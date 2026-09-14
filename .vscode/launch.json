@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter client",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/flutter_client/app"
+    },
+    {
+      "name": "Server (Python agent)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "uv run .",
+      "cwd": "${workspaceFolder}/server"
+    }
+  ]
+}

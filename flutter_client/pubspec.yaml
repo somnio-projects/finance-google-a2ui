@@ -1,0 +1,13 @@
+name: showcase_flutter_client_workspace
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.35.7 <4.0.0"
+
+workspace:
+  - app
+  - e2e_test
+
+dev_dependencies:
+  lints: ^6.1.0
