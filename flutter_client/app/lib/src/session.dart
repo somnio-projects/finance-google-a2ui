@@ -14,6 +14,7 @@
 
 import 'dart:async';
 
+import 'package:a2ui_core/a2ui_core.dart' hide Catalog;
 import 'package:flutter/foundation.dart';
 import 'package:genui/genui.dart';
 import 'package:genui_a2a/genui_a2a.dart';
@@ -132,7 +133,7 @@ class RestaurantSession extends ChangeNotifier {
 
     // Clear existing surfaces on each new request.
     for (final String id in [..._surfaceController.activeSurfaceIds]) {
-      _surfaceController.handleMessage(DeleteSurface(surfaceId: id));
+      _surfaceController.handleMessage(DeleteSurfaceMessage(surfaceId: id));
     }
 
     notifyListeners();
