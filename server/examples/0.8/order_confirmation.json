@@ -1,7 +1,7 @@
 [
   {
     "beginRendering": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "root": "confirmation-card",
       "styles": {
         "primaryColor": "#FF0000",
@@ -11,7 +11,7 @@
   },
   {
     "surfaceUpdate": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "components": [
         {
           "id": "confirmation-card",
@@ -28,13 +28,12 @@
               "children": {
                 "explicitList": [
                   "confirm-title",
-                  "confirm-image",
+                  "confirm-logo",
                   "divider1",
-                  "confirm-details",
+                  "confirm-amount",
+                  "confirm-quantity",
                   "divider2",
-                  "confirm-dietary",
-                  "divider3",
-                  "confirm-text"
+                  "confirm-note"
                 ]
               }
             }
@@ -52,42 +51,43 @@
           }
         },
         {
-          "id": "confirm-image",
+          "id": "confirm-logo",
           "component": {
             "Image": {
+              "usageHint": "avatar",
               "url": {
-                "path": "/imageUrl"
+                "path": "/logoUrl"
               }
             }
           }
         },
         {
-          "id": "confirm-details",
+          "id": "confirm-amount",
           "component": {
             "Text": {
               "text": {
-                "path": "/bookingDetails"
+                "path": "/amountDetails"
               }
             }
           }
         },
         {
-          "id": "confirm-dietary",
+          "id": "confirm-quantity",
           "component": {
             "Text": {
               "text": {
-                "path": "/dietaryRequirements"
+                "path": "/quantityDetails"
               }
             }
           }
         },
         {
-          "id": "confirm-text",
+          "id": "confirm-note",
           "component": {
             "Text": {
-              "usageHint": "h5",
+              "usageHint": "caption",
               "text": {
-                "literalString": "We look forward to seeing you!"
+                "literalString": "Simulated order. No real funds were used."
               }
             }
           }
@@ -103,37 +103,25 @@
           "component": {
             "Divider": {}
           }
-        },
-        {
-          "id": "divider3",
-          "component": {
-            "Divider": {}
-          }
         }
       ]
     }
   },
   {
     "dataModelUpdate": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "path": "/",
       "contents": [
+        { "key": "title", "valueString": "Order placed: [Name]" },
         {
-          "key": "title",
-          "valueString": "Booking at [RestaurantName]"
+          "key": "amountDetails",
+          "valueString": "Bought [AmountDisplay] of [Symbol] at [PriceDisplay]"
         },
         {
-          "key": "bookingDetails",
-          "valueString": "[PartySize] people at [Time]"
+          "key": "quantityDetails",
+          "valueString": "Quantity: [Quantity] [Symbol]"
         },
-        {
-          "key": "dietaryRequirements",
-          "valueString": "Dietary Requirements: [Requirements]"
-        },
-        {
-          "key": "imageUrl",
-          "valueString": "[ImageUrl]"
-        }
+        { "key": "logoUrl", "valueString": "[LogoURL]" }
       ]
     }
   }

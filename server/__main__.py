@@ -19,8 +19,8 @@ import click
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
-from agent import RestaurantAgent
-from agent_executor import RestaurantAgentExecutor
+from agent import CryptoAgent
+from agent_executor import CryptoAgentExecutor
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
@@ -50,9 +50,9 @@ def main(host, port):
 
         base_url = f"http://{host}:{port}"
 
-        agent = RestaurantAgent(base_url=base_url)
+        agent = CryptoAgent(base_url=base_url)
 
-        agent_executor = RestaurantAgentExecutor(agent)
+        agent_executor = CryptoAgentExecutor(agent)
 
         request_handler = DefaultRequestHandler(
             agent_executor=agent_executor,

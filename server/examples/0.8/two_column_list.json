@@ -18,7 +18,7 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["title-heading", "restaurant-row-1"]
+                "explicitList": ["title-heading", "asset-row-1"]
               }
             }
           }
@@ -35,7 +35,7 @@
           }
         },
         {
-          "id": "restaurant-row-1",
+          "id": "asset-row-1",
           "component": {
             "Row": {
               "children": {
@@ -58,34 +58,25 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["template-image-1", "card-details-1"]
+                "explicitList": [
+                  "template-logo-1",
+                  "template-name-1",
+                  "template-symbol-1",
+                  "template-price-1",
+                  "template-change-1",
+                  "template-buy-button-1"
+                ]
               }
             }
           }
         },
         {
-          "id": "template-image-1",
+          "id": "template-logo-1",
           "component": {
             "Image": {
+              "usageHint": "avatar",
               "url": {
-                "path": "/items/0/imageUrl"
-              },
-              "width": "100%"
-            }
-          }
-        },
-        {
-          "id": "card-details-1",
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "template-name-1",
-                  "template-rating-1",
-                  "template-detail-1",
-                  "template-link-1",
-                  "template-book-button-1"
-                ]
+                "path": "/items/0/logoUrl"
               }
             }
           }
@@ -102,59 +93,49 @@
           }
         },
         {
-          "id": "template-rating-1",
+          "id": "template-symbol-1",
           "component": {
             "Text": {
+              "usageHint": "caption",
               "text": {
-                "path": "/items/0/rating"
+                "path": "/items/0/symbol"
               }
             }
           }
         },
         {
-          "id": "template-detail-1",
+          "id": "template-price-1",
           "component": {
             "Text": {
+              "usageHint": "h4",
               "text": {
-                "path": "/items/0/detail"
+                "path": "/items/0/priceDisplay"
               }
             }
           }
         },
         {
-          "id": "template-link-1",
+          "id": "template-change-1",
           "component": {
             "Text": {
               "text": {
-                "path": "/items/0/infoLink"
+                "path": "/items/0/change24hDisplay"
               }
             }
           }
         },
         {
-          "id": "template-book-button-1",
+          "id": "template-buy-button-1",
           "component": {
             "Button": {
-              "child": "book-now-text-1",
+              "child": "buy-text-1",
               "action": {
-                "name": "book_restaurant",
+                "name": "buy_asset",
                 "context": [
                   {
-                    "key": "restaurantName",
+                    "key": "symbol",
                     "value": {
-                      "path": "/items/0/name"
-                    }
-                  },
-                  {
-                    "key": "imageUrl",
-                    "value": {
-                      "path": "/items/0/imageUrl"
-                    }
-                  },
-                  {
-                    "key": "address",
-                    "value": {
-                      "path": "/items/0/address"
+                      "path": "/items/0/symbol"
                     }
                   }
                 ]
@@ -163,11 +144,11 @@
           }
         },
         {
-          "id": "book-now-text-1",
+          "id": "buy-text-1",
           "component": {
             "Text": {
               "text": {
-                "literalString": "Book Now"
+                "literalString": "Buy"
               }
             }
           }
@@ -186,34 +167,25 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["template-image-2", "card-details-2"]
+                "explicitList": [
+                  "template-logo-2",
+                  "template-name-2",
+                  "template-symbol-2",
+                  "template-price-2",
+                  "template-change-2",
+                  "template-buy-button-2"
+                ]
               }
             }
           }
         },
         {
-          "id": "template-image-2",
+          "id": "template-logo-2",
           "component": {
             "Image": {
+              "usageHint": "avatar",
               "url": {
-                "path": "/items/1/imageUrl"
-              },
-              "width": "100%"
-            }
-          }
-        },
-        {
-          "id": "card-details-2",
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "template-name-2",
-                  "template-rating-2",
-                  "template-detail-2",
-                  "template-link-2",
-                  "template-book-button-2"
-                ]
+                "path": "/items/1/logoUrl"
               }
             }
           }
@@ -230,59 +202,49 @@
           }
         },
         {
-          "id": "template-rating-2",
+          "id": "template-symbol-2",
           "component": {
             "Text": {
+              "usageHint": "caption",
               "text": {
-                "path": "/items/1/rating"
+                "path": "/items/1/symbol"
               }
             }
           }
         },
         {
-          "id": "template-detail-2",
+          "id": "template-price-2",
           "component": {
             "Text": {
+              "usageHint": "h4",
               "text": {
-                "path": "/items/1/detail"
+                "path": "/items/1/priceDisplay"
               }
             }
           }
         },
         {
-          "id": "template-link-2",
+          "id": "template-change-2",
           "component": {
             "Text": {
               "text": {
-                "path": "/items/1/infoLink"
+                "path": "/items/1/change24hDisplay"
               }
             }
           }
         },
         {
-          "id": "template-book-button-2",
+          "id": "template-buy-button-2",
           "component": {
             "Button": {
-              "child": "book-now-text-2",
+              "child": "buy-text-2",
               "action": {
-                "name": "book_restaurant",
+                "name": "buy_asset",
                 "context": [
                   {
-                    "key": "restaurantName",
+                    "key": "symbol",
                     "value": {
-                      "path": "/items/1/name"
-                    }
-                  },
-                  {
-                    "key": "imageUrl",
-                    "value": {
-                      "path": "/items/1/imageUrl"
-                    }
-                  },
-                  {
-                    "key": "address",
-                    "value": {
-                      "path": "/items/1/address"
+                      "path": "/items/1/symbol"
                     }
                   }
                 ]
@@ -291,11 +253,11 @@
           }
         },
         {
-          "id": "book-now-text-2",
+          "id": "buy-text-2",
           "component": {
             "Text": {
               "text": {
-                "literalString": "Book Now"
+                "literalString": "Buy"
               }
             }
           }
@@ -310,7 +272,7 @@
       "contents": [
         {
           "key": "title",
-          "valueString": "Top Restaurants"
+          "valueString": "Top Cryptocurrencies"
         },
         {
           "key": "items",
@@ -318,59 +280,27 @@
             {
               "key": "item1",
               "valueMap": [
-                {
-                  "key": "name",
-                  "valueString": "The Fancy Place"
-                },
-                {
-                  "key": "rating",
-                  "valueNumber": 4.8
-                },
-                {
-                  "key": "detail",
-                  "valueString": "Fine dining experience"
-                },
-                {
-                  "key": "infoLink",
-                  "valueString": "https://example.com/fancy"
-                },
-                {
-                  "key": "imageUrl",
-                  "valueString": "https://example.com/fancy.jpg"
-                },
-                {
-                  "key": "address",
-                  "valueString": "123 Main St"
-                }
+                { "key": "symbol", "valueString": "AAA" },
+                { "key": "name", "valueString": "Example Coin" },
+                { "key": "price", "valueNumber": 1234.5 },
+                { "key": "priceDisplay", "valueString": "$1,234.50" },
+                { "key": "change24hPct", "valueNumber": 1.25 },
+                { "key": "change24hDisplay", "valueString": "+1.25%" },
+                { "key": "trend", "valueString": "up" },
+                { "key": "logoUrl", "valueString": "https://example.com/aaa.png" }
               ]
             },
             {
               "key": "item2",
               "valueMap": [
-                {
-                  "key": "name",
-                  "valueString": "Quick Bites"
-                },
-                {
-                  "key": "rating",
-                  "valueNumber": 4.2
-                },
-                {
-                  "key": "detail",
-                  "valueString": "Casual and fast"
-                },
-                {
-                  "key": "infoLink",
-                  "valueString": "https://example.com/quick"
-                },
-                {
-                  "key": "imageUrl",
-                  "valueString": "https://example.com/quick.jpg"
-                },
-                {
-                  "key": "address",
-                  "valueString": "456 Oak Ave"
-                }
+                { "key": "symbol", "valueString": "BBB" },
+                { "key": "name", "valueString": "Sample Token" },
+                { "key": "price", "valueNumber": 0.4321 },
+                { "key": "priceDisplay", "valueString": "$0.4321" },
+                { "key": "change24hPct", "valueNumber": -2.5 },
+                { "key": "change24hDisplay", "valueString": "-2.50%" },
+                { "key": "trend", "valueString": "down" },
+                { "key": "logoUrl", "valueString": "https://example.com/bbb.png" }
               ]
             }
           ]

@@ -42,7 +42,7 @@ from prompt_builder import (
     ROLE_DESCRIPTION,
     UI_DESCRIPTION,
 )
-from tools import get_restaurants
+from tools import get_crypto_assets
 from a2ui.schema.constants import (
     VERSION_0_8,
     VERSION_0_9,
@@ -59,14 +59,14 @@ from a2ui.a2a.parts import parse_response_to_parts, stream_response_to_parts
 logger = logging.getLogger(__name__)
 
 
-class RestaurantAgent:
-    """An agent that finds restaurants based on user criteria."""
+class CryptoAgent:
+    """An agent that shows fake crypto market data and simulates buy orders."""
 
     SUPPORTED_CONTENT_TYPES = ["text/plain"]
 
     def __init__(self, base_url: str):
         self.base_url = base_url
-        self._agent_name = "Restaurant Agent"
+        self._agent_name = "Crypto Market Agent"
         self._user_id = "remote_agent"
         self._text_runner: Optional[Runner] = self._build_runner(
             self._build_llm_agent()
@@ -116,23 +116,26 @@ class RestaurantAgent:
             extensions=extensions,
         )
         skill = AgentSkill(
-            id="find_restaurants",
-            name="Find Restaurants Tool",
+            id="crypto_market",
+            name="Crypto Market Tool",
             description=(
-                "Helps find restaurants based on user criteria (e.g., cuisine,"
-                " location)."
+                "Shows cryptocurrency market data (e.g., top assets, gainers,"
+                " losers, category) and simulates buy orders."
             ),
-            tags=["restaurant", "finder"],
-            examples=["Find me the top 10 chinese restaurants in the US"],
+            tags=["crypto", "market", "investing"],
+            examples=["Show me the top 5 cryptocurrencies by market cap"],
         )
 
         return AgentCard(
-            name="Restaurant Agent",
-            description="This agent helps find restaurants based on user criteria.",
+            name="Crypto Market Agent",
+            description=(
+                "This agent shows fake cryptocurrency market data and simulates"
+                " buy orders."
+            ),
             url=self.base_url,
             version="1.0.0",
-            default_input_modes=RestaurantAgent.SUPPORTED_CONTENT_TYPES,
-            default_output_modes=RestaurantAgent.SUPPORTED_CONTENT_TYPES,
+            default_input_modes=CryptoAgent.SUPPORTED_CONTENT_TYPES,
+            default_output_modes=CryptoAgent.SUPPORTED_CONTENT_TYPES,
             capabilities=capabilities,
             skills=[skill],
         )
@@ -147,12 +150,12 @@ class RestaurantAgent:
         )
 
     def get_processing_message(self) -> str:
-        return "Finding restaurants that match your criteria..."
+        return "Loading market data..."
 
     def _build_llm_agent(
         self, inference_format: Optional[DirectJsonFormat] = None
     ) -> LlmAgent:
-        """Builds the LLM agent for the restaurant agent."""
+        """Builds the LLM agent for the crypto market agent."""
         model_env = (
             os.getenv("MODEL_NAME") or os.getenv("LITELLM_MODEL") or "gemini-3.8-flash"
         )
@@ -185,10 +188,10 @@ class RestaurantAgent:
 
         return LlmAgent(
             model=model,
-            name="restaurant_agent",
-            description="An agent that finds restaurants and helps book tables.",
+            name="crypto_agent",
+            description="An agent that shows crypto market data and simulates buy orders.",
             instruction=instruction,
-            tools=[get_restaurants],
+            tools=[get_crypto_assets],
         )
 
     async def stream(
@@ -235,7 +238,7 @@ class RestaurantAgent:
         # Ensure schema was loaded
         if ui_version and (not selected_catalog or not selected_catalog.catalog_schema):
             logger.error(
-                "--- RestaurantAgent.stream: A2UI_SCHEMA is not loaded. "
+                "--- CryptoAgent.stream: A2UI_SCHEMA is not loaded. "
                 "Cannot perform UI validation. ---"
             )
             yield {
@@ -256,7 +259,7 @@ class RestaurantAgent:
         while attempt <= max_retries:
             attempt += 1
             logger.info(
-                f"--- RestaurantAgent.stream: Attempt {attempt}/{max_retries + 1} "
+                f"--- CryptoAgent.stream: Attempt {attempt}/{max_retries + 1} "
                 f"for session {session_id} ---"
             )
 
@@ -322,7 +325,7 @@ class RestaurantAgent:
 
             if ui_version:
                 logger.info(
-                    "--- RestaurantAgent.stream: Validating UI response (Attempt"
+                    "--- CryptoAgent.stream: Validating UI response (Attempt"
                     f" {attempt})... ---"
                 )
                 try:
@@ -338,14 +341,14 @@ class RestaurantAgent:
                         # Check if it validates against the A2UI_SCHEMA
                         # This will raise jsonschema.exceptions.ValidationError if it fails
                         logger.info(
-                            "--- RestaurantAgent.stream: Validating against"
+                            "--- CryptoAgent.stream: Validating against"
                             " A2UI_SCHEMA... ---"
                         )
                         selected_catalog.validator.validate(parsed_json_data)
                         # --- End Validation Steps ---
 
                         logger.info(
-                            "--- RestaurantAgent.stream: UI JSON successfully parsed"
+                            "--- CryptoAgent.stream: UI JSON successfully parsed"
                             " AND validated against schema. Validation OK (Attempt"
                             f" {attempt}). ---"
                         )
@@ -357,7 +360,7 @@ class RestaurantAgent:
                     jsonschema.exceptions.ValidationError,
                 ) as e:
                     logger.warning(
-                        f"--- RestaurantAgent.stream: A2UI validation failed: {e}"
+                        f"--- CryptoAgent.stream: A2UI validation failed: {e}"
                         f" (Attempt {attempt}) ---"
                     )
                     logger.warning(
@@ -371,7 +374,7 @@ class RestaurantAgent:
 
             if is_valid:
                 logger.info(
-                    "--- RestaurantAgent.stream: Response is valid. Sending final"
+                    "--- CryptoAgent.stream: Response is valid. Sending final"
                     f" response (Attempt {attempt}). ---"
                 )
                 final_parts = parse_response_to_parts(
@@ -388,7 +391,7 @@ class RestaurantAgent:
 
             if attempt <= max_retries:
                 logger.warning(
-                    "--- RestaurantAgent.stream: Retrying..."
+                    "--- CryptoAgent.stream: Retrying..."
                     f" ({attempt}/{max_retries + 1}) ---"
                 )
                 # Prepare the query for the retry
@@ -404,7 +407,7 @@ class RestaurantAgent:
 
         # --- If we're here, it means we've exhausted retries ---
         logger.error(
-            "--- RestaurantAgent.stream: Max retries exhausted. Sending text-only"
+            "--- CryptoAgent.stream: Max retries exhausted. Sending text-only"
             " error. ---"
         )
         yield {

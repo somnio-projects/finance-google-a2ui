@@ -2,7 +2,7 @@
   {
     "version": "v0.9",
     "createSurface": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json",
       "theme": {
         "primaryColor": "#FF0000",
@@ -13,7 +13,7 @@
   {
     "version": "v0.9",
     "updateComponents": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "components": [
         {
           "id": "root",
@@ -25,13 +25,12 @@
           "component": "Column",
           "children": [
             "confirm-title",
-            "confirm-image",
+            "confirm-logo",
             "divider1",
-            "confirm-details",
+            "confirm-amount",
+            "confirm-quantity",
             "divider2",
-            "confirm-dietary",
-            "divider3",
-            "confirm-text"
+            "confirm-note"
           ]
         },
         {
@@ -43,31 +42,32 @@
           }
         },
         {
-          "id": "confirm-image",
+          "id": "confirm-logo",
           "component": "Image",
+          "variant": "avatar",
           "url": {
-            "path": "/imageUrl"
+            "path": "/logoUrl"
           }
         },
         {
-          "id": "confirm-details",
+          "id": "confirm-amount",
           "component": "Text",
           "text": {
-            "path": "/bookingDetails"
+            "path": "/amountDetails"
           }
         },
         {
-          "id": "confirm-dietary",
+          "id": "confirm-quantity",
           "component": "Text",
           "text": {
-            "path": "/dietaryRequirements"
+            "path": "/quantityDetails"
           }
         },
         {
-          "id": "confirm-text",
+          "id": "confirm-note",
           "component": "Text",
-          "variant": "h5",
-          "text": "We look forward to seeing you!"
+          "variant": "caption",
+          "text": "Simulated order. No real funds were used."
         },
         {
           "id": "divider1",
@@ -76,10 +76,6 @@
         {
           "id": "divider2",
           "component": "Divider"
-        },
-        {
-          "id": "divider3",
-          "component": "Divider"
         }
       ]
     }
@@ -87,13 +83,13 @@
   {
     "version": "v0.9",
     "updateDataModel": {
-      "surfaceId": "confirmation",
+      "surfaceId": "order-confirmation",
       "path": "/",
       "value": {
-        "title": "Booking at [RestaurantName]",
-        "bookingDetails": "[PartySize] people at [Time]",
-        "dietaryRequirements": "Dietary Requirements: [Requirements]",
-        "imageUrl": "[ImageUrl]"
+        "title": "Order placed: [Name]",
+        "amountDetails": "Bought [AmountDisplay] of [Symbol] at [PriceDisplay]",
+        "quantityDetails": "Quantity: [Quantity] [Symbol]",
+        "logoUrl": "[LogoURL]"
       }
     }
   }

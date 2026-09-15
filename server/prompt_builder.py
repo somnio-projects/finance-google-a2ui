@@ -18,18 +18,20 @@ from a2ui.basic_catalog.provider import BasicCatalog
 from a2ui.schema.common_modifiers import remove_strict_validation
 
 ROLE_DESCRIPTION = (
-    "You are a helpful restaurant finding assistant. Your final output MUST be an A2UI"
-    " UI definition."
+    "You are a helpful crypto market assistant in a demo investing app. All market"
+    " data is fake demo data and all orders are simulated. Never give investment"
+    " advice. Your final output MUST be an A2UI UI definition."
 )
 
 UI_DESCRIPTION = """
--   If the query is for a list of restaurants, use the restaurant data you have already received from the `get_restaurants` tool to populate the `updateDataModel` message.
--   IMPORTANT: When using updateDataModel to update items, you MUST specify `path: "/items"` in `updateDataModel`, and the `value` MUST be an array of restaurants.
+-   If the query is for a list of cryptocurrencies, use the asset data you have already received from the `get_crypto_assets` tool to populate the `updateDataModel` message.
+-   IMPORTANT: Copy every asset exactly as received from the tool. NEVER change, recompute, round or reformat prices, percentages or any other value.
+-   IMPORTANT: When using updateDataModel to update items, you MUST specify `path: "/items"` in `updateDataModel`, and the `value` MUST be an array of assets.
 -   IMPORTANT: Always specify the path when using updateDataModel. The part message is ignored when the path is missing.
--   If the number of restaurants is 5 or fewer, you MUST use the `SINGLE_COLUMN_LIST_EXAMPLE` template.
--   If the number of restaurants is more than 5, you MUST use the `TWO_COLUMN_LIST_EXAMPLE` template.
--   If the query is to book a restaurant (e.g., "USER_WANTS_TO_BOOK..."), you MUST use the `BOOKING_FORM_EXAMPLE` template.
--   If the query is a booking submission (e.g., "User submitted a booking..."), you MUST use the `CONFIRMATION_EXAMPLE` template.
+-   If the number of assets is 5 or fewer, you MUST use the `single_column_list` template.
+-   If the number of assets is more than 5, you MUST use the `two_column_list` template, grouping the assets into pairs.
+-   If the query is to buy an asset (e.g., "USER_WANTS_TO_BUY..."), you MUST use the `order_form` template, filled with the values from the query.
+-   If the query is an order submission (e.g., "User submitted an order..."), you MUST use the `order_confirmation` template, filled with the values from the query.
 """
 
 
@@ -38,18 +40,18 @@ def get_text_prompt() -> str:
     Constructs the prompt for a text-only agent.
     """
     return """
-    You are a helpful restaurant finding assistant. Your final output MUST be a text response.
+    You are a helpful crypto market assistant in a demo investing app. All market data is fake demo data and all orders are simulated. Never give investment advice. Your final output MUST be a text response.
 
     To generate the response, you MUST follow these rules:
-    1.  **For finding restaurants:**
-        a. You MUST call the `get_restaurants` tool. Extract the cuisine, location, and a specific number (`count`) of restaurants from the user's query.
-        b. After receiving the data, format the restaurant list as a clear, human-readable text response. You MUST preserve any markdown formatting (like for links) that you receive from the tool.
+    1.  **For market data:**
+        a. You MUST call the `get_crypto_assets` tool. Extract the category, symbols, sorting (market_cap, gainers or losers) and a specific number (`count`) of assets from the user's query.
+        b. After receiving the data, format the asset list as a clear, human-readable text response. Use the pre-formatted `*Display` values exactly as received.
 
-    2.  **For booking a table (when you receive a query like 'USER_WANTS_TO_BOOK...'):**
-        a. Respond by asking the user for the necessary details to make a booking (party size, date, time, dietary requirements).
+    2.  **For buying an asset (when you receive a query like 'USER_WANTS_TO_BUY...'):**
+        a. Respond by asking the user how much in USD they want to spend.
 
-    3.  **For confirming a booking (when you receive a query like 'User submitted a booking...'):**
-        a. Respond with a simple text confirmation of the booking details.
+    3.  **For confirming an order (when you receive a query like 'User submitted an order...'):**
+        a. Respond with a simple text confirmation of the order details, using the values from the query exactly.
     """
 
 
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     # For a different agent (e.g., a flight booker), you would pass in
     # different examples but use the same `get_ui_prompt` function.
     version = VERSION_0_9
-    restaurant_prompt = DirectJsonFormat(
+    crypto_prompt = DirectJsonFormat(
         version,
         catalogs=[
             BasicCatalog.get_config(
@@ -78,9 +80,9 @@ if __name__ == "__main__":
         validate_examples=True,
     )
 
-    print(restaurant_prompt)
+    print(crypto_prompt)
 
     # This demonstrates how you could save the prompt to a file for inspection
     with open("generated_prompt.txt", "w") as f:
-        f.write(restaurant_prompt)
+        f.write(crypto_prompt)
     print("\nGenerated prompt saved to generated_prompt.txt")

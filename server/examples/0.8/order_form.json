@@ -1,0 +1,175 @@
+[
+  {
+    "beginRendering": {
+      "surfaceId": "order-form",
+      "root": "order-form-column",
+      "styles": {
+        "primaryColor": "#FF0000",
+        "font": "Roboto"
+      }
+    }
+  },
+  {
+    "surfaceUpdate": {
+      "surfaceId": "order-form",
+      "components": [
+        {
+          "id": "order-form-column",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": [
+                  "order-title",
+                  "order-header",
+                  "order-hint",
+                  "amount-field",
+                  "submit-button"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "order-title",
+          "component": {
+            "Text": {
+              "usageHint": "h2",
+              "text": {
+                "path": "/title"
+              }
+            }
+          }
+        },
+        {
+          "id": "order-header",
+          "component": {
+            "Row": {
+              "alignment": "center",
+              "children": {
+                "explicitList": ["order-logo", "order-asset"]
+              }
+            }
+          }
+        },
+        {
+          "id": "order-logo",
+          "component": {
+            "Image": {
+              "usageHint": "avatar",
+              "url": {
+                "path": "/logoUrl"
+              }
+            }
+          }
+        },
+        {
+          "id": "order-asset",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["order-name", "order-price"]
+              }
+            }
+          }
+        },
+        {
+          "id": "order-name",
+          "component": {
+            "Text": {
+              "usageHint": "h3",
+              "text": {
+                "path": "/assetLabel"
+              }
+            }
+          }
+        },
+        {
+          "id": "order-price",
+          "component": {
+            "Text": {
+              "text": {
+                "path": "/priceDisplay"
+              }
+            }
+          }
+        },
+        {
+          "id": "order-hint",
+          "component": {
+            "Text": {
+              "usageHint": "caption",
+              "text": {
+                "path": "/hint"
+              }
+            }
+          }
+        },
+        {
+          "id": "amount-field",
+          "component": {
+            "TextField": {
+              "label": {
+                "literalString": "Amount (USD)"
+              },
+              "text": {
+                "path": "/amountUsd"
+              },
+              "textFieldType": "number"
+            }
+          }
+        },
+        {
+          "id": "submit-button",
+          "component": {
+            "Button": {
+              "child": "submit-order-text",
+              "primary": true,
+              "action": {
+                "name": "submit_order",
+                "context": [
+                  {
+                    "key": "symbol",
+                    "value": {
+                      "path": "/symbol"
+                    }
+                  },
+                  {
+                    "key": "amountUsd",
+                    "value": {
+                      "path": "/amountUsd"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "submit-order-text",
+          "component": {
+            "Text": {
+              "text": {
+                "literalString": "Place Order"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "dataModelUpdate": {
+      "surfaceId": "order-form",
+      "path": "/",
+      "contents": [
+        { "key": "title", "valueString": "Buy [Name]" },
+        { "key": "assetLabel", "valueString": "[Name] ([Symbol])" },
+        { "key": "priceDisplay", "valueString": "[PriceDisplay]" },
+        { "key": "hint", "valueString": "[Hint]" },
+        { "key": "symbol", "valueString": "[Symbol]" },
+        { "key": "logoUrl", "valueString": "[LogoURL]" },
+        { "key": "amountUsd", "valueString": "100" }
+      ]
+    }
+  }
+]

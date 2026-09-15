@@ -18,7 +18,7 @@
         {
           "id": "root",
           "component": "Column",
-          "children": ["title-heading", "restaurant-list"]
+          "children": ["title-heading", "asset-list"]
         },
         {
           "id": "title-heading",
@@ -29,7 +29,7 @@
           }
         },
         {
-          "id": "restaurant-list",
+          "id": "asset-list",
           "component": "List",
           "direction": "vertical",
           "children": {
@@ -51,25 +51,22 @@
         {
           "id": "card-layout-left",
           "component": "Column",
-          "children": ["template-image-left", "card-details-left"]
-        },
-        {
-          "id": "template-image-left",
-          "component": "Image",
-          "variant": "mediumFeature",
-          "url": {
-            "path": "0/imageUrl"
-          }
-        },
-        {
-          "id": "card-details-left",
-          "component": "Column",
           "children": [
+            "template-logo-left",
             "template-name-left",
-            "template-rating-left",
-            "template-detail-left",
-            "template-book-button-left"
+            "template-symbol-left",
+            "template-price-left",
+            "template-change-left",
+            "template-buy-button-left"
           ]
+        },
+        {
+          "id": "template-logo-left",
+          "component": "Image",
+          "variant": "avatar",
+          "url": {
+            "path": "0/logoUrl"
+          }
         },
         {
           "id": "template-name-left",
@@ -80,44 +77,47 @@
           }
         },
         {
-          "id": "template-rating-left",
+          "id": "template-symbol-left",
           "component": "Text",
+          "variant": "caption",
           "text": {
-            "path": "0/rating"
+            "path": "0/symbol"
           }
         },
         {
-          "id": "template-detail-left",
+          "id": "template-price-left",
           "component": "Text",
+          "variant": "h4",
           "text": {
-            "path": "0/detail"
+            "path": "0/priceDisplay"
           }
         },
         {
-          "id": "template-book-button-left",
+          "id": "template-change-left",
+          "component": "Text",
+          "text": {
+            "path": "0/change24hDisplay"
+          }
+        },
+        {
+          "id": "template-buy-button-left",
           "component": "Button",
-          "child": "book-now-text-left",
+          "child": "buy-text-left",
           "action": {
             "event": {
-              "name": "book_restaurant",
+              "name": "buy_asset",
               "context": {
-                "restaurantName": {
-                  "path": "0/name"
-                },
-                "imageUrl": {
-                  "path": "0/imageUrl"
-                },
-                "address": {
-                  "path": "0/address"
+                "symbol": {
+                  "path": "0/symbol"
                 }
               }
             }
           }
         },
         {
-          "id": "book-now-text-left",
+          "id": "buy-text-left",
           "component": "Text",
-          "text": "Book Now"
+          "text": "Buy"
         },
         {
           "id": "card-template-right",
@@ -128,25 +128,22 @@
         {
           "id": "card-layout-right",
           "component": "Column",
-          "children": ["template-image-right", "card-details-right"]
-        },
-        {
-          "id": "template-image-right",
-          "component": "Image",
-          "variant": "mediumFeature",
-          "url": {
-            "path": "1/imageUrl"
-          }
-        },
-        {
-          "id": "card-details-right",
-          "component": "Column",
           "children": [
+            "template-logo-right",
             "template-name-right",
-            "template-rating-right",
-            "template-detail-right",
-            "template-book-button-right"
+            "template-symbol-right",
+            "template-price-right",
+            "template-change-right",
+            "template-buy-button-right"
           ]
+        },
+        {
+          "id": "template-logo-right",
+          "component": "Image",
+          "variant": "avatar",
+          "url": {
+            "path": "1/logoUrl"
+          }
         },
         {
           "id": "template-name-right",
@@ -157,44 +154,47 @@
           }
         },
         {
-          "id": "template-rating-right",
+          "id": "template-symbol-right",
           "component": "Text",
+          "variant": "caption",
           "text": {
-            "path": "1/rating"
+            "path": "1/symbol"
           }
         },
         {
-          "id": "template-detail-right",
+          "id": "template-price-right",
           "component": "Text",
+          "variant": "h4",
           "text": {
-            "path": "1/detail"
+            "path": "1/priceDisplay"
           }
         },
         {
-          "id": "template-book-button-right",
+          "id": "template-change-right",
+          "component": "Text",
+          "text": {
+            "path": "1/change24hDisplay"
+          }
+        },
+        {
+          "id": "template-buy-button-right",
           "component": "Button",
-          "child": "book-now-text-right",
+          "child": "buy-text-right",
           "action": {
             "event": {
-              "name": "book_restaurant",
+              "name": "buy_asset",
               "context": {
-                "restaurantName": {
-                  "path": "1/name"
-                },
-                "imageUrl": {
-                  "path": "1/imageUrl"
-                },
-                "address": {
-                  "path": "1/address"
+                "symbol": {
+                  "path": "1/symbol"
                 }
               }
             }
           }
         },
         {
-          "id": "book-now-text-right",
+          "id": "buy-text-right",
           "component": "Text",
-          "text": "Book Now"
+          "text": "Buy"
         }
       ]
     }
@@ -205,22 +205,28 @@
       "surfaceId": "default",
       "path": "/",
       "value": {
-        "title": "Top Restaurants",
+        "title": "Top Cryptocurrencies",
         "items": [
           [
             {
-              "name": "The Fancy Place",
-              "rating": 4.8,
-              "detail": "Fine dining experience",
-              "imageUrl": "https://picsum.photos/200/300?random=1",
-              "address": "123 Luxury Ave, Food City"
+              "symbol": "AAA",
+              "name": "Example Coin",
+              "price": 1234.5,
+              "priceDisplay": "$1,234.50",
+              "change24hPct": 1.25,
+              "change24hDisplay": "+1.25%",
+              "trend": "up",
+              "logoUrl": "https://example.com/aaa.png"
             },
             {
-              "name": "Quick Bites",
-              "rating": 4.2,
-              "detail": "Casual and fast",
-              "imageUrl": "https://picsum.photos/200/300?random=2",
-              "address": "456 Fast Lane, Quick Town"
+              "symbol": "BBB",
+              "name": "Sample Token",
+              "price": 0.4321,
+              "priceDisplay": "$0.4321",
+              "change24hPct": -2.5,
+              "change24hDisplay": "-2.50%",
+              "trend": "down",
+              "logoUrl": "https://example.com/bbb.png"
             }
           ]
         ]

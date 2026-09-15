@@ -61,34 +61,35 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["template-image", "card-details"]
+                "explicitList": ["template-logo", "card-details"]
               }
             }
           }
         },
         {
-          "id": "template-image",
-          "weight": 1,
+          "id": "template-logo",
           "component": {
             "Image": {
+              "usageHint": "avatar",
               "url": {
-                "path": "/imageUrl"
+                "path": "/logoUrl"
               }
             }
           }
         },
         {
           "id": "card-details",
-          "weight": 2,
+          "weight": 1,
           "component": {
             "Column": {
               "children": {
                 "explicitList": [
                   "template-name",
-                  "template-rating",
+                  "template-symbol",
+                  "template-price-row",
+                  "template-market-cap-row",
                   "template-detail",
-                  "template-link",
-                  "template-book-button"
+                  "template-buy-button"
                 ]
               }
             }
@@ -106,11 +107,78 @@
           }
         },
         {
-          "id": "template-rating",
+          "id": "template-symbol",
+          "component": {
+            "Text": {
+              "usageHint": "caption",
+              "text": {
+                "path": "/symbol"
+              }
+            }
+          }
+        },
+        {
+          "id": "template-price-row",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["template-price", "template-change"]
+              }
+            }
+          }
+        },
+        {
+          "id": "template-price",
+          "component": {
+            "Text": {
+              "usageHint": "h4",
+              "text": {
+                "path": "/priceDisplay"
+              }
+            }
+          }
+        },
+        {
+          "id": "template-change",
           "component": {
             "Text": {
               "text": {
-                "path": "/rating"
+                "path": "/change24hDisplay"
+              }
+            }
+          }
+        },
+        {
+          "id": "template-market-cap-row",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": [
+                  "template-market-cap-label",
+                  "template-market-cap"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "template-market-cap-label",
+          "component": {
+            "Text": {
+              "usageHint": "caption",
+              "text": {
+                "literalString": "Market cap"
+              }
+            }
+          }
+        },
+        {
+          "id": "template-market-cap",
+          "component": {
+            "Text": {
+              "usageHint": "caption",
+              "text": {
+                "path": "/marketCapDisplay"
               }
             }
           }
@@ -126,40 +194,18 @@
           }
         },
         {
-          "id": "template-link",
-          "component": {
-            "Text": {
-              "text": {
-                "path": "/infoLink"
-              }
-            }
-          }
-        },
-        {
-          "id": "template-book-button",
+          "id": "template-buy-button",
           "component": {
             "Button": {
-              "child": "book-now-text",
+              "child": "buy-text",
               "primary": true,
               "action": {
-                "name": "book_restaurant",
+                "name": "buy_asset",
                 "context": [
                   {
-                    "key": "restaurantName",
+                    "key": "symbol",
                     "value": {
-                      "path": "/name"
-                    }
-                  },
-                  {
-                    "key": "imageUrl",
-                    "value": {
-                      "path": "/imageUrl"
-                    }
-                  },
-                  {
-                    "key": "address",
-                    "value": {
-                      "path": "/address"
+                      "path": "/symbol"
                     }
                   }
                 ]
@@ -168,11 +214,11 @@
           }
         },
         {
-          "id": "book-now-text",
+          "id": "buy-text",
           "component": {
             "Text": {
               "text": {
-                "literalString": "Book Now"
+                "literalString": "Buy"
               }
             }
           }
@@ -186,64 +232,40 @@
       "path": "/",
       "contents": [
         {
+          "key": "title",
+          "valueString": "Top Cryptocurrencies"
+        },
+        {
           "key": "items",
           "valueMap": [
             {
               "key": "item1",
               "valueMap": [
-                {
-                  "key": "name",
-                  "valueString": "The Fancy Place"
-                },
-                {
-                  "key": "rating",
-                  "valueNumber": 4.8
-                },
-                {
-                  "key": "detail",
-                  "valueString": "Fine dining experience"
-                },
-                {
-                  "key": "infoLink",
-                  "valueString": "https://example.com/fancy"
-                },
-                {
-                  "key": "imageUrl",
-                  "valueString": "https://example.com/fancy.jpg"
-                },
-                {
-                  "key": "address",
-                  "valueString": "123 Main St"
-                }
+                { "key": "symbol", "valueString": "AAA" },
+                { "key": "name", "valueString": "Example Coin" },
+                { "key": "price", "valueNumber": 1234.5 },
+                { "key": "priceDisplay", "valueString": "$1,234.50" },
+                { "key": "change24hPct", "valueNumber": 1.25 },
+                { "key": "change24hDisplay", "valueString": "+1.25%" },
+                { "key": "trend", "valueString": "up" },
+                { "key": "marketCapDisplay", "valueString": "$12.30B" },
+                { "key": "detail", "valueString": "An example layer 1 blockchain." },
+                { "key": "logoUrl", "valueString": "https://example.com/aaa.png" }
               ]
             },
             {
               "key": "item2",
               "valueMap": [
-                {
-                  "key": "name",
-                  "valueString": "Quick Bites"
-                },
-                {
-                  "key": "rating",
-                  "valueNumber": 4.2
-                },
-                {
-                  "key": "detail",
-                  "valueString": "Casual and fast"
-                },
-                {
-                  "key": "infoLink",
-                  "valueString": "https://example.com/quick"
-                },
-                {
-                  "key": "imageUrl",
-                  "valueString": "https://example.com/quick.jpg"
-                },
-                {
-                  "key": "address",
-                  "valueString": "456 Oak Ave"
-                }
+                { "key": "symbol", "valueString": "BBB" },
+                { "key": "name", "valueString": "Sample Token" },
+                { "key": "price", "valueNumber": 0.4321 },
+                { "key": "priceDisplay", "valueString": "$0.4321" },
+                { "key": "change24hPct", "valueNumber": -2.5 },
+                { "key": "change24hDisplay", "valueString": "-2.50%" },
+                { "key": "trend", "valueString": "down" },
+                { "key": "marketCapDisplay", "valueString": "$850.00M" },
+                { "key": "detail", "valueString": "An example DeFi token." },
+                { "key": "logoUrl", "valueString": "https://example.com/bbb.png" }
               ]
             }
           ]

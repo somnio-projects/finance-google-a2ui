@@ -63,7 +63,7 @@ wheels = [
 ]
 
 [[package]]
-name = "a2ui-restaurant-finder"
+name = "a2ui-crypto-market"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

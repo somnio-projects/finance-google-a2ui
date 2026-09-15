@@ -45,27 +45,27 @@
         {
           "id": "card-layout",
           "component": "Row",
-          "children": ["card-image", "card-details"]
+          "children": ["card-logo", "card-details"]
         },
         {
-          "id": "card-image",
+          "id": "card-logo",
           "component": "Image",
-          "variant": "mediumFeature",
-          "weight": 1,
+          "variant": "avatar",
           "url": {
-            "path": "imageUrl"
+            "path": "logoUrl"
           }
         },
         {
           "id": "card-details",
           "component": "Column",
-          "weight": 2,
+          "weight": 1,
           "children": [
             "template-name",
-            "template-rating",
+            "template-symbol",
+            "template-price-row",
+            "template-market-cap-row",
             "template-detail",
-            "template-link",
-            "template-book-button"
+            "template-buy-button"
           ]
         },
         {
@@ -77,10 +77,50 @@
           }
         },
         {
-          "id": "template-rating",
+          "id": "template-symbol",
+          "component": "Text",
+          "variant": "caption",
+          "text": {
+            "path": "symbol"
+          }
+        },
+        {
+          "id": "template-price-row",
+          "component": "Row",
+          "children": ["template-price", "template-change"]
+        },
+        {
+          "id": "template-price",
+          "component": "Text",
+          "variant": "h4",
+          "text": {
+            "path": "priceDisplay"
+          }
+        },
+        {
+          "id": "template-change",
           "component": "Text",
           "text": {
-            "path": "rating"
+            "path": "change24hDisplay"
+          }
+        },
+        {
+          "id": "template-market-cap-row",
+          "component": "Row",
+          "children": ["template-market-cap-label", "template-market-cap"]
+        },
+        {
+          "id": "template-market-cap-label",
+          "component": "Text",
+          "variant": "caption",
+          "text": "Market cap"
+        },
+        {
+          "id": "template-market-cap",
+          "component": "Text",
+          "variant": "caption",
+          "text": {
+            "path": "marketCapDisplay"
           }
         },
         {
@@ -91,38 +131,25 @@
           }
         },
         {
-          "id": "template-link",
-          "component": "Text",
-          "text": {
-            "path": "infoLink"
-          }
-        },
-        {
-          "id": "template-book-button",
+          "id": "template-buy-button",
           "component": "Button",
-          "child": "book-now-text",
+          "child": "buy-text",
           "variant": "primary",
           "action": {
             "event": {
-              "name": "book_restaurant",
+              "name": "buy_asset",
               "context": {
-                "restaurantName": {
-                  "path": "name"
-                },
-                "imageUrl": {
-                  "path": "imageUrl"
-                },
-                "address": {
-                  "path": "address"
+                "symbol": {
+                  "path": "symbol"
                 }
               }
             }
           }
         },
         {
-          "id": "book-now-text",
+          "id": "buy-text",
           "component": "Text",
-          "text": "Book Now"
+          "text": "Buy"
         }
       ]
     }
@@ -132,7 +159,7 @@
     "updateDataModel": {
       "surfaceId": "default",
       "path": "/title",
-      "value": "Found Restaurants"
+      "value": "Top Cryptocurrencies"
     }
   },
   {
@@ -142,20 +169,30 @@
       "path": "/items",
       "value": [
         {
-          "name": "The Fancy Place",
-          "rating": 4.8,
-          "detail": "Fine dining experience",
-          "infoLink": "https://fancyplace.com",
-          "imageUrl": "https://picsum.photos/200/300?random=1",
-          "address": "123 Luxury Ave, Food City"
+          "symbol": "AAA",
+          "name": "Example Coin",
+          "category": "Layer 1",
+          "price": 1234.5,
+          "priceDisplay": "$1,234.50",
+          "change24hPct": 1.25,
+          "change24hDisplay": "+1.25%",
+          "trend": "up",
+          "marketCapDisplay": "$12.30B",
+          "detail": "An example layer 1 blockchain.",
+          "logoUrl": "https://example.com/aaa.png"
         },
         {
-          "name": "Quick Bites",
-          "rating": 4.2,
-          "detail": "Casual and fast",
-          "infoLink": "https://quickbites.com",
-          "imageUrl": "https://picsum.photos/200/300?random=2",
-          "address": "456 Fast Lane, Quick Town"
+          "symbol": "BBB",
+          "name": "Sample Token",
+          "category": "DeFi",
+          "price": 0.4321,
+          "priceDisplay": "$0.4321",
+          "change24hPct": -2.5,
+          "change24hDisplay": "-2.50%",
+          "trend": "down",
+          "marketCapDisplay": "$850.00M",
+          "detail": "An example DeFi token.",
+          "logoUrl": "https://example.com/bbb.png"
         }
       ]
     }

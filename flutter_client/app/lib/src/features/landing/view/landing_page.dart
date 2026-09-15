@@ -11,14 +11,14 @@ import '../repository/landing_repository.dart';
 /// Placeholder messages shown next to the loading spinner while the agent
 /// is busy.
 ///
-/// The same loading screen appears during both the restaurant-finding
-/// phase (after the user submits a search) and the booking phase (after
-/// the user taps "Submit Reservation"), so messages are kept neutral
-/// enough to fit either context — no "finding restaurants" copy that
-/// would look wrong while a reservation is being confirmed.
+/// The same loading screen appears during both the market data phase
+/// (after the user submits a query) and the order phase (after the user
+/// taps "Place Order"), so messages are kept neutral enough to fit either
+/// context — no "loading prices" copy that would look wrong while an order
+/// is being confirmed.
 const List<String> _loadingTexts = [
-  'Talking to your concierge...',
-  'Checking availability...',
+  'Checking the market...',
+  'Crunching the numbers...',
   'Looking up details...',
   'Working on your request...',
   'Almost there...',
@@ -126,7 +126,7 @@ class _LandingForm extends StatefulWidget {
 
 class _LandingFormState extends State<_LandingForm> {
   final _textController = TextEditingController(
-    text: 'Find me 3 Chinese restaurants in New York.',
+    text: 'Show me the top 3 cryptocurrencies by market cap.',
   );
 
   @override
@@ -141,10 +141,10 @@ class _LandingFormState extends State<_LandingForm> {
       padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
       child: Column(
         children: [
-          const Icon(Icons.restaurant, size: 80, color: Colors.orange),
+          const Icon(Icons.currency_bitcoin, size: 80, color: Colors.orange),
           const SizedBox(height: 16),
           Text(
-            'Restaurant Finder',
+            'Crypto Market',
             style: Theme.of(
               context,
             ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -156,7 +156,7 @@ class _LandingFormState extends State<_LandingForm> {
                 child: TextField(
                   controller: _textController,
                   decoration: InputDecoration(
-                    hintText: 'Find me 3 Italian restaurants in New York.',
+                    hintText: 'Show me the top 5 gainers in the last 24 hours.',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),

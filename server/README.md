@@ -1,8 +1,8 @@
-# A2UI Restaurant finder and table reservation agent sample.
+# A2UI crypto market agent
 
-This sample uses the Agent Development Kit (ADK) along with the A2A protocol to create a simple "Restaurant finder and table reservation" agent that is hosted as an A2A server.
+This agent uses the Agent Development Kit (ADK) along with the A2A protocol to create a crypto market agent that is hosted as an A2A server. It shows market data and simulates buy orders.
 
-This sample is featured in [Quickstart: Run A2UI in 5 Minutes](https://a2ui.org/quickstart). Refer to the guide for end-to-end setup and run instructions.
+All market data in `crypto_data.json` is fake: only the asset names and tickers are real. Coin images in `images/crypto/` are generated placeholders, not the real logos. Orders are simulated; no real funds are involved.
 
 ## Prerequisites
 
@@ -12,10 +12,10 @@ This sample is featured in [Quickstart: Run A2UI in 5 Minutes](https://a2ui.org/
 
 ## Running the Sample
 
-1. Navigate to the samples directory:
+1. Navigate to the server directory:
 
    ```bash
-   cd samples/agent/adk/restaurant_finder
+   cd server
    ```
 
 2. Create an environment file with your API key:
@@ -50,7 +50,7 @@ This sample is featured in [Quickstart: Run A2UI in 5 Minutes](https://a2ui.org/
          "params": {
            "message": {
              "role": "user",
-             "parts": [{"text": "Find me an Italian restaurant"}],
+             "parts": [{"text": "Show me the top 5 cryptocurrencies"}],
              "messageId": "1"
            }
          }
