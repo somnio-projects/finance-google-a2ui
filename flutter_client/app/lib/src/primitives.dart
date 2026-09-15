@@ -64,34 +64,3 @@ class ErrorBanner extends StatelessWidget {
     );
   }
 }
-
-class LoadingTexts {
-  /// Placeholder messages shown next to the loading spinner while the agent
-  /// is busy.
-  ///
-  /// The same loading screen appears during both the restaurant-finding
-  /// phase (after the user submits a search) and the booking phase (after
-  /// the user taps "Submit Reservation"), so messages are kept neutral
-  /// enough to fit either context — no "finding restaurants" copy that
-  /// would look wrong while a reservation is being confirmed.
-  static const List<String> _texts = [
-    'Talking to your concierge...',
-    'Checking availability...',
-    'Looking up details...',
-    'Working on your request...',
-    'Almost there...',
-    'Just a moment...',
-  ];
-
-  int _index = 0;
-
-  String get current => _texts[_index];
-
-  void advance() {
-    _index = (_index + 1) % _texts.length;
-  }
-
-  void reset() {
-    _index = 0;
-  }
-}
