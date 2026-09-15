@@ -29,7 +29,7 @@ void main() {
   test(
     'RestaurantSession can find restaurants and book a reservation.',
     () async {
-      final session = RestaurantSession(
+      final session = LandingPageSession(
         serverUrl: TestRestaurantFinderClient().baseUrl,
       );
       addTearDown(session.dispose);

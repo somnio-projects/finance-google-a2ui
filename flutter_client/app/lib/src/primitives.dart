@@ -15,17 +15,17 @@
 import 'package:flutter/material.dart';
 
 class ThemeToggleButton extends StatelessWidget {
-  const ThemeToggleButton({required this.themeMode, required this.onToggle});
+  const ThemeToggleButton({required this.onToggle});
 
-  final ThemeMode themeMode;
   final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
+    // Derived from the theme rather than passed in: pushed routes cache their
+    // page, so a constructor argument would go stale after toggling.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return IconButton(
-      icon: Icon(
-        themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-      ),
+      icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
       onPressed: onToggle,
       style: IconButton.styleFrom(
         backgroundColor: Theme.of(context).colorScheme.surface,

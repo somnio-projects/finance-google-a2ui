@@ -18,31 +18,26 @@ import 'package:genui/genui.dart';
 import 'primitives.dart';
 import 'session.dart';
 
-class RestaurantScreen extends StatefulWidget {
-  const RestaurantScreen({
-    super.key,
-    required this.onToggleTheme,
-    required this.themeMode,
-  });
+class LandingPage extends StatefulWidget {
+  const LandingPage({super.key, required this.onToggleTheme});
 
   final VoidCallback onToggleTheme;
-  final ThemeMode themeMode;
 
   @override
-  State<RestaurantScreen> createState() => _RestaurantScreenState();
+  State<LandingPage> createState() => _LandingPageState();
 }
 
-class _RestaurantScreenState extends State<RestaurantScreen> {
+class _LandingPageState extends State<LandingPage> {
   final TextEditingController _textController = TextEditingController(
     text: 'Find me 3 Chinese restaurants in New York.',
   );
   final ScrollController _scrollController = ScrollController();
-  late final RestaurantSession _session;
+  late final LandingPageSession _session;
 
   @override
   void initState() {
     super.initState();
-    _session = RestaurantSession();
+    _session = LandingPageSession();
   }
 
   @override
@@ -62,10 +57,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
               Positioned(
                 top: 8,
                 right: 16,
-                child: ThemeToggleButton(
-                  themeMode: widget.themeMode,
-                  onToggle: widget.onToggleTheme,
-                ),
+                child: ThemeToggleButton(onToggle: widget.onToggleTheme),
               ),
             ],
           ),

@@ -27,8 +27,8 @@ const String defaultServerUrl = 'http://localhost:10002';
 // https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json
 // https://a2ui.org/specification/v0_9/standard_catalog.json
 
-class RestaurantSession extends ChangeNotifier {
-  RestaurantSession({String serverUrl = defaultServerUrl}) {
+class LandingPageSession extends ChangeNotifier {
+  LandingPageSession({String serverUrl = defaultServerUrl}) {
     final List<Catalog> catalogs = [
       BasicCatalogItems.asCatalog().copyWith(catalogId: _agentCatalogId),
     ];

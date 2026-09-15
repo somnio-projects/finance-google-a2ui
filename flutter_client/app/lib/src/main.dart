@@ -15,7 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
-import 'screen.dart';
+import 'features/login/view/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,10 +58,7 @@ class _RestaurantFinderAppState extends State<RestaurantFinderApp> {
         ),
         useMaterial3: true,
       ),
-      home: RestaurantScreen(
-        onToggleTheme: _toggleTheme,
-        themeMode: _themeMode,
-      ),
+      home: LoginPage(onToggleTheme: _toggleTheme),
     );
   }
 }
