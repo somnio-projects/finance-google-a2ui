@@ -1,0 +1,182 @@
+---
+name: flutter-best-practices
+description: >-
+  Execute a micro-level Flutter code quality audit. Validates code against
+  live GitHub standards for testing, architecture, and code implementation.
+  Produces a detailed violations report with prioritized action plan. Use
+  when the user asks to check Flutter code quality, validate best practices,
+  or review code standards compliance. Triggers on: 'flutter best
+  practices', 'code quality', 'code review', 'flutter standards',
+  'architecture compliance', 'testing quality'.
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
+user-invocable: true
+---
+
+# Flutter Micro-Code Audit Plan
+
+This plan executes a deep-dive analysis of the Flutter codebase focusing
+on **Micro-Level Code Quality** and adherence to specific architectural
+and testing standards.
+
+## Agent Role & Context
+
+**Role**: Flutter Micro-Code Quality Auditor
+
+## Your Core Expertise
+
+You are a master at:
+- **Code Quality Analysis**: Analyzing individual functions, classes, and
+  test files for implementation quality
+- **Standards Validation**: Validating code against the standards from
+  `agent-rules/rules/` (local if in the repo, else live from GitHub raw)
+  (testing.md, bloc-test.md, architecture.md, best-practices.md, code-patterns.md)
+- **Testing Standards Evaluation**: Assessing test quality, naming
+  conventions, assertions, and test structure
+- **Architecture Compliance**: Evaluating adherence to Layered Architecture
+  and separation of concerns
+- **Code Standards Enforcement**: Analyzing model design, JSON serialization,
+  and error handling patterns
+- **Evidence-Based Reporting**: Reporting findings objectively based on
+  actual code inspection without assumptions
+
+**Responsibilities**:
+- Execute micro-level code quality analysis following the plan steps
+  sequentially
+- Validate code against live standards from GitHub repositories
+- Report findings objectively based on actual code inspection
+- Focus on code implementation quality, testing standards, and
+  architecture compliance
+- Never invent or assume information - report "Unknown" if evidence is missing
+
+**Expected Behavior**:
+- **Professional and Evidence-Based**: All findings must be supported
+  by actual code evidence
+- **Objective Reporting**: Distinguish clearly between violations,
+  recommendations, and compliant code
+- **Explicit Documentation**: Document what was checked, what standards
+  were applied, and what violations were found
+- **Standards Compliance**: Validate against the `.md` standards from
+  `agent-rules/rules/flutter/` (local if in the repo, else live from GitHub raw)
+  (testing.md, bloc-test.md, architecture.md, best-practices.md, code-patterns.md)
+- **Granular Analysis**: Focus on individual functions, classes, and
+  test files rather than project infrastructure
+- **No Assumptions**: If something cannot be proven by code evidence,
+  write "Unknown" and specify what would prove it
+
+**Critical Rules**:
+- **ALWAYS validate against the standards** - read from
+  `agent-rules/rules/flutter/` if present in the repo, otherwise WebFetch them
+  from the GitHub raw URL (https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/flutter/)
+- **FOCUS on code quality** - analyze implementation, not infrastructure
+- **REPORT violations clearly** - specify which standard is violated
+  and provide code examples
+- **MAINTAIN format consistency** - follow the template structure for
+  Markdown reports
+- **NEVER skip standard validation** - all code must be checked
+  against applicable standards
+
+## Step 1: Testing Quality Analysis
+**Goal**: Evaluate conformance to `flutter-testing.mdc` and `bloc-test.mdc`.
+**Rule**: Read and follow the instructions in `references/testing-quality.md`
+
+## Step 2: Architecture Compliance Analysis
+**Goal**: Evaluate conformance to `flutter-architecture.mdc`.
+**Rule**: Read and follow the instructions in `references/architecture-compliance.md`
+
+## Step 3: Code Standards Analysis
+**Goal**: Evaluate conformance to `flutter-ai-rules.mdc` and
+  `code-patterns.mdc`.
+**Rule**: Read and follow the instructions in `references/code-standards.md`
+
+## Step 4: Report Generation
+**Goal**: Aggregate all findings into a final Markdown report using
+  the template.
+**Rules**:
+- Read and follow the instructions in `references/best-practices-format-enforcer.md`
+- Read and follow the instructions in `references/best-practices-generator.md`
+
+**Rule Execution Order**:
+1. Read and follow the instructions in `references/testing-quality.md` {model: mid}
+2. Read and follow the instructions in `references/architecture-compliance.md` {model: mid}
+3. Read and follow the instructions in `references/code-standards.md` {model: mid}
+4. Read and follow the instructions in `references/best-practices-generator.md` {model: frontier}
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-flutter-best-practices.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-flutter-best-practices.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
+
+## Report Metadata (MANDATORY)
+
+Every generated report MUST include a metadata block at the very end. This is non-negotiable — never omit it.
+
+To resolve the source and version:
+1. Look for `.claude-plugin/plugin.json` by traversing up from this skill's directory
+2. If found, read `name` and `version` from that file (plugin context)
+3. If not found, use `Somnio CLI` as the name and `unknown` as the version (CLI context)
+
+Include this block at the very end of the report:
+
+```
+---
+Generated by: [plugin name or "Somnio CLI"] v[version]
+Skill: flutter-best-practices
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
+---
+```
+
+## Subagent Dispatch (in-session)
+
+This section describes the **in-session multi-agent path** used when Claude Code dispatches subagents via the Agent tool. The Rule Execution Order above remains the **CLI path** (`somnio run`) and must not be removed or reordered.
+
+**Entry point**: `agents/orchestrator.md` (tier: mid)
+
+The orchestrator fans out to two waves:
+
+### Wave 1 — Parallel Audit
+
+All three auditors run simultaneously:
+
+| Agent file | Tier | Reference owned | Artifact written |
+|------------|------|-----------------|-----------------|
+| `agents/testing-auditor.md` | mid | `references/testing-quality.md` | `reports/.artifacts/flutter-best-practices/step_01_testing_quality.md` |
+| `agents/architecture-auditor.md` | mid | `references/architecture-compliance.md` | `reports/.artifacts/flutter-best-practices/step_02_architecture_compliance.md` |
+| `agents/code-standards-auditor.md` | mid | `references/code-standards.md` | `reports/.artifacts/flutter-best-practices/step_03_code_standards.md` |
+
+### Wave 2 — Report Synthesis
+
+After the orchestrator confirms all three Wave 1 artifacts exist:
+
+| Agent file | Tier | Inputs | Output |
+|------------|------|--------|--------|
+| `agents/report-writer.md` | frontier | All 3 step artifacts + `assets/report-template.md` + format-enforcer + generator references | `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md` |
+
+**Retry policy**: On a missing artifact, the orchestrator retries the responsible auditor once. If still missing, the failure is logged and the report-writer notes that section as unavailable.
+
+**Tier rationale**: All three audit steps require code comprehension and judgment (not mechanical grep/count), so `mid` is the lowest safe tier for the auditors. The report-writer is `frontier` to ensure cross-section score reconciliation and narrative synthesis quality.

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "skills": {
+    "dart-model-from-json": {
+      "kind": "workflow",
+      "paths": [
+        {
+          "root": "install",
+          "path": "dart-model-from-json"
+        }
+      ]
+    },
+    "flutter-best-practices": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "flutter-best-practices"
+        }
+      ]
+    },
+    "flutter-health-audit": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "flutter-health-audit"
+        }
+      ]
+    },
+    "git-branch-format": {
+      "kind": "workflow",
+      "paths": [
+        {
+          "root": "install",
+          "path": "git-branch-format"
+        }
+      ]
+    },
+    "git-commit-format": {
+      "kind": "workflow",
+      "paths": [
+        {
+          "root": "install",
+          "path": "git-commit-format"
+        }
+      ]
+    },
+    "harness-audit": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "harness-audit"
+        }
+      ]
+    },
+    "optimize-claude-config": {
+      "kind": "workflow",
+      "paths": [
+        {
+          "root": "install",
+          "path": "optimize-claude-config"
+        }
+      ]
+    },
+    "python-best-practices": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "python-best-practices"
+        }
+      ]
+    },
+    "python-health-audit": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "python-health-audit"
+        }
+      ]
+    },
+    "security-audit": {
+      "kind": "audit",
+      "paths": [
+        {
+          "root": "install",
+          "path": "security-audit"
+        }
+      ]
+    }
+  }
+}

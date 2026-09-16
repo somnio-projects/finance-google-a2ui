@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "generated_by": "somnio-engineering-ai@0.9.17",
+  "generated_at": "2026-09-16T02:26:09Z",
+  "rules_source": {
+    "repo": "somnio-software/somnio-ai-tools",
+    "rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+    "path": "agent-rules/rules",
+    "tier": "owned-clone"
+  },
+  "stacks": [
+    "flutter",
+    "python"
+  ],
+  "installed": [
+    {
+      "path": ".claude/rules/flutter/architecture.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/architecture.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "7a1e132584bdf724c016455cceca3b291d1217e33c5dbe0f6280256cdf7f2dbf",
+      "sha256_pre_optimize": "db35529f2b269741c9690d6e422345b84cc8acdd4e4eb4ebb0a8013b110e9a63"
+    },
+    {
+      "path": ".claude/rules/flutter/best-practices.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/best-practices.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "f9f20dd4e7fc02c6e94b2ff83d686cbb48ad37404d33fd891850368339e3a2f0",
+      "sha256_pre_optimize": "85d981dff0b7d6da7ba8cb4bf07b80c3cbe89f196423880ca1acdd39c96c7a2a"
+    },
+    {
+      "path": ".claude/rules/flutter/bloc-test.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/bloc-test.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "2350cd1be6c33b64deb08f3a895891d28ea86f33e34909a14b85e1f6af7a04c3",
+      "sha256_pre_optimize": "e4dad31c4c077b4b2a3532b7ff063c14ea949b4873b0f08c4f3459901fc17f5f"
+    },
+    {
+      "path": ".claude/rules/flutter/code-patterns.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/code-patterns.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "84254bfd4bfa12383eadb16d74b6512a8105a1d3af9e71ab5146c8d0b8e5d0aa",
+      "sha256_pre_optimize": "9c1d8e14d999b4a1f24bfb7dd70da26ed5b870468da9f1b09267c8eb1fa36379"
+    },
+    {
+      "path": ".claude/rules/flutter/layout.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/layout.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "1749b75fe8cfb1f8a45c69f4082ea7ef81aed1a699b5b11a51b732987bc07666",
+      "sha256_pre_optimize": "b09fd71bc56f9fc18ff5e505d23428749489baf7547105b10061a3b328f5a309"
+    },
+    {
+      "path": ".claude/rules/flutter/testing.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/testing.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "af78cdd852b949067717adbf7355b7a4812425bfa38b20804f6b8f423f68b187",
+      "sha256_pre_optimize": "55e27b20e996b16c8d25f47c9aad9f61e61d6c218b31fdb8e77240d0e7787fbb"
+    },
+    {
+      "path": ".claude/rules/flutter/ui-theming.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/flutter/ui-theming.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "a6f0e2ed5d456c9174ebed5855d6097e3a3b1be4563b72c21ef894dd68d2efc4",
+      "sha256_pre_optimize": "00dcbca4ad0ca396b8689e67c9c74499c68d3c2345743eccda1bf463e6884ff0"
+    },
+    {
+      "path": ".claude/rules/python/code-style.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/code-style.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "ae8fdb605664c3b87db29c368450517d6660cb6f3a79d974945cd05fe57cc881",
+      "sha256_pre_optimize": "03383e900bcb40c07c84a89b3fa7dc8c8120805b3dc96d407134b06cdffe3c36"
+    },
+    {
+      "path": ".claude/rules/python/data-validation.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/data-validation.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "8435584deb363d354b72f37b3935bc2192e1c999a87eb19eb3fb464284cc9ac1",
+      "sha256_pre_optimize": "8942a0df32550035a515802ad6d96f25582c96a89e5c2cc10e4baec84ffcb06b"
+    },
+    {
+      "path": ".claude/rules/python/error-handling.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/error-handling.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "cb7e2b5684fcd01b800e0c9a4d1fa68b1539fc1abee4c267bebbd528170f6021",
+      "sha256_pre_optimize": "cccc3bf149346689d7021fc164bd5f2d22e55892e797f9d25c732b08d382e1cb"
+    },
+    {
+      "path": ".claude/rules/python/function-design.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/function-design.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "ced173377258d4dcea59bee24f47dcfaadebf2b2a8388a80fb0fd4d1822ddd0d",
+      "sha256_pre_optimize": "e228574774bd9e8fbbca656ec3f954fd0f3ab5a3a51d3ae511d5b2b9d049cde0"
+    },
+    {
+      "path": ".claude/rules/python/module-structure.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/module-structure.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "1befdc0fcc21578fb7f3de984eba3813b2bd5fd641c090ff3f9adbbf8fdbc0d2",
+      "sha256_pre_optimize": "46078a002c54f43cef5410ce517146622f292ec3bd4d59a39782ddbdbba9df08"
+    },
+    {
+      "path": ".claude/rules/python/testing-integration.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/testing-integration.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "1b21157e6c3cb72555c37337602ac0d619c8da00e66d1aa2c9f0ea3d5edd8d85",
+      "sha256_pre_optimize": "2a29c8e9735648e9356574546bc0fa3bb210cb3c4da17ad267a84f5851547ac2"
+    },
+    {
+      "path": ".claude/rules/python/testing-unit.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/testing-unit.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "566821b2d3c8efe70c773ea12a0910b24ab4fd4804ae455ceb25562afeae40c5",
+      "sha256_pre_optimize": "65122689e8774bea6d28950254f6d55bed7a7792e3f19ec0eb68b1b05466ed05"
+    },
+    {
+      "path": ".claude/rules/python/typing.md",
+      "origin": "somnio-software/somnio-ai-tools:ed8f9b6d622c794ccab93ace69755d928b216cd9:agent-rules/rules/python/typing.md",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "00b28d9d4edf5272371f8764c0bf34ce51b271b4d121622ab5efb888a2053b09",
+      "sha256_pre_optimize": "28c61722933258afead10f3f290d3c2b456290a3c4addf6505ffe768c6eb5145"
+    },
+    {
+      "path": ".claude/settings.json",
+      "origin": "template:target-settings.json",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "e9ca4c4c269137dce585be72a21329c3d70c0905d9c8589b16eff01ce019adc2"
+    },
+    {
+      "path": "CLAUDE.md",
+      "origin": "template:CLAUDE.md.template",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "4587f216599f993866c0503f29bade3c7019af38b0184f6c3cb9ae820e5cce9f",
+      "created": true
+    },
+    {
+      "path": ".gitignore",
+      "origin": "template:gitignore-block",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "77c896e74c3ab8cb48572eb90364cddc5fd3d6aa99b9b4db0abf24204b58d98f"
+    },
+    {
+      "path": ".claude/ship-gate.json",
+      "origin": "template:ship-gate-draft",
+      "source_rev": "ed8f9b6d622c794ccab93ace69755d928b216cd9",
+      "sha256": "81c989c7fa424e37cf43af9b901841fdf6d6b9a4acd22ebf3ab4b57fa41bfbf0"
+    }
+  ],
+  "pre_existing": [],
+  "not_in_scope": [],
+  "agents": [
+    "claude"
+  ],
+  "settings_bak_created": true,
+  "cli_installed": [
+    {
+      "agent": "claude",
+      "skill": "dart-model-from-json",
+      "path": ".claude/skills/dart-model-from-json",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "flutter-best-practices",
+      "path": ".claude/skills/flutter-best-practices",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "flutter-health-audit",
+      "path": ".claude/skills/flutter-health-audit",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "git-branch-format",
+      "path": ".claude/skills/git-branch-format",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "git-commit-format",
+      "path": ".claude/skills/git-commit-format",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "harness-audit",
+      "path": ".claude/skills/harness-audit",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "optimize-claude-config",
+      "path": ".claude/skills/optimize-claude-config",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "python-best-practices",
+      "path": ".claude/skills/python-best-practices",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "python-health-audit",
+      "path": ".claude/skills/python-health-audit",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    },
+    {
+      "agent": "claude",
+      "skill": "security-audit",
+      "path": ".claude/skills/security-audit",
+      "manifest": ".claude/skills/.somnio-skills.json"
+    }
+  ],
+  "cli_version": "2.13.0",
+  "cli_pin": "2.11.2",
+  "objective": "Crypto-market A2UI demo: Google ADK/genai Python agent server (backend_python) plus a Dart-workspace Flutter client (client_flutter/app, client_flutter/e2e_test)",
+  "network": {
+    "vendors": [
+      {
+        "id": "pypi",
+        "confidence": "medium"
+      }
+    ],
+    "domains": [
+      "api.github.com",
+      "files.pythonhosted.org",
+      "github.com",
+      "pypi.org",
+      "registry.npmjs.org"
+    ],
+    "excluded_commands": [],
+    "gaps": [],
+    "detected_at": "2026-09-16T01:53:09Z"
+  }
+}

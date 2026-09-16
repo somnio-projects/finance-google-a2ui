@@ -16,3 +16,22 @@
 
 # Logs
 *.log
+
+# Ruflo local secrets and runtime data
+.env.local
+.env.*.local
+.claude-flow/
+.swarm/
+ruvector.db
+ruvector.db-*
+
+# Codex local configuration
+.codex/
+# Claude Flow runtime data
+# Environment variables
+
+# somnio:harness:begin
+.claude/.harness/
+.claude/*.local.md
+.claude/settings.json.bak
+# somnio:harness:end
