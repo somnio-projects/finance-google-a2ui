@@ -1,0 +1,22 @@
+{
+  "hosting": {
+    "public": "client_flutter/app/build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "auth": {
+    "authorizedDomains": ["localhost"],
+    "providers": {
+      "emailPassword": true
+    }
+  }
+}
