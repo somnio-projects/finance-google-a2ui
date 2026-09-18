@@ -52,7 +52,8 @@ class JwksKeyResolver:
             response = await client.get(self._url)
             response.raise_for_status()
             return response.json()
-        except httpx.HTTPError as exc:
+        except (httpx.HTTPError, ValueError) as exc:
+            # ValueError: the body was not JSON.
             raise DependencyUnavailableError("identity provider unreachable") from exc
         finally:
             if self._http is None:

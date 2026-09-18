@@ -1,6 +1,6 @@
 """Record and read the security audit trail."""
 
-from app.auth.principal import Principal
+from app.core.principal import Principal
 from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
 from app.schemas.identity import AuditEventResponse

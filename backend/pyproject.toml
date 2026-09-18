@@ -100,6 +100,7 @@ markers = [
 ]
 filterwarnings = [
     "error",
+    # third-party deprecations (asyncpg/sqlalchemy internals) are not ours to fix here
     "ignore::DeprecationWarning",
     # testcontainers leaves a docker-socket handle open at interpreter exit
     "ignore::ResourceWarning",
@@ -110,14 +111,13 @@ filterwarnings = [
 [tool.coverage.run]
 source = ["app"]
 branch = true
-omit = ["src/app/main.py"]
 
 [tool.coverage.report]
 fail_under = 100
 show_missing = true
 skip_covered = false
+# Only Protocol method bodies (`...`) and TYPE_CHECKING blocks are excluded.
 exclude_also = [
     "if TYPE_CHECKING:",
     "\\.\\.\\.$",
-    "raise NotImplementedError",
 ]

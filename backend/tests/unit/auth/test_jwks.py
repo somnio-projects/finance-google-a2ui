@@ -15,13 +15,16 @@ JWKS_URL = "https://issuer.test/.well-known/jwks.json"
 class CountingTransport(httpx.MockTransport):
     """Mock transport that counts how many times the JWKS was fetched."""
 
-    def __init__(self, *, status: int = 200) -> None:
+    def __init__(self, *, status: int = 200, body: str | None = None) -> None:
         self.calls = 0
         self._status = status
+        self._body = body
         super().__init__(self._handle)
 
     def _handle(self, request: httpx.Request) -> httpx.Response:
         self.calls += 1
+        if self._body is not None:
+            return httpx.Response(self._status, text=self._body)
         return httpx.Response(self._status, json=JWKS)
 
 
@@ -37,7 +40,7 @@ async def test_key_for_fetches_once_within_ttl_and_refreshes_after() -> None:
         await resolver.key_for(token)
         assert key.key_id == KID
         assert transport.calls == 1
-        clock._instant = FROZEN_NOW + timedelta(minutes=6)
+        clock.advance(timedelta(minutes=6))
         await resolver.key_for(token)
         assert transport.calls == 2
 
@@ -47,12 +50,21 @@ async def test_key_for_unknown_kid_raises_key_error() -> None:
         resolver = JwksKeyResolver(
             jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
         )
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match="nope"):
             await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW, kid="nope"))
 
 
 async def test_key_for_http_failure_becomes_dependency_unavailable() -> None:
     async with httpx.AsyncClient(transport=CountingTransport(status=503)) as http:
+        resolver = JwksKeyResolver(
+            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
+        )
+        with pytest.raises(DependencyUnavailableError, match="identity provider"):
+            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
+
+
+async def test_key_for_non_json_body_becomes_dependency_unavailable() -> None:
+    async with httpx.AsyncClient(transport=CountingTransport(body="<html>")) as http:
         resolver = JwksKeyResolver(
             jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
         )

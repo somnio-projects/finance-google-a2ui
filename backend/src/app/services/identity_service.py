@@ -1,6 +1,6 @@
 """The ``/v1/me`` use case: describe the caller and audit the access."""
 
-from app.auth.principal import Principal
+from app.core.principal import Principal
 from app.schemas.identity import MeResponse
 from app.services.audit_service import AuditService
 

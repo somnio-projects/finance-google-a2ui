@@ -1,4 +1,8 @@
-"""The authenticated caller as seen by the rest of the application."""
+"""The authenticated caller as seen by the rest of the application.
+
+Lives in ``core`` so the ``TokenVerifier`` protocol and every layer can
+depend on it without importing the ``auth`` adapters.
+"""
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,7 +13,7 @@ class Principal(BaseModel):
     Attributes:
         subject: Stable unique identifier from the identity provider (``sub``).
         provider: Which verifier produced this principal (``jwt``, ``oidc``).
-        email: Verified e-mail when the provider supplies one.
+        email: E-mail claim when the provider supplies one (not re-verified here).
         scopes: Granted scopes / roles, already normalised to lowercase.
         token_fingerprint: Non-reversible correlation id for the token used.
     """

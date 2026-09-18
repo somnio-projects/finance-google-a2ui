@@ -1,6 +1,6 @@
 """Clock implementations satisfying ``app.core.protocols.Clock``."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 
 class SystemClock:
@@ -24,6 +24,10 @@ class FixedClock:
     def now(self) -> datetime:
         """Return the frozen instant."""
         return self._instant
+
+    def advance(self, delta: timedelta) -> None:
+        """Move the frozen instant forward by ``delta`` (tests only)."""
+        self._instant = self._instant + delta
 
 
 __all__ = ["FixedClock", "SystemClock"]

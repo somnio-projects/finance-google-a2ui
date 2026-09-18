@@ -1,5 +1,6 @@
 """Health and readiness response models."""
 
+from http import HTTPStatus
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,6 +31,12 @@ class ReadinessResponse(BaseModel):
 
     status: Literal["ready", "degraded"]
     dependencies: list[DependencyStatus] = Field(default_factory=list)
+
+    @property
+    def http_status(self) -> int:
+        """HTTP status the controller answers with (200 ready, 503 degraded)."""
+        mapping = {"ready": HTTPStatus.OK, "degraded": HTTPStatus.SERVICE_UNAVAILABLE}
+        return mapping[self.status].value
 
 
 __all__ = ["DependencyStatus", "HealthResponse", "ReadinessResponse"]

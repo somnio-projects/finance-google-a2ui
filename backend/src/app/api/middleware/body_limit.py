@@ -4,7 +4,9 @@ from http import HTTPStatus
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
+
+from app.api.errors import problem_response
 
 
 class BodyLimitMiddleware(BaseHTTPMiddleware):
@@ -22,15 +24,11 @@ class BodyLimitMiddleware(BaseHTTPMiddleware):
         declared = request.headers.get("content-length")
         if declared is not None and declared.isdigit():
             if int(declared) > self._max_bytes:
-                return JSONResponse(
-                    status_code=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
-                    content={
-                        "type": "https://errors.finance-a2ui/payload-too-large",
-                        "title": HTTPStatus.REQUEST_ENTITY_TOO_LARGE.phrase,
-                        "status": HTTPStatus.REQUEST_ENTITY_TOO_LARGE.value,
-                        "detail": f"request body exceeds {self._max_bytes} bytes",
-                    },
-                    media_type="application/problem+json",
+                return problem_response(
+                    request,
+                    status=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                    code="payload-too-large",
+                    detail=f"request body exceeds {self._max_bytes} bytes",
                 )
         return await call_next(request)
 

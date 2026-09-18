@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Protocol
 
-from app.auth.principal import Principal
+from app.core.principal import Principal
 
 
 class Clock(Protocol):

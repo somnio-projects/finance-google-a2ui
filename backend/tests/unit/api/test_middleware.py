@@ -4,9 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.middleware.security_headers import BASE_HEADERS, DOCS_CSP
-from app.auth.principal import Principal
+from app.core.principal import Principal
 from app.helpers.clock import FixedClock
-from tests.conftest import FROZEN_NOW, FakeReporter, make_settings
+from tests.conftest import FakeReporter, make_settings
 from tests.unit.api.conftest import UNREACHABLE_DSN, make_app
 
 
@@ -44,7 +44,9 @@ def test_production_enables_hsts_and_hides_docs(
     reporter: FakeReporter,
 ) -> None:
     settings = make_settings(
-        environment="production", database_url=UNREACHABLE_DSN, trusted_hosts=["*"]
+        environment="production",
+        database_url=UNREACHABLE_DSN,
+        trusted_hosts=["testserver"],
     )
     app = make_app(settings, principal=principal, clock=clock, reporter=reporter)
     with TestClient(app) as client:
@@ -59,7 +61,9 @@ def test_body_limit_rejects_oversized_declared_length(client: TestClient) -> Non
         "/healthz", content=b"x" * 3000, headers={"Content-Length": "3000"}
     )
     assert response.status_code == 413
-    assert response.json()["type"].endswith("/payload-too-large")
+    body = response.json()
+    assert body["type"].endswith("/payload-too-large")
+    assert body["request_id"] == response.headers["X-Request-ID"]
 
 
 def test_body_limit_lets_small_bodies_through(client: TestClient) -> None:
@@ -76,17 +80,39 @@ def test_rate_limit_returns_429_after_budget_and_resets_next_window(
     assert limited.status_code == 429
     assert limited.headers["Retry-After"] == "60"
     assert limited.json()["type"].endswith("/rate-limited")
-    clock._instant = FROZEN_NOW + timedelta(minutes=1)
+    clock.advance(timedelta(minutes=1))
     assert client.get("/v1/me").status_code == 401
 
 
-def test_rate_limit_is_keyed_per_token_and_skips_health(client: TestClient) -> None:
-    for _ in range(4):
-        client.get("/v1/me", headers={"Authorization": "Bearer one"})
-    assert (
-        client.get("/v1/me", headers={"Authorization": "Bearer two"}).status_code == 401
-    )
+def test_rate_limit_counts_ip_even_when_tokens_rotate(client: TestClient) -> None:
+    # Rotating unverified bearer tokens must not buy a fresh budget (limit is 3).
+    for index in range(3):
+        response = client.get("/v1/me", headers={"Authorization": f"Bearer t{index}"})
+        assert response.status_code == 401
+    limited = client.get("/v1/me", headers={"Authorization": "Bearer fresh"})
+    assert limited.status_code == 429
+    assert limited.json()["request_id"] == limited.headers["X-Request-ID"]
+    assert limited.json()["instance"] == "/v1/me"
     assert client.get("/healthz").status_code == 200
+
+
+def test_client_keys_always_include_ip_and_add_token_fingerprint() -> None:
+    from starlette.requests import Request
+
+    from app.api.middleware.rate_limit import client_keys
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "headers": [(b"authorization", b"Bearer abc")],
+        "client": ("10.0.0.7", 1234),
+    }
+    keys = client_keys(Request(scope))
+    assert keys[0] == "ip:10.0.0.7"
+    assert keys[1].startswith("token:") and "abc" not in keys[1]
+    anonymous = dict(scope, headers=[], client=None)
+    assert client_keys(Request(anonymous)) == ["ip:unknown"]
 
 
 @pytest.mark.parametrize(

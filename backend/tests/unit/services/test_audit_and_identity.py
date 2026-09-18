@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from app.auth.principal import Principal
+from app.core.principal import Principal
 from app.models.audit_event import AuditEvent
 from app.services.audit_service import MAX_HISTORY, AuditService
 from app.services.identity_service import IdentityService

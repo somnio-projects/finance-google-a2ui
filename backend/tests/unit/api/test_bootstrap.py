@@ -43,3 +43,22 @@ def test_create_app_without_arguments_reads_the_environment(
     app = create_app()
     assert app.state.container.settings.auth_audience == "aud"
     get_settings.cache_clear()
+
+
+def test_main_module_builds_the_asgi_app_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import importlib
+    import sys
+
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("DATABASE_URL", UNREACHABLE_DSN)
+    monkeypatch.setenv("AUTH_ISSUER", "https://i")
+    monkeypatch.setenv("AUTH_AUDIENCE", "aud")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "s")
+    sys.modules.pop("app.main", None)
+    module = importlib.import_module("app.main")
+    assert module.app.title == "finance-a2ui-backend"
+    get_settings.cache_clear()

@@ -11,7 +11,7 @@ from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.container import Container
-from app.auth.principal import Principal
+from app.core.principal import Principal
 from app.infra.db.session import session_scope
 from app.repositories.audit_repository import AuditRepository
 from app.services.audit_service import AuditService

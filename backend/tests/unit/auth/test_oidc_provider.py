@@ -36,7 +36,7 @@ async def test_oidc_verifier_accepts_rs256_token(verifier: OidcTokenVerifier) ->
 
 async def test_oidc_verifier_rejects_expired_token(verifier: OidcTokenVerifier) -> None:
     old = FROZEN_NOW - timedelta(days=365)
-    with pytest.raises(ExpiredTokenError):
+    with pytest.raises(ExpiredTokenError, match="expired"):
         await verifier.verify(rs256_token(subject="s", now=old, ttl_seconds=1))
 
 

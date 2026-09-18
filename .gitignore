@@ -42,3 +42,7 @@ backend/coverage.xml
 backend/htmlcov/
 backend/.pytest_cache/
 backend/.env
+
+# Somnio CLI audit reports (attached to PRs, not versioned)
+backend/reports/
+reports/

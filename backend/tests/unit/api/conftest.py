@@ -11,9 +11,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.container import Container
-from app.auth.principal import Principal
 from app.bootstrap import create_app
 from app.core.config import Settings
+from app.core.principal import Principal
 from app.helpers.clock import FixedClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory

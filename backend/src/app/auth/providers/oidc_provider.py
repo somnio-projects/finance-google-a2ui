@@ -8,9 +8,9 @@ the JWKS endpoint through a ``KeyResolver``.
 import jwt
 
 from app.auth.claims import principal_from_claims
-from app.auth.principal import Principal
 from app.auth.providers.jwks import KeyResolver
 from app.core.errors import AuthenticationError, ExpiredTokenError
+from app.core.principal import Principal
 
 ALGORITHMS: list[str] = ["RS256", "ES256"]
 

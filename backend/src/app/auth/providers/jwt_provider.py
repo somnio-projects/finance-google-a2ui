@@ -8,8 +8,8 @@ this service (SOC 2 CC6.1 — least privilege for key material).
 import jwt
 
 from app.auth.claims import principal_from_claims
-from app.auth.principal import Principal
 from app.core.errors import AuthenticationError, ExpiredTokenError
+from app.core.principal import Principal
 
 ALGORITHMS: list[str] = ["HS256"]
 

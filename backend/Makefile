@@ -38,7 +38,7 @@ audit:
 	$(UV) export --frozen --no-dev --no-emit-project --format requirements-txt -o $(AUDIT_REQ)
 	$(UV) tool run --with "pip<26" pip-audit --strict --progress-spinner off --disable-pip -r $(AUDIT_REQ)
 
-gate: lint typecheck budget test
+gate: lint typecheck budget test audit
 	@echo "ship gate green"
 
 run:

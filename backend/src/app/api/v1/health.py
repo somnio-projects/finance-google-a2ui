@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response
 
 from app.api.deps import get_health_service
 from app.schemas.health import HealthResponse, ReadinessResponse
@@ -22,8 +22,7 @@ def healthz(service: HealthDep) -> HealthResponse:
 async def readyz(service: HealthDep, response: Response) -> ReadinessResponse:
     """Return 200 when every dependency is reachable, 503 otherwise."""
     result = await service.readiness()
-    if result.status != "ready":
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    response.status_code = result.http_status
     return result
 
 

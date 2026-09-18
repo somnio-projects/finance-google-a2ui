@@ -4,8 +4,8 @@ Sits between the controller dependency and the ``TokenVerifier`` so the
 header parsing, error mapping and telemetry live in one testable place.
 """
 
-from app.auth.principal import Principal
 from app.core.errors import AuthenticationError, MissingTokenError
+from app.core.principal import Principal
 from app.core.protocols import ErrorReporter, TokenVerifier
 from app.helpers.tokens import extract_bearer
 

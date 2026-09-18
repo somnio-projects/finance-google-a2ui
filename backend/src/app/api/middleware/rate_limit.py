@@ -1,8 +1,13 @@
-"""Fixed-window, per-client rate limiting (compensating control, ADR-G D-7).
+"""Fixed-window rate limiting (compensating control, ADR-G D-7).
+
+Every request is counted against the **client address**; requests that carry
+a bearer token are additionally counted against the token fingerprint. The
+token is unverified at this point, so it can never widen the budget — a
+caller rotating garbage tokens still exhausts the per-IP window.
 
 In-memory by design for the single-instance review deployment. The limiter
-is behind a tiny class so a Redis-backed implementation can replace it
-without touching the middleware.
+is a small class so a Redis-backed implementation can replace it without
+touching the middleware.
 """
 
 from collections import defaultdict
@@ -10,8 +15,9 @@ from http import HTTPStatus
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
 
+from app.api.errors import problem_response
 from app.core.protocols import Clock
 from app.helpers.tokens import extract_bearer, fingerprint
 
@@ -38,13 +44,14 @@ class FixedWindowLimiter:
         return self._hits[key] <= self._limit
 
 
-def client_key(request: Request) -> str:
-    """Key by token fingerprint when present, else by client address."""
+def client_keys(request: Request) -> list[str]:
+    """Return the keys a request is counted against: always IP, plus token."""
+    host = request.client.host if request.client else "unknown"
+    keys = [f"ip:{host}"]
     token = extract_bearer(request.headers.get("authorization"))
     if token is not None:
-        return f"token:{fingerprint(token)}"
-    host = request.client.host if request.client else "unknown"
-    return f"ip:{host}"
+        keys.append(f"token:{fingerprint(token)}")
+    return keys
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -58,21 +65,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        """Check the budget for every non-exempt path."""
-        if request.url.path in EXEMPT_PATHS or self._limiter.allow(client_key(request)):
+        """Check every budget for non-exempt paths; any exhausted key blocks."""
+        if request.url.path in EXEMPT_PATHS:
             return await call_next(request)
-        status = HTTPStatus.TOO_MANY_REQUESTS
-        return JSONResponse(
-            status_code=status.value,
-            headers={"Retry-After": str(WINDOW_SECONDS)},
-            content={
-                "type": "https://errors.finance-a2ui/rate-limited",
-                "title": status.phrase,
-                "status": status.value,
-                "detail": "too many requests; retry after the window resets",
-            },
-            media_type="application/problem+json",
+        verdicts = [self._limiter.allow(key) for key in client_keys(request)]
+        if all(verdicts):
+            return await call_next(request)
+        response = problem_response(
+            request,
+            status=HTTPStatus.TOO_MANY_REQUESTS,
+            code="rate-limited",
+            detail="too many requests; retry after the window resets",
         )
+        response.headers["Retry-After"] = str(WINDOW_SECONDS)
+        return response
 
 
 __all__ = [
@@ -80,5 +86,5 @@ __all__ = [
     "WINDOW_SECONDS",
     "FixedWindowLimiter",
     "RateLimitMiddleware",
-    "client_key",
+    "client_keys",
 ]

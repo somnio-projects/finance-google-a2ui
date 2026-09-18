@@ -28,7 +28,8 @@ def test_settings_csv_fields_are_split(raw: object, expected: list[str]) -> None
 
 
 def test_settings_is_production_only_for_production() -> None:
-    assert make_settings(environment="production").is_production is True
+    production = make_settings(environment="production", trusted_hosts=["api.test"])
+    assert production.is_production is True
     assert make_settings(environment="local").is_production is False
 
 
@@ -48,6 +49,17 @@ def test_get_settings_is_cached_and_reads_env(
     assert first is get_settings()
     assert first.auth_audience == "aud"
     get_settings.cache_clear()
+
+
+def test_settings_reject_wildcard_cors_origin() -> None:
+    with pytest.raises(ValidationError, match="never '\\*'"):
+        make_settings(cors_allowed_origins=["*"])
+
+
+def test_settings_reject_wildcard_trusted_hosts_in_production() -> None:
+    with pytest.raises(ValidationError, match="TRUSTED_HOSTS must be an explicit list"):
+        make_settings(environment="production", trusted_hosts=["*"])
+    assert make_settings(environment="production", trusted_hosts=["api.test"])
 
 
 def test_settings_read_csv_lists_from_environment_not_json(

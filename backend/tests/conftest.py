@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 import jwt
 import pytest
 
-from app.auth.principal import Principal
 from app.core.config import Settings
+from app.core.principal import Principal
 from app.helpers.clock import FixedClock
 
 TEST_SECRET = "unit-test-secret-please-do-not-reuse-0123456789abcdef"
@@ -109,5 +109,5 @@ def principal() -> Principal:
         provider="fake",
         email="person@example.test",
         scopes=frozenset({"read"}),
-        token_fingerprint="0123456789abcdef",
+        token_fingerprint="0123456789abcdef",  # gitleaks:allow - test fixture
     )

@@ -7,8 +7,8 @@ validation) has exactly one implementation.
 from collections.abc import Mapping
 from typing import Any
 
-from app.auth.principal import Principal
 from app.core.errors import AuthenticationError
+from app.core.principal import Principal
 from app.helpers.tokens import fingerprint
 
 

@@ -59,7 +59,7 @@ backend/
 ├── tests/unit/         no I/O, fakes only
 ├── tests/integration/  real PostgreSQL via testcontainers
 ├── docs/               architecture, security (SOC 2 / ISO 27001), testing, auth, observability
-└── scripts/            gate helpers (file budget, dependency audit)
+└── scripts/            gate helpers (file budget); `make audit` runs pip-audit
 ```
 
 Every file stays under **150 lines** (`scripts/check_file_budget.py` fails the

@@ -34,9 +34,11 @@ async def test_readiness_is_degraded_when_any_probe_fails() -> None:
     result = await service.readiness()
     assert result.status == "degraded"
     assert result.dependencies[0].ready is False
+    assert result.http_status == 503
 
 
 async def test_readiness_with_no_probes_is_ready() -> None:
     result = await HealthService(version="v", probes=[]).readiness()
     assert result.status == "ready"
+    assert result.http_status == 200
     assert result.dependencies == []

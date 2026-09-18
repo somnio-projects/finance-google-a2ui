@@ -9,9 +9,9 @@ from tests.conftest import make_settings
 
 def test_null_reporter_accepts_everything_silently() -> None:
     reporter = NullErrorReporter()
-    reporter.capture_exception(RuntimeError("x"))
-    reporter.increment("m", tags={"a": "b"})
-    reporter.increment("m")
+    assert reporter.capture_exception(RuntimeError("x")) is None
+    assert reporter.increment("m", tags={"a": "b"}) is None
+    assert reporter.increment("m") is None
 
 
 def test_factory_returns_null_reporter_without_dsn() -> None:

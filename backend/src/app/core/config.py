@@ -2,13 +2,13 @@
 
 Every required variable has no default, so a missing value fails fast with a
 ``ValidationError`` before the first request is served (SOC 2 CC6.1: no
-implicit insecure defaults).
+implicit insecure defaults). Variables are documented in ``env.example``.
 """
 
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import Field, PostgresDsn, SecretStr, field_validator
+from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 Environment = Literal["local", "test", "staging", "production"]
@@ -21,7 +21,7 @@ CsvList = Annotated[list[str], NoDecode]
 class Settings(BaseSettings):
     """Typed view over the process environment.
 
-    Attributes are grouped by concern; see ``.env.example`` for documentation
+    Attributes are grouped by concern; see ``env.example`` for documentation
     of each variable and ``docs/SECURITY.md`` for why the defaults are strict.
     """
 
@@ -71,6 +71,23 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
+
+    @field_validator("cors_allowed_origins", mode="after")
+    @classmethod
+    def _no_wildcard_origin(cls, value: list[str]) -> list[str]:
+        """Reject ``*``: CORS runs with credentials; a wildcard is an open door."""
+        if "*" in value:
+            msg = "CORS_ALLOWED_ORIGINS must list explicit origins, never '*'"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def _production_requires_explicit_hosts(self) -> "Settings":
+        """In production the Host allow-list must be real, not ``*``."""
+        if self.environment == "production" and "*" in self.trusted_hosts:
+            msg = "TRUSTED_HOSTS must be an explicit list when ENVIRONMENT=production"
+            raise ValueError(msg)
+        return self
 
     @property
     def is_production(self) -> bool:
