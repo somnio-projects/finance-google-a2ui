@@ -1,0 +1,94 @@
+"""FastAPI dependency providers.
+
+Every controller parameter comes from here, so wiring is visible in one file
+and services stay ignorant of HTTP.
+"""
+
+from collections.abc import AsyncIterator
+from typing import Annotated
+
+from fastapi import Depends, Header, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.container import Container
+from app.auth.principal import Principal
+from app.infra.db.session import session_scope
+from app.repositories.audit_repository import AuditRepository
+from app.services.audit_service import AuditService
+from app.services.auth_service import AuthService
+from app.services.health_service import HealthService
+from app.services.identity_service import IdentityService
+
+
+def get_container(request: Request) -> Container:
+    """Return the process container placed on ``app.state`` at startup."""
+    return request.app.state.container
+
+
+ContainerDep = Annotated[Container, Depends(get_container)]
+
+
+def get_request_id(request: Request) -> str:
+    """Return the correlation id set by ``RequestIdMiddleware``."""
+    return request.state.request_id
+
+
+RequestIdDep = Annotated[str, Depends(get_request_id)]
+
+
+def get_health_service(container: ContainerDep) -> HealthService:
+    """Provide the singleton health service."""
+    return container.health
+
+
+async def get_session(container: ContainerDep) -> AsyncIterator[AsyncSession]:
+    """Provide one unit-of-work session for the request."""
+    async with session_scope(container.session_factory) as session:
+        yield session
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+def get_auth_service(container: ContainerDep) -> AuthService:
+    """Provide the auth service bound to the configured verifier."""
+    return AuthService(verifier=container.verifier, reporter=container.reporter)
+
+
+async def get_current_principal(
+    auth: Annotated[AuthService, Depends(get_auth_service)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> Principal:
+    """Authenticate the request or raise ``AuthenticationError``."""
+    return await auth.authenticate(authorization)
+
+
+PrincipalDep = Annotated[Principal, Depends(get_current_principal)]
+
+
+def get_audit_service(session: SessionDep) -> AuditService:
+    """Provide the audit service over the request session."""
+    return AuditService(AuditRepository(session))
+
+
+def get_identity_service(
+    audit: Annotated[AuditService, Depends(get_audit_service)],
+) -> IdentityService:
+    """Provide the identity service."""
+    return IdentityService(audit)
+
+
+__all__ = [
+    "ContainerDep",
+    "PrincipalDep",
+    "RequestIdDep",
+    "SessionDep",
+    "get_audit_service",
+    "get_auth_service",
+    "get_container",
+    "get_current_principal",
+    "get_health_service",
+    "get_identity_service",
+    "get_request_id",
+    "get_session",
+]

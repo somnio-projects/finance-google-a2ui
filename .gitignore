@@ -35,3 +35,10 @@ ruvector.db-*
 .claude/*.local.md
 .claude/settings.json.bak
 # somnio:harness:end
+
+# Backend (Python) artifacts
+backend/.coverage
+backend/coverage.xml
+backend/htmlcov/
+backend/.pytest_cache/
+backend/.env

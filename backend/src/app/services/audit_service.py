@@ -1,0 +1,42 @@
+"""Record and read the security audit trail."""
+
+from app.auth.principal import Principal
+from app.models.audit_event import AuditEvent
+from app.repositories.audit_repository import AuditRepository
+from app.schemas.identity import AuditEventResponse
+
+MAX_HISTORY = 100
+
+
+class AuditService:
+    """Append audit events for a principal and expose their history."""
+
+    def __init__(self, repository: AuditRepository) -> None:
+        """Bind the service to the request-scoped repository."""
+        self._repository = repository
+
+    async def record(
+        self, principal: Principal, *, action: str, request_id: str
+    ) -> AuditEvent:
+        """Persist that ``principal`` performed ``action`` in ``request_id``."""
+        event = AuditEvent(
+            subject=principal.subject,
+            provider=principal.provider,
+            action=action,
+            token_fingerprint=principal.token_fingerprint,
+            request_id=request_id,
+        )
+        return await self._repository.add(event)
+
+    async def history(
+        self, principal: Principal, *, limit: int = 20
+    ) -> list[AuditEventResponse]:
+        """Return the principal's newest events, capped at ``MAX_HISTORY``."""
+        bounded = min(max(limit, 1), MAX_HISTORY)
+        events = await self._repository.list_for_subject(
+            principal.subject, limit=bounded
+        )
+        return [AuditEventResponse.model_validate(event) for event in events]
+
+
+__all__ = ["MAX_HISTORY", "AuditService"]
