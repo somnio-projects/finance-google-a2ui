@@ -1,8 +1,9 @@
 # Epic refinement report — GGU-6
 
-- Run date: 2026-09-18 · Mode: **dry-run** (zero Jira writes) · Integration branch SHA: **`410bb9d`** (local `main`)
-- Operator: `/dev-epic-refinement` (harness) · Hardening engine: `jira-ticket-hardening` (**not invoked** — dry run)
-- Epic: [GGU-6 "Epic 0 — Foundation"](https://somniosoftware.atlassian.net/browse/GGU-6) · project GGU (Google Gen UI) · 7 children · 19.5h estimated
+- Run date: 2026-09-18 · Mode: **dry-run, then FULL RUN executed** · Integration branch SHA: **`410bb9d`** (local `main`)
+- Operator: `/dev-epic-refinement` (harness) · Hardening engine: `jira-ticket-hardening` (**executed** — 7 rewritten, 1 commented)
+- Epic: [GGU-6 "Epic 0 — Foundation"](https://somniosoftware.atlassian.net/browse/GGU-6) · project GGU (Google Gen UI) · **8 children** (GGU-46 created this run) · ~22h estimated after revisions
+- Companion docs: **PR #1** — 9 ADRs + 3 contract specs + this report
 
 > **Anchor caveat.** `git fetch origin` failed (SSH blocked by the sandbox). Every reality claim is
 > anchored to the **local** `main` at `410bb9d` and may not reflect the remote. There is no
@@ -546,3 +547,67 @@ closes on an Epic 4 dependency and link GGU-12 → GGU-29 so it is visible.
 5. Drive `jira-ticket-hardening` over the frozen key set — rewriting the To-Do tickets, commenting
    on GGU-4 (Done).
 6. Re-fetch every ticket and verify against hardening's manifest.
+
+---
+
+# RUN OUTCOME — full run executed 2026-09-18
+
+The dry-run sections above are preserved as the pre-execution record. This section is what actually happened.
+
+## Verify manifest (exhaustive — every ticket re-fetched, not a sample)
+
+| Key | Action | Status at edit | 12 template sections | Tables | Size before → after |
+|---|---|---|---|---|---|
+| GGU-1 | rewritten (pilot) | To Do | ✅ all | ✅ 3 | 13,981 → 14,491 |
+| GGU-2 | rewritten | To Do | ✅ all | ✅ 3 | 12,248 → 20,395 |
+| GGU-3 | rewritten | To Do | ✅ all | ✅ 5 | 14,399 → 19,543 |
+| GGU-4 | **comment only** | **Done** | n/a — gate held | ✅ 1 | 4,300 → **4,300 (byte-identical)** |
+| GGU-5 | rewritten | To Do | ✅ all | ✅ 5 | 14,167 → 23,973 |
+| GGU-12 | rewritten | To Do | ✅ all | ✅ 3 | 6,842 → 13,786 |
+| GGU-45 | rewritten (pilot) | To Do | ✅ all | ✅ 3 | 10,158 → 14,187 |
+| GGU-46 | rewritten (created this run) | To Do | ✅ all | ✅ 4 | 5,648 seed → 21,688 |
+
+- **Snapshot directory (rollback baseline):** `scratchpad/snapshots/GGU-6-2026-09-18/` — all 8 captured before any edit.
+- **Zero phantom ADR refs.** All citations resolve to the 9 lettered files on PR #1; no `ADR-0NN` numeric refs exist.
+- **No In-Progress ticket overwritten** (none existed). GGU-4's `Done` gate held — its description is byte-identical.
+- **No status, label or priority changed** on any ticket.
+- One recoverable failure: the GGU-4 comment first posted mangled (`addCommentToJiraIssue` takes raw text, not JSON-escaped text, unlike `editJiraIssue`'s `fields`). Fixed by updating comment `80041` **in place** — one retry, no loop, exactly one comment on the ticket.
+
+## What was created
+
+- **[GGU-46](https://somniosoftware.atlassian.net/browse/GGU-46)** — "Verify Firebase ID tokens on the backend (auth middleware + session identity)", split out of GGU-3.
+- **16 issue links**, zero deletions. GGU-4 and GGU-45 are no longer orphans. `GGU-3 --split to--> GGU-46` records the split.
+- **PR #1** — 9 ADRs, 3 contract specs, this report. Authored in an isolated `git worktree`, never in the user's checkout.
+
+### The iOS/Android ticket was NOT created — deliberately
+
+`GGU-27` (Epic 4) already exists and *edits* `ios/Runner/Info.plist` and `android/app/…`, presuming those directories. But creating them is literally what GGU-1's title and AC1 say. Folded into GGU-1 (est 3h → 4h) and linked `GGU-1 blocks GGU-27`. Idempotent-create rule working as intended: reuse over duplication.
+
+### The backend-restructure ticket was NOT created — folded into GGU-45
+
+Per the TL's ADR-C decision. GGU-45 does the `src/` packaging move; layering is deferred until after GGU-5 exists.
+
+## Conflicts caught and resolved during execution
+
+1. **`app_test.dart` was assigned to both GGU-45 and GGU-1** by the two upstream analyses. Resolved as sequential: GGU-45 creates it (so the gate is not green-on-nothing), GGU-1 updates it during the package rename. Both tickets now say so, so no one creates a duplicate.
+2. **`test_session_isolation.py` name collision** — GGU-3 and GGU-5 both planned it. Split by concern: GGU-46 owns `test_session_identity.py`, GGU-5 owns `test_portfolio_isolation.py`. The collision is called out in-ticket so a future reader does not "restore" the old name from the snapshot's own Technical Design.
+
+## ⚠️ Open scheduling risks surfaced during execution (for the TL)
+
+These are real and the wave plan does not express them:
+
+1. **GGU-46 needs GGU-3's `build_app()` extraction, not all of GGU-3.** No integration test can construct the Starlette app until it lands, so the extraction must ship as its own PR **early in Wave 1** — "GGU-3 is done" is too coarse. Recorded as GGU-3 OD-3.
+2. **The `fail_under` ratchet has no guaranteed ordering.** GGU-45 sets 50, GGU-3 raises to 60, GGU-5 raises to 80 — but GGU-5 PR1 runs in Wave 1 *parallel with* GGU-3, so it may land before the 60 step. Pin the ratchet to a single owner or make it monotonic-by-construction.
+3. **GGU-2 is forced strictly between GGU-3 and GGU-46** and no wave assignment says so: GGU-2's provisioning script needs `firebase-admin`, which GGU-3 adds, while GGU-46 needs GGU-2's token contract.
+4. **GGU-12 still cannot close inside Epic 0** — `firebase.json` has `authorizedDomains: ["localhost"]`, so prod web login fails until GGU-29 (Epic 4). Either pull that change forward or accept the cross-epic dependency.
+
+## Escalations — all four closed by the TL on 2026-09-18
+
+Navigator (not `go_router`) · portfolio as a live object behind `get_portfolio`/`save_portfolio` · no uid allow-list, email/password sole provider (ADR-B D-5a) · Cloud Run `max-instances=1`. Plus ADR-C resolved into GGU-45 and the GGU-3 split confirmed.
+
+## Remaining before Wave 1 starts
+
+1. **Merge PR #1**, then upgrade every "pending ADR" Open Decision in the 7 tickets to a real citation.
+2. **Ratify ADR-A** (session identity) — the isolation fix. Its rulings are already written into GGU-46's scope and ACs.
+3. **~30 minutes with the spike author** for ADR-D findings 5 (web render behaviour under genui's *Limited* support — the project's stated top risk) and 6 (API churn). Neither is derivable from code; an agent that invents them is worse than a blank section.
+4. **Assign an owner to `tasks/cancel`** — it always raises `UnsupportedOperationError` while the client calls it on every cancellation (ADR-D D-9).
