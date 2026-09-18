@@ -34,7 +34,18 @@ tickets will be re-baselined against this foundation.
   `backend/**/*.py`.
 - `.claude/settings.json`: PostToolUse hook `post-edit-check.py` (ruff +
   basedpyright + 150-line budget on edited backend files), `uv`/`docker
-  compose`/`make` allowed, stale `pnpm` allows removed.
+  compose`/`make` allowed, stale `pnpm` allows removed; the generated
+  `claudeFlow`, `statusLine` and `model` blocks were dropped (unused tooling),
+  the sandbox `excludedCommands` narrowed to `gh`/`gcloud`/`docker`/`open`/
+  `osascript`; `Edit` denied on the merged Alembic revision and on `uv.lock`
+  (new revisions are still creatable).
+- `backend-reviewer` first pass (2026-09-18) FLAGGED 2 blockers + 7 should-fix;
+  all addressed in the same PR: gitleaks allow on the fixture literal, 413/429
+  via `problem_response` (request_id/instance), rate limiter keyed per IP
+  **and** per token (rotating garbage tokens no longer buys budget), `Settings`
+  rejects `*` in CORS and `*` hosts in production, readiness status decided in
+  the DTO (no branching in the controller), `Principal` moved to `core/`,
+  `main.py` no longer omitted from coverage, `make gate` now includes `audit`.
 - `.claude/agents/backend-reviewer.md`, `.claude/commands/{feature,spec}.md`.
 - `.claude/ship-gate.json` populated (6 backend commands = CI = `make gate`).
 - `specs/` created (README, TEMPLATE, first spec); `docs/DEV_HARNESS.md`.

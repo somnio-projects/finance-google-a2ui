@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## The bar
 
-- `pytest --cov --cov-branch` over `src/app` must report **100 %**, with branches. The gate fails otherwise. Do not lower `fail_under`, do not add `omit` entries, do not sprinkle `# pragma: no cover` (allowed only for `if TYPE_CHECKING:` and `__main__` guards, with an inline reason).
+- `pytest --cov --cov-branch` over `src/app` must report **100 %**, with branches. The gate fails otherwise. Do not lower `fail_under`, do not add `omit` entries, do not sprinkle `# pragma: no cover` (allowed only for `if TYPE_CHECKING:` and `__main__` guards, with an inline reason). The only configured exclusions are `if TYPE_CHECKING:` blocks and Protocol method bodies (`...`) — see `exclude_also` in `pyproject.toml`.
 - Every behaviour has a test that would fail if the behaviour broke — executing a line is not testing it. Error branches (`except`, early returns, 4xx/5xx paths) are tested explicitly.
 
 ## Two suites, two rules

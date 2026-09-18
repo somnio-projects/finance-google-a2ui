@@ -35,7 +35,10 @@ domain (GGU-5), Flutter client wiring (GGU-2), Cloud Run deploy (GGU-29).
 | any | — | — | `rate-limited → 429`, `payload-too-large → 413`, `internal → 500` |
 
 All errors are RFC 9457 `application/problem+json` with
-`type = https://errors.finance-a2ui/<code>` and `request_id`.
+`type = https://errors.finance-a2ui/<code>`, `instance` and `request_id` —
+including the 413/429 produced by middleware. Known exception: Starlette's
+`TrustedHostMiddleware` answers a plain-text 400 for an unlisted `Host` (it
+runs before our handlers); accepted for the foundation, tracked as OD-4.
 
 ## 4. Data model & migration
 
@@ -89,6 +92,8 @@ Mutation checks: auth middleware and rate limiter — yes (performed before PR).
 | OD-1 | Where does the A2UI/A2A agent live — mounted inside this FastAPI app or a sibling service? | Lautaro + Mario | Mount the A2A Starlette app under this FastAPI app behind the same auth middleware (one deployable) |
 | OD-2 | Rate-limit backend for multi-instance deploys | Lautaro | In-memory (single instance, ADR-F D-4); Redis adapter when `max-instances > 1` |
 | OD-3 | Firebase JWKS URL / issuer values for `finance-a2ui` | Pato / Lautaro | `oidc` provider with Google's securetoken JWKS; issuer `https://securetoken.google.com/finance-a2ui`, audience `finance-a2ui` |
+| OD-4 | `TrustedHostMiddleware` 400 is plain text, not problem+json | Lautaro | Accept for Epic 0; replace with a custom Host check returning problem+json when the client needs to parse it |
+| OD-5 | `FORWARDED_ALLOW_IPS` defaults to `*` (Cloud Run's LB is the only ingress) | Lautaro | Keep `*` on Cloud Run; set the proxy CIDR anywhere clients can reach uvicorn directly |
 
 ## 9. Rollout & observability
 

@@ -16,7 +16,7 @@ Every file in `backend/src/app` belongs to exactly one layer and follows that la
 |---|---|---|---|
 | Controller | `api/v1/` | `api.deps`, `schemas`, `services` (types) | `repositories`, `models`, `sqlalchemy` |
 | Dependencies | `api/deps.py` | everything below | — |
-| Service | `services/` | `schemas`, `repositories`, `models`, `core`, `auth.principal` | `fastapi`, `starlette`, `sqlalchemy` |
+| Service | `services/` | `schemas`, `repositories`, `models`, `core` (incl. `core.principal`) | `fastapi`, `starlette`, `sqlalchemy`, `auth.providers` |
 | Repository | `repositories/` | `models`, `core.errors`, `sqlalchemy` | `services`, `api` |
 | Model | `models/` | `models.base`, `sqlalchemy` | anything else in `app` |
 | Schema | `schemas/` | `pydantic` | `models`, `services` |
