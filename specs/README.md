@@ -1,0 +1,41 @@
+# Specs — Spec-Driven Development
+
+Every feature in this repository starts as a spec here, before any code. The
+spec is the contract the implementation, the tests and the PR are checked
+against; the reviewer agent reads it, and the acceptance criteria numbers show
+up in test names and PR descriptions.
+
+## Layout
+
+```
+specs/
+├── README.md          this file
+├── TEMPLATE.md        copy me
+├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
+└── client/            NNNN-<feature>.md — Flutter client (client_flutter/), when it adopts SDD
+```
+
+Numbers are per area, zero-padded, never reused. The filename is stable once
+merged; a replaced spec is marked `Superseded by NNNN` and kept.
+
+## Status lifecycle
+
+| Status | Meaning |
+|---|---|
+| Draft | Being written; not yet reviewed |
+| Approved | Reviewed by the TL; implementation may start |
+| Implemented | Code merged; ACs verified by the gate and the PR |
+| Superseded | Replaced by a newer spec (linked) |
+
+## How to write one
+
+Run `/spec <area> <feature> [GGU-n]` or copy `TEMPLATE.md`. Keep it short and
+precise: a spec that a developer's Claude can implement without asking is the
+target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
+`docs/ggu-6-foundation-adrs` branch until PR #1 merges) and any related spec.
+
+## Index
+
+| Spec | Status | Ticket |
+|---|---|---|
+| [backend/0001-backend-foundation.md](backend/0001-backend-foundation.md) | Implemented | GGU-3 / GGU-45 / GGU-46 (re-baselined) |

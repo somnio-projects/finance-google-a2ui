@@ -1,7 +1,8 @@
 ---
 description: Python data-validation conventions — pydantic models at input boundaries, field validators/constraints, no unvalidated dict, typed response models, pydantic-settings BaseSettings for 12-factor configuration. Applies to all .py files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

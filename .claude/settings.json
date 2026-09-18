@@ -13,6 +13,8 @@
       "Read(**/*.pfx)",
       "Read(**/service-account*.json)",
       "Read(**/*credentials*.json)",
+      "Read(**/google-services.json)",
+      "Read(**/GoogleService-Info.plist)",
       "Edit(**/.env)",
       "Edit(**/.env.*)",
       "Edit(**/*.pem)",
@@ -22,37 +24,44 @@
       "Edit(**/*.p12)",
       "Edit(**/*.pfx)",
       "Edit(**/service-account*.json)",
-      "Edit(**/*credentials*.json)"
+      "Edit(**/*credentials*.json)",
+      "Edit(**/google-services.json)",
+      "Edit(**/GoogleService-Info.plist)",
+      "Edit(./backend/alembic/versions/*)",
+      "Edit(./backend/uv.lock)"
     ],
     "allow": [
-      "Bash(npx @claude-flow*)",
-      "Bash(npx claude-flow*)",
-      "Bash(node .claude/*)",
-      "mcp__claude-flow__*",
-      "WebFetch(domain:api.github.com)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:registry.npmjs.org)",
-      "Bash(pnpm run lint)",
-      "Bash(pnpm run lint:fix)",
-      "Bash(pnpm run build)",
-      "Bash(pnpm run test)",
-      "Bash(pnpm run test:cov)",
-      "Bash(pnpm run format:check)",
-      "Bash(pnpm run openapi:check)",
+      "Bash(uv run *)",
+      "Bash(uv sync*)",
+      "Bash(uv lock*)",
+      "Bash(uv add *)",
+      "Bash(make *)",
+      "Bash(docker compose *)",
       "Bash(git status)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git branch)",
+      "Bash(git branch*)",
       "Bash(git show *)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
       "WebFetch(domain:files.pythonhosted.org)",
-      "WebFetch(domain:pypi.org)"
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:fastapi.tiangolo.com)",
+      "WebFetch(domain:docs.sqlalchemy.org)",
+      "WebFetch(domain:docs.pydantic.dev)"
     ],
     "ask": [
       "Bash(rm -rf *)",
-      "Bash(terraform apply *)",
-      "Bash(terraform destroy *)",
       "Bash(git push --force *)",
-      "Bash(git push -f *)"
+      "Bash(git push -f *)",
+      "Bash(docker compose down -v*)",
+      "Bash(uv run alembic downgrade *)",
+      "Bash(gcloud *)",
+      "Bash(firebase deploy*)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)"
     ]
   },
   "sandbox": {
@@ -61,13 +70,6 @@
     "excludedCommands": [
       "gh *",
       "gcloud *",
-      "aws *",
-      "az *",
-      "flyctl *",
-      "vercel *",
-      "wrangler *",
-      "kubectl *",
-      "terraform *",
       "docker *",
       "open *",
       "osascript *"
@@ -76,20 +78,18 @@
       "allowedDomains": [
         "api.github.com",
         "github.com",
-        "registry.npmjs.org",
         "files.pythonhosted.org",
         "pypi.org",
+        "registry.npmjs.org",
         "generativelanguage.googleapis.com",
         "aiplatform.googleapis.com",
         "oauth2.googleapis.com",
+        "www.googleapis.com",
+        "securetoken.google.com",
         "pub.dev",
         "storage.googleapis.com"
       ]
     }
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "sh -c 'D=\"${CLAUDE_PROJECT_DIR:-.}\"; [ -f \"$D/.claude/helpers/statusline.cjs\" ] || D=\"${HOME}\"; exec node \"$D/.claude/helpers/statusline.cjs\"'"
   },
   "hooks": {
     "PreToolUse": [
@@ -102,116 +102,21 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/post-edit-check.py\"; if [ -f \"$f\" ]; then python3 \"$f\"; fi",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   },
-  "model": "claude-sonnet-5",
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_FLOW_V3_ENABLED": "true",
-    "CLAUDE_FLOW_HOOKS_ENABLED": "true"
-  },
-  "claudeFlow": {
-    "version": "3.0.0",
-    "enabled": true,
-    "platform": {
-      "os": "darwin",
-      "arch": "arm64",
-      "shell": "zsh"
-    },
-    "modelPreferences": {
-      "default": "claude-sonnet-5",
-      "routing": "claude-haiku-4-5-20251001"
-    },
-    "agentTeams": {
-      "enabled": true,
-      "teammateMode": "auto",
-      "taskListEnabled": true,
-      "mailboxEnabled": true,
-      "coordination": {
-        "autoAssignOnIdle": false,
-        "trainPatternsOnComplete": true,
-        "notifyLeadOnComplete": true,
-        "sharedMemoryNamespace": "agent-teams"
-      },
-      "hooks": {
-        "teammateIdle": {
-          "enabled": true,
-          "autoAssign": false,
-          "checkTaskList": true
-        },
-        "taskCompleted": {
-          "enabled": true,
-          "trainPatterns": true,
-          "notifyLead": true
-        }
-      }
-    },
-    "swarm": {
-      "topology": "mesh",
-      "maxAgents": 5
-    },
-    "memory": {
-      "backend": "memory",
-      "enableHNSW": false,
-      "learningBridge": {
-        "enabled": false
-      },
-      "memoryGraph": {
-        "enabled": false
-      },
-      "agentScopes": {
-        "enabled": false
-      }
-    },
-    "neural": {
-      "enabled": false
-    },
-    "daemon": {
-      "autoStart": false,
-      "workers": [
-        "map",
-        "audit",
-        "optimize"
-      ],
-      "schedules": {
-        "audit": {
-          "interval": "4h",
-          "priority": "critical"
-        },
-        "optimize": {
-          "interval": "2h",
-          "priority": "high"
-        }
-      }
-    },
-    "learning": {
-      "enabled": true,
-      "autoTrain": true,
-      "patterns": [
-        "coordination",
-        "optimization",
-        "prediction"
-      ],
-      "retention": {
-        "shortTerm": "24h",
-        "longTerm": "30d"
-      }
-    },
-    "adr": {
-      "autoGenerate": true,
-      "directory": "/docs/adr",
-      "template": "madr"
-    },
-    "ddd": {
-      "trackDomains": true,
-      "validateBoundedContexts": true,
-      "directory": "/docs/ddd"
-    },
-    "security": {
-      "autoScan": true,
-      "scanOnEdit": true,
-      "cveCheck": true,
-      "threatModel": true
-    }
+    "UV_LINK_MODE": "copy"
   }
 }

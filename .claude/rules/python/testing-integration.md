@@ -1,7 +1,8 @@
 ---
 description: Python integration testing — DB/fixture teardown & isolation; unique test data; registered markers (--strict-markers); branch coverage (--cov-branch) + fail_under gate; coverage != quality (flag untested branches/error paths).
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

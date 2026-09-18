@@ -1,6 +1,18 @@
 {
   "version": 1,
-  "required": [],
-  "_candidates": [],
-  "_note": "drafted by harness-init; the TL commits this file \u2014 docs/DEV_HARNESS.md"
+  "_note": "Definition of Done. Every cmd matches a CI step verbatim (.github/workflows/backend-ci.yaml) and `make gate` in backend/. Flutter gate lands with GGU-45/GGU-1.",
+  "required": [
+    { "id": "py.lint", "cwd": "backend", "cmd": "uv run ruff check ." },
+    { "id": "py.format", "cwd": "backend", "cmd": "uv run ruff format --check ." },
+    { "id": "py.types", "cwd": "backend", "cmd": "uv run basedpyright" },
+    { "id": "py.budget", "cwd": "backend", "cmd": "uv run python scripts/check_file_budget.py" },
+    { "id": "py.test", "cwd": "backend", "cmd": "uv run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml" },
+    { "id": "py.audit", "cwd": "backend", "cmd": "make audit" }
+  ],
+  "_candidates": [
+    { "id": "dart.format", "cwd": "client_flutter", "cmd": "dart format --output=none --set-exit-if-changed ." },
+    { "id": "dart.analyze", "cwd": "client_flutter", "cmd": "dart analyze --fatal-infos --fatal-warnings" },
+    { "id": "flutter.test", "cwd": "client_flutter/app", "cmd": "flutter test --coverage" },
+    { "id": "flutter.web", "cwd": "client_flutter/app", "cmd": "flutter build web --release" }
+  ]
 }
