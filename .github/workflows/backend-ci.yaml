@@ -85,3 +85,12 @@ jobs:
         run: |
           uid=$(docker run --rm --entrypoint id finance-a2ui-backend:ci -u)
           test "$uid" = "10001" || (echo "expected uid 10001, got $uid" && exit 1)
+      - name: Image CVE scan (Trivy — OS packages + Python deps)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: finance-a2ui-backend:ci
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+

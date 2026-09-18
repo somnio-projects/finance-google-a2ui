@@ -13,6 +13,12 @@ RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH" PORT=8000
+# Pull Debian security updates so the image does not ship base-layer CVEs
+# (Trivy gates CRITICAL/HIGH in CI); perl-base is only a dpkg dependency here.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --no-create-home app
 WORKDIR /app
 COPY --from=builder --chown=app:app /app/.venv ./.venv

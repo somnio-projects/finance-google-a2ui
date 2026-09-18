@@ -1,0 +1,24 @@
+# Local mirror of the CI security/quality signals, so a secret or a lint error
+# is caught before it enters branch history. Install once: `pre-commit install`.
+# CI (.github/workflows/backend-ci.yaml) remains the authoritative gate.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+  - repo: local
+    hooks:
+      - id: backend-file-budget
+        name: backend file budget (150 lines)
+        entry: python3 backend/scripts/check_file_budget.py
+        language: system
+        pass_filenames: false
+        files: ^backend/(src|tests)/.*\.py$
