@@ -13,6 +13,8 @@ alwaysApply: false
 
 - No backend feature starts without `specs/backend/NNNN-<feature>.md` created from `specs/TEMPLATE.md`. `NNNN` is the next free number; the filename never changes once the spec is merged.
 - A spec has: Problem · Scope (in / out) · API contract (paths, DTOs, error codes) · Data model & migration · Security notes (auth, audit, data) · Acceptance criteria (numbered, testable) · Test plan (unit + integration, mapped to ACs) · Open decisions (owner + default).
+- **Before coding**: assign the Jira ticket to the TL's account and move it to the next status; move it again when the PR merges.
+- **PR title** carries the ticket: `type(scope): GGU-n — description`. **PR body** carries: a detailed description (spec, ACs, decisions), the **test evidence** (unit + integration output, coverage) **and a manual run** against the running stack with the real commands and their real responses pasted in. No manual run, no merge.
 - Code, tests and the PR cite acceptance criteria by number (`AC-3`). A PR that changes the contract updates the spec in the same PR and flags it under `Spec:` in the description.
 - Specs are living documents: status `Draft → Approved → Implemented → Superseded`. Superseded specs stay in place with a pointer to the replacement.
 

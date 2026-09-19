@@ -35,6 +35,10 @@ Follow the Spec-Driven Development lifecycle end to end (repo
    `.claude/harness-log.md` (code + harness changes + what the next dev must
    know). If a durable decision was made, save it to memory too.
 9. **PR**: push and open it with `gh pr create` — base `develop`, title
+   `type(scope): GGU-n — description`, body with `Spec:`, `Test decision:`, the
+   gate output **and a `Manual verification` section holding the real commands
+   run against `docker compose` and their real responses. Then move the ticket
+   to the next Jira status. Old form for reference — title
    `type(scope): description`, body with `Spec: specs/backend/NNNN-...`,
    `Test decision: ...`, the gate output, and the GGU ticket link. English,
    no AI attribution.
