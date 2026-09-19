@@ -27,7 +27,7 @@ review and the ship gate cite them by number.
 | [ADR-B](ADR-B-auth-credential-contract.md) | Auth credential contract | Accepted | GGU-2, GGU-46 |
 | [ADR-C](ADR-C-backend-module-layout.md) | Backend module layout | Accepted | GGU-45 |
 | [ADR-D](ADR-D-a2ui-streaming-transport.md) | A2UI streaming transport | Proposed | GGU-3, GGU-4 |
-| [ADR-E](ADR-E-money-representation.md) | Money representation and rounding | Proposed | GGU-5 |
+| [ADR-E](ADR-E-money-representation.md) | Money representation and rounding | Accepted | GGU-5 |
 | [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted | GGU-5, GGU-3 |
 | [ADR-G](ADR-G-secret-handling.md) | Secret handling in a public repository | Accepted | GGU-3, GGU-12 |
 | [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed | GGU-45 |

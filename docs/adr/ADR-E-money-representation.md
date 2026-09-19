@@ -1,6 +1,6 @@
 # ADR-E — Money representation and rounding
 
-- **Status:** **Proposed** — awaiting TL ratification
+- **Status:** **Accepted** (TL, 2026-09-19)
 - **Gates:** GGU-5
 - **Related:** [ADR-F](ADR-F-persistence-and-session-lifetime.md)
 

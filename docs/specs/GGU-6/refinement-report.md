@@ -611,3 +611,21 @@ Navigator (not `go_router`) · portfolio as a live object behind `get_portfolio`
 2. **Ratify ADR-A** (session identity) — the isolation fix. Its rulings are already written into GGU-46's scope and ACs.
 3. **~30 minutes with the spike author** for ADR-D findings 5 (web render behaviour under genui's *Limited* support — the project's stated top risk) and 6 (API churn). Neither is derivable from code; an agent that invents them is worse than a blank section.
 4. **Assign an owner to `tasks/cancel`** — it always raises `UnsupportedOperationError` while the client calls it on every cancellation (ADR-D D-9).
+
+## ADR status — two gates, not one (added 2026-09-19)
+
+A ticket may cite an ADR only when **both** are true: the ADR file is **merged** (PR #1) *and* its
+status is **Accepted**. The two are independent, and conflating them was a defect in the first pass
+of ticket markers — merging PR #1 does not promote a Proposed ADR.
+
+| ADR | Status | Cited by | Remaining gate |
+|---|---|---|---|
+| A, B, C, F, G, I | Accepted | GGU-1, 2, 3, 5, 12, 45, 46 | merge PR #1 |
+| **E** — money / `Decimal` | **Accepted (TL, 2026-09-19)** | GGU-5 | merge PR #1 |
+| **D** — A2UI transport | **Proposed** | GGU-3 | merge **+ ratify** — blocked on the spike author for findings 5 (web render behaviour) and 6 (API churn), neither derivable from code; also needs an owner for D-9 (`tasks/cancel` always raises while the client calls it every time) |
+| **H** — CI ship gate | **Proposed** | GGU-45 | merge **+ ratify** — *intentionally* sequenced: `.claude/ship-gate.json` carries its own note that the TL commits it, so GGU-45 produces the gate and it is signed afterwards. Proposed is the correct state today. |
+
+ADR-E ratified 2026-09-19: portfolio money is `Decimal` end to end, parsed from the JSON **string**
+never via `float`, rounded only at display (`ROUND_HALF_EVEN`), with exact-equality invariants and a
+single tolerance on the weights sum. D-6 remains the load-bearing clause — the existing float path in
+the market-data tools must not compute any number the portfolio also computes.
