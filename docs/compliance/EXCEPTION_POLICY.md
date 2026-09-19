@@ -40,7 +40,7 @@ set, `typeCheckingMode`. Changing them is a team decision recorded here as a
 
 | # | Control | Justification | Compensating control | Expires | Approver |
 |---|---|---|---|---|---|
-| — | none | | | | |
+| EX-1 | `main`/`develop` require 1 **code-owner** approval — the repository **admin role may merge its own PR** (`bypass_mode: pull_request`) | The team has two backend code owners; one joined on 2026-09-18 and is still onboarding. Requiring his approval on every PR during the pre-demo sprint would stall the critical path. The bypass still forces a **pull request** — no direct push, no force-push, no deletion. | Every PR runs the full gate (lint, strict types, 150-line budget, code smells, 100 % branch coverage, pip-audit, gitleaks, Semgrep, image CVE scan) and the read-only `backend-reviewer` agent before merge; every merge is squash-only and recorded in `.claude/harness-log.md`; Mario reviews asynchronously after the fact. | **2026-10-03** (or when Mario's first review lands, whichever is first) | Security owner / TL backend, 2026-09-19 |
 
 Retained risk R-11 (single instance during the demo) is documented in the
 risk register, not here: it is an accepted risk, not a waived control.

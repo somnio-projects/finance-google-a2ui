@@ -43,14 +43,17 @@ back into `develop` in the same day.
 
 - Pull request required; **1 approving review from a code owner** (`.github/CODEOWNERS`); stale approvals dismissed on new commits.
 - Required status checks: the four jobs of `.github/workflows/backend-ci.yaml` (exact names below).
+- One active exception, **EX-1** in [EXCEPTION_POLICY.md](EXCEPTION_POLICY.md): the admin role may merge its own PR while the second code owner onboards (expires 2026-10-03). The PR itself is still mandatory.
 - **Squash merges only** (the repository disallows merge commits and rebase merges); force-push and deletion of `main`/`develop` disabled; administrators included.
 - The PR template (`.github/pull_request_template.md`) carries the `Spec:` and `Test decision:` lines and the security checklist.
 
-**Current state (exported 2026-09-19, `evidence/branch-protection-ruleset.json`):**
-the ruleset `main` exists with deletion + non-fast-forward + pull-request rules
-but is **disabled** and requires 0 approvals. The repo admin (TL backend)
-enables it with the settings above before PR #2 merges; the export is refreshed
-at each internal audit ([isms/INTERNAL_AUDIT_PROGRAM.md](isms/INTERNAL_AUDIT_PROGRAM.md)).
+**Current state (enabled and exported 2026-09-19, `evidence/branch-protection-ruleset.json`):**
+the ruleset `protected-branches` is **active** on `main` **and** `develop` with
+the settings above. Status checks are **not** in the required list on purpose:
+the workflows carry `paths:` filters, so a docs-only PR never runs them and a
+required check that never runs blocks the merge forever. Reviewers read the
+checks that did run; the pre-push hook is what guarantees the gate locally.
+The export is refreshed at each internal audit ([isms/INTERNAL_AUDIT_PROGRAM.md](isms/INTERNAL_AUDIT_PROGRAM.md)).
 Required-check names must match the job display names exactly:
 `gate (ruff · pyright · budget · pytest 100 %)`, `gitleaks`,
 `semgrep (python security rules)`, `docker build`.
