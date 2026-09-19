@@ -13,7 +13,12 @@ from tests.unit.conftest import FakeTool
 #: adds its name here — one line, and its discovery is proven. Without this
 #: list a commented-out ``register(...)`` leaves the suite fully green and the
 #: tool simply never reaches the model (spec 0013 AC-1).
-EXPECTED_TOOLS = ("compute_attribution", "get_holdings_summary", "simulate_sale")
+EXPECTED_TOOLS = (
+    "compute_attribution",
+    "get_holdings_summary",
+    "payoff",
+    "simulate_sale",
+)
 
 
 def test_register_publishes_the_tool_under_its_own_name() -> None:

@@ -7,6 +7,91 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-38 payoff tool · spec `specs/backend/0014-payoff-tool.md`
+
+**Branch:** `feat/GGU-38_payoff_tool`, stacked on GGU-39 (holdings). Seven deep.
+
+**What it answers.** "What does $500 of SOL do to me if the price drops 20 %?"
+— twenty-six numbers the model must not compute, including the dollars-to-units
+division. `payoff` returns them all pre-formatted, plus three named scenarios.
+
+**Code**
+- `domain/payoff.py` — `PayoffPoint`, `PayoffCurve`, `bracket()`.
+- `domain/payoff_pricing.py` — `payoff_curve` (the grid and the profit at each
+  point); `domain/orders.py` — `order_quantity` (the one division). Split from
+  the entities under the line budget, along seams that were already there.
+- `agent/tools/payoff{,_limits,_order,_rows}.py` — the tool, its bound table,
+  its declared arguments and its display shaping. No shared file edited;
+  `load_tools()` finds it.
+- `domain/errors.py` — `PayoffRangeError` for a grid with no steps.
+- `domain/symbols.py` — the `Ticker` type a tool accepts, moved out of
+  `holdings_query` now that two tools want the same bound (OD-13).
+
+**The honest half.** The ticket says "risk/payoff curve", which invites an
+options reading. This domain is a **spot** book — no strike, no expiry, no
+volatility — so the linear part ships and OD-8 names, in order, what would have
+to exist in `app.domain` before anything else could: an instrument entity, a
+volatility input, a pricing function. No Greeks were faked. The payload carries
+a `disclosure` string saying so, in every answer.
+
+**Thirteen open decisions, because the ticket predates this architecture.** The
+ones worth knowing: the grid is `steps` **per side** so the entry price is a
+sampled point and "P/L at entry is zero" is an equality, not a tolerance (OD-2);
+`range_pct` is an **integer percent** and the size a **decimal string**, because
+a float ratio cannot be made exact afterwards (OD-3/OD-4); the size is one field
+plus a `size_in` unit rather than two optional numeric fields, which removes a
+branch that could not be reached or tested (OD-4); an out-of-range request is
+**rejected, not clamped**, as the ticket asked — spec 0011 OD-7's precedent
+(OD-5); and `sell` is the mirror curve of a spot position, never a short (OD-6).
+
+**No render intent, on purpose (OD-7).** The registry holds a waterfall and an
+allocation donut. Neither draws a P/L curve over a price axis, so the tool emits
+none rather than aiming a confident wrong chart at a correct answer.
+`payoff.curve.v1` belongs to the ticket that owns the component. This is the
+first tool that returns figures and no intent by design, so
+`docs/diagrams/05-agent-turn.md` now says a render intent is optional.
+
+**What review found — three payloads that could mislead, and a silent test.**
+The gate was green for all four; none of them is a kind of defect a gate sees.
+
+1. **A row that contradicted itself.** On the sell path `positionValue` was
+   still `quantity × price`, so every row paired `"$7,924.80"` of position
+   value with `"-$1,828.80"` of profit — two figures moving in opposite
+   directions, in a payload the model copies verbatim. A sale leaves no
+   position, so the field is now `null` there (OD-12). The number was not
+   wrong arithmetic; it was arithmetic about something that does not exist.
+2. **A ladder that printed one price for twenty-six rows.** `{DOGE, range 5 %,
+   25 steps}` gave 51 points with **two** distinct displayed prices, a
+   break-even indistinguishable from a row losing six dollars, and support for
+   both "at $0.13 you make $6.36" and "at $0.13 you lose $6.36". OD-10 had
+   pre-approved a *coarse* ladder, not a *degenerate* one. The domain now
+   publishes `price_step` and the display asks for the smallest precision that
+   keeps two adjacent points apart — `money_display`'s own `precision`
+   argument, **not** a second money format, which is what OD-10 was protecting.
+3. **An AC with no test.** Commenting out `register(PayoffTool())` left the
+   suite green: the tool vanished from the agent, the prompt and the agent
+   card, silently. AC-1 now asserts discovery, and the mutation check was
+   re-run to watch it go red.
+
+**Verified**
+- `make gate`: **637 tests**, 100 % branch coverage, pylint 10.00/10,
+  interrogate 100 %, pip-audit clean.
+- Mutation check: `register(PayoffTool())` commented out → 1 failed, 613
+  passed; restored → green.
+
+**Next person should know**
+- A payoff ladder is the one surface where two-decimal money is not merely
+  coarse but self-contradictory, which is why it derives its own price
+  precision. **Every other surface still shows DOGE at `$0.13`** —
+  `get_holdings_summary` included. The durable fix is a per-asset price
+  precision on the curated market reference, like `name`, used everywhere at
+  once (OD-10, the shape spec 0011 OD-3 gave `logoUrl`).
+- `specs/README.md` was missing its 0011 row; added alongside 0014.
+- Spec numbers 0012 and 0013 are reserved by the tickets in flight beside this
+  one; 0014 was taken to stay out of their way.
+
+---
+
 ## 2026-09-19 — GGU-39 holdings tool · spec `specs/backend/0011-holdings-tool.md`
 
 **Branch:** `feat/GGU-39_holdings_tool`, stacked on GGU-3. Six deep.
