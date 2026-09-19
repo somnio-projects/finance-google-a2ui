@@ -17,6 +17,7 @@ flowchart TB
     subgraph core["Domain and contracts"]
         dom["domain/*<br/>portfolio, lots, prices (pure, Decimal)"]
         agt["agent/*<br/>Tool Protocol · registry · prompt · tools"]
+        cor["core/<br/>Settings · AppError · Protocols · Principal · display · trend"]
         cor["core/<br/>Settings · AppError · Protocols · Principal · display"]
     end
     subgraph infra["Infrastructure"]
