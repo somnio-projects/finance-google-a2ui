@@ -4,10 +4,11 @@ Inner layers depend on these shapes; ``app.infra`` and ``app.auth`` provide
 the concrete implementations, wired together in ``app.bootstrap``.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Protocol
 
+from app.core.model import ModelMessage, ModelReply, ToolSpec
 from app.core.principal import Principal
 
 
@@ -49,6 +50,32 @@ class ErrorReporter(Protocol):
         ...
 
 
+class ModelClient(Protocol):
+    """Generative model facade (Gemini in production, a scripted fake in tests).
+
+    Implementations are **stateless**: the whole conversation travels on every
+    call, which is what lets sessions (GGU-46) own history without this layer
+    knowing they exist. Every provider failure — timeout, HTTP error,
+    malformed body — MUST surface as
+    ``app.core.errors.DependencyUnavailableError`` carrying no provider text.
+    """
+
+    @property
+    def name(self) -> str:
+        """Model identifier recorded in telemetry (``gemini-3.8-flash``)."""
+        ...
+
+    async def generate(
+        self,
+        *,
+        system: str,
+        messages: Sequence[ModelMessage],
+        tools: Sequence[ToolSpec],
+    ) -> ModelReply:
+        """Produce the next assistant turn from the conversation so far."""
+        ...
+
+
 class ReadinessProbe(Protocol):
     """Answer whether a dependency can currently serve traffic."""
 
@@ -62,4 +89,10 @@ class ReadinessProbe(Protocol):
         ...
 
 
-__all__ = ["Clock", "ErrorReporter", "ReadinessProbe", "TokenVerifier"]
+__all__ = [
+    "Clock",
+    "ErrorReporter",
+    "ModelClient",
+    "ReadinessProbe",
+    "TokenVerifier",
+]

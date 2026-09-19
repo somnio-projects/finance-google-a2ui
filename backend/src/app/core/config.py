@@ -67,6 +67,20 @@ class Settings(BaseSettings):
     # None = decide by environment (required in production, optional elsewhere)
     auth_admin_require_mfa: bool | None = None
 
+    # --- agent host (spec 0006) -------------------------------------------
+    # Unset key = NullModelClient, exactly as an unset SENTRY_DSN means the
+    # null reporter: call sites never branch on configuration.
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = Field(default="gemini-3.8-flash", min_length=1, max_length=64)
+    gemini_base_url: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta",
+        min_length=1,
+        max_length=255,
+    )
+    gemini_timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
+    gemini_max_attempts: int = Field(default=3, ge=1, le=5)
+    agent_max_tool_iterations: int = Field(default=4, ge=1, le=10)
+
     # --- data retention (docs/compliance/DATA_RETENTION.md) --------------
     audit_retention_days: int = Field(default=400, ge=30, le=3650)
 

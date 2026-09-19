@@ -14,7 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app import __version__
-from app.api.container import Container
+from app.agent.registry import load_tools
+from app.api.container import AgentRuntime, Container
 from app.api.errors import register_error_handlers
 from app.api.middleware.body_limit import BodyLimitMiddleware
 from app.api.middleware.rate_limit import FixedWindowLimiter, RateLimitMiddleware
@@ -25,10 +26,12 @@ from app.api.router import api_router
 from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
-from app.core.protocols import Clock, ErrorReporter, TokenVerifier
+from app.core.protocols import Clock, ErrorReporter, ModelClient, TokenVerifier
+from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import SystemClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
+from app.infra.model.factory import build_model_client
 from app.infra.telemetry.factory import build_error_reporter
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
@@ -42,11 +45,13 @@ def build_container(
     clock: Clock | None = None,
     reporter: ErrorReporter | None = None,
     verifier: TokenVerifier | None = None,
+    model: ModelClient | None = None,
 ) -> Container:
     """Wire the singletons; optional arguments let tests inject doubles."""
     clock = clock or SystemClock()
     reporter = reporter or build_error_reporter(settings, release=__version__)
     verifier = verifier or build_token_verifier(settings, clock)
+    model = model or build_model_client(settings)
     engine = create_engine(settings)
     return Container(
         settings=settings,
@@ -60,6 +65,11 @@ def build_container(
         ),
         flag_cache=FeatureFlagCache(
             ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
+        ),
+        agent=AgentRuntime(
+            model=model,
+            tools=load_tools(),
+            portfolios=InMemoryPortfolioProvider(clock=clock),
         ),
     )
 
