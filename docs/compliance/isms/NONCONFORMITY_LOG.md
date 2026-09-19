@@ -24,8 +24,8 @@ detail; this table is the index and the closure record.
 
 | # | Date | Source | Nonconformity | Requirement | Correction | Corrective action (PR/issue) | Verified | Status |
 |---|---|---|---|---|---|---|---|---|
-| NC-1 | 2026-09-19 | soc2-audit run 3 | no incident response, BCP/DR, breach SLA, vendor, HR, AI-governance or ISMS documentation | Cl. 5–10; SOC 2 CC7.x, CC9.x, CC1.4 | — | `docs/compliance/` corpus + `infra/` in PR #2 | soc2 40→93, iso 64→86 (re-audit) | closing with PR #2 |
+| NC-1 | 2026-09-19 | soc2-audit run 3 | no incident response, BCP/DR, breach SLA, vendor, HR, AI-governance or ISMS documentation | Cl. 5–10; SOC 2 CC7.x, CC9.x, CC1.4 | — | `docs/compliance/` corpus + `infra/` in PR #2 | soc2 40→93, iso 64→92 | closed with PR #2 |
 | NC-2 | 2026-09-19 | soc2-audit run 3 (D6) | `audit_events` retained indefinitely, no purge | DATA_RETENTION.md (new) | — | `AuditRepository.purge_older_than`, `make purge-audit`, `AUDIT_RETENTION_DAYS` (PR #2) | gate green | closed |
 | NC-3 | 2026-09-19 | soc2-audit run 3 (C7) | MFA not enforced for admin operations at the API | ACCESS_CONTROL.md §2 | — | `amr` check in `_require_admin`, `AUTH_ADMIN_REQUIRE_MFA` default on in production (PR #2) | gate green | closed |
 | NC-4 | 2026-09-19 | soc2-audit run 3 (E3) | no CODEOWNERS / PR template in repo | CHANGE_MANAGEMENT.md §3 | — | `.github/CODEOWNERS`, `pull_request_template.md`; ruleset export at first ISMS audit | ruleset export pending | closing |
-| NC-5 | 2026-09-19 | python-best-practices run 3 | untyped token payload / JWKS at the auth boundary | .claude/rules/python/data-validation.md | — | `JwtClaims`, `JwksDocument`, `from_row` (`02d1836`) | re-audit pending | closing |
+| NC-5 | 2026-09-19 | python-best-practices run 3 | untyped token payload / JWKS at the auth boundary | .claude/rules/python/data-validation.md | — | `JwtClaims`, `JwksDocument`, `from_row` (`02d1836`) | best-practices 88→91 | closed |

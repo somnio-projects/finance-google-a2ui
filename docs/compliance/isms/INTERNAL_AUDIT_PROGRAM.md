@@ -35,6 +35,7 @@ scores feed [SECURITY_OBJECTIVES.md](SECURITY_OBJECTIVES.md) O-6.
 | 2026-09-19 | `python-best-practices` (run 5) | `4944768` | **91/100** | explicit `Final[...]` type arguments (cosmetic) |
 | 2026-09-19 | `python-health-audit` (run 4) | `4944768` | **91/100** | no new findings |
 | 2026-09-19 | `soc2-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (`4cd5af4`) | **93/100** (Audit-Ready) | remaining: external pentest (G2), `main` ruleset enforcement (E3/E4), DPAs (I3), rotation subscriber (F9), IaC apply (H5/H7) |
+| 2026-09-19 | `iso27001-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (`4cd5af4`) | **92/100** (Certification-Ready) | remaining: DPAs (A.5.19/20), `main` ruleset enforcement (A.8.32), external pentest / independent ISMS review (A.8.29, A.5.35), contributor attestations |
 | 2026-09-19 | `backend-reviewer` round 2 | final tree | FLAGGED → fixed | `audit_events.target` (0003), `feature_flag.list` audited, purge job into `app/jobs`, spec/docs sync, branch-protection evidence |
 
 Reports are kept by the security owner (`backend/reports/`, git-ignored, 90
@@ -42,5 +43,5 @@ days) and attached to the PR that addressed them.
 
 ## Next scheduled
 
-- Re-run of all five audits on the final foundation tree (before PR #2 merge).
+- All five audits ≥ 90 on the final foundation tree (2026-09-19): security 98 · python-health 91 · python-best-practices 91 · soc2 93 · iso27001 92. Next full run: after GGU-29 (IaC applied).
 - ISMS operation audit + tabletop: 2026-Q4 (auditor to be nominated).

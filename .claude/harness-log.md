@@ -64,7 +64,7 @@ every audit > 90 before the PR.
 - `docker compose up --build` with `backend/.env` from the template: migrations at `0003`, uid 10001 read-only, 401/200 identity, flag toggle 200 → 404 → 403 → 200, 100-char key with `target`, `feature_flag.list` audited, `python -m app.jobs.purge_audit` runs in the image.
 - Restore drill #1 (pg_dump → scratch DB → compare → drop) passed — `docs/compliance/RESTORE_DRILL_LOG.md`.
 - `infra/`: `terraform validate` OK, `trivy config` 0 findings.
-- Somnio CLI: security 98 · python-health 91 · python-best-practices 91 · soc2 40→78→93 (with IaC) · iso27001 64→86 (run 5 pending).
+- Somnio CLI: security 98 · python-health 91 · python-best-practices 91 · soc2 40→78→93 (with IaC) · iso27001 64→86→92. **All five > 90.**
 
 **Next person should know**
 - Policies are approved by merge; the management review #1 is asynchronous in
