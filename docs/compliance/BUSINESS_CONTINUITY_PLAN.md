@@ -40,7 +40,7 @@ Same as the incident response plan: IC, technical lead, communications, scribe.
 | Rebuild-from-scratch (empty DB + migrations + restore) | annually, with the DR drill | DR plan §5 |
 | Tabletop (regional outage) | annually | [isms/INTERNAL_AUDIT_PROGRAM.md](isms/INTERNAL_AUDIT_PROGRAM.md) |
 
-## 5. Production commitments (with GGU-29 deploy epic)
+## 5. Production commitments (defined in `infra/`, applied with GGU-29)
 
 Cloud SQL with automated daily backups + point-in-time recovery (RPO → 1 h),
 high-availability configuration (regional failover), Cloud Run min-instances

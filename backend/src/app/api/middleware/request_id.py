@@ -8,8 +8,8 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import Response
 
-HEADER: Final = "X-Request-ID"
-MAX_LENGTH: Final = 64
+HEADER: Final[str] = "X-Request-ID"
+MAX_LENGTH: Final[int] = 64
 
 
 def _incoming_or_new(value: str | None) -> str:

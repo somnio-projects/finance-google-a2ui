@@ -6,6 +6,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 |---|---|---|
 | `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc | Flutter rules in `.claude/rules/flutter/` |
+| `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL HA, Secret Manager, Cloud Run, Cloud Armor, logging/alerts — validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
 | `docs/` | `DEV_HARNESS.md` (how we work with Claude), ADRs arrive with PR #1 | — |
 

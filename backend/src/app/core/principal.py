@@ -9,7 +9,9 @@ from typing import Final
 from pydantic import BaseModel, ConfigDict, Field
 
 # RFC 8176 ``amr`` values that count as a second factor.
-MFA_METHODS: Final = frozenset({"mfa", "otp", "hwk", "swk", "sms", "fido"})
+MFA_METHODS: Final[frozenset[str]] = frozenset(
+    {"mfa", "otp", "hwk", "swk", "sms", "fido"}
+)
 
 
 class Principal(BaseModel):

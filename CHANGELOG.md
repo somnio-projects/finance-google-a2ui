@@ -16,6 +16,7 @@ too (`docs/compliance/VENDOR_MANAGEMENT.md` §3).
 - Docker image (non-root, read-only) and root `docker-compose.yml` (db + backend, env from `backend/.env`).
 - Claude Code harness (codelab 2): rules, hooks, commands, `backend-reviewer` agent, ship gate, specs, harness log.
 - CI: ship gate, gitleaks, Semgrep SAST, image build with Trivy; weekly scheduled scan with SBOM; Dependabot; pre-commit.
+- `infra/`: Terraform for the Google Cloud production topology (private VPC, Cloud SQL 16 regional HA + PITR, Secret Manager with 90-day rotation, least-privilege IAM, Cloud Run service + purge job, HTTPS LB with Cloud Armor, 90-day log retention, audit logs, alerts) with `infra-ci.yaml` (fmt, validate, trivy config). Validated, not applied (GGU-29).
 - Compliance corpus under `docs/compliance/` (SOC 2 / ISO 27001 policies, ISMS artifacts, runbooks, first restore drill), `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTORS.md`, `.github/CODEOWNERS`, PR template.
 
 ### Removed

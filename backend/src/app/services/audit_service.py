@@ -9,7 +9,7 @@ from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
 from app.schemas.identity import AuditEventResponse
 
-MAX_HISTORY: Final = 100
+MAX_HISTORY: Final[int] = 100
 
 
 class AuditService:

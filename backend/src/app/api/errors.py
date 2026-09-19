@@ -18,7 +18,7 @@ from app.core.logging import get_logger
 from app.core.protocols import ErrorReporter
 from app.schemas.problem import ProblemDetails
 
-PROBLEM_TYPE_BASE: Final = "https://errors.finance-a2ui/"
+PROBLEM_TYPE_BASE: Final[str] = "https://errors.finance-a2ui/"
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 

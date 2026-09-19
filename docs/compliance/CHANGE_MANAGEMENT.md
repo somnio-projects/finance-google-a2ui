@@ -19,7 +19,7 @@ log entry. Details: `docs/DEV_HARNESS.md`, `.claude/rules/backend/sdd.md`,
 |---|---|---|---|
 | `local` | development (`docker compose`) | synthetic | `backend/.env` (git-ignored) |
 | `test` | CI and integration tests (testcontainers) | ephemeral | `tests/conftest.py::make_settings` |
-| `staging` | pre-production deploy, smoke tests (GGU-29) | synthetic + demo accounts | Secret Manager (`staging` project) |
+| `staging` | pre-production deploy, smoke tests (`infra/environments/staging.tfvars`, apply with GGU-29) | synthetic + demo accounts | Secret Manager (`staging` project) |
 | `production` | the showcase | demo accounts | Secret Manager (`prod` project) |
 
 Separation is enforced in code: `ENVIRONMENT=production` disables docs/OpenAPI,

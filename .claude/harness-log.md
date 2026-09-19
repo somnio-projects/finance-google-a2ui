@@ -24,6 +24,10 @@ every audit > 90 before the PR.
   `FeatureFlagService._require_admin`.
 - **Retention**: `AuditRepository.purge_older_than`, `AuditService.purge_expired`,
   `scripts/purge_audit_events.py`, `make purge-audit`, `AUDIT_RETENTION_DAYS=400`.
+- **IaC** (`infra/`, Terraform ~> google 6): the CLOUD_SERVICES §3 topology as code —
+  validated locally and in `infra-ci.yaml` (fmt · validate · trivy config); **not
+  applied** (no GCP project until GGU-29). Closes the SOC 2 Family F evidence gap
+  honestly: the controls exist as reviewed code, status "apply pending".
 - `backend-reviewer` round 2 (final tree) FLAGGED 2 blockers + 7 should-fix, all
   addressed: `audit_events.target` column (migration 0003) so `action` stays
   `<domain>.<verb>` and 100-char flag keys no longer overflow `String(64)`;

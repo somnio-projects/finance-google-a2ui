@@ -57,7 +57,9 @@ quarterly access review ([ACCESS_CONTROL.md](ACCESS_CONTROL.md)).
 
 ## 4. Redundancy today vs. target
 
-| Layer | Demo (compose) | Production target (GGU-29) |
+The production column is implemented in [`infra/`](../../infra/README.md) (Terraform, validated, apply pending GGU-29).
+
+| Layer | Demo (compose) | Production target (`infra/`, GGU-29) |
 |---|---|---|
 | Database | single container, daily dump | Cloud SQL HA (regional standby), automated backups + PITR |
 | Backend | single container, health-checked | Cloud Run ≥ 1 min instance, multi-zone, `/readyz` uptime check |

@@ -9,11 +9,11 @@
 
 | Service | Use | Data class sent | Region | Status |
 |---|---|---|---|---|
-| Google Cloud Run | backend runtime (ADR-F) | Confidential (in process) | `us-central1` | planned (GGU-29) |
-| Google Cloud SQL for PostgreSQL 16 | database | Confidential | `us-central1` | planned |
-| Google Secret Manager | secrets | Restricted | `us-central1` | planned |
-| Google Cloud Logging / Monitoring | logs, uptime checks, alerts | Internal | `us-central1` | planned |
-| Google Cloud Armor | WAF in front of the load balancer | — | global | planned |
+| Google Cloud Run | backend runtime (ADR-F) | Confidential (in process) | `us-central1` | IaC in `infra/` (apply pending GGU-29) |
+| Google Cloud SQL for PostgreSQL 16 | database | Confidential | `us-central1` | IaC in `infra/` (apply pending GGU-29) |
+| Google Secret Manager | secrets | Restricted | `us-central1` | IaC in `infra/` (apply pending GGU-29) |
+| Google Cloud Logging / Monitoring | logs, uptime checks, alerts | Internal | `us-central1` | IaC in `infra/` (apply pending GGU-29) |
+| Google Cloud Armor | WAF in front of the load balancer | — | global | IaC in `infra/` (apply pending GGU-29) |
 | Firebase Auth / Google Identity | OIDC identity provider | user identity (`sub`, email in token) | global | in use for Epic 0 |
 | Google Gemini API | model backing the A2UI agent (future spec) | prompts (Confidential by default), **never** user credentials | US | planned |
 | Sentry (SaaS) | error telemetry | Internal (no PII, no bodies) | US | in use when `SENTRY_DSN` set |
@@ -29,17 +29,19 @@ Adding a service = a row here + the vendor register
 |---|---|
 | physical security, hardware, hypervisor, managed-service control planes, TLS certificates at the managed ingress, OS patching of managed runtimes, NTP | IAM configuration, network exposure, Cloud SQL settings (backups, private IP, HA), secrets, application security, logging configuration, data handling, incident response for the application |
 
-## 3. Production topology commitments (what IaC must implement — GGU-29)
+## 3. Production topology (implemented in `infra/` — Terraform, validated; apply pending GGU-29)
 
 - **Network**: Cloud SQL on **private IP** only; Cloud Run egress through a Serverless VPC connector; ingress "internal and Cloud Load Balancing"; Cloud Armor policy with the OWASP preconfigured rule set and per-IP rate limiting in front of the app-layer limiter.
 - **Identity**: one Cloud Run service account with `cloudsql.client` + `secretmanager.secretAccessor` + `logging.logWriter` only; no human `owner`; humans `viewer` with time-boxed break-glass ([ACCESS_CONTROL.md](ACCESS_CONTROL.md) §4).
 - **Secrets**: Secret Manager, one secret per setting, versioned, **90-day rotation** with Cloud Scheduler reminder; injected as env vars.
 - **Redundancy**: Cloud SQL HA (regional), Cloud Run min-instances ≥ 1, multi-zone by default; uptime check on `/readyz`.
 - **Backups**: automated daily + PITR, 30-day retention ([BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md)).
-- **IaC**: Terraform in `infra/` with `environments/staging` and `environments/production`; `tfsec`/`checkov` added to CI when the folder exists.
+- **IaC**: Terraform in [`infra/`](../../infra/README.md) with `environments/staging.tfvars` and `production.tfvars`; `.github/workflows/infra-ci.yaml` runs `fmt`, `validate` and `trivy config` (misconfiguration rules) on every change.
 
-Until then, the only running topology is the local `docker-compose.yml`
-(dev only, `localhost`), and the retained risk R-11 applies.
+**State:** the code above is committed and validated but **not applied** — no
+GCP project exists yet (GGU-29). Until the first apply the only running
+topology is the local `docker-compose.yml` (dev only, `localhost`), and the
+retained risk R-11 applies.
 
 ## 4. Logging
 

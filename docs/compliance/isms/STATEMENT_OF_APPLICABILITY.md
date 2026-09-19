@@ -50,7 +50,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.5.27 | Learning from information security incidents | Applicable | Implemented | POSTMORTEM_PROCESS.md; risk register updated after incidents |
 | A.5.28 | Collection of evidence | Applicable | Implemented | IR plan §5 evidence handling and chain of custody |
 | A.5.29 | Information security during disruption | Applicable | Implemented | BUSINESS_CONTINUITY_PLAN.md |
-| A.5.30 | ICT readiness for business continuity | Applicable | Partially implemented | DR plan + restore drill #1 done; production HA/PITR planned with GGU-29 (retained risk R-11) |
+| A.5.30 | ICT readiness for business continuity | Applicable | Partially implemented | DR plan + restore drill #1 done; Cloud SQL REGIONAL HA + PITR defined in `infra/database.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 (retained risk R-11) |
 | A.5.31 | Legal, statutory, regulatory and contractual requirements | Applicable | Implemented | GDPR as reference framework in DATA_RETENTION.md and BREACH_NOTIFICATION_SLA.md; Apache-2.0 LICENSE; Google program terms in CONFIDENTIALITY.md |
 | A.5.32 | Intellectual property rights | Applicable | Implemented | LICENSE (Apache-2.0), dependency licences via SBOM, contributor agreements (CONFIDENTIALITY.md) |
 | A.5.33 | Protection of records | Applicable | Implemented | audit_events insert-only API with retention purge (DATA_RETENTION.md); git history on `main` protected once the ruleset is enforced (see A.5.3) |
@@ -93,15 +93,15 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.11 | Data masking | Applicable | Implemented | core/logging.py redact_sensitive; token fingerprint; Sentry PII off |
 | A.8.12 | Data leakage prevention | Applicable | Implemented | gitleaks pre-commit/CI/weekly; .gitleaks.toml; permission denies on secrets |
 | A.8.13 | Information backup | Applicable | Implemented | BACKUP_AND_RECOVERY.md; RESTORE_DRILL_LOG.md drill #1 pass; Cloud SQL backups planned |
-| A.8.14 | Redundancy of information processing facilities | Applicable | Partially implemented | stateless service + health checks today; Cloud Run multi-instance + Cloud SQL HA with GGU-29 (retained risk R-11) |
+| A.8.14 | Redundancy of information processing facilities | Applicable | Partially implemented | stateless service + health checks today; Cloud Run min-instances + Cloud SQL REGIONAL HA in `infra/run.tf`, `database.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
 | A.8.15 | Logging | Applicable | Implemented | structlog JSON with request_id; audit_events; retention in CLOUD_SERVICES.md §4 |
 | A.8.16 | Monitoring activities | Applicable | Implemented | /healthz, /readyz, Sentry, alert routing in CLOUD_SERVICES.md §5 |
 | A.8.17 | Clock synchronisation | Applicable | Implemented (delegated) | container/Cloud Run host NTP; app uses injected Clock; JWT leeway ≤ 300 s |
 | A.8.18 | Use of privileged utility programs | Applicable | Implemented | no shell in production image beyond runtime; non-root uid 10001; read-only FS; Alembic the only schema path |
 | A.8.19 | Installation of software on operational systems | Applicable | Implemented | immutable images built in CI from the lockfile; no runtime installs |
-| A.8.20 | Networks security | Applicable | Partially implemented | app-layer TrustedHost/CORS/rate limit today; private IP + VPC connector + Cloud Armor committed in CLOUD_SERVICES.md §3 |
+| A.8.20 | Networks security | Applicable | Partially implemented | app-layer TrustedHost/CORS/rate limit today; private VPC, Cloud SQL private IP, VPC connector, deny-all firewall and Cloud Armor in `infra/network.tf`, `edge.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
 | A.8.21 | Security of network services | Applicable | Implemented | TLS at ingress, HSTS in production, HTTPS-only egress |
-| A.8.22 | Segregation of networks | Applicable | Partially implemented | Cloud SQL private IP / separate staging and production projects committed with GGU-29 |
+| A.8.22 | Segregation of networks | Applicable | Partially implemented | one GCP project per environment, Cloud SQL private IP (`infra/`) — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
 | A.8.23 | Web filtering | Applicable | Implemented | egress allow-list documented (CLOUD_SERVICES.md §6); CORS/TrustedHost allow-lists |
 | A.8.24 | Use of cryptography | Applicable | Implemented | RS256/ES256/HS256 via PyJWT[crypto], TLS, encryption at rest decision (DATA_RESIDENCY_AND_TENANCY.md §3) |
 | A.8.25 | Secure development life cycle | Applicable | Implemented | CHANGE_MANAGEMENT.md; SDD rules; ship gate |
@@ -110,7 +110,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.28 | Secure coding | Applicable | Implemented | ruff S/B rules, basedpyright strict, pydantic at boundaries, parameterised SQL, Semgrep |
 | A.8.29 | Security testing in development and acceptance | Applicable | Partially implemented | 100 % branch coverage, SAST, image scan; DAST and external pentest planned (VULNERABILITY_MANAGEMENT.md §2) |
 | A.8.30 | Outsourced development | Not applicable | — | no outsourced development (VENDOR_MANAGEMENT.md §5) |
-| A.8.31 | Separation of development, test and production environments | Applicable | Partially implemented | local/test/production separated by settings; staging + production IaC with GGU-29 (CHANGE_MANAGEMENT.md §2) |
+| A.8.31 | Separation of development, test and production environments | Applicable | Partially implemented | local/test/production separated by settings; staging + production tfvars in `infra/environments/` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 (CHANGE_MANAGEMENT.md §2) |
 | A.8.32 | Change management | Applicable | Implemented | CHANGE_MANAGEMENT.md; CODEOWNERS; PR template; EMERGENCY_CHANGE.md; CHANGELOG.md |
 | A.8.33 | Test information | Applicable | Implemented | synthetic data only; uuid-generated fixtures; testcontainers databases are ephemeral |
 | A.8.34 | Protection of information systems during audit testing | Applicable | Implemented | audits run read-only against the repository and local stacks (INTERNAL_AUDIT_PROGRAM.md); pentest scoped to staging |
@@ -120,7 +120,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | Ref | Missing piece | Owner | Target |
 |---|---|---|---|
 | A.5.20 | signed DPAs (Google Cloud, Sentry) | Eng. management | 2026-10-31 |
-| A.5.30, A.8.14, A.8.20, A.8.22, A.8.31 | production IaC: Cloud SQL HA + PITR, private IP, Cloud Armor, staging/production projects | TL backend | GGU-29 deploy epic |
+| A.5.30, A.8.14, A.8.20, A.8.22, A.8.31 | **apply** the committed `infra/` Terraform (Cloud SQL HA + PITR, private IP, Cloud Armor, staging/production projects) | TL backend | GGU-29 deploy epic |
 | A.5.35 | independent readiness review; external pentest | Eng. management | 2026-Q4 / before non-demo exposure |
 | A.8.29 | DAST on staging; external pentest | TL backend / Eng. management | with GGU-29 / before exposure |
 

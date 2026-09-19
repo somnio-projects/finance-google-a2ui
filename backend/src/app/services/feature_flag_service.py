@@ -20,7 +20,7 @@ from app.schemas.feature_flags import FeatureFlagResponse
 from app.services.audit_service import AuditService
 from app.services.feature_flag_cache import FeatureFlagCache
 
-ADMIN_SCOPE: Final = "admin"
+ADMIN_SCOPE: Final[str] = "admin"
 # design: the resolver logs its own fallbacks; a module logger keeps the constructor
 # focused on collaborators that affect behaviour (the reporter is injected).
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
