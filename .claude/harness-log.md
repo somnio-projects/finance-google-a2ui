@@ -64,6 +64,40 @@ conditional, which is what OD-1 made it.
 
 ---
 
+## 2026-09-19 — holdings price precision · follow-up, no ticket
+
+**Branch:** `fix/holdings_price_precision`, on GGU-37.
+
+**One line of code, and the reason it is worth a PR.** GGU-37's review found
+that `simulate_sale` printed DOGE at `$0.13` beside proceeds of `$1,527.60` —
+12,000 times $0.13 is $1,560.00, $32.40 apart in the same block. That tool
+fixed its own block with a new `core.display.price_display`, and deliberately
+did **not** touch `holdings_rows`, which had the identical bug: it was
+GGU-39's contract, reviewed one commit earlier, and editing it there would
+have collided.
+
+This closes it, with the same helper rather than a second one. Every holdings
+row now multiplies back: `$0.1273 × 12,000 = $1,527.60`. Assets quoted in
+whole cents are unchanged (`$64,250.00`).
+
+**Next person, read this**
+- There are now **two** precision helpers and they answer different questions:
+  `core.display.price_display` (how finely is this *asset* quoted) and
+  `payoff_rows.price_precision` (how finely must *adjacent grid points* differ
+  to stay distinguishable). Neither subsumes the other. Do not merge them;
+  do check which one a new surface needs.
+- The pattern that produced this bug is the one worth remembering: a figure
+  that is correct on its own, rendered beside another figure it no longer
+  agrees with. Three separate instances turned up in one day — this one, the
+  `positionValue` that rose while the P/L fell (GGU-38 OD-12), and a
+  break-even string shared with 25 losing rows (GGU-38 OD-10). **A payload is
+  wrong when two of its own numbers contradict each other, even when every
+  number is individually right.**
+
+**Harness** — no rule, hook or diagram changed.
+
+---
+
 ## 2026-09-19 — GGU-37 simulate_sale · spec `specs/backend/0013-simulate-sale-tool.md`
 
 **Branch:** `feat/GGU-37_simulate_sale_tool`, stacked on GGU-39 (holdings).

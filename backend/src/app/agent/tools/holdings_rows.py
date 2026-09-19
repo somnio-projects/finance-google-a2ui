@@ -18,6 +18,7 @@ from app.agent.tools.ratios import return_display
 from app.core.display import (
     money_display,
     percentage_display,
+    price_display,
     quantity_display,
     signed_money_display,
 )
@@ -35,12 +36,18 @@ def row(holding: Holding) -> Mapping[str, object]:
         The row the model copies. ``unrealizedPlPctDisplay`` is ``None`` for a
         position with no cost basis (spec 0011 OD-2); every other value is a
         string.
+
+        The **unit price** goes through ``price_display``, not
+        ``money_display``: three of the seeded assets are quoted below a cent
+        of precision, and rounding DOGE's ``0.1273`` to ``$0.13`` puts a price
+        in the row that does not multiply back to the market value beside it
+        (spec 0013 S1).
     """
     return {
         "symbol": holding.symbol,
         "name": holding.name,
         "quantityDisplay": quantity_display(holding.quantity, trim=True),
-        "priceDisplay": money_display(holding.price),
+        "priceDisplay": price_display(holding.price),
         "marketValueDisplay": money_display(holding.market_value),
         "costBasisDisplay": money_display(holding.cost_basis),
         "unrealizedPlDisplay": signed_money_display(holding.unrealized_pl),
