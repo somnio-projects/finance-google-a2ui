@@ -23,6 +23,9 @@ included — is read from `backend/.env`.
 - API: <http://localhost:8000> · OpenAPI: <http://localhost:8000/docs>
 - Liveness: `GET /healthz` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
 - Feature flags: `GET/PUT /v1/admin/feature-flags[/{key}]` (scope `admin`) — see [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md)
+- Conversation sessions: `POST/GET /v1/sessions`, `GET/DELETE /v1/sessions/{id}`,
+  `POST/GET /v1/sessions/{id}/messages` — owned by the token's subject, flag
+  `sessions.api` ([spec 0004](../specs/backend/0004-session-identity.md))
 
 Without Docker:
 
