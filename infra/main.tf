@@ -14,6 +14,9 @@ locals {
     "monitoring.googleapis.com",
     "pubsub.googleapis.com",
     "iam.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
   ]
 }
 

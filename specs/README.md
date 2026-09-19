@@ -12,6 +12,7 @@ specs/
 ├── README.md          this file
 ├── TEMPLATE.md        copy me
 ├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
+├── repo/              NNNN-<topic>.md   — repository-level work: licensing, docs, hygiene
 └── client/            NNNN-<feature>.md — Flutter client (client_flutter/), when it adopts SDD
 ```
 
@@ -44,3 +45,6 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 | [backend/0005-presentation-layer.md](backend/0005-presentation-layer.md) | Implemented | GGU-49 |
 | [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |
 | [backend/0008-attribution-tool.md](backend/0008-attribution-tool.md) | Implemented | GGU-36 |
+| [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
+| [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |
+| [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |
