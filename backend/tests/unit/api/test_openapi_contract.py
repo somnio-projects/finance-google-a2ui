@@ -21,6 +21,12 @@ from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA, problem_respons
 #: Routes FastAPI generates for the documentation itself.
 GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 
+#: Unauthenticated by contract (`.claude/rules/backend/security.md`). Adding a
+#: path here is a security decision: it needs a note in the feature spec and
+#: the reviewer's sign-off, which is why the list is spelled out rather than
+#: inferred from whether a route happens to declare a 401.
+PUBLIC = {"/healthz", "/readyz", "/.well-known/agent-card.json"}
+
 
 def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
     schema = app.openapi()
@@ -58,7 +64,7 @@ def test_every_operation_documents_its_error_responses(app: FastAPI) -> None:
 
 def test_authenticated_operations_document_401(app: FastAPI) -> None:
     for path, method, operation in _operations(app):
-        if path in {"/healthz", "/readyz"}:
+        if path in PUBLIC:
             continue
         assert "401" in operation["responses"], f"{method.upper()} {path} misses 401"
 

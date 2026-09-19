@@ -23,6 +23,7 @@ from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
 from app.infra.model.null_client import NullModelClient
 from app.presentation.registry import REGISTRY
+from app.services.agent_card_service import build_agent_card
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 from app.services.prompt_service import build_system_prompt
@@ -54,6 +55,7 @@ def make_app(
             model=NullModelClient(),
             tools=tools,
             system_prompt=build_system_prompt(tools=tools, views=REGISTRY.all()),
+            card=build_agent_card(settings, tools, version="test"),
         ),
         portfolio=InMemoryPortfolioProvider(clock=clock),
     )

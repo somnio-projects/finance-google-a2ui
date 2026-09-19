@@ -7,6 +7,65 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-3 A2A surface · spec `specs/backend/0010-a2a-surface.md`
+
+**Branch:** `feat/GGU-3_a2a_surface`, stacked on GGU-14. Five deep.
+
+**Why it mattered most.** The agent host ran a turn, the presentation layer
+shaped payloads, the prompt taught the model both catalogues — and **none of
+it was reachable**. Every one of those tickets had merged as code nothing could
+invoke. This is the surface that makes them real.
+
+**Code**
+- `api/agent_card.py` — `GET /.well-known/agent-card.json`, **public**.
+- `api/a2a.py` — `POST /`, JSON-RPC, answering `text/event-stream`.
+- `services/a2a_service.py` — the thin adapter (ADR-J D-2). `AgentService`
+  still does not know the protocol exists, which is what lets A2A move (it is
+  alpha) without the services moving with it.
+- `services/agent_card_service.py` — skills generated from the tool registry,
+  same principle as the prompt catalogues.
+- `api/middleware/install.py` — lifted out of `bootstrap.py`, which the change
+  pushed over the budget. Middleware **order is a security contract**, so it
+  says so where it now lives.
+
+**Two error shapes, on purpose.** A fault *inside* the protocol is a JSON-RPC
+error object at HTTP 200. A fault *before* the envelope is reached — no token,
+rate limit — is still an RFC 9457 problem document at its real status. The
+manual run shows both. A client parses two shapes and the spec says so rather
+than letting it be discovered.
+
+**A second public route.** The agent card is the first addition to the
+unauthenticated list since the health probes. `.claude/rules/backend/security.md`
+requires a spec note and sign-off, so both exist, and the contract test's
+exemption is now a **named `PUBLIC` constant** with the reason attached —
+previously a bare set literal inline in one assertion. Adding a public route is
+now a visible diff rather than a route that quietly stops declaring a 401.
+
+**Verified**
+- `make gate`: **546 tests**, 100 % branch coverage, pylint 10.00/10.
+- Live server: the card reads unauthenticated and advertises
+  `https://api.finance-a2ui.example` (the **public** URL, ADR-D D-7 — the
+  sample advertised `0.0.0.0`) with both tools as skills; a turn streams
+  `working` → `message` → `completed`; `POST /` without a token answers a 401
+  problem document; `tasks/cancel` answers `-32004` and an unknown method
+  `-32601`, both at HTTP 200.
+
+**Next person should know**
+- **Every turn currently starts with empty history.** `contextId` is echoed,
+  never resolved — sessions are GGU-46, on a different branch. The resolution
+  rule is already decided and unchanged (resolve against the subject or treat
+  as unknown).
+- **The stream is well-formed but not incremental.** `run_turn` returns a
+  finished turn rather than yielding, so the events arrive in one burst.
+  ADR-K D-19 wants per-surface streaming; making the loop a generator changes
+  `a2a_service.py` only.
+- **ADR-D is still `Proposed`.** This implements D-1, D-2, D-3, D-7 and D-9 as
+  written. If ratification moves any of them, this surface moves too (spec
+  OD-5). Treating a proposal as a decision silently would have been the easy
+  mistake.
+
+---
+
 ## 2026-09-19 — GGU-14 system prompt · spec `specs/backend/0009-prompt-fragments.md`
 
 **Branch:** `feat/GGU-14_prompt_fragments`, stacked on GGU-36. Four deep.
