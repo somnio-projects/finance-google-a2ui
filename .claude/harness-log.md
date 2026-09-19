@@ -58,6 +58,14 @@ every audit > 90 before the PR.
 - First **restore drill executed** against the compose database (pass, ~1 s) —
   `docs/compliance/RESTORE_DRILL_LOG.md`.
 
+**Verified locally before the PR (2026-09-19)**
+- `make gate`: 177 tests, 100 % branch coverage, basedpyright strict (+6 rules), pip-audit clean.
+- Mutation checks: `require_feature` gate (2026-09-18), MFA branch of `_require_admin` → red → restored green.
+- `docker compose up --build` with `backend/.env` from the template: migrations at `0003`, uid 10001 read-only, 401/200 identity, flag toggle 200 → 404 → 403 → 200, 100-char key with `target`, `feature_flag.list` audited, `python -m app.jobs.purge_audit` runs in the image.
+- Restore drill #1 (pg_dump → scratch DB → compare → drop) passed — `docs/compliance/RESTORE_DRILL_LOG.md`.
+- `infra/`: `terraform validate` OK, `trivy config` 0 findings.
+- Somnio CLI: security 98 · python-health 91 · python-best-practices 91 · soc2 40→78 (run 5 with IaC pending) · iso27001 64→86 (run 5 pending).
+
 **Next person should know**
 - Policies are approved by merge; the management review #1 is asynchronous in
   PR #2 by design — from #2 it is a meeting.
