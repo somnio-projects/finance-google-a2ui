@@ -73,9 +73,17 @@ None.
 - **No error body carries internal text.** JSON-RPC messages are fixed strings;
   a failed turn reports `AppError.code` and `detail`, both already safe for an
   anonymous caller. Asserted by a test.
-- The public route list lives in one named constant in the contract test, so
-  adding one is a visible diff rather than a route that quietly stops declaring
-  a 401.
+- The public route list lives in one named constant in the contract test, and
+  a second test **calls every other route without a token and insists on a
+  401** — documenting a 401 is not the same as enforcing one, and a controller
+  that copies the documented responses but forgets `PrincipalDep` would
+  otherwise pass every check while being wide open.
+- **Known limitation:** `BodyLimitMiddleware` inspects `Content-Length`, so a
+  body sent with chunked transfer encoding is not bounded by it. `POST /` is
+  the first route that reads the raw body itself, which makes this
+  load-bearing here for the first time. The envelope's own bounds (`id`,
+  `method`, `params`, message parts) limit what survives parsing, but the read
+  itself is unbounded. Recorded as OD-6 rather than left to be discovered.
 
 ## 6. Acceptance criteria
 
@@ -112,6 +120,7 @@ Mutation checks: **no new** auth or masking logic — the route reuses
 | OD-2 | What happens to `contextId` without sessions? | TL — **echo, never resolve** | Sessions are GGU-46, on another branch. Echoing keeps the client's correlation working; resolving would need the session store. The rule for when it lands is already decided and unchanged: resolve against the subject or treat as unknown. **Every turn currently starts with empty history** — stated in the module docstring so nobody mistakes it for a bug. |
 | OD-3 | Is the stream incremental? | TL — **not yet, and the PR says so** | ADR-K D-19 wants each surface emitted as it is ready. `run_turn` returns a finished turn rather than yielding, so the stream is well-formed but arrives in one burst. Making the loop a generator changes `a2a_service.py` only. Calling this "streaming" without the caveat would be the dishonest option. |
 | OD-4 | `tasks/cancel`, which ADR-D D-9 leaves unowned? | TL — **documented refusal** | The client calls it on every cancellation and nothing implements it, so today it would be a 500. A JSON-RPC "unsupported operation" is a truthful answer the client can handle. D-9 still needs an owner to decide whether to implement it. |
+| OD-6 | The body limit does not cover chunked encoding, and this is the first route that reads the raw body. | TL — **carried** | Every field of the envelope is bounded, so a chunked body cannot produce an oversized *response* or reach a method with unbounded parameters. What is not bounded is the read itself. Fixing it properly means counting bytes in the middleware's body stream, which changes every route's behaviour — worth doing deliberately, not inside a feature PR. |
 | OD-5 | ADR-D is still **Proposed**, not Accepted. | TL | This spec implements D-1, D-2, D-3, D-7 and D-9 as written. If ratification changes any of them, this surface changes with it. Flagged rather than silently treating a proposal as a decision. |
 
 ## 9. Rollout & observability

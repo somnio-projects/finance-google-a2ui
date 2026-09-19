@@ -16,38 +16,19 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import ValidationError
 
 from app.agent.contracts import ToolContext
 from app.api.deps import PrincipalDep, get_a2a_service, get_tool_context
 from app.api.openapi import problem_responses
-from app.schemas.a2a import (
-    INVALID_PARAMS,
-    METHOD_NOT_FOUND,
-    UNSUPPORTED_OPERATION,
-    JsonRpcError,
-    JsonRpcFailure,
-    JsonRpcRequest,
-    StreamParams,
-)
+from app.services.a2a_dispatch import message_of, parse
 from app.services.a2a_service import A2aService
 
 router = APIRouter(tags=["a2a"])
 
-STREAM_METHOD = "message/stream"
-CANCEL_METHOD = "tasks/cancel"
 EVENT_STREAM = "text/event-stream"
 
 A2aDep = Annotated[A2aService, Depends(get_a2a_service)]
 ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
-
-
-def _failure(request_id: str | int | None, code: int, message: str) -> JSONResponse:
-    """Answer a JSON-RPC error with HTTP 200, as the protocol requires."""
-    failure = JsonRpcFailure(
-        id=request_id, error=JsonRpcError(code=code, message=message)
-    )
-    return JSONResponse(content=failure.model_dump(mode="json"))
 
 
 @router.post(
@@ -88,41 +69,39 @@ async def call(
         request: The raw request, because JSON-RPC is one envelope for many
             methods and the body cannot be typed by the route.
         principal: The authenticated caller; the turn runs as this subject.
-        service: The protocol adapter.
+        service: The protocol adapter, which owns the dispatch.
         context: The subject-scoped tool context.
 
     Returns:
-        An event stream for `message/stream`, or a JSON-RPC error object.
+        An event stream for `message/stream`, or a JSON-RPC error body at
+        HTTP 200 for anything the adapter refused.
     """
     del principal  # resolved so the route is authenticated; the context carries it
-    try:
-        envelope = JsonRpcRequest.model_validate(await request.json())
-    except (ValidationError, ValueError):
-        return _failure(None, INVALID_PARAMS, "Malformed JSON-RPC request.")
-
-    if envelope.method == CANCEL_METHOD:
-        # ADR-D D-9: the client calls this on every cancellation and nothing
-        # implements it. Answering a documented "unsupported" beats a 500.
-        return _failure(
-            envelope.id, UNSUPPORTED_OPERATION, "tasks/cancel is not supported."
-        )
-    if envelope.method != STREAM_METHOD:
-        return _failure(
-            envelope.id, METHOD_NOT_FOUND, f"Unknown method {envelope.method!r}."
-        )
-
-    try:
-        params = StreamParams.model_validate(envelope.params)
-    except ValidationError:
-        return _failure(
-            envelope.id, INVALID_PARAMS, "Invalid parameters for message/stream."
-        )
-
+    body = await _decode(request)
+    envelope = parse(body)
+    if isinstance(envelope, dict):
+        return JSONResponse(content=envelope)
+    message = message_of(envelope)
+    if isinstance(message, dict):
+        return JSONResponse(content=message)
     return StreamingResponse(
-        service.stream(message=params.message, task_id=str(uuid4()), context=context),
+        service.stream(message=message, task_id=str(uuid4()), context=context),
         media_type=EVENT_STREAM,
         headers={"Cache-Control": "no-store"},
     )
+
+
+async def _decode(request: Request) -> object:
+    """Return the decoded body, or a sentinel the adapter will refuse.
+
+    A body that is not JSON at all is the adapter's problem to report, not a
+    transport error — so it is turned into something `parse` rejects rather
+    than allowed to raise here.
+    """
+    try:
+        return await request.json()
+    except ValueError:
+        return None
 
 
 __all__ = ["router"]

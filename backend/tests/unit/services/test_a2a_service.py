@@ -2,8 +2,6 @@
 
 import json
 
-import pytest
-
 from app.agent.contracts import ToolContext
 from app.core.errors import DependencyUnavailableError
 from app.core.model import ModelReply
@@ -13,6 +11,7 @@ from app.services.a2a_service import (
     COMPLETED,
     FAILED,
     INPUT_REQUIRED,
+    TURN_FAILED,
     WORKING,
     A2aService,
     sse,
@@ -101,30 +100,37 @@ async def test_a_failing_turn_reports_inside_the_stream(
     assert events[2]["message"] == "model provider unavailable"
 
 
-def test_a_message_joins_its_text_parts() -> None:
-    message = ClientMessage.model_validate(
-        {
-            "role": "user",
-            "parts": [
-                {"kind": "text", "text": "why did"},
-                {"kind": "text", "text": "I move?"},
-            ],
-        }
-    )
-
-    assert message.text() == "why did I move?"
-
-
-@pytest.mark.parametrize(
-    "payload",
-    [
-        {"role": "user", "parts": []},
-        {"role": "agent", "parts": [{"kind": "text", "text": "hi"}]},
-    ],
-    ids=["no_parts", "not_the_user"],
-)
-def test_a_message_the_protocol_does_not_allow_is_rejected(
-    payload: dict[str, object],
+async def test_an_unexpected_failure_still_ends_the_stream(
+    tool_context: ToolContext,
 ) -> None:
-    with pytest.raises(ValueError, match="validation error"):
-        ClientMessage.model_validate(payload)
+    """The failure mode a client cannot recover from if we get it wrong.
+
+    A bug in a tool, a projection or the dump of a render intent raises
+    something that is not an ``AppError``. The response has already started,
+    so the 500 handler has no body left to send: the client would be left with
+    a truncated stream whose last state is ``working`` and no ``final`` event,
+    and no way to know the turn is over. Catching it here and emitting the
+    terminal pair is reporting, not swallowing.
+    """
+
+    class Exploding(AgentService):
+        async def run_turn(self, **_: object) -> None:  # type: ignore[override]
+            raise RuntimeError("a tool has a bug")
+
+    service = A2aService(agent=Exploding.__new__(Exploding))
+
+    events = [
+        json.loads(chunk.removeprefix("data: ").strip())
+        async for chunk in service.stream(
+            message=_message(), task_id="t", context=tool_context
+        )
+    ]
+
+    assert [event.get("status", {}).get("state") for event in events] == [
+        WORKING,
+        FAILED,
+        None,
+    ]
+    assert events[1]["final"] is True
+    assert events[2]["message"] == TURN_FAILED
+    assert "bug" not in json.dumps(events), "the exception's text must not leak"

@@ -20,6 +20,10 @@ JSONRPC_VERSION = "2.0"
 METHOD_NOT_FOUND = -32601
 INVALID_PARAMS = -32602
 UNSUPPORTED_OPERATION = -32004
+#: Upper bound on top-level parameter keys. The method's own model rejects
+#: anything it does not declare; this only stops an unbounded dictionary
+#: reaching that model.
+MAX_PARAMS = 32
 
 
 class MessagePart(BaseModel):
@@ -83,7 +87,12 @@ class JsonRpcRequest(BaseModel):
 
     jsonrpc: Literal["2.0"] = Field(description="Protocol version; always `2.0`.")
     id: str | int | None = Field(
-        default=None, description="Correlation id the response echoes."
+        default=None,
+        max_length=128,
+        description=(
+            "Correlation id the response echoes. Bounded because it is "
+            "reflected verbatim: an unbounded id is an unbounded response."
+        ),
     )
     method: str = Field(
         max_length=64,
@@ -91,7 +100,9 @@ class JsonRpcRequest(BaseModel):
         examples=["message/stream"],
     )
     params: dict[str, Any] = Field(
-        default_factory=dict, description="Method parameters."
+        default_factory=dict,
+        max_length=MAX_PARAMS,
+        description="Method parameters; the method's own model validates them.",
     )
 
 
@@ -127,6 +138,7 @@ class JsonRpcFailure(BaseModel):
 __all__ = [
     "INVALID_PARAMS",
     "JSONRPC_VERSION",
+    "MAX_PARAMS",
     "METHOD_NOT_FOUND",
     "UNSUPPORTED_OPERATION",
     "ClientMessage",

@@ -28,6 +28,9 @@ from app.core.errors import AppError
 from app.schemas.a2a import ClientMessage
 from app.services.agent_service import AgentService
 
+TURN_FAILED: Final[str] = "The turn could not be completed."
+INTERNAL: Final[str] = "internal"
+
 WORKING: Final[str] = "working"
 COMPLETED: Final[str] = "completed"
 FAILED: Final[str] = "failed"
@@ -48,6 +51,16 @@ def sse(payload: dict[str, object]) -> str:
     return f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
 
 
+def _failed(
+    task_id: str, context_id: str | None, code: str, detail: str
+) -> "list[str]":
+    """Return the terminal pair a failed turn ends with."""
+    return [
+        sse(_status(task_id, context_id, FAILED)),
+        sse({"kind": "error", "taskId": task_id, "code": code, "message": detail}),
+    ]
+
+
 def _status(task_id: str, context_id: str | None, state: str) -> dict[str, object]:
     """Build a task-status event."""
     return {
@@ -60,7 +73,10 @@ def _status(task_id: str, context_id: str | None, state: str) -> dict[str, objec
 
 
 class A2aService:
-    """Run one A2A `message/stream` call as a turn, and emit its events."""
+    """Run one A2A call as a turn, and emit its events.
+
+    Deciding *what* was asked is `a2a_dispatch`; this runs it and reports.
+    """
 
     def __init__(self, *, agent: AgentService) -> None:
         """Bind the adapter to the agent host it delegates to."""
@@ -89,15 +105,18 @@ class A2aService:
                 prompt=message.text(), history=[], context=context
             )
         except AppError as exc:
-            yield sse(_status(task_id, message.context_id, FAILED))
-            yield sse(
-                {
-                    "kind": "error",
-                    "taskId": task_id,
-                    "code": exc.code,
-                    "message": exc.detail,
-                }
-            )
+            for event in _failed(task_id, message.context_id, exc.code, exc.detail):
+                yield event
+            return
+        except Exception:
+            # The response has already started, so a raise here reaches the
+            # 500 handler with no body left to send: the client would get a
+            # truncated stream whose last state is `working` and no terminal
+            # event. Catching everything and emitting the terminal pair is
+            # reporting, not swallowing — the exception still goes to the
+            # reporter through the turn loop that raised it.
+            for event in _failed(task_id, message.context_id, INTERNAL, TURN_FAILED):
+                yield event
             return
         yield sse(
             {
@@ -119,6 +138,7 @@ __all__ = [
     "COMPLETED",
     "FAILED",
     "INPUT_REQUIRED",
+    "TURN_FAILED",
     "WORKING",
     "A2aService",
     "sse",

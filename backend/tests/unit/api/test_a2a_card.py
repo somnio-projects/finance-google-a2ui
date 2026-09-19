@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 
 from app.api.container import Container
 
-AUTH = {"Authorization": "Bearer good"}
 CARD_URL = "/.well-known/agent-card.json"
 
 

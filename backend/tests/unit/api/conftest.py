@@ -88,6 +88,32 @@ def client(app: FastAPI) -> Iterator[TestClient]:
         yield test_client
 
 
+@pytest.fixture
+def unlimited_app(
+    principal: Principal, clock: FixedClock, reporter: FakeReporter
+) -> FastAPI:
+    """An app whose rate limiter will not fire during a test.
+
+    The default fixture limits to 3 requests a minute so the limiter itself can
+    be tested. A test that sweeps every route needs the opposite, and would
+    otherwise get a 429 and read it as "guarded" — which is exactly the false
+    green an auth sweep must not have.
+    """
+    settings = make_settings(
+        database_url=UNREACHABLE_DSN,
+        rate_limit_per_minute=10_000,
+        max_request_body_bytes=2048,
+        trusted_hosts=["testserver", "localhost"],
+    )
+    return make_app(settings, principal=principal, clock=clock, reporter=reporter)
+
+
+@pytest.fixture
+def unlimited_client(unlimited_app: FastAPI) -> Iterator[TestClient]:
+    with TestClient(unlimited_app, raise_server_exceptions=False) as test_client:
+        yield test_client
+
+
 def make_views_client(
     settings: Settings,
     *,

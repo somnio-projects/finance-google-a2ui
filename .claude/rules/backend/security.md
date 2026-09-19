@@ -39,7 +39,7 @@ The full control mapping is `backend/docs/SECURITY.md`. These are the rules that
 
 ## Transport & HTTP hardening (CC6.6, CC6.7 · A.8.20, A.8.26)
 
-- Keep `SecurityHeadersMiddleware`, `TrustedHostMiddleware`, CORS allow-list, body limit and rate limiter in `bootstrap._install_middleware`. Never widen CORS to `*` with credentials; never disable HSTS in production.
+- Keep `SecurityHeadersMiddleware`, `TrustedHostMiddleware`, CORS allow-list, body limit and rate limiter in `api/middleware/install.py::install_middleware`, in that order — outermost request id, innermost rate limit. Reordering them is a security change. Never widen CORS to `*` with credentials; never disable HSTS in production.
 - New endpoints that accept bodies define pydantic models with explicit `max_length`/bounds.
 
 ## Data (CC6.5 · A.8.10, A.8.12)

@@ -50,6 +50,33 @@ now a visible diff rather than a route that quietly stops declaring a 401.
   problem document; `tasks/cancel` answers `-32004` and an unknown method
   `-32601`, both at HTTP 200.
 
+**What review found, and the one that mattered.** The `backend-reviewer` agent
+was run over the four unreviewed commits in this stack. It reproduced a
+**blocker on the newest attack surface**: a `method` of 64 control characters
+is inside the field's 64-character bound, but `repr()` of it is far longer than
+the 256-character bound on the error message — so interpolating the caller's
+method into the reply raised a `ValidationError` **inside the very helper whose
+job is to avoid a transport error**, and the surface answered **HTTP 500**.
+That broke AC-3 and contradicted the spec's own claim that these messages are
+fixed strings.
+
+Protocol error messages are now **fixed strings, never built from the
+request**. The error *code* identifies the fault; echoing the caller's input
+back added nothing and cost correctness. Also from that review: `id` and
+`params` were the only unbounded fields in the module and `id` is reflected
+verbatim, so both are bounded now; the SSE generator caught only `AppError`,
+so anything else left the client with a truncated stream whose last state was
+`working` and no terminal event; and the controller carried the dispatch
+branching the architecture rule forbids, which is now `services/a2a_dispatch.py`.
+
+**The test that will keep paying.** The contract test asserted every non-public
+route *documents* a 401 — not that it *enforces* one. A controller that copied
+the documented responses and forgot `PrincipalDep` would have passed while
+being wide open. A new test calls every non-public route **without a token and
+insists on a 401**, so a route can only join the public set by being named in
+`PUBLIC`, never by omission. That is what makes the agent-card sign-off mean
+something.
+
 **Next person should know**
 - **Every turn currently starts with empty history.** `contextId` is echoed,
   never resolved — sessions are GGU-46, on a different branch. The resolution
@@ -59,6 +86,10 @@ now a visible diff rather than a route that quietly stops declaring a 401.
   finished turn rather than yielding, so the events arrive in one burst.
   ADR-K D-19 wants per-surface streaming; making the loop a generator changes
   `a2a_service.py` only.
+- **The body limit does not cover chunked encoding** (spec OD-6). `POST /` is
+  the first route that reads the raw body itself, which makes a pre-existing
+  middleware limitation load-bearing for the first time. Every envelope field
+  is bounded, so what is unbounded is the read, not the response.
 - **ADR-D is still `Proposed`.** This implements D-1, D-2, D-3, D-7 and D-9 as
   written. If ratification moves any of them, this surface moves too (spec
   OD-5). Treating a proposal as a decision silently would have been the easy
