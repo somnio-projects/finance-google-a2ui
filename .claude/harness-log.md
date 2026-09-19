@@ -105,6 +105,235 @@ figure.
 
 ---
 
+## 2026-09-19 — Harness rule: the agent opens PRs, the TL merges them
+
+**Harness only — no code change.**
+
+**Decision (Lautaro, TL, 2026-09-19).** An earlier instruction in the same day
+authorised the agent to merge its own PRs. It was withdrawn: **the agent never
+merges**. Opening the PR is where the agent's part of the lifecycle ends. The
+branch stays open, the Jira ticket stays **In Review**, and the merge happens
+only after the TL explicitly confirms it — for `develop` exactly as for `main`,
+and no matter how clean the gate is. When several PRs are waiting, the agent
+reports the list and moves on to the next ticket rather than merging any of
+them. Only when the TL names a PR (or says to merge them all) does the agent
+merge and then move the ticket to **Done**.
+
+**Changed**
+- `.claude/rules/backend/sdd.md` — the rule itself, next to the ticket-status
+  rule it completes; the `/feature` lifecycle line now reads "humans approve the
+  spec at the start and the merge at the end".
+- `.claude/commands/feature.md` — step 11 is now "stop at the open PR, never
+  merge"; the wrap-up also reports the PRs still waiting on confirmation.
+- Agent memory `pr-and-jira-workflow` updated with the same rule and the reason.
+
+**Why it is written down here.** `Done` already meant merged; what was missing
+was *who* merges. Without this, another developer's Claude reads a green gate as
+permission to close the loop itself, which takes the review decision away from
+the person who owns it.
+
+**Next person should know.** PRs accumulate on purpose. A queue of open PRs
+against `develop` is the expected steady state, not a backlog to clear.
+
+---
+
+## 2026-09-19 — GGU-46 session identity and isolation · spec `specs/backend/0004-session-identity.md`
+
+**PR:** #13 · built by a worktree agent, rebased, re-gated and manually verified here.
+
+**Re-baseline.** The ticket described the deleted ADK sample (`InMemorySessionService`,
+client-supplied `contextId` as the session key) and asked for token verification
+that PR #2 already shipped. What was actually missing — and what this delivers —
+is **persisted conversations owned by the verified subject**.
+
+**Code**
+- Migration `0004`: `conversation_sessions` + `conversation_messages` (cascade,
+  indexed on `(subject, created_at)` and `(session_id, created_at)`).
+- `SessionRepository` scopes **every** query by subject; `SessionService` answers
+  `NotFoundError` — never `AuthorizationError` — for another subject's id, so the
+  API does not reveal that the session exists.
+- Six fully documented REST operations under `/v1/sessions`, keyset pagination
+  through `helpers/cursor.py`, shared query params in `api/params.py`, the whole
+  router behind `require_feature("sessions.api")`.
+- Audit events `session.create`, `session.read`, `session.list`, `session.append`
+  carrying the session id as `target`.
+
+**Mutation check (required for auth changes)**
+- subject filter removed from `get_for_subject` → 4 isolation tests red;
+- removed from `delete_for_subject` → 2 red; restored → 9 green.
+
+**Next person should know**
+- `DELETE` answers **404** for an unknown or foreign id rather than a blanket 204:
+  idempotent on server state, and the isolation boundary stays testable from outside.
+- Coverage loses a controller's lines **after** an `await` that crosses SQLAlchemy's
+  greenlet bridge — `create_session`'s `Location` line is covered by a unit test with
+  a faked service. Any future controller with post-`await` statements hits the same thing.
+- Sessions live in the PostgreSQL the backend already owns; flagged as OD-1 against
+  ADR-F D-1 for the TL.
+## 2026-09-19 — GGU-48 continuous delivery · spec `specs/backend/0007-cd-pipeline.md`
+
+**Branch:** `feat/GGU-48_cd_pipeline` → `develop`. Built in a worktree while the
+GGU-49 and GGU-47 agents held `backend/src/app/presentation/` and
+`backend/src/app/agent/`; this ticket deliberately took the one area with no
+overlap (`.github/`, `infra/`).
+
+**Code**
+- `backend/src/app/core/release.py` — resolves `APP_RELEASE`, falls back to the
+  packaged `__version__`. `bootstrap.py` now feeds it to `HealthService` and to
+  the Sentry release, so a revision can say which build it is.
+- `infra/delivery.tf` — Artifact Registry (digest-addressed, retention
+  policies), the Workload Identity pool and provider **pinned to this GitHub
+  repository**, and a deployer service account holding only
+  `artifactregistry.writer`, `run.developer` and `serviceAccountUser` on the
+  runtime identity.
+- `infra/scripts/deploy_cloud_run.sh` — deploy with no traffic → require the
+  revision's `Ready` condition → shift traffic → verify `/healthz` reports
+  exactly the release → roll back on any failure.
+- `.github/workflows/backend-cd.yaml` — publish, deploy, tag, report.
+
+**Harness**
+- `.claude/ship-gate.json` gains `infra.delivery-script` and
+  `infra.credential-model`; the same two run in `pre-commit` and in the new
+  `delivery-scripts` job of `infra-ci.yaml`, keeping the three in step as
+  `.claude/rules/ci-conventions.md` §5 requires.
+- `.pre-commit-config.yaml` gains `shellcheck` — the repository now has shell
+  it depends on, so shell gets a linter.
+- `infra-ci.yaml` was rewritten to the job/step naming contract (it predated
+  the rule) and now ends in a `Report · …` summary like every other workflow.
+- `CLAUDE.md` gains a delivery convention; `docs/diagrams/08` and `09` updated
+  in this PR as `.claude/rules/diagrams.md` requires;
+  `docs/compliance/CHANGE_MANAGEMENT.md` §7 rewritten around the automated
+  record.
+
+**Why the deploy is a shell script and not inline workflow YAML.** A rollback
+path that has never executed is not a rollback path. As a script it runs
+against a stub `gcloud` on `PATH`, so the whole sequence — including the
+rollback — is exercised on a laptop in under a second. Inline YAML could only
+have been proven by breaking a real deploy.
+
+**What the `backend-reviewer` agent caught, and what changed because of it**
+
+The first version was gate-green and wrong in four ways. All four are fixed
+here; they are worth reading because three of them would only have shown up on
+the first real deploy.
+
+1. **The readiness probe could pass for the wrong revision.** It looked up the
+   candidate revision's tagged URL and fell back to the service's public URL
+   when the lookup missed — and the public URL still served the *previous*,
+   healthy revision. A missed lookup therefore verified the old code and then
+   shifted traffic to the unverified new one. An unresolvable revision is now a
+   hard failure, covered by its own test.
+2. **The probes could not have reached the service at all.** Ingress is
+   `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`, so the `*.run.app` hostnames are
+   unreachable from a GitHub-hosted runner and every deploy would have rolled
+   itself back. The pre-traffic gate is now the revision's own `Ready`
+   condition — which Cloud Run reports only after the startup probe on
+   `/readyz` passes — and the post-traffic check goes to the load balancer
+   domain (`PUBLIC_URL`), the only address that resolves from outside the VPC.
+   Recorded as spec OD-5.
+3. **The release tag could never be created.** The workflow granted
+   `contents: read` and then POSTed a ref, swallowing every error as "already
+   exists". The deploy job now has `contents: write` and distinguishes a 422
+   from a real failure.
+4. **One provider and one deployer variable cannot serve two projects.**
+   `delivery.tf` creates a pool, a provider and a deployer *per environment*,
+   but the workflow read repository-level variables and only branched on the
+   project id — so a `main` run would have authenticated as staging and pushed
+   into the production registry. A `settings` job now resolves the whole
+   per-environment set once and **fails naming the missing variable** instead.
+
+Also from that review: the release is read through `Settings.app_release`
+rather than `os.environ` (the architecture rule allows `os.environ` only in
+`core/config.py`); the release comparison is an exact match on the parsed
+`version` field instead of a substring, so `0.1.0` no longer "matches"
+`0.1.0+stale`; production federation additionally requires
+`assertion.ref == refs/heads/main`; `run.tf` declares `ignore_changes` on the
+image and the traffic split so a later `terraform apply` cannot undo a
+rollback (OD-6); `APP_RELEASE` is documented in `env.example` and compose; and
+the report job now fails on `skipped`, so a rejected production approval is not
+reported green.
+
+**Verified**
+- `make gate`: 266 tests, 100 % branch coverage, pylint 10.00/10, no CVEs.
+- `bash infra/scripts/tests/test_deploy_cloud_run.sh`: 36 passed, covering all
+  nine paths including deploy failure and an unidentifiable revision.
+  **Mutation check** — removing `shift_traffic "${previous}"` from `rollback()`
+  turned exactly 5 assertions red; restored → 36 passed.
+- `bash infra/scripts/tests/test_wif_conditions.sh`: 5 passed.
+- `terraform fmt -check -recursive` clean; `terraform validate` → *Success!*
+- `shellcheck` clean on all delivery scripts.
+- Container run with `APP_RELEASE=0.1.0+a1b2c3d` → `/healthz`
+  `{"status":"ok","version":"0.1.0+a1b2c3d"}`; without it → `"0.1.0"`;
+  `/readyz` ready; uid still 10001.
+
+**Next person should know**
+- **The pipeline is merged but has never run**: the GCP projects do not exist
+  until GGU-29 applies Terraform. AC-1, AC-2 and the live halves of AC-4/AC-5
+  are proven here by the script tests and `terraform validate`, not by a
+  deploy, and the PR says so rather than implying otherwise.
+- After GGU-29, set the repository **variables** (not secrets) from the
+  Terraform outputs. Everything except `GCP_REGION` is suffixed per
+  environment, because each environment has its own pool, provider and deployer:
+  `GCP_PROJECT_ID_*`, `GCP_WIF_PROVIDER_*`, `GCP_DEPLOYER_SA_*`, `PUBLIC_URL_*`.
+  Then add the required reviewer to the `production` GitHub Environment — that
+  reviewer *is* AC-2; the workflow only declares the environment.
+- A gate-green delivery pipeline proves very little. Everything that mattered
+  in this ticket was found by reading the failure paths, not by running the
+  suite; budget review time accordingly on anything that touches deploys.
+- `cleanup_policy` is `cleanup_policies` in the google provider v6. The first
+  spelling validates as an unsupported block, which is how it was caught.
+- Terraform provider downloads need network access the sandbox denies; run
+  `terraform init` outside it.
+## 2026-09-19 — GGU-28 open-source readiness · spec `specs/repo/0001-open-source-readiness.md`
+
+**Branch:** `docs/GGU-28_open_source_readiness` → `develop`. Documentation and
+one developer command; no application code changed.
+
+**The finding that shaped it.** The repository had **no `README.md` at all** —
+a public reference application whose audience is Google's reviewers, with no
+entry point. It also had no `NOTICE`, no architecture document, no contribution
+guide and no issue templates.
+
+**Added**
+- `README.md`, `NOTICE`, `docs/ARCHITECTURE.md`, `CONTRIBUTING.md`,
+  `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}`.
+- `backend/scripts/mint_dev_token.py` and `make token`. Not cosmetic: every
+  route except the health ones is authenticated, so without it the README's
+  clone-and-run promise was false — a fresh clone could not call anything.
+- `specs/repo/` as a spec area for repository-level work, registered in
+  `specs/README.md`.
+
+**The decision worth keeping.** The README describes **what is built, not what
+is planned**, and says so in its second paragraph: the backend is real, the
+Flutter client is still Google's upstream `restaurant_finder` sample, the
+delivery pipeline has never run, and the market data is invented. A reviewer
+who discovers the Flutter gap by failing to run the app trusts nothing else in
+the repository, so the gap leads rather than hides. `docs/ARCHITECTURE.md`
+ends in a "Known gaps" table naming the ticket that closes each one — which now
+has to shrink as GGU-3, Epic 1, GGU-29 and GGU-22 land. **Leaving that table
+stale is the main risk this change creates.**
+
+Per-file Apache headers were declined on backend sources (spec OD-2): `LICENSE`
+plus `NOTICE` satisfies the licence, the upstream client files keep their
+Google headers as required, and a 13-line header on files capped at 150 lines
+would consume the budget it is meant to protect.
+
+**Verified**
+- The README's own commands, run for real against a **clean** database:
+  compose up, `make token`, `GET /v1/me` → 200 `{"subject":"alice",...}`; the
+  same call with no token → 401 problem+json; `/healthz` and `/readyz` 200
+  unauthenticated; `/openapi.json` complete.
+- `gitleaks` over the **full history** — 71 commits, ~5 MB, **no leaks**.
+- `make gate` green: 262 tests, 100 % branch coverage, pylint 10.00/10.
+
+**Next person should know**
+- The shared compose database is at Alembic revision `0004` from the GGU-46
+  branch, which `develop` does not have yet — a container built from `develop`
+  refuses to start against it ("Can't locate revision identified by '0004'").
+  Use a throwaway database when verifying a branch that predates it.
+- `make token` is local only and refuses to run without `AUTH_JWT_SECRET`
+  rather than inventing a default. It cannot mint anything production would
+  accept, because production verifies RS256 through OIDC.
 ## 2026-09-19 — GGU-47 agent host · spec `specs/backend/0006-agent-host.md`
 
 **Branch:** `feat/GGU-47_agent_host` → `develop`. Built by a worktree agent in
