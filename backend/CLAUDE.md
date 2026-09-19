@@ -48,6 +48,7 @@ Rules that are checked, not suggested:
 - **Persistence**: one `AsyncSession` per request (`get_session`), commit/rollback owned by `session_scope`. Schema changes ship with an Alembic migration in the same PR.
 - **Telemetry**: report through the injected `ErrorReporter`; never `if sentry_configured:` at call sites (the null reporter handles absence).
 - **Feature flags**: gate a route with `dependencies=[require_feature("<domain>.<capability>")]` (`api/feature_gate.py`); dark-launch with `default=False`. Toggle via `PUT /v1/admin/feature-flags/{key}` (scope `admin`) or the `FEATURE_FLAGS_FORCE_DISABLED` env kill-switch. See `docs/FEATURE_FLAGS.md`.
+- **REST + OpenAPI**: resource paths, correct verbs/status codes, and *every* operation carrying `summary`, `description`, `operation_id`, `tags`, `response_model`, the full `responses` map (problem+json per status) and examples; every DTO field documented and bounded. Shared response blocks come from `api/openapi.py` — never copy-pasted. See `.claude/rules/backend/api-design.md`.
 - **Docstrings** on every public module/class/function (Google style, imperative). Type hints everywhere, `X | None`, built-in generics.
 
 ## Tests

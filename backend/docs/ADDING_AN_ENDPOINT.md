@@ -79,6 +79,10 @@ async def read_thing(
 __all__ = ["router"]
 ```
 
+The operation must also carry `operation_id`, `description` and a full
+`responses=` map built with `app.api.openapi.problem_responses(...)` — see
+`.claude/rules/backend/api-design.md` for the complete contract.
+
 Rules the reviewer checks on a controller:
 
 - resolves `Depends`, calls **one** service method, returns the DTO — no
