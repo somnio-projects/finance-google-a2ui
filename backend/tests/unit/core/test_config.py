@@ -75,3 +75,28 @@ def test_settings_read_csv_lists_from_environment_not_json(
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     assert settings.cors_allowed_origins == ["http://a.test", "http://b.test"]
     assert settings.trusted_hosts == ["*"]
+
+
+@pytest.mark.parametrize(
+    ("environment", "override", "expected"),
+    [
+        ("production", None, True),
+        ("local", None, False),
+        ("local", True, True),
+        ("production", False, False),
+    ],
+    ids=["prod_default", "local_default", "local_forced_on", "prod_forced_off"],
+)
+def test_settings_admin_mfa_required_follows_environment_unless_set(
+    environment: str, override: bool | None, expected: bool
+) -> None:
+    settings = make_settings(
+        environment=environment,
+        trusted_hosts=["api.example"],
+        auth_admin_require_mfa=override,
+    )
+    assert settings.admin_mfa_required is expected
+
+
+def test_settings_audit_retention_defaults_to_thirteen_months() -> None:
+    assert make_settings().audit_retention_days == 400

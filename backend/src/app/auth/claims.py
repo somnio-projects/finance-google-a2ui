@@ -29,6 +29,7 @@ class JwtClaims(BaseModel):
     scope: list[str] = Field(default_factory=list)
     scp: list[str] = Field(default_factory=list)
     roles: list[str] = Field(default_factory=list)
+    amr: list[str] = Field(default_factory=list)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -36,7 +37,7 @@ class JwtClaims(BaseModel):
         """Drop non-string emails instead of rejecting the token."""
         return value if isinstance(value, str) else None
 
-    @field_validator("scope", "scp", "roles", mode="before")
+    @field_validator("scope", "scp", "roles", "amr", mode="before")
     @classmethod
     def _as_scope_list(cls, value: object) -> list[str]:
         """Accept ``"read write"`` or ``["read", "write"]``; ignore anything else."""
@@ -71,6 +72,7 @@ def principal_from_claims(
         provider=provider,
         email=claims.email,
         scopes=claims.scopes,
+        auth_methods=frozenset(method.lower() for method in claims.amr),
         token_fingerprint=fingerprint(token),
     )
 

@@ -1,7 +1,9 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pytest_mock import MockerFixture
+from sqlalchemy import update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,3 +67,24 @@ async def test_infrastructure_errors_are_translated(
         await repo.list_recent(limit=1)
     with pytest.raises(DependencyUnavailableError, match="read failed"):
         await repo.list_for_subject("x", limit=1)
+    with pytest.raises(DependencyUnavailableError, match="write failed"):
+        await repo.purge_older_than(datetime.now(tz=UTC))
+
+
+async def test_purge_older_than_deletes_only_expired_rows(
+    session: AsyncSession,
+) -> None:
+    repo = AuditRepository(session)
+    subject = f"s-{uuid.uuid4()}"
+    old = await repo.add(_event(subject, "old"))
+    await repo.add(_event(subject, "fresh"))
+    await session.execute(
+        update(AuditEvent)
+        .where(AuditEvent.id == old.id)
+        .values(created_at=datetime.now(tz=UTC) - timedelta(days=401))
+    )
+    purged = await repo.purge_older_than(datetime.now(tz=UTC) - timedelta(days=400))
+    assert purged == 1
+    assert [e.action for e in await repo.list_for_subject(subject, limit=5)] == [
+        "fresh"
+    ]

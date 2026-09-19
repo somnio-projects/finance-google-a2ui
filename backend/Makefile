@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget test test-unit test-integration audit gate run migrate
+.PHONY: install lint format typecheck budget test test-unit test-integration audit gate run migrate purge-audit
 
 install:
 	$(UV) sync --all-groups
@@ -37,6 +37,11 @@ AUDIT_REQ ?= $(or $(TMPDIR),/tmp)/finance-a2ui-requirements.txt
 audit:
 	$(UV) export --frozen --no-dev --no-emit-project --format requirements-txt -o $(AUDIT_REQ)
 	$(UV) tool run --with "pip<26" pip-audit --strict --progress-spinner off --disable-pip -r $(AUDIT_REQ)
+
+# Retention job (docs/compliance/DATA_RETENTION.md): deletes audit_events older than
+# AUDIT_RETENTION_DAYS. Needs DATABASE_URL; run monthly (Cloud Scheduler in prod).
+purge-audit:
+	$(UV) run python scripts/purge_audit_events.py
 
 gate: lint typecheck budget test audit
 	@echo "ship gate green"

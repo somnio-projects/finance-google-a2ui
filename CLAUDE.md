@@ -14,9 +14,12 @@ Default branch `main`. GitHub `somnio-projects/finance-google-a2ui`. Demo target
 ## Run
 
 ```bash
+cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
 docker compose up --build              # Postgres + backend on http://localhost:8000 (docs at /docs)
 cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
+
+Compose carries only the topology (hostnames, ports, origins); credentials and tunables come from each solution's `.env` through `env_file`. Frontend is not part of the stack yet.
 
 ## Verify — a change is not done without this
 

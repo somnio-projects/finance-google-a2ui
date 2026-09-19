@@ -2,8 +2,11 @@
 .DS_Store
 .idea/
 
-# Secrets
+# Secrets — env files live inside each solution (backend/.env, ...) and are never committed;
+# the committed templates are named `env.example` (no leading dot).
 .env
+**/.env
+**/.env.*
 
 # Python
 **/.venv/

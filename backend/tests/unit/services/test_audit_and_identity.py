@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from app.core.principal import Principal
 from app.models.audit_event import AuditEvent
@@ -13,6 +13,7 @@ class FakeAuditRepository:
     def __init__(self) -> None:
         self.events: list[AuditEvent] = []
         self.requested_limits: list[int] = []
+        self.purge_cutoffs: list[datetime] = []
 
     async def add(self, entity: AuditEvent) -> AuditEvent:
         entity.created_at = datetime.now(tz=UTC)
@@ -24,6 +25,10 @@ class FakeAuditRepository:
     ) -> Sequence[AuditEvent]:
         self.requested_limits.append(limit)
         return [e for e in self.events if e.subject == subject][:limit]
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        self.purge_cutoffs.append(cutoff)
+        return 7
 
 
 async def test_record_persists_principal_action_and_fingerprint(
@@ -67,3 +72,13 @@ async def test_identity_describe_audits_then_returns_sorted_scopes(
     assert me.email == principal.email
     assert [e.action for e in repo.events] == ["identity.read"]
     assert repo.events[0].request_id == "req-9"
+
+
+async def test_purge_expired_deletes_before_the_retention_cutoff() -> None:
+    repo = FakeAuditRepository()
+    now = datetime(2026, 9, 19, 12, 0, tzinfo=UTC)
+    purged = await AuditService(repo).purge_expired(  # type: ignore[arg-type]
+        now=now, retention_days=400
+    )
+    assert purged == 7
+    assert repo.purge_cutoffs == [now - timedelta(days=400)]

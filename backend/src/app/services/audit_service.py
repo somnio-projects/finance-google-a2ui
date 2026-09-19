@@ -1,5 +1,6 @@
 """Record and read the security audit trail."""
 
+from datetime import datetime, timedelta
 from typing import Final
 
 from app.core.dto import from_row
@@ -40,6 +41,11 @@ class AuditService:
             principal.subject, limit=bounded
         )
         return [from_row(AuditEventResponse, event) for event in events]
+
+    async def purge_expired(self, *, now: datetime, retention_days: int) -> int:
+        """Apply the retention policy: delete events older than ``retention_days``."""
+        cutoff = now - timedelta(days=retention_days)
+        return await self._repository.purge_older_than(cutoff)
 
 
 __all__ = ["MAX_HISTORY", "AuditService"]

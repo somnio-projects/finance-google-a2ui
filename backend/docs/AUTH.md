@@ -65,6 +65,18 @@ Controllers and services do not change.
 Services decide with `principal.has_scope("...")` and raise
 `AuthorizationError`. Controllers never inspect claims.
 
+Privileged (`admin`) operations additionally require a **multi-factor
+session** when `Settings.admin_mfa_required` is true — by default only in
+production (`AUTH_ADMIN_REQUIRE_MFA` overrides). The check reads the token's
+`amr` claim (RFC 8176): `Principal.auth_methods` must intersect
+`MFA_METHODS` (`mfa`, `otp`, `hwk`, `swk`, `sms`, `fido`). The identity
+provider is responsible for putting `amr` in the token; the HS256 dev provider
+accepts whatever the minted token carries, so local admin tokens for a
+production-like run need `"amr": ["pwd", "otp"]`.
+
+The decoded payload is validated through `JwtClaims` (`auth/claims.py`) before
+anything reads it; unknown claims are kept but never interpreted.
+
 ## Audit
 
 `IdentityService.describe` records `identity.read` in `audit_events` with the

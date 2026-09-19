@@ -85,6 +85,7 @@ def get_feature_flag_service(
         audit=audit,
         reporter=container.reporter,
         force_disabled=container.settings.feature_flags_force_disabled,
+        require_mfa=container.settings.admin_mfa_required,
     )
 
 

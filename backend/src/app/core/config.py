@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     auth_jwt_secret: SecretStr | None = None
     auth_oidc_jwks_url: str | None = None
     auth_leeway_seconds: int = Field(default=30, ge=0, le=300)
+    # None = decide by environment (required in production, optional elsewhere)
+    auth_admin_require_mfa: bool | None = None
+
+    # --- data retention (docs/compliance/DATA_RETENTION.md) --------------
+    audit_retention_days: int = Field(default=400, ge=30, le=3650)
 
     # --- observability -----------------------------------------------------
     sentry_dsn: SecretStr | None = None
@@ -97,6 +102,13 @@ class Settings(BaseSettings):
             msg = "TRUSTED_HOSTS must be an explicit list when ENVIRONMENT=production"
             raise ValueError(msg)
         return self
+
+    @property
+    def admin_mfa_required(self) -> bool:
+        """Whether ``admin``-scoped operations must present an MFA ``amr``."""
+        if self.auth_admin_require_mfa is None:
+            return self.is_production
+        return self.auth_admin_require_mfa
 
     @property
     def is_production(self) -> bool:

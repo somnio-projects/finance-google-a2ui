@@ -1,8 +1,9 @@
 """Repository for ``AuditEvent`` rows."""
 
 from collections.abc import Sequence
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.errors import DependencyUnavailableError
@@ -30,6 +31,15 @@ class AuditRepository(BaseRepository[AuditEvent]):
         except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc
         return result.scalars().all()
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        """Delete events created before ``cutoff``; return how many went."""
+        statement = delete(AuditEvent).where(AuditEvent.created_at < cutoff)
+        try:
+            result = await self._session.execute(statement)
+        except (SQLAlchemyError, OSError) as exc:
+            raise DependencyUnavailableError("database write failed") from exc
+        return int(result.rowcount)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 __all__ = ["AuditRepository"]

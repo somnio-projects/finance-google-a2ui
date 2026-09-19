@@ -64,6 +64,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  sast:
+    name: semgrep (python security rules)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep
+        run: semgrep scan --config p/python --config p/owasp-top-ten --config p/secrets --error --metrics=off backend/src backend/alembic
+
   image:
     name: docker build
     runs-on: ubuntu-latest

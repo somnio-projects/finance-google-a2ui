@@ -48,3 +48,18 @@ def test_principal_from_claims_ignores_non_string_email() -> None:
 def test_principal_from_claims_requires_subject(payload: dict[str, object]) -> None:
     with pytest.raises(AuthenticationError, match="subject claim"):
         principal_from_claims(payload, provider="p", token="t")
+
+
+@pytest.mark.parametrize(
+    ("amr", "expected"),
+    [(["pwd", "MFA"], {"pwd", "mfa"}), ("pwd otp", {"pwd", "otp"}), (None, set())],
+    ids=["list", "space_separated", "absent"],
+)
+def test_principal_from_claims_collects_authentication_methods(
+    amr: object, expected: set[str]
+) -> None:
+    payload: dict[str, object] = {"sub": "s"}
+    if amr is not None:
+        payload["amr"] = amr
+    principal = principal_from_claims(payload, provider="jwt", token="tok")
+    assert principal.auth_methods == frozenset(expected)

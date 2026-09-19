@@ -33,8 +33,10 @@ class FeatureFlagService:
         audit: AuditService,
         reporter: ErrorReporter,
         force_disabled: Collection[str],
+        require_mfa: bool = False,
     ) -> None:
-        """Inject collaborators; ``force_disabled`` comes from settings."""
+        """Inject collaborators; the last two arguments come from settings."""
+        self._require_mfa = require_mfa
         self._repository = repository
         self._cache = cache
         self._audit = audit
@@ -90,6 +92,8 @@ class FeatureFlagService:
     def _require_admin(self, principal: Principal) -> None:
         if not principal.has_scope(ADMIN_SCOPE):
             raise AuthorizationError("feature flags require the admin scope")
+        if self._require_mfa and not principal.is_mfa:
+            raise AuthorizationError("admin operations require a multi-factor session")
 
     def _to_response(self, flag: FeatureFlag) -> FeatureFlagResponse:
         response = from_row(FeatureFlagResponse, flag)

@@ -47,8 +47,10 @@ Key convention: lowercase dotted segments, `<domain>.<capability>`
 | `GET /v1/admin/feature-flags` | — | every persisted flag |
 | `PUT /v1/admin/feature-flags/{key}` | `{"enabled": false, "description": "why"}` | upserts, refreshes the cache, audits |
 
-Both require a bearer token whose scopes/roles include `admin`
-(`scope: "admin"`, `scp: ["admin"]` or `roles: ["admin"]`). Anyone else gets
+Both require a bearer token whose scopes/roles include `admin` — and, in
+production (or when `AUTH_ADMIN_REQUIRE_MFA=true`), an `amr` claim proving a
+second factor (see `docs/AUTH.md`, "Authorization"). The scope may come from
+`scope: "admin"`, `scp: ["admin"]` or `roles: ["admin"]`; anyone else gets
 403 `forbidden`. Every change writes `feature_flag.update:<key>` to
 `audit_events` with the actor's subject and the request id, and emits the
 `feature_flag.toggled{key,enabled}` metric.

@@ -12,8 +12,13 @@ the operating manual. Human-oriented docs live in [`docs/`](docs/).
 
 ```bash
 # from the repository root — Postgres + backend, with hot reload
+cp backend/env.example backend/.env      # once; compose loads it via env_file (never commit .env)
 docker compose up --build
 ```
+
+Compose only sets the topology keys (`DATABASE_URL` → `db`, `PUBLIC_BASE_URL`,
+`CORS_ALLOWED_ORIGINS`, `UVICORN_EXTRA_ARGS`); everything else — credentials
+included — is read from `backend/.env`.
 
 - API: <http://localhost:8000> · OpenAPI: <http://localhost:8000/docs>
 - Liveness: `GET /healthz` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
@@ -60,7 +65,7 @@ backend/
 ├── tests/unit/         no I/O, fakes only
 ├── tests/integration/  real PostgreSQL via testcontainers
 ├── docs/               architecture, security (SOC 2 / ISO 27001), testing, auth, observability
-└── scripts/            gate helpers (file budget); `make audit` runs pip-audit
+└── scripts/            gate helpers (file budget), `purge_audit_events.py` (retention job — `make purge-audit`); `make audit` runs pip-audit
 ```
 
 Every file stays under **150 lines** (`scripts/check_file_budget.py` fails the
@@ -72,6 +77,8 @@ repositories are the only code that touches SQLAlchemy sessions.
 | Doc | What it answers |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, dependency direction, patterns, how to add a feature |
+| [docs/ADDING_AN_ENDPOINT.md](docs/ADDING_AN_ENDPOINT.md) | Where routes live, the layer-by-layer recipe, controller template, tests per layer |
+| [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md) | Runtime endpoint switches: `require_feature`, admin API, kill-switch |
 | [docs/SECURITY.md](docs/SECURITY.md) | Controls mapped to SOC 2 TSC and ISO/IEC 27001 Annex A |
 | [docs/AUTH.md](docs/AUTH.md) | Bearer-token auth, provider registry, adding OAuth / SSO |
 | [docs/TESTING.md](docs/TESTING.md) | Unit vs integration, fixtures, the 100 % coverage gate |

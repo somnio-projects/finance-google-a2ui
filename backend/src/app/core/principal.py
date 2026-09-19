@@ -4,7 +4,12 @@ Lives in ``core`` so the ``TokenVerifier`` protocol and every layer can
 depend on it without importing the ``auth`` adapters.
 """
 
+from typing import Final
+
 from pydantic import BaseModel, ConfigDict, Field
+
+# RFC 8176 ``amr`` values that count as a second factor.
+MFA_METHODS: Final = frozenset({"mfa", "otp", "hwk", "swk", "sms", "fido"})
 
 
 class Principal(BaseModel):
@@ -16,6 +21,7 @@ class Principal(BaseModel):
         email: E-mail claim when the provider supplies one (not re-verified here).
         scopes: Granted scopes / roles, already normalised to lowercase.
         token_fingerprint: Non-reversible correlation id for the token used.
+        auth_methods: ``amr`` claim values (RFC 8176), lowercase; empty when absent.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -25,10 +31,16 @@ class Principal(BaseModel):
     email: str | None = Field(default=None, max_length=320)
     scopes: frozenset[str] = Field(default_factory=frozenset)
     token_fingerprint: str = Field(min_length=8, max_length=64)
+    auth_methods: frozenset[str] = Field(default_factory=frozenset)
 
     def has_scope(self, scope: str) -> bool:
         """Return True when the principal was granted ``scope``."""
         return scope.lower() in self.scopes
 
+    @property
+    def is_mfa(self) -> bool:
+        """Return True when the token was obtained with a second factor."""
+        return not self.auth_methods.isdisjoint(MFA_METHODS)
 
-__all__ = ["Principal"]
+
+__all__ = ["MFA_METHODS", "Principal"]

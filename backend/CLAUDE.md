@@ -5,8 +5,9 @@ FastAPI 0.141 · Python 3.12 · uv · SQLAlchemy 2 (async, asyncpg) · Alembic �
 ## Run
 
 ```bash
+cp backend/env.example backend/.env   # once; compose reads it via env_file, never committed
 docker compose up --build          # from repo root: Postgres + API on :8000 (hot reload)
-cd backend && make run             # API only, needs DATABASE_URL (cp env.example .env)
+cd backend && make run             # API only, needs DATABASE_URL (same .env)
 make migrate                       # alembic upgrade head
 ```
 
@@ -59,7 +60,7 @@ Rules that are checked, not suggested:
 ## Adding a feature (Spec-Driven Development)
 
 1. Write `specs/backend/NNNN-<feature>.md` from `specs/TEMPLATE.md` (problem, scope, API contract, data model, acceptance criteria, test plan, security notes). Get it reviewed before code.
-2. Migration → model → schema → repository → service → controller → `deps.py` provider → `router.py` include, each with its tests.
+2. Migration → model → schema → repository → service → controller (`api/v1/<domain>.py`) → `deps.py` provider → `router.py` include, each with its tests. Recipe + controller template: `docs/ADDING_AN_ENDPOINT.md`.
 3. `make gate` green, run the `backend-reviewer` agent, open the PR with `Spec:` and `Test decision:` lines, then append the iteration to `.claude/harness-log.md`.
 
 `/feature <description>` packages this lifecycle.

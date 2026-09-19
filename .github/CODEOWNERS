@@ -1,0 +1,25 @@
+# Review ownership (SOC 2 CC8.1 / ISO 27001 A.8.32).
+# Every PR needs an approving review from an owner of the paths it touches;
+# GitHub enforces this through the branch-protection ruleset on `main`
+# (docs/compliance/CHANGE_MANAGEMENT.md).
+
+*                                   @lautarob @mcampbell-somnio
+
+# Security-critical backend surfaces — TL backend approves.
+/backend/src/app/auth/              @lautarob
+/backend/src/app/api/middleware/    @lautarob
+/backend/src/app/api/deps.py        @lautarob
+/backend/src/app/core/config.py     @lautarob
+/backend/alembic/versions/          @lautarob
+/backend/Dockerfile                 @lautarob
+/docker-compose.yml                 @lautarob
+
+# Pipeline, scanners and the harness are change-controlled.
+/.github/                           @lautarob
+/.claude/                           @lautarob
+/.gitleaks.toml                     @lautarob
+/.pre-commit-config.yaml            @lautarob
+
+# Compliance corpus — changes need the security owner.
+/docs/compliance/                   @lautarob
+/backend/docs/SECURITY.md           @lautarob

@@ -7,6 +7,50 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Audit remediation: compliance corpus, admin MFA, retention purge
+
+**Trigger:** first full Somnio CLI audits on the foundation — `soc2-audit`
+40/100, `iso27001-audit` 64/100, `python-best-practices` 88/100 (the earlier
+`security-audit` 98 measured only technical controls). Lautaro's standing rule:
+every audit > 90 before the PR.
+
+**Code**
+- `JwtClaims` / `JwksDocument` pydantic boundary models; `core/dto.py::from_row`
+  (corrupt row → typed 503); `FeatureFlagCache.get` and `JwksKeyResolver.key_for`
+  are pure queries; `Final` constants; `create_app` split; fixture/`autospec`/ids
+  fixes (`02d1836`).
+- **Admin MFA**: `Principal.auth_methods` from the `amr` claim, `Principal.is_mfa`,
+  `Settings.admin_mfa_required` (default = production), enforced in
+  `FeatureFlagService._require_admin`.
+- **Retention**: `AuditRepository.purge_older_than`, `AuditService.purge_expired`,
+  `scripts/purge_audit_events.py`, `make purge-audit`, `AUDIT_RETENTION_DAYS=400`.
+- `api/router.py` documented as the single route registration point;
+  `docs/ADDING_AN_ENDPOINT.md` recipe + controller template (Lautaro: "routes
+  ready to declare endpoints with the harness next iteration").
+
+**Harness / repo**
+- `docs/compliance/` — 27 policy/runbook documents + `isms/` (scope, SoA with all
+  93 Annex A controls, objectives, document control, internal audit program,
+  management review, CAPA log, competence records). Owner/approver/version
+  headers; honest status words (pentest and DPAs are *planned*, not claimed).
+- `.github/CODEOWNERS`, `pull_request_template.md`, `scheduled-scan.yaml`
+  (weekly pip-audit + SBOM, Trivy SARIF, gitleaks → issue on failure), Semgrep
+  `sast` job in `backend-ci.yaml`; root `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+  `CONTRIBUTORS.md`, `CHANGELOG.md`.
+- First **restore drill executed** against the compose database (pass, ~1 s) —
+  `docs/compliance/RESTORE_DRILL_LOG.md`.
+
+**Next person should know**
+- Policies are approved by merge; the management review #1 is asynchronous in
+  PR #2 by design — from #2 it is a meeting.
+- Local admin tokens for a production-like run need `"amr": ["pwd","otp"]`.
+- `make purge-audit` needs `DATABASE_URL`; in production it is a monthly job
+  (GGU-29).
+- `backend-reviewer` should check that a new column/DTO field appears in
+  `docs/compliance/DATA_CLASSIFICATION.md` §2.
+
+---
+
 ## 2026-09-19 — Feature flags for endpoints · spec `specs/backend/0002-feature-flags.md`
 
 **Decision (Lautaro):** endpoints must be switchable on demand without a deploy.
@@ -27,6 +71,12 @@ repository-side memory; the agent's private memory mirrors the decisions.
 **Harness**
 - `backend/docs/FEATURE_FLAGS.md`; `backend/CLAUDE.md` gets the flag rule;
   `specs/README.md` index; compose/env.example variables.
+- **Env policy (Lautaro, 2026-09-19):** `docker-compose.yml` carries only the
+  topology; the backend service loads `backend/.env` through `env_file`
+  (required — `cp backend/env.example backend/.env` once per clone). Env files
+  live inside each solution and are git-ignored (`**/.env`, `**/.env.*`); the
+  agent cannot create them (permission deny), a human copies the template.
+  Compose stays backend-only until frontend work starts.
 
 **Next person should know**
 - Dark-launch a new endpoint with `default=False`; an admin flips it on.
