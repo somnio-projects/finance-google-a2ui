@@ -58,6 +58,14 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         ),
     },
     {
+        "name": "sessions",
+        "description": (
+            "Conversation sessions and the messages inside them (spec 0004). "
+            "A session belongs to the verified subject that opened it: "
+            "anybody else's session answers 404, exactly as an unknown one."
+        ),
+    },
+    {
         "name": "feature-flags",
         "description": (
             "Runtime switches for endpoints (spec 0002). Administrative: the "
