@@ -12,7 +12,12 @@ redacted by processor even if someone logs them by mistake. Do not log emails
 or other PII; log ids and fingerprints.
 
 Events worth knowing: `startup` (with `public_base_url`), `shutdown`,
-`unhandled_exception` (with traceback, before the masked 500 is returned).
+`unhandled_exception` (with traceback, before the masked 500 is returned),
+`agent.turn` (one per turn: `model`, `outcome`, `duration_ms`, `iterations`,
+`tool_calls` — and deliberately **no** prompt, answer or subject, spec 0006
+AC-13), `agent.tool.failed` (the tool name and the exception *type*, never its
+text) and `agent.tool.unknown` (a tool the model asked for that is not
+registered).
 
 ## Errors and metrics — `ErrorReporter`
 
@@ -22,7 +27,8 @@ Code never talks to Sentry directly. It calls the injected `ErrorReporter`
 - `capture_exception(exc)` — from the catch-all handler and anywhere a failure
   is swallowed on purpose.
 - `increment(metric, tags=)` — counters. Current metrics:
-  `auth.accepted{provider}`, `auth.rejected{code}`, `feature_flag.toggled{key,enabled}`.
+  `auth.accepted{provider}`, `auth.rejected{code}`, `feature_flag.toggled{key,enabled}`,
+  `agent.turn{model,outcome}`.
 
 Implementations: `SentryErrorReporter` when `SENTRY_DSN` is set (environment,
 release = app version, `send_default_pii=False`, request bodies never sent,
