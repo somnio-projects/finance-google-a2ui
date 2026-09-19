@@ -43,6 +43,7 @@ back into `develop` in the same day.
 
 - Pull request required; **1 approving review from a code owner** (`.github/CODEOWNERS`); stale approvals dismissed on new commits.
 - Required status checks: the four jobs of `.github/workflows/backend-ci.yaml` (exact names below).
+- One active exception, **EX-1** in [EXCEPTION_POLICY.md](EXCEPTION_POLICY.md): the admin role may merge its own PR while the second code owner onboards (expires 2026-10-03). The PR itself is still mandatory.
 - **Squash merges only** (the repository disallows merge commits and rebase merges); force-push and deletion of `main`/`develop` disabled; administrators included.
 - The PR template (`.github/pull_request_template.md`) carries the `Spec:` and `Test decision:` lines and the security checklist.
 
