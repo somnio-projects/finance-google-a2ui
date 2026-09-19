@@ -50,7 +50,40 @@ class AgentSkill(BaseModel):
 class AgentCard(BaseModel):
     """What a client reads before it has a token."""
 
-    model_config = ConfigDict(frozen=True, populate_by_name=True)
+    model_config = ConfigDict(
+        frozen=True,
+        populate_by_name=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "name": "Finance A2UI agent",
+                    "description": (
+                        "Answers portfolio questions by composing UI surfaces."
+                    ),
+                    "url": "https://api.example.test",
+                    "version": "0.1.0",
+                    "protocolVersion": A2A_VERSION,
+                    "defaultInputModes": ["text/plain"],
+                    "defaultOutputModes": ["text/plain", "application/json"],
+                    "capabilities": {
+                        "streaming": True,
+                        "pushNotifications": False,
+                        "stateTransitionHistory": False,
+                    },
+                    "skills": [
+                        {
+                            "id": "compute_attribution",
+                            "name": "Compute attribution",
+                            "description": (
+                                "Explain what moved the portfolio over a window."
+                            ),
+                            "tags": ["portfolio", "performance"],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
 
     name: str = Field(max_length=64, description="Agent name.")
     description: str = Field(max_length=512, description="What the agent is for.")

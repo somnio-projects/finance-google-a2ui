@@ -16,9 +16,15 @@ from app.services.a2a_service import (
     A2aService,
     sse,
 )
-from app.services.agent_service import AgentService
 from tests.unit.conftest import FakeTool
-from tests.unit.services.agent_doubles import ANSWER, call, make_service
+from tests.unit.services.agent_doubles import (
+    ANSWER,
+    FailingModel,
+    call,
+    make_service,
+)
+
+UNAVAILABLE = "model provider unavailable"
 
 
 def _message(text: str = "why did I move?") -> ClientMessage:
@@ -81,11 +87,8 @@ async def test_a_failing_turn_reports_inside_the_stream(
     arrive after the response had already started, which no client can read.
     """
 
-    class Failing(AgentService):
-        async def run_turn(self, **_: object) -> None:  # type: ignore[override]
-            raise DependencyUnavailableError("model provider unavailable")
-
-    service = A2aService(agent=Failing.__new__(Failing))
+    agent, _ = make_service(FailingModel(DependencyUnavailableError(UNAVAILABLE)))
+    service = A2aService(agent=agent)
 
     events = [
         json.loads(chunk.removeprefix("data: ").strip())
@@ -97,7 +100,7 @@ async def test_a_failing_turn_reports_inside_the_stream(
     assert events[0]["status"] == {"state": WORKING}
     assert events[1]["status"] == {"state": FAILED}
     assert events[2]["kind"] == "error"
-    assert events[2]["message"] == "model provider unavailable"
+    assert events[2]["message"] == UNAVAILABLE
 
 
 async def test_an_unexpected_failure_still_ends_the_stream(
@@ -113,11 +116,8 @@ async def test_an_unexpected_failure_still_ends_the_stream(
     terminal pair is reporting, not swallowing.
     """
 
-    class Exploding(AgentService):
-        async def run_turn(self, **_: object) -> None:  # type: ignore[override]
-            raise RuntimeError("a tool has a bug")
-
-    service = A2aService(agent=Exploding.__new__(Exploding))
+    agent, reporter = make_service(FailingModel(RuntimeError("a tool has a bug")))
+    service = A2aService(agent=agent)
 
     events = [
         json.loads(chunk.removeprefix("data: ").strip())
@@ -134,3 +134,6 @@ async def test_an_unexpected_failure_still_ends_the_stream(
     assert events[1]["final"] is True
     assert events[2]["message"] == TURN_FAILED
     assert "bug" not in json.dumps(events), "the exception's text must not leak"
+    assert [type(exc) for exc in reporter.exceptions] == [RuntimeError], (
+        "the stream swallows the exception, so the turn must have reported it"
+    )

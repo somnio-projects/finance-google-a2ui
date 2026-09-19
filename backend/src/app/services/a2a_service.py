@@ -3,73 +3,45 @@
 This is the **thin adapter** ADR-J D-2 requires: it knows the protocol envelope
 and nothing else. No business rule lives here, and `AgentService` does not know
 the protocol exists — which is what lets A2A move (it is alpha) without the
-services moving with it.
+services moving with it. The event shapes themselves live in
+`app.services.a2a_events`.
 
-**What this does not do yet, stated plainly:**
+**The stream is incremental** (ADR-K D-19, ADR-D). `AgentService.run_turn_events`
+yields each render intent the moment the tool that produced it returned, so
+this adapter forwards a `render-intent` event per surface *while the turn is
+still running*, and only then the terminal `message` and status. Perceived
+latency is therefore the time to the first widget, not to the last. The
+terminal message still carries the full `renderIntents` list, so a client that
+ignores the incremental events sees exactly what spec 0010 AC-2 documented.
 
-- *Conversation history.* `contextId` is echoed for correlation but no history
-  is loaded, because sessions (GGU-46) are not on this branch. Every turn
-  currently starts empty. The resolution rule is already decided (ADR-J D-4,
-  ADR-A): a `contextId` is resolved **against the authenticated subject** or
-  treated as unknown, never trusted on its own.
-- *Incremental streaming.* ADR-K D-19 wants each surface emitted as it is
-  ready. `AgentService.run_turn` returns a finished turn rather than yielding,
-  so the stream here is well-formed but not incremental: a `working` event,
-  then the result. Making the loop a generator is the follow-up, and it changes
-  this module only.
+**What this still does not do, stated plainly:** *conversation history*.
+`contextId` is echoed for correlation but no history is loaded, because
+sessions (GGU-46) are not on this branch. Every turn starts empty. The
+resolution rule is already decided (ADR-J D-4, ADR-A): a `contextId` is
+resolved **against the authenticated subject** or treated as unknown, never
+trusted on its own.
 """
 
-import json
 from collections.abc import AsyncIterator
-from typing import Final
 
-from app.agent.contracts import ToolContext
+from app.agent.contracts import ToolContext, TurnResult
+from app.agent.events import SurfaceReady
 from app.core.errors import AppError
 from app.schemas.a2a import ClientMessage
+from app.services.a2a_events import (
+    COMPLETED,
+    FAILED,
+    INPUT_REQUIRED,
+    INTERNAL,
+    TURN_FAILED,
+    WORKING,
+    answer,
+    failed,
+    sse,
+    status,
+    surface,
+)
 from app.services.agent_service import AgentService
-
-TURN_FAILED: Final[str] = "The turn could not be completed."
-INTERNAL: Final[str] = "internal"
-
-WORKING: Final[str] = "working"
-COMPLETED: Final[str] = "completed"
-FAILED: Final[str] = "failed"
-#: A turn that produced a surface awaiting the user is a normal terminal state,
-#: not an error — the client must not treat it as one (ADR-D D-3).
-INPUT_REQUIRED: Final[str] = "input_required"
-
-
-def sse(payload: dict[str, object]) -> str:
-    """Frame one JSON payload as a server-sent event.
-
-    Args:
-        payload: The event body.
-
-    Returns:
-        The wire text, terminated by the blank line SSE requires.
-    """
-    return f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
-
-
-def _failed(
-    task_id: str, context_id: str | None, code: str, detail: str
-) -> "list[str]":
-    """Return the terminal pair a failed turn ends with."""
-    return [
-        sse(_status(task_id, context_id, FAILED)),
-        sse({"kind": "error", "taskId": task_id, "code": code, "message": detail}),
-    ]
-
-
-def _status(task_id: str, context_id: str | None, state: str) -> dict[str, object]:
-    """Build a task-status event."""
-    return {
-        "kind": "status-update",
-        "taskId": task_id,
-        "contextId": context_id,
-        "status": {"state": state},
-        "final": state != WORKING,
-    }
 
 
 class A2aService:
@@ -93,21 +65,20 @@ class A2aService:
             context: The subject-scoped tool context.
 
         Yields:
-            Server-sent events: a `working` status, then either the answer and
-            a terminal status, or a terminal `failed` status. A failure is
-            reported **inside the stream** rather than as a transport error,
-            because the client has already received a 200 and a header by the
-            time a turn can fail.
+            Server-sent events: a `working` status, a `render-intent` per
+            surface as it becomes ready, then either the answer and a terminal
+            status, or a terminal `failed` status. A failure is reported
+            **inside the stream** rather than as a transport error, because the
+            client has already received a 200 and a header by the time a turn
+            can fail.
         """
-        yield sse(_status(task_id, message.context_id, WORKING))
+        yield sse(status(task_id, message.context_id, WORKING))
         try:
-            result = await self._agent.run_turn(
-                prompt=message.text(), history=[], context=context
-            )
-        except AppError as exc:
-            for event in _failed(task_id, message.context_id, exc.code, exc.detail):
+            async for event in self._turn(message, task_id, context):
                 yield event
-            return
+        except AppError as exc:
+            for event in failed(task_id, message.context_id, exc.code, exc.detail):
+                yield sse(event)
         except Exception:
             # The response has already started, so a raise here reaches the
             # 500 handler with no body left to send: the client would get a
@@ -115,23 +86,26 @@ class A2aService:
             # event. Catching everything and emitting the terminal pair is
             # reporting, not swallowing — the exception still goes to the
             # reporter through the turn loop that raised it.
-            for event in _failed(task_id, message.context_id, INTERNAL, TURN_FAILED):
-                yield event
-            return
-        yield sse(
-            {
-                "kind": "message",
-                "taskId": task_id,
-                "contextId": message.context_id,
-                "role": "agent",
-                "parts": [{"kind": "text", "text": result.message}],
-                "renderIntents": [
-                    intent.model_dump(mode="json") for intent in result.render_intents
-                ],
-            }
-        )
+            for event in failed(task_id, message.context_id, INTERNAL, TURN_FAILED):
+                yield sse(event)
+
+    async def _turn(
+        self, message: ClientMessage, task_id: str, context: ToolContext
+    ) -> AsyncIterator[str]:
+        """Forward the turn's own events, surfaces first, terminal pair last."""
+        context_id = message.context_id
+        results: list[TurnResult] = []
+        async for event in self._agent.run_turn_events(
+            prompt=message.text(), history=[], context=context
+        ):
+            if isinstance(event, SurfaceReady):
+                yield sse(surface(task_id, context_id, event.index, event.intent))
+            else:
+                results.append(event.result)
+        result = results[-1]
+        yield sse(answer(task_id, context_id, result.message, result.render_intents))
         terminal = INPUT_REQUIRED if result.render_intents else COMPLETED
-        yield sse(_status(task_id, message.context_id, terminal))
+        yield sse(status(task_id, context_id, terminal))
 
 
 __all__ = [

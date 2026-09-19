@@ -46,3 +46,4 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 | [backend/0008-attribution-tool.md](backend/0008-attribution-tool.md) | Implemented | GGU-36 |
 | [backend/0009-prompt-fragments.md](backend/0009-prompt-fragments.md) | Implemented | GGU-14 |
 | [backend/0010-a2a-surface.md](backend/0010-a2a-surface.md) | Implemented | GGU-3 |
+| [backend/0012-delivery-followups.md](backend/0012-delivery-followups.md) | Implemented | — (ADR-K D-18/D-19/D-20 follow-ups) |

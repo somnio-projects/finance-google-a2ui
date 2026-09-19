@@ -9,6 +9,7 @@ a route can answer and returns the documented entries.
 from http import HTTPStatus
 from typing import Any, Final
 
+from app.core.errors import PROBLEM_TYPE_BASE
 from app.schemas.problem import ProblemDetails
 
 #: One sentence per status, written for the client developer reading `/docs`.
@@ -95,7 +96,7 @@ def problem_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
             "content": {
                 "application/problem+json": {
                     "example": {
-                        "type": f"https://errors.finance-a2ui/{_code(status)}",
+                        "type": f"{PROBLEM_TYPE_BASE}{_code(status)}",
                         "title": HTTPStatus(status).phrase,
                         "status": status,
                         "detail": PROBLEM_DESCRIPTIONS[status],

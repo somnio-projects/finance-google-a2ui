@@ -27,7 +27,11 @@ from app.api.deps.common import (
     get_request_id,
     get_session,
 )
-from app.api.deps.views import get_render_intent_service, get_view_service
+from app.api.deps.views import (
+    get_render_intent_service,
+    get_view_render_service,
+    get_view_service,
+)
 
 __all__ = [
     "ContainerDep",
@@ -48,5 +52,6 @@ __all__ = [
     "get_request_id",
     "get_session",
     "get_tool_context",
+    "get_view_render_service",
     "get_view_service",
 ]

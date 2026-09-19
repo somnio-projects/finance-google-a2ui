@@ -15,6 +15,7 @@ from pydantic import Field
 from app.domain.holdings import Holding
 from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
+from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Category, ProjectionDto, Total, money, percentage
 from app.presentation.options import (
     CurrencyOptions,
@@ -32,7 +33,6 @@ SUMMARY: Final[str] = (
     "Allocation by holding: market value and portfolio weight per symbol, "
     "with a residual Other bucket for everything beyond top_n."
 )
-ENDPOINTS: Final[tuple[str, ...]] = ("GET /v1/portfolios/{portfolio_id}/views",)
 OTHER_KEY: Final[str] = "other"
 
 #: Row order per ``sort`` option — a table, so a new order is a new entry.
@@ -129,7 +129,7 @@ PROJECTION: Final = register(
     ProjectionSpec(
         id=VIEW_ID,
         summary=SUMMARY,
-        endpoints=ENDPOINTS,
+        endpoints=PORTFOLIO_ENDPOINTS,
         options=HoldingsAllocationOptions,
         dto=HoldingsAllocationPayload,
         render=render,

@@ -6,6 +6,12 @@ translated into these at the adapter boundary and never leak upward.
 """
 
 from http import HTTPStatus
+from typing import Final
+
+#: Base of every problem-details ``type`` URI. It lives here, beside the codes
+#: it is concatenated with, so the API layer and the services that build a
+#: nested problem (the batch render) share one spelling.
+PROBLEM_TYPE_BASE: Final[str] = "https://errors.finance-a2ui/"
 
 
 class AppError(Exception):
@@ -93,6 +99,7 @@ class ConfigurationError(AppError):
 
 
 __all__ = [
+    "PROBLEM_TYPE_BASE",
     "AppError",
     "AuthenticationError",
     "AuthorizationError",

@@ -7,6 +7,126 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Delivery follow-ups · spec `specs/backend/0012-delivery-followups.md`
+
+**Branch:** `feat/backend_followups`, stacked on `feat/GGU-3_a2a_surface`. Six
+deep. **No Jira ticket** — every item here was already decided in ADR-K's
+*Delivery speed* section and carried as an open decision in specs 0005 and
+0010; none of it needed a new one.
+
+**Why it mattered.** ADR-K D-18/D-19/D-20 had shipped as written-down
+intentions. Three caveats were sitting in the tree as prose — "not
+incremental", "no batch", "no ETag" — which is the state where a decision
+quietly stops being true. The demo is judged on time-to-first-widget, and all
+three pushed the wrong way.
+
+**Code**
+- `agent/events.py` + `services/agent_loop.py` — the model/tool loop is now an
+  **async generator**. `AgentService.run_turn_events` yields a `SurfaceReady`
+  the moment a tool returns a render intent; `run_turn` stayed as a thin
+  collector, so no existing caller moved. The loop moved to its own module
+  because a generator that also owns telemetry and history is two jobs.
+- `services/a2a_events.py` + `a2a_service.py` — the adapter forwards a
+  `render-intent` event per surface, mid-turn. The event shapes moved next
+  door: A2A is alpha, and the module that follows it should not also be the
+  one that runs turns. **The terminal `message` still carries the full
+  `renderIntents` list**, so spec 0010 AC-2 holds and no client breaks.
+- `POST /v1/view-renders` (`api/v1/view_renders.py`, `…_openapi.py`,
+  `services/view_render_service.py`, `schemas/view_renders.py`) — the
+  heterogeneous batch, **per-entry status**. One unknown view is that entry's
+  404; the other entries still render. 201 with no `Location`, and the
+  operation says why.
+- `api/caching.py` — strong `ETag`, `Cache-Control`, `If-None-Match`, 304, as
+  a **dependency with its own tests**, applied to both view reads. The next
+  read endpoint gets revalidation for one parameter and one call.
+- `presentation/endpoints.py` — serving endpoints named once. Adding the batch
+  route would otherwise have meant editing every chart module, which is D-15's
+  coupling in reverse.
+- `core/errors.py` now owns `PROBLEM_TYPE_BASE`; `api/errors.py`,
+  `api/openapi.py` and the batch service share it instead of spelling the URI
+  three times.
+- `presentation/contract.py::catalog_entry` — one description of a catalog
+  entry, used by `ViewService.catalog()` **and** by the route's OpenAPI
+  example, so the documented catalog is the served catalog.
+
+**Harness**
+- **`.claude/rules/backend/api-design.md` §2 required a request and a response
+  example on every operation, and nothing enforced it.** `test_openapi_contract.py`
+  checked summaries, ids, tags, statuses, parameters and schema properties;
+  `test_openapi_projections.py` checked only the projection half. New
+  `tests/unit/api/test_openapi_examples.py` closes it, following `$ref`s so
+  `json_schema_extra` counts exactly as the rule says it should. It turned
+  eight existing operations red — `/healthz`, `/readyz`, both feature-flag
+  routes, `/v1/me`, `/v1/me/audit-events`, `/v1/views` and the agent card —
+  and **every one was fixed by adding a real example, none by relaxing the
+  test**. `POST /` (A2A) is the single exemption, named with its reason in
+  `WITHOUT_EXAMPLES`, and a third test fails if that list ever names a route
+  that no longer exists.
+- Diagrams updated in the same change: `05-agent-turn.md` (the loop yields;
+  `SessionService` drawn as planned), `06-response-shaping.md` (three callers,
+  the batch as a resource, the ETag box), `03-backend-layers.md` and
+  `04-request-lifecycle.md` (`ConditionalResponse` is a dependency, not
+  middleware).
+- `specs/README.md` indexes 0012; spec 0010's OD-3 now points at where it was
+  closed, and its OD-2 at why it was not.
+
+**`backend-reviewer` findings, all closed in the same commit**
+- **A model provider raising something untranslated reached no reporter and
+  emitted no `agent.turn` metric.** Pre-existing, but this change made the path
+  reachable *and* testable, so it is fixed here: `run_turn_events` now reports
+  and counts every failure (`outcome="error"`) before re-raising. The A2A
+  stream is the only transport that can swallow it — by then the client holds
+  a 200 — so the turn is the last place that can still report.
+- `Vary: Authorization` added beside `Cache-Control` on both reads: the bodies
+  are subject-scoped and `private` alone was the whole argument.
+- `max-age=60` replaced with `private, no-cache`. The old comment claimed the
+  window was short so a feature flag took effect quickly — but a `max-age`
+  means the client does *not* ask, so a switched-off endpoint kept rendering
+  client-side for a minute. The comment and the header now agree.
+- The catalog's entity tag is computed **once at import**, not per request: it
+  dumps every options schema, and doing that on the 304 path is exactly the
+  compute revalidation exists to avoid.
+- `reviewer@google.com` in the `/v1/me` example replaced with a reserved
+  `example.test` address — an e-mail is PII and this one is published in
+  `/openapi.json`.
+- `ViewDescriptor.endpoints`' field example was stale the moment the batch
+  route landed; it now matches what the catalog actually serves.
+
+**Verified locally before the PR**
+- `make gate`: 609 tests, **100 % branch coverage**, ruff/basedpyright/budget/
+  xenon/vulture/interrogate/deptry/pylint/codespell clean, pip-audit clean.
+- No mutation check needed: no new auth, rate-limit or masking logic. The
+  batch route reuses `PrincipalDep`, `require_feature` and the existing
+  problem handler, and the unauthenticated sweep in `test_openapi_contract.py`
+  covers it by construction — a missing `PrincipalDep` turns it red.
+
+**Next person should know**
+- **`contextId` is still not resolved, and that is deliberate** (spec 0012
+  OD-3). GGU-46's session code merged onto `ggu46-integration`; this stack was
+  never rebased onto it, so there is no `SessionService`, no
+  `conversation_session` model and no `session_repository` in this tree —
+  nothing to resolve a `contextId` *against*. `a2a_service.py` still passes
+  `history=[]` and says so. **Whoever rebases this stack onto the session work
+  owns that item**, and the rule is unchanged: resolve against the verified
+  subject or treat as unknown, never trust the id alone.
+- The A2A `render-intent` event kind is **ours, not the protocol's** (spec 0012
+  OD-2). A2A has no "surface ready" event and its artifact semantics are
+  unsettled, so guessing at `artifact-update` would have invented a contract we
+  do not control. It lives in one module; when A2A settles, one file changes.
+- ADR-K D-20's other half — memoising the domain build and each render — is
+  **not** done (OD-4). A 304 already removes the body from the wire; a render
+  cache keyed by *(subject, view, options)* is unbounded memory in a process
+  that seeds a portfolio per subject, so it needs an eviction decision, not a
+  decorator.
+- Docker is needed for the integration suite, and in a sandboxed shell the
+  daemon socket is refused — run `make test` with the sandbox off, or point
+  `TEST_DATABASE_URL` at a running PostgreSQL.
+- Adding a chart still touches only its own module, but it now imports
+  `PORTFOLIO_ENDPOINTS` from `presentation/endpoints.py` instead of spelling
+  its serving endpoints out.
+
+---
+
 ## 2026-09-19 — GGU-3 A2A surface · spec `specs/backend/0010-a2a-surface.md`
 
 **Branch:** `feat/GGU-3_a2a_surface`, stacked on GGU-14. Five deep.

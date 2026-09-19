@@ -17,6 +17,7 @@ from app.core.errors import NotFoundError
 from app.core.principal import Principal
 from app.domain.portfolio import Portfolio
 from app.domain.provider import PortfolioProvider
+from app.presentation.contract import catalog_entry
 from app.presentation.fragments import ProjectionDto
 from app.presentation.registry import ProjectionRegistry
 from app.presentation.resolve import validated_options
@@ -43,13 +44,7 @@ class ViewService:
     async def catalog(self) -> list[ViewDescriptor]:
         """Describe every registered projection for `/v1/views` (0005 AC-8)."""
         return [
-            ViewDescriptor(
-                id=projection.id,
-                summary=projection.summary,
-                endpoints=list(projection.endpoints),
-                options_schema=projection.options.model_json_schema(),
-                example=dict(projection.example),
-            )
+            ViewDescriptor.model_validate(catalog_entry(projection))
             for projection in self._registry.all()
         ]
 

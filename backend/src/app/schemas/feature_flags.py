@@ -12,7 +12,17 @@ FLAG_KEY_PATTERN: Final[str] = r"^[a-z0-9]+(\.[a-z0-9_-]+)*$"
 class FeatureFlagUpdate(BaseModel):
     """Body of ``PUT /v1/admin/feature-flags/{key}``."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "enabled": False,
+                    "description": "attribution paused until the seed is re-cut",
+                }
+            ]
+        },
+    )
 
     enabled: bool = Field(
         description="Target state of the flag after the call.", examples=[False]
@@ -28,7 +38,21 @@ class FeatureFlagUpdate(BaseModel):
 class FeatureFlagResponse(BaseModel):
     """Current state of one flag."""
 
-    model_config = ConfigDict(frozen=True, from_attributes=True)
+    model_config = ConfigDict(
+        frozen=True,
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "key": "views.batch-render",
+                    "enabled": True,
+                    "description": "attribution paused until the seed is re-cut",
+                    "updated_by": "firebase:uid-8f2c",
+                    "updated_at": "2026-09-19T12:43:39.042545Z",
+                }
+            ]
+        },
+    )
 
     key: str = Field(
         min_length=3,

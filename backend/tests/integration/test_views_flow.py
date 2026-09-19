@@ -62,3 +62,43 @@ def test_the_catalog_is_served(integration_client: TestClient) -> None:
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:
     assert integration_client.get(VIEWS_URL).status_code == 401
     assert integration_client.get("/v1/views").status_code == 401
+
+
+def test_a_batch_renders_across_entries_with_per_entry_status(
+    integration_client: TestClient,
+) -> None:
+    """Spec 0012 AC-4, AC-5 — the real route, the real gates, one bad entry."""
+    response = integration_client.post(
+        "/v1/view-renders",
+        json={
+            "renders": [
+                {"view": ALLOCATION},
+                {"view": "nope.thing.v1"},
+                {"view": WATERFALL},
+            ]
+        },
+        headers=_headers(),
+    )
+
+    assert response.status_code == 201
+    results = response.json()["results"]
+    assert [entry["status"] for entry in results] == [200, 404, 200]
+    assert results[0]["payload"]["total"]["amount"]["display"].startswith("$")
+    assert results[1]["error"]["status"] == 404
+
+
+def test_a_repeated_view_read_revalidates_to_304(
+    integration_client: TestClient,
+) -> None:
+    """Spec 0012 AC-7 — end to end, including the feature gate and the DB."""
+    headers = _headers()
+    first = integration_client.get(f"{VIEWS_URL}?view={ALLOCATION}", headers=headers)
+    etag = first.headers["ETag"]
+
+    second = integration_client.get(
+        f"{VIEWS_URL}?view={ALLOCATION}",
+        headers={**headers, "If-None-Match": etag},
+    )
+
+    assert second.status_code == 304
+    assert second.content == b""

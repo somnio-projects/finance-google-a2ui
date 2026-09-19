@@ -15,6 +15,7 @@ from pydantic import Field
 from app.domain.holdings import Holding
 from app.domain.portfolio import Portfolio
 from app.presentation import options as opt
+from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Annotation, Bucket, ProjectionDto, Total
 from app.presentation.registry import register
 from app.presentation.spec import ProjectionSpec
@@ -26,7 +27,6 @@ SUMMARY: Final[str] = (
     "Unrealised profit and loss walked from cost basis to market value, one "
     "bucket per holding, biggest move first."
 )
-ENDPOINTS: Final[tuple[str, ...]] = ("GET /v1/portfolios/{portfolio_id}/views",)
 SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
 ANNOTATED: Final[int] = 2
 
@@ -134,7 +134,7 @@ PROJECTION: Final = register(
     ProjectionSpec(
         id=VIEW_ID,
         summary=SUMMARY,
-        endpoints=ENDPOINTS,
+        endpoints=PORTFOLIO_ENDPOINTS,
         options=AttributionWaterfallOptions,
         dto=AttributionWaterfallPayload,
         render=render,
