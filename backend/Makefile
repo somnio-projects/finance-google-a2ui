@@ -62,3 +62,9 @@ run:
 
 migrate:
 	$(UV) run alembic upgrade head
+
+# Local development only: an HS256 token the `jwt` provider accepts, so a fresh
+# clone can call an authenticated route. Production verifies RS256 via OIDC.
+token:
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(UV) run python scripts/mint_dev_token.py --subject "$(or $(SUBJECT),alice)"

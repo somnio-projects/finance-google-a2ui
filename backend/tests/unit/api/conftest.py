@@ -115,3 +115,28 @@ def views_client(
     yield from make_views_client(
         api_settings, principal=principal, clock=clock, reporter=reporter
     )
+
+
+def make_session_app(
+    principal: Principal,
+    clock: FixedClock,
+    reporter: FakeReporter,
+    **overrides: object,
+) -> FastAPI:
+    """App for the session routes (spec 0004) with room for several requests."""
+    settings = make_settings(
+        database_url=UNREACHABLE_DSN,
+        rate_limit_per_minute=200,
+        trusted_hosts=["testserver", "localhost"],
+        **overrides,
+    )
+    return make_app(settings, principal=principal, clock=clock, reporter=reporter)
+
+
+@pytest.fixture
+def sessions_client(
+    principal: Principal, clock: FixedClock, reporter: FakeReporter
+) -> Iterator[TestClient]:
+    app = make_session_app(principal, clock, reporter)
+    with TestClient(app, raise_server_exceptions=False) as test_client:
+        yield test_client

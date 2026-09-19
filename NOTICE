@@ -1,0 +1,29 @@
+finance-google-a2ui
+Copyright 2026 Somnio Software
+
+This product includes software developed at Somnio Software
+(https://www.somniosoftware.com/) as an open-source reference application for
+the A2UI protocol, built as a showcase with Google.
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+--------------------------------------------------------------------------------
+Third-party material
+--------------------------------------------------------------------------------
+
+The Flutter client under client_flutter/ originates from the "restaurant
+finder" sample in Google's genui repository, which is also licensed under the
+Apache License, Version 2.0:
+
+    Copyright 2024 Google LLC
+
+Files derived from that sample keep their original Apache 2.0 headers and the
+Google copyright line, as the licence requires. As of this release the client
+is still substantially the upstream sample; it is being replaced with the
+finance catalog under Epic 1 (GGU-7), and headers on files rewritten from
+scratch carry the Somnio copyright instead.
+
+The client depends on the genui packages (genui, genui_a2a, a2ui_core)
+published by Google, and the backend speaks the A2A protocol. Those are
+dependencies and protocol implementations, not vendored source, and are
+governed by their own licences.
