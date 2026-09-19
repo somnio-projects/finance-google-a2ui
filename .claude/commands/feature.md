@@ -6,7 +6,7 @@ argument-hint: "[GGU-n and/or short description]"
 Work to deliver: $ARGUMENTS
 
 Follow the Spec-Driven Development lifecycle end to end (repo
-`somnio-projects/finance-google-a2ui`, base branch `main`, Jira project `GGU`):
+`somnio-projects/finance-google-a2ui`, base branch `develop`, Jira project `GGU`):
 
 1. **Spec**: find or create `specs/backend/NNNN-<feature>.md` from
    `specs/TEMPLATE.md`. Fill Problem, Scope, API contract, Data model,
@@ -16,8 +16,9 @@ Follow the Spec-Driven Development lifecycle end to end (repo
    repository → service → controller → `api/deps.py` → `api/router.py`) and
    the tests per AC. Flag anything that would break the 150-line budget or
    the layering table in `.claude/rules/backend/architecture.md`.
-3. **Branch**: off `origin/main`, `feat/GGU-n_short_desc` (or `fix/`,
-   `chore/`), per the `git-branch-format` skill.
+3. **Branch**: off `origin/develop`, `feat/GGU-n_short_desc` (or `fix/`,
+   `chore/`), per the `git-branch-format` skill. Every PR targets `develop`;
+   `main` only receives release PRs.
 4. **Implement** in layer order, one test file alongside each source file.
    Use the fakes in `backend/tests/conftest.py`; anything touching PostgreSQL
    goes to `backend/tests/integration/`. Keep the security rules
@@ -33,7 +34,7 @@ Follow the Spec-Driven Development lifecycle end to end (repo
    mark the spec `Implemented`, append the iteration to
    `.claude/harness-log.md` (code + harness changes + what the next dev must
    know). If a durable decision was made, save it to memory too.
-9. **PR**: push and open it with `gh pr create` — base `main`, title
+9. **PR**: push and open it with `gh pr create` — base `develop`, title
    `type(scope): description`, body with `Spec: specs/backend/NNNN-...`,
    `Test decision: ...`, the gate output, and the GGU ticket link. English,
    no AI attribution.

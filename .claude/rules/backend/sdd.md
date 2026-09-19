@@ -18,6 +18,7 @@ alwaysApply: false
 
 ## Iterations are recorded
 
+- Branches are cut from `develop` and every PR targets `develop` (`main` only via release PR).
 - Every PR appends an entry to `.claude/harness-log.md`: date, spec, what changed in code **and** in the harness (rules, hooks, commands, docs), and what the next person should know.
 - When a rule in `.claude/rules/**`, a hook or `CLAUDE.md` changes, say why in the log entry — the harness is versioned like code.
 - Memory (the agent's persistent notes) mirrors decisions that are not derivable from the repo: who decided, when, and the alternatives rejected.

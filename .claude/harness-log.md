@@ -20,7 +20,7 @@ every audit > 90 before the PR.
 - `JwtClaims` / `JwksDocument` pydantic boundary models; `core/dto.py::from_row`
   (corrupt row → typed 503); `FeatureFlagCache.get` and `JwksKeyResolver.key_for`
   are pure queries; `Final` constants; `create_app` split; fixture/`autospec`/ids
-  fixes (`02d1836`).
+  fixes (PR #2).
 - **Admin MFA**: `Principal.auth_methods` from the `amr` claim, `Principal.is_mfa`,
   `Settings.admin_mfa_required` (default = production), enforced in
   `FeatureFlagService._require_admin`.

@@ -6,7 +6,7 @@ on:
   pull_request:
     paths: ["backend/**", ".github/workflows/backend-ci.yaml", "docker-compose.yml"]
   push:
-    branches: [main]
+    branches: [main, develop]
     paths: ["backend/**", ".github/workflows/backend-ci.yaml", "docker-compose.yml"]
 
 permissions:

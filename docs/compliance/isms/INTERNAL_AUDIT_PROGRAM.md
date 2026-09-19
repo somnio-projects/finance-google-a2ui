@@ -22,20 +22,20 @@ scores feed [SECURITY_OBJECTIVES.md](SECURITY_OBJECTIVES.md) O-6.
 
 | Date | Audit | Scope / commit | Result | Findings → actions |
 |---|---|---|---|---|
-| 2026-09-18 | `security-audit` (run 2) | `feat/backend_fastapi_foundation` before feature flags | **98/100** | Dependabot, pre-commit, gitleaks config, Trivy, base-image upgrade (all landed in `7af8331`) |
-| 2026-09-19 | `python-health-audit` (run 3) | after feature flags (`9169280`) | **92/100** | no pre-push hook / no agent model pin noted — accepted (PostToolUse hook + CI cover it) |
-| 2026-09-19 | `python-best-practices` (run 3) | `9169280` | **88/100** | boundary validation (JwtClaims, JwksDocument, `from_row`), CQS in cache/JWKS, `Final`, fixtures — landed in `02d1836`; re-audit in progress |
-| 2026-09-19 | `soc2-audit` (run 3, first full 10-family audit) | `9169280` | **40/100** | this compliance corpus, CODEOWNERS, PR template, scheduled scan, Semgrep, retention purge, admin MFA, restore drill — re-audit pending |
-| 2026-09-19 | `iso27001-audit` (run 3) | `9169280` | **64/100** | same remediation + ISMS artifacts (this folder) — re-audit pending |
+| 2026-09-18 | `security-audit` (run 2) | `feat/backend_fastapi_foundation` before feature flags | **98/100** | Dependabot, pre-commit, gitleaks config, Trivy, base-image upgrade (landed in PR #2) |
+| 2026-09-19 | `python-health-audit` (run 3) | after the feature-flag commits (PR #2) | **92/100** | no pre-push hook / no agent model pin noted — accepted (PostToolUse hook + CI cover it) |
+| 2026-09-19 | `python-best-practices` (run 3) | PR #2 (feature flags) | **88/100** | boundary validation (JwtClaims, JwksDocument, `from_row`), CQS in cache/JWKS, `Final`, fixtures — landed in PR #2; re-audited |
+| 2026-09-19 | `soc2-audit` (run 3, first full 10-family audit) | PR #2 (feature flags) | **40/100** | this compliance corpus, CODEOWNERS, PR template, scheduled scan, Semgrep, retention purge, admin MFA, restore drill — re-audit pending |
+| 2026-09-19 | `iso27001-audit` (run 3) | PR #2 (feature flags) | **64/100** | same remediation + ISMS artifacts (this folder) — re-audit pending |
 | 2026-09-19 | Backup/restore drill #1 | local compose | pass | see RESTORE_DRILL_LOG.md |
-| 2026-09-19 | `python-best-practices` (run 4) | after `02d1836` | **90/100** | stricter basedpyright, CQS split, keyword-only constructors (`4944768`); run 5 pending |
-| 2026-09-19 | `soc2-audit` (run 4) | after the compliance corpus (`82534de`) | **78/100** (Largely Ready) | remaining: Family F infrastructure (IaC), external pentest, DPAs, IAM/revocation |
-| 2026-09-19 | `iso27001-audit` (run 4) | `82534de` | **86/100** (Certification-Ready) | Category A scored from a stale snapshot — re-run (run 5) in progress; H/I need IaC + DPAs |
+| 2026-09-19 | `python-best-practices` (run 4) | after the boundary-hardening commits (PR #2) | **90/100** | stricter basedpyright, CQS split, keyword-only constructors (PR #2); run 5 pending |
+| 2026-09-19 | `soc2-audit` (run 4) | after the compliance corpus (PR #2) | **78/100** (Largely Ready) | remaining: Family F infrastructure (IaC), external pentest, DPAs, IAM/revocation |
+| 2026-09-19 | `iso27001-audit` (run 4) | PR #2 (compliance corpus) | **86/100** (Certification-Ready) | Category A scored from a stale snapshot — re-run (run 5) in progress; H/I need IaC + DPAs |
 | 2026-09-19 | `security-audit` (run 3) | final tree | **98/100** | no new findings |
-| 2026-09-19 | `python-best-practices` (run 5) | `4944768` | **91/100** | explicit `Final[...]` type arguments (cosmetic) |
-| 2026-09-19 | `python-health-audit` (run 4) | `4944768` | **91/100** | no new findings |
-| 2026-09-19 | `soc2-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (`4cd5af4`) | **93/100** (Audit-Ready) | remaining: external pentest (G2), `main` ruleset enforcement (E3/E4), DPAs (I3), rotation subscriber (F9), IaC apply (H5/H7) |
-| 2026-09-19 | `iso27001-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (`4cd5af4`) | **92/100** (Certification-Ready) | remaining: DPAs (A.5.19/20), `main` ruleset enforcement (A.8.32), external pentest / independent ISMS review (A.8.29, A.5.35), contributor attestations |
+| 2026-09-19 | `python-best-practices` (run 5) | PR #2 | **91/100** | explicit `Final[...]` type arguments (cosmetic) |
+| 2026-09-19 | `python-health-audit` (run 4) | PR #2 | **91/100** | no new findings |
+| 2026-09-19 | `soc2-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (PR #2) | **93/100** (Audit-Ready) | remaining: external pentest (G2), `main` ruleset enforcement (E3/E4), DPAs (I3), rotation subscriber (F9), IaC apply (H5/H7) |
+| 2026-09-19 | `iso27001-audit` (run 6, run 5 aborted by the usage limit) | final tree incl. `infra/` (PR #2) | **92/100** (Certification-Ready) | remaining: DPAs (A.5.19/20), `main` ruleset enforcement (A.8.32), external pentest / independent ISMS review (A.8.29, A.5.35), contributor attestations |
 | 2026-09-19 | `backend-reviewer` round 2 | final tree | FLAGGED → fixed | `audit_events.target` (0003), `feature_flag.list` audited, purge job into `app/jobs`, spec/docs sync, branch-protection evidence |
 
 Reports are kept by the security owner (`backend/reports/`, git-ignored, 90

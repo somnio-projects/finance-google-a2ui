@@ -27,11 +27,23 @@ requires explicit `TRUSTED_HOSTS`, enables HSTS and admin MFA. Promotion order i
 always local → CI → staging → production; a change never lands in production
 without a green CI run on the same commit.
 
-## 3. Branch protection and review (GitHub ruleset on `main`)
+## 3. Branch model
+
+| Branch | Role | Who writes to it |
+|---|---|---|
+| `develop` | integration branch — **every feature/fix PR targets it** | PRs only |
+| `main` | release branch — what is deployed and tagged | release PRs from `develop` only |
+| `type/GGU-n_…` | one branch per ticket, cut from `develop` | its author |
+
+A release is a PR `develop → main`, squash-merged, tagged, and recorded in
+`CHANGELOG.md`. Hotfixes branch from `main`, merge to `main`, and are merged
+back into `develop` in the same day.
+
+## 4. Branch protection and review (GitHub ruleset on `main` and `develop`)
 
 - Pull request required; **1 approving review from a code owner** (`.github/CODEOWNERS`); stale approvals dismissed on new commits.
 - Required status checks: the four jobs of `.github/workflows/backend-ci.yaml` (exact names below).
-- Linear history (squash or rebase); force-push and deletion of `main` disabled; administrators included.
+- **Squash merges only** (the repository disallows merge commits and rebase merges); force-push and deletion of `main`/`develop` disabled; administrators included.
 - The PR template (`.github/pull_request_template.md`) carries the `Spec:` and `Test decision:` lines and the security checklist.
 
 **Current state (exported 2026-09-19, `evidence/branch-protection-ruleset.json`):**
@@ -43,32 +55,32 @@ Required-check names must match the job display names exactly:
 `gate (ruff · pyright · budget · pytest 100 %)`, `gitleaks`,
 `semgrep (python security rules)`, `docker build`.
 
-## 4. Definition of Done
+## 5. Definition of Done
 
 `.claude/ship-gate.json` == `make gate` == CI: ruff, format, basedpyright
 strict, 150-line budget, pytest at 100 % branch coverage, pip-audit; plus
 gitleaks, Semgrep and the image build/Trivy scan in CI. Thresholds are never
 lowered in a feature PR ([EXCEPTION_POLICY.md](EXCEPTION_POLICY.md)).
 
-## 5. Database changes
+## 6. Database changes
 
 Only through Alembic revisions in the same PR; merged revisions are immutable
 (permission deny in the harness); integration tests run `alembic upgrade head`
 on a fresh PostgreSQL; `alembic check` verifies no drift; production
 migrations run at container start (`RUN_MIGRATIONS`), preceded by a backup.
 
-## 6. Releases
+## 7. Releases
 
-- `main` is always deployable; releases are tags `vMAJOR.MINOR.PATCH` (SemVer) with notes in `CHANGELOG.md` (Keep a Changelog).
+- `develop` is always green; `main` is always deployable. Releases are tags `vMAJOR.MINOR.PATCH` (SemVer) cut from `main` after a `develop → main` PR, with notes in `CHANGELOG.md` (Keep a Changelog).
 - The release PR bumps `backend/pyproject.toml` version (reported by `/healthz`).
 - Rollback = redeploy the previous image tag; data rollbacks follow the DR plan.
 
-## 7. Emergency changes
+## 8. Emergency changes
 
 See [EMERGENCY_CHANGE.md](EMERGENCY_CHANGE.md). Everything else goes through
 this document.
 
-## 8. Dependencies and supply chain
+## 9. Dependencies and supply chain
 
 Pinned `uv.lock`; Dependabot weekly (grouped); pip-audit in the gate; Trivy
 on the image; weekly scheduled scan with SBOM export; new dependencies named in

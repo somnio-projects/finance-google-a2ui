@@ -1,4 +1,5 @@
 <!-- Title: type(scope): description  (Conventional Commits; GGU-n in the branch name) -->
+<!-- Base branch: develop — main only for release PRs -->
 
 **Spec:** `specs/<area>/NNNN-<feature>.md` <!-- required for any behaviour change -->
 **Test decision:** <!-- what is covered by unit vs integration tests and why; mutation checks run -->

@@ -10,7 +10,9 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
 | `docs/` | `DEV_HARNESS.md` (how we work with Claude), ADRs arrive with PR #1 | — |
 
-Default branch `main`. GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
+GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
+
+**Branching:** `develop` is the integration branch — **every PR targets `develop`**. `main` is the release branch and only receives `develop` through a release PR. Branch off `develop` as `type/GGU-n_short_description`.
 
 ## Run
 
@@ -41,7 +43,7 @@ cd client_flutter && dart format --output=none --set-exit-if-changed . && dart a
 - **Security is a gate, not a review note**: bearer-token auth on every non-health route, RFC 9457 errors without internals, no secrets/tokens/PII in logs, audit events for identity actions, non-root read-only containers. SOC 2 / ISO 27001 mapping in `backend/docs/SECURITY.md`; rules in `.claude/rules/backend/security.md`.
 - **Auth is pluggable**: `AUTH_PROVIDER=jwt` (HS256, dev/service) or `oidc` (RS256 via JWKS — Firebase, Google, any SSO). New provider = one module in `backend/src/app/auth/providers/` + one registry entry.
 - **Numbers-from-tools (product invariant)**: the LLM never computes financial figures; deterministic backend tools return pre-formatted `*Display` strings the agent copies. Keep it when the agent lands here.
-- Branches `type/short_description` or `type/GGU-n_short_description`; Conventional Commit titles; PRs in English; no AI attribution in commits or PR bodies.
+- Branches `type/short_description` or `type/GGU-n_short_description`, cut from **`develop`**, PRs **into `develop`**; `main` only via release PR. Conventional Commit titles; PRs in English; no AI attribution in commits or PR bodies. The repo allows **squash merges only**.
 - Jira `GGU` tickets GGU-3/45/46 were written against the old `backend_python/` sample — treat `specs/backend/0001-backend-foundation.md` as the current baseline and flag divergences in the ticket.
 
 ## Do not touch
