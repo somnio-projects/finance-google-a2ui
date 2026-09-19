@@ -24,6 +24,10 @@ MONEY_PRECISION: Final[int] = 2
 QUANTITY_PRECISION: Final[int] = 8
 PERCENTAGE_PRECISION: Final[int] = 2
 
+#: How far a **unit price** may be quoted (see ``price_display``). A market
+#: reference quoting finer must widen it; a test over the curated list says so.
+PRICE_PRECISION: Final[int] = 4
+
 
 def money_display(
     value: Decimal, *, precision: int = MONEY_PRECISION, locale: str = DEFAULT_LOCALE
@@ -60,6 +64,27 @@ def signed_money_display(
     if quantize(value, precision=precision) > 0:
         return f"+{rendered}"
     return rendered
+
+
+def price_display(value: Decimal, *, locale: str = DEFAULT_LOCALE) -> str:
+    """Return a unit price at the precision it is actually quoted to.
+
+    A price is the one figure a reader multiplies by, and ``"$0.13"`` beside
+    a quantity of 12,000 invites a multiplication landing $32.40 away from
+    the total in the same block (spec 0013 OD-4). Rounding still happens only
+    at display; this decides how far to carry it, not what the number is.
+
+    Args:
+        value: The exact reference price.
+        locale: One of ``LOCALE_FORMATS``.
+
+    Returns:
+        ``"$64,250.00"`` for a price that is exact in cents, ``"$0.1273"``
+        for one that is not.
+    """
+    if value == quantize(value, precision=MONEY_PRECISION):
+        return money_display(value, locale=locale)
+    return money_display(value, precision=PRICE_PRECISION, locale=locale)
 
 
 def percentage_display(
@@ -114,9 +139,11 @@ def quantity_display(
 __all__ = [
     "MONEY_PRECISION",
     "PERCENTAGE_PRECISION",
+    "PRICE_PRECISION",
     "QUANTITY_PRECISION",
     "money_display",
     "percentage_display",
+    "price_display",
     "quantity_display",
     "signed_money_display",
 ]

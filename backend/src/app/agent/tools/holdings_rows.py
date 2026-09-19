@@ -14,6 +14,7 @@ helper next to the tool instead of in a shared file (spec 0006 AC-7).
 from collections.abc import Mapping
 from decimal import Decimal
 
+from app.agent.tools.ratios import return_display
 from app.core.display import (
     money_display,
     percentage_display,
@@ -22,15 +23,6 @@ from app.core.display import (
 )
 from app.core.trend import trend_of
 from app.domain.holdings import Holding
-from app.domain.returns import return_on_cost
-
-
-def _return_display(unrealized_pl: Decimal, cost_basis: Decimal) -> str | None:
-    """Return the profit as a percentage of cost, or ``None`` when undefined."""
-    ratio = return_on_cost(unrealized_pl, cost_basis)
-    if ratio is None:
-        return None
-    return percentage_display(ratio)
 
 
 def row(holding: Holding) -> Mapping[str, object]:
@@ -52,7 +44,7 @@ def row(holding: Holding) -> Mapping[str, object]:
         "marketValueDisplay": money_display(holding.market_value),
         "costBasisDisplay": money_display(holding.cost_basis),
         "unrealizedPlDisplay": signed_money_display(holding.unrealized_pl),
-        "unrealizedPlPctDisplay": _return_display(
+        "unrealizedPlPctDisplay": return_display(
             holding.unrealized_pl, holding.cost_basis
         ),
         "weightDisplay": percentage_display(holding.weight),
@@ -81,7 +73,7 @@ def totals(
         "marketValueDisplay": money_display(market_value),
         "costBasisDisplay": money_display(cost_basis),
         "unrealizedPlDisplay": signed_money_display(unrealized_pl),
-        "unrealizedPlPctDisplay": _return_display(unrealized_pl, cost_basis),
+        "unrealizedPlPctDisplay": return_display(unrealized_pl, cost_basis),
         "trend": trend_of(unrealized_pl),
     }
 

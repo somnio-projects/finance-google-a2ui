@@ -64,6 +64,118 @@ conditional, which is what OD-1 made it.
 
 ---
 
+## 2026-09-19 — GGU-37 simulate_sale · spec `specs/backend/0013-simulate-sale-tool.md`
+
+**Branch:** `feat/GGU-37_simulate_sale_tool`, stacked on GGU-39 (holdings).
+
+**What it is.** The deterministic tool behind Flow B's tax-lot comparator:
+*"what if I sold 0.5 BTC?"* — which lots the sale consumes under FIFO, LIFO or
+HIFO, the proceeds, the cost basis, the realised result split short-term vs
+long-term, and the position left over. The seed has been waiting for it since
+GGU-5: BTC's two lots sit at 367 and 363 days, one either side of the 1-year
+boundary, precisely so this answer has something to say.
+
+**Code**
+- `domain/lot_selection.py` — `LotMethod` and the three orders. Its own module
+  because *which lot goes first* is a policy; a fourth method touches nothing
+  else. Every order ends in `lot_id`, so a tie cannot reorder between runs.
+- `domain/sale_results.py` — `LotConsumption`, `SaleSimulation`. The short/long
+  split is **derived** (`pl_in`, `lots_in`), never stored, so it cannot
+  disagree with the rows it summarises. `closes()` mirrors the attribution
+  waterfall's own closure check.
+- `domain/sales.py` — the walk. Read-only: it never calls
+  `PortfolioProvider.save`.
+- `agent/tools/{simulate_sale,sale_request,sale_rows}.py` — tool, arguments,
+  display shaping. Registered from its own module; no shared file edited.
+- `agent/tools/ratios.py` — `return_display` lifted out of `holdings_rows`,
+  where it was private. Two tools now share one answer to "return on a zero
+  cost basis", instead of two copies free to drift.
+
+**Three decisions worth knowing (full set: spec §8, OD-1…OD-9).**
+- **Sizes cross as decimal strings**, not JSON numbers. `json.loads("0.5")` is
+  a `float` before this code runs, and `domain.money.reject_float` exists to
+  refuse exactly that. `quantity`/`amount_usd` are pattern-bounded strings.
+- **Over-sell is an answer, not an exception.** The turn loop flattens a
+  raising tool to `{"error": "tool-failed"}` — deliberately, since a message
+  can quote a holding. So the tool catches `PositionTooSmallError` and returns
+  `{"error": "position-too-small", "requestedDisplay", "heldDisplay"}`. The
+  model copies "you hold 0.6" instead of inventing it. Invalid *arguments*
+  still reject, unchanged (spec 0011 OD-7).
+- **No render intent.** Only `attribution.waterfall.v1` and
+  `holdings.allocation.v1` are registered, and neither renders a sell
+  scenario. A tool pointing at a view that does not exist is the same lie as
+  inventing a number. `tax_lots.table.v1` arrives with its component, in
+  Epic 2.
+
+**Ticket re-baselining.** GGU-37 was written against the deleted
+`backend_python/` sample — `tools.py`, `agent.py`, `tools=[...]` on an ADK
+`LlmAgent`, a `py.typed` marker and a pyproject that still needed pydantic.
+Every acceptance criterion survives; only the mechanism changed. Recorded as
+OD-1 so the ticket's plan is not followed by the next reader.
+
+**Harness** — no rule, hook or command changed. `specs/README.md` gained rows
+for **0013 and 0011**: the holdings PR added its spec without indexing it, and
+an index that omits a spec is worse than no index.
+
+**Review round (same PR).** The financial walk was hand-checked and held.
+Two test gaps did not, and both would have shipped a wrong figure silently.
+
+- **`register(...)` was unproven.** Commenting it out left the whole suite
+  green: the tool would have shipped invisible to the model with a clean
+  gate. The discovery test is now parametrized over **every** tool name this
+  backend ships, plus a companion that counts the modules ending in a
+  top-level `register(` call — so a tool added without being listed fails,
+  rather than the next person having to remember.
+- **The summary payload was never asserted.** Swapping `shortTermPlDisplay`
+  with `longTermPlDisplay` stayed green: the tax split inverted, which is the
+  entire product value of Flow B, and AC-2's "short plus long equals the
+  total" is symmetric under exactly that swap. The published §3 example is
+  now a **literal** oracle in `tests/unit/agent/tools/sale_payload.py`,
+  asserted whole.
+- **`price_display`, new in `core/display.py`.** OD-4 promised a reader can
+  multiply the price by the quantity and land on the proceeds. That was false
+  for DOGE, ADA and DOT: `$0.13 × 12,000` reads $1,560.00 against proceeds of
+  $1,527.60 in the same block. A price now carries `PRICE_PRECISION` (4 dp)
+  when cents are not enough, and a test over the curated reference fails if an
+  asset is ever quoted finer than that. **`holdings_rows` has the same bug and
+  is deliberately untouched** — it is GGU-39's contract, reviewed one commit
+  ago; the helper lives in `core` so that fix is a one-line import.
+- Both OD-4 tests could not fail (production compared against production);
+  they use literal oracles now. Added the cent either side of the whole
+  position, the sub-dollar price, and a `position-too-small` clause in the
+  tool description so OD-3 is declared to the model rather than hoped for.
+  `symbol` is bounded by pattern, not only by length.
+
+**Verified locally before the PR**
+- `make gate`: 657 tests, **100 % branch coverage**, ruff/basedpyright/budget/
+  xenon/vulture/interrogate/deptry/pylint/codespell clean, pip-audit clean.
+- Hand-check of the FIFO half-BTC case against the seed: proceeds $32,125.00,
+  cost basis $22,620.00, realised +$9,505.00 = +$8,925.00 long (lot-btc-01,
+  367 days) plus +$580.00 short (lot-btc-02, 363 days), leaving 0.1 BTC.
+- **Mutation evidence**, each applied then reverted: `register(...)` commented
+  out → 2 failures; short/long swapped → 1; `priceDisplay` from the proceeds
+  → 3; leftover basis from the consumed basis → 1. All four were green before
+  this round.
+- No auth, rate limiting or error masking touched, so no security mutation
+  check was required.
+
+**Next person should know**
+- The seed **cannot** tell LIFO from HIFO on BTC (its newest lot is also its
+  dearest), and cannot tell FIFO from HIFO on ETH. `test_sales.py` builds a
+  three-lot position whose age order and price order disagree; do not
+  "simplify" it back onto the seed.
+- Test files obey the 150-line budget too. This feature ships six of them,
+  split by responsibility, with the shared pieces in `sale_fixtures.py`,
+  `sale_payload.py` and `tests/unit/domain/conftest.py::make_portfolio`.
+- `percentage_display` does **not** prefix a `+`. Two spec examples in the
+  repo claim otherwise; 0013's were corrected.
+- `.claude/commands/feature.md` shows modified in this worktree and is **not**
+  in the commit. Writes under `.claude/commands/` are denied to the agent, so
+  the on-disk copy could not be updated to the branch's version; it is marked
+  `assume-unchanged` so a rebase is possible. Undo that outside the sandbox.
+
+---
+
 ## 2026-09-19 — GGU-3 A2A surface · spec `specs/backend/0010-a2a-surface.md`
 
 **Branch:** `feat/GGU-3_a2a_surface`, stacked on GGU-14. Five deep.

@@ -45,7 +45,10 @@ sequenceDiagram
     %% Solid = shipped in GGU-47. Dashed = the surrounding tickets.
     %% A turn emits exactly one agent.turn metric and one log line:
     %% model, outcome, duration, counters — never prompt, result or subject.
-    %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
+    %% An unknown or raising tool becomes {"error": "tool-failed"} fed back, not a
+    %% failed turn — the message is dropped, because it can quote a holding. A
+    %% tool with something useful to say about a refusal returns its own
+    %% {"error": ...} payload instead of raising (spec 0013 OD-3).
     %% A tool emits a render intent only when a registered projection actually
     %% fits the answer it just produced: a filtered or re-ordered result whose
     %% chart would contradict it carries none (spec 0011 OD-1).
