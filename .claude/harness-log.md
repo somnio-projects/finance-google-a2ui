@@ -7,6 +7,74 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Harness rule: the agent opens PRs, the TL merges them
+
+**Harness only — no code change.**
+
+**Decision (Lautaro, TL, 2026-09-19).** An earlier instruction in the same day
+authorised the agent to merge its own PRs. It was withdrawn: **the agent never
+merges**. Opening the PR is where the agent's part of the lifecycle ends. The
+branch stays open, the Jira ticket stays **In Review**, and the merge happens
+only after the TL explicitly confirms it — for `develop` exactly as for `main`,
+and no matter how clean the gate is. When several PRs are waiting, the agent
+reports the list and moves on to the next ticket rather than merging any of
+them. Only when the TL names a PR (or says to merge them all) does the agent
+merge and then move the ticket to **Done**.
+
+**Changed**
+- `.claude/rules/backend/sdd.md` — the rule itself, next to the ticket-status
+  rule it completes; the `/feature` lifecycle line now reads "humans approve the
+  spec at the start and the merge at the end".
+- `.claude/commands/feature.md` — step 11 is now "stop at the open PR, never
+  merge"; the wrap-up also reports the PRs still waiting on confirmation.
+- Agent memory `pr-and-jira-workflow` updated with the same rule and the reason.
+
+**Why it is written down here.** `Done` already meant merged; what was missing
+was *who* merges. Without this, another developer's Claude reads a green gate as
+permission to close the loop itself, which takes the review decision away from
+the person who owns it.
+
+**Next person should know.** PRs accumulate on purpose. A queue of open PRs
+against `develop` is the expected steady state, not a backlog to clear.
+
+---
+
+## 2026-09-19 — GGU-46 session identity and isolation · spec `specs/backend/0004-session-identity.md`
+
+**PR:** #13 · built by a worktree agent, rebased, re-gated and manually verified here.
+
+**Re-baseline.** The ticket described the deleted ADK sample (`InMemorySessionService`,
+client-supplied `contextId` as the session key) and asked for token verification
+that PR #2 already shipped. What was actually missing — and what this delivers —
+is **persisted conversations owned by the verified subject**.
+
+**Code**
+- Migration `0004`: `conversation_sessions` + `conversation_messages` (cascade,
+  indexed on `(subject, created_at)` and `(session_id, created_at)`).
+- `SessionRepository` scopes **every** query by subject; `SessionService` answers
+  `NotFoundError` — never `AuthorizationError` — for another subject's id, so the
+  API does not reveal that the session exists.
+- Six fully documented REST operations under `/v1/sessions`, keyset pagination
+  through `helpers/cursor.py`, shared query params in `api/params.py`, the whole
+  router behind `require_feature("sessions.api")`.
+- Audit events `session.create`, `session.read`, `session.list`, `session.append`
+  carrying the session id as `target`.
+
+**Mutation check (required for auth changes)**
+- subject filter removed from `get_for_subject` → 4 isolation tests red;
+- removed from `delete_for_subject` → 2 red; restored → 9 green.
+
+**Next person should know**
+- `DELETE` answers **404** for an unknown or foreign id rather than a blanket 204:
+  idempotent on server state, and the isolation boundary stays testable from outside.
+- Coverage loses a controller's lines **after** an `await` that crosses SQLAlchemy's
+  greenlet bridge — `create_session`'s `Location` line is covered by a unit test with
+  a faked service. Any future controller with post-`await` statements hits the same thing.
+- Sessions live in the PostgreSQL the backend already owns; flagged as OD-1 against
+  ADR-F D-1 for the TL.
+
+---
+
 ## 2026-09-19 — GGU-5 portfolio domain · spec `specs/backend/0003-portfolio-domain.md`
 
 **PR:** #12 · **Built by a worktree agent**, integrated and verified here.

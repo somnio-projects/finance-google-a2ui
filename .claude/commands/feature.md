@@ -43,4 +43,10 @@ Follow the Spec-Driven Development lifecycle end to end (repo
 10. **Jira**: move the ticket to **In Review** when the PR opens. It becomes
     **Done** only when that PR is **merged**; if it stalls, **Blocked** with a
     comment naming the blocker.
-11. **Wrap-up**: report the PR URL and the harness-log entry.
+11. **Stop at the open PR — never merge.** The merge is the TL's decision and
+    needs his explicit confirmation, for `develop` as much as for `main`, no
+    matter how clean the gate is. Leave the branch open, leave the ticket In
+    Review, and move on to the next ticket. Only when he names a PR does the
+    agent merge it and then move the ticket to Done.
+12. **Wrap-up**: report the PR URL and the harness-log entry, plus the list of
+    PRs still waiting on his confirmation.

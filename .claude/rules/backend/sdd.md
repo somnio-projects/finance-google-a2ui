@@ -14,6 +14,7 @@ alwaysApply: false
 - No backend feature starts without `specs/backend/NNNN-<feature>.md` created from `specs/TEMPLATE.md`. `NNNN` is the next free number; the filename never changes once the spec is merged.
 - A spec has: Problem · Scope (in / out) · API contract (paths, DTOs, error codes) · Data model & migration · Security notes (auth, audit, data) · Acceptance criteria (numbered, testable) · Test plan (unit + integration, mapped to ACs) · Open decisions (owner + default).
 - **Ticket status follows the work, and `Done` means merged.** Assign the ticket to the TL's account and move it to **In Progress** before writing anything; move it to **In Review** when the **PR is opened**; move it to **Done** only once that PR is **merged**; use **Blocked** (with a comment naming the blocker) if it stalls. Never mark a ticket Done because the work "is finished" — an open PR is In Review.
+- **The agent does not merge.** Opening the PR ends the agent's part of the lifecycle. The branch stays open and the ticket stays **In Review** until the **TL explicitly confirms the merge** — for `develop` and for `main`, and regardless of how clean the gate is. When several PRs are waiting, list them and carry on with other work; never merge one because it looks obviously fine. Only after the TL names a PR (or says to merge them all) does the agent merge it and move the ticket to **Done**.
 - **PR title** carries the ticket: `type(scope): GGU-n — description`. **PR body** carries: a detailed description (spec, ACs, decisions), the **test evidence** (unit + integration output, coverage) **and a manual run** against the running stack with the real commands and their real responses pasted in. No manual run, no merge.
 - Code, tests and the PR cite acceptance criteria by number (`AC-3`). A PR that changes the contract updates the spec in the same PR and flags it under `Spec:` in the description.
 - Specs are living documents: status `Draft → Approved → Implemented → Superseded`. Superseded specs stay in place with a pointer to the replacement.
@@ -45,4 +46,4 @@ not recorded yet.
 
 ## Lifecycle (`/feature`)
 
-spec → plan (files to touch, per layer) → implement in layer order (migration, model, schema, repository, service, controller, deps, router) → `make gate` → `backend-reviewer` → PR → harness log. Humans approve the spec at the start and the PR at the end; the agent owns everything in between.
+spec → plan (files to touch, per layer) → implement in layer order (migration, model, schema, repository, service, controller, deps, router) → `make gate` → `backend-reviewer` → PR → harness log. Humans approve the spec at the start and the merge at the end; the agent owns everything in between and stops at the open PR.
