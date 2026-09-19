@@ -99,7 +99,7 @@ def render(
         value = sum((row.market_value for row in rest), ZERO)
         weight = sum((row.weight for row in rest), ZERO)
         slices.append(_slice(OTHER_KEY, "Other", value, weight, digits))
-    total = sum((row.market_value for row in rows), ZERO)
+    total = portfolio.total_market_value()
     return HoldingsAllocationPayload(
         title=TITLE,
         total=Total(label="Total market value", amount=money(total, precision=digits)),

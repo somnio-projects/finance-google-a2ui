@@ -73,6 +73,22 @@ branch resolves it instead:
   schemas; OpenAPI showed the `oneOf` with a `discriminator` and one example
   per member.
 
+**A third duplication, found by auditing the merged result.** After both
+branches were integrated, `total market value` was computed in **three**
+places — the agent's `holdings_summary` tool and both projections — and the
+`Portfolio` aggregate that owns the data exposed no total at all. None of them
+was wrong, which is the point: they agreed only because three separate pieces
+of code happened to be right. In a finance demo the agent says one of those
+numbers out loud while a chart draws another, so *drift between them is the
+most embarrassing failure available*. `Portfolio` now owns
+`total_market_value()`, `total_cost_basis()` and `total_unrealized_pl()`, and
+the three call sites read them. The residual "Other" bucket in the allocation
+chart keeps its own sum — that one really is a chart concern.
+
+Every pre-existing projection and tool test passed unchanged afterwards, which
+is the evidence that the three implementations had been computing the same
+figure.
+
 **Next person should know**
 - **`app/api/deps.py` no longer exists** — it is `app/api/deps/`. The
   architecture rule and `backend/CLAUDE.md` still name the file; they are

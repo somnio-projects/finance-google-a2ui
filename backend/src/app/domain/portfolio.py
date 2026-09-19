@@ -26,6 +26,7 @@ from app.domain.invariants import (
 )
 from app.domain.lots import TaxLot
 from app.domain.market import price_of
+from app.domain.money import ZERO
 from app.domain.prices import PricePoint
 from app.domain.symbols import normalize_symbol
 from app.domain.transactions import Transaction
@@ -43,6 +44,27 @@ class Portfolio:
     def holdings(self) -> list[Holding]:
         """Return every holding in a stable order (seed order, never a set)."""
         return list(self.positions)
+
+    # The three totals live here, not in each caller: they are facts about the
+    # portfolio. The agent's spoken total and a chart's total must be the same
+    # number, and the only way to guarantee that is for there to be one of it.
+
+    def total_market_value(self) -> Decimal:
+        """Return what every holding is worth together, at ``as_of``."""
+        return sum((row.market_value for row in self.positions), ZERO)
+
+    def total_cost_basis(self) -> Decimal:
+        """Return what every holding cost together — where a walk starts."""
+        return sum((row.cost_basis for row in self.positions), ZERO)
+
+    def total_unrealized_pl(self) -> Decimal:
+        """Return the portfolio's unrealised profit or loss.
+
+        Returns:
+            Market value minus cost basis, from the same two sums, so the
+            three totals can never disagree with one another.
+        """
+        return self.total_market_value() - self.total_cost_basis()
 
     def tax_lots(self, symbol: str) -> list[TaxLot]:
         """Return the open lots of ``symbol``, or ``[]`` for an unknown one.

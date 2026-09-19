@@ -13,7 +13,6 @@ from typing import Final, Literal
 from pydantic import Field
 
 from app.domain.holdings import Holding
-from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
 from app.presentation import options as opt
 from app.presentation.fragments import Annotation, Bucket, ProjectionDto, Total
@@ -97,10 +96,11 @@ def render(
     """
     sections = options.selected(SECTIONS)
     rows = sorted(portfolio.holdings(), key=lambda h: (-abs(h.unrealized_pl), h.symbol))
-    cost = sum((row.cost_basis for row in rows), ZERO)
-    value = sum((row.market_value for row in rows), ZERO)
+    cost = portfolio.total_cost_basis()
+    value = portfolio.total_market_value()
     walk = _buckets(rows, start=cost, options=options) if "buckets" in sections else ()
-    notes = _notes(rows, value - cost, options) if "annotations" in sections else ()
+    net = portfolio.total_unrealized_pl()
+    notes = _notes(rows, net, options) if "annotations" in sections else ()
     return AttributionWaterfallPayload(
         title=TITLE,
         start=Total(label="Cost basis", amount=options.money(cost)),

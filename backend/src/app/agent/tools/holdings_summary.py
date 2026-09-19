@@ -12,7 +12,6 @@ pydantic arguments model, a ``run`` over the injected context, and one
 """
 
 from collections.abc import Mapping
-from decimal import Decimal
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -101,8 +100,8 @@ class HoldingsSummaryTool:
             portfolio.holdings(), key=lambda item: item.market_value, reverse=True
         )
         shown = ranked[: options.top_n] if options.top_n is not None else ranked
-        total = sum((item.market_value for item in ranked), Decimal(0))
-        unrealized = sum((item.unrealized_pl for item in ranked), Decimal(0))
+        total = portfolio.total_market_value()
+        unrealized = portfolio.total_unrealized_pl()
         data: Mapping[str, object] = {
             "asOf": portfolio.as_of.isoformat(),
             "positionCount": len(ranked),
