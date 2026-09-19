@@ -1,91 +1,122 @@
-"""The single ``Decimal`` → display-string boundary (ADR-E D-2, spec 0006 OD-5).
+"""The single ``Decimal`` → display-string boundary (ADR-E D-2, ADR-K D-5).
 
-ADR-E D-3 fixes the rounding: USD to 2 dp, quantities to 8 dp, percentages to
-2 dp, always ``ROUND_HALF_EVEN``, and **only here** — never in intermediate
-arithmetic. Everything that shows a number to a human or to the model goes
-through this module, so a figure cannot be formatted two different ways in one
-answer.
+Every number a human or the model sees is formatted here, exactly once, so a
+figure cannot be rendered two ways in one answer. ADR-E D-3 fixes the
+rounding: ``ROUND_HALF_EVEN``, and **only at display** — never in intermediate
+arithmetic. The exact ``Decimal`` travels next to the string it produced.
 
-It lives in ``core`` rather than in the agent or the presentation package
-because both of them need it and neither may import the other.
+It lives in ``core`` because both ``app.agent`` (spec 0006) and
+``app.presentation`` (spec 0005) need it and neither may import the other.
+``app.core.locales`` holds the separators and the rounding it builds on.
 """
 
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import Decimal
 from typing import Final
 
-USD_EXPONENT: Final[Decimal] = Decimal("0.01")
-QUANTITY_EXPONENT: Final[Decimal] = Decimal("0.00000001")
-PERCENT_EXPONENT: Final[Decimal] = Decimal("0.01")
-_HUNDRED: Final[Decimal] = Decimal(100)
+from app.core.locales import (
+    DEFAULT_LOCALE,
+    LOCALE_FORMATS,
+    quantize,
+    split_sign,
+)
+
+MONEY_PRECISION: Final[int] = 2
+QUANTITY_PRECISION: Final[int] = 8
+PERCENTAGE_PRECISION: Final[int] = 2
 
 
-def _quantize(value: Decimal, exponent: Decimal) -> Decimal:
-    """Round ``value`` to ``exponent`` with banker's rounding (ADR-E D-3)."""
-    return value.quantize(exponent, rounding=ROUND_HALF_EVEN)
-
-
-def money_display(amount: Decimal) -> str:
-    """Render ``amount`` as USD with thousands separators.
-
-    Args:
-        amount: An exact monetary amount.
-
-    Returns:
-        ``"$64,250.00"`` for a positive amount, ``"-$64,250.00"`` for a
-        negative one — the sign leads, so the currency stays readable.
-    """
-    rounded = _quantize(amount, USD_EXPONENT)
-    sign = "-" if rounded < 0 else ""
-    return f"{sign}${abs(rounded):,.2f}"
-
-
-def signed_money_display(amount: Decimal) -> str:
-    """Render ``amount`` as USD with an explicit sign for gains and losses.
+def money_display(
+    value: Decimal, *, precision: int = MONEY_PRECISION, locale: str = DEFAULT_LOCALE
+) -> str:
+    """Return ``value`` as the money string a widget or the model binds.
 
     Args:
-        amount: An exact monetary amount, typically a profit or loss.
+        value: The exact amount, in the portfolio's currency.
+        precision: Decimal places to show.
+        locale: One of ``LOCALE_FORMATS``.
 
     Returns:
-        ``"+$1,234.56"``, ``"-$1,234.56"`` or ``"$0.00"`` when it rounds flat.
+        ``"$18,060.00"`` or ``"-$1,234.56"`` — the sign leads the currency.
     """
-    rounded = _quantize(amount, USD_EXPONENT)
-    if rounded > 0:
-        return f"+{money_display(rounded)}"
-    return money_display(rounded)
+    sign, digits = split_sign(value, precision=precision, locale=locale)
+    return sign + LOCALE_FORMATS[locale][2].format(amount=digits)
 
 
-def quantity_display(quantity: Decimal) -> str:
-    """Render an asset quantity at 8 dp without trailing noise.
+def signed_money_display(
+    value: Decimal, *, precision: int = MONEY_PRECISION, locale: str = DEFAULT_LOCALE
+) -> str:
+    """Return ``value`` as money with an explicit sign for gains and losses.
 
     Args:
-        quantity: An exact number of units.
+        value: The exact amount, typically a profit or a loss.
+        precision: Decimal places to show.
+        locale: One of ``LOCALE_FORMATS``.
 
     Returns:
-        ``"0.75"`` rather than ``"0.75000000"``; ``"0"`` for a flat zero.
+        ``"+$1,234.56"`` or ``"-$1,234.56"``; unsigned when it rounds flat,
+        because ``"+$0.00"`` would claim a gain that is not there.
     """
-    rounded = _quantize(quantity, QUANTITY_EXPONENT).normalize()
-    text = f"{rounded:f}"
-    return text
+    rendered = money_display(value, precision=precision, locale=locale)
+    if quantize(value, precision=precision) > 0:
+        return f"+{rendered}"
+    return rendered
 
 
-def percent_display(ratio: Decimal) -> str:
-    """Render a 0-to-1 ratio as a percentage at 2 dp.
+def percentage_display(
+    value: Decimal,
+    *,
+    precision: int = PERCENTAGE_PRECISION,
+    locale: str = DEFAULT_LOCALE,
+) -> str:
+    """Return a ``0..1`` ratio as the percentage string the caller binds.
 
     Args:
-        ratio: A share of a whole, where ``Decimal("0.425")`` is 42.5 %.
+        value: The ratio the domain computed — ``0.3124``, not ``31.24``.
+        precision: Decimal places to show.
+        locale: One of ``LOCALE_FORMATS``.
 
     Returns:
-        ``"42.50%"``.
+        A percentage such as ``"31.24%"``.
     """
-    return f"{_quantize(ratio * _HUNDRED, PERCENT_EXPONENT):.2f}%"
+    sign, digits = split_sign(value * 100, precision=precision, locale=locale)
+    return f"{sign}{digits}%"
+
+
+def quantity_display(
+    value: Decimal,
+    *,
+    precision: int = QUANTITY_PRECISION,
+    locale: str = DEFAULT_LOCALE,
+    trim: bool = False,
+) -> str:
+    """Return a unit count as the string the caller binds.
+
+    Args:
+        value: The exact number of units held or traded.
+        precision: Decimal places — crypto quantities use 8 (ADR-E D-3).
+        locale: One of ``LOCALE_FORMATS``.
+        trim: Drop trailing zeros. A chart axis wants the fixed shape
+            (``"0.60000000"``); a sentence the model reads aloud wants
+            ``"0.6"``, so the caller says which it is.
+
+    Returns:
+        ``"0.60000000"``, or ``"0.6"`` when trimmed.
+    """
+    rounded = quantize(value, precision=precision)
+    if trim:
+        normalised = rounded.normalize()
+        digits = f"{normalised:f}"
+        return digits.replace(",", LOCALE_FORMATS[locale][0])
+    sign, digits = split_sign(value, precision=precision, locale=locale)
+    return sign + digits
 
 
 __all__ = [
-    "PERCENT_EXPONENT",
-    "QUANTITY_EXPONENT",
-    "USD_EXPONENT",
+    "MONEY_PRECISION",
+    "PERCENTAGE_PRECISION",
+    "QUANTITY_PRECISION",
     "money_display",
-    "percent_display",
+    "percentage_display",
     "quantity_display",
     "signed_money_display",
 ]

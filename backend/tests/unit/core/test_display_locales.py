@@ -8,12 +8,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.presentation.formatting import (
-    money_display,
-    percentage_display,
-    quantity_display,
-    quantize,
-)
+from app.core.display import money_display, percentage_display, quantity_display
+from app.core.locales import quantize
 
 
 @pytest.mark.parametrize(

@@ -6,20 +6,22 @@ pair is what lets the widget plot an exact value and print a correctly rounded
 one without doing either job itself.
 
 Re-exported from ``app.presentation.fragments``, so a projection imports the
-whole vocabulary from one place.
+whole vocabulary from one place. The formatting itself lives in
+``app.core.display`` — ADR-E D-2 allows exactly one such module, and the agent
+host needs the same one.
 """
 
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.presentation.formatting import (
-    DEFAULT_LOCALE,
+from app.core.display import (
     MONEY_PRECISION,
     PERCENTAGE_PRECISION,
     money_display,
     percentage_display,
 )
+from app.core.locales import DEFAULT_LOCALE
 
 
 class MoneyDisplay(BaseModel):
