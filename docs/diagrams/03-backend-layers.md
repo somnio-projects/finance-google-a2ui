@@ -16,7 +16,8 @@ flowchart TB
     end
     subgraph core["Domain and contracts"]
         dom["domain/*<br/>portfolio, lots, prices (pure, Decimal)"]
-        cor["core/<br/>Settings · AppError · Protocols · Principal"]
+        agt["agent/*<br/>Tool Protocol · registry · prompt · tools"]
+        cor["core/<br/>Settings · AppError · Protocols · Principal · display"]
     end
     subgraph infra["Infrastructure"]
         repo["repositories/*.py<br/>the only SQLAlchemy users"]
@@ -31,12 +32,16 @@ flowchart TB
     deps --> svc
     svc --> pres
     svc --> dom
+    svc --> agt --> dom
     svc --> repo --> mdl
     svc --> cor
+    agt --> cor
     adp --> cor
     auth --> cor
     boot -.->|"wires everything, imported by nobody"| deps
 
     %% Forbidden and checked in review: services importing FastAPI/SQLAlchemy,
     %% controllers importing repositories, presenters doing I/O.
+    %% agent/ is an inner layer beside domain/: core + domain only, nothing
+    %% outward — asserted over the parsed source by the boundary tests.
 ```

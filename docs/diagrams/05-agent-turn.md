@@ -1,6 +1,13 @@
 # 05 — An agent turn: question to streamed surfaces
 
-How a sentence becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-K](../adr/ADR-K-response-shaping.md), GGU-47. Dashed = planned.
+How a sentence becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md). Dashed = planned.
+
+`AgentService.run_turn` (GGU-47) is everything between `turn(...)` and the
+`TurnResult`. It is deliberately **synchronous and session-free**: it takes the
+history as an argument, bounds itself to `AGENT_MAX_TOOL_ITERATIONS` model
+calls, and returns the answer plus the render intents it collected. The A2A
+adapter (GGU-3) is what turns that into a stream; `SessionService` (GGU-46) is
+what supplies and persists the history.
 
 ```mermaid
 sequenceDiagram
@@ -8,31 +15,36 @@ sequenceDiagram
     participant C as Flutter client
     participant A as A2A adapter (root)
     participant S as SessionService
-    participant H as AgentHost (GGU-47)
-    participant M as Gemini
-    participant T as Deterministic tools
+    participant H as AgentService (GGU-47)
+    participant M as ModelClient (Gemini · Null)
+    participant T as Tool registry
     participant P as Projection registry
     participant DB as PostgreSQL
 
-    C->>A: message/stream + Bearer + contextId
-    A->>A: resolve contextId AGAINST the verified subject
-    A->>S: load conversation (subject-scoped)
-    S->>DB: sessions + messages
-    A->>H: turn(history, question)
-    H->>M: system prompt (catalog fragments) + history + tool schemas
-    M-->>H: tool call(s) + render intent {view, options}
-    H->>T: execute tool (pure, Decimal, injected clock)
-    T-->>H: result with *Display strings
-    H->>P: validate intent against the registry
-    P-->>H: rejected → default projection (recorded in telemetry)
-    P-->>H: payload for the chosen view
-    H-->>A: surface ready
-    A-->>C: stream surface #1
-    H->>M: continue turn
-    A-->>C: stream surface #2 …
-    H->>S: append assistant message
-    S->>DB: persist
+    C-->>A: message/stream + Bearer + contextId
+    A-->>A: resolve contextId AGAINST the verified subject
+    A-->>S: load conversation (subject-scoped)
+    S-->>DB: sessions + messages
+    A-->>H: run_turn(prompt, history, ToolContext)
 
-    %% First pixel is the time to surface #1, not to the last one.
+    loop up to AGENT_MAX_TOOL_ITERATIONS model calls
+        H->>M: system prompt + history + tool schemas
+        M->>H: text, or tool call(s)
+        H->>T: run tool (pure, Decimal, injected clock)
+        T->>H: ToolOutcome: *Display strings + render intent
+        H->>M: tool results fed back
+    end
+    H-->>A: TurnResult {message, render_intents, counters}
+
+    H-->>P: validate intent against the registry (GGU-49)
+    P-->>H: rejected → default projection (recorded in telemetry)
+    A-->>C: stream surface #1, #2 …
+    A-->>S: append assistant message
+    S-->>DB: persist
+
+    %% Solid = shipped in GGU-47. Dashed = the surrounding tickets.
+    %% A turn emits exactly one agent.turn metric and one log line:
+    %% model, outcome, duration, counters — never prompt, result or subject.
+    %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
     %% The model picks a view; it never invents a shape or a number.
 ```

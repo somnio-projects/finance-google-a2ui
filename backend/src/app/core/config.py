@@ -9,17 +9,20 @@ from datetime import timedelta
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
+from pydantic import Field, PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from app.core.config_parsing import WILDCARD, CsvParsing
 
 Environment = Literal["local", "test", "staging", "production"]
 AuthProviderName = Literal["jwt", "oidc"]
 # ``NoDecode``: pydantic-settings would otherwise JSON-decode list fields from
-# the environment; we accept plain comma-separated values (see ``_split_csv``).
+# the environment; we accept plain comma-separated values
+# (see ``app.core.config_parsing``).
 CsvList = Annotated[list[str], NoDecode]
 
 
-class Settings(BaseSettings):
+class Settings(CsvParsing, BaseSettings):
     """Typed view over the process environment.
 
     Attributes are grouped by concern; see ``env.example`` for documentation
@@ -76,6 +79,20 @@ class Settings(BaseSettings):
     # None = decide by environment (required in production, optional elsewhere)
     auth_admin_require_mfa: bool | None = None
 
+    # --- agent host (spec 0006) -------------------------------------------
+    # Unset key = NullModelClient, exactly as an unset SENTRY_DSN means the
+    # null reporter: call sites never branch on configuration.
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = Field(default="gemini-3.8-flash", min_length=1, max_length=64)
+    gemini_base_url: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta",
+        min_length=1,
+        max_length=255,
+    )
+    gemini_timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
+    gemini_max_attempts: int = Field(default=3, ge=1, le=5)
+    agent_max_tool_iterations: int = Field(default=4, ge=1, le=10)
+
     # --- data retention (docs/compliance/DATA_RETENTION.md) --------------
     audit_retention_days: int = Field(default=400, ge=30, le=3650)
 
@@ -83,32 +100,10 @@ class Settings(BaseSettings):
     sentry_dsn: SecretStr | None = None
     sentry_traces_sample_rate: float = Field(default=0.0, ge=0.0, le=1.0)
 
-    @field_validator(
-        "cors_allowed_origins",
-        "trusted_hosts",
-        "feature_flags_force_disabled",
-        mode="before",
-    )
-    @classmethod
-    def _split_csv(cls, value: object) -> object:
-        """Accept comma-separated strings from the environment."""
-        if isinstance(value, str):
-            return [item.strip() for item in value.split(",") if item.strip()]
-        return value
-
-    @field_validator("cors_allowed_origins", mode="after")
-    @classmethod
-    def _no_wildcard_origin(cls, value: list[str]) -> list[str]:
-        """Reject ``*``: CORS runs with credentials; a wildcard is an open door."""
-        if "*" in value:
-            msg = "CORS_ALLOWED_ORIGINS must list explicit origins, never '*'"
-            raise ValueError(msg)
-        return value
-
     @model_validator(mode="after")
     def _production_requires_explicit_hosts(self) -> "Settings":
         """In production the Host allow-list must be real, not ``*``."""
-        if self.environment == "production" and "*" in self.trusted_hosts:
+        if self.environment == "production" and WILDCARD in self.trusted_hosts:
             msg = "TRUSTED_HOSTS must be an explicit list when ENVIRONMENT=production"
             raise ValueError(msg)
         return self

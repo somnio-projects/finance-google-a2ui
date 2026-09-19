@@ -10,38 +10,15 @@ import ast
 from pathlib import Path
 
 import app.domain
+from tests.unit.import_graph import foreign_imports, outward_imports
+from tests.unit.import_graph import tree as parse
 
 PACKAGE = Path(app.domain.__file__).parent
-FORBIDDEN_PREFIXES = (
-    "app.api",
-    "app.services",
-    "app.repositories",
-    "app.models",
-    "app.schemas",
-    "app.infra",
-    "app.auth",
-    "app.bootstrap",
-    "app.main",
-)
 
 
 def _sources() -> list[Path]:
     modules = sorted(PACKAGE.glob("*.py"))
     assert modules, "the domain package has no modules to check"
-    return modules
-
-
-def _tree(path: Path) -> ast.Module:
-    return ast.parse(path.read_text(encoding="utf-8"))
-
-
-def _imported_modules(tree: ast.Module) -> list[str]:
-    modules: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module is not None:
-            modules.append(node.module)
-        elif isinstance(node, ast.Import):
-            modules.extend(alias.name for alias in node.names)
     return modules
 
 
@@ -64,32 +41,19 @@ def test_domain_never_reads_the_wall_clock() -> None:
     offenders = [
         path.name
         for path in _sources()
-        if any(_reads_a_wall_clock(node) for node in ast.walk(_tree(path)))
+        if any(_reads_a_wall_clock(node) for node in ast.walk(parse(path)))
     ]
     assert offenders == []
 
 
 def test_domain_has_no_outward_imports() -> None:
-    offenders = {
-        path.name: [
-            module
-            for module in _imported_modules(_tree(path))
-            if module.startswith(FORBIDDEN_PREFIXES)
-        ]
-        for path in _sources()
-    }
-    assert {name: found for name, found in offenders.items() if found} == {}
+    assert outward_imports(_sources()) == {}
 
 
 def test_domain_only_imports_core_from_outside_itself() -> None:
     allowed = {"app.core.errors", "app.core.logging", "app.core.protocols"}
-    inside = {
-        module
-        for path in _sources()
-        for module in _imported_modules(_tree(path))
-        if module.startswith("app.") and not module.startswith("app.domain")
-    }
-    assert inside <= allowed
+
+    assert foreign_imports(_sources(), package="app.domain") <= allowed
 
 
 def test_only_the_money_module_mentions_float() -> None:
@@ -97,6 +61,6 @@ def test_only_the_money_module_mentions_float() -> None:
         path.name
         for path in _sources()
         if path.name != "money.py"
-        and any(_touches_float(node) for node in ast.walk(_tree(path)))
+        and any(_touches_float(node) for node in ast.walk(parse(path)))
     ]
     assert offenders == []
