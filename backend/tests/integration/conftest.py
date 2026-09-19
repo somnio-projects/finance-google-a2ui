@@ -7,6 +7,7 @@ Migrations run through Alembic exactly as in production.
 """
 
 import os
+import uuid
 from collections.abc import AsyncIterator, Iterator
 
 import pytest
@@ -22,7 +23,7 @@ from app.core.config import Settings
 from app.helpers.clock import FixedClock
 from app.infra.db.engine import create_engine
 from app.infra.db.session import create_session_factory, session_scope
-from tests.conftest import FROZEN_NOW, FakeReporter, make_settings
+from tests.conftest import FROZEN_NOW, FakeReporter, make_settings, make_token
 
 
 @pytest.fixture
@@ -93,3 +94,21 @@ def integration_app(
 def integration_client(integration_app: FastAPI) -> Iterator[TestClient]:
     with TestClient(integration_app) as client:
         yield client
+
+
+SESSIONS = "/v1/sessions"
+
+
+def subject_headers(subject: str | None = None) -> dict[str, str]:
+    """Bearer header for a fresh (or named) verified subject — spec 0004."""
+    token = make_token(subject=subject or f"user-{uuid.uuid4()}", ttl_seconds=10**9)
+    return {"Authorization": f"Bearer {token}"}
+
+
+def open_session(
+    client: TestClient, headers: dict[str, str], title: str | None = None
+) -> str:
+    """Open a session for the caller behind ``headers`` and return its id."""
+    created = client.post(SESSIONS, json={"title": title}, headers=headers)
+    assert created.status_code == 201, created.text
+    return str(created.json()["id"])

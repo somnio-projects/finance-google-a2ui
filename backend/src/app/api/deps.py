@@ -15,11 +15,13 @@ from app.core.principal import Principal
 from app.infra.db.session import session_scope
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.feature_flag_repository import FeatureFlagRepository
+from app.repositories.session_repository import SessionRepository
 from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
 from app.services.feature_flag_service import FeatureFlagService
 from app.services.health_service import HealthService
 from app.services.identity_service import IdentityService
+from app.services.session_service import SessionService
 
 
 def get_container(request: Request) -> Container:
@@ -105,6 +107,14 @@ def get_identity_service(
     return IdentityService(audit=audit)
 
 
+def get_session_service(
+    session: SessionDep,
+    audit: Annotated[AuditService, Depends(get_audit_service)],
+) -> SessionService:
+    """Provide the conversation-session service over the request session."""
+    return SessionService(repository=SessionRepository(session), audit=audit)
+
+
 __all__ = [
     "ContainerDep",
     "PrincipalDep",
@@ -119,4 +129,5 @@ __all__ = [
     "get_identity_service",
     "get_request_id",
     "get_session",
+    "get_session_service",
 ]
