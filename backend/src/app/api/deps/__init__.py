@@ -29,7 +29,9 @@ __all__ = [
     "PrincipalDep",
     "RequestIdDep",
     "SessionDep",
+    # from .agent — the turn
     "get_agent_service",
+    # from .common — everything a controller needs
     "get_audit_service",
     "get_auth_service",
     "get_container",
@@ -40,5 +42,6 @@ __all__ = [
     "get_request_id",
     "get_session",
     "get_session_service",
+    # from .agent again — sorted, not grouped, so the name is findable
     "get_tool_context",
 ]

@@ -115,19 +115,7 @@ def get_session_service(
     return SessionService(repository=SessionRepository(session), audit=audit)
 
 
-__all__ = [
-    "ContainerDep",
-    "PrincipalDep",
-    "RequestIdDep",
-    "SessionDep",
-    "get_audit_service",
-    "get_auth_service",
-    "get_container",
-    "get_current_principal",
-    "get_feature_flag_service",
-    "get_health_service",
-    "get_identity_service",
-    "get_request_id",
-    "get_session",
-    "get_session_service",
-]
+# No ``__all__`` here on purpose: this module is an internal of the ``deps``
+# package, and ``deps/__init__.py`` declares the surface controllers import.
+# Restating the same fourteen names in both files gives the next person two
+# lists to keep in step and no way to tell which one is authoritative.
