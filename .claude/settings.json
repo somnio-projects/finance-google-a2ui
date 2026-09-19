@@ -28,6 +28,7 @@
       "Edit(**/google-services.json)",
       "Edit(**/GoogleService-Info.plist)",
       "Edit(./backend/alembic/versions/20260918_0001_audit_events.py)",
+      "Edit(./backend/alembic/versions/20260918_0002_feature_flags.py)",
       "Edit(./backend/uv.lock)"
     ],
     "allow": [

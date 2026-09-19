@@ -12,7 +12,7 @@ from app.repositories.base import BaseRepository
 
 
 class AuditRepository(BaseRepository[AuditEvent]):
-    """Append-only access to the audit trail."""
+    """Insert-only access to the audit trail, plus the retention purge."""
 
     model = AuditEvent
 

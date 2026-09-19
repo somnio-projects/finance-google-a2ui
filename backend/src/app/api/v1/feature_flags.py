@@ -19,10 +19,10 @@ FlagKey = Annotated[str, Path(min_length=3, max_length=100, pattern=FLAG_KEY_PAT
 
 @router.get("", response_model=list[FeatureFlagResponse], summary="List flags")
 async def list_feature_flags(
-    principal: PrincipalDep, service: FlagsDep
+    principal: PrincipalDep, request_id: RequestIdDep, service: FlagsDep
 ) -> list[FeatureFlagResponse]:
-    """Return every persisted flag (admin only)."""
-    return await service.list_flags(principal)
+    """Return every persisted flag (admin only, audited). Spec 0002 AC-2."""
+    return await service.list_flags(principal, request_id=request_id)
 
 
 @router.put("/{key}", response_model=FeatureFlagResponse, summary="Set a flag")
@@ -33,7 +33,7 @@ async def set_feature_flag(
     request_id: RequestIdDep,
     service: FlagsDep,
 ) -> FeatureFlagResponse:
-    """Enable or disable ``key`` at runtime (admin only, audited)."""
+    """Enable or disable ``key`` at runtime (admin, audited). Spec 0002 AC-1/3/6."""
     return await service.set_flag(
         principal,
         key=key,

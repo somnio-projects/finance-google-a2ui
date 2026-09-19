@@ -19,7 +19,7 @@
 | Store | Field | Class | PII? | Minimisation applied |
 |---|---|---|---|---|
 | `audit_events` | `subject` (IdP `sub`) | Confidential | pseudonymous identifier | stored as given by the IdP; no name/email |
-| `audit_events` | `provider`, `action`, `request_id`, `created_at` | Internal | no | — |
+| `audit_events` | `provider`, `action`, `target` (flag key / resource id), `request_id`, `created_at` | Internal | no | `action` is `<domain>.<verb>`; `target` never carries PII |
 | `audit_events` | `token_fingerprint` | Confidential | no (16-hex SHA-256 prefix) | the token itself is **never** stored |
 | `feature_flags` | `key`, `enabled`, `description`, `updated_by` (subject) | Internal (`updated_by` Confidential) | pseudonymous | — |
 | Token claims (in memory only) | `email` | Confidential / PII | yes | read for the `Principal`, returned to the caller on `/v1/me`, never persisted or logged |

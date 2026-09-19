@@ -33,7 +33,7 @@ or configuration and verified by tests; each row names where.
 | Audit-trail retention with purge job | `repositories/audit_repository.py::purge_older_than`, `services/audit_service.py::purge_expired`, `scripts/purge_audit_events.py`, `AUDIT_RETENTION_DAYS` | `tests/integration/test_repositories.py`, `tests/unit/services/test_audit_and_identity.py` | C1.2 | A.8.10 |
 | Corrupt stored rows surface as a typed 503, never a 500 | `core/dto.py::from_row` | `tests/unit/core/test_dto.py` | CC7.4 | A.8.9 |
 | SAST, secret and image scanning on every PR; weekly independent scan with SBOM | `.github/workflows/backend-ci.yaml` (`sast`, `secrets`, `image`), `.github/workflows/scheduled-scan.yaml` | CI | CC7.1, CC8.1 | A.8.8, A.8.29, A.5.21 |
-| Review ownership and change control | `.github/CODEOWNERS`, `.github/pull_request_template.md`, branch protection on `main` | GitHub ruleset | CC8.1 | A.8.32 |
+| Review ownership and change control | `.github/CODEOWNERS`, `.github/pull_request_template.md`; `main` ruleset exported to `docs/compliance/evidence/` (enforcement pending — enabled by the repo admin before merge) | GitHub ruleset export | CC8.1 | A.8.32 |
 
 ## Governance, tenancy and data (out of code)
 

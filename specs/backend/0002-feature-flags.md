@@ -27,8 +27,8 @@ TTL (single instance per ADR-F D-4).
 
 | Method & path | Auth | Request | Response | Errors |
 |---|---|---|---|---|
-| `GET /v1/admin/feature-flags` | Bearer + scope `admin` | — | `list[FeatureFlagResponse]` | `forbidden → 403` |
-| `PUT /v1/admin/feature-flags/{key}` | Bearer + scope `admin` | `FeatureFlagUpdate{enabled, description?}` | `FeatureFlagResponse` | `forbidden → 403`, `malformed-request → 422` |
+| `GET /v1/admin/feature-flags` | Bearer + scope `admin` (+ MFA `amr` when `admin_mfa_required`) | — | `list[FeatureFlagResponse]`; audited `feature_flag.list` | `forbidden → 403` (no scope **or** no MFA) |
+| `PUT /v1/admin/feature-flags/{key}` | Bearer + scope `admin` (+ MFA `amr` when `admin_mfa_required`) | `FeatureFlagUpdate{enabled, description?}` | `FeatureFlagResponse`; audited `feature_flag.update` with `target=key` | `forbidden → 403` (no scope **or** no MFA), `malformed-request → 422` |
 | any gated route | as the route | — | as the route | `feature-disabled → 404` |
 
 `key` matches `^[a-z0-9]+(\.[a-z0-9_-]+)*$` (e.g. `identity.audit`), 3–100
@@ -52,9 +52,15 @@ updated_at timestamptz)`. Revision `0002`. No backfill: an absent row means
 ## 5. Security notes
 
 Toggling is an administrative action: requires scope `admin` on the token
-(ADR-B scopes), decided in the service with `principal.has_scope`. Every
-change writes `feature_flag.update` to `audit_events` with the actor's subject
-and the request id (SOC 2 CC8.1 change management, ISO A.8.32). Reads are
+(ADR-B scopes), decided in the service with `principal.has_scope`, **and a
+multi-factor session** (`amr` claim ∩ `MFA_METHODS`, `Principal.is_mfa`) when
+`Settings.admin_mfa_required` is on — the default in production,
+`AUTH_ADMIN_REQUIRE_MFA` overrides (docs/compliance/ACCESS_CONTROL.md). Every
+change writes `action="feature_flag.update"` with `target=<key>` to
+`audit_events` (the key can be 100 chars; `action` stays `<domain>.<verb>` in
+`String(64)` — migration 0003 added `target`); every listing writes
+`feature_flag.list`. Both carry the actor's subject and the request id (SOC 2
+CC8.1 change management, ISO A.8.32). Reads are
 unauthenticated in the sense that the gate runs before the route's own auth —
 it only reveals a 404. The env kill-switch lets operators disable an endpoint
 even if the database is unavailable.
@@ -62,8 +68,8 @@ even if the database is unavailable.
 ## 6. Acceptance criteria
 
 1. **AC-1** `PUT /v1/admin/feature-flags/identity.audit {enabled:false}` by an `admin` principal makes `GET /v1/me/audit` answer 404 `feature-disabled`; enabling it again restores 200 — without restarting the process.
-2. **AC-2** A principal without the `admin` scope gets 403 `forbidden` on both admin routes; an unauthenticated caller gets 401.
-3. **AC-3** Every toggle persists a `feature_flags` row and an `audit_events` row with action `feature_flag.update`.
+2. **AC-2** A principal without the `admin` scope gets 403 `forbidden` on both admin routes; so does an `admin` without an MFA `amr` when `admin_mfa_required`; an unauthenticated caller gets 401. Listing is audited as `feature_flag.list`.
+3. **AC-3** Every toggle persists a `feature_flags` row and an `audit_events` row with `action = feature_flag.update` and `target = <key>`, for any valid key length (3–100).
 4. **AC-4** A key listed in `FEATURE_FLAGS_FORCE_DISABLED` is disabled regardless of the database value and cannot be enabled through the API (the response shows `enabled=false`).
 5. **AC-5** Flag reads are served from cache within the TTL and refreshed after it; a database read failure falls back to the gate default and is reported through `ErrorReporter`.
 6. **AC-6** Invalid keys (uppercase, spaces, >100 chars) are rejected with 422.
@@ -74,14 +80,14 @@ even if the database is unavailable.
 | AC | Unit | Integration |
 |---|---|---|
 | AC-1 | `services/test_feature_flag_service.py`, `api/test_feature_gate.py` | `test_feature_flags_flow.py::test_toggle_disables_and_restores_gated_endpoint` |
-| AC-2 | `services/test_feature_flag_service.py::test_*_requires_admin_scope`, `api/test_feature_gate.py` | `test_feature_flags_flow.py::test_admin_routes_require_admin_scope` |
-| AC-3 | `services/test_feature_flag_service.py::test_set_records_audit_event` | `test_feature_flags_flow.py::test_toggle_persists_flag_and_audit_rows` |
-| AC-4 | `services/test_feature_flag_service.py::test_force_disabled_wins` | `test_feature_flags_flow.py::test_force_disabled_env_wins_over_database` |
-| AC-5 | `services/test_feature_flag_cache.py`, `services/test_feature_flag_service.py::test_read_failure_falls_back_to_default` | — |
+| AC-2 | `services/test_feature_flag_service.py::test_admin_operations_require_admin_scope`, `services/test_feature_flag_admin_mfa.py`, `api/test_feature_gate.py` | `test_feature_flags_flow.py::test_admin_routes_require_admin_scope` |
+| AC-3 | `services/test_feature_flag_service.py::test_set_flag_persists_caches_audits_and_counts` | `test_feature_flags_flow.py::test_toggle_persists_flag_and_audit_rows`, `::test_longest_valid_key_is_persisted_and_audited` |
+| AC-4 | `services/test_feature_flag_service.py::test_force_disabled_wins_over_everything` | `test_feature_flags_flow.py::test_force_disabled_env_wins_over_database` |
+| AC-5 | `services/test_feature_flag_cache.py`, `services/test_feature_flag_service.py::test_read_failure_falls_back_to_default_and_reports` | — |
 | AC-6 | `schemas` validation via `api/test_feature_gate.py` | `test_feature_flags_flow.py::test_invalid_key_is_422` |
 | AC-7 | gate | gate |
 
-Mutation checks: gate dependency disabled → AC-1 tests red (performed).
+Mutation checks: gate dependency disabled → AC-1 tests red (performed 2026-09-18); MFA branch of `_require_admin` disabled → `test_feature_flag_admin_mfa.py::test_admin_without_mfa_is_forbidden_when_mfa_required` red (performed 2026-09-19).
 
 ## 8. Open decisions
 

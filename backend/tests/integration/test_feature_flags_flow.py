@@ -58,8 +58,10 @@ def test_toggle_persists_flag_and_audit_rows(integration_client: TestClient) -> 
     assert listed.status_code == 200
     assert any(f["key"] == key and f["enabled"] is False for f in listed.json())
     audit = integration_client.get("/v1/me/audit", headers=admin)
-    actions = [e["action"] for e in audit.json()]
-    assert f"feature_flag.update:{key}" in actions
+    assert ("feature_flag.update", key) in [
+        (e["action"], e["target"]) for e in audit.json()
+    ]
+    assert "feature_flag.list" in [e["action"] for e in audit.json()]
     assert any(e["request_id"] == "ff-1" for e in audit.json())
 
 
@@ -71,6 +73,21 @@ def test_admin_routes_require_admin_scope(integration_client: TestClient) -> Non
     )
     assert denied.status_code == 403
     assert denied.json()["type"].endswith("/forbidden")
+
+
+def test_longest_valid_key_is_persisted_and_audited(
+    integration_client: TestClient,
+) -> None:
+    """Spec 0002 AC-3/AC-6: a 100-char key fits the flag row and the audit target."""
+    admin = _admin_headers()
+    key = ("k" + uuid.uuid4().hex)[:20] + "." + "x" * 79
+    assert len(key) == 100
+    saved = integration_client.put(
+        f"{FLAGS}/{key}", json={"enabled": False}, headers=admin
+    )
+    assert saved.status_code == 200, saved.text
+    audit = integration_client.get("/v1/me/audit", headers=admin).json()
+    assert ("feature_flag.update", key) in [(e["action"], e["target"]) for e in audit]
 
 
 def test_invalid_key_is_422(integration_client: TestClient) -> None:

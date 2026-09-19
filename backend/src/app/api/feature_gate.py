@@ -20,7 +20,7 @@ from app.services.feature_flag_service import FeatureFlagService
 
 
 def require_feature(key: str, *, default: bool = True) -> params.Depends:
-    """Build a FastAPI dependency that rejects requests while ``key`` is off.
+    """Build a dependency that rejects requests while ``key`` is off (0002 AC-1).
 
     Args:
         key: Flag key, e.g. ``identity.audit``.

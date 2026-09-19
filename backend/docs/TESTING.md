@@ -8,7 +8,7 @@ make audit     # pip-audit
 ```
 
 Coverage is measured on `src/app` with **branch** coverage and must be 100 %.
-`src/app/main.py` is the only omitted file (it just calls `create_app()`).
+Nothing is omitted — `src/app/main.py` is covered by `tests/unit/api/test_bootstrap.py`.
 
 ## Suites
 

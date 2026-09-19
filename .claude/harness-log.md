@@ -24,6 +24,20 @@ every audit > 90 before the PR.
   `FeatureFlagService._require_admin`.
 - **Retention**: `AuditRepository.purge_older_than`, `AuditService.purge_expired`,
   `scripts/purge_audit_events.py`, `make purge-audit`, `AUDIT_RETENTION_DAYS=400`.
+- `backend-reviewer` round 2 (final tree) FLAGGED 2 blockers + 7 should-fix, all
+  addressed: `audit_events.target` column (migration 0003) so `action` stays
+  `<domain>.<verb>` and 100-char flag keys no longer overflow `String(64)`;
+  `feature_flag.list` audited; `httpx2` justified in `pyproject.toml` (Starlette's
+  TestClient needs it); purge job moved to `app/jobs/purge_audit.py` (typed,
+  covered) with a thin `scripts/` wrapper; spec 0002 aligned (MFA, target, test
+  names, mutation check); docs synced; branch-protection claims corrected with
+  the exported ruleset (`docs/compliance/evidence/`, enforcement disabled today);
+  `Edit` deny added for the merged migration 0002.
+- Run 4 of `python-best-practices` (90) → basedpyright now also reports
+  `Any`/`ExplicitAny`, unknown parameter/lambda types, private usage and
+  uninitialised instance variables (only 2 fixes needed); `KeyResolver` split
+  into `ensure_fresh()` + `key_for()`; `AuditService`/`IdentityService`
+  constructors keyword-only; integration `session` fixture disposes in `finally`.
 - `api/router.py` documented as the single route registration point;
   `docs/ADDING_AN_ENDPOINT.md` recipe + controller template (Lautaro: "routes
   ready to declare endpoints with the harness next iteration").
@@ -59,7 +73,7 @@ every audit > 90 before the PR.
 - `feature_flags` table (revision `0002`), `FeatureFlagRepository`,
   `FeatureFlagCache` (TTL, in the `Container`), `FeatureFlagService`
   (env kill-switch → cache → DB → default; `admin` scope for writes; audit
-  event `feature_flag.update:<key>` + `feature_flag.toggled` metric).
+  event `feature_flag.update` with `target=<key>` + `feature_flag.toggled` metric).
 - `api/feature_gate.py::require_feature(key, default=)` — route dependency
   answering 404 `feature-disabled`; `/v1/me/audit` is the first gated route.
 - Admin API `GET/PUT /v1/admin/feature-flags[/{key}]`; settings

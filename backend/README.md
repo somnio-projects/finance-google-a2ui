@@ -83,7 +83,6 @@ repositories are the only code that touches SQLAlchemy sessions.
 | [docs/AUTH.md](docs/AUTH.md) | Bearer-token auth, provider registry, adding OAuth / SSO |
 | [docs/TESTING.md](docs/TESTING.md) | Unit vs integration, fixtures, the 100 % coverage gate |
 | [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) | Structured logs, request ids, Sentry, metrics |
-| [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md) | Enable/disable endpoints at runtime, admin API, kill-switch |
 | [../specs/](../specs/) | Spec-driven development: one spec per feature |
 
 License: Apache-2.0 (see repository root).

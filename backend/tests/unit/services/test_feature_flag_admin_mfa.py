@@ -52,7 +52,7 @@ async def test_admin_without_mfa_is_forbidden_when_mfa_required(
 ) -> None:
     service = _service(clock, reporter, require_mfa=True)
     with pytest.raises(AuthorizationError, match="multi-factor"):
-        await service.list_flags(_admin(amr=frozenset({"pwd"})))
+        await service.list_flags(_admin(amr=frozenset({"pwd"})), request_id="r")
 
 
 @pytest.mark.parametrize(
@@ -68,4 +68,19 @@ async def test_admin_passes_when_mfa_present_or_not_required(
     clock: FixedClock, reporter: FakeReporter, require_mfa: bool, amr: frozenset[str]
 ) -> None:
     service = _service(clock, reporter, require_mfa=require_mfa)
-    assert await service.list_flags(_admin(amr=amr)) == []
+    assert await service.list_flags(_admin(amr=amr), request_id="r") == []
+
+
+@pytest.mark.parametrize("operation", ["list", "set"], ids=["list", "set"])
+async def test_admin_operations_require_admin_scope(
+    clock: FixedClock, reporter: FakeReporter, operation: str
+) -> None:
+    service = _service(clock, reporter, require_mfa=False)
+    user = _admin(amr=frozenset()).model_copy(update={"scopes": frozenset()})
+    with pytest.raises(AuthorizationError, match="admin scope"):
+        if operation == "list":
+            await service.list_flags(user, request_id="r")
+        else:
+            await service.set_flag(
+                user, key="x", enabled=True, description=None, request_id="r"
+            )

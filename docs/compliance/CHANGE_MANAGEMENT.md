@@ -30,14 +30,18 @@ without a green CI run on the same commit.
 ## 3. Branch protection and review (GitHub ruleset on `main`)
 
 - Pull request required; **1 approving review from a code owner** (`.github/CODEOWNERS`); stale approvals dismissed on new commits.
-- Required status checks: `gate`, `gitleaks`, `semgrep`, `docker build` (from `.github/workflows/backend-ci.yaml`).
+- Required status checks: the four jobs of `.github/workflows/backend-ci.yaml` (exact names below).
 - Linear history (squash or rebase); force-push and deletion of `main` disabled; administrators included.
 - The PR template (`.github/pull_request_template.md`) carries the `Spec:` and `Test decision:` lines and the security checklist.
 
-The ruleset lives in GitHub settings; its configuration is exported to
-`docs/compliance/evidence/branch-protection.json` at each internal audit
-(first export due with the first audit cycle, see
-[isms/INTERNAL_AUDIT_PROGRAM.md](isms/INTERNAL_AUDIT_PROGRAM.md)).
+**Current state (exported 2026-09-19, `evidence/branch-protection-ruleset.json`):**
+the ruleset `main` exists with deletion + non-fast-forward + pull-request rules
+but is **disabled** and requires 0 approvals. The repo admin (TL backend)
+enables it with the settings above before PR #2 merges; the export is refreshed
+at each internal audit ([isms/INTERNAL_AUDIT_PROGRAM.md](isms/INTERNAL_AUDIT_PROGRAM.md)).
+Required-check names must match the job display names exactly:
+`gate (ruff · pyright · budget · pytest 100 %)`, `gitleaks`,
+`semgrep (python security rules)`, `docker build`.
 
 ## 4. Definition of Done
 

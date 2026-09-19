@@ -1,9 +1,7 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
-from app.core.errors import AuthorizationError, DependencyUnavailableError
+from app.core.errors import DependencyUnavailableError
 from app.core.principal import Principal
 from app.helpers.clock import FixedClock
 from app.models.audit_event import AuditEvent
@@ -94,11 +92,12 @@ async def test_is_enabled_reads_row_value(
 async def test_force_disabled_wins_over_everything(
     clock: FixedClock, reporter: FakeReporter, principal: Principal
 ) -> None:
-    service, repo, _ = build(clock, reporter, force_disabled=["x.read"])
+    service, repo, audit_repo = build(clock, reporter, force_disabled=["x.read"])
     await repo.upsert("x.read", enabled=True, description=None, updated_by="op")
     assert await service.is_enabled("x.read") is False
     assert repo.reads == 0
-    listed = await service.list_flags(admin(principal))
+    listed = await service.list_flags(admin(principal), request_id="r-list")
+    assert [e.action for e in audit_repo.events] == ["feature_flag.list"]
     assert [(f.key, f.enabled) for f in listed] == [("x.read", False)]
 
 
@@ -128,23 +127,11 @@ async def test_set_flag_persists_caches_audits_and_counts(
     assert repo.rows["x.read"].enabled is False
     assert await service.is_enabled("x.read") is False
     assert repo.reads == 0  # served by the cache the toggle refreshed
-    assert [e.action for e in audit_repo.events] == ["feature_flag.update:x.read"]
+    assert [(e.action, e.target) for e in audit_repo.events] == [
+        ("feature_flag.update", "x.read")
+    ]
     assert audit_repo.events[0].request_id == "r1"
     assert (
         "feature_flag.toggled",
         {"key": "x.read", "enabled": "false"},
     ) in reporter.metrics
-
-
-@pytest.mark.parametrize("operation", ["list", "set"], ids=["list", "set"])
-async def test_admin_operations_require_admin_scope(
-    clock: FixedClock, reporter: FakeReporter, principal: Principal, operation: str
-) -> None:
-    service, _, _ = build(clock, reporter)
-    with pytest.raises(AuthorizationError, match="admin scope"):
-        if operation == "list":
-            await service.list_flags(principal)
-        else:
-            await service.set_flag(
-                principal, key="x", enabled=True, description=None, request_id="r"
-            )

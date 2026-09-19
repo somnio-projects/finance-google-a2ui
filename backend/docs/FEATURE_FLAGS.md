@@ -51,8 +51,9 @@ Both require a bearer token whose scopes/roles include `admin` — and, in
 production (or when `AUTH_ADMIN_REQUIRE_MFA=true`), an `amr` claim proving a
 second factor (see `docs/AUTH.md`, "Authorization"). The scope may come from
 `scope: "admin"`, `scp: ["admin"]` or `roles: ["admin"]`; anyone else gets
-403 `forbidden`. Every change writes `feature_flag.update:<key>` to
-`audit_events` with the actor's subject and the request id, and emits the
+403 `forbidden`. Every change writes `feature_flag.update` (with `target` =
+the key) to `audit_events` with the actor's subject and the request id; every
+listing writes `feature_flag.list`. Toggles also emit the
 `feature_flag.toggled{key,enabled}` metric.
 
 ```bash

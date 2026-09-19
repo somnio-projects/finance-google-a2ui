@@ -20,7 +20,7 @@ class FakeFlags:
         self.calls.append((key, default))
         return self.state.get(key, default)
 
-    async def list_flags(self, principal: object) -> list[object]:
+    async def list_flags(self, principal: object, *, request_id: str) -> list[object]:
         raise AuthorizationError("feature flags require the admin scope")
 
     async def set_flag(self, principal: object, **kwargs: object) -> object:

@@ -22,7 +22,7 @@ Code never talks to Sentry directly. It calls the injected `ErrorReporter`
 - `capture_exception(exc)` — from the catch-all handler and anywhere a failure
   is swallowed on purpose.
 - `increment(metric, tags=)` — counters. Current metrics:
-  `auth.accepted{provider}`, `auth.rejected{code}`.
+  `auth.accepted{provider}`, `auth.rejected{code}`, `feature_flag.toggled{key,enabled}`.
 
 Implementations: `SentryErrorReporter` when `SENTRY_DSN` is set (environment,
 release = app version, `send_default_pii=False`, request bodies never sent,
@@ -44,5 +44,5 @@ the startup probe.
 
 ## Local
 
-`docker compose up` runs with `LOG_LEVEL=DEBUG`. Export `SENTRY_DSN` in your
-shell before `docker compose up` to test the Sentry path locally.
+`docker compose up` reads `LOG_LEVEL` and `SENTRY_DSN` from `backend/.env`
+(`LOG_LEVEL=DEBUG` and a DSN there exercise the verbose/Sentry paths locally).

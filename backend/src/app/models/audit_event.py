@@ -21,6 +21,9 @@ class AuditEvent(TimestampMixin, Base):
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     provider: Mapped[str] = mapped_column(String(32), nullable=False)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
+    # What the action was applied to (flag key, resource id); ``action`` stays
+    # ``<domain>.<verb>`` so it never overflows and stays queryable.
+    target: Mapped[str | None] = mapped_column(String(255), nullable=True)
     token_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     request_id: Mapped[str] = mapped_column(String(64), nullable=False)
 

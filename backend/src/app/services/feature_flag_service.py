@@ -48,7 +48,7 @@ class FeatureFlagService:
         self._force_disabled = frozenset(force_disabled)
 
     async def is_enabled(self, key: str, *, default: bool = True) -> bool:
-        """Return the effective state of ``key``; never raises."""
+        """Return the effective state of ``key``; never raises (AC-4, AC-5)."""
         if key in self._force_disabled:
             return False
         cached = self._cache.get(key)
@@ -64,10 +64,15 @@ class FeatureFlagService:
         self._cache.put(key, value)
         return value
 
-    async def list_flags(self, principal: Principal) -> list[FeatureFlagResponse]:
-        """Return every persisted flag with the kill-switch applied."""
+    async def list_flags(
+        self, principal: Principal, *, request_id: str
+    ) -> list[FeatureFlagResponse]:
+        """Return every flag with the kill-switch applied (AC-2; audited)."""
         self._require_admin(principal)
         flags = await self._repository.list_all()
+        await self._audit.record(
+            principal, action="feature_flag.list", request_id=request_id
+        )
         return [self._to_response(flag) for flag in flags]
 
     async def set_flag(
@@ -79,14 +84,14 @@ class FeatureFlagService:
         description: str | None,
         request_id: str,
     ) -> FeatureFlagResponse:
-        """Persist the new state, refresh the cache and audit the change."""
+        """Persist, refresh the cache and audit the change (spec 0002 AC-1, AC-3)."""
         self._require_admin(principal)
         flag = await self._repository.upsert(
             key, enabled=enabled, description=description, updated_by=principal.subject
         )
         self._cache.put(key, flag.enabled)
         await self._audit.record(
-            principal, action=f"feature_flag.update:{key}", request_id=request_id
+            principal, action="feature_flag.update", target=key, request_id=request_id
         )
         self._reporter.increment(
             "feature_flag.toggled", tags={"key": key, "enabled": str(enabled).lower()}

@@ -22,6 +22,7 @@ class AuditEventResponse(BaseModel):
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
     action: str
+    target: str | None = None
     provider: str
     request_id: str
     created_at: datetime

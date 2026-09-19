@@ -7,7 +7,10 @@ from sqlalchemy import update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bootstrap import build_container
+from app.core.config import Settings
 from app.core.errors import DependencyUnavailableError, NotFoundError
+from app.jobs import purge_audit
 from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
 
@@ -88,3 +91,14 @@ async def test_purge_older_than_deletes_only_expired_rows(
     assert [e.action for e in await repo.list_for_subject(subject, limit=5)] == [
         "fresh"
     ]
+
+
+async def test_purge_job_runs_end_to_end_against_postgres(
+    integration_settings: Settings,
+) -> None:
+    container = build_container(integration_settings)
+    try:
+        purged = await purge_audit.run(container)
+    finally:
+        await container.engine.dispose()
+    assert purged >= 0

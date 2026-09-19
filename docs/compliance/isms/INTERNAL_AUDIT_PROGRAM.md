@@ -28,6 +28,11 @@ scores feed [SECURITY_OBJECTIVES.md](SECURITY_OBJECTIVES.md) O-6.
 | 2026-09-19 | `soc2-audit` (run 3, first full 10-family audit) | `9169280` | **40/100** | this compliance corpus, CODEOWNERS, PR template, scheduled scan, Semgrep, retention purge, admin MFA, restore drill — re-audit pending |
 | 2026-09-19 | `iso27001-audit` (run 3) | `9169280` | **64/100** | same remediation + ISMS artifacts (this folder) — re-audit pending |
 | 2026-09-19 | Backup/restore drill #1 | local compose | pass | see RESTORE_DRILL_LOG.md |
+| 2026-09-19 | `python-best-practices` (run 4) | after `02d1836` | **90/100** | stricter basedpyright, CQS split, keyword-only constructors (`4944768`); run 5 pending |
+| 2026-09-19 | `soc2-audit` (run 4) | after the compliance corpus (`82534de`) | **78/100** (Largely Ready) | remaining: Family F infrastructure (IaC), external pentest, DPAs, IAM/revocation |
+| 2026-09-19 | `iso27001-audit` (run 4) | `82534de` | **86/100** (Certification-Ready) | Category A scored from a stale snapshot — re-run (run 5) in progress; H/I need IaC + DPAs |
+| 2026-09-19 | `security-audit` (run 3) | final tree | **98/100** | no new findings |
+| 2026-09-19 | `backend-reviewer` round 2 | final tree | FLAGGED → fixed | `audit_events.target` (0003), `feature_flag.list` audited, purge job into `app/jobs`, spec/docs sync, branch-protection evidence |
 
 Reports are kept by the security owner (`backend/reports/`, git-ignored, 90
 days) and attached to the PR that addressed them.

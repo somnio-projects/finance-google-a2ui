@@ -20,13 +20,22 @@ class AuditService:
         self._repository = repository
 
     async def record(
-        self, principal: Principal, *, action: str, request_id: str
+        self,
+        principal: Principal,
+        *,
+        action: str,
+        request_id: str,
+        target: str | None = None,
     ) -> AuditEvent:
-        """Persist that ``principal`` performed ``action`` in ``request_id``."""
+        """Persist that ``principal`` performed ``action`` (on ``target``).
+
+        ``action`` is ``<domain>.<verb>``; ``target`` carries the object acted on.
+        """
         event = AuditEvent(
             subject=principal.subject,
             provider=principal.provider,
             action=action,
+            target=target,
             token_fingerprint=principal.token_fingerprint,
             request_id=request_id,
         )

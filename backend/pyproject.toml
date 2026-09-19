@@ -28,6 +28,8 @@ dev = [
     "ruff>=0.6",
     "basedpyright>=1.18",
     "testcontainers[postgres]>=4.8",
+    # Starlette's TestClient imports httpx2 first and only falls back to httpx with a
+    # deprecation warning (fatal under filterwarnings=error). Test-only dependency.
     "httpx2>=2.13.0",
 ]
 

@@ -23,7 +23,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 |---|---|---|---|---|
 | A.5.1 | Policies for information security | Applicable | Implemented | docs/compliance/INFORMATION_SECURITY_POLICY.md + policy set; backend/docs/SECURITY.md control matrix |
 | A.5.2 | Information security roles and responsibilities | Applicable | Implemented | RACI in INFORMATION_SECURITY_POLICY.md §4; CONTRIBUTORS.md; .github/CODEOWNERS |
-| A.5.3 | Segregation of duties | Applicable | Implemented | author ≠ reviewer enforced by CODEOWNERS + branch protection; admin scope separate from user scope (ACCESS_CONTROL.md) |
+| A.5.3 | Segregation of duties | Applicable | Partially implemented | CODEOWNERS committed; the `main` ruleset exists but is **disabled** and requires 0 approvals (`evidence/branch-protection-ruleset.json`) — enforcement with code-owner review + status checks is enabled by the repo admin before PR #2 merges; admin scope separate from user scope (ACCESS_CONTROL.md) |
 | A.5.4 | Management responsibilities | Applicable | Implemented | management commitment §5 of the IS policy; approval by merge; MANAGEMENT_REVIEW.md |
 | A.5.5 | Contact with authorities | Applicable | Implemented | BREACH_NOTIFICATION_SLA.md (regulator row, coordinated by Somnio legal) |
 | A.5.6 | Contact with special interest groups | Applicable | Implemented | GitHub Security Advisories, Dependabot/OSV feeds, OWASP rule sets via Semgrep (VULNERABILITY_MANAGEMENT.md) |
@@ -53,7 +53,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.5.30 | ICT readiness for business continuity | Applicable | Partially implemented | DR plan + restore drill #1 done; production HA/PITR planned with GGU-29 (retained risk R-11) |
 | A.5.31 | Legal, statutory, regulatory and contractual requirements | Applicable | Implemented | GDPR as reference framework in DATA_RETENTION.md and BREACH_NOTIFICATION_SLA.md; Apache-2.0 LICENSE; Google program terms in CONFIDENTIALITY.md |
 | A.5.32 | Intellectual property rights | Applicable | Implemented | LICENSE (Apache-2.0), dependency licences via SBOM, contributor agreements (CONFIDENTIALITY.md) |
-| A.5.33 | Protection of records | Applicable | Implemented | audit_events append-only with retention (DATA_RETENTION.md); git history immutable on main |
+| A.5.33 | Protection of records | Applicable | Implemented | audit_events insert-only API with retention purge (DATA_RETENTION.md); git history on `main` protected once the ruleset is enforced (see A.5.3) |
 | A.5.34 | Privacy and protection of PII | Applicable | Implemented | data minimisation, no PII in logs/Sentry, erasure procedure (DATA_CLASSIFICATION.md, DATA_RETENTION.md §3, AI_DATA_HANDLING.md) |
 | A.5.35 | Independent review of information security | Applicable | Planned | internal readiness review by a Somnio reviewer outside the team 2026-Q4; external pentest before non-demo exposure (VULNERABILITY_MANAGEMENT.md §2) |
 | A.5.36 | Compliance with policies, rules and standards for information security | Applicable | Implemented | ship gate == CI == .claude/ship-gate.json; PostToolUse hook; CODEOWNERS; NONCONFORMITY_LOG.md |
@@ -83,7 +83,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.1 | User endpoint devices | Applicable | Implemented | DEVICE_POLICY.md |
 | A.8.2 | Privileged access rights | Applicable | Implemented | admin scope + MFA (amr) in production; audited (ACCESS_CONTROL.md; services/feature_flag_service.py) |
 | A.8.3 | Information access restriction | Applicable | Implemented | PrincipalDep on every route; own-subject queries; scope matrix |
-| A.8.4 | Access to source code | Applicable | Implemented | open-source read; write via GitHub roles + 2FA; branch protection (CHANGE_MANAGEMENT.md §3) |
+| A.8.4 | Access to source code | Applicable | Partially implemented | open-source read; write via GitHub roles + 2FA (`lautarob` admin, `mcampbell-somnio` write — verified 2026-09-19); branch-protection ruleset exported but not yet enforced (CHANGE_MANAGEMENT.md §3) |
 | A.8.5 | Secure authentication | Applicable | Implemented | auth/providers/*, rate limiting, error masking; MFA delegated to IdP and enforced for admin |
 | A.8.6 | Capacity management | Applicable | Implemented | rate limit, body limit, Cloud Run autoscaling commitments (CLOUD_SERVICES.md §3) |
 | A.8.7 | Protection against malware | Applicable | Implemented | Trivy image scan, gitleaks, pip-audit; OS protection in DEVICE_POLICY.md |

@@ -5,6 +5,7 @@ Every required variable has no default, so a missing value fails fast with a
 implicit insecure defaults). Variables are documented in ``env.example``.
 """
 
+from datetime import timedelta
 from functools import lru_cache
 from typing import Annotated, Literal
 
@@ -102,6 +103,11 @@ class Settings(BaseSettings):
             msg = "TRUSTED_HOSTS must be an explicit list when ENVIRONMENT=production"
             raise ValueError(msg)
         return self
+
+    @property
+    def audit_retention(self) -> timedelta:
+        """``audit_retention_days`` as a ``timedelta``."""
+        return timedelta(days=self.audit_retention_days)
 
     @property
     def admin_mfa_required(self) -> bool:
