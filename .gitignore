@@ -1,6 +1,7 @@
 # OS / editors
 .DS_Store
 .idea/
+*.iml
 
 # Secrets — env files live inside each solution (backend/.env, ...) and are never committed;
 # the committed templates are named `env.example` (no leading dot).
