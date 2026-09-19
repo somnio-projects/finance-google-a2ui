@@ -26,6 +26,7 @@ from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.protocols import Clock, ErrorReporter, TokenVerifier
+from app.core.release import resolve_release
 from app.helpers.clock import SystemClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
@@ -45,7 +46,8 @@ def build_container(
 ) -> Container:
     """Wire the singletons; optional arguments let tests inject doubles."""
     clock = clock or SystemClock()
-    reporter = reporter or build_error_reporter(settings, release=__version__)
+    release = resolve_release(settings.app_release)
+    reporter = reporter or build_error_reporter(settings, release=release)
     verifier = verifier or build_token_verifier(settings, clock)
     engine = create_engine(settings)
     return Container(
@@ -55,9 +57,7 @@ def build_container(
         verifier=verifier,
         engine=engine,
         session_factory=create_session_factory(engine),
-        health=HealthService(
-            version=__version__, probes=[DatabaseReadinessProbe(engine)]
-        ),
+        health=HealthService(version=release, probes=[DatabaseReadinessProbe(engine)]),
         flag_cache=FeatureFlagCache(
             ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
         ),

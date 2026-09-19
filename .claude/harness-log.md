@@ -72,6 +72,120 @@ is **persisted conversations owned by the verified subject**.
   a faked service. Any future controller with post-`await` statements hits the same thing.
 - Sessions live in the PostgreSQL the backend already owns; flagged as OD-1 against
   ADR-F D-1 for the TL.
+## 2026-09-19 — GGU-48 continuous delivery · spec `specs/backend/0007-cd-pipeline.md`
+
+**Branch:** `feat/GGU-48_cd_pipeline` → `develop`. Built in a worktree while the
+GGU-49 and GGU-47 agents held `backend/src/app/presentation/` and
+`backend/src/app/agent/`; this ticket deliberately took the one area with no
+overlap (`.github/`, `infra/`).
+
+**Code**
+- `backend/src/app/core/release.py` — resolves `APP_RELEASE`, falls back to the
+  packaged `__version__`. `bootstrap.py` now feeds it to `HealthService` and to
+  the Sentry release, so a revision can say which build it is.
+- `infra/delivery.tf` — Artifact Registry (digest-addressed, retention
+  policies), the Workload Identity pool and provider **pinned to this GitHub
+  repository**, and a deployer service account holding only
+  `artifactregistry.writer`, `run.developer` and `serviceAccountUser` on the
+  runtime identity.
+- `infra/scripts/deploy_cloud_run.sh` — deploy with no traffic → require the
+  revision's `Ready` condition → shift traffic → verify `/healthz` reports
+  exactly the release → roll back on any failure.
+- `.github/workflows/backend-cd.yaml` — publish, deploy, tag, report.
+
+**Harness**
+- `.claude/ship-gate.json` gains `infra.delivery-script` and
+  `infra.credential-model`; the same two run in `pre-commit` and in the new
+  `delivery-scripts` job of `infra-ci.yaml`, keeping the three in step as
+  `.claude/rules/ci-conventions.md` §5 requires.
+- `.pre-commit-config.yaml` gains `shellcheck` — the repository now has shell
+  it depends on, so shell gets a linter.
+- `infra-ci.yaml` was rewritten to the job/step naming contract (it predated
+  the rule) and now ends in a `Report · …` summary like every other workflow.
+- `CLAUDE.md` gains a delivery convention; `docs/diagrams/08` and `09` updated
+  in this PR as `.claude/rules/diagrams.md` requires;
+  `docs/compliance/CHANGE_MANAGEMENT.md` §7 rewritten around the automated
+  record.
+
+**Why the deploy is a shell script and not inline workflow YAML.** A rollback
+path that has never executed is not a rollback path. As a script it runs
+against a stub `gcloud` on `PATH`, so the whole sequence — including the
+rollback — is exercised on a laptop in under a second. Inline YAML could only
+have been proven by breaking a real deploy.
+
+**What the `backend-reviewer` agent caught, and what changed because of it**
+
+The first version was gate-green and wrong in four ways. All four are fixed
+here; they are worth reading because three of them would only have shown up on
+the first real deploy.
+
+1. **The readiness probe could pass for the wrong revision.** It looked up the
+   candidate revision's tagged URL and fell back to the service's public URL
+   when the lookup missed — and the public URL still served the *previous*,
+   healthy revision. A missed lookup therefore verified the old code and then
+   shifted traffic to the unverified new one. An unresolvable revision is now a
+   hard failure, covered by its own test.
+2. **The probes could not have reached the service at all.** Ingress is
+   `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`, so the `*.run.app` hostnames are
+   unreachable from a GitHub-hosted runner and every deploy would have rolled
+   itself back. The pre-traffic gate is now the revision's own `Ready`
+   condition — which Cloud Run reports only after the startup probe on
+   `/readyz` passes — and the post-traffic check goes to the load balancer
+   domain (`PUBLIC_URL`), the only address that resolves from outside the VPC.
+   Recorded as spec OD-5.
+3. **The release tag could never be created.** The workflow granted
+   `contents: read` and then POSTed a ref, swallowing every error as "already
+   exists". The deploy job now has `contents: write` and distinguishes a 422
+   from a real failure.
+4. **One provider and one deployer variable cannot serve two projects.**
+   `delivery.tf` creates a pool, a provider and a deployer *per environment*,
+   but the workflow read repository-level variables and only branched on the
+   project id — so a `main` run would have authenticated as staging and pushed
+   into the production registry. A `settings` job now resolves the whole
+   per-environment set once and **fails naming the missing variable** instead.
+
+Also from that review: the release is read through `Settings.app_release`
+rather than `os.environ` (the architecture rule allows `os.environ` only in
+`core/config.py`); the release comparison is an exact match on the parsed
+`version` field instead of a substring, so `0.1.0` no longer "matches"
+`0.1.0+stale`; production federation additionally requires
+`assertion.ref == refs/heads/main`; `run.tf` declares `ignore_changes` on the
+image and the traffic split so a later `terraform apply` cannot undo a
+rollback (OD-6); `APP_RELEASE` is documented in `env.example` and compose; and
+the report job now fails on `skipped`, so a rejected production approval is not
+reported green.
+
+**Verified**
+- `make gate`: 266 tests, 100 % branch coverage, pylint 10.00/10, no CVEs.
+- `bash infra/scripts/tests/test_deploy_cloud_run.sh`: 36 passed, covering all
+  nine paths including deploy failure and an unidentifiable revision.
+  **Mutation check** — removing `shift_traffic "${previous}"` from `rollback()`
+  turned exactly 5 assertions red; restored → 36 passed.
+- `bash infra/scripts/tests/test_wif_conditions.sh`: 5 passed.
+- `terraform fmt -check -recursive` clean; `terraform validate` → *Success!*
+- `shellcheck` clean on all delivery scripts.
+- Container run with `APP_RELEASE=0.1.0+a1b2c3d` → `/healthz`
+  `{"status":"ok","version":"0.1.0+a1b2c3d"}`; without it → `"0.1.0"`;
+  `/readyz` ready; uid still 10001.
+
+**Next person should know**
+- **The pipeline is merged but has never run**: the GCP projects do not exist
+  until GGU-29 applies Terraform. AC-1, AC-2 and the live halves of AC-4/AC-5
+  are proven here by the script tests and `terraform validate`, not by a
+  deploy, and the PR says so rather than implying otherwise.
+- After GGU-29, set the repository **variables** (not secrets) from the
+  Terraform outputs. Everything except `GCP_REGION` is suffixed per
+  environment, because each environment has its own pool, provider and deployer:
+  `GCP_PROJECT_ID_*`, `GCP_WIF_PROVIDER_*`, `GCP_DEPLOYER_SA_*`, `PUBLIC_URL_*`.
+  Then add the required reviewer to the `production` GitHub Environment — that
+  reviewer *is* AC-2; the workflow only declares the environment.
+- A gate-green delivery pipeline proves very little. Everything that mattered
+  in this ticket was found by reading the failure paths, not by running the
+  suite; budget review time accordingly on anything that touches deploys.
+- `cleanup_policy` is `cleanup_policies` in the google provider v6. The first
+  spelling validates as an unsupported block, which is how it was caught.
+- Terraform provider downloads need network access the sandbox denies; run
+  `terraform init` outside it.
 
 ---
 
