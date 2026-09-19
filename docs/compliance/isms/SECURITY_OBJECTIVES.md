@@ -12,7 +12,7 @@
 | O-3 | No secret ever reaches the repository | gitleaks findings on `main` | 0 | pre-commit + CI + weekly | 0 |
 | O-4 | Code quality gate never regresses | branch coverage; ruff/pyright errors; files > 150 lines | 100 % / 0 / 0 | `make gate` == CI | 100 % / 0 / 0 (155 tests) |
 | O-5 | Recoverability | quarterly restore drill executed and passed; RTO in drill | 4 drills/yr, RTO ≤ 4 h | RESTORE_DRILL_LOG.md | 1/1 passed, ~1 s |
-| O-6 | Readiness scores | Somnio CLI `security-audit`, `soc2-audit`, `iso27001-audit`, `python-health-audit`, `python-best-practices` | each ≥ 90 | INTERNAL_AUDIT_PROGRAM.md | 98 / 40→re-audit pending / 64→re-audit pending / 92 / 88→re-audit pending |
+| O-6 | Readiness scores | Somnio CLI `security-audit`, `soc2-audit`, `iso27001-audit`, `python-health-audit`, `python-best-practices` | each ≥ 90 | INTERNAL_AUDIT_PROGRAM.md | 98 / 40→78→re-audit with IaC pending / 64→86→re-audit pending / 92→91 / 88→91 |
 | O-7 | Incident readiness | SEV-1/2 incidents with postmortem within 10 business days | 100 % | POSTMORTEM_PROCESS.md log | n/a (no incidents) |
 | O-8 | People | contributors with current security-primer attestation | 100 % | COMPETENCE_RECORDS.md | 1/2 (Mario pending, joined 2026-09-18) |
 | O-9 | Access hygiene | quarterly access review done; leavers deprovisioned within 1 business day | 4/yr; 100 % | ACCESS_CONTROL.md §6; access issues | Q3 review done |
