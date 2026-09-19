@@ -1,10 +1,10 @@
 """How a payoff curve is computed (spec 0014).
 
 ``app.domain.payoff`` says what a payoff **is**; this says how one is built —
-the price grid, the profit at each point, and the single division that turns a
-dollar amount into units. Pricing here means arithmetic over a spot price that
-is given to it: there is no derivatives pricing model in this repository and
-this module is not the beginning of one (spec 0014 OD-8).
+the price grid and the profit at each point of it. Pricing here means
+arithmetic over a spot price that is given to it: there is no derivatives
+pricing model in this repository and this module is not the beginning of one
+(spec 0014 OD-8).
 
 Pure and deterministic: the entry price, the size and the grid arrive as
 arguments, and nothing here reads a clock or a repository (ADR-F D-6). No
@@ -25,21 +25,23 @@ from app.domain.returns import return_on_cost
 PERCENT: Final[Decimal] = Decimal(100)
 
 
-def order_quantity(amount: Decimal, price: Decimal) -> Decimal:
-    """Return how many units ``amount`` buys at ``price``.
-
-    The one division the ticket insists happens server-side: the model states
-    a dollar amount, this states the units, and the model copies them.
+def _position_value(*, price: Decimal, quantity: Decimal, side: Side) -> Decimal | None:
+    """Return what the order leaves the caller holding at ``price``.
 
     Args:
-        amount: What the order spends, in USD.
-        price: The entry price; positive, as every price in the curated
-            market reference is (``Field(gt=0)``).
+        price: The hypothetical price.
+        quantity: Units the order covers.
+        side: Which way the order goes.
 
     Returns:
-        The exact quotient, unrounded.
+        ``quantity * price`` for a purchase. ``None`` for a sale: it leaves no
+        position, and the units' worth rises exactly where the sale's profit
+        falls, so publishing it beside that profit would put two figures that
+        contradict each other in one row (spec 0014 OD-12).
     """
-    return amount / price
+    if side == "sell":
+        return None
+    return price * quantity
 
 
 def _point(
@@ -47,16 +49,17 @@ def _point(
     entry_price: Decimal,
     quantity: Decimal,
     notional: Decimal,
-    direction: Decimal,
+    side: Side,
     move_ratio: Decimal,
 ) -> PayoffPoint:
     """Price the order at one point of the grid."""
     price = entry_price * (ONE + move_ratio)
+    direction = ONE if side == "buy" else -ONE
     profit_loss = direction * (price - entry_price) * quantity
     return PayoffPoint(
         price=price,
         move_ratio=move_ratio,
-        position_value=price * quantity,
+        position_value=_position_value(price=price, quantity=quantity, side=side),
         profit_loss=profit_loss,
         return_ratio=return_on_cost(profit_loss, notional),
     )
@@ -102,7 +105,6 @@ def payoff_curve(
     if steps < MIN_STEPS:
         msg = f"a payoff curve needs at least {MIN_STEPS} step per side, got {steps}"
         raise PayoffRangeError(msg)
-    direction = ONE if side == "buy" else -ONE
     notional = entry_price * quantity
     span = Decimal(range_pct) / PERCENT
     return PayoffCurve(
@@ -112,13 +114,14 @@ def payoff_curve(
         entry_price=entry_price,
         quantity=quantity,
         notional=notional,
+        price_step=entry_price * span / steps,
         break_even_price=entry_price,
         points=tuple(
             _point(
                 entry_price=entry_price,
                 quantity=quantity,
                 notional=notional,
-                direction=direction,
+                side=side,
                 move_ratio=span * step / steps,
             )
             for step in range(-steps, steps + 1)
@@ -126,4 +129,4 @@ def payoff_curve(
     )
 
 
-__all__ = ["PERCENT", "order_quantity", "payoff_curve"]
+__all__ = ["PERCENT", "payoff_curve"]

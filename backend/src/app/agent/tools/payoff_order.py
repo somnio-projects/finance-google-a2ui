@@ -1,12 +1,12 @@
 """The order ``payoff`` is asked about: how big, which way, how far (spec 0014).
 
-Split out of the tool module along the seam that was already there: this file
-is *what was asked*, ``payoff_rows`` is *how the answer reads*, and ``payoff``
-is the tool that joins them.
+`payoff_limits` holds the bounds, `payoff_rows` decides how the answer reads,
+and `payoff` is the tool. This module is the boundary: what the model may ask
+for, enforced, and what that ask resolves to.
 
-Every knob is a declared, bounded field — no free-form expression is ever
-interpreted from model input (ADR-K D-3) — and an undeclared or out-of-range
-argument is rejected rather than coerced into the default (spec 0014 OD-5).
+No free-form expression is ever interpreted from model input (ADR-K D-3), and
+an undeclared or out-of-range argument is rejected rather than coerced into the
+default (spec 0014 OD-5).
 
 The size arrives as a **string** with an explicit unit, not as a number in one
 of two optional fields: a JSON number from a model is a float and a float can
@@ -15,32 +15,26 @@ four combinations illegal (spec 0014 OD-4).
 """
 
 from decimal import Decimal
-from typing import Final, Literal, Self
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.agent.tools.payoff_limits import (
+    DEFAULT_RANGE_PCT,
+    DEFAULT_SIDE,
+    DEFAULT_SIZE_UNIT,
+    DEFAULT_STEPS,
+    MAX_RANGE_PCT,
+    MAX_SIZE_TEXT,
+    MAX_STEPS,
+    MIN_RANGE_PCT,
+    SIZE_PATTERN,
+    SizeUnit,
+)
 from app.domain.money import ZERO
+from app.domain.orders import order_quantity
 from app.domain.payoff import MIN_STEPS, Side
-from app.domain.payoff_pricing import order_quantity
-
-MAX_TICKER: Final[int] = 10
-MAX_SIZE_TEXT: Final[int] = 21
-
-#: Digits, optionally a decimal point and up to eight places. No sign, no
-#: exponent, no separators: a size is a plain positive amount.
-SIZE_PATTERN: Final[str] = r"^\d{1,12}(\.\d{1,8})?$"
-
-SizeUnit = Literal["units", "usd"]
-DEFAULT_SIZE_UNIT: Final[SizeUnit] = "units"
-DEFAULT_SIDE: Final[Side] = "buy"
-
-MIN_RANGE_PCT: Final[int] = 5
-MAX_RANGE_PCT: Final[int] = 90
-DEFAULT_RANGE_PCT: Final[int] = 30
-
-#: 25 steps a side is 51 points — the largest curve any argument can ask for.
-MAX_STEPS: Final[int] = 25
-DEFAULT_STEPS: Final[int] = 12
+from app.domain.symbols import Ticker
 
 
 class PayoffArguments(BaseModel):
@@ -48,9 +42,7 @@ class PayoffArguments(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    symbol: str = Field(
-        min_length=2,
-        max_length=MAX_TICKER,
+    symbol: Ticker = Field(
         description="Ticker of the asset the order is for, such as 'SOL'.",
         examples=["SOL"],
     )
@@ -132,17 +124,4 @@ class PayoffArguments(BaseModel):
         return value
 
 
-__all__ = [
-    "DEFAULT_RANGE_PCT",
-    "DEFAULT_SIDE",
-    "DEFAULT_SIZE_UNIT",
-    "DEFAULT_STEPS",
-    "MAX_RANGE_PCT",
-    "MAX_SIZE_TEXT",
-    "MAX_STEPS",
-    "MAX_TICKER",
-    "MIN_RANGE_PCT",
-    "SIZE_PATTERN",
-    "PayoffArguments",
-    "SizeUnit",
-]
+__all__ = ["PayoffArguments"]

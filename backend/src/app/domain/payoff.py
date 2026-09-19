@@ -41,7 +41,15 @@ class PayoffPoint(BaseModel):
     move_ratio: Decimal = Field(
         description="Where this price sits relative to the entry, as a ratio."
     )
-    position_value: Money = Field(description="``quantity * price``, in USD.")
+    position_value: Money | None = Field(
+        description=(
+            "``quantity * price`` — what the order leaves the caller holding "
+            "at this price. ``None`` for a sale, which leaves them holding "
+            "nothing: there is no position to value, and quoting the units' "
+            "worth there would move **against** the profit beside it "
+            "(spec 0014 OD-12)."
+        )
+    )
     profit_loss: Money = Field(
         description="What the order makes here; negative for a loss."
     )
@@ -65,6 +73,14 @@ class PayoffCurve(BaseModel):
     entry_price: Money = Field(description="The price the order is struck at.")
     quantity: Quantity = Field(description="Units the order covers.")
     notional: Money = Field(description="``quantity * entry_price``, in USD.")
+    price_step: Money = Field(
+        description=(
+            "The distance between two adjacent grid prices. A fact about the "
+            "grid, not a display choice — but it is what tells a display how "
+            "finely this curve has to be printed for its points to stay "
+            "distinguishable (spec 0014 OD-10)."
+        )
+    )
     break_even_price: Money = Field(
         description=(
             "Where the order's profit crosses zero. The entry price for a "

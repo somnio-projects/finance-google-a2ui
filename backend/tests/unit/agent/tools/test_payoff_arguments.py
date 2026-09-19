@@ -1,4 +1,4 @@
-"""Spec 0014 — what the payoff tool refuses to answer.
+"""Spec 0014 — how the payoff tool is registered, and what it refuses.
 
 Every rejection here is a rejection, never a quiet fall back to a default
 (AC-7, OD-5): the model gets a tool error it can retry with a legal value,
@@ -11,7 +11,8 @@ import pytest
 from pydantic import ValidationError
 
 from app.agent.contracts import ToolContext
-from app.agent.tools.payoff import PayoffTool
+from app.agent.registry import load_tools
+from app.agent.tools.payoff import NAME, PayoffTool
 from app.core.model import ToolSpec
 from app.domain.errors import SymbolNotFoundError
 from tests.unit.agent.tools.payoff_fixtures import SOL, tool
@@ -19,11 +20,25 @@ from tests.unit.agent.tools.payoff_fixtures import SOL, tool
 __all__ = ["tool"]
 
 
+async def test_the_registry_discovers_it_without_a_shared_list() -> None:
+    """AC-1 — the assertion that goes red if ``register(...)`` is removed.
+
+    Discovery is the whole registration seam (spec 0006 AC-7): with no test
+    naming this tool, deleting its ``register(...)`` call makes it invisible
+    to the agent, to the prompt and to the agent card, and the suite stays
+    green.
+    """
+    registry = load_tools()
+
+    assert NAME in registry.names()
+    assert registry.get(NAME) is not None
+
+
 async def test_it_describes_itself_for_the_model_to_choose_by(
     tool: PayoffTool,
 ) -> None:
     """AC-1 — the description and the schema are what the model picks from."""
-    assert tool.name == "payoff"
+    assert tool.name == NAME
     properties = tool.parameters["properties"]
     assert isinstance(properties, dict)
     assert set(properties) == {
@@ -63,8 +78,12 @@ async def test_an_unknown_ticker_is_refused_not_guessed(
         ({"symbol": SOL, "size": "-5"}, "should match pattern"),
         ({"symbol": SOL, "size": "a lot"}, "should match pattern"),
         ({"symbol": SOL}, "Field required"),
+        ({"symbol": "S", "size": "1"}, "should match pattern"),
+        ({"symbol": "S" * 5000, "size": "1"}, "at most 10 characters"),
         ({"symbol": SOL, "size": "1", "steps": 26}, "less than or equal to 25"),
+        ({"symbol": SOL, "size": "1", "steps": 0}, "greater than or equal to 1"),
         ({"symbol": SOL, "size": "1", "range_pct": 99}, "less than or equal to 90"),
+        ({"symbol": SOL, "size": "1", "range_pct": 4}, "greater than or equal to 5"),
         ({"symbol": SOL, "size": "1", "side": "hold"}, "'buy' or 'sell'"),
         (
             {"symbol": SOL, "size": "1", "amount_usd": "500"},
@@ -76,8 +95,12 @@ async def test_an_unknown_ticker_is_refused_not_guessed(
         "negative_size",
         "unparseable_size",
         "no_size_at_all",
+        "a_ticker_too_short_to_be_one",
+        "a_five_thousand_character_ticker",
         "too_many_steps",
-        "range_beyond_the_bound",
+        "too_few_steps",
+        "range_above_the_bound",
+        "range_below_the_bound",
         "a_side_that_is_not_a_side",
         "an_argument_nobody_declared",
     ],

@@ -34,7 +34,9 @@ NAME: Final[str] = "payoff"
 DISCLOSURE: Final[str] = (
     "Illustrative linear spot payoff on the demo portfolio's simulated "
     "prices: profit or loss is (price - entry) x quantity, with no fees, no "
-    "slippage, no financing and no options pricing."
+    "slippage, no financing and no options pricing. A sell is the mirror of "
+    "the position — what the units being sold would have made — and leaves "
+    "no position, so it reports no position value."
 )
 
 
@@ -86,12 +88,18 @@ class PayoffTool:
             range_pct=options.range_pct,
             steps=options.steps,
         )
+        # The grid's own step decides how finely a price has to be printed for
+        # two neighbouring points to stay distinguishable (spec 0014 OD-10).
+        precision = payoff_rows.price_precision(curve.price_step)
         data: Mapping[str, object] = {
             "asOf": portfolio.as_of.isoformat(),
             "disclosure": DISCLOSURE,
-            "order": payoff_rows.order_block(curve),
-            "scenarios": payoff_rows.scenarios(curve),
-            "points": [payoff_rows.point_row(point) for point in curve.points],
+            "order": payoff_rows.order_block(curve, precision=precision),
+            "scenarios": payoff_rows.scenarios(curve, precision=precision),
+            "points": [
+                payoff_rows.point_row(point, precision=precision)
+                for point in curve.points
+            ],
         }
         return ToolOutcome(data=data)
 

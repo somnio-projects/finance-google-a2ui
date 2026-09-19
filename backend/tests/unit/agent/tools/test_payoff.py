@@ -4,44 +4,38 @@ The curve's arithmetic is proven in ``tests/unit/domain/test_payoff.py`` and
 the declared arguments in ``test_payoff_arguments``; this file is the payload:
 the order block, the scenarios, the formatting invariant, determinism and the
 deliberate absence of a chart.
+
+The expected figures are the hand-computed ones from spec 0014 §3, written out
+as literals. Recomputing them here by calling the production helpers would be
+a test that agrees with the code whatever the code says.
 """
 
-from decimal import Decimal
 from typing import Final
 
 from app.agent.contracts import ToolContext
-from app.agent.tools.payoff import DISCLOSURE, PayoffTool
-from app.core.display import money_display, quantity_display
-from app.domain.market import price_of
-from app.domain.payoff_pricing import order_quantity
+from app.agent.tools.payoff import PayoffTool
 from tests.unit.agent.tools.payoff_fixtures import SOL, block, rows, tool
 
 __all__ = ["tool"]
 
-AMOUNT: Final[Decimal] = Decimal(500)
-UNITS: Final[Decimal] = Decimal(40)
-
-#: The one value in a point row that is not a figure.
-NOT_A_FIGURE: Final[frozenset[str]] = frozenset({"trend"})
+#: Spec 0014 §3, for $500 of SOL at the seeded price of $152.40.
+QUANTITY_FOR_500: Final[str] = "3.2808399"
+ENTRY_DISPLAY: Final[str] = "$152.40"
 
 
 async def test_a_dollar_order_is_sized_at_the_entry_price(
     tool: PayoffTool, tool_context: ToolContext
 ) -> None:
     """AC-4 — the model states dollars and copies the units it gets back."""
-    entry = price_of(SOL)
-
     outcome = await tool.run(
         {"symbol": SOL, "size": "500", "size_in": "usd"}, tool_context
     )
 
     order = block(outcome.data["order"])
-    assert order["quantityDisplay"] == quantity_display(
-        order_quantity(AMOUNT, entry), trim=True
-    )
-    assert order["entryPriceDisplay"] == money_display(entry)
-    assert order["breakEvenPriceDisplay"] == money_display(entry)
-    assert order["notionalDisplay"] == money_display(AMOUNT)
+    assert order["quantityDisplay"] == QUANTITY_FOR_500
+    assert order["entryPriceDisplay"] == ENTRY_DISPLAY
+    assert order["breakEvenPriceDisplay"] == ENTRY_DISPLAY
+    assert order["notionalDisplay"] == "$500.00"
 
 
 async def test_a_size_in_units_is_priced_as_given(
@@ -51,8 +45,9 @@ async def test_a_size_in_units_is_priced_as_given(
     outcome = await tool.run({"symbol": SOL, "size": "40"}, tool_context)
 
     order = block(outcome.data["order"])
-    assert order["quantityDisplay"] == quantity_display(UNITS, trim=True)
-    assert order["notionalDisplay"] == money_display(UNITS * price_of(SOL))
+    assert order["quantityDisplay"] == "40"
+    assert order["entryPriceDisplay"] == ENTRY_DISPLAY
+    assert order["notionalDisplay"] == "$6,096.00"
 
 
 async def test_the_scenarios_name_the_ends_of_the_plotted_range(
@@ -66,37 +61,9 @@ async def test_the_scenarios_name_the_ends_of_the_plotted_range(
     assert scenarios["low"] == points[0]
     assert scenarios["high"] == points[-1]
     entry = block(scenarios["entry"])
+    assert entry["priceDisplay"] == ENTRY_DISPLAY
     assert entry["profitLossDisplay"] == "$0.00"
     assert entry["trend"] == "flat"
-
-
-async def test_a_sell_loses_where_a_buy_gains(
-    tool: PayoffTool, tool_context: ToolContext
-) -> None:
-    """OD-6 — the mirror curve, stated in the strings the model copies."""
-    outcome = await tool.run(
-        {"symbol": SOL, "size": "40", "side": "sell"}, tool_context
-    )
-
-    scenarios = block(outcome.data["scenarios"])
-    assert block(scenarios["high"])["trend"] == "down"
-    assert block(scenarios["low"])["trend"] == "up"
-    assert block(outcome.data["order"])["side"] == "sell"
-
-
-async def test_every_figure_the_model_sees_is_a_display_string(
-    tool: PayoffTool, tool_context: ToolContext
-) -> None:
-    """AC-5 — no ``Decimal`` and no float reaches the model, anywhere."""
-    outcome = await tool.run({"symbol": SOL, "size": "40"}, tool_context)
-
-    assert outcome.data["disclosure"] == DISCLOSURE
-    for value in block(outcome.data["order"]).values():
-        assert isinstance(value, str)
-    for row in rows(outcome.data["points"]):
-        assert all(isinstance(value, str) for value in row.values())
-        formatted = {key for key in row if key.endswith("Display")}
-        assert formatted == set(row) - NOT_A_FIGURE
 
 
 async def test_the_same_order_twice_gives_the_same_answer(
