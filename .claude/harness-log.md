@@ -7,6 +7,62 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-36 attribution tool · spec `specs/backend/0008-attribution-tool.md`
+
+**Branch:** `feat/GGU-36_attribution_tool`, stacked on GGU-49 (which is itself
+stacked on GGU-47). Three deep, which is the direct cost of shipping four
+tickets before any of them merges — worth naming rather than hiding.
+
+**The distinction the ticket turned on.** Flow A asks *"why did my portfolio
+move this week?"*. The existing `attribution.waterfall.v1` projection walks
+each holding's **unrealised P/L** — a comparison against what the position
+*cost*. The question asks about what it was *worth seven days ago*. A holding
+bought two years ago can be deeply profitable and have contributed nothing this
+week. Conflating the two would have put a confidently wrong chart in front of a
+reviewer, so this ticket adds a genuinely new domain computation rather than
+reusing the one that was already there. Recorded as spec OD-3: whoever builds
+the window projection gives it **its own id** instead of changing what `v1`
+means.
+
+**Code**
+- `app/domain/attribution.py` — pure `attribute_window(portfolio, window,
+  symbols)`. The totals are derived *from* the contributions, so the waterfall
+  closes structurally rather than by rounding luck.
+- `app/agent/tools/attribution.py` — the `compute_attribution` tool: a closed
+  set of windows, an optional symbol filter, `extra="forbid"`, and output that
+  is entirely `*Display` strings.
+
+**Two facts that look like bugs and are not** (both pinned by tests, both in
+the spec):
+- **The money closes exactly; the shares do not.** `contribution` is a
+  subtraction of exact amounts. `share` is a division, and division is inexact
+  in any finite base — the shares land one unit in the last place away from 1.
+  The chart is drawn from the contributions. A test says so, so nobody later
+  "fixes" the closure by rescaling the ratios.
+- **A share can exceed 100 % or go negative.** When holdings move in opposite
+  directions, one contributed 132 % of the net move while another offset
+  −32 %. That is what a waterfall shows and it is correct. Clamping it would
+  misstate the answer.
+
+**Verified**
+- `make gate`: **518 tests**, 100 % branch coverage, pylint 10.00/10, no CVEs.
+- Manual run of the tool: the 7-day window reports `-$3,175.95` / `-4.66%`,
+  the bars sum to exactly `-3175.950000000000`, `closes()` is True, a filtered
+  BTC+ETH 30-day run still closes against its own total, and two identical
+  calls produce identical payloads.
+
+**Next person should know**
+- Windows are a **closed set** (`1d`/`7d`/`30d`), not a free-form duration.
+  The seeded history is 90 days, so a free-form window would let the model ask
+  for a year and get a silently truncated answer. The closed set makes the
+  refusal explicit (spec OD-4).
+- One test in the first draft asserted nothing meaningful (a `max()` over a
+  constant, then `!= []`). The testing rule forbids exactly that, and it passed
+  anyway — worth re-reading your own new tests for it, because a green suite
+  will not tell you.
+
+---
+
 ## 2026-09-19 — GGU-49 presentation layer · spec `specs/backend/0005-presentation-layer.md`
 
 **Branch:** `feat/GGU-49_presentation_layer`, **stacked on `feat/GGU-47_agent_host`**
