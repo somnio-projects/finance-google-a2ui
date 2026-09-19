@@ -7,6 +7,38 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Harness rule: the agent opens PRs, the TL merges them
+
+**Harness only — no code change.**
+
+**Decision (Lautaro, TL, 2026-09-19).** An earlier instruction in the same day
+authorised the agent to merge its own PRs. It was withdrawn: **the agent never
+merges**. Opening the PR is where the agent's part of the lifecycle ends. The
+branch stays open, the Jira ticket stays **In Review**, and the merge happens
+only after the TL explicitly confirms it — for `develop` exactly as for `main`,
+and no matter how clean the gate is. When several PRs are waiting, the agent
+reports the list and moves on to the next ticket rather than merging any of
+them. Only when the TL names a PR (or says to merge them all) does the agent
+merge and then move the ticket to **Done**.
+
+**Changed**
+- `.claude/rules/backend/sdd.md` — the rule itself, next to the ticket-status
+  rule it completes; the `/feature` lifecycle line now reads "humans approve the
+  spec at the start and the merge at the end".
+- `.claude/commands/feature.md` — step 11 is now "stop at the open PR, never
+  merge"; the wrap-up also reports the PRs still waiting on confirmation.
+- Agent memory `pr-and-jira-workflow` updated with the same rule and the reason.
+
+**Why it is written down here.** `Done` already meant merged; what was missing
+was *who* merges. Without this, another developer's Claude reads a green gate as
+permission to close the loop itself, which takes the review decision away from
+the person who owns it.
+
+**Next person should know.** PRs accumulate on purpose. A queue of open PRs
+against `develop` is the expected steady state, not a backlog to clear.
+
+---
+
 ## 2026-09-19 — GGU-46 session identity and isolation · spec `specs/backend/0004-session-identity.md`
 
 **PR:** #13 · built by a worktree agent, rebased, re-gated and manually verified here.
