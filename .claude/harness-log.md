@@ -7,6 +7,92 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-47 agent host · spec `specs/backend/0006-agent-host.md`
+
+**Branch:** `feat/GGU-47_agent_host` → `develop`. Built by a worktree agent in
+parallel with GGU-49 (presentation) and GGU-48 (delivery), with
+non-overlapping file ownership agreed up front.
+
+**Why the ticket existed at all.** The board had tickets for the prompt
+fragments (GGU-14), the deterministic tools (GGU-36–39) and the transport
+(GGU-3), but nothing owned the piece that ties them together. The deleted ADK
+sample provided it for free; the FastAPI baseline does not. Without it every
+tool ticket would have merged as an unreachable pure function.
+
+**Code**
+- `core/model.py` (conversation DTOs), `core/display.py` (the single
+  `Decimal` → string boundary), `core/protocols.py` gains `ModelClient`.
+- `agent/{contracts,registry,prompt}.py` and `agent/tools/holdings_summary.py`
+  — tools register from their own module, so adding one never edits a shared
+  file. That seam is what GGU-37/38/39 depend on.
+- `infra/model/{payload,gemini_client,null_client,factory}.py` — the Gemini
+  adapter behind the Protocol, plus a deterministic `NullModelClient` wired
+  exactly like the existing `ErrorReporter`/`NullErrorReporter` pair.
+- `services/agent_service.py` (the turn loop) and `services/agent_tools.py`
+  (tool execution and failure masking, split out to stay inside the budget).
+
+**Decisions worth knowing**
+- **httpx, not the `google-genai` SDK.** No new dependency, no new pip-audit or
+  deptry surface, and the adapter mirrors `JwksKeyResolver`, a pattern already
+  proven in this codebase. Swapping to the SDK later is one module.
+- **The render intent is declared, not resolved.** `agent/contracts.py` defines
+  only `{view, options}` (ADR-K D-11). Validating it against the projection
+  registry and falling back on rejection is ADR-K D-12 and belongs to GGU-49 —
+  which is why the two tickets could run in parallel at all.
+- **One formatting module.** `core/display.py` sits in `core` because it is the
+  only place both `app/agent` and `app/presentation` may import (ADR-E D-2).
+  **The presentation layer must reuse it rather than add a second formatter.**
+- **The iteration bound counts model calls, not tool calls** (default 4: one
+  plan plus three corrections). On exhaustion the turn answers a fixed message
+  and sets `truncated=True`, rather than emitting half a sentence.
+- **A misbehaving tool never fails the turn.** The model receives
+  `{"error": ...}` and another iteration; only the exception object reaches the
+  `ErrorReporter`. An unknown tool is not reported at all — it is the model's
+  mistake, not ours.
+- `AgentRuntime` groups `model`/`tools`/`portfolios` in `api/container.py`:
+  three more singletons would have pushed `Container` past pylint's attribute
+  limit.
+
+**Verified**
+- `make gate`: 348 tests, 100 % branch coverage, pylint 10.00/10, interrogate
+  100 %, deptry clean, no CVEs.
+- **Mutation check** (required whenever error masking changes): removing the two
+  `except` clauses in `gemini_client.py` turned 9 tests red; restored → 32
+  green.
+- Manual run of a full turn against `NullModelClient` with a tool call: the
+  tool result was fed back to the model on the second call, the turn answered
+  with the pre-formatted figures, and the telemetry line carried
+  `model`/`outcome`/`duration_ms`/`iterations`/`tool_calls` and **no** prompt,
+  answer or subject.
+
+**What review changed.** The `backend-reviewer` agent approved it with no
+blockers and eleven should-fixes. Four were rule violations and are fixed here:
+`backend/docs/SECURITY.md` still described the model key as living in a "future
+spec", `backend/docs/OBSERVABILITY.md` did not list the new metric or events,
+`docs/diagrams/01-system-context.md` still drew Gemini as "(planned — GGU-47)"
+in the ticket that ships it, and the spec was `Draft` and missing from
+`specs/README.md`. The remaining seven are recorded as **OD-7 … OD-12 in the
+spec** rather than fixed here, each with the ticket that should fix it. The one
+worth reading is **OD-7: the Gemini wire format has never met the real API** —
+every test runs against stubs we wrote, so 100 % coverage proves the code
+matches *our assumption* of the format. GGU-3 carries the first live call and
+should treat a mapping fix as expected.
+
+**Next person should know**
+- **There is no HTTP route yet.** `api/v1/`, `router.py` and the OpenAPI
+  document are untouched by design; `get_agent_service` and `get_tool_context`
+  wait in `deps.py` for GGU-3 to expose the A2A surface (ADR-J D-2).
+- The default model id is `gemini-3.8-flash`, the only pin recorded in the repo
+  (ADR-D D-4). Nothing depends on it; `GEMINI_MODEL` overrides.
+- `tests/unit/import_graph.py` now holds the shared AST helpers that the domain
+  and agent boundary tests both use — pylint's duplicate-code check forced the
+  extraction, and the presentation layer's boundary test should reuse it too.
+- This entry was written during integration, not by the building agent: the
+  sandbox denies writes to `.claude/` inside an agent worktree. Budget for that
+  when delegating.
+
+---
+
 ## 2026-09-19 — GGU-5 portfolio domain · spec `specs/backend/0003-portfolio-domain.md`
 
 **PR:** #12 · **Built by a worktree agent**, integrated and verified here.

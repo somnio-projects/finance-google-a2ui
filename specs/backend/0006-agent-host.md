@@ -1,7 +1,7 @@
 # 0006 — Agent host: Gemini adapter, tool registry and turn loop
 
 - **Area:** backend
-- **Status:** Draft
+- **Status:** Implemented
 - **Ticket:** GGU-47 · **Related specs / ADRs:** 0001, 0003, ADR-D, ADR-E, ADR-G, ADR-J, ADR-K
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-19
 
@@ -334,6 +334,12 @@ error masking. Removing the `except` that translates provider failures in
 | OD-4 | Should the turn loop stream partial surfaces? | TL | **No** — ADR-D/ADR-K D-19 put streaming in GGU-3. `run_turn` is the unit GGU-3 wraps. |
 | OD-5 | Where does `Decimal` → display formatting live, given `app/presentation/` is being created in parallel? | TL | **`app/core/display.py`** — ADR-E D-2 demands *one* formatting module; `core` is the only place both `app/agent` and `app/presentation` may import. The presentation layer reuses it rather than adding a second. |
 | OD-6 | Do tool arguments and results belong in telemetry when a demo answer is wrong? | TL | **No** — §5. Reproduction comes from the fixed `as_of`; a conversation log is a PII surface the showcase does not need. |
+| OD-7 | The Gemini wire mapping has never met the real API. | TL — **carried** | It cannot be proven here: there is no route (GGU-3) and no key in this environment, so every test runs against stubs we wrote ourselves. `payload.py` is 100 % covered against *our* assumption of the format, which is not the same as being correct. **GGU-3 carries the first live `generateContent` round trip** and must treat a mapping fix as expected, not as a regression. |
+| OD-8 | A turn has no wall-clock deadline. | TL — **deferred to GGU-3** | The ceilings multiply: 4 iterations × 3 attempts × 20 s ≈ 240 s worst case. `AGENT_MAX_TOOL_ITERATIONS` bounds cost, not latency. Once a route exists that worst case ties up a worker, so the deadline belongs with the transport that owns the request, not with the loop. |
+| OD-9 | Retries have no backoff and ignore `Retry-After`. | TL — **deferred** | Three immediate re-POSTs on a 429 turn a soft rate limit into a hard one. Bounded, so not a storm; worth fixing when the p95 budget in ADR-K is measured rather than asserted. |
+| OD-10 | The adapter opens a new `httpx.AsyncClient` per call. | TL — **deferred** | A TLS handshake per model call, up to four per turn. Cheap to fix by building it once in the factory; it only shows up against the latency budget, which needs a route first. |
+| OD-11 | A hallucinated tool argument reaches Sentry. | TL — **the spec is what should change** | §3.4 says "a tool raises anything → report", and a `pydantic.ValidationError` from a bad argument is expected model behaviour the loop already handles. It should be logged, not reported. Changed with the first tool that does I/O, when the distinction starts to matter. |
+| OD-12 | Tool `call_id`s are unique within a reply, not across a turn. | TL — **deferred to GGU-46/GGU-3** | Two iterations that both call the same tool at part 0 produce the same id. Harmless today (Gemini matches `functionResponse` by name) but `ModelMessage.tool_call_id` is the contract those tickets will persist and correlate on, so it is fixed there, with the tests that need it. |
 
 ## 9. Rollout & observability
 
