@@ -7,6 +7,63 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-39 holdings tool · spec `specs/backend/0011-holdings-tool.md`
+
+**Branch:** `feat/GGU-39_holdings_tool`, stacked on GGU-3. Six deep.
+
+**Why it mattered.** Spec 0006 shipped `get_holdings_summary` as the reference
+tool that proved the registration seam — one fixed ordering, no filter. GGU-39
+turns it into the surface the demo actually lands on, which is the entry point
+for all three flows. The three questions it could not answer ("just my BTC",
+"my biggest losers", "how am I doing overall") each pushed work onto the model
+that the numbers-from-tools invariant exists to keep away from it.
+
+**Code**
+- `domain/returns.py` — `return_on_cost`, returning `None` on a zero cost
+  basis. A return on nothing is undefined, and `0.00%` would call an
+  infinitely profitable position flat (OD-2).
+- `core/trend.py` — the up/down/flat token, decided from the **rounded**
+  figure so it cannot contradict the string beside it. Its own module: it was
+  the fifth concept in `display.py` and that file was at the line budget.
+- The tool is now four files: `holdings_sort` (the orders, as a table),
+  `holdings_query` (bounded arguments, what they select, whether a chart
+  fits), `holdings_rows` (how a position reads), `holdings_summary` (the tool).
+
+**What the reviewer caught that the gate could not**
+- `symbols` advertised `maxLength: 10` to the model and enforced **nothing**
+  per item — a 5 000-character "ticker" validated. The spec's security section
+  asserted the bound that did not exist. Fixed with `StringConstraints`, and
+  there is now a test comparing the advertised JSON Schema against the
+  enforced pydantic schema, because the comment claiming they agreed was
+  exactly what the hole hid behind.
+- The render-intent suppression closed the `symbols` hole and left the
+  identical `sort_by` hole open: "your two worst losers" under a donut of the
+  two largest positions. Both are now one predicate in `chart_options`.
+- Three tests that could not fail: an ordering oracle that called the same
+  production `SORTERS` entry the tool calls (invert the comparison and it
+  still passes), a weights assertion that never looked at the payload, and a
+  totals assertion that skipped the three figures this ticket added.
+
+**Next person, read this**
+- A tool's argument model and the JSON Schema it publishes are **two
+  declarations of the same bound**. Assert they agree; a comment is not a
+  test. This is now the third time a documented property turned out to be
+  unenforced.
+- 100 % branch coverage does not see a conditional *expression*. `ZERO if
+  ratio is None else ratio` inside a sort key was fully "covered" and never
+  once executed with `None`. If a rule is documented, assert it directly.
+- `weight` and `value` sort identically by construction and always will;
+  `gainers`/`losers` rank by return, not by absolute profit, because absolute
+  profit is dominated by position size (OD-4, OD-5).
+- `trend` describes the **money**, not the percentage: they round at different
+  scales and `up` beside `0.00%` is correct (OD-8).
+
+**Harness** — no rule, hook or command changed. `docs/diagrams/03-backend-layers.md`
+gained `core/trend`; `05-agent-turn.md` now draws the render intent as
+conditional, which is what OD-1 made it.
+
+---
+
 ## 2026-09-19 — GGU-3 A2A surface · spec `specs/backend/0010-a2a-surface.md`
 
 **Branch:** `feat/GGU-3_a2a_surface`, stacked on GGU-14. Five deep.

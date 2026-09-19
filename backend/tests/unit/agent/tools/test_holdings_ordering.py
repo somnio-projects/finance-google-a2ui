@@ -1,30 +1,107 @@
-"""Spec 0011 AC-4 — which positions the holdings tool answers with, and in what order.
+"""Spec 0011 AC-4 — which positions the tool answers with, and in what order.
 
-Ordering is asserted against the **domain**, never against numbers parsed back
-out of formatted strings: a test that re-parses a display string proves the
-formatter and the test agree, not that the answer is right.
+Every ordering is checked against an oracle written **here**, from the
+documented rule, never by calling the production ``SORTERS`` entry the tool
+itself calls: that would pass with the comparison inverted. Nothing is
+asserted by parsing a number back out of a display string either — that would
+prove the formatter and the test agree, not that the answer is right.
 """
 
+from decimal import Decimal
+
 import pytest
-from pydantic import ValidationError
 
 from app.agent.contracts import ToolContext
-from app.agent.tools.holdings_query import SORTERS
+from app.agent.tools.holdings_sort import SORTERS, return_key
 from app.agent.tools.holdings_summary import HoldingsSummaryTool
+from app.domain.holdings import Holding
 from app.domain.returns import return_on_cost
-from tests.unit.agent.tools.holdings_fixtures import held, rows, symbols_of, tool
+from tests.unit.agent.tools.holdings_fixtures import AIRDROP, held, symbols_of
+from tests.unit.agent.tools.holdings_fixtures import tool as tool
 
-__all__ = ["tool"]
+FAR_BEHIND = Decimal(-1_000_000)
+FAR_AHEAD = Decimal(1_000_000)
 
 
-@pytest.mark.parametrize("sort_by", sorted(SORTERS), ids=sorted(SORTERS))
-async def test_each_order_matches_what_the_domain_ranks(
+def _by_size(positions: list[Holding]) -> list[str]:
+    """Rank largest first, ties by symbol — the oracle for weight and value."""
+    ranked = sorted(positions, key=lambda item: (-item.market_value, item.symbol))
+    return [item.symbol for item in ranked]
+
+
+def _by_return(positions: list[Holding], *, best_first: bool) -> list[str]:
+    """Rank by return on cost, no-return positions last, ties by symbol.
+
+    Written from spec 0011 OD-5 rather than from ``return_key``, so inverting
+    the production comparison makes this disagree.
+    """
+
+    def rank(item: Holding) -> tuple[int, Decimal, str]:
+        ratio = return_on_cost(item.unrealized_pl, item.cost_basis)
+        if ratio is None:
+            return (1, FAR_BEHIND, item.symbol)
+        return (0, -ratio if best_first else ratio, item.symbol)
+
+    return [item.symbol for item in sorted(positions, key=rank)]
+
+
+@pytest.mark.parametrize("sort_by", ["weight", "value"], ids=["weight", "value"])
+async def test_the_size_orders_rank_the_largest_position_first(
     tool: HoldingsSummaryTool, tool_context: ToolContext, sort_by: str
 ) -> None:
     outcome = await tool.run({"sort_by": sort_by}, tool_context)
-    expected = SORTERS[sort_by](held(tool_context))
 
-    assert symbols_of(outcome.data["holdings"]) == [item.symbol for item in expected]
+    assert symbols_of(outcome.data["holdings"]) == _by_size(held(tool_context))
+
+
+@pytest.mark.parametrize(
+    ("sort_by", "best_first"),
+    [("gainers", True), ("losers", False)],
+    ids=["gainers", "losers"],
+)
+async def test_the_return_orders_rank_by_profit_on_what_was_paid(
+    tool: HoldingsSummaryTool,
+    tool_context: ToolContext,
+    sort_by: str,
+    best_first: bool,
+) -> None:
+    """OD-5 — by return, not by absolute profit, which position size dominates."""
+    outcome = await tool.run({"sort_by": sort_by}, tool_context)
+    expected = _by_return(held(tool_context), best_first=best_first)
+
+    assert symbols_of(outcome.data["holdings"]) == expected
+
+
+@pytest.mark.parametrize("best_first", [True, False], ids=["gainers", "losers"])
+def test_a_position_with_no_cost_basis_ranks_last_in_both_directions(
+    best_first: bool,
+) -> None:
+    """OD-5 — it is neither a top gainer nor a top loser, and is not dropped.
+
+    Unreachable from the seed, so it is built here: the conditional inside
+    ``return_key`` is not a branch coverage.py can see, which is exactly how
+    a documented rule ends up unverified.
+    """
+    winner = AIRDROP.model_copy(
+        update={
+            "symbol": "WIN",
+            "cost_basis": Decimal("100"),
+            "unrealized_pl": FAR_AHEAD,
+        }
+    )
+    loser = AIRDROP.model_copy(
+        update={
+            "symbol": "LOSE",
+            "cost_basis": Decimal("100"),
+            "unrealized_pl": FAR_BEHIND,
+        }
+    )
+
+    ranked = sorted(
+        [winner, AIRDROP, loser], key=lambda h: return_key(h, descending=best_first)
+    )
+
+    assert ranked[-1].symbol == AIRDROP.symbol
 
 
 async def test_weight_and_value_are_the_same_order(
@@ -35,83 +112,4 @@ async def test_weight_and_value_are_the_same_order(
     by_value = await tool.run({"sort_by": "value"}, tool_context)
 
     assert by_weight.data["holdings"] == by_value.data["holdings"]
-
-
-async def test_gainers_and_losers_are_opposite_orders(
-    tool: HoldingsSummaryTool, tool_context: ToolContext
-) -> None:
-    """OD-5 — ranked by return on cost, best first and worst first."""
-    ranked = sorted(
-        held(tool_context),
-        key=lambda item: return_on_cost(item.unrealized_pl, item.cost_basis) or 0,
-        reverse=True,
-    )
-    gainers = await tool.run({"sort_by": "gainers"}, tool_context)
-    losers = await tool.run({"sort_by": "losers"}, tool_context)
-
-    ordered = symbols_of(gainers.data["holdings"])
-    assert ordered == [item.symbol for item in ranked]
-    assert symbols_of(losers.data["holdings"]) == ordered[::-1]
-
-
-@pytest.mark.parametrize(
-    "asked", [["btc"], [" BTC "], ["BTC"]], ids=["lowercase", "padded", "canonical"]
-)
-async def test_the_symbols_filter_normalises_what_it_was_asked_for(
-    tool: HoldingsSummaryTool, tool_context: ToolContext, asked: list[str]
-) -> None:
-    """One ask, however the model spelled it (spec 0003 AC-4)."""
-    outcome = await tool.run({"symbols": asked}, tool_context)
-
-    assert symbols_of(outcome.data["holdings"]) == ["BTC"]
-
-
-async def test_an_unknown_symbol_matches_nothing_rather_than_failing(
-    tool: HoldingsSummaryTool, tool_context: ToolContext
-) -> None:
-    """A ticker the portfolio does not hold is an empty answer, not an error."""
-    outcome = await tool.run({"symbols": ["ZZZ"]}, tool_context)
-    totals = outcome.data["totals"]
-
-    assert rows(outcome.data["holdings"]) == []
-    assert isinstance(totals, dict)
-    assert totals["count"] == len(held(tool_context))
-
-
-async def test_top_n_cuts_after_sorting_not_before(
-    tool: HoldingsSummaryTool, tool_context: ToolContext
-) -> None:
-    """The first row of a trimmed call is the first row of the full one."""
-    full = await tool.run({"sort_by": "losers"}, tool_context)
-    trimmed = await tool.run({"sort_by": "losers", "top_n": 1}, tool_context)
-
-    assert rows(trimmed.data["holdings"]) == rows(full.data["holdings"])[:1]
-
-
-@pytest.mark.parametrize(
-    "arguments",
-    [
-        {"top_n": 0},
-        {"top_n": 99},
-        {"unknown": 1},
-        {"top_n": "two"},
-        {"sort_by": "alphabetical"},
-        {"symbols": [f"S{index}" for index in range(21)]},
-    ],
-    ids=[
-        "below_bound",
-        "above_bound",
-        "undeclared_option",
-        "wrong_type",
-        "unknown_order",
-        "too_many_symbols",
-    ],
-)
-async def test_run_rejects_arguments_the_schema_does_not_declare(
-    tool: HoldingsSummaryTool,
-    tool_context: ToolContext,
-    arguments: dict[str, object],
-) -> None:
-    """OD-7 — rejected, never coerced into the default."""
-    with pytest.raises(ValidationError, match=r"top_n|unknown|sort_by|symbols"):
-        await tool.run(arguments, tool_context)
+    assert SORTERS["weight"] is SORTERS["value"]

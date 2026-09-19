@@ -1,9 +1,8 @@
-"""Which positions ``get_holdings_summary`` answers with, and in which order.
+"""The arguments ``get_holdings_summary`` accepts, and what they select.
 
-The other half of the tool: `holdings_rows` decides how a position *reads*,
-this decides *which* ones and in *what order*, and `holdings_summary` is the
-tool that puts the two together. Split under the 150-line budget along that
-seam rather than by size.
+`holdings_sort` holds the orders, `holdings_rows` decides how a position
+reads, and `holdings_summary` is the tool. This module is the boundary: what
+the model may ask for, bounded, and what that asks resolves to.
 
 Every knob is a declared, bounded field — no free-form expression is ever
 interpreted from model input (ADR-K D-3). An undeclared or out-of-range
@@ -11,49 +10,41 @@ argument raises, and the turn loop hands the model a recoverable tool error;
 it is never quietly coerced into the default (spec 0011 OD-7).
 """
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import Final, Literal
+from collections.abc import Mapping, Sequence
+from typing import Annotated, Final
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from app.agent.tools.holdings_sort import (
+    DEFAULT_SORT,
+    SIZE_ORDERS,
+    SORTERS,
+    SortBy,
+)
 from app.domain.holdings import Holding
-from app.domain.money import ZERO
-from app.domain.returns import return_on_cost
 from app.domain.symbols import normalize_symbol
 
 MAX_TOP_N: Final[int] = 20
 MAX_SYMBOLS: Final[int] = 20
 MAX_TICKER: Final[int] = 10
+#: Case-insensitive twin of ``app.domain.symbols.SYMBOL_PATTERN``: the stored
+#: form is upper-case, but the model may ask in any case and
+#: ``normalize_symbol`` folds it. Bounding the **item** matters as much as
+#: bounding the list — twenty entries of five thousand characters each is
+#: still unbounded input (spec 0011 §5).
+TICKER_PATTERN: Final[str] = r"^[A-Za-z]{2,10}$"
 
-SortBy = Literal["weight", "value", "gainers", "losers"]
-DEFAULT_SORT: Final[SortBy] = "weight"
-
-
-def _return_key(holding: Holding, *, descending: bool) -> tuple[bool, object, str]:
-    """Order by return on cost, positions without one last, ties by symbol."""
-    ratio = return_on_cost(holding.unrealized_pl, holding.cost_basis)
-    value = ZERO if ratio is None else ratio
-    return (ratio is None, -value if descending else value, holding.symbol)
-
-
-def _by_value(rows: Sequence[Holding]) -> list[Holding]:
-    """Order by market value descending — which is also weight descending."""
-    return sorted(rows, key=lambda item: (-item.market_value, item.symbol))
-
-
-#: Row order per ``sort_by``. ``weight`` and ``value`` are the same ordering by
-#: construction: weight is market value over a total that does not vary within
-#: one call (spec 0011 OD-4).
-SORTERS: Final[dict[str, Callable[[Sequence[Holding]], list[Holding]]]] = {
-    "weight": _by_value,
-    "value": _by_value,
-    "gainers": lambda rows: sorted(rows, key=lambda h: _return_key(h, descending=True)),
-    "losers": lambda rows: sorted(rows, key=lambda h: _return_key(h, descending=False)),
-}
+Ticker = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True, max_length=MAX_TICKER, pattern=TICKER_PATTERN
+    ),
+]
 
 #: The JSON Schema the model chooses its arguments from. It mirrors
 #: ``HoldingsSummaryArguments``; the model reads this one, pydantic enforces
-#: the other, and a test asserts the two agree.
+#: the other, and ``test_the_schema_the_model_reads_carries_the_same_bounds``
+#: asserts the two agree rather than trusting this comment.
 PARAMETERS: Final[Mapping[str, object]] = {
     "type": "object",
     "properties": {
@@ -68,7 +59,11 @@ PARAMETERS: Final[Mapping[str, object]] = {
         },
         "symbols": {
             "type": "array",
-            "items": {"type": "string", "maxLength": MAX_TICKER},
+            "items": {
+                "type": "string",
+                "maxLength": MAX_TICKER,
+                "pattern": TICKER_PATTERN,
+            },
             "maxItems": MAX_SYMBOLS,
             "description": "Keep only these tickers. Omit for every position.",
         },
@@ -92,7 +87,7 @@ class HoldingsSummaryArguments(BaseModel):
     sort_by: SortBy = Field(
         default=DEFAULT_SORT, description="Which order the positions arrive in."
     )
-    symbols: tuple[str, ...] | None = Field(
+    symbols: tuple[Ticker, ...] | None = Field(
         default=None,
         max_length=MAX_SYMBOLS,
         description="Tickers to keep; omit for the whole portfolio.",
@@ -100,6 +95,13 @@ class HoldingsSummaryArguments(BaseModel):
     top_n: int | None = Field(
         default=None, ge=1, le=MAX_TOP_N, description="How many positions to keep."
     )
+
+    def _filtered(self, rows: Sequence[Holding]) -> list[Holding]:
+        """Keep only the tickers this call named, or all of them."""
+        if self.symbols is None:
+            return list(rows)
+        wanted = {normalize_symbol(symbol) for symbol in self.symbols}
+        return [item for item in rows if item.symbol in wanted]
 
     def select(self, rows: Sequence[Holding]) -> list[Holding]:
         """Return the positions this call asks for, sorted then filtered.
@@ -112,20 +114,35 @@ class HoldingsSummaryArguments(BaseModel):
             ``symbols`` when given, then cut to ``top_n``. An unknown ticker
             is not an error — it simply matches nothing.
         """
-        ordered = SORTERS[self.sort_by](rows)
-        if self.symbols is not None:
-            wanted = {normalize_symbol(symbol) for symbol in self.symbols}
-            ordered = [item for item in ordered if item.symbol in wanted]
+        ordered = self._filtered(SORTERS[self.sort_by](rows))
         return ordered if self.top_n is None else ordered[: self.top_n]
+
+    def chart_options(self, shown: int) -> Mapping[str, object] | None:
+        """Return the allocation chart's options, or ``None`` for no chart.
+
+        The chart draws **the whole portfolio, largest first**. It fits this
+        answer only when the answer is also the whole portfolio, largest
+        first: a filter, or an order by return, would put a chart under a
+        sentence that contradicts it (spec 0011 OD-1).
+
+        Args:
+            shown: How many rows the answer carries.
+
+        Returns:
+            Options for ``holdings.allocation.v1``, clamped to the ``top_n``
+            bound that projection declares so the intent is always valid
+            against it, or ``None`` when no chart fits.
+        """
+        fits = self.symbols is None and self.sort_by in SIZE_ORDERS and shown > 0
+        return {"top_n": min(shown, MAX_TOP_N)} if fits else None
 
 
 __all__ = [
-    "DEFAULT_SORT",
     "MAX_SYMBOLS",
     "MAX_TICKER",
     "MAX_TOP_N",
     "PARAMETERS",
-    "SORTERS",
+    "TICKER_PATTERN",
     "HoldingsSummaryArguments",
-    "SortBy",
+    "Ticker",
 ]

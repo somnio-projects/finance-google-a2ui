@@ -4,8 +4,9 @@ from decimal import Decimal
 
 import pytest
 
-from app.core.display import signed_money_display
+from app.core.display import percentage_display, signed_money_display
 from app.core.trend import DOWN, FLAT, UP, trend_of
+from app.domain.returns import return_on_cost
 
 
 @pytest.mark.parametrize(
@@ -43,3 +44,21 @@ def test_a_position_that_rounds_flat_is_not_reported_as_a_move(
 def test_a_higher_precision_can_see_a_move_the_default_rounds_away() -> None:
     assert trend_of(Decimal("0.004")) == FLAT
     assert trend_of(Decimal("0.004"), precision=3) == UP
+
+
+def test_trend_describes_the_money_and_may_disagree_with_a_percentage() -> None:
+    """Spec 0011 OD-8 — the two round at different scales, deliberately.
+
+    ``trend_of`` quantises money at two **cents**; ``percentage_display``
+    quantises a ratio times a hundred at two **percentage points**. A cent of
+    profit on a thousand dollars is a real gain and a percentage that rounds
+    to nothing, so ``"up"`` beside ``"0.00%"`` is correct, not a defect. It is
+    pinned here because it reads like one.
+    """
+    profit = Decimal("0.01")
+    ratio = return_on_cost(profit, Decimal("1000"))
+    assert ratio is not None
+
+    assert signed_money_display(profit) == "+$0.01"
+    assert trend_of(profit) == UP
+    assert percentage_display(ratio) == "0.00%"

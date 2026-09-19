@@ -8,18 +8,7 @@ reached here, with a hand-built ``Holding``, rather than left untested.
 from decimal import Decimal
 
 from app.agent.tools import holdings_rows
-from app.domain.holdings import Holding
-
-AIRDROP = Holding(
-    symbol="FREE",
-    name="Airdropped token",
-    quantity=Decimal("100"),
-    price=Decimal("5"),
-    market_value=Decimal("500"),
-    cost_basis=Decimal(0),
-    unrealized_pl=Decimal("500"),
-    weight=Decimal("0.03"),
-)
+from tests.unit.agent.tools.holdings_fixtures import AIRDROP
 
 
 def test_a_position_with_no_cost_basis_reports_no_percentage_return() -> None:

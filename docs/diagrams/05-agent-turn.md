@@ -31,7 +31,7 @@ sequenceDiagram
         H->>M: system prompt + history + tool schemas
         M->>H: text, or tool call(s)
         H->>T: run tool (pure, Decimal, injected clock)
-        T->>H: ToolOutcome: *Display strings + render intent
+        T->>H: ToolOutcome: *Display strings (+ render intent, if one fits)
         H->>M: tool results fed back
     end
     H-->>A: TurnResult {message, render_intents, counters}
@@ -46,5 +46,8 @@ sequenceDiagram
     %% A turn emits exactly one agent.turn metric and one log line:
     %% model, outcome, duration, counters — never prompt, result or subject.
     %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
+    %% A tool emits a render intent only when a registered projection actually
+    %% fits the answer it just produced: a filtered or re-ordered result whose
+    %% chart would contradict it carries none (spec 0011 OD-1).
     %% The model picks a view; it never invents a shape or a number.
 ```

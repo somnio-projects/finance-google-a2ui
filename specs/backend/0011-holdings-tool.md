@@ -43,9 +43,12 @@ figure is still derived from the aggregate GGU-5 already stores.
   `display.py`: that module turns a number into *text*, this turns one into a
   *direction*, and `display.py` was at the line budget.
 - `app/agent/tools/holdings_summary.py` — the tool itself.
-- `app/agent/tools/holdings_query.py` — `symbols`, `sort_by`, `top_n`: which
-  positions and in which order.
+- `app/agent/tools/holdings_query.py` — the bounded arguments, what they
+  select, and whether a chart fits the answer.
+- `app/agent/tools/holdings_sort.py` — the four orders, as a table.
 - `app/agent/tools/holdings_rows.py` — the row and totals shaping.
+- `tests/unit/agent/tools/holdings_fixtures.py` — the shared fixture and the
+  zero-cost `Holding` the seed does not contain.
 - Tests for all of the above.
 
 **Out**
@@ -68,7 +71,7 @@ No HTTP surface. The tool's contract, which is what the model sees:
 | Argument | Type | Default | Notes |
 |---|---|---|---|
 | `sort_by` | `"weight" \| "value" \| "gainers" \| "losers"` | `"weight"` | A closed set. Ties broken by symbol, so the order is total. |
-| `symbols` | list of tickers, ≤ 20 | all | Normalised through `app.domain.symbols`, so `btc` and `" BTC "` are the same ask. An unknown ticker is not an error: it simply matches nothing. |
+| `symbols` | list of tickers, ≤ 20, each ≤ 10 chars matching `^[A-Za-z]{2,10}$` | all | Normalised through `app.domain.symbols`, so `btc` and `" BTC "` are the same ask. An unknown ticker is not an error: it simply matches nothing. The **item** is bounded as well as the list — twenty entries of five thousand characters each is still unbounded input. |
 | `top_n` | `1..20` | all | Applied **after** sorting and filtering. |
 
 Anything else is rejected (`extra="forbid"`), which the turn loop turns into a
@@ -80,11 +83,11 @@ Response:
 {
   "asOf": "2026-09-19T00:00:00+00:00",
   "totals": {
-    "count": 4,                        // the whole portfolio, not the slice
+    "count": 5,                        // the whole portfolio, not the slice
     "marketValueDisplay": "$18,060.00",
     "costBasisDisplay": "$15,400.00",
     "unrealizedPlDisplay": "+$2,660.00",
-    "unrealizedPlPctDisplay": "+17.27%",
+    "unrealizedPlPctDisplay": "17.27%",
     "trend": "up"
   },
   "holdings": [
@@ -92,7 +95,7 @@ Response:
       "symbol": "BTC", "name": "Bitcoin",
       "quantityDisplay": "0.6", "priceDisplay": "$30,100.00",
       "marketValueDisplay": "$18,060.00", "costBasisDisplay": "$15,400.00",
-      "unrealizedPlDisplay": "+$2,660.00", "unrealizedPlPctDisplay": "+17.27%",
+      "unrealizedPlDisplay": "+$2,660.00", "unrealizedPlPctDisplay": "17.27%",
       "weightDisplay": "62.41%", "trend": "up"
     }
   ]
@@ -102,6 +105,12 @@ Response:
 `count` and `trend` are the only non-`*Display` values, and neither is a
 number a human reads: `count` is a cardinality, `trend` is a UI token. Every
 figure is a string produced by `app.core.display`.
+
+Note the asymmetry: `unrealizedPlDisplay` carries an explicit `+` and
+`unrealizedPlPctDisplay` does not. Money is signed because a gain and a loss
+must be distinguishable at a glance in a column of dollars; a percentage
+already sits beside that signed figure and its `-` is enough. It is stated
+here because it looks like an oversight.
 
 `unrealizedPlPctDisplay` is `null` when the cost basis is zero — a return on
 nothing is undefined, and `"0.00%"` would assert a flat position that is in
@@ -133,10 +142,13 @@ cannot be used to make the tool do work proportional to the input.
    argument is rejected. *(ticket AC-4)*
 5. **AC-5** — The same arguments give byte-identical output on repeated calls.
    *(ticket AC-5)*
-6. **AC-6** — `trend` never contradicts the display string beside it: a P/L
-   that renders as `$0.00` is `flat`, not `up`.
-7. **AC-7** — A filtered call emits **no** render intent; an unfiltered call
-   emits the allocation intent. See OD-1.
+6. **AC-6** — `trend` never contradicts the **money** string beside it: a P/L
+   that renders as `$0.00` is `flat`, not `up`. It describes the dollar
+   figure, not the percentage — see OD-8.
+7. **AC-7** — A call that is not "the whole portfolio, largest first" emits
+   **no** render intent; a default or size-ordered call emits the allocation
+   intent, with a `top_n` that is always valid against that projection. See
+   OD-1.
 
 ## 7. Test plan
 
@@ -159,13 +171,14 @@ limiting or error masking.
 
 | # | Question | Owner | Resolution |
 |---|---|---|---|
-| OD-1 | Should a filtered call still ask for the allocation donut? | TL — **no** | `holdings.allocation.v1` renders **the portfolio**, not the tool's rows: it is handed the `Portfolio` and slices all of it. Pairing it with a filtered answer would put a whole-portfolio chart under the sentence "here are your two positions". The tool therefore emits the render intent only for an unfiltered call; a filtered call answers in text, from the same display strings. A holdings *table* projection that renders an arbitrary subset is the real fix and belongs to Epic 2. |
+| OD-1 | When does the answer still fit the allocation donut? | TL — **only when it is the whole portfolio, largest first** | `holdings.allocation.v1` renders **the portfolio**, not the tool's rows: it is handed the `Portfolio`, slices all of it, and always orders by value. Two things can therefore contradict it, and they are the same mistake one argument apart: a `symbols` filter ("here are your two positions" under a whole-portfolio chart), and an order by return ("here are your two worst losers" under a chart of the two *largest*). `chart_options` suppresses the intent for both, and clamps `top_n` to the 20 that projection declares so the intent is always valid against it. A filtered or return-ordered call answers in text, from the same display strings. A holdings *table* projection that renders an arbitrary subset is the real fix and belongs to Epic 2. |
 | OD-2 | Return on a zero cost basis — `0.00%`, `∞`, or absent? | TL — **absent (`null`)** | `Holding.cost_basis` is `ge=0`, so a zero-cost position (an airdrop) is representable. `"0.00%"` would claim a flat position; `"∞"` is not a number anyone can bind. `null` is the only honest answer, the field is documented as nullable, and the tool description tells the model to report the absolute P/L when it is missing. |
 | OD-3 | `logoUrl` and `category` from the ticket's output shape | TL — **out of scope, and the domain is where they would start** | Neither is in spec 0003's `Holding`. Adding them here means the tool inventing them, which breaks numbers-from-tools in the one direction nobody checks — non-numeric fields. Whoever needs them adds them to the domain seed first (they are curated demo data, like `name`), and the tool then copies them like every other field. Recorded so the Epic 2 component schema does not assume they exist. |
 | OD-4 | `weight` and `value` sort to the same order — is one of them a bug? | TL — **neither; they are aliases by construction** | `weight` is `market_value / total_market_value` and the total is constant across a single call, so ordering by weight **is** ordering by value, always — not just for the seeded portfolio. Both names are kept because the model is picking from the user's words, and "largest allocation" and "most valuable" are the same question asked twice. A test pins the equivalence so nobody later "fixes" one of them into a different order. |
 | OD-5 | `gainers`/`losers` by absolute P/L or by return? | TL — **by return** | Absolute P/L is dominated by position size, which would make `gainers` a near-duplicate of `value` and leave the "what is dragging me down" question unanswered for small positions. Ordering by return on cost is what a reader means. A position with no cost basis (OD-2) has no return and sorts last in both directions, deterministically. |
 | OD-6 | Rename the tool to `get_holdings`, as the ticket calls it? | TL — **no** | The ticket predates this architecture and names the function in the deleted `backend_python/` sample. `get_holdings_summary` is the name already registered, already described in spec 0006 and already taught to the model by the generated prompt fragments. The ticket's AC-1 is about the tool being registered and callable, which holds. Renaming buys nothing and costs a contract change. |
 | OD-7 | The ticket asks for an unknown `sort_by` to **fall back to the default with a logged warning**. | TL — **reject instead** | That behaviour belongs to the deleted sample, which had no argument validation. Here every knob is a declared, bounded field and ADR-K D-3 is explicit: an unknown or out-of-range option is rejected, never a best-effort guess. A silent fallback is worse for exactly the caller it was meant to help — the model asks for `losers`, mistypes it, and receives a confident answer ordered the other way with no indication anything went wrong. The rejection reaches the model as a recoverable tool error it can retry, which is strictly more information than a log line nobody reads. |
+| OD-8 | `trend` says `up` next to a percentage of `0.00%`. Which one is wrong? | TL — **neither** | `trend_of` rounds money at two decimals of a **dollar**; `percentage_display` rounds at two decimals of a **percentage point**. A cent of profit on a thousand dollars is a real gain (`+$0.01`, `up`) and a return that genuinely rounds to nothing (`0.00%`). Agreement between the two is coincidental at any scale, so AC-6 binds `trend` to the money figure only — the primary one, and the one a widget colours. Pinned by a test so the next reader does not "fix" it into a disagreement with the dollars. |
 
 ## 9. Rollout & observability
 

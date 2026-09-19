@@ -6,11 +6,27 @@ so neither test file repeats them, which pylint's duplicate-code check would
 flag and a reader would have to diff by eye.
 """
 
+from decimal import Decimal
+
 import pytest
 
 from app.agent.contracts import ToolContext
 from app.agent.tools.holdings_summary import HoldingsSummaryTool
 from app.domain.holdings import Holding
+
+#: A position the seeded portfolio does not contain: acquired at no cost, so
+#: it has no return on cost and every path that divides by one has to say so
+#: rather than invent a number (spec 0011 OD-2, OD-5).
+AIRDROP = Holding(
+    symbol="FREE",
+    name="Airdropped token",
+    quantity=Decimal("100"),
+    price=Decimal("5"),
+    market_value=Decimal("500"),
+    cost_basis=Decimal(0),
+    unrealized_pl=Decimal("500"),
+    weight=Decimal("0.03"),
+)
 
 
 @pytest.fixture
@@ -42,4 +58,4 @@ def held(context: ToolContext) -> list[Holding]:
     return context.portfolios.get(context.subject).holdings()
 
 
-__all__ = ["held", "rows", "symbols_of", "tool"]
+__all__ = ["AIRDROP", "held", "rows", "symbols_of", "tool"]

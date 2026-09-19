@@ -72,11 +72,8 @@ class HoldingsSummaryTool:
             ),
             "holdings": [holdings_rows.row(holding) for holding in shown],
         }
-        render = (
-            None
-            if options.symbols is not None
-            else RenderIntent(view=VIEW, options={"top_n": len(shown)})
-        )
+        chart = options.chart_options(len(shown))
+        render = None if chart is None else RenderIntent(view=VIEW, options=chart)
         return ToolOutcome(data=data, render=render)
 
 

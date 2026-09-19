@@ -17,7 +17,7 @@ flowchart TB
     subgraph core["Domain and contracts"]
         dom["domain/*<br/>portfolio, lots, prices (pure, Decimal)"]
         agt["agent/*<br/>Tool Protocol · registry · prompt · tools"]
-        cor["core/<br/>Settings · AppError · Protocols · Principal · display"]
+        cor["core/<br/>Settings · AppError · Protocols · Principal · display · trend"]
     end
     subgraph infra["Infrastructure"]
         repo["repositories/*.py<br/>the only SQLAlchemy users"]
