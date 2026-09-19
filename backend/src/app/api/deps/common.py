@@ -1,7 +1,7 @@
-"""FastAPI dependency providers.
+"""FastAPI dependency providers shared by every controller.
 
-Every controller parameter comes from here, so wiring is visible in one file
-and services stay ignorant of HTTP.
+Every controller parameter comes from here or from a sibling module in this
+package, so wiring is visible in one place and services stay ignorant of HTTP.
 """
 
 from collections.abc import AsyncIterator
