@@ -7,6 +7,44 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — REST + OpenAPI contract, quality tooling, CI redesign
+
+**Decisions (Lautaro):** every endpoint strictly RESTful and *exhaustively*
+documented in Swagger; add every tool that keeps the code impeccable and run
+them in a pre-commit hook; make CI cheap and readable; all PRs go to `develop`.
+
+**Code**
+- `api/openapi.py` — one place for problem responses, tag metadata and the API
+  description; controllers compose from it instead of repeating `responses=`.
+- Every operation now carries `operation_id`, `description`, `tags`, full
+  `responses` (problem+json per status) and examples; every DTO field and query
+  parameter has a description, an example and a bound.
+- `GET /v1/me/audit` → **`GET /v1/me/audit-events`** (plural resource noun).
+- `tests/unit/api/test_openapi_contract.py` makes the rule enforceable: a route
+  without summary/description/operation_id/tags/responses fails the gate.
+
+**Harness**
+- `.claude/rules/backend/api-design.md` (REST semantics, OpenAPI completeness, DRY).
+- `.claude/rules/ci-conventions.md` (where a check belongs, job/step naming,
+  cost rules, "change one → change all three").
+- `make quality` = xenon · vulture · interrogate (100 % docstrings) · deptry ·
+  pylint (duplication + design limits) · codespell, wired into `make gate`,
+  `.pre-commit-config.yaml` and CI.
+- `.pre-commit-config.yaml` rewritten: hygiene hooks (incl. `check-added-large-files`
+  and `no-commit-to-branch main,develop`), gitleaks, ruff, codespell, actionlint,
+  `terraform_fmt`, local typecheck/budget/quality/unit-tests, and `make gate` on pre-push.
+- `backend-ci.yaml` rewritten as four readable jobs (Quality · Tests · Security ·
+  Container) plus a `Report` job writing a table to the run summary; PostgreSQL as a
+  **service container** instead of testcontainers; `image` needs the cheap jobs.
+- Branch model: `develop` is the integration branch, `main` release-only.
+
+**Next person should know**
+- `pre-commit install && pre-commit install --hook-type pre-push` once per clone.
+- Adding an endpoint without full OpenAPI metadata now fails `make gate`, not review.
+- `starlette` became an explicit dependency (deptry caught the transitive import).
+
+---
+
 ## 2026-09-19 — Audit remediation: compliance corpus, admin MFA, retention purge
 
 **PR:** https://github.com/somnio-projects/finance-google-a2ui/pull/2 (reviewer `mcampbell-somnio`).

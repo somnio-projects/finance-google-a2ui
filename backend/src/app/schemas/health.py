@@ -11,8 +11,8 @@ class HealthResponse(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    status: Literal["ok"] = "ok"
-    version: str
+    status: Literal["ok"] = Field(default="ok", description="Always `ok` when served.")
+    version: str = Field(description="Running application version.", examples=["0.1.0"])
 
 
 class DependencyStatus(BaseModel):
@@ -20,8 +20,10 @@ class DependencyStatus(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str
-    ready: bool
+    name: str = Field(description="Probe name.", examples=["database"])
+    ready: bool = Field(
+        description="Whether that dependency answered.", examples=[True]
+    )
 
 
 class ReadinessResponse(BaseModel):
@@ -29,8 +31,13 @@ class ReadinessResponse(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    status: Literal["ready", "degraded"]
-    dependencies: list[DependencyStatus] = Field(default_factory=list)
+    status: Literal["ready", "degraded"] = Field(
+        description="`ready` when every probe passed, `degraded` otherwise (503).",
+        examples=["ready"],
+    )
+    dependencies: list[DependencyStatus] = Field(
+        default_factory=list, description="Per-dependency readiness."
+    )
 
     @property
     def http_status(self) -> int:

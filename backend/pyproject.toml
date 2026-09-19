@@ -17,6 +17,7 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.14",
     "pyjwt[crypto]>=2.9",
     "httpx>=0.27",
+    "starlette>=0.41",
 ]
 
 [dependency-groups]
@@ -31,6 +32,12 @@ dev = [
     # Starlette's TestClient imports httpx2 first and only falls back to httpx with a
     # deprecation warning (fatal under filterwarnings=error). Test-only dependency.
     "httpx2>=2.13.0",
+    "xenon>=0.9.3",
+    "vulture>=2.16",
+    "interrogate>=1.7.0",
+    "deptry>=0.25.1",
+    "pylint>=4.0.8",
+    "codespell>=2.4.3",
 ]
 
 [build-system]
@@ -117,3 +124,60 @@ exclude_also = [
     "if TYPE_CHECKING:",
     "\\.\\.\\.$",
 ]
+
+# --------------------------------------------------------------------------- quality
+# Code-smell gates. Each one runs in `make quality`, in pre-commit and in CI;
+# thresholds are the current state of the tree — they go up, never down.
+[tool.interrogate]
+fail-under = 100
+ignore-nested-functions = true   # closures are documented by their factory
+ignore-magic = true
+ignore-module = false
+exclude = ["tests", "alembic", ".venv"]
+quiet = false
+
+[tool.vulture]
+paths = ["src", "alembic/env.py"]
+min_confidence = 80
+ignore_names = ["cls"]           # pydantic/SQLAlchemy classmethod validators
+
+[tool.deptry]
+known_first_party = ["app"]
+extend_exclude = [".venv", "reports", "htmlcov", "alembic"]
+
+[tool.deptry.per_rule_ignores]
+# Loaded by name, never imported from `src/`: the asyncpg driver, the uvicorn
+# server (entrypoint.sh) and the alembic CLI (migrations run at container start).
+DEP002 = ["asyncpg", "uvicorn", "alembic"]
+
+[tool.codespell]
+skip = "./.venv,./uv.lock,./reports,./htmlcov,./.git"
+ignore-words-list = "assertIn,asend,crate,ist,nd,te,som"
+
+[tool.pylint.main]
+# Only the checks ruff/basedpyright do not cover: duplication and design smells.
+disable = ["all"]
+enable = [
+    "duplicate-code",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
+    "too-many-instance-attributes",
+    "too-many-public-methods",
+    "too-many-nested-blocks",
+]
+ignore-paths = ["^.venv/.*$", "^alembic/.*$"]
+
+[tool.pylint.design]
+max-args = 7
+max-locals = 12
+max-branches = 8
+max-statements = 30
+max-attributes = 10
+max-public-methods = 12
+
+[tool.pylint.similarities]
+min-similarity-lines = 8
+ignore-imports = true
+ignore-signatures = true

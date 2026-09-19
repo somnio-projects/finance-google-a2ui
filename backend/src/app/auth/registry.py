@@ -17,6 +17,7 @@ VerifierFactory = Callable[[Settings, Clock], TokenVerifier]
 
 
 def _build_jwt(settings: Settings, _clock: Clock) -> TokenVerifier:
+    """Build the HS256 verifier; fail fast when its secret is absent."""
     if settings.auth_jwt_secret is None:
         raise ConfigurationError("AUTH_JWT_SECRET is required when AUTH_PROVIDER=jwt")
     return JwtTokenVerifier(
@@ -28,6 +29,7 @@ def _build_jwt(settings: Settings, _clock: Clock) -> TokenVerifier:
 
 
 def _build_oidc(settings: Settings, clock: Clock) -> TokenVerifier:
+    """Build the OIDC verifier; fail fast when the JWKS URL is absent."""
     if settings.auth_oidc_jwks_url is None:
         raise ConfigurationError(
             "AUTH_OIDC_JWKS_URL is required when AUTH_PROVIDER=oidc"

@@ -61,7 +61,7 @@ TOKEN=...   # admin token
 curl -X PUT http://localhost:8000/v1/admin/feature-flags/identity.audit \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"enabled": false, "description": "hide during rehearsal"}'
-curl http://localhost:8000/v1/me/audit -H "Authorization: Bearer $USER_TOKEN"   # -> 404 feature-disabled
+curl http://localhost:8000/v1/me/audit-events -H "Authorization: Bearer $USER_TOKEN"   # -> 404 feature-disabled
 ```
 
 ## Adding a flag

@@ -59,7 +59,16 @@ def get_auth_service(container: ContainerDep) -> AuthService:
 
 async def get_current_principal(
     auth: Annotated[AuthService, Depends(get_auth_service)],
-    authorization: Annotated[str | None, Header()] = None,
+    authorization: Annotated[
+        str | None,
+        Header(
+            description=(
+                "`Bearer <token>` — a Firebase/OIDC ID token, or an HS256 "
+                "service token for local and service-to-service use."
+            ),
+            examples=["Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6..."],
+        ),
+    ] = None,
 ) -> Principal:
     """Authenticate the request or raise ``AuthenticationError``."""
     return await auth.authenticate(authorization)

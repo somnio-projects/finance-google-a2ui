@@ -30,6 +30,7 @@ def require_feature(key: str, *, default: bool = True) -> params.Depends:
     async def _gate(
         service: Annotated[FeatureFlagService, Depends(get_feature_flag_service)],
     ) -> None:
+        """Reject the request when the flag resolves to disabled."""
         if not await service.is_enabled(key, default=default):
             raise FeatureDisabledError(f"feature {key!r} is disabled")
 

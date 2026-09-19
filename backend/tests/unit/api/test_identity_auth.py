@@ -36,7 +36,7 @@ def test_me_audit_rejects_out_of_range_limit_before_hitting_the_database(
     client: TestClient,
 ) -> None:
     response = client.get(
-        "/v1/me/audit?limit=0", headers={"Authorization": "Bearer good"}
+        "/v1/me/audit-events?limit=0", headers={"Authorization": "Bearer good"}
     )
     assert response.status_code == 422
     body = response.json()

@@ -17,7 +17,7 @@ demo with a fixed surface. Nothing in the backend supports that today.
 **In:** persisted flags (PostgreSQL) with an in-process TTL cache; an
 authenticated admin API to list and toggle flags; a `require_feature(key)`
 dependency that gates any route; an environment kill-switch that wins over the
-database; audit events on every change; `/v1/me/audit` gated as the first
+database; audit events on every change; `/v1/me/audit-events` gated as the first
 consumer.
 **Out:** per-user / percentage rollouts, flag scheduling, a UI (the Flutter
 client may call the admin API later), multi-instance cache invalidation beyond
@@ -67,7 +67,7 @@ even if the database is unavailable.
 
 ## 6. Acceptance criteria
 
-1. **AC-1** `PUT /v1/admin/feature-flags/identity.audit {enabled:false}` by an `admin` principal makes `GET /v1/me/audit` answer 404 `feature-disabled`; enabling it again restores 200 — without restarting the process.
+1. **AC-1** `PUT /v1/admin/feature-flags/identity.audit {enabled:false}` by an `admin` principal makes `GET /v1/me/audit-events` answer 404 `feature-disabled`; enabling it again restores 200 — without restarting the process.
 2. **AC-2** A principal without the `admin` scope gets 403 `forbidden` on both admin routes; so does an `admin` without an MFA `amr` when `admin_mfa_required`; an unauthenticated caller gets 401. Listing is audited as `feature_flag.list`.
 3. **AC-3** Every toggle persists a `feature_flags` row and an `audit_events` row with `action = feature_flag.update` and `target = <key>`, for any valid key length (3–100).
 4. **AC-4** A key listed in `FEATURE_FLAGS_FORCE_DISABLED` is disabled regardless of the database value and cannot be enabled through the API (the response shows `enabled=false`).

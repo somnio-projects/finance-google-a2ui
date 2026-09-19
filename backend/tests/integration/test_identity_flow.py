@@ -31,7 +31,7 @@ def test_me_returns_identity_and_records_audit_trail(
     }
     assert token not in me.text
 
-    audit = integration_client.get("/v1/me/audit?limit=5", headers=headers)
+    audit = integration_client.get("/v1/me/audit-events?limit=5", headers=headers)
     assert audit.status_code == 200
     events = audit.json()
     assert len(events) == 1
@@ -47,7 +47,7 @@ def test_audit_trail_is_isolated_per_subject(integration_client: TestClient) -> 
     integration_client.get("/v1/me", headers={"Authorization": f"Bearer {token_a}"})
     integration_client.get("/v1/me", headers={"Authorization": f"Bearer {token_a}"})
     audit_b = integration_client.get(
-        "/v1/me/audit", headers={"Authorization": f"Bearer {token_b}"}
+        "/v1/me/audit-events", headers={"Authorization": f"Bearer {token_b}"}
     )
     assert audit_b.status_code == 200
     assert audit_b.json() == []

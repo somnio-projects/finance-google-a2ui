@@ -27,7 +27,8 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 ## Verify — a change is not done without this
 
 ```bash
-cd backend && make gate                # ruff · format · basedpyright · 150-line budget · pytest 100 % branch coverage
+pre-commit install && pre-commit install --hook-type pre-push   # once per clone
+cd backend && make gate                # lint · types · budget · quality (smells) · tests 100 % · audit
 cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
 ```
 
@@ -71,6 +72,7 @@ matching path is touched.
 |:--|:--|:--|
 | .claude/rules/backend/architecture.md | python | Backend layering, file templates, 150-line budget (backend/src, backend/tests). |
 | .claude/rules/backend/api-design.md | python | REST semantics, exhaustive OpenAPI documentation, DRY/abstraction (backend/src/app/api, schemas). |
+| .claude/rules/ci-conventions.md | all | Where a check belongs (pre-commit vs CI), job/step naming, CI cost rules (.github/, .pre-commit-config.yaml). |
 | .claude/rules/backend/security.md | python | SOC 2 / ISO 27001 controls while writing backend code, Dockerfile, compose. |
 | .claude/rules/backend/testing.md | python | 100 % branch coverage contract, unit vs integration, fixtures and naming. |
 | .claude/rules/backend/sdd.md | all | Spec-driven workflow, harness log, `/feature` lifecycle (specs/, .claude/). |

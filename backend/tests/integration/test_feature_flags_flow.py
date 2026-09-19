@@ -25,7 +25,8 @@ def test_toggle_disables_and_restores_gated_endpoint(
     integration_client: TestClient,
 ) -> None:
     user, admin = _user_headers(), _admin_headers()
-    assert integration_client.get("/v1/me/audit", headers=user).status_code == 200
+    audit_url = "/v1/me/audit-events"
+    assert integration_client.get(audit_url, headers=user).status_code == 200
 
     off = integration_client.put(
         f"{FLAGS}/identity.audit",
@@ -34,7 +35,7 @@ def test_toggle_disables_and_restores_gated_endpoint(
     )
     assert off.status_code == 200
     assert off.json()["enabled"] is False
-    disabled = integration_client.get("/v1/me/audit", headers=user)
+    disabled = integration_client.get("/v1/me/audit-events", headers=user)
     assert disabled.status_code == 404
     assert disabled.json()["type"].endswith("/feature-disabled")
 
@@ -43,7 +44,7 @@ def test_toggle_disables_and_restores_gated_endpoint(
     )
     assert on.json()["enabled"] is True
     assert on.json()["description"] == "demo rehearsal"
-    assert integration_client.get("/v1/me/audit", headers=user).status_code == 200
+    assert integration_client.get(audit_url, headers=user).status_code == 200
 
 
 def test_toggle_persists_flag_and_audit_rows(integration_client: TestClient) -> None:
@@ -57,7 +58,7 @@ def test_toggle_persists_flag_and_audit_rows(integration_client: TestClient) -> 
     listed = integration_client.get(FLAGS, headers=admin)
     assert listed.status_code == 200
     assert any(f["key"] == key and f["enabled"] is False for f in listed.json())
-    audit = integration_client.get("/v1/me/audit", headers=admin)
+    audit = integration_client.get("/v1/me/audit-events", headers=admin)
     assert ("feature_flag.update", key) in [
         (e["action"], e["target"]) for e in audit.json()
     ]
@@ -86,7 +87,7 @@ def test_longest_valid_key_is_persisted_and_audited(
         f"{FLAGS}/{key}", json={"enabled": False}, headers=admin
     )
     assert saved.status_code == 200, saved.text
-    audit = integration_client.get("/v1/me/audit", headers=admin).json()
+    audit = integration_client.get("/v1/me/audit-events", headers=admin).json()
     assert ("feature_flag.update", key) in [(e["action"], e["target"]) for e in audit]
 
 
@@ -118,4 +119,4 @@ def test_force_disabled_env_wins_over_database(
         )
         assert on.status_code == 200
         assert on.json()["enabled"] is False  # kill-switch reflected in the response
-        assert client.get("/v1/me/audit", headers=admin).status_code == 404
+        assert client.get("/v1/me/audit-events", headers=admin).status_code == 404

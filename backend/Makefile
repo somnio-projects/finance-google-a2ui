@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget test test-unit test-integration audit gate run migrate purge-audit
+.PHONY: install lint format typecheck budget quality test test-unit test-integration audit gate run migrate purge-audit
 
 install:
 	$(UV) sync --all-groups
@@ -43,7 +43,18 @@ audit:
 purge-audit:
 	$(UV) run python -m app.jobs.purge_audit
 
-gate: lint typecheck budget test audit
+# Code-smell gates: complexity (xenon), dead code (vulture), docstring coverage
+# (interrogate), dependency hygiene (deptry), duplication + design limits (pylint),
+# typos (codespell). Thresholds live in pyproject.toml and only ever go up.
+quality:
+	$(UV) run xenon --max-absolute B --max-modules A --max-average A src
+	$(UV) run vulture
+	$(UV) run interrogate src
+	$(UV) run deptry .
+	$(UV) run pylint src/app tests
+	$(UV) run codespell src tests docs scripts
+
+gate: lint typecheck budget quality test audit
 	@echo "ship gate green"
 
 run:

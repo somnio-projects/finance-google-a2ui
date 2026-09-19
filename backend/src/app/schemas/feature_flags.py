@@ -14,8 +14,15 @@ class FeatureFlagUpdate(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    enabled: bool
-    description: str | None = Field(default=None, max_length=255)
+    enabled: bool = Field(
+        description="Target state of the flag after the call.", examples=[False]
+    )
+    description: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Why the flag was flipped; stored with the row.",
+        examples=["hidden until the demo rehearsal"],
+    )
 
 
 class FeatureFlagResponse(BaseModel):
@@ -23,11 +30,30 @@ class FeatureFlagResponse(BaseModel):
 
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
-    key: str = Field(min_length=3, max_length=100, pattern=FLAG_KEY_PATTERN)
-    enabled: bool
-    description: str | None = None
-    updated_by: str
-    updated_at: datetime
+    key: str = Field(
+        min_length=3,
+        max_length=100,
+        pattern=FLAG_KEY_PATTERN,
+        description="Flag key, `<domain>.<capability>`.",
+        examples=["identity.audit"],
+    )
+    enabled: bool = Field(
+        description="Effective state, with the environment kill-switch applied.",
+        examples=[True],
+    )
+    description: str | None = Field(
+        default=None,
+        description="Why it is in this state.",
+        examples=["demo rehearsal"],
+    )
+    updated_by: str = Field(
+        description="Subject of the admin who last changed it.",
+        examples=["firebase:uid-8f2c"],
+    )
+    updated_at: datetime = Field(
+        description="When it was last changed (UTC).",
+        examples=["2026-09-19T12:43:39.042545Z"],
+    )
 
 
 __all__ = ["FLAG_KEY_PATTERN", "FeatureFlagResponse", "FeatureFlagUpdate"]

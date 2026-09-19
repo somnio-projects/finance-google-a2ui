@@ -1,24 +1,114 @@
-# Local mirror of the CI security/quality signals, so a secret or a lint error
-# is caught before it enters branch history. Install once: `pre-commit install`.
-# CI (.github/workflows/backend-ci.yaml) remains the authoritative gate.
+# Local quality gate — the cheap half of the ship gate.
+#
+# Everything a laptop can prove runs here, before the commit, so CI minutes are
+# spent only on what a laptop cannot: a real PostgreSQL, the container image and
+# scans over the full history (.claude/rules/ci-conventions.md).
+#
+#   pre-commit install && pre-commit install --hook-type pre-push
+#   pre-commit run --all-files
+#
+# Hook ids are stable; the `backend-*` ones shell out to the same commands as
+# `make gate`, so local and CI can never disagree.
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+fail_fast: false
+
 repos:
+  # ---------------------------------------------------------------- hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+      # The Terraform provider cache once reached the 100 MB GitHub limit.
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, develop]
+
+  # ---------------------------------------------------------------- secrets
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.24.3
     hooks:
       - id: gitleaks
+
+  # ---------------------------------------------------------------- python
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.0
     hooks:
       - id: ruff
-        args: ["--fix"]
+        args: [--fix]
         files: ^backend/
       - id: ruff-format
         files: ^backend/
+
+  # ---------------------------------------------------------------- prose
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        additional_dependencies: [tomli]
+        args: [--toml, backend/pyproject.toml]
+        exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|backend/reports/)
+
+  # ---------------------------------------------------------------- yaml & actions
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+  # ---------------------------------------------------------------- terraform
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+
+  # ------------------------------------------------- backend gate (local tools)
   - repo: local
     hooks:
-      - id: backend-file-budget
-        name: backend file budget (150 lines)
-        entry: python3 backend/scripts/check_file_budget.py
+      - id: backend-typecheck
+        name: Type-check the backend in strict mode (basedpyright)
+        entry: bash -c 'cd backend && uv run basedpyright'
         language: system
+        files: ^backend/.*\.py$
         pass_filenames: false
+
+      - id: backend-file-budget
+        name: Enforce the 150-line file budget (check_file_budget.py)
+        entry: bash -c 'cd backend && uv run python scripts/check_file_budget.py'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+
+      - id: backend-quality
+        name: Detect code smells (xenon, vulture, interrogate, deptry, pylint)
+        entry: bash -c 'cd backend && make quality'
+        language: system
+        files: ^backend/(src|tests|scripts|pyproject\.toml)
+        pass_filenames: false
+
+      # Fast enough for every commit; the DB-backed suite runs on push.
+      - id: backend-unit-tests
+        name: Run the unit suite (pytest -m unit)
+        entry: bash -c 'cd backend && uv run pytest -m unit --no-cov -q'
+        language: system
         files: ^backend/(src|tests)/.*\.py$
+        pass_filenames: false
+
+      - id: backend-full-gate
+        name: Run the full ship gate before pushing (make gate)
+        entry: bash -c 'cd backend && make gate'
+        language: system
+        files: ^backend/
+        pass_filenames: false
+        stages: [pre-push]

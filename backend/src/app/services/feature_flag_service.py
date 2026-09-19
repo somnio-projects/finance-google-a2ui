@@ -99,12 +99,14 @@ class FeatureFlagService:
         return self._to_response(flag)
 
     def _require_admin(self, principal: Principal) -> None:
+        """Raise unless the caller holds ``admin`` (and MFA when required)."""
         if not principal.has_scope(ADMIN_SCOPE):
             raise AuthorizationError("feature flags require the admin scope")
         if self._require_mfa and not principal.is_mfa:
             raise AuthorizationError("admin operations require a multi-factor session")
 
     def _to_response(self, flag: FeatureFlag) -> FeatureFlagResponse:
+        """Map a row to its DTO with the environment kill-switch applied."""
         response = from_row(FeatureFlagResponse, flag)
         if response.key in self._force_disabled:
             return response.model_copy(update={"enabled": False})

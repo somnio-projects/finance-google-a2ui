@@ -20,6 +20,7 @@ from app.api.middleware.body_limit import BodyLimitMiddleware
 from app.api.middleware.rate_limit import FixedWindowLimiter, RateLimitMiddleware
 from app.api.middleware.request_id import RequestIdMiddleware
 from app.api.middleware.security_headers import SecurityHeadersMiddleware
+from app.api.openapi import API_DESCRIPTION, TAGS_METADATA
 from app.api.router import api_router
 from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
@@ -92,6 +93,7 @@ def _build_lifespan(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
+        """Log startup, yield control, then release the engine on shutdown."""
         log.info("startup", public_base_url=container.settings.public_base_url)
         yield
         await container.engine.dispose()
@@ -118,6 +120,12 @@ def create_app(
     app = FastAPI(
         title=settings.app_name,
         version=__version__,
+        description=API_DESCRIPTION,
+        openapi_tags=TAGS_METADATA,
+        license_info={
+            "name": "Apache-2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0",
+        },
         lifespan=_build_lifespan(container),
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None,

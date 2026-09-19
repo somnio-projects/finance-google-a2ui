@@ -26,7 +26,7 @@ accounts; service tokens carry their own `sub`).
 
 | Scope | Grants | Who holds it |
 |---|---|---|
-| (authenticated, no scope) | `GET /v1/me`, `GET /v1/me/audit` (own history only) | every signed-in user |
+| (authenticated, no scope) | `GET /v1/me`, `GET /v1/me/audit-events` (own history only) | every signed-in user |
 | `admin` | `GET/PUT /v1/admin/feature-flags` | TL backend, on-call engineer; issued by the IdP group `finance-a2ui-admins` (production) or minted locally with the dev secret |
 
 New scopes are added to this table in the same PR that introduces them.

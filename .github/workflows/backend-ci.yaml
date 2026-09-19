@@ -1,92 +1,172 @@
-# Backend ship gate. The steps are the same commands as `make gate` in backend/
-# and `.claude/ship-gate.json` — if you change one, change all three.
+# Backend ship gate.
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+# Cost contract: anything a laptop can prove runs in pre-commit, not here.
+# CI re-proves it on a clean machine and adds what a laptop cannot: a real
+# PostgreSQL, the container image, and scans over the full git history.
 name: backend-ci
 
 on:
   pull_request:
-    paths: ["backend/**", ".github/workflows/backend-ci.yaml", "docker-compose.yml"]
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-ci.yaml"
   push:
     branches: [main, develop]
-    paths: ["backend/**", ".github/workflows/backend-ci.yaml", "docker-compose.yml"]
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-ci.yaml"
 
 permissions:
   contents: read
 
+# One run per branch: a new push cancels the previous one instead of paying twice.
 concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  UV_VERSION: "0.11.19"
+  PYTHON_VERSION: "3.12"
+
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
-  gate:
-    name: gate (ruff · pyright · budget · pytest 100 %)
+  quality:
+    name: "Quality · style, types, complexity, duplication"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: backend
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up Python and uv (astral-sh/setup-uv)
+        uses: astral-sh/setup-uv@v5
         with:
-          version: "0.11.19"
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
-      - name: Install
+
+      - name: Install locked dependencies (uv sync --frozen)
         run: uv sync --all-groups --frozen
-      - name: py.lint
+
+      - name: Lint for errors and security smells (ruff check)
         run: uv run ruff check .
-      - name: py.format
+
+      - name: Verify formatting is canonical (ruff format --check)
         run: uv run ruff format --check .
-      - name: py.types
+
+      - name: Type-check in strict mode (basedpyright)
         run: uv run basedpyright
-      - name: py.budget
+
+      - name: Enforce the 150-line file budget (check_file_budget.py)
         run: uv run python scripts/check_file_budget.py
-      - name: py.test
+
+      - name: Detect code smells (xenon, vulture, interrogate, deptry, pylint, codespell)
+        run: make quality
+
+  tests:
+    name: "Tests · pytest with 100% branch coverage on PostgreSQL 16"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # A service container is cheaper and faster than testcontainers pulling
+      # the image inside the job; the suite reads TEST_DATABASE_URL.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: finance
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d finance"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/finance
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up Python and uv (astral-sh/setup-uv)
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install locked dependencies (uv sync --frozen)
+        run: uv sync --all-groups --frozen
+
+      - name: Run unit and integration tests under a 100% branch gate (pytest)
         run: uv run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml
-      - name: py.audit
-        run: make audit
-      - name: Upload coverage
+
+      - name: Publish the coverage report (actions/upload-artifact)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage.xml
+          retention-days: 14
 
-  secrets:
-    name: gitleaks
+  security:
+    name: "Security · secrets, SAST, dependency CVEs"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the full history (actions/checkout)
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: gitleaks (full history, pinned binary)
-        # The gitleaks GitHub Action requires a paid licence for organisations;
-        # the scanner itself is open source, so run the pinned image directly.
+
+      - name: Scan every commit for secrets (gitleaks)
+        working-directory: .
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
             git --config=/repo/.gitleaks.toml --redact --no-banner --exit-code 1
 
-  sast:
-    name: semgrep (python security rules)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    container:
-      image: semgrep/semgrep
-    steps:
-      - uses: actions/checkout@v4
-      - name: Semgrep
-        run: semgrep scan --config p/python --config p/owasp-top-ten --config p/secrets --error --metrics=off backend/src backend/alembic
+      - name: Scan the source for vulnerable patterns (semgrep)
+        working-directory: .
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.97.0 \
+            semgrep scan --config p/python --config p/owasp-top-ten \
+            --config p/secrets --error --metrics=off backend/src backend/alembic
+
+      - name: Set up Python and uv (astral-sh/setup-uv)
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Audit the locked runtime dependencies for CVEs (pip-audit)
+        run: make audit
 
   image:
-    name: docker build
+    name: "Container · build, non-root, CVE scan"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: gate
+    # Only after the cheap jobs pass — a broken branch never pays for a build.
+    needs: [quality, tests]
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Build (no push)
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up BuildKit (docker/setup-buildx-action)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the runtime image from cache (docker/build-push-action)
         uses: docker/build-push-action@v6
         with:
           context: backend
@@ -95,11 +175,13 @@ jobs:
           tags: finance-a2ui-backend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Image runs as non-root
+
+      - name: Assert the image runs as uid 10001 (docker run id -u)
         run: |
           uid=$(docker run --rm --entrypoint id finance-a2ui-backend:ci -u)
-          test "$uid" = "10001" || (echo "expected uid 10001, got $uid" && exit 1)
-      - name: Image CVE scan (Trivy — OS packages + Python deps)
+          test "$uid" = "10001" || { echo "expected uid 10001, got $uid"; exit 1; }
+
+      - name: Scan the image for CRITICAL and HIGH CVEs (trivy)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: finance-a2ui-backend:ci
@@ -108,3 +190,29 @@ jobs:
           ignore-unfixed: true
           severity: CRITICAL,HIGH
 
+  report:
+    name: "Report · ship-gate summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality, tests, security, image]
+    if: always()
+    steps:
+      - name: Write the gate result to the run summary (GITHUB_STEP_SUMMARY)
+        working-directory: .
+        run: |
+          {
+            echo "## Backend ship gate"
+            echo ""
+            echo "| Gate | Proves | Result |"
+            echo "|---|---|---|"
+            echo "| Quality | ruff, basedpyright strict, 150-line budget, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
+            echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
+            echo "| Security | gitleaks (full history), Semgrep, pip-audit | ${{ needs.security.result }} |"
+            echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"
+            echo ""
+            echo "Local equivalent: \`cd backend && make gate\`; pre-commit runs the same checks before every commit."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run when any gate failed (bash)
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

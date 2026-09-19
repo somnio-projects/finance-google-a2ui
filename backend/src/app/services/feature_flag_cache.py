@@ -12,6 +12,8 @@ from app.core.protocols import Clock
 
 @dataclass(frozen=True, slots=True)
 class _CacheEntry:
+    """One remembered flag value and when it was stored."""
+
     value: bool
     stored_at: datetime
 
@@ -30,6 +32,7 @@ class FeatureFlagCache:
         self._entries: dict[str, _CacheEntry] = {}
 
     def _is_live(self, entry: _CacheEntry) -> bool:
+        """Return True while ``entry`` is inside the time-to-live."""
         return self._clock.now() - entry.stored_at < self._ttl
 
     def get(self, key: str) -> bool | None:

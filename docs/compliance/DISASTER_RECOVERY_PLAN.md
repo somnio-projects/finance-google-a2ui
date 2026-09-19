@@ -17,7 +17,7 @@ Targets: **RPO 24 h (1 h with Cloud SQL PITR) · RTO 4 h** — from
 3. Provision an empty database (compose: `docker compose up -d db` on a fresh volume; Cloud SQL: restore instance from the latest automated backup or PITR to the chosen timestamp).
 4. Restore the latest good backup: `pg_restore --no-owner --exit-on-error -d finance <dump>` (see [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) §3).
 5. `alembic upgrade head` — brings the schema to the current revision if the dump predates a migration.
-6. Verify: `alembic current` = head, row counts vs. backup manifest, `/readyz` ready, one authenticated `GET /v1/me` and `GET /v1/me/audit`.
+6. Verify: `alembic current` = head, row counts vs. backup manifest, `/readyz` ready, one authenticated `GET /v1/me` and `GET /v1/me/audit-events`.
 7. Restart writes; announce recovery; postmortem.
 
 ### S2 — Backend instance / host lost

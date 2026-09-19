@@ -69,7 +69,7 @@ def test_gated_me_audit_is_404_while_disabled_before_touching_the_database(
 ) -> None:
     flags.state["identity.audit"] = False
     response = gated_client.get(
-        "/v1/me/audit", headers={"Authorization": "Bearer good"}
+        "/v1/me/audit-events", headers={"Authorization": "Bearer good"}
     )
     assert response.status_code == 404
     assert response.json()["type"].endswith("/feature-disabled")

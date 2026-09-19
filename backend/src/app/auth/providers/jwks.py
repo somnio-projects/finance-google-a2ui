@@ -65,11 +65,13 @@ class JwksKeyResolver:
         self._fetched_at: datetime | None = None
 
     def _is_fresh(self) -> bool:
+        """Return True while the cached document is inside its TTL."""
         if self._fetched_at is None:
             return False
         return self._clock.now() - self._fetched_at < self._ttl
 
     async def _fetch(self) -> JwksDocument:
+        """Fetch and validate the JWK Set, translating transport failures."""
         client = self._http or httpx.AsyncClient(timeout=5.0)
         try:
             response = await client.get(self._url)

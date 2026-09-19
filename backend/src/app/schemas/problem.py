@@ -12,12 +12,29 @@ class ProblemDetails(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    type: str = Field(examples=["https://errors.finance-a2ui/auth/expired-token"])
-    title: str
-    status: int = Field(ge=400, le=599)
-    detail: str
-    instance: str | None = None
-    request_id: str | None = None
+    type: str = Field(
+        description="Stable URI identifying the error code; branch on this.",
+        examples=["https://errors.finance-a2ui/auth/expired-token"],
+    )
+    title: str = Field(
+        description="Short, human-readable summary (the status phrase).",
+        examples=["Unauthorized"],
+    )
+    status: int = Field(
+        ge=400, le=599, description="HTTP status of this response.", examples=[401]
+    )
+    detail: str = Field(
+        description="Safe-to-expose explanation; never contains internals.",
+        examples=["The bearer token has expired."],
+    )
+    instance: str | None = Field(
+        default=None, description="Path that produced the error.", examples=["/v1/me"]
+    )
+    request_id: str | None = Field(
+        default=None,
+        description="Correlates with the `X-Request-ID` response header.",
+        examples=["3ed55388-087e-419f-acbe-34f663fc04c4"],
+    )
 
 
 __all__ = ["ProblemDetails"]

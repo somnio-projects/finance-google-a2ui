@@ -16,7 +16,8 @@ Docs at http://localhost:8000/docs (disabled when `ENVIRONMENT=production`).
 ## Verify — a change is not done without this
 
 ```bash
-cd backend && make gate            # ruff check · ruff format --check · basedpyright · file budget · pytest 100 %
+cd backend && make gate            # lint · typecheck · budget · quality · test 100 % · audit
+cd backend && make quality         # code smells: complexity, dead code, docstrings, deps, duplication, typos
 ```
 
 - `make gate` == CI == `.claude/ship-gate.json`. Red gate = not done. Never lower `fail_under`, never add `# pragma: no cover` without a one-line reason.

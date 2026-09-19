@@ -46,6 +46,7 @@ def register_error_handlers(app: FastAPI, reporter: ErrorReporter) -> None:
 
     @app.exception_handler(AppError)
     async def _app_error(request: Request, exc: AppError) -> JSONResponse:
+        """Answer a typed domain error with its status and code."""
         return problem_response(
             request, status=exc.status, code=exc.code, detail=exc.detail
         )
@@ -54,6 +55,7 @@ def register_error_handlers(app: FastAPI, reporter: ErrorReporter) -> None:
     async def _validation(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        """Answer a pydantic validation failure without echoing the input."""
         return problem_response(
             request,
             status=HTTPStatus.UNPROCESSABLE_ENTITY,
@@ -63,6 +65,7 @@ def register_error_handlers(app: FastAPI, reporter: ErrorReporter) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
+        """Report the exception to telemetry and answer a generic problem."""
         reporter.capture_exception(exc)
         log.error("unhandled_exception", exc_info=exc)
         return problem_response(

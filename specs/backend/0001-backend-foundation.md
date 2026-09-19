@@ -31,7 +31,7 @@ domain (GGU-5), Flutter client wiring (GGU-2), Cloud Run deploy (GGU-29).
 | `GET /healthz` | none | `HealthResponse{status:"ok", version}` | — |
 | `GET /readyz` | none | `ReadinessResponse{status, dependencies[]}` | `503` when degraded |
 | `GET /v1/me` | Bearer | `MeResponse{subject, provider, email, scopes[]}` | `auth/missing-token`, `auth/invalid-token`, `auth/expired-token` → 401 |
-| `GET /v1/me/audit?limit=1..100` | Bearer | `list[AuditEventResponse]` | `malformed-request → 422`, auth codes |
+| `GET /v1/me/audit-events?limit=1..100` | Bearer | `list[AuditEventResponse]` | `malformed-request → 422`, auth codes |
 | any | — | — | `rate-limited → 429`, `payload-too-large → 413`, `internal → 500` |
 
 All errors are RFC 9457 `application/problem+json` with
