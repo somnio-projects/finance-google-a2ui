@@ -1,0 +1,251 @@
+# Backend continuous delivery (spec 0007, GGU-48).
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+#
+# What reaches each environment:
+#   develop -> staging,    no human step
+#   main    -> production, behind the `production` Environment's required reviewer
+#
+# Credentials: Workload Identity Federation only. There is no service-account
+# key in this repository's secrets, and `infra/scripts/tests/test_wif_conditions.sh`
+# fails the build if one is ever added. Each environment has its own pool,
+# provider and deployer identity, so the repository variables are suffixed per
+# environment and the `settings` job resolves them once.
+#
+# Before the first run, GGU-29 must have applied Terraform; then set the
+# repository variables listed in spec 0007 §9 from the Terraform outputs.
+name: backend-cd
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "backend/**"
+      - "infra/**"
+      - ".github/workflows/backend-cd.yaml"
+  workflow_dispatch:
+    inputs:
+      rollback_to:
+        description: "Revision to send 100% of traffic to (leave empty to deploy HEAD)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# Deploys are serialised per branch and never cancelled halfway: a cancelled
+# traffic shift is exactly the state this pipeline exists to avoid, so this
+# deliberately departs from the cancel-in-progress rule in ci-conventions.md §3.
+concurrency:
+  group: backend-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  settings:
+    name: "Target · resolve the environment this ref releases to"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+      project: ${{ steps.resolve.outputs.project }}
+      provider: ${{ steps.resolve.outputs.provider }}
+      deployer: ${{ steps.resolve.outputs.deployer }}
+      public_url: ${{ steps.resolve.outputs.public_url }}
+      region: ${{ vars.GCP_REGION }}
+      repository: ${{ steps.resolve.outputs.repository }}
+      service: ${{ steps.resolve.outputs.service }}
+    steps:
+      - name: Resolve the per-environment variables for this ref (bash)
+        id: resolve
+        env:
+          IS_PRODUCTION: ${{ github.ref_name == 'main' }}
+          PROJECT_STAGING: ${{ vars.GCP_PROJECT_ID_STAGING }}
+          PROJECT_PRODUCTION: ${{ vars.GCP_PROJECT_ID_PRODUCTION }}
+          PROVIDER_STAGING: ${{ vars.GCP_WIF_PROVIDER_STAGING }}
+          PROVIDER_PRODUCTION: ${{ vars.GCP_WIF_PROVIDER_PRODUCTION }}
+          DEPLOYER_STAGING: ${{ vars.GCP_DEPLOYER_SA_STAGING }}
+          DEPLOYER_PRODUCTION: ${{ vars.GCP_DEPLOYER_SA_PRODUCTION }}
+          PUBLIC_URL_STAGING: ${{ vars.PUBLIC_URL_STAGING }}
+          PUBLIC_URL_PRODUCTION: ${{ vars.PUBLIC_URL_PRODUCTION }}
+          REGION: ${{ vars.GCP_REGION }}
+        run: |
+          set -euo pipefail
+          if [ "${IS_PRODUCTION}" = "true" ]; then
+            environment=production
+            project="${PROJECT_PRODUCTION}"
+            provider="${PROVIDER_PRODUCTION}"
+            deployer="${DEPLOYER_PRODUCTION}"
+            public_url="${PUBLIC_URL_PRODUCTION}"
+          else
+            environment=staging
+            project="${PROJECT_STAGING}"
+            provider="${PROVIDER_STAGING}"
+            deployer="${DEPLOYER_STAGING}"
+            public_url="${PUBLIC_URL_STAGING}"
+          fi
+          missing=""
+          [ -n "${project}" ]    || missing="${missing} GCP_PROJECT_ID"
+          [ -n "${provider}" ]   || missing="${missing} GCP_WIF_PROVIDER"
+          [ -n "${deployer}" ]   || missing="${missing} GCP_DEPLOYER_SA"
+          [ -n "${public_url}" ] || missing="${missing} PUBLIC_URL"
+          [ -n "${REGION}" ]     || missing="${missing} GCP_REGION"
+          if [ -n "${missing}" ]; then
+            echo "::error::repository variables not set for ${environment}:${missing} (see infra/README.md)"
+            exit 1
+          fi
+          {
+            echo "environment=${environment}"
+            echo "project=${project}"
+            echo "provider=${provider}"
+            echo "deployer=${deployer}"
+            echo "public_url=${public_url}"
+            echo "repository=${REGION}-docker.pkg.dev/${project}/finance-a2ui-${environment}/backend"
+            echo "service=finance-a2ui-${environment}-api"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: "Image · build and push it to Artifact Registry by digest"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [settings]
+    permissions:
+      contents: read
+      id-token: write # mint the federated token; nothing else is granted
+    outputs:
+      image: ${{ steps.pin.outputs.image }}
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - name: Check out the commit being released (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Derive the release identifier from the version and the commit (bash)
+        id: release
+        run: |
+          set -euo pipefail
+          version="$(grep -m1 '^version' backend/pyproject.toml | cut -d'"' -f2)"
+          echo "release=${version}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ needs.settings.outputs.provider }}
+          service_account: ${{ needs.settings.outputs.deployer }}
+
+      - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Allow Docker to push to Artifact Registry (gcloud auth configure-docker)
+        run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
+
+      - name: Set up BuildKit (docker/setup-buildx-action)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push the runtime image (docker/build-push-action)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          provenance: true
+          tags: |
+            ${{ needs.settings.outputs.repository }}:${{ github.sha }}
+            ${{ needs.settings.outputs.repository }}:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Pin the deployable to its immutable digest (bash)
+        id: pin
+        run: |
+          set -euo pipefail
+          echo "image=${{ needs.settings.outputs.repository }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: "Deploy · release the digest and verify it before traffic"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [settings, publish]
+    permissions:
+      contents: write # create the release tag after a production deploy
+      id-token: write
+    # The Environment carries the required reviewer for production and the
+    # deployment history for both. This one line is AC-2.
+    environment:
+      name: ${{ needs.settings.outputs.environment }}
+    steps:
+      - name: Check out the deploy scripts (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ needs.settings.outputs.provider }}
+          service_account: ${{ needs.settings.outputs.deployer }}
+
+      - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy without traffic, verify readiness, then shift (deploy_cloud_run.sh)
+        env:
+          SERVICE: ${{ needs.settings.outputs.service }}
+          REGION: ${{ needs.settings.outputs.region }}
+          PROJECT: ${{ needs.settings.outputs.project }}
+          PUBLIC_URL: ${{ needs.settings.outputs.public_url }}
+          IMAGE: ${{ needs.publish.outputs.image }}
+          RELEASE: ${{ needs.publish.outputs.release }}
+          ROLLBACK_TO: ${{ inputs.rollback_to }}
+        run: ./infra/scripts/deploy_cloud_run.sh
+
+      - name: Tag the released commit so a tag can only exist for a live deploy (gh)
+        if: needs.settings.outputs.environment == 'production' && inputs.rollback_to == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.publish.outputs.release }}
+        run: |
+          set -euo pipefail
+          out="$(mktemp)"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+               -f ref="refs/tags/v${RELEASE}" -f sha="${GITHUB_SHA}" > "${out}" 2>&1; then
+            echo "tagged v${RELEASE}"
+          elif grep -q "already exists" "${out}"; then
+            echo "tag v${RELEASE} already exists; leaving it alone"
+          else
+            cat "${out}" >&2
+            echo "::error::could not create tag v${RELEASE}"
+            exit 1
+          fi
+
+  report:
+    name: "Report · what was released and where"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [settings, publish, deploy]
+    if: always()
+    steps:
+      - name: Write the release record to the run summary (GITHUB_STEP_SUMMARY)
+        run: |
+          {
+            echo "## Backend delivery"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Environment | ${{ needs.settings.outputs.environment }} |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Release | \`${{ needs.publish.outputs.release }}\` |"
+            echo "| Image | \`${{ needs.publish.outputs.image }}\` |"
+            echo "| Publish | ${{ needs.publish.result }} |"
+            echo "| Deploy | ${{ needs.deploy.result }} |"
+            echo ""
+            echo "The deploy job appends the revision name and the readiness result above."
+            echo "Rollback: re-run this workflow with \`rollback_to\` set to the last good revision."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run unless every job succeeded (bash)
+        # `skipped` counts as a failure here: a rejected production approval
+        # leaves `deploy` skipped, and a run that released nothing must not be
+        # reported as green.
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: |
+          echo "::error::delivery did not complete — publish=${{ needs.publish.result }} deploy=${{ needs.deploy.result }}"
+          exit 1

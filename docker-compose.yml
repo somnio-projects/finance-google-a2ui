@@ -40,6 +40,7 @@ services:
     environment:                      # topology only — overrides the same keys in .env
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/finance
       PUBLIC_BASE_URL: http://localhost:8000
+      APP_RELEASE: local          # production gets <version>+<sha> from backend-cd; /healthz reports it
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
       UVICORN_EXTRA_ARGS: --reload --reload-dir /app/src
     volumes:
