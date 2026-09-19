@@ -6,6 +6,7 @@
 locals {
   backend_env = {
     ENVIRONMENT               = var.environment
+    APP_RELEASE               = var.backend_release
     LOG_LEVEL                 = "INFO"
     PUBLIC_BASE_URL           = "https://${var.domain}"
     CORS_ALLOWED_ORIGINS      = var.cors_allowed_origins
@@ -34,6 +35,23 @@ resource "google_cloud_run_v2_service" "backend" {
   deletion_protection = var.environment == "production"
   labels              = local.labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  # Two systems touch this service and they own different fields. Terraform
+  # owns the shape (identity, scaling, networking, secrets, probes); the
+  # delivery pipeline owns WHICH image runs and WHERE traffic points
+  # (spec 0007). Without this, the next `terraform apply` would re-point 100 %
+  # of traffic at the newest revision — undoing a rollback the pipeline had
+  # just performed — and revert the image to `var.backend_image`.
+  #
+  # `APP_RELEASE` is deliberately NOT ignored: an apply may create a revision
+  # carrying the placeholder release, but because `traffic` is ignored that
+  # revision never serves, and the next deploy supersedes it.
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      traffic,
+    ]
+  }
 
   template {
     service_account = google_service_account.backend.email

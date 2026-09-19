@@ -22,3 +22,18 @@ output "secrets_to_populate" {
   description = "Secrets whose value the security owner adds out of band (never via Terraform)."
   value       = [for s in google_secret_manager_secret.external : s.secret_id]
 }
+
+output "artifact_registry_repository" {
+  description = "Docker repository the delivery pipeline pushes to (spec 0007)."
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.backend.repository_id}"
+}
+
+output "wif_provider" {
+  description = "Value for the GCP_WIF_PROVIDER repository variable used by google-github-actions/auth."
+  value       = google_iam_workload_identity_pool_provider.github.name
+}
+
+output "deployer_service_account" {
+  description = "Value for the GCP_DEPLOYER_SA repository variable — the identity GitHub Actions impersonates."
+  value       = google_service_account.deployer.email
+}

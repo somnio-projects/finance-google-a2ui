@@ -47,7 +47,15 @@ dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
-## 5. When you change one, change all three
+## 5. When you change one, change its pair
 
-`.claude/ship-gate.json`, `backend/Makefile` and the workflow must stay
-identical. A PR that changes one without the others is incomplete.
+`.claude/ship-gate.json` is the Definition of Done and has two halves, each
+with a runner and a workflow that must stay identical to it:
+
+| Half | Runner | Workflow | Also in |
+|---|---|---|---|
+| `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
+| `infra.*` | `bash infra/scripts/tests/*.sh` from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
+
+A PR that changes one without its pair is incomplete. If a third runner ever
+appears, it goes in this table rather than in a comment.
