@@ -4,6 +4,11 @@
 summary, a description, a stable operation id, tags, documented responses and
 documented parameters. These tests fail the moment a route is added without
 them — the rule is enforced, not aspirational.
+
+The projection half of the contract (ADR-K: one example per registered view,
+an options schema, a discriminator literal) is asserted in
+``test_openapi_projections.py`` — same gate, split out to stay inside the
+150-line budget.
 """
 
 from typing import Any

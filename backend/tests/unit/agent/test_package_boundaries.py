@@ -3,15 +3,15 @@
 Three rules a reviewer cannot see by reading one file: ``app.agent`` is an
 inner layer that never imports outward, the turn loop touches neither a
 framework nor a session, and the provider API key is read in exactly one
-module.
+module. The AST helpers are shared with the domain and presentation suites in
+``tests/boundaries.py`` — one reader, three callers.
 """
 
 from pathlib import Path
 
 import app.agent
 import app.services.agent_service
-from tests.unit.import_graph import foreign_imports, imported_modules, outward_imports
-from tests.unit.import_graph import tree as parse
+from tests.boundaries import imported_modules, imports_outside, outward_imports, sources
 
 AGENT_PACKAGE = Path(app.agent.__file__).parent
 SRC_ROOT = AGENT_PACKAGE.parent.parent
@@ -19,9 +19,7 @@ SERVICE_FORBIDDEN = ("fastapi", "starlette", "sqlalchemy", "app.models", "app.ap
 
 
 def _agent_sources() -> list[Path]:
-    modules = sorted(AGENT_PACKAGE.rglob("*.py"))
-    assert modules, "the agent package has no modules to check"
-    return modules
+    return sources(AGENT_PACKAGE, recursive=True)
 
 
 def test_agent_package_has_no_outward_imports() -> None:
@@ -29,7 +27,7 @@ def test_agent_package_has_no_outward_imports() -> None:
 
 
 def test_agent_package_only_imports_core_and_domain_from_outside_itself() -> None:
-    outside = foreign_imports(_agent_sources(), package="app.agent")
+    outside = imports_outside(_agent_sources(), own_prefix="app.agent")
 
     assert [
         m for m in sorted(outside) if not m.startswith(("app.core", "app.domain"))
@@ -37,7 +35,7 @@ def test_agent_package_only_imports_core_and_domain_from_outside_itself() -> Non
 
 
 def test_agent_service_imports_no_framework_and_no_session_module() -> None:
-    imported = imported_modules(parse(Path(app.services.agent_service.__file__)))
+    imported = imported_modules(Path(app.services.agent_service.__file__))
 
     assert [m for m in imported if m.startswith(SERVICE_FORBIDDEN)] == []
     assert [m for m in imported if "session" in m] == []

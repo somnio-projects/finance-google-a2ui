@@ -1,9 +1,9 @@
-"""Dependency providers, re-exported so controllers import one place.
+"""Every FastAPI dependency provider, re-exported from one name.
 
-Split into modules by the surface they serve — `common` for everything a
-controller needs, `agent` for the turn — because the single file outgrew the
-150-line budget once the agent host landed beside the session providers. The
-import path stays `app.api.deps`, so no controller moved.
+Controllers import ``from app.api.deps import ...`` exactly as before; the
+providers are grouped into modules only because the single file outgrew the
+150-line budget. The rule is unchanged: services are constructed here and
+nowhere else, so the wiring stays visible in one place.
 """
 
 from app.api.deps.agent import get_agent_service, get_tool_context
@@ -23,15 +23,14 @@ from app.api.deps.common import (
     get_session,
     get_session_service,
 )
+from app.api.deps.views import get_render_intent_service, get_view_service
 
 __all__ = [
     "ContainerDep",
     "PrincipalDep",
     "RequestIdDep",
     "SessionDep",
-    # from .agent — the turn
     "get_agent_service",
-    # from .common — everything a controller needs
     "get_audit_service",
     "get_auth_service",
     "get_container",
@@ -39,9 +38,10 @@ __all__ = [
     "get_feature_flag_service",
     "get_health_service",
     "get_identity_service",
+    "get_render_intent_service",
     "get_request_id",
     "get_session",
     "get_session_service",
-    # from .agent again — sorted, not grouped, so the name is findable
     "get_tool_context",
+    "get_view_service",
 ]

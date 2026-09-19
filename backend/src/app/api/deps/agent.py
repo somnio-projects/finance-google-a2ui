@@ -28,7 +28,7 @@ def get_agent_service(container: ContainerDep) -> AgentService:
 
 def get_tool_context(container: ContainerDep, principal: PrincipalDep) -> ToolContext:
     """Provide the subject-scoped context every tool of a turn receives."""
-    return ToolContext(subject=principal.subject, portfolios=container.agent.portfolios)
+    return ToolContext(subject=principal.subject, portfolios=container.portfolio)
 
 
 __all__ = ["get_agent_service", "get_tool_context"]

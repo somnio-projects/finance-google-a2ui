@@ -66,11 +66,8 @@ def build_container(
         flag_cache=FeatureFlagCache(
             ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
         ),
-        agent=AgentRuntime(
-            model=model,
-            tools=load_tools(),
-            portfolios=InMemoryPortfolioProvider(clock=clock),
-        ),
+        agent=AgentRuntime(model=model, tools=load_tools()),
+        portfolio=InMemoryPortfolioProvider(clock=clock),
     )
 
 

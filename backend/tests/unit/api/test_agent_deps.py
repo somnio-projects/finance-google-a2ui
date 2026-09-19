@@ -22,7 +22,7 @@ def test_get_tool_context_scopes_the_context_to_the_caller(
     context = get_tool_context(container, principal)
 
     assert context.subject == principal.subject
-    assert context.portfolios is container.agent.portfolios
+    assert context.portfolios is container.portfolio
 
 
 async def test_the_wired_service_runs_a_turn_against_the_configured_model(

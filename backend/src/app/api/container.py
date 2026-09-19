@@ -22,13 +22,15 @@ class AgentRuntime:
     """The agent host's process-wide collaborators (spec 0006).
 
     Grouped rather than spread across the container: they are built together,
-    replaced together in tests, and every one of them is meaningless without
-    the other two.
+    replaced together in tests, and neither is meaningful without the other.
+
+    The portfolio provider is deliberately *not* here. Both the agent's tools
+    and the presentation layer read the same portfolios, so it belongs to the
+    container, not to one consumer of it.
     """
 
     model: ModelClient
     tools: ToolRegistry
-    portfolios: PortfolioProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +46,7 @@ class Container:
     health: HealthService
     flag_cache: FeatureFlagCache
     agent: AgentRuntime
+    portfolio: PortfolioProvider
 
 
 __all__ = ["AgentRuntime", "Container"]

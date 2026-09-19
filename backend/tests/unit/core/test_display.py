@@ -6,7 +6,7 @@ import pytest
 
 from app.core.display import (
     money_display,
-    percent_display,
+    percentage_display,
     quantity_display,
     signed_money_display,
 )
@@ -64,10 +64,10 @@ def test_signed_money_display_marks_gains_explicitly(
     ],
     ids=["trailing_zeros_trimmed", "integer", "zero", "rounded_to_eight_places"],
 )
-def test_quantity_display_trims_to_eight_places(
+def test_quantity_display_trimmed_drops_trailing_zeros(
     quantity: Decimal, expected: str
 ) -> None:
-    assert quantity_display(quantity) == expected
+    assert quantity_display(quantity, trim=True) == expected
 
 
 @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ def test_quantity_display_trims_to_eight_places(
     ],
     ids=["fraction", "whole", "zero", "rounded_to_two_places"],
 )
-def test_percent_display_renders_a_ratio_as_a_percentage(
+def test_percentage_display_renders_a_ratio_as_a_percentage(
     ratio: Decimal, expected: str
 ) -> None:
-    assert percent_display(ratio) == expected
+    assert percentage_display(ratio) == expected

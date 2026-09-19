@@ -12,12 +12,22 @@ full recipe and the controller template.
 
 from fastapi import APIRouter
 
-from app.api.v1 import feature_flags, health, identity, session_messages, sessions
+from app.api.v1 import (
+    feature_flags,
+    health,
+    identity,
+    portfolio_views,
+    session_messages,
+    sessions,
+    views,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(feature_flags.router)
 api_router.include_router(identity.router)
+api_router.include_router(portfolio_views.router)
+api_router.include_router(views.router)
 api_router.include_router(sessions.router)
 api_router.include_router(session_messages.router)
 

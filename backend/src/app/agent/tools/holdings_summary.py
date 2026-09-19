@@ -12,14 +12,13 @@ pydantic arguments model, a ``run`` over the injected context, and one
 """
 
 from collections.abc import Mapping
-from decimal import Decimal
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
 from app.agent.registry import register
-from app.core.display import money_display, percent_display, quantity_display
+from app.core.display import money_display, percentage_display, quantity_display
 from app.core.display import signed_money_display as signed
 from app.domain.holdings import Holding
 
@@ -56,12 +55,12 @@ def _row(holding: Holding) -> Mapping[str, object]:
     return {
         "symbol": holding.symbol,
         "name": holding.name,
-        "quantityDisplay": quantity_display(holding.quantity),
+        "quantityDisplay": quantity_display(holding.quantity, trim=True),
         "priceDisplay": money_display(holding.price),
         "marketValueDisplay": money_display(holding.market_value),
         "costBasisDisplay": money_display(holding.cost_basis),
         "unrealizedPlDisplay": signed(holding.unrealized_pl),
-        "weightDisplay": percent_display(holding.weight),
+        "weightDisplay": percentage_display(holding.weight),
     }
 
 
@@ -101,8 +100,8 @@ class HoldingsSummaryTool:
             portfolio.holdings(), key=lambda item: item.market_value, reverse=True
         )
         shown = ranked[: options.top_n] if options.top_n is not None else ranked
-        total = sum((item.market_value for item in ranked), Decimal(0))
-        unrealized = sum((item.unrealized_pl for item in ranked), Decimal(0))
+        total = portfolio.total_market_value()
+        unrealized = portfolio.total_unrealized_pl()
         data: Mapping[str, object] = {
             "asOf": portfolio.as_of.isoformat(),
             "positionCount": len(ranked),

@@ -1,7 +1,8 @@
-"""FastAPI dependency providers shared by every controller.
+"""Request-scoped providers every controller shares.
 
-Every controller parameter comes from here or from a sibling module in this
-package, so wiring is visible in one place and services stay ignorant of HTTP.
+The container, the correlation id, the unit-of-work session, the caller, and
+the services that predate the agent and the presentation layer. Grouped here
+so the feature-specific modules beside it stay short enough to read.
 """
 
 from collections.abc import AsyncIterator

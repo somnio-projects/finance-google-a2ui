@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.agent.registry import load_tools
 from app.api.container import AgentRuntime, Container
+from app.api.deps import get_feature_flag_service
 from app.bootstrap import create_app
 from app.core.config import Settings
 from app.core.principal import Principal
@@ -23,7 +24,7 @@ from app.infra.db.session import create_session_factory
 from app.infra.model.null_client import NullModelClient
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
-from tests.conftest import FakeReporter, FakeVerifier, make_settings
+from tests.conftest import FakeFlags, FakeReporter, FakeVerifier, make_settings
 
 UNREACHABLE_DSN = "postgresql+asyncpg://app:app@127.0.0.1:1/nowhere"
 
@@ -46,11 +47,8 @@ def make_app(
         session_factory=create_session_factory(engine),
         health=HealthService(version="test", probes=[DatabaseReadinessProbe(engine)]),
         flag_cache=FeatureFlagCache(ttl=timedelta(seconds=15), clock=clock),
-        agent=AgentRuntime(
-            model=NullModelClient(),
-            tools=load_tools(),
-            portfolios=InMemoryPortfolioProvider(clock=clock),
-        ),
+        agent=AgentRuntime(model=NullModelClient(), tools=load_tools()),
+        portfolio=InMemoryPortfolioProvider(clock=clock),
     )
     return create_app(settings, container=container)
 
@@ -79,6 +77,37 @@ def app(
 def client(app: FastAPI) -> Iterator[TestClient]:
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
+
+
+def make_views_client(
+    settings: Settings,
+    *,
+    principal: Principal,
+    clock: FixedClock,
+    reporter: FakeReporter,
+) -> Iterator[TestClient]:
+    """Yield a client for the view routes with their feature gates faked on.
+
+    The gates read the flag service, which reads the database; the view
+    routes themselves touch neither, so the fake keeps this a unit test.
+    """
+    app = make_app(settings, principal=principal, clock=clock, reporter=reporter)
+    app.dependency_overrides[get_feature_flag_service] = FakeFlags
+    with TestClient(app, raise_server_exceptions=False) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def views_client(
+    api_settings: Settings,
+    principal: Principal,
+    clock: FixedClock,
+    reporter: FakeReporter,
+) -> Iterator[TestClient]:
+    yield from make_views_client(
+        api_settings, principal=principal, clock=clock, reporter=reporter
+    )
 
 
 def make_session_app(

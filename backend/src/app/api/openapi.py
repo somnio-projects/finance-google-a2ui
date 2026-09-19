@@ -40,6 +40,14 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         ),
     },
     {
+        "name": "views",
+        "description": (
+            "Named, versioned projections of the portfolio (ADR-K): the "
+            "catalog of what can be rendered, and the rendering itself. The "
+            "backend shapes every payload; the client binds it unchanged."
+        ),
+    },
+    {
         "name": "sessions",
         "description": (
             "Conversation sessions and the messages inside them (spec 0004). "

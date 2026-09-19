@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 
 from app.domain.errors import PortfolioInvariantError, SymbolNotFoundError
+from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
 from tests.conftest import FROZEN_NOW
 from tests.unit.domain.conftest import make_lot
@@ -76,3 +77,49 @@ def test_portfolio_validate_rejects_a_future_lot(portfolio: Portfolio) -> None:
 def test_portfolio_is_frozen(portfolio: Portfolio) -> None:
     with pytest.raises(AttributeError, match="as_of"):
         portfolio.as_of = FROZEN_NOW + timedelta(days=1)  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def test_total_market_value_sums_every_holding(portfolio: Portfolio) -> None:
+    expected = sum((row.market_value for row in portfolio.positions), ZERO)
+
+    assert portfolio.total_market_value() == expected
+
+
+def test_total_cost_basis_sums_every_holding(portfolio: Portfolio) -> None:
+    expected = sum((row.cost_basis for row in portfolio.positions), ZERO)
+
+    assert portfolio.total_cost_basis() == expected
+
+
+def test_total_unrealized_pl_is_the_difference_of_the_other_two(
+    portfolio: Portfolio,
+) -> None:
+    assert portfolio.total_unrealized_pl() == (
+        portfolio.total_market_value() - portfolio.total_cost_basis()
+    )
+
+
+def test_the_totals_agree_with_each_holdings_own_unrealised_pl(
+    portfolio: Portfolio,
+) -> None:
+    """The reason the totals live on the aggregate at all.
+
+    The agent says one of these numbers out loud while a chart draws another.
+    If they were computed in two places they could drift; computed here they
+    cannot, and this asserts the identity that makes that true.
+    """
+    per_holding = sum((row.unrealized_pl for row in portfolio.positions), ZERO)
+
+    assert portfolio.total_unrealized_pl() == per_holding
+
+
+def test_an_empty_portfolio_totals_to_zero_rather_than_failing(
+    portfolio: Portfolio,
+) -> None:
+    empty = Portfolio(
+        as_of=portfolio.as_of, positions=(), lots=(), ledger=portfolio.ledger
+    )
+
+    assert empty.total_market_value() == ZERO
+    assert empty.total_cost_basis() == ZERO
+    assert empty.total_unrealized_pl() == ZERO
