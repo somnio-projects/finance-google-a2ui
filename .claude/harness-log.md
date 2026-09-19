@@ -9,6 +9,8 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ## 2026-09-19 — Audit remediation: compliance corpus, admin MFA, retention purge
 
+**PR:** https://github.com/somnio-projects/finance-google-a2ui/pull/2 (reviewer `mcampbell-somnio`).
+
 **Trigger:** first full Somnio CLI audits on the foundation — `soc2-audit`
 40/100, `iso27001-audit` 64/100, `python-best-practices` 88/100 (the earlier
 `security-audit` 98 measured only technical controls). Lautaro's standing rule:
