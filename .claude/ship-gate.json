@@ -1,6 +1,63 @@
 {
   "version": 1,
-  "required": [],
-  "_candidates": [],
-  "_note": "drafted by harness-init; the TL commits this file \u2014 docs/DEV_HARNESS.md"
+  "_note": "Definition of Done. Every cmd matches a step of `make gate` in backend/ and a job in .github/workflows/backend-ci.yaml \u2014 change one, change all three (.claude/rules/ci-conventions.md). Flutter gate lands with GGU-1.",
+  "required": [
+    {
+      "id": "py.lint",
+      "cwd": "backend",
+      "cmd": "uv run ruff check ."
+    },
+    {
+      "id": "py.format",
+      "cwd": "backend",
+      "cmd": "uv run ruff format --check ."
+    },
+    {
+      "id": "py.types",
+      "cwd": "backend",
+      "cmd": "uv run basedpyright"
+    },
+    {
+      "id": "py.budget",
+      "cwd": "backend",
+      "cmd": "uv run python scripts/check_file_budget.py"
+    },
+    {
+      "id": "py.quality",
+      "cwd": "backend",
+      "cmd": "make quality"
+    },
+    {
+      "id": "py.test",
+      "cwd": "backend",
+      "cmd": "uv run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml"
+    },
+    {
+      "id": "py.audit",
+      "cwd": "backend",
+      "cmd": "make audit"
+    }
+  ],
+  "_candidates": [
+    {
+      "id": "dart.format",
+      "cwd": "client_flutter",
+      "cmd": "dart format --output=none --set-exit-if-changed ."
+    },
+    {
+      "id": "dart.analyze",
+      "cwd": "client_flutter",
+      "cmd": "dart analyze --fatal-infos --fatal-warnings"
+    },
+    {
+      "id": "flutter.test",
+      "cwd": "client_flutter/app",
+      "cmd": "flutter test --coverage"
+    },
+    {
+      "id": "flutter.web",
+      "cwd": "client_flutter/app",
+      "cmd": "flutter build web --release"
+    }
+  ]
 }

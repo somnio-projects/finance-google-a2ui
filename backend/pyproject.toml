@@ -1,0 +1,183 @@
+[project]
+name = "finance-a2ui-backend"
+version = "0.1.0"
+description = "FastAPI backend for the Somnio × Google A2UI finance showcase."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",
+    "alembic>=1.13",
+    "structlog>=24.4",
+    "sentry-sdk[fastapi]>=2.14",
+    "pyjwt[crypto]>=2.9",
+    "httpx>=0.27",
+    "starlette>=0.41",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.6",
+    "basedpyright>=1.18",
+    "testcontainers[postgres]>=4.8",
+    # Starlette's TestClient imports httpx2 first and only falls back to httpx with a
+    # deprecation warning (fatal under filterwarnings=error). Test-only dependency.
+    "httpx2>=2.13.0",
+    "xenon>=0.9.3",
+    "vulture>=2.16",
+    "interrogate>=1.7.0",
+    "deptry>=0.25.1",
+    "pylint>=4.0.8",
+    "codespell>=2.4.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+# --------------------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = [".venv", "alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "D", "UP", "B", "S", "N", "ANN", "RUF"]
+ignore = [
+    "ANN401", # Any is allowed only where documented (see typing rule 8)
+    "D203",   # conflicts with D211
+    "D213",   # conflicts with D212
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "D", "ANN"]
+"alembic/**" = ["D", "ANN", "S"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# --------------------------------------------------------------------------- pyright
+[tool.basedpyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+include = ["src", "tests"]
+exclude = [".venv", "alembic"]
+reportMissingTypeStubs = false
+reportImplicitOverride = false
+reportUnusedCallResult = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnnecessaryIsInstance = false
+reportUnnecessaryComparison = false
+reportMissingSuperCall = false
+reportUnusedParameter = false
+reportImportCycles = false
+
+# --------------------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--strict-markers --strict-config -ra"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "unit: fast tests with no I/O (fakes and in-memory doubles only)",
+    "integration: tests that exercise the app against a real PostgreSQL",
+]
+filterwarnings = [
+    "error",
+    # third-party deprecations (asyncpg/sqlalchemy internals) are not ours to fix here
+    "ignore::DeprecationWarning",
+    # testcontainers leaves a docker-socket handle open at interpreter exit
+    "ignore::ResourceWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+# --------------------------------------------------------------------------- coverage
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = false
+# Only Protocol method bodies (`...`) and TYPE_CHECKING blocks are excluded.
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "\\.\\.\\.$",
+]
+
+# --------------------------------------------------------------------------- quality
+# Code-smell gates. Each one runs in `make quality`, in pre-commit and in CI;
+# thresholds are the current state of the tree — they go up, never down.
+[tool.interrogate]
+fail-under = 100
+ignore-nested-functions = true   # closures are documented by their factory
+ignore-magic = true
+ignore-module = false
+exclude = ["tests", "alembic", ".venv"]
+quiet = false
+
+[tool.vulture]
+paths = ["src", "alembic/env.py"]
+min_confidence = 80
+ignore_names = ["cls"]           # pydantic/SQLAlchemy classmethod validators
+
+[tool.deptry]
+known_first_party = ["app"]
+extend_exclude = [".venv", "reports", "htmlcov", "alembic"]
+
+[tool.deptry.per_rule_ignores]
+# Loaded by name, never imported from `src/`: the asyncpg driver, the uvicorn
+# server (entrypoint.sh) and the alembic CLI (migrations run at container start).
+DEP002 = ["asyncpg", "uvicorn", "alembic"]
+
+[tool.codespell]
+skip = "./.venv,./uv.lock,./reports,./htmlcov,./.git"
+ignore-words-list = "assertIn,asend,crate,ist,nd,te,som"
+
+[tool.pylint.main]
+# Only the checks ruff/basedpyright do not cover: duplication and design smells.
+disable = ["all"]
+enable = [
+    "duplicate-code",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
+    "too-many-instance-attributes",
+    "too-many-public-methods",
+    "too-many-nested-blocks",
+]
+ignore-paths = ["^.venv/.*$", "^alembic/.*$"]
+
+[tool.pylint.design]
+max-args = 7
+max-locals = 12
+max-branches = 8
+max-statements = 30
+max-attributes = 10
+max-public-methods = 12
+
+[tool.pylint.similarities]
+min-similarity-lines = 8
+ignore-imports = true
+ignore-signatures = true

@@ -1,0 +1,11 @@
+project_id           = "finance-a2ui-staging"
+environment          = "staging"
+domain               = "api-staging.finance-a2ui.example"
+backend_image        = "us-central1-docker.pkg.dev/finance-a2ui-staging/finance-a2ui/backend:latest"
+auth_issuer          = "https://securetoken.google.com/finance-a2ui"
+auth_audience        = "finance-a2ui"
+auth_oidc_jwks_url   = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+cors_allowed_origins = "https://finance-a2ui.web.app"
+alert_email          = "lbertuzzi@somniosoftware.com"
+min_instances        = 0
+max_instances        = 2

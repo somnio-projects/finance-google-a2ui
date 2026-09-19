@@ -1,7 +1,8 @@
 ---
 description: Python error handling — EAFP over LBYL, narrowest except, custom exception hierarchy, translate at boundaries, never swallow, no control-flow-by-exception. Applies to all .py files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

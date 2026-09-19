@@ -1,7 +1,8 @@
 ---
 description: Python function design — single responsibility, early returns, pure functions, side-effect isolation, dataclasses, keyword-only args. Applies to all .py files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

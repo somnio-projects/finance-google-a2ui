@@ -1,0 +1,15 @@
+# Gitleaks configuration — extends the default rule set.
+# The allowlist is deliberately narrow: only the test-fixture literal used as a
+# fake token fingerprint (matched on the whole line so the context is part of
+# the match). Real secrets never live in tests either.
+title = "finance-google-a2ui"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret fixtures"
+regexTarget = "line"
+regexes = [
+  '''token_fingerprint="0123456789abcdef"''',
+]

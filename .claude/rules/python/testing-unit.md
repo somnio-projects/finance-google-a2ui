@@ -1,7 +1,8 @@
 ---
 description: pytest unit-testing conventions — plain assert, test_*.py discovery, fixture scoping, parametrize, mocker/autospec, Hypothesis. Applies to all Python test files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

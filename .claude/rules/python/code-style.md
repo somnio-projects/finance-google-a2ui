@@ -1,7 +1,8 @@
 ---
 description: Python code style — PEP 8 enforced via Ruff as CI gate; line length 88 (CONTESTED); naming conventions; 3-group sorted absolute imports; docstrings (PEP 257 + Google sections via Ruff D + convention=google, CONTESTED). Applies to all .py files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

@@ -1,0 +1,96 @@
+# Weekly vulnerability scan of `main`, independent of PR traffic
+# (SOC 2 CC7.1 / ISO 27001 A.8.8 — docs/compliance/VULNERABILITY_MANAGEMENT.md).
+# Findings open an issue so the patch-policy clock starts even when nobody
+# is merging.
+name: scheduled-scan
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dependencies:
+    name: pip-audit (locked runtime deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.11.19"
+      - name: Install
+        run: uv sync --all-groups --frozen
+      - name: pip-audit
+        run: make audit
+      - name: SBOM (CycloneDX)
+        run: uv tool run cyclonedx-py environment --output-format json --outfile sbom.json .venv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: backend/sbom.json
+          retention-days: 90
+
+  image:
+    name: Trivy (image + filesystem)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          load: true
+          tags: finance-a2ui-backend:scan
+      - name: Trivy image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: finance-a2ui-backend:scan
+          format: sarif
+          output: trivy-image.sarif
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-sarif
+          path: trivy-image.sarif
+          retention-days: 90
+
+  secrets:
+    name: gitleaks (full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history, pinned binary)
+        # The gitleaks GitHub Action requires a paid licence for organisations;
+        # the scanner itself is open source, so run the pinned image directly.
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
+            git --config=/repo/.gitleaks.toml --redact --no-banner --exit-code 1
+
+  report:
+    name: open issue on failure
+    runs-on: ubuntu-latest
+    needs: [dependencies, image, secrets]
+    if: failure()
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Scheduled security scan failed — ${new Date().toISOString().slice(0, 10)}`;
+            const body = `The weekly scan on \`main\` reported findings. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nTriage per docs/compliance/PATCH_POLICY.md (Critical 48 h · High 7 d).`;
+            await github.rest.issues.create({ ...context.repo, title, body, labels: ["security", "vulnerability"] });

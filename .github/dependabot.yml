@@ -1,0 +1,31 @@
+# Automated dependency updates (SOC 2 CC8.1 / ISO 27001 A.8.8 — vulnerability management).
+# Security releases open PRs that still have to pass the backend ship gate.
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      backend-runtime:
+        dependency-type: "production"
+      backend-dev:
+        dependency-type: "development"
+    commit-message:
+      prefix: "chore(deps)"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci(deps)"
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "build(deps)"

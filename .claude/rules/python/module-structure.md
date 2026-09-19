@@ -1,7 +1,8 @@
 ---
 description: Python module structure — src/ layout, __init__/__all__ exports, layered/clean architecture, dependency inversion (ABC/Protocol, single composition root), no circular imports, absolute imports, pyproject.toml packaging (PEP 517/518/621, no setup.py), structured logging (structlog, no import-time config in libraries).
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 

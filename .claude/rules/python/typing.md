@@ -1,7 +1,8 @@
 ---
 description: Python type hints everywhere — modern generics (list[int]/dict[str,int]/X | None, Python 3.10+), Protocol structural typing, pyright/basedpyright strict mode, py.typed marker (PEP 561). Applies to all .py files.
 paths:
-  - "backend_python/*.py"
+  - "backend/src/**/*.py"
+  - "backend/tests/**/*.py"
 alwaysApply: false
 ---
 
