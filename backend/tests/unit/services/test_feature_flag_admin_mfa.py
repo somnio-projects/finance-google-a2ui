@@ -40,7 +40,7 @@ def _service(
     return FeatureFlagService(
         repository=_EmptyFlagRepository(),  # type: ignore[arg-type]
         cache=FeatureFlagCache(ttl=timedelta(seconds=15), clock=clock),
-        audit=AuditService(_NullAuditRepository()),  # type: ignore[arg-type]
+        audit=AuditService(repository=_NullAuditRepository()),  # type: ignore[arg-type]
         reporter=reporter,
         force_disabled=[],
         require_mfa=require_mfa,

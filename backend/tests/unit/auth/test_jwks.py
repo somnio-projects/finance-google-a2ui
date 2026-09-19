@@ -28,7 +28,15 @@ class CountingTransport(httpx.MockTransport):
         return httpx.Response(self._status, json=JWKS)
 
 
-async def test_key_for_fetches_once_within_ttl_and_refreshes_after() -> None:
+def _resolver(
+    http: httpx.AsyncClient, clock: FixedClock | None = None
+) -> JwksKeyResolver:
+    return JwksKeyResolver(
+        jwks_url=JWKS_URL, clock=clock or FixedClock(FROZEN_NOW), http=http
+    )
+
+
+async def test_ensure_fresh_fetches_once_within_ttl_and_refreshes_after() -> None:
     clock = FixedClock(FROZEN_NOW)
     transport = CountingTransport()
     async with httpx.AsyncClient(transport=transport) as http:
@@ -36,53 +44,41 @@ async def test_key_for_fetches_once_within_ttl_and_refreshes_after() -> None:
             jwks_url=JWKS_URL, clock=clock, ttl=timedelta(minutes=5), http=http
         )
         token = rs256_token(subject="s", now=FROZEN_NOW)
-        key = await resolver.key_for(token)
-        await resolver.key_for(token)
-        assert key.key_id == KID
+        await resolver.ensure_fresh()
+        await resolver.ensure_fresh()
+        assert resolver.key_for(token).key_id == KID
         assert transport.calls == 1
         clock.advance(timedelta(minutes=6))
-        await resolver.key_for(token)
+        await resolver.ensure_fresh()
         assert transport.calls == 2
 
 
 async def test_key_for_unknown_kid_raises_key_error() -> None:
     async with httpx.AsyncClient(transport=CountingTransport()) as http:
-        resolver = JwksKeyResolver(
-            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
-        )
+        resolver = _resolver(http)
+        await resolver.ensure_fresh()
         with pytest.raises(KeyError, match="nope"):
-            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW, kid="nope"))
+            resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW, kid="nope"))
 
 
-async def test_key_for_http_failure_becomes_dependency_unavailable() -> None:
-    async with httpx.AsyncClient(transport=CountingTransport(status=503)) as http:
-        resolver = JwksKeyResolver(
-            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
-        )
+@pytest.mark.parametrize(
+    "transport",
+    [
+        CountingTransport(status=503),
+        CountingTransport(body="<html>"),
+        CountingTransport(body='{"keys": [{"kid": "no-kty"}]}'),
+    ],
+    ids=["http_503", "non_json_body", "json_but_not_a_jwk_set"],
+)
+async def test_ensure_fresh_failures_become_dependency_unavailable(
+    transport: CountingTransport,
+) -> None:
+    async with httpx.AsyncClient(transport=transport) as http:
         with pytest.raises(DependencyUnavailableError, match="identity provider"):
-            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
+            await _resolver(http).ensure_fresh()
 
 
-async def test_key_for_non_json_body_becomes_dependency_unavailable() -> None:
-    async with httpx.AsyncClient(transport=CountingTransport(body="<html>")) as http:
-        resolver = JwksKeyResolver(
-            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
-        )
-        with pytest.raises(DependencyUnavailableError, match="identity provider"):
-            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
-
-
-async def test_key_for_non_jwks_json_becomes_dependency_unavailable() -> None:
-    body = '{"keys": [{"kid": "no-kty"}]}'
-    async with httpx.AsyncClient(transport=CountingTransport(body=body)) as http:
-        resolver = JwksKeyResolver(
-            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
-        )
-        with pytest.raises(DependencyUnavailableError, match="identity provider"):
-            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
-
-
-async def test_key_for_creates_and_closes_its_own_client(
+async def test_ensure_fresh_creates_and_closes_its_own_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     closed: list[bool] = []
@@ -101,5 +97,5 @@ async def test_key_for_creates_and_closes_its_own_client(
 
     monkeypatch.setattr("app.auth.providers.jwks.httpx.AsyncClient", factory)
     resolver = JwksKeyResolver(jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW))
-    await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
+    await resolver.ensure_fresh()
     assert closed == [True]

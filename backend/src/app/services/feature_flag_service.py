@@ -7,6 +7,8 @@ the caller's default. Toggling requires the ``admin`` scope and is audited.
 from collections.abc import Collection
 from typing import Final
 
+import structlog
+
 from app.core.dto import from_row
 from app.core.errors import AppError, AuthorizationError
 from app.core.logging import get_logger
@@ -19,7 +21,9 @@ from app.services.audit_service import AuditService
 from app.services.feature_flag_cache import FeatureFlagCache
 
 ADMIN_SCOPE: Final = "admin"
-log = get_logger(__name__)
+# design: the resolver logs its own fallbacks; a module logger keeps the constructor
+# focused on collaborators that affect behaviour (the reporter is injected).
+log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 
 class FeatureFlagService:

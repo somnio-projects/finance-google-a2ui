@@ -27,7 +27,9 @@ async def _run() -> int:
     engine = create_engine(settings)
     try:
         async with session_scope(create_session_factory(engine)) as session:
-            purged = await AuditService(AuditRepository(session)).purge_expired(
+            purged = await AuditService(
+                repository=AuditRepository(session)
+            ).purge_expired(
                 now=SystemClock().now(), retention_days=settings.audit_retention_days
             )
     finally:

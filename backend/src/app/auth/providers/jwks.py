@@ -34,9 +34,13 @@ class JwksDocument(BaseModel):
 
 
 class KeyResolver(Protocol):
-    """Resolve the verification key for a token."""
+    """Resolve the verification key for a token (command, then query)."""
 
-    async def key_for(self, token: str) -> jwt.PyJWK:
+    async def ensure_fresh(self) -> None:
+        """Refresh the key material when it is stale."""
+        ...
+
+    def key_for(self, token: str) -> jwt.PyJWK:
         """Return the key matching the token's ``kid`` header."""
         ...
 
@@ -78,7 +82,7 @@ class JwksKeyResolver:
             if self._http is None:
                 await client.aclose()
 
-    async def _refresh_if_stale(self) -> None:
+    async def ensure_fresh(self) -> None:
         """Command: replace the cached document once the TTL has elapsed."""
         if self._is_fresh():
             return
@@ -89,9 +93,8 @@ class JwksKeyResolver:
         """Query: the cached document as a PyJWT key set."""
         return jwt.PyJWKSet.from_dict(self._document.model_dump(exclude_none=True))
 
-    async def key_for(self, token: str) -> jwt.PyJWK:
-        """Return the JWK for the token's ``kid``, refreshing the cache if stale."""
-        await self._refresh_if_stale()
+    def key_for(self, token: str) -> jwt.PyJWK:
+        """Query: the JWK for the token's ``kid`` from the cached document."""
         header = jwt.get_unverified_header(token)
         return self._key_set()[header.get("kid", "")]
 

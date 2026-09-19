@@ -29,10 +29,12 @@ from tests.conftest import FROZEN_NOW, FakeReporter, make_settings
 async def session(database_url: str) -> AsyncIterator[AsyncSession]:
     """One rolled-back session per test against the migrated database."""
     engine = create_engine(make_settings(database_url=database_url))
-    async with session_scope(create_session_factory(engine)) as db_session:
-        yield db_session
-        await db_session.rollback()
-    await engine.dispose()
+    try:
+        async with session_scope(create_session_factory(engine)) as db_session:
+            yield db_session
+            await db_session.rollback()
+    finally:
+        await engine.dispose()
 
 
 ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini")

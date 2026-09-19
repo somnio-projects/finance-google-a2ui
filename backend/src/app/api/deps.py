@@ -70,7 +70,7 @@ PrincipalDep = Annotated[Principal, Depends(get_current_principal)]
 
 def get_audit_service(session: SessionDep) -> AuditService:
     """Provide the audit service over the request session."""
-    return AuditService(AuditRepository(session))
+    return AuditService(repository=AuditRepository(session))
 
 
 def get_feature_flag_service(
@@ -93,7 +93,7 @@ def get_identity_service(
     audit: Annotated[AuditService, Depends(get_audit_service)],
 ) -> IdentityService:
     """Provide the identity service."""
-    return IdentityService(audit)
+    return IdentityService(audit=audit)
 
 
 __all__ = [

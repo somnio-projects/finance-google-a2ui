@@ -8,7 +8,7 @@ from app.services.audit_service import AuditService
 class IdentityService:
     """Compose the identity view and record the access in the audit trail."""
 
-    def __init__(self, audit: AuditService) -> None:
+    def __init__(self, *, audit: AuditService) -> None:
         """Inject the audit service (request-scoped)."""
         self._audit = audit
 

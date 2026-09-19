@@ -8,6 +8,7 @@ from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import timedelta
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -31,7 +32,7 @@ from app.infra.telemetry.factory import build_error_reporter
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 
-log = get_logger(__name__)
+log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 
 def build_container(

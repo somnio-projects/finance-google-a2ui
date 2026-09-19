@@ -35,7 +35,7 @@ async def test_record_persists_principal_action_and_fingerprint(
     principal: Principal,
 ) -> None:
     repo = FakeAuditRepository()
-    event = await AuditService(repo).record(  # type: ignore[arg-type]
+    event = await AuditService(repository=repo).record(  # type: ignore[arg-type]
         principal, action="identity.read", request_id="req-1"
     )
     assert event.subject == principal.subject
@@ -50,7 +50,7 @@ async def test_history_maps_rows_to_responses_and_clamps_limit(
     principal: Principal,
 ) -> None:
     repo = FakeAuditRepository()
-    service = AuditService(repo)  # type: ignore[arg-type]
+    service = AuditService(repository=repo)  # type: ignore[arg-type]
     await service.record(principal, action="a", request_id="r")
     history = await service.history(principal, limit=10_000)
     assert repo.requested_limits == [MAX_HISTORY]
@@ -65,7 +65,7 @@ async def test_identity_describe_audits_then_returns_sorted_scopes(
 ) -> None:
     repo = FakeAuditRepository()
     principal = principal.model_copy(update={"scopes": frozenset({"z", "a"})})
-    service = IdentityService(AuditService(repo))  # type: ignore[arg-type]
+    service = IdentityService(audit=AuditService(repository=repo))  # type: ignore[arg-type]
     me = await service.describe(principal, request_id="req-9")
     assert me.subject == principal.subject
     assert me.scopes == ["a", "z"]
@@ -77,7 +77,7 @@ async def test_identity_describe_audits_then_returns_sorted_scopes(
 async def test_purge_expired_deletes_before_the_retention_cutoff() -> None:
     repo = FakeAuditRepository()
     now = datetime(2026, 9, 19, 12, 0, tzinfo=UTC)
-    purged = await AuditService(repo).purge_expired(  # type: ignore[arg-type]
+    purged = await AuditService(repository=repo).purge_expired(  # type: ignore[arg-type]
         now=now, retention_days=400
     )
     assert purged == 7

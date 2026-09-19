@@ -15,7 +15,7 @@ MAX_HISTORY: Final = 100
 class AuditService:
     """Append audit events for a principal and expose their history."""
 
-    def __init__(self, repository: AuditRepository) -> None:
+    def __init__(self, *, repository: AuditRepository) -> None:
         """Bind the service to the request-scoped repository."""
         self._repository = repository
 

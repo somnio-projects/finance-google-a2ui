@@ -1,5 +1,6 @@
 """Engine factory and the database readiness probe."""
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from app.core.config import Settings
 from app.core.logging import get_logger
 
-log = get_logger(__name__)
+log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 
 def create_engine(settings: Settings) -> AsyncEngine:

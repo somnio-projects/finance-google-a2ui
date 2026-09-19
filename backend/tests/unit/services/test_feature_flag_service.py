@@ -60,7 +60,7 @@ def build(
     service = FeatureFlagService(
         repository=repo,  # type: ignore[arg-type]
         cache=FeatureFlagCache(ttl=timedelta(seconds=15), clock=clock),
-        audit=AuditService(audit_repo),  # type: ignore[arg-type]
+        audit=AuditService(repository=audit_repo),  # type: ignore[arg-type]
         reporter=reporter,
         force_disabled=force_disabled or [],
     )

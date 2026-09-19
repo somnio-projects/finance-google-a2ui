@@ -37,7 +37,8 @@ class OidcTokenVerifier:
     async def verify(self, token: str) -> Principal:
         """Resolve the signing key, then validate the token's claims."""
         try:
-            key = await self._resolver.key_for(token)
+            await self._resolver.ensure_fresh()
+            key = self._resolver.key_for(token)
             payload = jwt.decode(
                 token,
                 key,

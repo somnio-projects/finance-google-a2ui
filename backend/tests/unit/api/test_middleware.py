@@ -2,7 +2,9 @@ from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
+from app.api.middleware.rate_limit import client_keys
 from app.api.middleware.security_headers import BASE_HEADERS, DOCS_CSP
 from app.core.principal import Principal
 from app.helpers.clock import FixedClock
@@ -97,10 +99,6 @@ def test_rate_limit_counts_ip_even_when_tokens_rotate(client: TestClient) -> Non
 
 
 def test_client_keys_always_include_ip_and_add_token_fingerprint() -> None:
-    from starlette.requests import Request
-
-    from app.api.middleware.rate_limit import client_keys
-
     scope = {
         "type": "http",
         "method": "GET",

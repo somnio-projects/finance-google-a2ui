@@ -12,7 +12,10 @@ from tests.unit.auth.rsa_fixture import JWKS, rs256_token
 class StaticResolver:
     """``KeyResolver`` backed by the fixture JWKS, no network."""
 
-    async def key_for(self, token: str) -> jwt.PyJWK:
+    async def ensure_fresh(self) -> None:
+        return None
+
+    def key_for(self, token: str) -> jwt.PyJWK:
         header = jwt.get_unverified_header(token)
         return jwt.PyJWKSet.from_dict(JWKS)[header["kid"]]
 
