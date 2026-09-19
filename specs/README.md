@@ -41,4 +41,5 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 | [backend/0001-backend-foundation.md](backend/0001-backend-foundation.md) | Implemented | GGU-3 / GGU-45 / GGU-46 (re-baselined) |
 | [backend/0002-feature-flags.md](backend/0002-feature-flags.md) | Implemented | — (TL request 2026-09-18) |
 | [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |
+| [backend/0005-presentation-layer.md](backend/0005-presentation-layer.md) | Implemented | GGU-49 |
 | [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |

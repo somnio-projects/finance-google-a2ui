@@ -7,6 +7,88 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-49 presentation layer · spec `specs/backend/0005-presentation-layer.md`
+
+**Branch:** `feat/GGU-49_presentation_layer`, **stacked on `feat/GGU-47_agent_host`**
+(see *Why this one is stacked* below). Built by a worktree agent in parallel
+with GGU-47 and GGU-48.
+
+**Code** — implements [ADR-K](../docs/adr/ADR-K-response-shaping.md) end to end:
+`presentation/{registry,spec,fragments,displays,options,selection,prompt,contract,resolve,errors,sample,surfaces}.py`
+plus two reference projections in `presentation/views/`, the `/v1/views`
+catalog, `?view=` on a portfolio read, and the agent-facing render intent.
+
+**Decisions worth knowing**
+- **`views/` is auto-discovered** (`pkgutil.iter_modules`), not a hand-kept
+  import list. The presentation rule blessed "one import line in the package
+  `__init__`"; the ticket said *no* shared file may be edited to add a chart.
+  Discovery satisfies both, and adding a chart is now literally one new file.
+- **Options are shared across a multi-view request.** `?view=a&view=b` works,
+  but `?view=attribution.waterfall.v1&top_n=3` is a **422** because the
+  waterfall declares no `top_n`. Per-view namespacing would need a query-string
+  interpreter, which ADR-K D-3 rejects; per-entry options belong to
+  `POST /v1/view-renders` (D-18, out of scope).
+- **`currency` is `Literal["USD"]`.** The backend invents no FX rate, so `EUR`
+  is an honest 422 rather than a fabricated figure.
+- **Selection stays additive**: each projection declares `fitness(portfolio)`
+  and the rule ranks the registry — no `if/elif` on ids.
+- **OpenAPI examples are rendered from the registry at operation level**, not
+  hand-copied into `json_schema_extra`: a schema-level example would have to
+  exist before the DTO class is complete.
+
+**Why this one is stacked on GGU-47 rather than cut straight to `develop`.**
+Built in parallel, the two tickets each created the piece the other also
+needed. ADR-E D-2 allows exactly **one** formatting module and both had one;
+the duplicate-code gate allows one AST helper for the boundary tests and both
+had one. Landing them side by side would have merged that duplication into
+`develop` and left someone to find it later. The integration commit on this
+branch resolves it instead:
+
+- `app/core/display.py` becomes the single `Decimal` → string boundary for both
+  layers, carrying GGU-49's locale support and GGU-47's explicit sign.
+  Quantities take a `trim` flag because a chart axis wants `"0.60000000"` and a
+  sentence the model reads aloud wants `"0.6"`. `presentation/formatting.py` is
+  gone.
+- The locale table, the rounding and the digit grouping move to
+  `app/core/locales.py` — *what kind of number this is* and *how digits are
+  written in a place* are different questions, and together they broke the
+  150-line budget.
+- `tests/boundaries.py` is the one AST reader for the domain, agent and
+  presentation suites; `tests/unit/import_graph.py` is gone.
+- The portfolio provider is a **container** field, not a member of
+  `AgentRuntime`: both the agent's tools and the projections read the same
+  portfolios.
+- **`app/api/deps` is now a package.** Merging both tickets' providers put the
+  single file at 168 lines. Controllers still write
+  `from app.api.deps import ...` unchanged, and services are still constructed
+  in one place — it is one directory instead of one file.
+
+**Verified**
+- `make gate` after the rebase: **485 tests, 100 % branch coverage**, pylint
+  10.00/10, interrogate 100 %, deptry clean, no CVEs.
+- Manual run against the compose Postgres: two projections in one request;
+  an undeclared option → 422 problem+json; `currency=EUR` → 422; no `view`
+  named → the selection rule chose; unknown view → 404; another portfolio →
+  404; no token → 401; `/v1/views` listed both projections with their options
+  schemas; OpenAPI showed the `oneOf` with a `discriminator` and one example
+  per member.
+
+**Next person should know**
+- **`app/api/deps.py` no longer exists** — it is `app/api/deps/`. The
+  architecture rule and `backend/CLAUDE.md` still name the file; they are
+  correct about the *rule* (one place constructs services) and stale about the
+  path. Fix the wording when you next touch them.
+- Adding a chart is one file under `presentation/views/`. A test proves it:
+  it defines `cash.runway.v1` inside the test body and finds it in the
+  registry, in `GET /v1/views` and in the generated prompt fragments.
+- `test_openapi_contract.py` was split — the projection assertions live in
+  `test_openapi_projections.py` because the 150-line budget would not hold
+  both. Same gate, two files, with a pointer in the original docstring.
+- This entry and GGU-47's were written during integration, not by the building
+  agents: the sandbox denies writes to `.claude/` inside an agent worktree.
+
+---
+
 ## 2026-09-19 — GGU-47 agent host · spec `specs/backend/0006-agent-host.md`
 
 **Branch:** `feat/GGU-47_agent_host` → `develop`. Built by a worktree agent in

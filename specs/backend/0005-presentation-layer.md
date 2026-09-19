@@ -1,7 +1,7 @@
 # 0005 — Presentation layer: versioned projections, declared options and the `/v1/views` catalog
 
 - **Area:** backend
-- **Status:** Draft
+- **Status:** Implemented
 - **Ticket:** GGU-49 · **Related specs / ADRs:** 0003 (portfolio domain), ADR-K (the specification of this ticket), ADR-J, ADR-E, ADR-F · rule `.claude/rules/backend/presentation.md`
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-19
 
