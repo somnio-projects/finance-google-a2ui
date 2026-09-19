@@ -23,21 +23,23 @@ class FinanceTokens extends ThemeExtension<FinanceTokens> {
   /// Flat / unchanged price movement.
   final Color neutral;
 
-  /// Brand accent, used as the Material 3 seed colour.
+  /// Brand accent. Flat across brightnesses — it only ever appears as an
+  /// icon/illustration tint, never as a filled surface, so it doesn't need a
+  /// separate high-contrast variant the way a theme's primary colour does.
   final Color brandAccent;
 
   static const FinanceTokens light = FinanceTokens(
-    gain: Color(0xFF1B873B),
-    loss: Color(0xFFC3372B),
-    neutral: Color(0xFF6B7280),
-    brandAccent: Color(0xFFF7931A),
+    gain: Color(0xFF12805C),
+    loss: Color(0xFFC0362C),
+    neutral: Color(0xFF5F6169),
+    brandAccent: Color(0xFF4F5DFF),
   );
 
   static const FinanceTokens dark = FinanceTokens(
-    gain: Color(0xFF4ADE80),
-    loss: Color(0xFFF87171),
-    neutral: Color(0xFF9CA3AF),
-    brandAccent: Color(0xFFF7931A),
+    gain: Color(0xFF4ADE9E),
+    loss: Color(0xFFFF6B5E),
+    neutral: Color(0xFFA4A6B0),
+    brandAccent: Color(0xFF4F5DFF),
   );
 
   /// The tokens registered on the ambient theme.

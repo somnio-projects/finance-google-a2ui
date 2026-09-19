@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
 import 'config/app_config.dart';
@@ -24,6 +25,12 @@ void main() async {
   // Resolved once, at the composition root. A malformed BACKEND_BASE_URL
   // throws here, at startup, rather than at first use.
   final config = AppConfig.fromEnv();
+
+  // Draws Flutter's content edge-to-edge on Android (behind the system bars)
+  // on every API level, not only the ones where the OS enforces it. The
+  // per-frame bar colours themselves are set reactively in
+  // _FinanceA2UiAppState.build, since they follow the active theme.
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   Logger.root.level = Level.WARNING;
   Logger.root.onRecord.listen((record) {
@@ -43,8 +50,8 @@ class FinanceA2UiApp extends StatefulWidget {
 }
 
 class _FinanceA2UiAppState extends State<FinanceA2UiApp> {
-  // Built from const tokens, so they never vary: building them per rebuild
-  // would re-run ColorScheme.fromSeed on every theme toggle.
+  // Built once: both themes are fixed, so rebuilding them on every setState
+  // (e.g. every theme toggle) would be pure waste.
   static final ThemeData _lightTheme = AppTheme.light();
   static final ThemeData _darkTheme = AppTheme.dark();
 
@@ -66,6 +73,27 @@ class _FinanceA2UiAppState extends State<FinanceA2UiApp> {
       theme: _lightTheme,
       darkTheme: _darkTheme,
       home: LoginPage(config: widget.config, onToggleTheme: _toggleTheme),
+      builder: (context, child) => _SystemBarStyle(child: child!),
+    );
+  }
+}
+
+/// Keeps the Android status and navigation bars in the active theme's
+/// [ColorScheme.surface], so the edge-to-edge navigation bar reads as part of
+/// the app rather than a default black strip. Re-applies on every rebuild
+/// this subtree sees, which covers both a manual theme toggle and the system
+/// switching brightness under [ThemeMode.system].
+class _SystemBarStyle extends StatelessWidget {
+  const _SystemBarStyle({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.systemOverlayStyle(scheme),
+      child: child,
     );
   }
 }
