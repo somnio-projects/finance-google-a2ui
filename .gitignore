@@ -49,3 +49,9 @@ backend/.env
 # Somnio CLI audit reports (attached to PRs, not versioned)
 backend/reports/
 reports/
+
+# Terraform working files (provider binaries, state) — never committed
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+infra/.terraform.tfstate.lock.info
