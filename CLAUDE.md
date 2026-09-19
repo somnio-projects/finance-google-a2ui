@@ -8,7 +8,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc | Flutter rules in `.claude/rules/flutter/` |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL HA, Secret Manager, Cloud Run, Cloud Armor, logging/alerts — validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
-| `docs/` | `DEV_HARNESS.md` (how we work with Claude), ADRs arrive with PR #1 | — |
+| `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
 
 GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 
@@ -74,6 +74,7 @@ matching path is touched.
 | .claude/rules/backend/architecture.md | python | Backend layering, file templates, 150-line budget (backend/src, backend/tests). |
 | .claude/rules/backend/api-design.md | python | REST semantics, exhaustive OpenAPI documentation, DRY/abstraction (backend/src/app/api, schemas). |
 | .claude/rules/backend/presentation.md | python | Projections, declared options, A2UI adapters, batching and caching (backend/src/app/presentation). |
+| .claude/rules/diagrams.md | all | Architecture diagrams as Mermaid in docs/diagrams/, updated in the same PR as the structure they describe. |
 | .claude/rules/ci-conventions.md | all | Where a check belongs (pre-commit vs CI), job/step naming, CI cost rules (.github/, .pre-commit-config.yaml). |
 | .claude/rules/backend/security.md | python | SOC 2 / ISO 27001 controls while writing backend code, Dockerfile, compose. |
 | .claude/rules/backend/testing.md | python | 100 % branch coverage contract, unit vs integration, fixtures and naming. |

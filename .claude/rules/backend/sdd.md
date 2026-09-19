@@ -29,6 +29,7 @@ exist. Record it, in this order of preference:
 | Feature-level (contract, data model, trade-off, rejected option) | the feature **spec** under `specs/`, in *Open decisions* (owner + default) and in the section it constrains |
 | A rule the agent must follow every time | a **harness rule** in `.claude/rules/**`, indexed in the root `CLAUDE.md` |
 | What changed in an iteration and why | `.claude/harness-log.md` |
+| The **shape** of anything structural | a Mermaid diagram in `docs/diagrams/`, updated in the same PR (`.claude/rules/diagrams.md`) |
 | Who decided, when, and what was rejected | the agent's memory, mirroring the record above |
 
 The test: **a new developer opening this repo with Claude must reach the same
