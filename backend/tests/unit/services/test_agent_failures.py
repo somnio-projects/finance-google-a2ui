@@ -14,6 +14,7 @@ from tests.conftest import FROZEN_NOW, FakeReporter
 from tests.unit.conftest import FakeTool
 from tests.unit.services.agent_doubles import (
     ANSWER,
+    TEST_PROMPT,
     FailingModel,
     call,
     make_service,
@@ -68,6 +69,7 @@ async def test_run_turn_reports_and_reraises_a_model_failure(
         reporter=reporter,
         clock=FixedClock(FROZEN_NOW),
         max_iterations=4,
+        system_prompt=TEST_PROMPT,
     )
 
     with pytest.raises(DependencyUnavailableError, match="model provider unavailable"):

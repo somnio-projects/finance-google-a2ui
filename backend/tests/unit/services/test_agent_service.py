@@ -1,12 +1,13 @@
 """Spec 0006 AC-9/AC-10 — the turn loop and its iteration bound."""
 
 from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
-from app.agent.prompt import ITERATION_LIMIT_MESSAGE, SYSTEM_PROMPT
+from app.agent.prompt import ITERATION_LIMIT_MESSAGE
 from app.core.model import MessageRole, ModelMessage, ModelReply, ToolSpec
 from app.infra.model.null_client import NullModelClient
 from tests.unit.conftest import FakeTool
 from tests.unit.services.agent_doubles import (
     ANSWER,
+    TEST_PROMPT,
     call,
     make_service,
     tool_results,
@@ -39,7 +40,7 @@ async def test_run_turn_sends_the_system_prompt_history_and_tool_schemas(
     await service.run_turn(prompt="hi", history=[earlier], context=tool_context)
 
     sent = model.calls[0]
-    assert sent.system == SYSTEM_PROMPT
+    assert sent.system == TEST_PROMPT
     assert sent.messages[0] == earlier
     assert sent.messages[-1] == ModelMessage(role=MessageRole.USER, text="hi")
     assert sent.tools == (
