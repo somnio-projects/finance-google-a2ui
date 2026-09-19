@@ -26,4 +26,15 @@ class WindowOutOfRangeError(ValidationFailedError):
     code = "portfolio/invalid-window"
 
 
-__all__ = ["PortfolioInvariantError", "SymbolNotFoundError", "WindowOutOfRangeError"]
+class PayoffRangeError(ValidationFailedError):
+    """The requested payoff grid has fewer than one step on each side."""
+
+    code = "portfolio/invalid-payoff-range"
+
+
+__all__ = [
+    "PayoffRangeError",
+    "PortfolioInvariantError",
+    "SymbolNotFoundError",
+    "WindowOutOfRangeError",
+]

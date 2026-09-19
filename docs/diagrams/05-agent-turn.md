@@ -48,6 +48,9 @@ sequenceDiagram
     %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
     %% A tool emits a render intent only when a registered projection actually
     %% fits the answer it just produced: a filtered or re-ordered result whose
-    %% chart would contradict it carries none (spec 0011 OD-1).
+    %% chart would contradict it carries none (spec 0011 OD-1), and a tool no
+    %% projection draws at all — payoff (spec 0014 OD-7) — returns figures
+    %% only, so the turn answers in text rather than aiming an ill-fitting
+    %% chart at a correct sentence.
     %% The model picks a view; it never invents a shape or a number.
 ```
