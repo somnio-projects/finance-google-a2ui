@@ -7,6 +7,34 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Feature flags for endpoints · spec `specs/backend/0002-feature-flags.md`
+
+**Decision (Lautaro):** endpoints must be switchable on demand without a deploy.
+
+**Code**
+- `feature_flags` table (revision `0002`), `FeatureFlagRepository`,
+  `FeatureFlagCache` (TTL, in the `Container`), `FeatureFlagService`
+  (env kill-switch → cache → DB → default; `admin` scope for writes; audit
+  event `feature_flag.update:<key>` + `feature_flag.toggled` metric).
+- `api/feature_gate.py::require_feature(key, default=)` — route dependency
+  answering 404 `feature-disabled`; `/v1/me/audit` is the first gated route.
+- Admin API `GET/PUT /v1/admin/feature-flags[/{key}]`; settings
+  `FEATURE_FLAGS_CACHE_TTL_SECONDS`, `FEATURE_FLAGS_FORCE_DISABLED`.
+- Repositories now translate `OSError` (asyncpg connection refused) as well as
+  `SQLAlchemyError` — a flag read against a down database falls back to the
+  gate default instead of a 500.
+
+**Harness**
+- `backend/docs/FEATURE_FLAGS.md`; `backend/CLAUDE.md` gets the flag rule;
+  `specs/README.md` index; compose/env.example variables.
+
+**Next person should know**
+- Dark-launch a new endpoint with `default=False`; an admin flips it on.
+- The gate runs before the route's own auth, on purpose (a disabled route
+  does not advertise itself); the flag service never raises.
+
+---
+
 ## 2026-09-18 — Backend foundation (FastAPI) · spec `specs/backend/0001-backend-foundation.md`
 
 **Decision (Lautaro, TL backend):** replace the inherited Google ADK sample

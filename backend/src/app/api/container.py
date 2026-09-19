@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
 from app.core.protocols import Clock, ErrorReporter, TokenVerifier
+from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 
 
@@ -25,6 +26,7 @@ class Container:
     engine: AsyncEngine
     session_factory: async_sessionmaker[AsyncSession]
     health: HealthService
+    flag_cache: FeatureFlagCache
 
 
 __all__ = ["Container"]

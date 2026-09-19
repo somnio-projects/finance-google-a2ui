@@ -6,6 +6,7 @@ FastAPI application. Tests call it with their own settings and overrides.
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import timedelta
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +28,7 @@ from app.helpers.clock import SystemClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
 from app.infra.telemetry.factory import build_error_reporter
+from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 
 
@@ -51,6 +53,9 @@ def build_container(
         session_factory=create_session_factory(engine),
         health=HealthService(
             version=__version__, probes=[DatabaseReadinessProbe(engine)]
+        ),
+        flag_cache=FeatureFlagCache(
+            ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
         ),
     )
 

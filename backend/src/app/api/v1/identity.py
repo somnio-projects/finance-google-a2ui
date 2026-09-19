@@ -10,6 +10,7 @@ from app.api.deps import (
     get_audit_service,
     get_identity_service,
 )
+from app.api.feature_gate import require_feature
 from app.schemas.identity import AuditEventResponse, MeResponse
 from app.services.audit_service import AuditService
 from app.services.identity_service import IdentityService
@@ -31,6 +32,7 @@ async def read_me(
     "/me/audit",
     response_model=list[AuditEventResponse],
     summary="My recent audit events",
+    dependencies=[require_feature("identity.audit")],
 )
 async def read_my_audit(
     principal: PrincipalDep,

@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     max_request_body_bytes: int = Field(default=1_048_576, ge=1_024)
     rate_limit_per_minute: int = Field(default=120, ge=1)
 
+    # --- feature flags (spec 0002) ----------------------------------------
+    feature_flags_cache_ttl_seconds: int = Field(default=15, ge=0, le=3600)
+    feature_flags_force_disabled: CsvList = Field(default_factory=list)
+
     # --- authentication ----------------------------------------------------
     auth_provider: AuthProviderName = "jwt"
     auth_audience: str
@@ -64,7 +68,12 @@ class Settings(BaseSettings):
     sentry_dsn: SecretStr | None = None
     sentry_traces_sample_rate: float = Field(default=0.0, ge=0.0, le=1.0)
 
-    @field_validator("cors_allowed_origins", "trusted_hosts", mode="before")
+    @field_validator(
+        "cors_allowed_origins",
+        "trusted_hosts",
+        "feature_flags_force_disabled",
+        mode="before",
+    )
     @classmethod
     def _split_csv(cls, value: object) -> object:
         """Accept comma-separated strings from the environment."""

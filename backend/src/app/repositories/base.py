@@ -31,7 +31,7 @@ class BaseRepository[ModelT: TimestampMixin]:
         try:
             self._session.add(entity)
             await self._session.flush()
-        except SQLAlchemyError as exc:
+        except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database write failed") from exc
         return entity
 
@@ -39,7 +39,7 @@ class BaseRepository[ModelT: TimestampMixin]:
         """Return the entity with ``entity_id`` or raise ``NotFoundError``."""
         try:
             entity = await self._session.get(self.model, entity_id)
-        except SQLAlchemyError as exc:
+        except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc
         if entity is None:
             raise NotFoundError(f"{self.model.__name__} {entity_id} not found")
@@ -55,7 +55,7 @@ class BaseRepository[ModelT: TimestampMixin]:
         )
         try:
             result = await self._session.execute(statement)
-        except SQLAlchemyError as exc:
+        except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc
         return result.scalars().all()  # pyright: ignore[reportReturnType]
 

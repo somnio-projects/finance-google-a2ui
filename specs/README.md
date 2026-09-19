@@ -39,3 +39,4 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 | Spec | Status | Ticket |
 |---|---|---|
 | [backend/0001-backend-foundation.md](backend/0001-backend-foundation.md) | Implemented | GGU-3 / GGU-45 / GGU-46 (re-baselined) |
+| [backend/0002-feature-flags.md](backend/0002-feature-flags.md) | Implemented | — (TL request 2026-09-18) |

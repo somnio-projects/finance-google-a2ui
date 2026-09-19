@@ -14,8 +14,10 @@ from app.api.container import Container
 from app.core.principal import Principal
 from app.infra.db.session import session_scope
 from app.repositories.audit_repository import AuditRepository
+from app.repositories.feature_flag_repository import FeatureFlagRepository
 from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
+from app.services.feature_flag_service import FeatureFlagService
 from app.services.health_service import HealthService
 from app.services.identity_service import IdentityService
 
@@ -71,6 +73,21 @@ def get_audit_service(session: SessionDep) -> AuditService:
     return AuditService(AuditRepository(session))
 
 
+def get_feature_flag_service(
+    container: ContainerDep,
+    session: SessionDep,
+    audit: Annotated[AuditService, Depends(get_audit_service)],
+) -> FeatureFlagService:
+    """Provide the feature-flag service (shared cache, request session)."""
+    return FeatureFlagService(
+        repository=FeatureFlagRepository(session),
+        cache=container.flag_cache,
+        audit=audit,
+        reporter=container.reporter,
+        force_disabled=container.settings.feature_flags_force_disabled,
+    )
+
+
 def get_identity_service(
     audit: Annotated[AuditService, Depends(get_audit_service)],
 ) -> IdentityService:
@@ -87,6 +104,7 @@ __all__ = [
     "get_auth_service",
     "get_container",
     "get_current_principal",
+    "get_feature_flag_service",
     "get_health_service",
     "get_identity_service",
     "get_request_id",

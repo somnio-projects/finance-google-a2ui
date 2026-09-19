@@ -33,6 +33,12 @@ class NotFoundError(AppError):
     code = "not-found"
 
 
+class FeatureDisabledError(NotFoundError):
+    """The endpoint is switched off by a feature flag (spec 0002)."""
+
+    code = "feature-disabled"
+
+
 class ValidationFailedError(AppError):
     """The request was well-formed but semantically invalid."""
 
@@ -93,6 +99,7 @@ __all__ = [
     "ConfigurationError",
     "DependencyUnavailableError",
     "ExpiredTokenError",
+    "FeatureDisabledError",
     "MissingTokenError",
     "NotFoundError",
     "RateLimitedError",

@@ -5,6 +5,7 @@ routes that need the database are covered by ``tests/integration``.
 """
 
 from collections.abc import Iterator
+from datetime import timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -17,6 +18,7 @@ from app.core.principal import Principal
 from app.helpers.clock import FixedClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
+from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 from tests.conftest import FakeReporter, FakeVerifier, make_settings
 
@@ -40,6 +42,7 @@ def make_app(
         engine=engine,
         session_factory=create_session_factory(engine),
         health=HealthService(version="test", probes=[DatabaseReadinessProbe(engine)]),
+        flag_cache=FeatureFlagCache(ttl=timedelta(seconds=15), clock=clock),
     )
     return create_app(settings, container=container)
 

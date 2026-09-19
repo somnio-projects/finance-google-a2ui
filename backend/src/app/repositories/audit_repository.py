@@ -27,7 +27,7 @@ class AuditRepository(BaseRepository[AuditEvent]):
         )
         try:
             result = await self._session.execute(statement)
-        except SQLAlchemyError as exc:
+        except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc
         return result.scalars().all()
 
