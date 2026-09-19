@@ -4,6 +4,7 @@ The deployable pieces. Source of truth: [ADR-F](../adr/ADR-F-persistence-and-ses
 
 ```mermaid
 flowchart LR
+    client["Flutter client<br/>(still the upstream sample)"]
     subgraph edge["Edge (planned — infra/edge.tf)"]
         lb["HTTPS Load Balancer<br/>managed cert · TLS 1.2+"]
         waf["Cloud Armor<br/>OWASP · per-IP throttle"]
@@ -19,6 +20,9 @@ flowchart LR
     obs["Cloud Logging / Monitoring<br/>90-day retention · alerts"]
     sched["Cloud Scheduler<br/>monthly"]
 
+    client -- "GET /.well-known/agent-card.json (public)" --> lb
+    client -- "POST / · JSON-RPC message/stream · SSE" --> lb
+    client -- "GET /v1/** · REST · bearer" --> lb
     lb --> waf --> svc
     svc -- "asyncpg over private VPC" --> sql
     svc -- "secretAccessor per secret" --> sm
@@ -27,5 +31,10 @@ flowchart LR
     svc --> obs
     job --> obs
 
+    %% Two surfaces on one service (ADR-J): /v1/** is strictly RESTful and
+    %% answers RFC 9457 problem documents; the root is Google's A2A protocol,
+    %% JSON-RPC over SSE, and answers JSON-RPC error objects. The agent card is
+    %% the only public route besides the health probes — a client cannot hold a
+    %% token before it has read it.
     %% Today the same shape runs locally as docker compose: db + backend only.
 ```

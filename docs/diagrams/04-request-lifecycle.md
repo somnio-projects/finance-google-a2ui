@@ -1,6 +1,6 @@
 # 04 — Lifecycle of one authenticated request
 
-What every `/v1` call goes through. Source of truth: [`backend/docs/SECURITY.md`](../../backend/docs/SECURITY.md), `bootstrap.py::_install_middleware`.
+What every `/v1` call goes through. Source of truth: [`backend/docs/SECURITY.md`](../../backend/docs/SECURITY.md), `api/middleware/install.py::install_middleware`.
 
 ```mermaid
 sequenceDiagram
@@ -32,6 +32,6 @@ sequenceDiagram
     SV->>DB: write audit event <domain>.<verb>
     SV-->>C: DTO, or RFC 9457 problem with request_id
 
-    %% Every error leaves as application/problem+json; no stack traces,
+    %% Every error on /v1/** leaves as application/problem+json; the A2A root answers JSON-RPC error objects instead (ADR-J D-3); no stack traces,
     %% no SQL, no library text ever reaches the caller.
 ```

@@ -7,6 +7,8 @@ transport lands as a controller, not as a second wiring path.
 
 from app.agent.contracts import ToolContext
 from app.api.deps.common import ContainerDep, PrincipalDep
+from app.schemas.agent_card import AgentCard
+from app.services.a2a_service import A2aService
 from app.services.agent_service import AgentService
 
 
@@ -32,4 +34,19 @@ def get_tool_context(container: ContainerDep, principal: PrincipalDep) -> ToolCo
     return ToolContext(subject=principal.subject, portfolios=container.portfolio)
 
 
-__all__ = ["get_agent_service", "get_tool_context"]
+def get_a2a_service(container: ContainerDep) -> A2aService:
+    """Provide the A2A protocol adapter over the agent host (ADR-J D-2)."""
+    return A2aService(agent=get_agent_service(container))
+
+
+def get_agent_card(container: ContainerDep) -> AgentCard:
+    """Provide the agent card built once at startup."""
+    return container.agent.card
+
+
+__all__ = [
+    "get_a2a_service",
+    "get_agent_card",
+    "get_agent_service",
+    "get_tool_context",
+]

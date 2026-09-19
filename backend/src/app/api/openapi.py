@@ -48,6 +48,16 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         ),
     },
     {
+        "name": "a2a",
+        "description": (
+            "The A2A protocol surface: JSON-RPC posted to the service root, "
+            "plus the public agent card. **Not RESTful, on purpose** — it "
+            "implements Google's protocol (ADR-J D-2/D-3). Errors here are "
+            "JSON-RPC error objects, not RFC 9457 problem documents, so a "
+            "client parses two shapes depending on the surface it is on."
+        ),
+    },
+    {
         "name": "sessions",
         "description": (
             "Conversation sessions and the messages inside them (spec 0004). "

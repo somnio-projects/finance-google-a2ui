@@ -15,11 +15,18 @@ from typing import Any
 
 import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA, problem_responses
 
 #: Routes FastAPI generates for the documentation itself.
 GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
+
+#: Unauthenticated by contract (`.claude/rules/backend/security.md`). Adding a
+#: path here is a security decision: it needs a note in the feature spec and
+#: the reviewer's sign-off, which is why the list is spelled out rather than
+#: inferred from whether a route happens to declare a 401.
+PUBLIC = {"/healthz", "/readyz", "/.well-known/agent-card.json"}
 
 
 def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
@@ -58,7 +65,7 @@ def test_every_operation_documents_its_error_responses(app: FastAPI) -> None:
 
 def test_authenticated_operations_document_401(app: FastAPI) -> None:
     for path, method, operation in _operations(app):
-        if path in {"/healthz", "/readyz"}:
+        if path in PUBLIC:
             continue
         assert "401" in operation["responses"], f"{method.upper()} {path} misses 401"
 
@@ -108,3 +115,29 @@ def test_document_describes_the_service_and_its_tags(app: FastAPI) -> None:
         tag["name"] for tag in TAGS_METADATA
     }
     assert all(tag["description"] for tag in schema["tags"])
+
+
+def test_every_non_public_route_actually_refuses_an_unauthenticated_call(
+    unlimited_app: FastAPI, unlimited_client: TestClient
+) -> None:
+    """Documenting a 401 is not the same as enforcing one.
+
+    The test above asserts every non-public operation *documents* a 401. A
+    controller that copies the documented responses and forgets
+    ``PrincipalDep`` would pass it while being wide open. This calls each
+    route without a token and insists on being turned away, so a route cannot
+    join the public set by omission — only by being named in ``PUBLIC``.
+    """
+    methods = {
+        "GET": unlimited_client.get,
+        "POST": unlimited_client.post,
+        "PUT": unlimited_client.put,
+    }
+    checked = 0
+    for path, method, _ in _operations(unlimited_app):
+        call = methods.get(method.upper())
+        if path in PUBLIC or call is None or "{" in path:
+            continue
+        checked += 1
+        assert call(path).status_code == 401, f"{method.upper()} {path} is not guarded"
+    assert checked, "no route was checked — the loop is not doing anything"

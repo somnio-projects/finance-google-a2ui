@@ -6,7 +6,12 @@ providers are grouped into modules only because the single file outgrew the
 nowhere else, so the wiring stays visible in one place.
 """
 
-from app.api.deps.agent import get_agent_service, get_tool_context
+from app.api.deps.agent import (
+    get_a2a_service,
+    get_agent_card,
+    get_agent_service,
+    get_tool_context,
+)
 from app.api.deps.common import (
     ContainerDep,
     PrincipalDep,
@@ -30,6 +35,8 @@ __all__ = [
     "PrincipalDep",
     "RequestIdDep",
     "SessionDep",
+    "get_a2a_service",
+    "get_agent_card",
     "get_agent_service",
     "get_audit_service",
     "get_auth_service",

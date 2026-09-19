@@ -15,7 +15,7 @@ The full control mapping is `backend/docs/SECURITY.md`. These are the rules that
 
 ## Authentication & authorization (CC6.1, CC6.3 · A.5.15, A.5.17, A.8.5)
 
-- Every route is authenticated through `PrincipalDep` except `/healthz`, `/readyz`, `/openapi.json`, `/docs`. Adding a public route requires a note in the feature spec and the reviewer's sign-off.
+- Every route is authenticated through `PrincipalDep` except `/healthz`, `/readyz`, `/openapi.json`, `/docs` and `/.well-known/agent-card.json`. Adding a public route requires a note in the feature spec and the reviewer's sign-off. The agent card is public because a client cannot present a token before it has bootstrapped (spec 0010 OD-1); it carries no subject data, only what the service is and what it can be asked for. The list is spelled out in `tests/unit/api/test_openapi_contract.py::PUBLIC`, so adding one is a visible diff rather than a route that quietly stops declaring a 401.
 - Only Firebase/OIDC ID tokens or HS256 service tokens are accepted; refresh tokens, API keys in query strings and cookies are never credentials.
 - Verify `iss`, `aud`, `exp`, `iat` and signature; require `sub`. Leeway ≤ 300 s.
 - Authorization decisions (scopes/roles) live in services, using `principal.has_scope(...)`; never in controllers, never by string comparison on raw claims.
@@ -39,7 +39,7 @@ The full control mapping is `backend/docs/SECURITY.md`. These are the rules that
 
 ## Transport & HTTP hardening (CC6.6, CC6.7 · A.8.20, A.8.26)
 
-- Keep `SecurityHeadersMiddleware`, `TrustedHostMiddleware`, CORS allow-list, body limit and rate limiter in `bootstrap._install_middleware`. Never widen CORS to `*` with credentials; never disable HSTS in production.
+- Keep `SecurityHeadersMiddleware`, `TrustedHostMiddleware`, CORS allow-list, body limit and rate limiter in `api/middleware/install.py::install_middleware`, in that order — outermost request id, innermost rate limit. Reordering them is a security change. Never widen CORS to `*` with credentials; never disable HSTS in production.
 - New endpoints that accept bodies define pydantic models with explicit `max_length`/bounds.
 
 ## Data (CC6.5 · A.8.10, A.8.12)

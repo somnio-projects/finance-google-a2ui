@@ -13,6 +13,7 @@ from app.agent.registry import ToolRegistry
 from app.core.config import Settings
 from app.core.protocols import Clock, ErrorReporter, ModelClient, TokenVerifier
 from app.domain.provider import PortfolioProvider
+from app.schemas.agent_card import AgentCard
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 
@@ -32,6 +33,7 @@ class AgentRuntime:
     model: ModelClient
     tools: ToolRegistry
     system_prompt: str
+    card: AgentCard
 
 
 @dataclass(frozen=True, slots=True)
