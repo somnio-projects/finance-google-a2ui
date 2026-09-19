@@ -24,7 +24,18 @@ flowchart TB
         obs["Cloud Logging 90d · data-access audit logs<br/>uptime check /readyz · alerts: readiness, 5xx, auth-failure spike"]
         sched["Cloud Scheduler — monthly"]
         sa(["Runtime service account<br/>cloudsql.client · per-secret accessor · log/metric writer<br/>no owner, no key"])
+        subgraph delivery["Delivery (GGU-48)"]
+            ar["Artifact Registry<br/>backend images · digest-addressed<br/>keep 20 · drop untagged after 30d"]
+            wif["Workload Identity pool + provider<br/>issuer token.actions.githubusercontent.com<br/>condition: assertion.repository == this repo"]
+            dsa(["Deployer service account<br/>artifactregistry.writer · run.developer<br/>serviceAccountUser on the runtime SA only<br/>NO KEY"])
+        end
     end
+
+    gha["GitHub Actions<br/>backend-cd"] -->|"OIDC token"| wif
+    wif -->|impersonates| dsa
+    dsa -->|push by digest| ar
+    dsa -->|create revision, shift traffic| svc
+    ar -->|image| svc
 
     net --> ip --> https --> armor --> svc
     net --> httpr --> https
@@ -36,6 +47,8 @@ flowchart TB
     sa -.->|"identity of"| svc
     sa -.->|"identity of"| job
 
-    %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability}.tf
+    %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,delivery}.tf
     %% trivy config: 0 misconfigurations. Apply is GGU-29.
+    %% The deployer can publish an image and create a revision. It cannot read
+    %% a secret, reach the database, or act as any other identity.
 ```

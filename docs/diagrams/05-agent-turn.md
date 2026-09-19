@@ -32,6 +32,7 @@ sequenceDiagram
         M->>H: text, or tool call(s)
         H->>T: run tool (pure, Decimal, injected clock)
         T->>H: ToolOutcome: *Display strings (+ render intent, if one fits)
+        T->>H: ToolOutcome: *Display strings + render intent
         H->>M: tool results fed back
     end
     H-->>A: TurnResult {message, render_intents, counters}

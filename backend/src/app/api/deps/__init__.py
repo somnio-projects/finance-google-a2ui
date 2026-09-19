@@ -26,6 +26,7 @@ from app.api.deps.common import (
     get_identity_service,
     get_request_id,
     get_session,
+    get_session_service,
 )
 from app.api.deps.views import get_render_intent_service, get_view_service
 
@@ -47,6 +48,7 @@ __all__ = [
     "get_render_intent_service",
     "get_request_id",
     "get_session",
+    "get_session_service",
     "get_tool_context",
     "get_view_service",
 ]
