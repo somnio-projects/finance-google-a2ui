@@ -67,6 +67,12 @@ repos:
     hooks:
       - id: actionlint
 
+  # ---------------------------------------------------------------- shell
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+
   # ---------------------------------------------------------------- terraform
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.96.2
@@ -95,6 +101,22 @@ repos:
         entry: bash -c 'cd backend && make quality'
         language: system
         files: ^backend/(src|tests|scripts|pyproject\.toml)
+        pass_filenames: false
+
+      # The delivery scripts are shell, so they get shell tests: the deploy
+      # runs against a stub gcloud, including the rollback path (spec 0007 AC-4).
+      - id: delivery-deploy-script
+        name: Prove the deploy verifies and rolls back (test_deploy_cloud_run.sh)
+        entry: bash infra/scripts/tests/test_deploy_cloud_run.sh
+        language: system
+        files: ^infra/scripts/
+        pass_filenames: false
+
+      - id: delivery-credential-model
+        name: Prove the pipeline holds no long-lived key (test_wif_conditions.sh)
+        entry: bash infra/scripts/tests/test_wif_conditions.sh
+        language: system
+        files: ^infra/
         pass_filenames: false
 
       # Fast enough for every commit; the DB-backed suite runs on push.

@@ -41,6 +41,15 @@ class Settings(BaseSettings):
         default="http://localhost:8000",
         description="Advertised origin; never derived from the bind address.",
     )
+    app_release: str = Field(
+        default="",
+        max_length=128,
+        description=(
+            "Release identifier injected by the delivery pipeline "
+            "(`<version>+<short sha>`). Blank locally: the packaged version is "
+            "reported instead (spec 0007 AC-5)."
+        ),
+    )
 
     # --- database ----------------------------------------------------------
     database_url: PostgresDsn

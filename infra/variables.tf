@@ -18,6 +18,18 @@ variable "environment" {
   }
 }
 
+variable "github_repository" {
+  description = "owner/repo allowed to federate into this project (spec 0007 AC-3). Any other repository is refused by the provider condition."
+  type        = string
+  default     = "somnio-projects/finance-google-a2ui"
+}
+
+variable "backend_release" {
+  description = "Release identifier reported by GET /healthz (APP_RELEASE). The pipeline passes <version>+<git-sha>; Terraform alone deploys the packaged default."
+  type        = string
+  default     = ""
+}
+
 variable "backend_image" {
   description = "Fully qualified backend image (built by CI from backend/Dockerfile), e.g. us-central1-docker.pkg.dev/<project>/finance-a2ui/backend:<sha>."
   type        = string
