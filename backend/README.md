@@ -23,6 +23,8 @@ included — is read from `backend/.env`.
 - API: <http://localhost:8000> · OpenAPI: <http://localhost:8000/docs>
 - Liveness: `GET /healthz` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
 - Feature flags: `GET/PUT /v1/admin/feature-flags[/{key}]` (scope `admin`) — see [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md)
+- View catalog: `GET /v1/views` — every projection the backend can render, with its options schema and an example payload
+- Portfolio projections: `GET /v1/portfolios/current/views?view=<id>&view=<id>` — repeat `view` for up to four projections in one request; omit it and a documented selection rule picks one. See [ADR-K](../docs/adr/ADR-K-response-shaping.md) and [spec 0005](../specs/backend/0005-presentation-layer.md)
 
 Without Docker:
 

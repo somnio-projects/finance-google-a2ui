@@ -14,6 +14,7 @@ from app.agent.contracts import ToolContext
 from app.api.container import Container
 from app.core.principal import Principal
 from app.infra.db.session import session_scope
+from app.presentation.registry import REGISTRY
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.feature_flag_repository import FeatureFlagRepository
 from app.services.agent_service import AgentService
@@ -22,6 +23,8 @@ from app.services.auth_service import AuthService
 from app.services.feature_flag_service import FeatureFlagService
 from app.services.health_service import HealthService
 from app.services.identity_service import IdentityService
+from app.services.render_intent_service import RenderIntentService
+from app.services.view_service import ViewService
 
 
 def get_container(request: Request) -> Container:
@@ -100,6 +103,22 @@ def get_feature_flag_service(
     )
 
 
+def get_view_service(container: ContainerDep) -> ViewService:
+    """Provide the projection renderer over the caller's portfolio (0005 AC-6).
+
+    The registry is filled by importing ``app.presentation.views``, which the
+    controller module does at import time — see ``api/v1/portfolio_views.py``.
+    """
+    return ViewService(provider=container.portfolio, registry=REGISTRY)
+
+
+def get_render_intent_service(container: ContainerDep) -> RenderIntentService:
+    """Provide the agent-facing render-intent entry point (GGU-47 calls it)."""
+    return RenderIntentService(
+        views=get_view_service(container), reporter=container.reporter
+    )
+
+
 def get_identity_service(
     audit: Annotated[AuditService, Depends(get_audit_service)],
 ) -> IdentityService:
@@ -125,7 +144,7 @@ def get_agent_service(container: ContainerDep) -> AgentService:
 
 def get_tool_context(container: ContainerDep, principal: PrincipalDep) -> ToolContext:
     """Provide the subject-scoped context every tool of a turn receives."""
-    return ToolContext(subject=principal.subject, portfolios=container.agent.portfolios)
+    return ToolContext(subject=principal.subject, portfolios=container.portfolio)
 
 
 __all__ = [
@@ -141,7 +160,9 @@ __all__ = [
     "get_feature_flag_service",
     "get_health_service",
     "get_identity_service",
+    "get_render_intent_service",
     "get_request_id",
     "get_session",
     "get_tool_context",
+    "get_view_service",
 ]

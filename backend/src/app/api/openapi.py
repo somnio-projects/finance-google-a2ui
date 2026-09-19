@@ -40,6 +40,14 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         ),
     },
     {
+        "name": "views",
+        "description": (
+            "Named, versioned projections of the portfolio (ADR-K): the "
+            "catalog of what can be rendered, and the rendering itself. The "
+            "backend shapes every payload; the client binds it unchanged."
+        ),
+    },
+    {
         "name": "feature-flags",
         "description": (
             "Runtime switches for endpoints (spec 0002). Administrative: the "
