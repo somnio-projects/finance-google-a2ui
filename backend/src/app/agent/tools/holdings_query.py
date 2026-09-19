@@ -11,9 +11,9 @@ it is never quietly coerced into the default (spec 0011 OD-7).
 """
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Final
+from typing import Final
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.agent.tools.holdings_sort import (
     DEFAULT_SORT,
@@ -22,24 +22,15 @@ from app.agent.tools.holdings_sort import (
     SortBy,
 )
 from app.domain.holdings import Holding
-from app.domain.symbols import normalize_symbol
+from app.domain.symbols import (
+    MAX_TICKER,
+    TICKER_PATTERN,
+    Ticker,
+    normalize_symbol,
+)
 
 MAX_TOP_N: Final[int] = 20
 MAX_SYMBOLS: Final[int] = 20
-MAX_TICKER: Final[int] = 10
-#: Case-insensitive twin of ``app.domain.symbols.SYMBOL_PATTERN``: the stored
-#: form is upper-case, but the model may ask in any case and
-#: ``normalize_symbol`` folds it. Bounding the **item** matters as much as
-#: bounding the list — twenty entries of five thousand characters each is
-#: still unbounded input (spec 0011 §5).
-TICKER_PATTERN: Final[str] = r"^[A-Za-z]{2,10}$"
-
-Ticker = Annotated[
-    str,
-    StringConstraints(
-        strip_whitespace=True, max_length=MAX_TICKER, pattern=TICKER_PATTERN
-    ),
-]
 
 #: The JSON Schema the model chooses its arguments from. It mirrors
 #: ``HoldingsSummaryArguments``; the model reads this one, pydantic enforces

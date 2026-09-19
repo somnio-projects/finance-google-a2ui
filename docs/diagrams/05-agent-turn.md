@@ -32,6 +32,7 @@ sequenceDiagram
         M->>H: text, or tool call(s)
         H->>T: run tool (pure, Decimal, injected clock)
         T->>H: ToolOutcome: *Display strings (+ render intent, if one fits)
+        T->>H: ToolOutcome: *Display strings + render intent
         H->>M: tool results fed back
     end
     H-->>A: TurnResult {message, render_intents, counters}
@@ -45,10 +46,18 @@ sequenceDiagram
     %% Solid = shipped in GGU-47. Dashed = the surrounding tickets.
     %% A turn emits exactly one agent.turn metric and one log line:
     %% model, outcome, duration, counters — never prompt, result or subject.
+    %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
+    %% A tool emits a render intent only when a registered projection actually
+    %% fits the answer it just produced: a filtered or re-ordered result whose
+    %% chart would contradict it carries none (spec 0011 OD-1), and a tool no
+    %% projection draws at all — payoff (spec 0014 OD-7) — returns figures
+    %% only, so the turn answers in text rather than aiming an ill-fitting
+    %% chart at a correct sentence.
     %% An unknown or raising tool becomes {"error": "tool-failed"} fed back, not a
     %% failed turn — the message is dropped, because it can quote a holding. A
     %% tool with something useful to say about a refusal returns its own
     %% {"error": ...} payload instead of raising (spec 0013 OD-3).
+    %% An unknown or raising tool becomes {"error": ...} fed back, not a failed turn.
     %% A tool emits a render intent only when a registered projection actually
     %% fits the answer it just produced: a filtered or re-ordered result whose
     %% chart would contradict it carries none (spec 0011 OD-1).

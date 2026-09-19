@@ -28,6 +28,12 @@ class WindowOutOfRangeError(ValidationFailedError):
     code = "portfolio/invalid-window"
 
 
+class PayoffRangeError(ValidationFailedError):
+    """The requested payoff grid has fewer than one step on each side."""
+
+    code = "portfolio/invalid-payoff-range"
+
+
 class SaleQuantityError(ValidationFailedError):
     """The simulated sale is not for a positive number of units."""
 
@@ -59,6 +65,7 @@ class PositionTooSmallError(ValidationFailedError):
 
 
 __all__ = [
+    "PayoffRangeError",
     "PortfolioInvariantError",
     "PositionTooSmallError",
     "SaleQuantityError",
