@@ -18,6 +18,23 @@ alwaysApply: false
 - Code, tests and the PR cite acceptance criteria by number (`AC-3`). A PR that changes the contract updates the spec in the same PR and flags it under `Spec:` in the description.
 - Specs are living documents: status `Draft → Approved → Implemented → Superseded`. Superseded specs stay in place with a pointer to the replacement.
 
+## Every decision is written down where the next person's Claude will find it
+
+A decision that lives only in a chat, a PR comment or someone's head does not
+exist. Record it, in this order of preference:
+
+| Decision | Goes to |
+|---|---|
+| Architectural, cross-cutting, hard to reverse | an **ADR** in `docs/adr/` (WH(Y) statement + numbered `D-n` rulings), registered in `docs/adr/README.md` |
+| Feature-level (contract, data model, trade-off, rejected option) | the feature **spec** under `specs/`, in *Open decisions* (owner + default) and in the section it constrains |
+| A rule the agent must follow every time | a **harness rule** in `.claude/rules/**`, indexed in the root `CLAUDE.md` |
+| What changed in an iteration and why | `.claude/harness-log.md` |
+| Who decided, when, and what was rejected | the agent's memory, mirroring the record above |
+
+The test: **a new developer opening this repo with Claude must reach the same
+decisions without asking anyone.** If they would have to ask, the decision is
+not recorded yet.
+
 ## Iterations are recorded
 
 - Branches are cut from `develop` and every PR targets `develop` (`main` only via release PR).
