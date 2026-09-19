@@ -22,8 +22,10 @@ from app.helpers.clock import FixedClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
 from app.infra.model.null_client import NullModelClient
+from app.presentation.registry import REGISTRY
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
+from app.services.prompt_service import build_system_prompt
 from tests.conftest import FakeFlags, FakeReporter, FakeVerifier, make_settings
 
 UNREACHABLE_DSN = "postgresql+asyncpg://app:app@127.0.0.1:1/nowhere"
@@ -38,6 +40,7 @@ def make_app(
 ) -> FastAPI:
     """Create the app with a fake verifier accepting the token ``good``."""
     engine = create_engine(settings)
+    tools = load_tools()
     container = Container(
         settings=settings,
         clock=clock,
@@ -47,7 +50,11 @@ def make_app(
         session_factory=create_session_factory(engine),
         health=HealthService(version="test", probes=[DatabaseReadinessProbe(engine)]),
         flag_cache=FeatureFlagCache(ttl=timedelta(seconds=15), clock=clock),
-        agent=AgentRuntime(model=NullModelClient(), tools=load_tools()),
+        agent=AgentRuntime(
+            model=NullModelClient(),
+            tools=tools,
+            system_prompt=build_system_prompt(tools=tools, views=REGISTRY.all()),
+        ),
         portfolio=InMemoryPortfolioProvider(clock=clock),
     )
     return create_app(settings, container=container)

@@ -31,6 +31,7 @@ class AgentRuntime:
 
     model: ModelClient
     tools: ToolRegistry
+    system_prompt: str
 
 
 @dataclass(frozen=True, slots=True)

@@ -23,6 +23,7 @@ def get_agent_service(container: ContainerDep) -> AgentService:
         reporter=container.reporter,
         clock=container.clock,
         max_iterations=container.settings.agent_max_tool_iterations,
+        system_prompt=container.agent.system_prompt,
     )
 
 

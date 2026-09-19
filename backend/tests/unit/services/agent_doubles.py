@@ -12,6 +12,10 @@ from tests.conftest import FROZEN_NOW, FakeReporter
 from tests.unit.conftest import FakeTool
 
 ANSWER = "Your portfolio is worth $1.00."
+#: The prompt these tests assert on. Deliberately not the real one: the turn
+#: loop's job is to send whatever prompt it was given, and pinning the real
+#: text here would make every prompt edit break the turn-loop suite.
+TEST_PROMPT = "test system prompt"
 
 
 def call(name: str = "fake_tool", *, call_id: str = "0-fake") -> ToolCall:
@@ -36,6 +40,7 @@ def make_service(
         reporter=reporter,
         clock=FixedClock(FROZEN_NOW),
         max_iterations=max_iterations,
+        system_prompt=TEST_PROMPT,
     )
     return service, reporter
 

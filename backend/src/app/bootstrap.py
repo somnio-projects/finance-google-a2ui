@@ -34,8 +34,10 @@ from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
 from app.infra.model.factory import build_model_client
 from app.infra.telemetry.factory import build_error_reporter
+from app.presentation.registry import REGISTRY
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
+from app.services.prompt_service import build_system_prompt
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
@@ -54,6 +56,8 @@ def build_container(
     reporter = reporter or build_error_reporter(settings, release=release)
     verifier = verifier or build_token_verifier(settings, clock)
     model = model or build_model_client(settings)
+    tools = load_tools()
+    prompt = build_system_prompt(tools=tools, views=REGISTRY.all())
     engine = create_engine(settings)
     return Container(
         settings=settings,
@@ -66,7 +70,7 @@ def build_container(
         flag_cache=FeatureFlagCache(
             ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
         ),
-        agent=AgentRuntime(model=model, tools=load_tools()),
+        agent=AgentRuntime(model=model, tools=tools, system_prompt=prompt),
         portfolio=InMemoryPortfolioProvider(clock=clock),
     )
 

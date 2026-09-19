@@ -16,22 +16,15 @@ arguments, tool results or the subject (spec 0006 §5, AC-13).
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Final
-
-import structlog
 
 from app.agent.contracts import ToolContext, TurnResult, TurnState
-from app.agent.prompt import ITERATION_LIMIT_MESSAGE, SYSTEM_PROMPT
+from app.agent.prompt import ITERATION_LIMIT_MESSAGE
 from app.agent.registry import ToolRegistry
 from app.core.errors import DependencyUnavailableError
-from app.core.logging import get_logger
 from app.core.model import MessageRole, ModelMessage
 from app.core.protocols import Clock, ErrorReporter, ModelClient
+from app.services.agent_telemetry import TURN_METRIC, record_turn
 from app.services.agent_tools import execute_tool
-
-log: structlog.stdlib.BoundLogger = get_logger(__name__)
-
-TURN_METRIC: Final[str] = "agent.turn"
 
 
 class AgentService:
@@ -45,10 +38,16 @@ class AgentService:
         reporter: ErrorReporter,
         clock: Clock,
         max_iterations: int,
+        system_prompt: str,
     ) -> None:
-        """Inject the collaborators and the per-turn iteration bound."""
+        """Inject the collaborators, the bound and the already-built prompt.
+
+        The prompt arrives built because it carries catalogues generated from
+        both registries (GGU-14), which this package cannot reach on its own.
+        """
         self._model = model
         self._tools = tools
+        self._system_prompt = system_prompt
         self._reporter = reporter
         self._clock = clock
         self._max_iterations = max_iterations
@@ -97,7 +96,9 @@ class AgentService:
         while state.iterations < self._max_iterations:
             state.iterations += 1
             reply = await self._model.generate(
-                system=SYSTEM_PROMPT, messages=messages, tools=self._tools.specs()
+                system=self._system_prompt,
+                messages=messages,
+                tools=self._tools.specs(),
             )
             if not reply.tool_calls:
                 return self._result(state, message=reply.text, truncated=False)
@@ -132,18 +133,13 @@ class AgentService:
         )
 
     def _record(self, started: datetime, state: TurnState, *, outcome: str) -> None:
-        """Emit the turn's single metric and single log line."""
-        elapsed = self._clock.now() - started
-        self._reporter.increment(
-            TURN_METRIC, tags={"model": self._model.name, "outcome": outcome}
-        )
-        log.info(
-            TURN_METRIC,
+        """Hand the turn's counters to the telemetry boundary."""
+        record_turn(
+            self._reporter,
+            state,
             model=self._model.name,
             outcome=outcome,
-            duration_ms=int(elapsed.total_seconds() * 1000),
-            iterations=state.iterations,
-            tool_calls=state.tool_calls,
+            elapsed=self._clock.now() - started,
         )
 
 

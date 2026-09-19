@@ -7,6 +7,48 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-14 system prompt · spec `specs/backend/0009-prompt-fragments.md`
+
+**Branch:** `feat/GGU-14_prompt_fragments`, stacked on GGU-36. Four deep.
+
+**The gap.** Two halves existed and nothing joined them: `agent/prompt.py`
+held the rules, `presentation/prompt.py` could render the projection registry
+as text, and the turn loop imported the rules as a constant and **sent neither
+catalogue**. The model was told it must pick a registered view and never told
+which views exist.
+
+They were never joined because they cannot be: `app.agent` may not import
+`app.presentation` (asserted over the parsed source). A **service** is where
+they meet, which is what `services/prompt_service.py` now is.
+
+**Both catalogues are generated.** The views came from the registry already
+(ADR-K D-14); the tools now do too. Registering a tool or a view is what
+teaches the model about it — there is no list to forget to update. The rules
+that stay hand-written deliberately **name no tool**: a rule saying "for a
+why-did-it-move question call `compute_attribution`" reads better and is the
+one line guaranteed to go stale, so a test asserts the rules mention no
+registered tool name (spec OD-1).
+
+**Also split:** `services/agent_telemetry.py`. The turn loop was already at the
+150-line ceiling — the reviewer of GGU-47 flagged it — and observability is the
+part that grows every time someone wants one more counter. It answers a
+different question from the loop: what an operator gets to see.
+
+**Verified**
+- `make gate`: **527 tests**, 100 % branch coverage, pylint 10.00/10.
+- Printed the real prompt: 2,585 characters, both tools and both views present
+  with their option bounds, generated from the two registries.
+
+**Next person should know**
+- `AgentService` no longer imports `SYSTEM_PROMPT`; it receives the built
+  prompt. The turn-loop tests inject their own, which is deliberate: the loop's
+  job is to send whatever prompt it was given, and pinning the real text there
+  would make every prompt edit break the turn-loop suite.
+- The prompt is built **once at startup**, so adding a tool needs a restart —
+  which is true of registration anyway (spec OD-4).
+
+---
+
 ## 2026-09-19 — GGU-36 attribution tool · spec `specs/backend/0008-attribution-tool.md`
 
 **Branch:** `feat/GGU-36_attribution_tool`, stacked on GGU-49 (which is itself
