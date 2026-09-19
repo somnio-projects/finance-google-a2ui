@@ -1,14 +1,15 @@
 """Correlation id per request, propagated to logs and responses."""
 
 import uuid
+from typing import Final
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
-HEADER = "X-Request-ID"
-MAX_LENGTH = 64
+HEADER: Final = "X-Request-ID"
+MAX_LENGTH: Final = 64
 
 
 def _incoming_or_new(value: str | None) -> str:

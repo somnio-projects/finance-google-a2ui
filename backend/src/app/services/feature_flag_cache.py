@@ -4,34 +4,44 @@ One instance lives in the ``Container``; the service reads through it so a
 gated endpoint costs no database round-trip inside the TTL window.
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from app.core.protocols import Clock
 
 
+@dataclass(frozen=True, slots=True)
+class _CacheEntry:
+    value: bool
+    stored_at: datetime
+
+
 class FeatureFlagCache:
-    """Remember ``key -> enabled`` for ``ttl`` and forget on demand."""
+    """Remember ``key -> enabled`` for ``ttl`` and forget on demand.
+
+    ``get`` is a pure query: an expired entry simply reads as absent and is
+    replaced by the next ``put``; nothing mutates while reading.
+    """
 
     def __init__(self, *, ttl: timedelta, clock: Clock) -> None:
         """Create an empty cache with the given time-to-live."""
         self._ttl = ttl
         self._clock = clock
-        self._entries: dict[str, tuple[bool, datetime]] = {}
+        self._entries: dict[str, _CacheEntry] = {}
+
+    def _is_live(self, entry: _CacheEntry) -> bool:
+        return self._clock.now() - entry.stored_at < self._ttl
 
     def get(self, key: str) -> bool | None:
         """Return the cached value, or ``None`` when absent or expired."""
         entry = self._entries.get(key)
-        if entry is None:
+        if entry is None or not self._is_live(entry):
             return None
-        value, stored_at = entry
-        if self._clock.now() - stored_at >= self._ttl:
-            del self._entries[key]
-            return None
-        return value
+        return entry.value
 
     def put(self, key: str, value: bool) -> None:
         """Store ``value`` for ``key`` stamped with the current time."""
-        self._entries[key] = (value, self._clock.now())
+        self._entries[key] = _CacheEntry(value=value, stored_at=self._clock.now())
 
     def invalidate(self, key: str) -> None:
         """Forget ``key`` so the next read hits the database."""

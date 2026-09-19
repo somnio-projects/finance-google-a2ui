@@ -5,17 +5,20 @@ the caller's default. Toggling requires the ``admin`` scope and is audited.
 """
 
 from collections.abc import Collection
+from typing import Final
 
+from app.core.dto import from_row
 from app.core.errors import AppError, AuthorizationError
 from app.core.logging import get_logger
 from app.core.principal import Principal
 from app.core.protocols import ErrorReporter
+from app.models.feature_flag import FeatureFlag
 from app.repositories.feature_flag_repository import FeatureFlagRepository
 from app.schemas.feature_flags import FeatureFlagResponse
 from app.services.audit_service import AuditService
 from app.services.feature_flag_cache import FeatureFlagCache
 
-ADMIN_SCOPE = "admin"
+ADMIN_SCOPE: Final = "admin"
 log = get_logger(__name__)
 
 
@@ -88,8 +91,8 @@ class FeatureFlagService:
         if not principal.has_scope(ADMIN_SCOPE):
             raise AuthorizationError("feature flags require the admin scope")
 
-    def _to_response(self, flag: object) -> FeatureFlagResponse:
-        response = FeatureFlagResponse.model_validate(flag)
+    def _to_response(self, flag: FeatureFlag) -> FeatureFlagResponse:
+        response = from_row(FeatureFlagResponse, flag)
         if response.key in self._force_disabled:
             return response.model_copy(update={"enabled": False})
         return response

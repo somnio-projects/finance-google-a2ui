@@ -1,11 +1,14 @@
 """Record and read the security audit trail."""
 
+from typing import Final
+
+from app.core.dto import from_row
 from app.core.principal import Principal
 from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
 from app.schemas.identity import AuditEventResponse
 
-MAX_HISTORY = 100
+MAX_HISTORY: Final = 100
 
 
 class AuditService:
@@ -36,7 +39,7 @@ class AuditService:
         events = await self._repository.list_for_subject(
             principal.subject, limit=bounded
         )
-        return [AuditEventResponse.model_validate(event) for event in events]
+        return [from_row(AuditEventResponse, event) for event in events]
 
 
 __all__ = ["MAX_HISTORY", "AuditService"]

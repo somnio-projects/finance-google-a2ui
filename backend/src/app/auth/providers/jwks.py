@@ -1,17 +1,36 @@
 """JWKS fetching with a small time-based cache.
 
 Separated from the OIDC verifier so key retrieval can be tested and swapped
-(for example, a static key set in tests) without touching verification.
+(for example, a static key set in tests) without touching verification. The
+provider's JSON is parsed into ``JwksDocument`` before PyJWT ever sees it.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Protocol
+from typing import Protocol
 
 import httpx
 import jwt
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.errors import DependencyUnavailableError
 from app.core.protocols import Clock
+
+
+class JwksKey(BaseModel):
+    """One JWK (RFC 7517). Algorithm-specific members stay as extras."""
+
+    model_config = ConfigDict(frozen=True, extra="allow")
+
+    kty: str = Field(min_length=1)
+    kid: str | None = None
+
+
+class JwksDocument(BaseModel):
+    """The JWK Set a provider publishes at its ``jwks_uri``."""
+
+    model_config = ConfigDict(frozen=True)
+
+    keys: list[JwksKey]
 
 
 class KeyResolver(Protocol):
@@ -38,35 +57,43 @@ class JwksKeyResolver:
         self._clock = clock
         self._ttl = ttl
         self._http = http
-        self._keys: dict[str, Any] | None = None
+        self._document = JwksDocument(keys=[])
         self._fetched_at: datetime | None = None
 
     def _is_fresh(self) -> bool:
-        if self._keys is None or self._fetched_at is None:
+        if self._fetched_at is None:
             return False
         return self._clock.now() - self._fetched_at < self._ttl
 
-    async def _fetch(self) -> dict[str, Any]:
+    async def _fetch(self) -> JwksDocument:
         client = self._http or httpx.AsyncClient(timeout=5.0)
         try:
             response = await client.get(self._url)
             response.raise_for_status()
-            return response.json()
+            return JwksDocument.model_validate(response.json())
         except (httpx.HTTPError, ValueError) as exc:
-            # ValueError: the body was not JSON.
+            # ValueError: not JSON, or (pydantic ValidationError) not a JWK Set.
             raise DependencyUnavailableError("identity provider unreachable") from exc
         finally:
             if self._http is None:
                 await client.aclose()
 
+    async def _refresh_if_stale(self) -> None:
+        """Command: replace the cached document once the TTL has elapsed."""
+        if self._is_fresh():
+            return
+        self._document = await self._fetch()
+        self._fetched_at = self._clock.now()
+
+    def _key_set(self) -> jwt.PyJWKSet:
+        """Query: the cached document as a PyJWT key set."""
+        return jwt.PyJWKSet.from_dict(self._document.model_dump(exclude_none=True))
+
     async def key_for(self, token: str) -> jwt.PyJWK:
         """Return the JWK for the token's ``kid``, refreshing the cache if stale."""
-        if not self._is_fresh():
-            self._keys = await self._fetch()
-            self._fetched_at = self._clock.now()
-        key_set = jwt.PyJWKSet.from_dict(self._keys or {})
+        await self._refresh_if_stale()
         header = jwt.get_unverified_header(token)
-        return key_set[header.get("kid", "")]
+        return self._key_set()[header.get("kid", "")]
 
 
-__all__ = ["JwksKeyResolver", "KeyResolver"]
+__all__ = ["JwksDocument", "JwksKey", "JwksKeyResolver", "KeyResolver"]

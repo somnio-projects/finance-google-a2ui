@@ -72,6 +72,16 @@ async def test_key_for_non_json_body_becomes_dependency_unavailable() -> None:
             await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
 
 
+async def test_key_for_non_jwks_json_becomes_dependency_unavailable() -> None:
+    body = '{"keys": [{"kid": "no-kty"}]}'
+    async with httpx.AsyncClient(transport=CountingTransport(body=body)) as http:
+        resolver = JwksKeyResolver(
+            jwks_url=JWKS_URL, clock=FixedClock(FROZEN_NOW), http=http
+        )
+        with pytest.raises(DependencyUnavailableError, match="identity provider"):
+            await resolver.key_for(rs256_token(subject="s", now=FROZEN_NOW))
+
+
 async def test_key_for_creates_and_closes_its_own_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

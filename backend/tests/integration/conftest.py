@@ -7,19 +7,33 @@ Migrations run through Alembic exactly as in production.
 """
 
 import os
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.postgres import PostgresContainer
 
 from app.bootstrap import build_container, create_app
 from app.core.config import Settings
 from app.helpers.clock import FixedClock
+from app.infra.db.engine import create_engine
+from app.infra.db.session import create_session_factory, session_scope
 from tests.conftest import FROZEN_NOW, FakeReporter, make_settings
+
+
+@pytest.fixture
+async def session(database_url: str) -> AsyncIterator[AsyncSession]:
+    """One rolled-back session per test against the migrated database."""
+    engine = create_engine(make_settings(database_url=database_url))
+    async with session_scope(create_session_factory(engine)) as db_session:
+        yield db_session
+        await db_session.rollback()
+    await engine.dispose()
+
 
 ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini")
 

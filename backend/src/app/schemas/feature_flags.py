@@ -1,11 +1,12 @@
 """Feature-flag DTOs (spec 0002)."""
 
 from datetime import datetime
+from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
 # ``identity.audit``, ``orders.submit-v2`` — lowercase dotted segments only.
-FLAG_KEY_PATTERN = r"^[a-z0-9]+(\.[a-z0-9_-]+)*$"
+FLAG_KEY_PATTERN: Final = r"^[a-z0-9]+(\.[a-z0-9_-]+)*$"
 
 
 class FeatureFlagUpdate(BaseModel):

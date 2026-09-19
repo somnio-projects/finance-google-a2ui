@@ -7,18 +7,20 @@ Configured exactly once from the composition root. Library modules only call
 
 import logging
 from collections.abc import MutableMapping
-from typing import Any
+from typing import Any, Final
 
 import structlog
 
-SENSITIVE_KEYS: frozenset[str] = frozenset(
+SENSITIVE_KEYS: Final[frozenset[str]] = frozenset(
     {"authorization", "token", "password", "secret", "cookie", "api_key"}
 )
 
 
-def redact_sensitive(
-    _logger: object, _method: str, event_dict: MutableMapping[str, Any]
-) -> MutableMapping[str, Any]:
+# Any: structlog processors receive the library's untyped event dict.
+EventDict = MutableMapping[str, Any]
+
+
+def redact_sensitive(_logger: object, _method: str, event_dict: EventDict) -> EventDict:
     """Replace values of well-known secret keys with a placeholder."""
     for key in list(event_dict):
         if key.lower() in SENSITIVE_KEYS:

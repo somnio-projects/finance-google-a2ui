@@ -27,7 +27,18 @@ from app.core import errors
         ),
         (errors.ConfigurationError, HTTPStatus.INTERNAL_SERVER_ERROR, "configuration"),
     ],
-    ids=lambda value: getattr(value, "__name__", str(value)),
+    ids=[
+        "AppError",
+        "NotFoundError",
+        "ValidationFailedError",
+        "AuthenticationError",
+        "MissingTokenError",
+        "ExpiredTokenError",
+        "AuthorizationError",
+        "RateLimitedError",
+        "DependencyUnavailableError",
+        "ConfigurationError",
+    ],
 )
 def test_error_hierarchy_carries_status_and_code(
     error_type: type[errors.AppError], status: HTTPStatus, code: str

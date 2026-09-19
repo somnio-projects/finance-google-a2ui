@@ -4,8 +4,8 @@
 FastAPI application. Tests call it with their own settings and overrides.
 """
 
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator, Callable
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import timedelta
 
 from fastapi import FastAPI
@@ -30,6 +30,8 @@ from app.infra.db.session import create_session_factory
 from app.infra.telemetry.factory import build_error_reporter
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
+
+log = get_logger(__name__)
 
 
 def build_container(
@@ -82,6 +84,29 @@ def _install_middleware(app: FastAPI, container: Container) -> None:
     app.add_middleware(RequestIdMiddleware)
 
 
+def _build_lifespan(
+    container: Container,
+) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
+    """Log startup/shutdown and release the engine when the app stops."""
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
+        log.info("startup", public_base_url=container.settings.public_base_url)
+        yield
+        await container.engine.dispose()
+        log.info("shutdown")
+
+    return lifespan
+
+
+def _configure_app(app: FastAPI, container: Container) -> None:
+    """Attach state, middleware, error handlers and routes — in that order."""
+    app.state.container = container
+    _install_middleware(app, container)
+    register_error_handlers(app, container.reporter)
+    app.include_router(api_router)
+
+
 def create_app(
     settings: Settings | None = None, *, container: Container | None = None
 ) -> FastAPI:
@@ -89,27 +114,15 @@ def create_app(
     settings = settings or get_settings()
     configure_logging(settings.log_level)
     container = container or build_container(settings)
-    log = get_logger(__name__)
-
-    @asynccontextmanager
-    async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
-        log.info("startup", public_base_url=settings.public_base_url)
-        yield
-        await container.engine.dispose()
-        log.info("shutdown")
-
     app = FastAPI(
         title=settings.app_name,
         version=__version__,
-        lifespan=lifespan,
+        lifespan=_build_lifespan(container),
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None,
         openapi_url=None if settings.is_production else "/openapi.json",
     )
-    app.state.container = container
-    _install_middleware(app, container)
-    register_error_handlers(app, container.reporter)
-    app.include_router(api_router)
+    _configure_app(app, container)
     return app
 
 

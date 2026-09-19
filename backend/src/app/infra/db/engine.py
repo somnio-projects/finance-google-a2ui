@@ -5,6 +5,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core.config import Settings
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 
 
 def create_engine(settings: Settings) -> AsyncEngine:
@@ -35,7 +38,8 @@ class DatabaseReadinessProbe:
         try:
             async with self._engine.connect() as connection:
                 await connection.execute(text("SELECT 1"))
-        except (SQLAlchemyError, OSError):
+        except (SQLAlchemyError, OSError) as exc:
+            log.warning("db_readiness_check_failed", error=type(exc).__name__)
             return False
         return True
 

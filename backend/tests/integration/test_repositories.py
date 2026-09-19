@@ -1,5 +1,4 @@
 import uuid
-from collections.abc import AsyncIterator
 
 import pytest
 from pytest_mock import MockerFixture
@@ -7,20 +6,8 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DependencyUnavailableError, NotFoundError
-from app.infra.db.engine import create_engine
-from app.infra.db.session import create_session_factory, session_scope
 from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
-from tests.conftest import make_settings
-
-
-@pytest.fixture
-async def session(database_url: str) -> AsyncIterator[AsyncSession]:
-    engine = create_engine(make_settings(database_url=database_url))
-    async with session_scope(create_session_factory(engine)) as db_session:
-        yield db_session
-        await db_session.rollback()
-    await engine.dispose()
 
 
 def _event(subject: str, action: str = "test") -> AuditEvent:

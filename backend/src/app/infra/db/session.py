@@ -32,6 +32,7 @@ async def session_scope(
         yield session
         await session.commit()
     except BaseException:
+        # BaseException on purpose: CancelledError/KeyboardInterrupt must roll back too.
         await session.rollback()
         raise
     finally:
