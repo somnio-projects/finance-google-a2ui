@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genui/genui.dart';
 
+import '../../../config/app_config.dart';
 import '../../../primitives.dart';
+import '../../../theme/finance_tokens.dart';
 import '../bloc/landing_bloc.dart';
 import '../bloc/landing_event.dart';
 import '../bloc/landing_state.dart';
@@ -27,11 +29,13 @@ const List<String> _loadingTexts = [
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
+    required this.config,
     required this.onToggleTheme,
     this.landingRepository,
     super.key,
   });
 
+  final AppConfig config;
   final VoidCallback onToggleTheme;
 
   /// Optional [LandingRepository] for testing. When provided, the caller
@@ -48,7 +52,9 @@ class _LandingPageState extends State<LandingPage> {
   @override
   void initState() {
     super.initState();
-    _repository = widget.landingRepository ?? LandingRepository();
+    _repository =
+        widget.landingRepository ??
+        LandingRepository(serverUrl: widget.config.backendBaseUrl);
   }
 
   @override
@@ -141,7 +147,11 @@ class _LandingFormState extends State<_LandingForm> {
       padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
       child: Column(
         children: [
-          const Icon(Icons.currency_bitcoin, size: 80, color: Colors.orange),
+          Icon(
+            Icons.currency_bitcoin,
+            size: 80,
+            color: FinanceTokens.of(context).brandAccent,
+          ),
           const SizedBox(height: 16),
           Text(
             'Crypto Market',

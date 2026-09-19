@@ -5,16 +5,14 @@ import 'package:genui/genui.dart';
 import 'package:genui_a2a/genui_a2a.dart';
 import 'package:logging/logging.dart';
 
-const String defaultServerUrl = 'http://localhost:10002';
-
 // https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json
 // https://a2ui.org/specification/v0_9/standard_catalog.json
 
-/// Talks to the restaurant finder agent over A2A and holds the rendered
+/// Talks to the crypto market agent over A2A and holds the rendered
 /// A2UI surfaces.
 class LandingRepository {
-  LandingRepository({String serverUrl = defaultServerUrl})
-    : _connector = A2uiAgentConnector(url: Uri.parse(serverUrl)),
+  LandingRepository({required Uri serverUrl})
+    : _connector = A2uiAgentConnector(url: serverUrl),
       _surfaceController = SurfaceController(
         catalogs: [
           BasicCatalogItems.asCatalog().copyWith(catalogId: _agentCatalogId),

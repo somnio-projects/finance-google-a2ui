@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'test_infra/ai_client.dart';
 import 'test_infra/api_key.dart';
-import 'test_infra/restaurant_finder.dart';
+import 'test_infra/crypto_agent.dart';
 
 void main() {
   test('test can read api key "$geminiApiKeyName"', () {
@@ -40,9 +40,9 @@ void main() {
     print('Joke from AI:\n\n$result\n\n');
   });
 
-  test('test can start restaurant_finder', () async {
-    final restaurantFinderClient = TestRestaurantFinderClient();
-    addTearDown(restaurantFinderClient.dispose);
-    await restaurantFinderClient.startAndVerify();
+  test('test can start the crypto market agent', () async {
+    final cryptoAgentClient = TestCryptoAgentClient();
+    addTearDown(cryptoAgentClient.dispose);
+    await cryptoAgentClient.startAndVerify();
   }, timeout: const Timeout(Duration(minutes: 5)));
 }

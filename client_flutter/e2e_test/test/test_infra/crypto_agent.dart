@@ -20,13 +20,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'shell_utils.dart';
 
-const _restaurantFinderDefaultUrl = 'http://127.0.0.1:10002';
-const _restaurantFinderAgentCardUrl =
-    '$_restaurantFinderDefaultUrl/.well-known/agent-card.json';
+const _cryptoAgentDefaultUrl = 'http://127.0.0.1:10002';
+const _cryptoAgentCardUrl =
+    '$_cryptoAgentDefaultUrl/.well-known/agent-card.json';
 
-const _restaurantFinderCurlMessage =
+const _cryptoAgentCurlMessage =
     '''
-curl $_restaurantFinderDefaultUrl \\
+curl $_cryptoAgentDefaultUrl \\
   -H 'Content-Type: application/json' \\
   -d '{
     "jsonrpc": "2.0",
@@ -42,13 +42,13 @@ curl $_restaurantFinderDefaultUrl \\
   }'
 ''';
 
-final class TestRestaurantFinderClient {
+final class TestCryptoAgentClient {
   Process? _process;
 
-  String get baseUrl => _restaurantFinderDefaultUrl;
-  String get cardUrl => _restaurantFinderAgentCardUrl;
+  String get baseUrl => _cryptoAgentDefaultUrl;
+  String get cardUrl => _cryptoAgentCardUrl;
 
-  /// Tests [start instructions](../../../../server/README.md).
+  /// Tests [start instructions](../../../../../backend_python/README.md).
   ///
   /// If the client is already running, it will be restarted.
   Future<void> startAndVerify() async {
@@ -56,12 +56,24 @@ final class TestRestaurantFinderClient {
     _process = null;
     killProcessesOnPort(10002);
 
+    // Resolved against the test process's cwd (the package directory under
+    // `flutter test`). Checked explicitly so a wrong cwd fails with the path
+    // it looked for, rather than an opaque spawn error.
+    const backendDir = '../../backend_python';
+    if (!Directory(backendDir).existsSync()) {
+      fail(
+        'Backend directory not found at "$backendDir" '
+        '(resolved from ${Directory.current.path}). '
+        'Run these tests from the e2e_test package directory.',
+      );
+    }
+
     _process = await startAndVerifyService(
       'uv run .',
-      '../../server',
+      backendDir,
       [
         ShellProbe(
-          command: 'curl $_restaurantFinderAgentCardUrl',
+          command: 'curl $_cryptoAgentCardUrl',
           responseChecker: (response) {
             expect(response, contains('capabilities'));
             expect(response, contains('A2UI'));
@@ -69,7 +81,7 @@ final class TestRestaurantFinderClient {
           },
         ),
         ShellProbe(
-          command: _restaurantFinderCurlMessage,
+          command: _cryptoAgentCurlMessage,
           responseChecker: (response) {
             expect(response, contains('"parts":[{"kind":'));
             print('\nReceived agent response:\n$response\n');

@@ -15,25 +15,39 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
+import 'config/app_config.dart';
 import 'features/login/view/login_page.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Resolved once, at the composition root. A malformed BACKEND_BASE_URL
+  // throws here, at startup, rather than at first use.
+  final config = AppConfig.fromEnv();
+
   Logger.root.level = Level.WARNING;
   Logger.root.onRecord.listen((record) {
     debugPrint('${record.level.name}: ${record.time}: ${record.message}');
   });
-  runApp(const RestaurantFinderApp());
+
+  runApp(FinanceA2UiApp(config: config));
 }
 
-class RestaurantFinderApp extends StatefulWidget {
-  const RestaurantFinderApp({super.key});
+class FinanceA2UiApp extends StatefulWidget {
+  const FinanceA2UiApp({required this.config, super.key});
+
+  final AppConfig config;
 
   @override
-  State<RestaurantFinderApp> createState() => _RestaurantFinderAppState();
+  State<FinanceA2UiApp> createState() => _FinanceA2UiAppState();
 }
 
-class _RestaurantFinderAppState extends State<RestaurantFinderApp> {
+class _FinanceA2UiAppState extends State<FinanceA2UiApp> {
+  // Built from const tokens, so they never vary: building them per rebuild
+  // would re-run ColorScheme.fromSeed on every theme toggle.
+  static final ThemeData _lightTheme = AppTheme.light();
+  static final ThemeData _darkTheme = AppTheme.dark();
+
   ThemeMode _themeMode = ThemeMode.system;
 
   void _toggleTheme() {
@@ -46,19 +60,12 @@ class _RestaurantFinderAppState extends State<RestaurantFinderApp> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.orange);
     return MaterialApp(
-      title: 'Restaurant Finder',
+      title: 'FinanceA2Ui',
       themeMode: _themeMode,
-      theme: ThemeData(colorScheme: colorScheme, useMaterial3: true),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.orange,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      home: LoginPage(onToggleTheme: _toggleTheme),
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
+      home: LoginPage(config: widget.config, onToggleTheme: _toggleTheme),
     );
   }
 }
