@@ -131,7 +131,7 @@ resource "google_cloud_run_v2_job" "purge_audit" {
 
       containers {
         image   = var.backend_image
-        command = ["python", "scripts/purge_audit_events.py"]
+        command = ["python", "-m", "app.jobs.purge_audit"]
 
         dynamic "env" {
           for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }

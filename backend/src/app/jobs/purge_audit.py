@@ -2,7 +2,11 @@
 
 Deletes rows older than ``Settings.audit_retention_days`` and logs the count
 and the cutoff, so the job history is the evidence of the purge (A.8.10).
+Run it as ``python -m app.jobs.purge_audit`` (``make purge-audit`` locally, the
+Cloud Run job in production) — the image ships ``src/app`` only.
 """
+
+import asyncio
 
 import structlog
 
@@ -54,3 +58,7 @@ async def main() -> int:
 
 
 __all__ = ["main", "run"]
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI guard
+    asyncio.run(main())

@@ -9,7 +9,7 @@
 
 | Data | Class | Retention | Mechanism | Owner |
 |---|---|---|---|---|
-| `audit_events` | Confidential | **400 days** (13 months — covers an annual audit cycle plus one quarter) | `AuditRepository.purge_older_than(cutoff)` invoked by `make purge-audit` / the scheduled job (`scripts/purge_audit_events.py`), monthly | TL backend |
+| `audit_events` | Confidential | **400 days** (13 months — covers an annual audit cycle plus one quarter) | `AuditRepository.purge_older_than(cutoff)` invoked by `make purge-audit` / the scheduled job (`python -m app.jobs.purge_audit`), monthly | TL backend |
 | `feature_flags` | Internal | while the flag exists; rows for removed routes deleted in the PR that removes the route | migration / admin PUT | feature owner |
 | Application logs | Internal | local: container lifetime; production: **90 days** in Cloud Logging | log bucket retention (CLOUD_SERVICES §4) | TL backend |
 | Sentry events | Internal | Sentry plan default (90 days) | vendor setting | TL backend |
@@ -31,8 +31,9 @@ tested against real PostgreSQL) exposed as a maintenance command:
 cd backend && make purge-audit                 # uses AUDIT_RETENTION_DAYS from settings (default 400)
 ```
 
-In production the same script runs monthly as a Cloud Scheduler → Cloud Run
-job (GGU-29). Each run logs `audit_events_purged count=<n> cutoff=<date>`.
+In production the same module runs monthly as a Cloud Scheduler → Cloud Run
+job (`infra/run.tf`, apply with GGU-29). Each run logs
+`audit_events_purged count=<n> retention_days=<d> cutoff=<iso date>`.
 The purge itself is not audited as a row (it would never age out); the log
 line plus the job history are the record.
 

@@ -23,7 +23,7 @@ every audit > 90 before the PR.
   `Settings.admin_mfa_required` (default = production), enforced in
   `FeatureFlagService._require_admin`.
 - **Retention**: `AuditRepository.purge_older_than`, `AuditService.purge_expired`,
-  `scripts/purge_audit_events.py`, `make purge-audit`, `AUDIT_RETENTION_DAYS=400`.
+  `app/jobs/purge_audit.py` (`python -m app.jobs.purge_audit`, `make purge-audit`), `AUDIT_RETENTION_DAYS=400`.
 - **IaC** (`infra/`, Terraform ~> google 6): the CLOUD_SERVICES §3 topology as code —
   validated locally and in `infra-ci.yaml` (fmt · validate · trivy config); **not
   applied** (no GCP project until GGU-29). Closes the SOC 2 Family F evidence gap
@@ -33,7 +33,7 @@ every audit > 90 before the PR.
   `<domain>.<verb>` and 100-char flag keys no longer overflow `String(64)`;
   `feature_flag.list` audited; `httpx2` justified in `pyproject.toml` (Starlette's
   TestClient needs it); purge job moved to `app/jobs/purge_audit.py` (typed,
-  covered) with a thin `scripts/` wrapper; spec 0002 aligned (MFA, target, test
+  covered, run as a module — the image ships `src/app` only); spec 0002 aligned (MFA, target, test
   names, mutation check); docs synced; branch-protection claims corrected with
   the exported ruleset (`docs/compliance/evidence/`, enforcement disabled today);
   `Edit` deny added for the merged migration 0002.

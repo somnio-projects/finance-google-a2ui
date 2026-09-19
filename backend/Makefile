@@ -41,7 +41,7 @@ audit:
 # Retention job (docs/compliance/DATA_RETENTION.md): deletes audit_events older than
 # AUDIT_RETENTION_DAYS. Needs DATABASE_URL; run monthly (Cloud Scheduler in prod).
 purge-audit:
-	$(UV) run python scripts/purge_audit_events.py
+	$(UV) run python -m app.jobs.purge_audit
 
 gate: lint typecheck budget test audit
 	@echo "ship gate green"

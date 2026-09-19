@@ -87,6 +87,16 @@ def make_token(
     return jwt.encode(claims, secret, algorithm="HS256")
 
 
+@pytest.fixture(autouse=True)
+def _never_read_dotenv(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests build settings from explicit values only, never from ``backend/.env``.
+
+    A developer's real ``.env`` would otherwise leak into tests that assert
+    fail-fast behaviour (``.claude/rules/backend/testing.md``).
+    """
+    monkeypatch.setitem(Settings.model_config, "env_file", None)
+
+
 @pytest.fixture
 def settings() -> Settings:
     return make_settings()

@@ -65,7 +65,7 @@ backend/
 ├── tests/unit/         no I/O, fakes only
 ├── tests/integration/  real PostgreSQL via testcontainers
 ├── docs/               architecture, security (SOC 2 / ISO 27001), testing, auth, observability
-└── scripts/            gate helpers (file budget), `purge_audit_events.py` (retention job — `make purge-audit`); `make audit` runs pip-audit
+└── scripts/            gate helpers (file budget); `make audit` runs pip-audit, `make purge-audit` runs `app.jobs.purge_audit`
 ```
 
 Every file stays under **150 lines** (`scripts/check_file_budget.py` fails the
