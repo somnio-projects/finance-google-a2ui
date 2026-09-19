@@ -186,6 +186,56 @@ reported green.
   spelling validates as an unsupported block, which is how it was caught.
 - Terraform provider downloads need network access the sandbox denies; run
   `terraform init` outside it.
+## 2026-09-19 — GGU-28 open-source readiness · spec `specs/repo/0001-open-source-readiness.md`
+
+**Branch:** `docs/GGU-28_open_source_readiness` → `develop`. Documentation and
+one developer command; no application code changed.
+
+**The finding that shaped it.** The repository had **no `README.md` at all** —
+a public reference application whose audience is Google's reviewers, with no
+entry point. It also had no `NOTICE`, no architecture document, no contribution
+guide and no issue templates.
+
+**Added**
+- `README.md`, `NOTICE`, `docs/ARCHITECTURE.md`, `CONTRIBUTING.md`,
+  `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}`.
+- `backend/scripts/mint_dev_token.py` and `make token`. Not cosmetic: every
+  route except the health ones is authenticated, so without it the README's
+  clone-and-run promise was false — a fresh clone could not call anything.
+- `specs/repo/` as a spec area for repository-level work, registered in
+  `specs/README.md`.
+
+**The decision worth keeping.** The README describes **what is built, not what
+is planned**, and says so in its second paragraph: the backend is real, the
+Flutter client is still Google's upstream `restaurant_finder` sample, the
+delivery pipeline has never run, and the market data is invented. A reviewer
+who discovers the Flutter gap by failing to run the app trusts nothing else in
+the repository, so the gap leads rather than hides. `docs/ARCHITECTURE.md`
+ends in a "Known gaps" table naming the ticket that closes each one — which now
+has to shrink as GGU-3, Epic 1, GGU-29 and GGU-22 land. **Leaving that table
+stale is the main risk this change creates.**
+
+Per-file Apache headers were declined on backend sources (spec OD-2): `LICENSE`
+plus `NOTICE` satisfies the licence, the upstream client files keep their
+Google headers as required, and a 13-line header on files capped at 150 lines
+would consume the budget it is meant to protect.
+
+**Verified**
+- The README's own commands, run for real against a **clean** database:
+  compose up, `make token`, `GET /v1/me` → 200 `{"subject":"alice",...}`; the
+  same call with no token → 401 problem+json; `/healthz` and `/readyz` 200
+  unauthenticated; `/openapi.json` complete.
+- `gitleaks` over the **full history** — 71 commits, ~5 MB, **no leaks**.
+- `make gate` green: 262 tests, 100 % branch coverage, pylint 10.00/10.
+
+**Next person should know**
+- The shared compose database is at Alembic revision `0004` from the GGU-46
+  branch, which `develop` does not have yet — a container built from `develop`
+  refuses to start against it ("Can't locate revision identified by '0004'").
+  Use a throwaway database when verifying a branch that predates it.
+- `make token` is local only and refuses to run without `AUTH_JWT_SECRET`
+  rather than inventing a default. It cannot mint anything production would
+  accept, because production verifies RS256 through OIDC.
 
 ---
 

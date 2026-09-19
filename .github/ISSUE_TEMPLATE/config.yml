@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/somnio-projects/finance-google-a2ui/blob/develop/SECURITY.md
+    about: Please report vulnerabilities privately, not as a public issue.
+  - name: Architecture and decisions
+    url: https://github.com/somnio-projects/finance-google-a2ui/blob/develop/docs/ARCHITECTURE.md
+    about: How the system is built, and the decisions behind it with what was rejected.
