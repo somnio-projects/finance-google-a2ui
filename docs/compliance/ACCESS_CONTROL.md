@@ -43,7 +43,7 @@ New scopes are added to this table in the same PR that introduces them.
 
 | System | Roles | Rule |
 |---|---|---|
-| GitHub | `admin`: eng. management; `write`: engineers; `triage`: PM/UX | org-enforced 2FA; `main` ruleset (PR + code-owner review + green checks) to be enforced before PR #2 merges — current state in `evidence/branch-protection-ruleset.json` ([CHANGE_MANAGEMENT.md](CHANGE_MANAGEMENT.md)) |
+| GitHub | `admin`: eng. management; `write`: engineers; `triage`: PM/UX | org-enforced 2FA; **active** ruleset on `main` and `develop` — PR + 1 code-owner approval + resolved threads, squash-only, no force-push ([CHANGE_MANAGEMENT.md](CHANGE_MANAGEMENT.md)) |
 | Google Cloud (when production exists) | `roles/run.developer`, `roles/cloudsql.client`, `roles/secretmanager.secretAccessor` per service account; humans get `viewer` + break-glass `editor` via time-boxed grant | no `owner` on the project; IAM in `infra/iam.tf` (apply with GGU-29) |
 | Sentry | project member | PII disabled at the SDK |
 | Secrets | Secret Manager accessor bound to the Cloud Run service account only | humans read secrets only during an incident, logged |
