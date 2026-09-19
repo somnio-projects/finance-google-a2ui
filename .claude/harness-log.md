@@ -7,6 +7,43 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-5 portfolio domain · spec `specs/backend/0003-portfolio-domain.md`
+
+**PR:** #12 · **Built by a worktree agent**, integrated and verified here.
+
+**Code**
+- `src/app/domain/` — 16 modules, each ≤150 lines: `money` (Decimal end to end,
+  float rejected at the boundary), `terms` (long = **strictly more than 365 days**,
+  leap year asserted), `lots`, `holdings`, `transactions`, `prices`/`history`
+  (deterministic **90-day** daily series ending on the current price),
+  `market` (curated reference — the deleted `crypto_data.json` is gone and the
+  domain is now the **single source of price**), `invariants` (exact Decimal
+  equality; weights within 0.0001), `portfolio`, `seed`, `provider`.
+- `PortfolioProvider` Protocol + in-memory implementation: portfolios are
+  per-subject and `as_of` is fixed at first access, so a lot cannot flip term
+  mid-demo. No `datetime.now()` anywhere — a test parses the AST to prove it.
+
+**Decisions recorded in the spec**
+- OD-1 (blocked GGU-5): 90-day window, answered by GGU-36's owner in Jira.
+- `Portfolio` is a frozen dataclass, not a pydantic model — a `validate()` read
+  method would shadow pydantic's deprecated `BaseModel.validate`.
+- `price_series`: `min(window, 89)+1` points, truncates above history,
+  `window=0` → 1 point, negative → `WindowOutOfRangeError`.
+- `provider.get` **seeds** instead of raising for an unknown subject: a demo
+  session must not open on an error, and that is what fixes `as_of`.
+- Divergence from ADR-C D-7 (stdlib logging): the provider uses
+  `app.core.logging` because this backend configures structlog in `bootstrap`;
+  D-7 was written for the deleted `backend_python/`.
+
+**Next person should know**
+- The shared dev database was stamped at revision `0004` by the GGU-46 worktree
+  while this branch only has `0001`–`0003`; run the suite with testcontainers
+  (the default) or re-create the local volume.
+- `docs/specs/GGU-5/domain-contract.md` (written before the rewrite) is
+  superseded by spec 0003 §8 — it should be marked as such when GGU-46 lands.
+
+---
+
 ## 2026-09-19 — REST + OpenAPI contract, quality tooling, CI redesign
 
 **Decisions (Lautaro):** every endpoint strictly RESTful and *exhaustively*

@@ -34,6 +34,27 @@ uv run alembic upgrade head              # needs DATABASE_URL to point at Postgr
 uv run uvicorn app.main:app --reload
 ```
 
+## The demo portfolio — which symbol to ask about
+
+`src/app/domain/` holds a curated, entirely simulated portfolio (spec
+[`0003-portfolio-domain.md`](../specs/backend/0003-portfolio-domain.md)) and is
+the backend's **single source of price**. It is seeded per subject at a fixed
+`as_of`, so the numbers never move between two questions in the same session.
+
+Three cases are built into the seed on purpose. A demo driver who has never
+seen the data should ask about these symbols:
+
+| Flow | Symbol | Why that one |
+|---|---|---|
+| **Tax-lot flow** | **BTC** | Two lots straddling the 1-year line — `lot-btc-01` at 367 days (long-term) and `lot-btc-02` at 363 days (short-term, two days inside it). Selling picks a side. |
+| **Attribution story** | **ETH** (and **LINK**) | The losers. ETH is roughly −15 % against its blended cost basis while BTC and SOL are up, so attribution has something to explain instead of a wall of green. |
+| **Order / payoff** | **SOL** | 60 units bought, 20 sold, 40 still open — a simulated sale has a real history behind it, and the remaining lot is single-term so the payoff is easy to follow. |
+
+The boundary rule the tax flow depends on: a lot is **long-term only beyond 365
+days held** — the anniversary itself is still short-term
+(`src/app/domain/terms.py`). Price history is a deterministic 90-day daily
+series per symbol whose last point is exactly the current price.
+
 ## Verify — a change is not done without this
 
 ```bash
@@ -55,6 +76,7 @@ backend/
 │   ├── repositories/   persistence access, one per aggregate
 │   ├── models/         SQLAlchemy ORM entities
 │   ├── schemas/        pydantic request / response DTOs
+│   ├── domain/         the simulated portfolio: entities, invariants, seed, prices
 │   ├── auth/           token verification providers (JWT, OIDC/SSO) behind a Protocol
 │   ├── infra/          adapters: database engine/session, telemetry (Sentry)
 │   ├── core/           settings, error hierarchy, logging, shared Protocols
