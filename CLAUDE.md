@@ -40,6 +40,7 @@ cd client_flutter && dart format --output=none --set-exit-if-changed . && dart a
 
 ## Conventions the code does not show
 
+- **The backend shapes every payload; the client transforms nothing** — versioned projections with declared options, selected by the client (`?view=`) or by the agent (validated against the same registry), batched and cached. See `.claude/rules/backend/presentation.md` and `docs/adr/ADR-K-response-shaping.md`.
 - **Every endpoint is strictly RESTful and exhaustively documented in OpenAPI** (summary, description, operation_id, tags, response_model, every error response, examples, documented+bounded fields). See `.claude/rules/backend/api-design.md`.
 - **Backend layering is enforced**: controllers only call services; services never import FastAPI/SQLAlchemy; repositories are the only SQLAlchemy users; `bootstrap.py` is the single composition root; files ≤150 lines. See `.claude/rules/backend/architecture.md`.
 - **Security is a gate, not a review note**: bearer-token auth on every non-health route, RFC 9457 errors without internals, no secrets/tokens/PII in logs, audit events for identity actions, non-root read-only containers. SOC 2 / ISO 27001 mapping in `backend/docs/SECURITY.md`; rules in `.claude/rules/backend/security.md`.
@@ -72,6 +73,7 @@ matching path is touched.
 |:--|:--|:--|
 | .claude/rules/backend/architecture.md | python | Backend layering, file templates, 150-line budget (backend/src, backend/tests). |
 | .claude/rules/backend/api-design.md | python | REST semantics, exhaustive OpenAPI documentation, DRY/abstraction (backend/src/app/api, schemas). |
+| .claude/rules/backend/presentation.md | python | Projections, declared options, A2UI adapters, batching and caching (backend/src/app/presentation). |
 | .claude/rules/ci-conventions.md | all | Where a check belongs (pre-commit vs CI), job/step naming, CI cost rules (.github/, .pre-commit-config.yaml). |
 | .claude/rules/backend/security.md | python | SOC 2 / ISO 27001 controls while writing backend code, Dockerfile, compose. |
 | .claude/rules/backend/testing.md | python | 100 % branch coverage contract, unit vs integration, fixtures and naming. |
