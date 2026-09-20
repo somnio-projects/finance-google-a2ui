@@ -24,6 +24,10 @@ async def test_selling_more_than_is_held_answers_instead_of_failing(
 
     A raising tool would reach the model as ``{"error": "tool-failed"}`` and
     the one number that makes the answer helpful would be gone.
+
+    The absent render intent is spec 0015 AC-13's other half: there are no
+    lots to draw, and a tax-lot table under "you hold fewer units than that"
+    is the contradiction spec 0011 OD-1 named.
     """
     outcome = await tool.run({"symbol": "BTC", "quantity": "1.5"}, tool_context)
 

@@ -13,6 +13,7 @@ from tests.conftest import make_token
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
+TAX_LOTS = "taxlots.table.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 
 
@@ -56,7 +57,20 @@ def test_an_option_the_view_does_not_declare_is_422(
 def test_the_catalog_is_served(integration_client: TestClient) -> None:
     response = integration_client.get("/v1/views", headers=_headers())
     assert response.status_code == 200
-    assert {entry["id"] for entry in response.json()} == {ALLOCATION, WATERFALL}
+    served = {entry["id"] for entry in response.json()}
+    assert served == {ALLOCATION, WATERFALL, TAX_LOTS}
+
+
+def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -> None:
+    """Spec 0015 AC-11 — the id the callers share used to be rejected."""
+    response = integration_client.get(
+        f"{VIEWS_URL}?view={TAX_LOTS}&locale=en-US", headers=_headers()
+    )
+    assert response.status_code == 200
+    payload = response.json()["views"][TAX_LOTS]
+    assert payload["subtitle"] == "Sell 0.5 BTC under FIFO"
+    assert [half["term"] for half in payload["by_term"]] == ["short", "long"]
+    assert payload["price"]["amount"]["display"] == "$64,250.00"
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:
