@@ -6,7 +6,7 @@ resource "google_logging_project_bucket_config" "default" {
   project        = var.project_id
   location       = "global"
   bucket_id      = "_Default"
-  retention_days = var.log_retention_days
+  retention_days = local.log_retention_days
 }
 
 # Data-access audit logs for the services that hold Confidential/Restricted data.
@@ -32,7 +32,13 @@ resource "google_monitoring_notification_channel" "oncall_email" {
   labels       = { email_address = var.alert_email }
 }
 
+# An external uptime check needs a hostname that exists before the apply. Dev's
+# address is Cloud Run's run.app URL, which the service only reports afterwards,
+# so dev has no uptime check and no readiness alert — the one observability
+# control it gives up, recorded in CLOUD_SERVICES.md §5. The 5xx and
+# auth-failure alerts below are log-based, cost nothing, and stay in dev.
 resource "google_monitoring_uptime_check_config" "readyz" {
+  count        = local.uptime_check_enabled ? 1 : 0
   display_name = "${local.name} /readyz"
   timeout      = "10s"
   period       = "60s"
@@ -51,6 +57,7 @@ resource "google_monitoring_uptime_check_config" "readyz" {
 }
 
 resource "google_monitoring_alert_policy" "readyz_down" {
+  count                 = local.uptime_check_enabled ? 1 : 0
   display_name          = "${local.name}: readiness failing"
   combiner              = "OR"
   notification_channels = [google_monitoring_notification_channel.oncall_email.id]
@@ -58,7 +65,7 @@ resource "google_monitoring_alert_policy" "readyz_down" {
   conditions {
     display_name = "uptime check failed"
     condition_threshold {
-      filter          = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.readyz.uptime_check_id}\""
+      filter          = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.readyz[0].uptime_check_id}\""
       comparison      = "COMPARISON_GT"
       threshold_value = 1
       duration        = "180s"

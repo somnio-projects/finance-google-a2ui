@@ -46,3 +46,11 @@ Cloud SQL with automated daily backups + point-in-time recovery (RPO → 1 h),
 high-availability configuration (regional failover), Cloud Run min-instances
 ≥ 1 across zones, uptime checks on `/readyz`. These move R-11 from retained to
 treated; the plan is updated when they land.
+
+**These commitments are production's, and only production's.** The `dev`
+environment defined in
+[specs/infra/0001-dev-environment.md](../../specs/infra/0001-dev-environment.md)
+has none of them — zonal database, no PITR, scale-to-zero, no uptime check —
+and carries no availability commitment. It is a disposable proof of concept
+with synthetic data; a dev outage is not a continuity event and does not
+invoke this plan. Applying dev therefore does **not** move R-11.

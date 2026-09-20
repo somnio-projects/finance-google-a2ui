@@ -9,10 +9,15 @@ resource "google_compute_network" "vpc" {
 }
 
 resource "google_compute_subnetwork" "connector" {
-  name                     = "${local.name}-connector"
-  region                   = var.region
-  network                  = google_compute_network.vpc.id
-  ip_cidr_range            = "10.8.0.0/28"
+  name    = "${local.name}-connector"
+  region  = var.region
+  network = google_compute_network.vpc.id
+
+  # A Serverless VPC Access connector requires its own dedicated /28. Dev has
+  # no connector (see below) and uses this subnet for Cloud Run's direct VPC
+  # egress instead, which draws one address per running instance — Google's
+  # sizing guidance for that is /26, and a subnet costs nothing either way.
+  ip_cidr_range            = local.ephemeral ? "10.8.0.0/26" : "10.8.0.0/28"
   private_ip_google_access = true
 
   # Flow logs = edge/network access evidence (SOC 2 CC7.2 F5).
@@ -39,7 +44,13 @@ resource "google_service_networking_connection" "private_services" {
   depends_on              = [google_project_service.apis]
 }
 
+# A connector is a managed instance group: its floor is two e2-micro VMs that
+# bill by the hour whether or not a request ever arrives — on its own, more
+# than the whole rest of a dev environment. Dev therefore has none, and Cloud
+# Run reaches the private database through direct VPC egress (run.tf), which
+# has no standing compute. Staging and production keep the connector.
 resource "google_vpc_access_connector" "run" {
+  count  = local.ephemeral ? 0 : 1
   name   = "${local.name}-vpc-conn"
   region = var.region
   subnet {

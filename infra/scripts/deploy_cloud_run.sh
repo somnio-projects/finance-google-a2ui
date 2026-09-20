@@ -16,13 +16,21 @@
 #   4. verify PUBLIC_URL/healthz reports exactly the release we deployed
 #   5. on any failure, put traffic back on the revision that was serving before
 #
-# Why the post-shift check uses PUBLIC_URL and not the *.run.app hostname: the
-# service's ingress is INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER (infra/run.tf),
-# so the run.app URLs are unreachable from a GitHub-hosted runner. The load
-# balancer domain is the only address that resolves for a caller outside the
-# VPC, and /healthz is unauthenticated by contract. For the same reason the
-# pre-shift check is the revision's Ready condition rather than an HTTP probe:
-# a revision with no traffic has no address the runner can reach.
+# Why the post-shift check uses PUBLIC_URL rather than a hostname this script
+# works out for itself: what is reachable differs per environment, and the
+# script must not have to know which one it is in. In staging and production
+# the service's ingress is INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER
+# (infra/run.tf), so the *.run.app URLs are unreachable from a GitHub-hosted
+# runner and the load balancer domain is the only address that resolves. In
+# dev there is no load balancer, ingress is open, and PUBLIC_URL is the
+# service's own run.app URL — which is exactly why dev's ingress is open
+# (specs/infra/0001-dev-environment.md AC-6). Either way the caller passes one
+# address, /healthz is unauthenticated by contract, and the verify-then-roll-
+# back sequence below is identical.
+#
+# The pre-shift check stays the revision's Ready condition rather than an HTTP
+# probe in every environment: a revision with no traffic has no address of its
+# own to probe.
 #
 # Usage:
 #   deploy_cloud_run.sh

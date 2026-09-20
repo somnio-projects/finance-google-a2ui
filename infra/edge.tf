@@ -2,8 +2,23 @@
 # certificate, Cloud Armor (OWASP preconfigured WAF + rate limiting + adaptive
 # DDoS protection) in front of the Cloud Run serverless NEG, HTTP→HTTPS redirect.
 # SOC 2 CC6.6 F2 · ISO 27001 A.8.20, A.8.21, A.8.23.
+#
+# EVERY resource in this file is absent in dev (`count` off `local.edge_enabled`
+# in main.tf). A global load balancer, a reserved anycast IP and a Cloud Armor
+# policy each bill a fixed amount per month whether or not a request ever
+# arrives, and the managed certificate needs a domain a proof of concept does
+# not have. Dev is served on Cloud Run's own run.app URL instead.
+#
+# What dev loses with this file is a real reduction and is written down, not
+# glossed: no WAF, no edge rate limit ahead of the application's own, no
+# adaptive DDoS, no edge access log, no TLS policy of our choosing (Google's
+# run.app certificate and TLS settings apply instead). The backend's bearer-
+# token auth, per-principal rate limiter and security headers are unchanged and
+# are what dev relies on. See specs/infra/0001-dev-environment.md §5.
 
 resource "google_compute_security_policy" "waf" {
+  count = local.edge_enabled ? 1 : 0
+
   name        = "${local.name}-waf"
   description = "Cloud Armor policy for the finance-a2ui API"
   type        = "CLOUD_ARMOR"
@@ -83,6 +98,8 @@ resource "google_compute_security_policy" "waf" {
 }
 
 resource "google_compute_region_network_endpoint_group" "backend" {
+  count = local.edge_enabled ? 1 : 0
+
   name                  = "${local.name}-neg"
   region                = var.region
   network_endpoint_type = "SERVERLESS"
@@ -92,13 +109,15 @@ resource "google_compute_region_network_endpoint_group" "backend" {
 }
 
 resource "google_compute_backend_service" "backend" {
+  count = local.edge_enabled ? 1 : 0
+
   name                  = "${local.name}-backend"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   protocol              = "HTTPS"
-  security_policy       = google_compute_security_policy.waf.id
+  security_policy       = google_compute_security_policy.waf[0].id
 
   backend {
-    group = google_compute_region_network_endpoint_group.backend.id
+    group = google_compute_region_network_endpoint_group.backend[0].id
   }
 
   # Edge access logs (SOC 2 CC7.2 F5), retained with the log bucket (90 days).
@@ -109,11 +128,15 @@ resource "google_compute_backend_service" "backend" {
 }
 
 resource "google_compute_url_map" "https" {
+  count = local.edge_enabled ? 1 : 0
+
   name            = "${local.name}-https"
-  default_service = google_compute_backend_service.backend.id
+  default_service = google_compute_backend_service.backend[0].id
 }
 
 resource "google_compute_managed_ssl_certificate" "api" {
+  count = local.edge_enabled ? 1 : 0
+
   name = "${local.name}-cert"
   managed {
     domains = [var.domain]
@@ -121,32 +144,42 @@ resource "google_compute_managed_ssl_certificate" "api" {
 }
 
 resource "google_compute_ssl_policy" "modern" {
+  count = local.edge_enabled ? 1 : 0
+
   name            = "${local.name}-tls"
   profile         = "MODERN"
   min_tls_version = "TLS_1_2"
 }
 
 resource "google_compute_target_https_proxy" "api" {
+  count = local.edge_enabled ? 1 : 0
+
   name             = "${local.name}-https-proxy"
-  url_map          = google_compute_url_map.https.id
-  ssl_certificates = [google_compute_managed_ssl_certificate.api.id]
-  ssl_policy       = google_compute_ssl_policy.modern.id
+  url_map          = google_compute_url_map.https[0].id
+  ssl_certificates = [google_compute_managed_ssl_certificate.api[0].id]
+  ssl_policy       = google_compute_ssl_policy.modern[0].id
 }
 
 resource "google_compute_global_address" "api" {
+  count = local.edge_enabled ? 1 : 0
+
   name = "${local.name}-ip"
 }
 
 resource "google_compute_global_forwarding_rule" "https" {
+  count = local.edge_enabled ? 1 : 0
+
   name                  = "${local.name}-https"
   load_balancing_scheme = "EXTERNAL_MANAGED"
-  ip_address            = google_compute_global_address.api.address
+  ip_address            = google_compute_global_address.api[0].address
   port_range            = "443"
-  target                = google_compute_target_https_proxy.api.id
+  target                = google_compute_target_https_proxy.api[0].id
 }
 
 # Plain HTTP only redirects to HTTPS (HSTS is set by the application).
 resource "google_compute_url_map" "http_redirect" {
+  count = local.edge_enabled ? 1 : 0
+
   name = "${local.name}-http-redirect"
   default_url_redirect {
     https_redirect         = true
@@ -156,14 +189,18 @@ resource "google_compute_url_map" "http_redirect" {
 }
 
 resource "google_compute_target_http_proxy" "redirect" {
+  count = local.edge_enabled ? 1 : 0
+
   name    = "${local.name}-http-proxy"
-  url_map = google_compute_url_map.http_redirect.id
+  url_map = google_compute_url_map.http_redirect[0].id
 }
 
 resource "google_compute_global_forwarding_rule" "http" {
+  count = local.edge_enabled ? 1 : 0
+
   name                  = "${local.name}-http"
   load_balancing_scheme = "EXTERNAL_MANAGED"
-  ip_address            = google_compute_global_address.api.address
+  ip_address            = google_compute_global_address.api[0].address
   port_range            = "80"
-  target                = google_compute_target_http_proxy.redirect.id
+  target                = google_compute_target_http_proxy.redirect[0].id
 }

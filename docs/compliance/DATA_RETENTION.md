@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | `audit_events` | Confidential | **400 days** (13 months — covers an annual audit cycle plus one quarter) | `AuditRepository.purge_older_than(cutoff)` invoked by `make purge-audit` / the scheduled job (`python -m app.jobs.purge_audit`), monthly | TL backend |
 | `feature_flags` | Internal | while the flag exists; rows for removed routes deleted in the PR that removes the route | migration / admin PUT | feature owner |
-| Application logs | Internal | local: container lifetime; production: **90 days** in Cloud Logging | log bucket retention (CLOUD_SERVICES §4) | TL backend |
+| Application logs | Internal | local: container lifetime; **dev: 30 days**; staging/production: **90 days** in Cloud Logging | log bucket retention (CLOUD_SERVICES §4) | TL backend |
 | Sentry events | Internal | Sentry plan default (90 days) | vendor setting | TL backend |
 | Database backups | Confidential | 14 days (local dumps) / 30 days (Cloud SQL) | [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md) | TL backend |
 | Incident evidence | Confidential | 12 months after closure, unless legal hold | restricted folder, deleted by IC | IC |

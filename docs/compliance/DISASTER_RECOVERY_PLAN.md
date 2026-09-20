@@ -59,12 +59,17 @@ quarterly access review ([ACCESS_CONTROL.md](ACCESS_CONTROL.md)).
 
 The production column is implemented in [`infra/`](../../infra/README.md) (Terraform, validated, apply pending GGU-29).
 
-| Layer | Demo (compose) | Production target (`infra/`, GGU-29) |
-|---|---|---|
-| Database | single container, daily dump | Cloud SQL HA (regional standby), automated backups + PITR |
-| Backend | single container, health-checked | Cloud Run ≥ 1 min instance, multi-zone, `/readyz` uptime check |
-| Secrets | `.env` per solution (never committed) | Secret Manager, versioned, 90-day rotation |
-| Logs | container stdout (JSON) | Cloud Logging, 90-day retention |
+| Layer | Demo (compose) | Dev (`infra/`, `environment = "dev"`) | Production target (`infra/`, GGU-29) |
+|---|---|---|---|
+| Database | single container, daily dump | Cloud SQL **zonal**, daily backups, **no PITR** | Cloud SQL HA (regional standby), automated backups + PITR |
+| Backend | single container, health-checked | Cloud Run **scale-to-zero**, no uptime check | Cloud Run ≥ 1 min instance, multi-zone, `/readyz` uptime check |
+| Secrets | `.env` per solution (never committed) | Secret Manager, versioned, 90-day rotation | Secret Manager, versioned, 90-day rotation |
+| Logs | container stdout (JSON) | Cloud Logging, **30-day** retention | Cloud Logging, 90-day retention |
+
+**Dev has no disaster-recovery commitment.** Losing it is not an incident: the
+recovery procedure is `terraform apply` followed by a re-seed, and the data is
+synthetic. It is listed here so nobody reads the production column and assumes
+it describes every deployed environment.
 
 ## 5. Drills
 

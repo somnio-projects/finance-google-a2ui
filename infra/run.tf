@@ -2,15 +2,24 @@
 # Ingress only from the load balancer; egress only to private ranges (Cloud SQL)
 # plus Google APIs; secrets mounted from Secret Manager; probes on the health
 # routes. SOC 2 CC6.6, CC7.2, A1.2 · ISO 27001 A.8.9, A.8.16, A.8.31.
+#
+# Two things differ in dev (derived from `local.ephemeral`, main.tf): ingress is
+# open, because there is no load balancer to be internal to, and the private
+# database is reached through direct VPC egress rather than a connector whose
+# two VMs would bill around the clock. Egress stays PRIVATE_RANGES_ONLY either
+# way, so the database is still only reachable from inside the VPC.
 
 locals {
   backend_env = {
-    ENVIRONMENT               = var.environment
-    APP_RELEASE               = var.backend_release
-    LOG_LEVEL                 = "INFO"
-    PUBLIC_BASE_URL           = "https://${var.domain}"
-    CORS_ALLOWED_ORIGINS      = var.cors_allowed_origins
-    TRUSTED_HOSTS             = var.domain
+    ENVIRONMENT          = var.environment
+    APP_RELEASE          = var.backend_release
+    LOG_LEVEL            = "INFO"
+    PUBLIC_BASE_URL      = local.public_base_url
+    CORS_ALLOWED_ORIGINS = var.cors_allowed_origins
+    # The backend refuses the wildcard when ENVIRONMENT=production and permits
+    # it elsewhere (core/config.py). Dev takes it because the run.app hostname
+    # is not known until after the apply; staging and production name theirs.
+    TRUSTED_HOSTS             = local.trusted_hosts
     AUTH_PROVIDER             = "oidc"
     AUTH_ISSUER               = var.auth_issuer
     AUTH_AUDIENCE             = var.auth_audience
@@ -31,7 +40,7 @@ locals {
 resource "google_cloud_run_v2_service" "backend" {
   name                = "${local.name}-api"
   location            = var.region
-  ingress             = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress             = local.run_ingress
   deletion_protection = var.environment == "production"
   labels              = local.labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
@@ -58,13 +67,23 @@ resource "google_cloud_run_v2_service" "backend" {
     labels          = local.labels
 
     scaling {
-      min_instance_count = var.min_instances
-      max_instance_count = var.max_instances
+      min_instance_count = local.min_instances
+      max_instance_count = local.max_instances
     }
 
+    # `one()` rather than a conditional: the connector's count is 0 in dev, so
+    # this is null there and the network_interfaces block below takes over.
     vpc_access {
-      connector = google_vpc_access_connector.run.id
+      connector = one(google_vpc_access_connector.run[*].id)
       egress    = "PRIVATE_RANGES_ONLY"
+
+      dynamic "network_interfaces" {
+        for_each = local.ephemeral ? [1] : []
+        content {
+          network    = google_compute_network.vpc.id
+          subnetwork = google_compute_subnetwork.connector.id
+        }
+      }
     }
 
     containers {
@@ -143,8 +162,16 @@ resource "google_cloud_run_v2_job" "purge_audit" {
       timeout         = "600s"
 
       vpc_access {
-        connector = google_vpc_access_connector.run.id
+        connector = one(google_vpc_access_connector.run[*].id)
         egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
       }
 
       containers {

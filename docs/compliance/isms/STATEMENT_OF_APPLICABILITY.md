@@ -100,9 +100,9 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.18 | Use of privileged utility programs | Applicable | Implemented | no shell in production image beyond runtime; non-root uid 10001; read-only FS; Alembic the only schema path |
 | A.8.19 | Installation of software on operational systems | Applicable | Implemented | immutable images built in CI from the lockfile; no runtime installs |
 | A.8.20 | Networks security | Applicable | Partially implemented | app-layer TrustedHost/CORS/rate limit today; private VPC, Cloud SQL private IP, VPC connector, deny-all firewall and Cloud Armor in `infra/network.tf`, `edge.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
-| A.8.21 | Security of network services | Applicable | Implemented | TLS at ingress, HSTS in production, HTTPS-only egress |
+| A.8.21 | Security of network services | Applicable | Implemented | TLS at ingress, HSTS in production, HTTPS-only egress. **In `dev` TLS is terminated on Cloud Run's own certificate — no load balancer, so no TLS policy of our choosing** (specs/infra/0001-dev-environment.md §5) |
 | A.8.22 | Segregation of networks | Applicable | Partially implemented | one GCP project per environment, Cloud SQL private IP (`infra/`) — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
-| A.8.23 | Web filtering | Applicable | Implemented | egress allow-list documented (CLOUD_SERVICES.md §6); CORS/TrustedHost allow-lists |
+| A.8.23 | Web filtering | Applicable | Partially implemented | egress allow-list documented (CLOUD_SERVICES.md §6); CORS/TrustedHost allow-lists; Cloud Armor OWASP WAF + per-IP throttling in `infra/edge.tf` — **staging/production only, deliberately absent in `dev`** (risk R-16, accepted while dev holds synthetic data only) |
 | A.8.24 | Use of cryptography | Applicable | Implemented | RS256/ES256/HS256 via PyJWT[crypto], TLS, encryption at rest decision (DATA_RESIDENCY_AND_TENANCY.md §3) |
 | A.8.25 | Secure development life cycle | Applicable | Implemented | CHANGE_MANAGEMENT.md; SDD rules; ship gate |
 | A.8.26 | Application security requirements | Applicable | Implemented | spec template §5; backend/docs/SECURITY.md |
@@ -110,7 +110,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.28 | Secure coding | Applicable | Implemented | ruff S/B rules, basedpyright strict, pydantic at boundaries, parameterised SQL, Semgrep |
 | A.8.29 | Security testing in development and acceptance | Applicable | Partially implemented | 100 % branch coverage, SAST, image scan; DAST and external pentest planned (VULNERABILITY_MANAGEMENT.md §2) |
 | A.8.30 | Outsourced development | Not applicable | — | no outsourced development (VENDOR_MANAGEMENT.md §5) |
-| A.8.31 | Separation of development, test and production environments | Applicable | Partially implemented | local/test/production separated by settings; staging + production tfvars in `infra/environments/` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 (CHANGE_MANAGEMENT.md §2) |
+| A.8.31 | Separation of development, test and production environments | Applicable | Partially implemented | local/test/dev/production separated by settings and by `var.environment`, which derives a distinct control set per environment (`infra/main.tf`); dev + staging + production tfvars in `infra/environments/`; `develop` releases dev, `main` releases production behind a required reviewer. IaC committed and validated in CI — **not applied yet**, first apply with GGU-29 (CHANGE_MANAGEMENT.md §2). Whether dev gets its own GCP project is open (spec 0001 OD-1); until production is applied nothing shares a project |
 | A.8.32 | Change management | Applicable | Implemented | CHANGE_MANAGEMENT.md; CODEOWNERS; PR template; EMERGENCY_CHANGE.md; CHANGELOG.md |
 | A.8.33 | Test information | Applicable | Implemented | synthetic data only; uuid-generated fixtures; testcontainers databases are ephemeral |
 | A.8.34 | Protection of information systems during audit testing | Applicable | Implemented | audits run read-only against the repository and local stacks (INTERNAL_AUDIT_PROGRAM.md); pentest scoped to staging |
@@ -120,7 +120,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | Ref | Missing piece | Owner | Target |
 |---|---|---|---|
 | A.5.20 | signed DPAs (Google Cloud, Sentry) | Eng. management | 2026-10-31 |
-| A.5.30, A.8.14, A.8.20, A.8.22, A.8.31 | **apply** the committed `infra/` Terraform (Cloud SQL HA + PITR, private IP, Cloud Armor, staging/production projects) | TL backend | GGU-29 deploy epic |
+| A.5.30, A.8.14, A.8.20, A.8.22, A.8.31 | **apply** the committed `infra/` Terraform. Dev first (private IP, Secret Manager, keyless delivery — but no HA, PITR or Cloud Armor); the production control set (Cloud SQL HA + PITR, Cloud Armor, its own project) lands when production is applied | TL backend | GGU-29 deploy epic |
 | A.5.35 | independent readiness review; external pentest | Eng. management | 2026-Q4 / before non-demo exposure |
 | A.8.29 | DAST on staging; external pentest | TL backend / Eng. management | with GGU-29 / before exposure |
 

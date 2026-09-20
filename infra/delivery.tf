@@ -23,7 +23,7 @@ resource "google_artifact_registry_repository" "backend" {
     id     = "keep-recent-builds"
     action = "KEEP"
     most_recent_versions {
-      keep_count = 20
+      keep_count = local.image_versions_kept
     }
   }
 
