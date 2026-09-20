@@ -194,14 +194,32 @@ The policy, from ADR-B D-7 — **force-refresh and exactly one retry, no loop**:
 implementable. *Not captured:* forcing a real expiry needs a clock the probe
 could not move; verified by reading both providers.
 
-> **Known divergence — `auth/revoked-token` does not exist.** ADR-B D-4 asks
-> for `check_revoked=True` and D-6 lists `auth/revoked-token` → 401. The
-> backend has no such error class and no revocation check: `OidcTokenVerifier`
-> is a generic JWKS verifier (`jwt.decode`), not the Firebase Admin SDK. **A
-> client must not write a branch for a code the backend cannot emit.** A
-> revoked token presents as `auth/invalid-token`, which the table above already
-> handles by signing out — so the client behaviour is correct today and the gap
-> is the ADR's, not the client's. Owner: TL (OD-3).
+> **Resolved divergence — `auth/revoked-token` does not exist, and a revoked
+> token is not rejected at all.** ADR-B D-4 asked for `check_revoked=True` and
+> D-6 listed `auth/revoked-token` → 401. Neither was ever built: `check_revoked`
+> is a **Firebase Admin SDK** parameter and `firebase-admin` is not a dependency;
+> `OidcTokenVerifier` is a generic JWKS verifier (`jwt.decode`). **A client must
+> not write a branch for a code the backend cannot emit.**
+>
+> **What actually happens, which is not what this note said before.** A revoked
+> token does **not** present as `auth/invalid-token`. Revoking a Firebase session
+> invalidates the *refresh* token and sets a valid-since watermark; the ID token
+> already in the client's hand keeps its valid signature, `iss`, `aud` and `exp`,
+> and the backend consults no watermark (`auth/claims.py` never reads `auth_time`).
+> For the remainder of that token's lifetime the request is **accepted, with a
+> 200**. What signs the user out is **D-7**: at `exp` the client force-refreshes,
+> the refresh fails at Firebase, and sign-out follows.
+>
+> **So the client needs no change, but for a different reason than "the backend
+> rejects it".** Nothing here is rejected; the window is closed by expiry. Bound:
+> **≤ 1 h + 30 s** for user ID tokens (Firebase's fixed one-hour lifetime plus
+> `AUTH_LEEWAY_SECONDS`). A client must not present the session as revoked before
+> then, and must not poll for a rejection that will not come.
+>
+> ADR-B **D-4 is struck and superseded by D-11/D-12**, and D-6's
+> `auth/revoked-token` is struck (GGU-87, Proposed). The gap was the ADR's, and it
+> is recorded there and in `backend/docs/SECURITY.md` as an accepted residual
+> risk with an owner. See OD-3.
 
 ### 4.5 `GET /v1/me`
 
@@ -992,7 +1010,7 @@ indistinguishable from a missing one.
 |---|---|---|---|
 | OD-1 | Does the client render a `render-intent` incrementally, or wait for the terminal `message`? Both are supported (§8.3); incremental is what buys the < 1 s first-surface budget, at the cost of a more complex widget lifecycle. | Client lead (Timur) | incremental, since the budget is the reason the events exist |
 | OD-2 | When a `render-intent` arrives, does the client fetch the payload via `GET …/views?view=<id>` or render from the catalog `example`? The intent carries no payload. | Client lead + TL | fetch, so the widget shows real portfolio data rather than the sample |
-| OD-3 | `auth/revoked-token` and `check_revoked=True` (ADR-B D-4/D-6) are not implemented (§4.4). Amend ADR-B to match the code, or implement revocation. | TL | amend the ADR — the client already handles it as `auth/invalid-token` |
+| OD-3 | ~~`auth/revoked-token` and `check_revoked=True` (ADR-B D-4/D-6) are not implemented (§4.4). Amend ADR-B to match the code, or implement revocation.~~ **Resolved 2026-09-20 (GGU-87): the ADR was amended.** D-4 is struck and superseded by D-11 (what verification asserts) and D-12 (no revocation check; latency = the token's remaining lifetime, **≤ 1 h + 30 s**), and `auth/revoked-token` is struck from D-6 — both Proposed, awaiting TL ratification. **No client change.** Note the corrected mechanism in §4.4: a revoked token is *accepted* until `exp`, not rejected as `auth/invalid-token`; D-7's failed refresh is what signs the user out. | TL | — resolved; ratification of ADR-B D-11/D-12 is the only thing still open |
 | OD-4 | Conversation history: `contextId` is echoed but no history is loaded (§2). Which spec wires `/v1/sessions` into a turn? | TL | a backend spec, before the demo; the client should not simulate history locally |
 | OD-5 | How does the client cache across a cold start — in-memory only, or persisted with its `ETag`? `Cache-Control: private` permits persistence for the signed-in user; it must be dropped on sign-out. | Client lead | in-memory only, until the latency budget demands otherwise |
 | OD-6 | Which `genui` / `a2ui_core` version the six components bind to. They are alpha and their catalog will move; the adapter indirection (§7) is what contains a bump. | Client lead | pin exactly, and record the version in `client_flutter/CLAUDE.md` |
