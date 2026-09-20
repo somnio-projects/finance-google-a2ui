@@ -1380,3 +1380,75 @@ tickets will be re-baselined against this foundation.
   exports it.
 - Flutter gate is still a `_candidates` entry in `ship-gate.json` until
   GGU-45/GGU-1 land.
+
+---
+
+## 2026-09-20 — GGU-29: the dev environment, applied for real (#29, #31, #32)
+
+**Specs:** `specs/infra/0001-dev-environment.md` (new, §10b is the interesting part)
+
+**Code.** A POC-sized `dev` environment: one local, `ephemeral = var.environment
+== "dev"`, derives every durability/exposure/cost decision, so `dev.tfvars`
+cannot make dev expensive and `production.tfvars` cannot make production cheap.
+Staging was dropped rather than built and left idle. CD retargeted: `develop` →
+dev behind a **real `needs: [ci]` edge** (backend-ci gained `workflow_call` and
+runs as backend-cd's `ci` job) rather than a `workflow_run` trigger that has to
+remember to inspect `conclusion`.
+
+**Harness.** `test_dev_environment.sh` (34 assertions). `.claude/ship-gate.json`
+gained `infra.dev-environment`; ci-conventions §5 now names the three runners.
+
+**What actually matters here: six defects, none of which any check in this
+repository could have caught.** Every one lives in the gap between two things
+that were each internally consistent, and nothing read both:
+
+1. Cloud SQL `edition` unset → defaulted to ENTERPRISE_PLUS, which rejects
+   every shared-core tier. `terraform plan` accepted it: **plan validates the
+   schema, not the API's compatibility rules.** Spec OD-2 had predicted the
+   tier question and recorded a fallback that would have failed identically.
+2. `sqladmin.googleapis.com` does not accept a service-level audit config —
+   wrong one of two real API names. The compliance corpus claimed those logs;
+   the claim was unapplyable.
+3. Secret Manager's service agent: created and used inside one apply, and IAM
+   could not see it yet. A 30 s wait is in the config, not in a runbook step.
+4. **`ENVIRONMENT=dev` was not a value the backend would accept.** Terraform
+   passes `var.environment` straight through; `Environment` in `config.py`
+   listed local/test/staging/production. The container would have died at
+   startup, after everything else was built.
+5. A mounted-but-empty optional secret arrives as `""`, not absent, so the
+   factories that branch on `is None` would have built `sentry_sdk.init(dsn="")`
+   and a keyless Gemini client.
+6. **Google's edge intercepts the exact path `/healthz` on `*.run.app`** and
+   never delivers it to the container. Liveness is now `/health`.
+
+**Next person should know**
+
+- **`terraform validate` cannot see Python and `make gate` cannot see
+  Terraform.** Defect 4 is the canonical example, and the fix is the pattern:
+  `test_dev_environment.sh` now reads `variables.tf` *and* `config.py` and
+  compares the environment names. When a fact is declared on both sides of
+  that wall, the test belongs in the shell suite — it is the only place that
+  can see both.
+- **A deployment hands the application things no test ever hands it.** Defects
+  4 and 5 are both that shape. An empty secret and an unknown environment name
+  are not exotic; they are what a real mount and a real env var look like.
+- **`/healthz` is unusable on Cloud Run's run.app domain.** Proven with two
+  controls from two networks (see the PR #32 body). Six alternative paths were
+  probed before choosing `/health`. Do not "fix" this back.
+- **Read the first apply, not just the first plan.** The spec told the reader
+  to read the plan. The plan was clean and five of the six defects were still
+  waiting. Plan is necessary and nowhere near sufficient.
+- **`gcloud storage buckets describe --format=json` reports versioning under
+  `versioning_enabled`**, not `versioning`. A wrong key reads as "off" and
+  invites you to re-enable something that was already on.
+- Secret Manager **rejects an empty payload**, so a deliberately-absent secret
+  is stored as a single space and labelled `state=intentionally-blank`. This is
+  why the blank-is-unset validator strips whitespace instead of comparing to
+  `""`.
+- **Still open, and it is the only thing between dev and a green pipeline:**
+  the Cloud Run service has no `run.invoker` binding, so it answers 403 to any
+  caller without a Google identity — including the pipeline's own post-deploy
+  probe, which is unauthenticated by contract. `iam.tf` carries the dev-only
+  binding and it plans clean; applying it is an exposure decision left to the
+  TL (OD-4). The rollback path was exercised for real by this failure and
+  worked: traffic was restored to the previous revision.
