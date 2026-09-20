@@ -122,6 +122,7 @@ async def test_catalog_describes_every_registered_projection(
     assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION, TAX_LOTS]
     assert [entry.id for entry in catalog] == [p.id for p in REGISTRY.all()]
     assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION, SCENARIO]
+    assert {WATERFALL, ALLOCATION} <= {entry.id for entry in catalog}
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry.summary == projection.summary
         assert entry.endpoints == list(projection.endpoints)

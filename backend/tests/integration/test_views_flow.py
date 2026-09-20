@@ -80,6 +80,7 @@ def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -
         WATERFALL,
         SCENARIO,
     }
+    assert {ALLOCATION, WATERFALL} <= {entry["id"] for entry in response.json()}
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:

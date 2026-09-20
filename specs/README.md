@@ -55,6 +55,7 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 | [backend/0015-tax-lot-table-projection.md](backend/0015-tax-lot-table-projection.md) | Implemented | GGU-41 |
 | [backend/0016-payoff-curve-projection.md](backend/0016-payoff-curve-projection.md) | Implemented | GGU-41 |
 | [backend/0017-scenario-comparison-projection.md](backend/0017-scenario-comparison-projection.md) | Implemented | GGU-41 |
+| [backend/0018-order-ticket-projection.md](backend/0018-order-ticket-projection.md) | Draft | GGU-41 |
 | [backend/0013-simulate-sale-tool.md](backend/0013-simulate-sale-tool.md) | Implemented | GGU-37 |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
 | [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |

@@ -97,6 +97,11 @@ def test_the_process_registry_holds_every_shipped_projection() -> None:
         "holdings.allocation.v1",
         "scenario.comparison.v1",
     ]
+def test_the_process_registry_holds_the_reference_projections() -> None:
+    """Containment, not equality: every new chart adds one id here (D-15)."""
+    ids = [p.id for p in REGISTRY.all()]
+    assert {"attribution.waterfall.v1", "holdings.allocation.v1"} <= set(ids)
+    assert ids == sorted(ids)
 
 
 def test_validated_options_fills_the_declared_defaults() -> None:
