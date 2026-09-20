@@ -102,6 +102,14 @@ with a runner and a workflow that must stay identical to it:
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
+| `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
+
+**`repo-ci.yaml` deliberately has no `paths:` filter**, which every other
+workflow here does have. A repository-wide check placed in a scoped workflow
+runs only when that scope changes — exactly when it is least needed. It is
+seconds long, so running it on every pull request costs nothing worth saving.
+A new `repo.*` check belongs here only if it genuinely spans the repository;
+anything that proves one stack goes in that stack's workflow.
 
 **"Identical" means the command, not the intent.** `infra.shell-lint` was
 missing from `ship-gate.json` while `infra-ci` had been running
@@ -113,6 +121,21 @@ a runner — after the branch had already merged.
 The lesson is narrow and worth keeping: when you add a check to a workflow,
 copy its command string into `ship-gate.json` rather than describing what it
 does. A paraphrase is where the two drift.
+
+**`repo.spelling` is the second instance of the same defect**, found while
+renumbering a spec. `make gate` ran `codespell src tests docs scripts` from
+inside `backend/`; the pre-commit hook ran codespell over the whole
+repository. Both were individually sensible and nobody compared them, so a
+typo in `specs/`, root `docs/` or `.claude/` **passed a green gate** and was
+caught only at commit time — and only if the author had not bypassed the hook.
+Proven both ways: a typo added to `specs/README.md` exits 65 under the new
+check and exits 0 under the old scope.
+
+The two halves also disagreed on *configuration*, not just scope: the hook
+read `backend/pyproject.toml`, whose word list knows nothing about the Flutter
+or documentation vocabulary, so it flagged `bloc` on every Flutter file it
+touched. Both now read `.codespellrc`. **Two configurations for one check is
+the same drift as two command strings.**
 
 A PR that changes one without its pair is incomplete. If a third runner ever
 appears, it goes in this table rather than in a comment.
