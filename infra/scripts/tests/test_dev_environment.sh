@@ -208,5 +208,38 @@ while read -r env; do
 done <<< "${TFVARS_ENVS}"
 
 echo
+echo "the schema moves before anything serves the new image"
+
+SCRIPT="${ROOT}/infra/scripts/deploy_cloud_run.sh"
+RUNTF="${ROOT}/infra/run.tf"
+
+# Until 2026-09-20 nothing ran migrations at all — not the pipeline, not
+# Terraform, not the container — and `/readyz` hid it by proving the
+# connection rather than the schema. These assertions are the reason that
+# cannot come back silently.
+assert "a migration job exists" '^resource "google_cloud_run_v2_job" "migrate"' "${RUNTF}"
+assert "it runs alembic, not the app" \
+  'command = \["alembic", "upgrade", "head"\]' "${RUNTF}"
+assert "a failed migration is not retried blindly" 'max_retries     = 0 #' "${RUNTF}"
+assert "the deploy runs migrations" 'if ! migrate ' "${SCRIPT}"
+assert "a failed migration rolls back" \
+  'migrations failed; the schema was not moved' "${SCRIPT}"
+
+# The ordering assertion, and the only one that really matters: migrations
+# must come BEFORE the traffic shift. A line-number comparison is crude, but
+# it is exactly the property — after the shift, requests meet a schema the
+# running code does not expect.
+migrate_line="$(grep -nF 'if ! migrate "' "${SCRIPT}" | head -1 | cut -d: -f1)"
+shift_line="$(grep -nF 'shift_traffic "${revision}"' "${SCRIPT}" | tail -1 | cut -d: -f1)"
+if [[ -n "${migrate_line}" && -n "${shift_line}" && "${migrate_line}" -lt "${shift_line}" ]]; then
+  echo "  PASS  migrations run before the traffic shift (${migrate_line} < ${shift_line})"
+  PASSED=$((PASSED + 1))
+else
+  echo "  FAIL  migrations must run BEFORE the traffic shift"
+  echo "        migrate at line ${migrate_line:-?}, shift at line ${shift_line:-?}"
+  FAILED=$((FAILED + 1))
+fi
+
+echo
 echo "${PASSED} passed, ${FAILED} failed"
 [[ "${FAILED}" -eq 0 ]]
