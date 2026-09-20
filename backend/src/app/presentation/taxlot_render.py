@@ -24,7 +24,7 @@ from app.domain.sale_results import LotConsumption, SaleSimulation
 from app.domain.terms import LotTerm
 from app.presentation.fragments import Annotation, MoneyDisplay, Total
 from app.presentation.options import DisplayOptions
-from app.presentation.tax_lots import TERM_LABELS, TaxLotRow, TermTotal
+from app.presentation.taxlots import TERM_LABELS, TaxLotRow, TermTotal
 
 
 def signed_money(value: Decimal, options: DisplayOptions) -> MoneyDisplay:

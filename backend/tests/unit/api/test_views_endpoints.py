@@ -17,7 +17,7 @@ from app.schemas.views import MAX_VIEWS
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
-TAX_LOTS = "tax_lots.table.v1"
+TAX_LOTS = "taxlots.table.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 AUTH = {"Authorization": "Bearer good"}
 

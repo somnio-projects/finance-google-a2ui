@@ -1,6 +1,6 @@
 """What the tax-lot table's payload **is** (spec 0015 §4).
 
-Split from ``tax_lot_render``, which is how it is **built**, along the seam
+Split from ``taxlot_render``, which is how it is **built**, along the seam
 spec 0013 already cut through the same data — and the one the 150-line budget
 was going to force anyway (spec 0015 OD-7). These are the shapes; the pure
 builders that fill them are one import away.
@@ -25,7 +25,7 @@ from app.presentation.fragments import (
     Total,
 )
 
-VIEW_ID: Final[str] = "tax_lots.table.v1"
+VIEW_ID: Final[str] = "taxlots.table.v1"
 
 #: The human half of ``LotTerm``. A mapping keyed by the enum, so a term can
 #: only be labelled by being a term — there is no string to mistype.
@@ -87,7 +87,7 @@ class TermTotal(Labelled):
 class TaxLotsTablePayload(ProjectionDto):
     """The lots a proposed sale consumes, and what each one realises."""
 
-    view: Literal["tax_lots.table.v1"] = Field(
+    view: Literal["taxlots.table.v1"] = Field(
         default=VIEW_ID, description="Projection discriminator.", examples=[VIEW_ID]
     )
     title: str = Field(

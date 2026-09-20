@@ -89,7 +89,7 @@ def test_the_process_registry_holds_every_reference_projection() -> None:
     assert [p.id for p in REGISTRY.all()] == [
         "attribution.waterfall.v1",
         "holdings.allocation.v1",
-        "tax_lots.table.v1",
+        "taxlots.table.v1",
     ]
 
 

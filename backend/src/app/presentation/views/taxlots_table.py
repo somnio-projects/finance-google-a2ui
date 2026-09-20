@@ -1,8 +1,8 @@
-"""``tax_lots.table.v1`` — the lots a proposed sale consumes (spec 0015).
+"""``taxlots.table.v1`` — the lots a proposed sale consumes (spec 0015).
 
 Flow B's primary surface, and the first projection that renders something the
 portfolio does not contain: a **sale**. The scenario therefore travels as
-declared, bounded options (ADR-K D-3, ``tax_lot_scenario``) and ``render``
+declared, bounded options (ADR-K D-3, ``taxlot_scenario``) and ``render``
 calls the pure domain walk, which keeps the Protocol's
 ``(portfolio, options) → DTO`` signature honest — ``simulate_sale`` performs no
 I/O, holds the finance itself and takes its ``as_of`` from the portfolio.
@@ -17,14 +17,14 @@ from typing import Final
 
 from app.domain.portfolio import Portfolio
 from app.domain.sales import simulate_sale
-from app.presentation import tax_lot_render as build
+from app.presentation import taxlot_render as build
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Total
 from app.presentation.registry import register
 from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
-from app.presentation.tax_lot_scenario import TaxLotsTableOptions
-from app.presentation.tax_lots import VIEW_ID, TaxLotsTablePayload
+from app.presentation.taxlot_scenario import TaxLotsTableOptions
+from app.presentation.taxlots import VIEW_ID, TaxLotsTablePayload
 
 TITLE: Final[str] = "Tax lots this sale consumes"
 SUMMARY: Final[str] = (

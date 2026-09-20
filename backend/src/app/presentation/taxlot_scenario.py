@@ -30,7 +30,7 @@ DEFAULT_QUANTITY: Final[str] = "0.5"
 
 
 class TaxLotsTableOptions(opt.DisplayOptions, opt.FieldSelection):
-    """Declared knobs of ``tax_lots.table.v1``; nothing else is accepted."""
+    """Declared knobs of ``taxlots.table.v1``; nothing else is accepted."""
 
     symbol: Ticker = Field(
         default=DEFAULT_SYMBOL,

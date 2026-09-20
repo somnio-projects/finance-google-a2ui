@@ -12,7 +12,7 @@ import pytest
 
 from app.domain.portfolio import Portfolio
 from app.domain.terms import LotTerm
-from app.presentation.views.tax_lots_table import (
+from app.presentation.views.taxlots_table import (
     VIEW_ID,
     TaxLotsTableOptions,
     render,

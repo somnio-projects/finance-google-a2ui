@@ -1,4 +1,4 @@
-"""AC-2/5/6/7/8/9 — ``tax_lots.table.v1`` rendered over the seeded portfolio.
+"""AC-2/5/6/7/8/9 — ``taxlots.table.v1`` rendered over the seeded portfolio.
 
 Every number asserted here is a literal: the render is pure and the portfolio
 is seeded at a frozen ``as_of``, so a changed string means the payload a widget
@@ -20,7 +20,7 @@ from app.domain.errors import (
 )
 from app.domain.portfolio import Portfolio
 from app.domain.terms import LotTerm
-from app.presentation.views.tax_lots_table import (
+from app.presentation.views.taxlots_table import (
     VIEW_ID,
     TaxLotsTableOptions,
     fitness,

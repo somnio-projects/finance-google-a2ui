@@ -13,7 +13,7 @@ from tests.conftest import make_token
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
-TAX_LOTS = "tax_lots.table.v1"
+TAX_LOTS = "taxlots.table.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 
 

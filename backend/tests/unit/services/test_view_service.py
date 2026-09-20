@@ -21,7 +21,7 @@ from tests.conftest import FROZEN_NOW
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
-TAX_LOTS = "tax_lots.table.v1"
+TAX_LOTS = "taxlots.table.v1"
 
 
 @pytest.fixture
