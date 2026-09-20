@@ -48,7 +48,18 @@ def test_the_api_key_setting_is_referenced_only_by_config_and_the_factory() -> N
         if "gemini_api_key" in path.read_text(encoding="utf-8")
     )
 
-    assert readers == ["app/core/config.py", "app/infra/model/factory.py"]
+    # What this guard is for: the key is DECLARED in config and CONSUMED in the
+    # factory, and no third module branches on whether it is set. `config` is
+    # two files only because of the 150-line budget — `config_parsing` holds the
+    # validators that turn raw environment strings into these fields, so naming
+    # the field there is the declaration, not a call site. If a module outside
+    # `app/core/config*` or the model adapter appears in this list, that is the
+    # failure the test was written for.
+    assert readers == [
+        "app/core/config.py",
+        "app/core/config_parsing.py",
+        "app/infra/model/factory.py",
+    ]
 
 
 def test_get_secret_value_for_the_model_key_lives_only_in_the_adapter() -> None:

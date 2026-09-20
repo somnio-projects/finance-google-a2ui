@@ -26,6 +26,26 @@ locals {
   db_tier             = coalesce(var.db_tier, local.ephemeral ? "db-f1-micro" : "db-custom-1-3840")
   db_disk_type        = local.ephemeral ? "PD_HDD" : "PD_SSD"
 
+  # Edition, made explicit after the first dev apply failed on it:
+  #
+  #   Invalid Tier (db-f1-micro) for (ENTERPRISE_PLUS) Edition.
+  #
+  # `edition` was never set here, and the API does NOT infer it from the tier —
+  # it defaulted to ENTERPRISE_PLUS, which only accepts `db-perf-optimized-N-*`.
+  # So the shared-core tiers this project assumes were unreachable, and nobody
+  # could know until an apply: `terraform plan` does not validate tier/edition
+  # against the API (spec 0001 OD-2 predicted the tier question and guessed the
+  # wrong fallback — `db-g1-small` would have failed identically).
+  #
+  # ENTERPRISE is what dev needs and what the compliance corpus actually asks
+  # for: regional HA, PITR and the 30-backup retention are all ENTERPRISE
+  # features. ENTERPRISE_PLUS buys sub-second failover and a data cache that no
+  # document here requires, at roughly double the price — and it was reaching
+  # staging/production by *default*, not by decision. It is pinned below so the
+  # bill cannot be set by a provider default, and flagged in the spec as a
+  # choice to make deliberately before production is first applied.
+  db_edition = "ENTERPRISE"
+
   # Exposure (edge.tf, run.tf). No load balancer means no Cloud Armor, no
   # managed certificate, no reserved global IP and no fixed monthly forwarding
   # charge. The endpoint is Cloud Run's own run.app URL, which only resolves
