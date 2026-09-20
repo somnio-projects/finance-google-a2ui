@@ -2,7 +2,12 @@
 #   cp backend/env.example backend/.env   -> once; per-solution env files, never committed
 #   docker compose up --build             -> Postgres + backend (:8000, hot reload)
 #   docker compose up db                  -> only the database (for `make test`, TEST_DATABASE_URL)
-# The Flutter client is not part of the stack yet (frontend work has not started).
+#   docker compose --profile client up --build
+#                                         -> the above plus the web client (:3000)
+#
+# The client sits behind a profile so that `docker compose up --build` is still
+# Postgres + backend and nothing else: building the Flutter bundle downloads an
+# SDK and takes minutes, and a backend developer should never pay for it.
 #
 # Env policy: this file only carries the *topology* (hostnames, ports, origins
 # the services need to reach each other). Credentials and tunables live in each
@@ -52,6 +57,37 @@ services:
       - no-new-privileges:true
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  client:
+    profiles: ["client"]              # opt in: `docker compose --profile client up`
+    build:
+      context: ./client_flutter
+      dockerfile: Dockerfile
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:8080"                   # 3000 is already in the backend's CORS allow-list above
+    env_file:
+      - path: ./client_flutter/.env   # optional: the client holds no credentials by design.
+        required: false               # Everything it is given reaches the browser, so a secret
+                                      # here would be a published secret. The hook exists only so
+                                      # a developer can override the values below locally.
+    environment:                      # topology only
+      # The *browser's* view of the API, not the compose network's: this value
+      # is served to the page, and `http://backend:8000` does not resolve there.
+      BACKEND_BASE_URL: http://localhost:8000
+      PORT: 8080
+    read_only: true
+    tmpfs:
+      - /tmp                          # the entrypoint renders nginx.conf and /config.json here
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
       interval: 15s
       timeout: 3s
       retries: 5

@@ -19,10 +19,11 @@ GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 ```bash
 cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
 docker compose up --build              # Postgres + backend on http://localhost:8000 (docs at /docs)
+docker compose --profile client up --build   # …plus the web client on http://localhost:3000
 cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
 
-Compose carries only the topology (hostnames, ports, origins); credentials and tunables come from each solution's `.env` through `env_file`. Frontend is not part of the stack yet.
+Compose carries only the topology (hostnames, ports, origins); credentials and tunables come from each solution's `.env` through `env_file`. The client is in the stack behind a `client` profile, so a backend-only `docker compose up` never pays for a Flutter build; it is hardened like the backend's container and gets `BACKEND_BASE_URL` at **run** time, not build time (`client_flutter/Dockerfile`, `specs/client/0002-client-delivery.md`).
 
 ## Verify — a change is not done without this
 

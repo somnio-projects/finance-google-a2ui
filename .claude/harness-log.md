@@ -1862,3 +1862,66 @@ everything is worse than none.
   same session can be pasted into a chat or a ticket without disclosing
   anything — the fix is a mechanism, not a stronger warning. When a document
   tells someone what not to do, check that the copyable part agrees.
+
+---
+
+## 2026-09-20 (cont.) — the client joins the stack, and a manifest that could not build itself (GGU-82)
+
+**Specs:** `specs/client/0002-client-delivery.md`
+
+**Code.** `client_flutter/` gained a container: multi-stage, both stages pinned
+by digest, non-root (uid 101), read-only root filesystem, `no-new-privileges`,
+`/health` (not `/healthz` — the harness log above explains why), and a static
+nginx that serves the bundle with its own CSP. `docker-compose.yml` gained a
+`client` service behind a `client` profile, so a backend-only `docker compose
+up` still does not pay for a Flutter build. `client_flutter/docs/SECURITY.md`
+is the client's control mapping; it has fourteen implemented rows and **ten**
+listed gaps.
+
+**Two decisions worth carrying forward**
+
+- **`BACKEND_BASE_URL` is read at run time, not compiled in.** The argument
+  that nearly won — "a baked-in value is shipped to every browser" — is wrong,
+  and writing it down as the reason would have been worse than picking the
+  other option: the backend URL is public either way, it is in the network tab
+  on the first call. The reason that survives is **artifact identity**.
+  `backend-cd.yaml` promotes one digest through probe-then-shift; a
+  per-environment client image would mean the artifact CI verified is not the
+  artifact that ships. So the entrypoint renders `/config.json` at start.
+- **`wasm-unsafe-eval`, never `unsafe-eval`.** CanvasKit is WebAssembly, so
+  `script-src` must permit instantiation — but the narrow directive does only
+  that. `flutter build web --csp` is what keeps the broad one unnecessary, so
+  **the flag and the header are a pair**; whoever removes `--csp` has to widen
+  the header, and should have to notice. `style-src 'unsafe-inline'` remains
+  and is written down as residual risk rather than quietly dropped.
+
+**Next person should know**
+
+- **Building the thing is how you find out the manifest is fiction.**
+  `client_flutter/pubspec.yaml` declares `flutter: ">=3.35.7"` / `sdk:
+  ">=3.10.0"`. Its own checked-in `pubspec.lock` resolves against `flutter:
+  ">=3.44.0"` / `dart: ">=3.12.0"`. Installing the declared minimum fails
+  version solving outright. Nothing had ever installed it — every developer had
+  a newer SDK already on their machine, and there is no client CI — so the
+  declared floor had been decorative since the day it was written. Same shape
+  as the seven claims in the entry above: believed, never executed.
+- **An `add_header` inside an nginx `location` replaces every inherited one.**
+  A per-location `Cache-Control` would have silently deleted the CSP from the
+  HTML response — the one response that needs it. The config uses a `map` and a
+  single server-level `add_header` for exactly this reason. If someone adds a
+  header to a `location` later, they have to re-add all of them.
+- **`envsubst` needs its variable list.** `envsubst < in > out` with no
+  SHELL-FORMAT argument expands nginx's own `$uri`, `$host` and
+  `$request_method` to empty strings, and the resulting config still starts.
+  The entrypoint passes `'${PORT} ${CONNECT_SRC}'`.
+- **The evidence for this PR is incomplete, and that is stated in the PR rather
+  than papered over.** The host ran out of disk (460 GiB volume at 100 %, 2 GiB
+  free) mid-run and took the Docker daemon down with it, so the image was never
+  built end to end and the `docker run` / `curl -I` proofs AC-5 asks for are not
+  in the PR body. What *is* pasted is real: the version-solving failure above,
+  and the compose profile check. Do not merge on the strength of the rest —
+  the container's claims are unverified until someone runs it.
+- **Ten gaps, and the first one is the interesting one.** The client's login
+  (`login_bloc.dart`) is a fake that emits `success` for any input after a
+  two-second delay. There is no token anywhere in the browser, so every control
+  about token storage would have been invention. The mapping says so instead.
