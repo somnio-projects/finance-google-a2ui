@@ -17,7 +17,17 @@ solution's `.env` / Secret Manager.
 | Environment | Mechanism | Frequency | Retention | Encryption |
 |---|---|---|---|---|
 | Local / demo (compose) | `pg_dump -Fc` from the `db` container (§3) | daily while the demo stack is in use, and **before every migration deploy** | 14 days locally, in the operator's encrypted home directory (FileVault); never committed | at rest by the host disk encryption |
-| Production (Cloud SQL — `infra/database.tf`, apply with GGU-29) | automated daily backups + point-in-time recovery (WAL) | daily + continuous WAL | 30 days | Google-managed AES-256 at rest (CMEK optional, decision recorded in DATA_RESIDENCY_AND_TENANCY) |
+| **Dev** (Cloud SQL — `infra/database.tf` with `environment = "dev"`, apply with GGU-29) | automated daily backups only — **no point-in-time recovery, no regional standby** | daily | **2 backups** | Google-managed AES-256 at rest |
+| Production / staging (Cloud SQL — `infra/database.tf`, apply with GGU-29) | automated daily backups + point-in-time recovery (WAL) | daily + continuous WAL | 30 days | Google-managed AES-256 at rest (CMEK optional, decision recorded in DATA_RESIDENCY_AND_TENANCY) |
+
+**Dev is deliberately outside the recovery commitments above**
+([specs/infra/0001-dev-environment.md](../../specs/infra/0001-dev-environment.md)
+§5). Its RPO is **up to 24 hours** and it has no RTO commitment at all: it is a
+throwaway proof of concept holding **synthetic data only**, and the recovery
+procedure for it is to re-apply Terraform and re-seed, not to restore. Deletion
+protection is off on that instance on purpose, so it can be destroyed the day
+it stops being useful. If real or client data is ever placed in dev, this row
+and that spec are void and the environment must be re-sized first.
 
 Backups contain Confidential data (`audit_events`) and are handled per
 [DATA_CLASSIFICATION.md](DATA_CLASSIFICATION.md): restricted access (IC,

@@ -34,7 +34,8 @@ that succeeded.
   account** with the narrowest roles that can publish and deploy. No key
   material anywhere.
 - `.github/workflows/backend-cd.yaml` — build, push, deploy, verify, record.
-  `develop` → staging with no human step; `main` → production behind a
+  `develop` → **dev** with no human step (retargeted from staging by
+  `specs/infra/0001-dev-environment.md`); `main` → production behind a
   `production` GitHub Environment with a required reviewer.
 - A **deploy-and-verify script** (`infra/scripts/deploy_cloud_run.sh`) holding
   the risky logic — deploy without traffic, confirm the revision is Ready,

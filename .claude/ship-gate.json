@@ -46,6 +46,11 @@
       "id": "infra.credential-model",
       "cwd": ".",
       "cmd": "bash infra/scripts/tests/test_wif_conditions.sh"
+    },
+    {
+      "id": "infra.dev-environment",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_dev_environment.sh"
     }
   ],
   "_candidates": [

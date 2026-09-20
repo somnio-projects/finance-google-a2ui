@@ -119,6 +119,15 @@ repos:
         files: ^infra/
         pass_filenames: false
 
+      # Reads the Terraform AND both backend workflows, so it must run when
+      # either side moves — the property it guards spans the two.
+      - id: infra-dev-environment
+        name: Prove dev stays cheap and releases behind a green gate (test_dev_environment.sh)
+        entry: bash infra/scripts/tests/test_dev_environment.sh
+        language: system
+        files: ^(infra/|\.github/workflows/backend-c[di]\.yaml$)
+        pass_filenames: false
+
       # Fast enough for every commit; the DB-backed suite runs on push.
       - id: backend-unit-tests
         name: Run the unit suite (pytest -m unit)

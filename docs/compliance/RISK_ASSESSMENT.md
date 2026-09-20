@@ -50,10 +50,16 @@
 | R-13 | AS-4/5 | Vendor (Sentry, Google) changes data handling or suffers a breach | 2 | 3 | 6 | Share | VENDOR_MANAGEMENT register, DPAs, annual review, PII never sent to Sentry | 1×3 = 3 |
 | R-14 | AS-1 | Retention violation (data kept forever, erasure impossible) | 3 | 3 | 9 | Modify | DATA_RETENTION policy, `audit_events` purge (repository method + scheduled job), erasure procedure | 1×3 = 3 |
 | R-15 | AS-8 | Unencrypted data at rest in production | 2 | 4 | 8 | Modify | Cloud SQL encryption at rest (Google-managed keys), private IP and TLS-only in `infra/database.tf`; decision in DATA_RESIDENCY_AND_TENANCY; local compose is dev only | 1×4 = 4 |
+| R-16 | AS-8 | The **`dev`** environment runs without the edge and durability controls production has: no Cloud Armor WAF, no edge rate limit or adaptive DDoS, no regional HA, no PITR, 2 retained backups, no uptime check, deletion protection off | 3 | 2 | 6 | Retain | Deliberate, scoped and written down: `specs/infra/0001-dev-environment.md` §5 and each control's own document here. Impact is bounded by **synthetic data only** and `max-instances = 2`; the application-layer controls (bearer auth, per-principal rate limit, error masking, audit events, private DB IP, TLS-only, Secret Manager, keyless pipeline) are **unchanged** in dev | 3×2 = 6 |
 
 All residual scores are ≤ 6 (accepted). R-11 is explicitly **retained** while
 the service is a demo behind Google reviewer credentials; the acceptance
 expires when the service is exposed beyond the demo (owner: TL backend).
+
+R-16 is **retained** on one condition: `dev` holds synthetic data only. Placing
+real, client or production-derived data in `dev` invalidates the acceptance
+immediately and requires the environment to be re-sized to the production
+control set before the data is loaded (owner: TL backend).
 
 ## 4. Risk treatment plan (Cl. 6.1.3)
 

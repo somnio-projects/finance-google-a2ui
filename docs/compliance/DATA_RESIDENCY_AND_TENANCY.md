@@ -33,7 +33,7 @@ Sentry's own subprocessor locations are listed in
 
 | Path | Control |
 |---|---|
-| In transit, client → API | TLS 1.2+ terminated at the Cloud Run ingress (Google-managed certificates); HSTS `max-age=63072000; includeSubDomains` sent in production; local compose is plain HTTP on `localhost` only |
+| In transit, client → API | TLS 1.2+ terminated at the load balancer with a certificate and a `MODERN` TLS policy we configure (staging/production); **in dev there is no load balancer — TLS is terminated by Cloud Run on its own `run.app` certificate, so the profile is Google's default rather than one we pick**; HSTS `max-age=63072000; includeSubDomains` sent in production; local compose is plain HTTP on `localhost` only |
 | In transit, API → PostgreSQL | production: Cloud SQL connector / private IP with TLS; local: Docker network |
 | In transit, API → IdP / Sentry | HTTPS only (httpx, sentry-sdk) |
 | At rest, database | production: Cloud SQL encryption at rest, Google-managed AES-256 keys (decision: **Google-managed keys are accepted** for the showcase; CMEK to be revisited if client data is ever introduced — recorded in the risk register R-15); local: host disk encryption (FileVault) per DEVICE_POLICY |

@@ -6,12 +6,24 @@
 #   step name = "<Verb> <object> (<tool>)"
 name: infra-ci
 
+# The delivery-scripts job asserts properties that span infra/ and the two
+# backend workflows (what dev is, and that a release waits for a green gate),
+# so a change to either side has to start this run.
+# (Actions does not expand YAML anchors, so the two lists are spelled out.)
 on:
   pull_request:
-    paths: ["infra/**", ".github/workflows/infra-ci.yaml"]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yaml"
+      - ".github/workflows/backend-cd.yaml"
+      - ".github/workflows/backend-ci.yaml"
   push:
     branches: [main, develop]
-    paths: ["infra/**", ".github/workflows/infra-ci.yaml"]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yaml"
+      - ".github/workflows/backend-cd.yaml"
+      - ".github/workflows/backend-ci.yaml"
 
 permissions:
   contents: read
@@ -72,6 +84,9 @@ jobs:
       - name: Prove no long-lived key exists and the provider is repository-pinned (test_wif_conditions.sh)
         run: bash infra/scripts/tests/test_wif_conditions.sh
 
+      - name: Prove dev stays cheap by derivation and releases only behind a green gate (test_dev_environment.sh)
+        run: bash infra/scripts/tests/test_dev_environment.sh
+
   report:
     name: "Report · infrastructure gate summary"
     runs-on: ubuntu-latest
@@ -87,7 +102,7 @@ jobs:
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
             echo "| Terraform | formatting, validity, no CRITICAL/HIGH misconfiguration | ${{ needs.terraform.result }} |"
-            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository | ${{ needs.delivery-scripts.result }} |"
+            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate | ${{ needs.delivery-scripts.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail the run when any gate failed (bash)

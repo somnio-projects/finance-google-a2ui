@@ -1,6 +1,11 @@
 output "api_ip" {
-  description = "Global anycast IP to point the DNS A record of var.domain at."
-  value       = google_compute_global_address.api.address
+  description = "Global anycast IP to point the DNS A record of var.domain at. Null in dev, which has no load balancer."
+  value       = one(google_compute_global_address.api[*].address)
+}
+
+output "public_url" {
+  description = "Where the API answers, and the value for this environment's PUBLIC_URL_<ENV> repository variable: the certified domain outside dev, Cloud Run's own URL in dev. This reads the service's real address — use it rather than reconstructing the run.app hostname by hand."
+  value       = local.ephemeral ? google_cloud_run_v2_service.backend.uri : "https://${var.domain}"
 }
 
 output "cloud_run_service" {

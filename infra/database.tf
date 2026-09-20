@@ -1,18 +1,26 @@
-# Cloud SQL for PostgreSQL 16 — private IP only, regional HA, automated
-# backups + PITR, encryption at rest with Google-managed keys (decision in
-# DATA_RESIDENCY_AND_TENANCY.md §3). SOC 2 A1.2, C1.1 · ISO 27001 A.8.13, A.8.14, A.8.24.
+# Cloud SQL for PostgreSQL 16 — private IP only, TLS required, encryption at
+# rest with Google-managed keys (decision in DATA_RESIDENCY_AND_TENANCY.md §3).
+# SOC 2 A1.2, C1.1 · ISO 27001 A.8.13, A.8.14, A.8.24.
+#
+# Redundancy and recoverability are the expensive half and are derived from
+# `local.ephemeral` (main.tf): staging and production keep regional HA, PITR,
+# 30 retained backups and deletion protection; dev keeps none of them, and
+# says so in specs/infra/0001-dev-environment.md §5 and
+# docs/compliance/BACKUP_AND_RECOVERY.md. Everything that protects the *data
+# in flight* — private IP, no public IP, TLS-only, connection logging — is
+# identical in every environment, because none of it costs anything.
 
 resource "google_sql_database_instance" "postgres" {
   name                = "${local.name}-pg"
   database_version    = "POSTGRES_16"
   region              = var.region
-  deletion_protection = true
+  deletion_protection = local.db_deletion_protect
   depends_on          = [google_service_networking_connection.private_services]
 
   settings {
-    tier              = var.db_tier
-    availability_type = "REGIONAL" # synchronous standby in another zone (BCP §5)
-    disk_type         = "PD_SSD"
+    tier              = local.db_tier
+    availability_type = local.db_availability # REGIONAL = synchronous standby in another zone (BCP §5)
+    disk_type         = local.db_disk_type
     disk_autoresize   = true
     user_labels       = local.labels
 
@@ -24,11 +32,11 @@ resource "google_sql_database_instance" "postgres" {
 
     backup_configuration {
       enabled                        = true
-      point_in_time_recovery_enabled = true # RPO 1 h target → minutes in practice
+      point_in_time_recovery_enabled = local.db_point_in_time # RPO 1 h target → minutes in practice
       start_time                     = "03:00"
-      transaction_log_retention_days = 7
+      transaction_log_retention_days = local.db_log_retention
       backup_retention_settings {
-        retained_backups = 30 # BACKUP_AND_RECOVERY.md §2
+        retained_backups = local.db_retained_backups # BACKUP_AND_RECOVERY.md §2
         retention_unit   = "COUNT"
       }
     }

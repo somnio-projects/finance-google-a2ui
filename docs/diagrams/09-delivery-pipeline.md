@@ -1,6 +1,6 @@
 # 09 — Where each check runs
 
-Cheap checks locally, expensive ones once. Source of truth: [`.claude/rules/ci-conventions.md`](../../.claude/rules/ci-conventions.md), `.github/workflows/`. Dashed = the environments do not exist yet (GGU-29 applies Terraform); the pipeline itself is merged.
+Cheap checks locally, expensive ones once, and nothing released without the gate. Source of truth: [`.claude/rules/ci-conventions.md`](../../.claude/rules/ci-conventions.md), `.github/workflows/`, [`specs/infra/0001-dev-environment.md`](../../specs/infra/0001-dev-environment.md). Dashed = the environments do not exist yet (GGU-29 applies Terraform); the pipeline itself is merged.
 
 ```mermaid
 flowchart LR
@@ -17,6 +17,7 @@ flowchart LR
         rep["Report · ship-gate summary"]
     end
     subgraph cd["backend-cd — after merge"]
+        gate["Gate · backend-ci called as a job<br/>publish and deploy need: it"]
         pub["Image · build, push by digest to Artifact Registry"]
         dep["Deploy · revision with no traffic → /readyz → shift 100%"]
         ver["Verify · /healthz reports the released identifier"]
@@ -32,12 +33,17 @@ flowchart LR
     t --> img
     q & t & s & img --> rep
     rep --> merge["Squash merge<br/>1 code-owner approval"]
-    merge --> pub --> dep --> ver
+    merge --> gate --> pub --> dep --> ver
     ver -- "not healthy" --> rb
-    dep -. "develop" .-> stg["Cloud Run staging<br/>(no human step)"]
-    dep -. "main, after environment approval" .-> prd["Cloud Run production"]
+    dep -. "develop" .-> dv["Cloud Run dev<br/>(no human step)<br/>probed at its run.app URL"]
+    dep -. "main, after environment approval" .-> prd["Cloud Run production<br/>probed at the LB domain"]
     merge --> wk
 
+    %% The `gate` node is backend-ci.yaml called via workflow_call, in the SAME
+    %% run as the deploy, so `needs:` makes the ordering an Actions guarantee —
+    %% not a workflow_run trigger that fires on completion whatever the result.
+    %% backend-ci therefore has no push trigger of its own: it would run twice.
+    %% There is no staging box: dev replaced it as develop's target.
     %% Authentication is Workload Identity Federation: no service-account key
     %% exists in repository secrets, and a test fails the build if one appears.
     %% Traffic never lands on an unverified revision — that ordering is the
@@ -49,3 +55,12 @@ holds the deploy-verify-rollback sequence so it can be run against a stub
 `gcloud` and tested (`infra/scripts/tests/test_deploy_cloud_run.sh`). A rollback
 path that has never executed is not a rollback path. See
 [spec 0007](../../specs/backend/0007-cd-pipeline.md).
+
+**Why the gate is a called workflow, not a trigger.** `backend-cd` runs
+`backend-ci.yaml` as its `ci` job and every later job declares `needs: [ci, …]`.
+A red quality, test, security or image job leaves `publish` and `deploy`
+*skipped*, and the `report` job counts `skipped` as failure — so a run that
+released nothing is never reported green. The alternative, a `workflow_run`
+trigger, fires when CI *completes* regardless of conclusion and relies on
+remembering to inspect it. `infra/scripts/tests/test_dev_environment.sh`
+asserts the `needs` edges, so removing one fails the build.

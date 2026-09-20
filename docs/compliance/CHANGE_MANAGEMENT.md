@@ -19,12 +19,19 @@ log entry. Details: `docs/DEV_HARNESS.md`, `.claude/rules/backend/sdd.md`,
 |---|---|---|---|
 | `local` | development (`docker compose`) | synthetic | `backend/.env` (git-ignored) |
 | `test` | CI and integration tests (testcontainers) | ephemeral | `tests/conftest.py::make_settings` |
-| `staging` | pre-production deploy, smoke tests (`infra/environments/staging.tfvars`, apply with GGU-29) | synthetic + demo accounts | Secret Manager (`staging` project) |
+| `dev` | the deployed proof of concept — what `develop` releases (`infra/environments/dev.tfvars`, apply with GGU-29) | **synthetic only** | Secret Manager (`finance-a2ui` project) |
+| `staging` | pre-production deploy, smoke tests (`infra/environments/staging.tfvars`) — **defined but not provisioned, and currently nobody's deploy target** | synthetic + demo accounts | Secret Manager (`staging` project) |
 | `production` | the showcase | demo accounts | Secret Manager (`prod` project) |
+
+`dev` is a reduced control set, not a smaller production — the controls it does
+**not** have are listed in
+[specs/infra/0001-dev-environment.md](../../specs/infra/0001-dev-environment.md)
+§5 and in each control's own document here. It holds synthetic data only; that
+constraint is what makes the reduction acceptable.
 
 Separation is enforced in code: `ENVIRONMENT=production` disables docs/OpenAPI,
 requires explicit `TRUSTED_HOSTS`, enables HSTS and admin MFA. Promotion order is
-always local → CI → staging → production; a change never lands in production
+always local → CI → dev → production; a change never lands in production
 without a green CI run on the same commit.
 
 ## 3. Branch model
@@ -76,7 +83,7 @@ migrations run at container start (`RUN_MIGRATIONS`), preceded by a backup.
 
 - `develop` is always green; `main` is always deployable. Releases are tags `vMAJOR.MINOR.PATCH` (SemVer) cut from `main` after a `develop → main` PR, with notes in `CHANGELOG.md` (Keep a Changelog).
 - The release PR bumps `backend/pyproject.toml` version. `GET /healthz` reports the **release identifier** `<version>+<short sha>`, injected as `APP_RELEASE` by the pipeline, so the running revision names the exact commit it was built from.
-- **Deployment is automated and recorded** (`.github/workflows/backend-cd.yaml`, spec 0007). A merge to `develop` releases staging with no human step; a merge to `main` releases production only after the `production` GitHub Environment's **required reviewer** approves — the separation-of-duties control for release, since the approver need not be the merger.
+- **Deployment is automated, gated and recorded** (`.github/workflows/backend-cd.yaml`, spec 0007, `specs/infra/0001-dev-environment.md`). A merge to `develop` releases **dev** with no human step; a merge to `main` releases production only after the `production` GitHub Environment's **required reviewer** approves — the separation-of-duties control for release, since the approver need not be the merger. In both cases the delivery run **calls the full ship gate as a job and the build and deploy jobs `needs:` it**, so nothing is published or released unless the gate passed on that exact commit; this is a dependency inside one run, not a notification that fires after CI and then has to remember to check whether it passed.
 - **The deploy record is the workflow run.** Its summary names the environment, the commit, the release identifier, the **image digest** and the Cloud Run revision, and the GitHub Environment keeps the deployment history. No separate spreadsheet: the record cannot drift from what actually ran.
 - **Nothing takes traffic unverified.** The revision is created with no traffic (its startup applies the migrations), `/readyz` is probed on that revision, traffic shifts only then, and `/healthz` must report the expected release.
 - **Rollback is automatic on a failed verification** — traffic returns to the previously serving revision and the run fails. A manual rollback is the same script with `ROLLBACK_TO=<revision>`, or re-running `backend-cd` with the `rollback_to` input (`infra/README.md`). Data rollbacks follow the DR plan.
