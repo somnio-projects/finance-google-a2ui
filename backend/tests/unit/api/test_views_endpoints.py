@@ -103,6 +103,7 @@ def test_catalog_describes_every_registered_projection(
     assert response.status_code == 200
     catalog = response.json()
     assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION, TAX_LOTS]
+    assert [entry["id"] for entry in catalog] == [p.id for p in REGISTRY.all()]
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry["endpoints"] == list(projection.endpoints)
         assert entry["options_schema"]["properties"]

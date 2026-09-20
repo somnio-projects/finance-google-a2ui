@@ -9,6 +9,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from app.presentation.registry import REGISTRY
 from tests.conftest import make_token
 
 ALLOCATION = "holdings.allocation.v1"
@@ -71,6 +72,8 @@ def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -
     assert payload["subtitle"] == "Sell 0.5 BTC under FIFO"
     assert [half["term"] for half in payload["by_term"]] == ["short", "long"]
     assert payload["price"]["amount"]["display"] == "$64,250.00"
+
+    assert served == {projection.id for projection in REGISTRY.all()}
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:

@@ -90,6 +90,7 @@ def test_the_process_registry_holds_every_reference_projection() -> None:
         "attribution.waterfall.v1",
         "holdings.allocation.v1",
         "taxlots.table.v1",
+        "payoff.curve.v1",
     ]
 
 
