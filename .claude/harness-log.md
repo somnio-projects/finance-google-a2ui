@@ -2142,3 +2142,38 @@ building it first:
 - **A filename rule cannot separate two classes that share a file.** The first attempt at "only a `*_page.dart` may read a repository" passed its own mutation check *green*, because `PortfolioViewsView` lived inside `portfolio_views_page.dart`. The fix was to split the file, which the page/view split wanted anyway. The mutation caught it; reading it twice had not.
 - **Needle lists have holes on the `try` prefix.** `double.parse` does **not** match `double.tryParse` as a substring, and `tryParse` is the form a developer reaches for first. Both spellings of `double`, `num` and `int` are now listed, plus `DateTime.timestamp()` beside `DateTime.now()`.
 - **The frontend gate cannot be run without a Flutter SDK, and this machine had none.** It was verified against a pinned 3.47.5 downloaded for the session. Anyone reproducing it needs that SDK, not merely Dart — `dart test` covers the three pure packages but not the widget suite.
+
+---
+
+## 2026-09-20 (merge) — GGU-91 merged with the manual run **waived**, not satisfied
+
+**Recorded because a waived gate and a passed gate are different things.**
+
+`.claude/rules/backend/sdd.md` requires every PR body to carry *"a manual run
+against the running stack with the real commands and their real responses
+pasted in. No manual run, no merge."* PR #58 does **not** carry one, and says so
+in its own body: `backend/.env` does not exist in a worktree and creating it is
+denied by this repository's own permissions (`Edit(**/.env)`), so
+`docker compose up` could not start the API. The author did not route around the
+deny — the correct call.
+
+**The TL waived the requirement for this PR and authorised the merge.** The
+blocker paragraph is left standing in the PR body on purpose: it is the record
+of what was not done. Nothing here says the manual run passed, because nobody
+ran it.
+
+**What that leaves open.** The frontend gate (`cd frontend && make gate`) and
+`frontend-ci.yaml` both ran green, so the code is proven against its tests and a
+real web build. What is *not* proven is the thing only a running stack shows:
+that the client actually reaches this backend — `BACKEND_BASE_URL`, CORS, the
+bearer token, and the shape of a real `?view=` response against a real
+projection. Spec `frontend/0001` still owns that.
+
+**Next person should know**
+
+- **The first task for whoever has a `.env` is to do the run this waiver skipped**,
+  and to append the result here. Until then, treat "the frontend binds the
+  backend" as asserted by tests, not observed.
+- **A permission deny is not a reason to lower a gate.** The gate stayed where it
+  was, the PR said plainly what it could not do, and a human took the decision.
+  That is the shape to copy the next time the sandbox blocks a verification.

@@ -26,7 +26,7 @@ is longer than the control matrix, and that is the accurate picture.
 | Layer boundaries are enforced, not reviewed | `app/test/architecture/layering_test.dart` (8 boundary tests) | itself, mutation-checked | CC8.1 | A.8.25 |
 | Pinned, reproducible dependency graph | one `pubspec.lock`; every install and every CI job uses `flutter pub get --enforce-lockfile`; Flutter pinned to 3.47.5 in `frontend-ci.yaml` | CI | CC8.1 | A.8.8, A.8.32 |
 | 100 % line coverage per file, **and no `lib/` file without a coverage record** | `tool/check_coverage.dart` cross-checks the lcov records against the files on disk, so an untested file fails rather than passing unseen | `make gate`, `frontend-ci.yaml`; mutation-checked | CC8.1 | A.8.25, A.8.29 |
-| Change control and review ownership | every change arrives through a pull request into `develop`; `.github/CODEOWNERS` and the PR template govern review. **Whether branch protection is actually enabled is a repository-admin setting this document cannot verify** — `backend/docs/SECURITY.md` records the same caveat | GitHub settings, not code | CC8.1 | A.8.32 |
+| Change control and review ownership | every change arrives through a pull request into `develop`; `.github/CODEOWNERS` (a `*` rule, so `frontend/` is covered) and the PR template govern review | GitHub, not code | CC8.1 | A.8.32 |
 
 ## Gaps — not implemented, with an owner
 
@@ -39,6 +39,7 @@ is longer than the control matrix, and that is the accurate picture.
 | **G-5** | **No dependency vulnerability scan over the Dart graph.** The backend runs `pip-audit`; the frontend gate has no equivalent. | A vulnerable transitive package would not be noticed. | Lautaro | Spec `frontend/0001` OD-5 — add OSV scanning of `pubspec.lock` to `frontend-ci.yaml`. |
 | **G-6** | **No secret scanning scoped to `frontend/`.** `gitleaks` runs over the full history in `backend-ci`, which does cover these files in practice, but no frontend job asserts it. | A committed token would be caught by the backend job today and silently would not be if that job were ever narrowed. | Lautaro | Follow-up: either widen the scan's ownership or add a job here. |
 | **G-7** | **No telemetry, and therefore no evidence of client-side failures.** | A defect in a user's browser is invisible. | TL | Deliberate for now: the first reporter added must be one that cannot carry a token or a payload body (the backend's `send_default_pii=False` shape). |
+| **G-7b** | **Branch protection is a repository-admin setting, not something this repository can assert.** `.github/CODEOWNERS` says the ruleset is on `main`; `backend/docs/SECURITY.md` records its enforcement as *pending*. Everything above that depends on "every change arrives through a reviewed PR" inherits that caveat. | If protection is off, the PR-gated model in `ci-conventions.md` §4b is advisory — that rule says so too. | TL / repo admin | Enable and export the ruleset for `develop` as well as `main`; the backend's evidence folder is where it lands. |
 | **G-8** | **No accessibility audit beyond semantics on the one component.** Contrast comes from Material 3's generated scheme rather than from a measured check. | WCAG 4.5:1 is claimed by the framework, not verified here. | Lautaro | Add a contrast assertion and `flutter test --update-goldens` coverage when the component set lands. |
 
 ## Threat notes

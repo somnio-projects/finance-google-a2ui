@@ -72,6 +72,6 @@ duplicated one are both visible at a glance.
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |
+| [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
-| [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |

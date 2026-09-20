@@ -90,7 +90,9 @@ matching path is touched.
 | .claude/rules/client/presentation.md | flutter | The client half of ADR-K — bind, never format/compute/derive/interpret/invent (client_flutter views, blocs, repositories). |
 | .claude/rules/client/testing.md | flutter | Coverage bar and who checks it, unit vs widget vs bloc, the verbatim-binding test, Dart mutation checks (client_flutter/*/test). |
 | .claude/rules/client/security.md | flutter | Token handling, what a --dart-define may carry, secrets, logging, TLS, the absent deep-link surface (client_flutter Dart, web shell, manifests). |
-
+| .claude/rules/frontend/architecture.md | flutter | `frontend/` layering, the composition root, the component seam, the 150-line budget. |
+| .claude/rules/frontend/contract-binding.md | flutter | The numbers rule and the fifteen prohibitions; view ids, options, ETags (frontend components, repository, transport). |
+| .claude/rules/frontend/testing.md | flutter | `frontend/` coverage contract, the pump_app harness, what a test must assert. |
 | .claude/rules/python/code-style.md | python | Ruff gate, naming, imports, Google docstrings. |
 | .claude/rules/python/data-validation.md | python | pydantic at boundaries, pydantic-settings, typed responses. |
 | .claude/rules/python/error-handling.md | python | EAFP, narrowest except, custom hierarchy, translate at boundaries. |
