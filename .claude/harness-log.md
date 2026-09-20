@@ -2112,6 +2112,7 @@ building it first:
 | `check_file_budget.dart` | three test files over 150 lines; splitting them produced the two shared harnesses the suites now use |
 | `check_coverage.dart` | a `props` override on a sealed base that no subclass used (deleted), and a credential closure that could only be reached through a live request (extracted to `devTokenProvider`, now testable) |
 | `dart analyze --fatal-infos` | 21 findings in test files alone, none visible while only `lib/` was being analysed |
+| **CI's `build` job** | the app had **no `web/` scaffold at all** — it was assembled by hand rather than by `flutter create`, so a web-first client could not build for web. Every local check was green. |
 
 **Next person should know**
 
@@ -2122,4 +2123,5 @@ building it first:
 - **A widget test through a bare `MaterialApp` hides wiring bugs.** `pumpApp` uses the real theme and the real providers; the `AppSpacing` equality defect surfaced only because a test compared a `ThemeExtension` read back out of a real `ThemeData`.
 - **Dart has no runtime reflection on the web**, so an unimported library is tree-shaken and its registration never runs. "Adding a component edits no existing file" is therefore only true because the one file that imports them is **generated and diffed by the gate** — the same shape as the backend's frozen catalog.
 - **`go_router`'s configuration is empty until it is attached to a widget tree.** Asserting on `currentConfiguration` from a bare `buildRouter()` fails with `Bad state: No element`; route tests have to pump.
+- **A hand-assembled Flutter package has no platform scaffold, and nothing local tells you.** `make gate` was green, 159 tests passed, and `flutter build web` said *"This project is not configured for the web."* The gate's local half cannot prove a bundle compiles; that is why `frontend-ci.yaml` has a `build` job, and it earned its place on the first run. `flutter create . --platforms web` also drops in an `analysis_options.yaml`, a `README.md`, a `.gitignore` and a default `widget_test.dart` — the first of those would have silently shadowed the workspace analyzer configuration. Delete all four; keep `.metadata`.
 - **The frontend gate cannot be run without a Flutter SDK, and this machine had none.** It was verified against a pinned 3.47.5 downloaded for the session. Anyone reproducing it needs that SDK, not merely Dart — `dart test` covers the three pure packages but not the widget suite.

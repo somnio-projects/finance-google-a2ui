@@ -33,9 +33,20 @@ cd frontend && make format  # apply formatting
 cd frontend && make manifest # regenerate the component manifest after adding one
 ```
 
-`make gate` == `.github/workflows/frontend-ci.yaml` == the `frontend.*` entries
-in `.claude/ship-gate.json`, **command string for command string**. Red gate =
+`make gate` == the `quality` and `tests` jobs of
+`.github/workflows/frontend-ci.yaml` == the `frontend.*` entries in
+`.claude/ship-gate.json`, **command string for command string**. Red gate =
 not done. Thresholds go up, never down, and never in a feature PR.
+
+CI additionally runs `flutter build web --release`, which the local gate does
+**not** — it is slow, and it belongs on a runner for the same reason the
+backend's image build does. It is not decoration: it is the job that caught
+this app shipping without a `web/` scaffold at all. Run it yourself before a
+PR that touches `app/`:
+
+```bash
+cd frontend/app && flutter build web --release
+```
 
 Always `flutter pub get --enforce-lockfile`. Plain `pub get` silently
 re-resolves and builds something nobody reviewed.

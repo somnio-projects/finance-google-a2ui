@@ -42,7 +42,7 @@ class PortfolioViewsView extends StatelessWidget {
       body: BlocBuilder<PortfolioViewsBloc, PortfolioViewsState>(
         builder: (context, state) => switch (state.status) {
           PortfolioViewsStatus.initial || PortfolioViewsStatus.loading =>
-            const Center(child: CircularProgressIndicator.adaptive()),
+            const Center(child: CircularProgressIndicator()),
           PortfolioViewsStatus.failure => _FailureView(
             message: state.failure?.message ?? 'The request failed.',
             code: state.failure?.code ?? 'unknown',

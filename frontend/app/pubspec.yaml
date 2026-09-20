@@ -12,6 +12,10 @@ resolution: workspace
 
 dependencies:
   bloc: ^9.2.1
+  # The Flutter template dependency. Present because the framework and
+  # go_router reference CupertinoIcons on code paths this web-first app does
+  # not take; without it every release build warns about a missing font.
+  cupertino_icons: ^1.0.8
   equatable: ^3.0.0
   finance_api_client: ^0.1.0
   finance_core: ^0.1.0
