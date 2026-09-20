@@ -2,10 +2,10 @@
 
 Every classification the frozen contract prints is decided here, and every one
 of them is **structural**: a node is a figure because its declared type is
-numeric, a string is pre-formatted because it sits beside a figure, a field can
-be absent because the schema says so. No rule keys on a field name — the one
+numeric, a string is pre-formatted because it is half of a figure/string pair,
+a field can be absent because the schema says so. No rule keys on a name — the
 that does (an editable field matches a declared option) lives in
-``inventory`` and is documented in the generated document as doing so.
+one that does lives in ``inventory``, and the document says so.
 
 Keeping the rules here rather than inside the walk is what lets each of them be
 tested against a hand-written schema fragment, one shape per case.
@@ -18,18 +18,12 @@ from typing import Any, Final
 NULL_TYPE: Final[Mapping[str, Any]] = {"type": "null"}
 NUMERIC_TYPES: Final[frozenset[str]] = frozenset({"integer", "number"})
 CONTAINER_TYPES: Final[frozenset[str]] = frozenset({"object", "array"})
+PAIR_SIZE: Final[int] = 2
 NONE: Final[str] = "—"
 
 
 def variant_types(spec: Mapping[str, Any]) -> set[str]:
-    """Return the declared types of a union node, empty when it is not one.
-
-    Args:
-        spec: A JSON-schema node.
-
-    Returns:
-        The ``type`` of every non-null member of its ``anyOf``.
-    """
+    """Return the non-null ``anyOf`` member types, empty when not a union."""
     return {
         variant.get("type", "object")
         for variant in spec.get("anyOf", ())
@@ -40,12 +34,7 @@ def variant_types(spec: Mapping[str, Any]) -> set[str]:
 def collapse(spec: Mapping[str, Any]) -> Mapping[str, Any]:
     """Drop a lone ``null`` member so an optional field shows its real type.
 
-    Args:
-        spec: A JSON-schema node, possibly ``anyOf[X, null]``.
-
-    Returns:
-        ``X`` with the node's own keys kept, or ``spec`` unchanged when the
-        union carries more than one real member (a ``Decimal``, say).
+    A union with two real members (a ``Decimal``) is left alone.
     """
     members = [item for item in spec.get("anyOf", ()) if item != NULL_TYPE]
     if len(members) == 1:
@@ -56,6 +45,19 @@ def collapse(spec: Mapping[str, Any]) -> Mapping[str, Any]:
 def is_numeric(spec: Mapping[str, Any]) -> bool:
     """Say whether ``spec`` carries a figure rather than a string."""
     return bool((variant_types(spec) or {spec.get("type")}) & NUMERIC_TYPES)
+
+
+def is_pair(properties: Mapping[str, Mapping[str, Any]]) -> bool:
+    """Say whether an object is an ADR-E figure/string pair and nothing else.
+
+    Exactly two properties, exactly one of them a figure: that is
+    ``{amount, display}`` and ``{value, display}``. Requiring the object to
+    hold *only* the pair is what stops a payload that happens to carry a bare
+    figure beside a title from having its title called pre-formatted.
+    """
+    return (
+        len(properties) == PAIR_SIZE and sum(map(is_numeric, properties.values())) == 1
+    )
 
 
 def bound(spec: Mapping[str, Any]) -> str:
@@ -99,8 +101,8 @@ def binding(spec: Mapping[str, Any], *, paired: bool) -> str:
 
     Args:
         spec: The resolved schema node of one leaf or container.
-        paired: Whether the object holding it also declares a figure, which is
-            what makes a string the pre-formatted half of an ADR-E pair.
+        paired: Whether the object holding it is nothing but a figure/string
+            pair, which is what makes a string the printable half of one.
 
     Returns:
         One of ``constant``, ``enum``, ``container``, ``raw``, ``flag``,
@@ -135,11 +137,13 @@ __all__ = [
     "NONE",
     "NULL_TYPE",
     "NUMERIC_TYPES",
+    "PAIR_SIZE",
     "binding",
     "bound",
     "collapse",
     "describe",
     "is_numeric",
+    "is_pair",
     "presence",
     "state",
     "variant_types",

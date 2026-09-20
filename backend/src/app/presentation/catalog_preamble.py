@@ -91,9 +91,12 @@ designer and model are held to the same bound, written once.
 **Binding** values, and how each is derived:
 
 - `display` — a pre-formatted string the widget prints **verbatim**. A string
-  leaf whose containing object also declares a numeric leaf: the `*Display`
-  pair of [ADR-E](../adr/ADR-E-money-representation.md) D-2, `{{amount,
-  display}}` or `{{value, display}}`.
+  leaf inside an object that holds a figure and this string **and nothing
+  else**: the `*Display` pair of
+  [ADR-E](../adr/ADR-E-money-representation.md) D-2, `{{amount, display}}` or
+  `{{value, display}}`. Requiring the object to hold only the pair is what
+  keeps a payload that carries a bare figure beside a title from having its
+  title called pre-formatted.
 - `raw` — the exact figure beside it, for a chart's geometry, **never
   printed**. Any leaf whose JSON type is numeric; a `Decimal` arrives as
   `number` or `string`.

@@ -21,7 +21,7 @@ from app.presentation.schema_facts import (
     binding,
     collapse,
     describe,
-    is_numeric,
+    is_pair,
     presence,
     state,
 )
@@ -113,9 +113,7 @@ def _object(
     properties: Mapping[str, Any] = spec.get("properties", {})
     required = set(spec.get("required", ()))
     resolved = {name: _resolve(sub, defs) for name, sub in properties.items()}
-    context = _Context(
-        inputs=inputs, paired=any(is_numeric(sub) for sub in resolved.values())
-    )
+    context = _Context(inputs=inputs, paired=is_pair(resolved))
     for name, sub in resolved.items():
         yield _row(
             name,

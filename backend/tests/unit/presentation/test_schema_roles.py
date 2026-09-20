@@ -14,10 +14,11 @@ from typing import Any
 
 import pytest
 
-from app.presentation.schema_facts import NONE, binding, presence, state
+from app.presentation.schema_facts import NONE, binding, is_pair, presence, state
 
 DECIMAL: dict[str, Any] = {"anyOf": [{"type": "number"}, {"type": "string"}]}
 A_STRING: dict[str, Any] = {"type": "string", "maxLength": 32}
+MONEY_PAIR: dict[str, Any] = {"amount": DECIMAL, "display": A_STRING}
 
 
 @pytest.mark.parametrize(
@@ -68,6 +69,33 @@ def test_a_display_string_is_classified_without_ever_being_named_display() -> No
     """The rule is the ADR-E pair, so a differently named string still works."""
     assert binding(A_STRING, paired=True) == "display"
     assert binding(A_STRING, paired=False) == "text"
+
+
+def test_only_an_object_that_is_nothing_but_a_pair_counts_as_one() -> None:
+    """Both `*Display` fragments are pairs; a whole payload never is."""
+    assert is_pair(MONEY_PAIR) is True
+    assert is_pair({"value": DECIMAL, "display": A_STRING}) is True
+    assert is_pair({"label": A_STRING, "text": A_STRING}) is False
+    assert is_pair({"a": DECIMAL, "b": DECIMAL}) is False
+
+
+def test_a_payload_carrying_a_bare_figure_does_not_make_its_title_display() -> None:
+    """The bug the `len == 2` clause fixes, in the shape `order.ticket.v1` has.
+
+    An editable integer sits at the top level beside `title`. Under a looser
+    rule — "any string in an object that holds a figure" — every string in
+    that payload would be reported as pre-formatted, and a designer would be
+    told the title arrives formatted when it is just a title.
+    """
+    ticket = {
+        "view": A_STRING,
+        "title": A_STRING,
+        "top_n": {"type": "integer"},
+        "total": {"type": "object"},
+    }
+
+    assert is_pair(ticket) is False
+    assert binding(A_STRING, paired=is_pair(ticket)) == "text"
 
 
 @pytest.mark.parametrize(
