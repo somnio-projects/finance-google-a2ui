@@ -1,9 +1,20 @@
 # Automated dependency updates (SOC 2 CC8.1 / ISO 27001 A.8.8 — vulnerability management).
 # Security releases open PRs that still have to pass the backend ship gate.
+#
+# `target-branch: develop` on every ecosystem, because without it Dependabot
+# opens against the repository's default branch — `main`. Five such PRs sat
+# open for weeks doing exactly that: based on a `main` thirty commits stale,
+# proposing edits to workflows that no longer looked anything like that. They
+# were unmergeable by construction, and nothing said so.
+#
+# `develop` is the integration branch and the only branch a PR may target
+# (root CLAUDE.md); `main` receives it through a release PR. A bot is not an
+# exception to that.
 version: 2
 updates:
   - package-ecosystem: "uv"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -17,6 +28,7 @@ updates:
       prefix: "chore(deps)"
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -24,6 +36,7 @@ updates:
       prefix: "ci(deps)"
   - package-ecosystem: "docker"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"

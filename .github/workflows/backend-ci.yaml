@@ -52,10 +52,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -106,10 +106,10 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/finance
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -136,7 +136,7 @@ jobs:
     timeout-minutes: 12
     steps:
       - name: Check out the full history (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -154,7 +154,7 @@ jobs:
             --config p/secrets --error --metrics=off backend/src backend/alembic
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -172,13 +172,13 @@ jobs:
     needs: [quality, tests]
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up BuildKit (docker/setup-buildx-action)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build the runtime image from cache (docker/build-push-action)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: false
