@@ -6,7 +6,7 @@ transport lands as a controller, not as a second wiring path.
 """
 
 from app.agent.contracts import ToolContext
-from app.api.deps.common import ContainerDep, PrincipalDep
+from app.api.deps.common import ContainerDep, PortfolioDep, PrincipalDep
 from app.schemas.agent_card import AgentCard
 from app.services.a2a_service import A2aService
 from app.services.agent_service import AgentService
@@ -29,9 +29,9 @@ def get_agent_service(container: ContainerDep) -> AgentService:
     )
 
 
-def get_tool_context(container: ContainerDep, principal: PrincipalDep) -> ToolContext:
+def get_tool_context(portfolio: PortfolioDep, principal: PrincipalDep) -> ToolContext:
     """Provide the subject-scoped context every tool of a turn receives."""
-    return ToolContext(subject=principal.subject, portfolios=container.portfolio)
+    return ToolContext(subject=principal.subject, portfolios=portfolio)
 
 
 def get_a2a_service(container: ContainerDep) -> A2aService:

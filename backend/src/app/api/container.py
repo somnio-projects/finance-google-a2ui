@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from app.agent.registry import ToolRegistry
 from app.core.config import Settings
 from app.core.protocols import Clock, ErrorReporter, ModelClient, TokenVerifier
-from app.domain.provider import PortfolioProvider
 from app.schemas.agent_card import AgentCard
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
@@ -25,9 +24,10 @@ class AgentRuntime:
     Grouped rather than spread across the container: they are built together,
     replaced together in tests, and neither is meaningful without the other.
 
-    The portfolio provider is deliberately *not* here. Both the agent's tools
-    and the presentation layer read the same portfolios, so it belongs to the
-    container, not to one consumer of it.
+    The portfolio provider is deliberately *not* here either — and no longer
+    anywhere process-wide. It holds a repository over the request's session,
+    whose commit `session_scope` owns, so it is built in `api/deps/common.py`
+    per request (spec 0020 §4.2).
     """
 
     model: ModelClient
@@ -49,7 +49,6 @@ class Container:
     health: HealthService
     flag_cache: FeatureFlagCache
     agent: AgentRuntime
-    portfolio: PortfolioProvider
 
 
 __all__ = ["AgentRuntime", "Container"]

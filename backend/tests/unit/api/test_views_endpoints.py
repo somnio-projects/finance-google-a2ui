@@ -12,6 +12,8 @@ from fastapi.testclient import TestClient
 
 from app.api.container import Container
 from app.api.deps import get_render_intent_service, get_view_service
+from app.domain.provider import InMemoryPortfolioProvider
+from app.helpers.clock import FixedClock
 from app.presentation.registry import REGISTRY
 from app.schemas.views import MAX_VIEWS
 from tests.catalog import SHIPPED_VIEWS
@@ -123,7 +125,14 @@ def test_the_operation_documents_the_union_and_one_example_per_view(
     assert union["additionalProperties"]["discriminator"]["propertyName"] == "view"
 
 
-def test_the_providers_build_both_services(app: FastAPI) -> None:
+def test_the_providers_build_both_services(app: FastAPI, clock: FixedClock) -> None:
+    """Both entry points to the registry resolve from the same provider.
+
+    The provider is a per-request argument since spec 0020, not a field of the
+    container: it holds a repository over the request's session. Passing the
+    in-memory double here is what the app itself does under test.
+    """
     container: Container = app.state.container
-    assert get_view_service(container).surface  # the renderer is wired
-    assert get_render_intent_service(container) is not None
+    portfolio = InMemoryPortfolioProvider(clock=clock)
+    assert get_view_service(portfolio).surface  # the renderer is wired
+    assert get_render_intent_service(container, portfolio) is not None

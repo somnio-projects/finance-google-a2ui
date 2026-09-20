@@ -20,7 +20,7 @@ async def test_a_default_call_asks_for_the_allocation_chart(
 
     assert outcome.render is not None
     assert outcome.render.view == VIEW
-    assert outcome.render.options == {"top_n": len(held(tool_context))}
+    assert outcome.render.options == {"top_n": len(await held(tool_context))}
 
 
 async def test_a_filtered_call_asks_for_no_chart(

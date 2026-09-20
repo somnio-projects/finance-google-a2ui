@@ -68,7 +68,7 @@ class ViewService:
             One keyed entry per requested view — or per the selection rule's
             choice when the caller named none.
         """
-        portfolio = self.portfolio(principal, portfolio_id=portfolio_id)
+        portfolio = await self.portfolio(principal, portfolio_id=portfolio_id)
         options = query.options()
         chosen = tuple(query.view) or (
             select_view(portfolio, projections=self._registry.all(), default=default),
@@ -82,7 +82,7 @@ class ViewService:
             },
         )
 
-    def portfolio(
+    async def portfolio(
         self, principal: Principal, *, portfolio_id: str = CURRENT_PORTFOLIO
     ) -> Portfolio:
         """Return the caller's own portfolio; only ``current`` is addressable.
@@ -94,7 +94,7 @@ class ViewService:
         if portfolio_id != CURRENT_PORTFOLIO:
             msg = f"portfolio {portfolio_id!r} does not exist"
             raise NotFoundError(msg)
-        return self._provider.get(principal.subject)
+        return await self._provider.get(principal.subject)
 
     def render_one(
         self, portfolio: Portfolio, *, view: str, options: Mapping[str, Any]

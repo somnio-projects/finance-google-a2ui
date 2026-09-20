@@ -46,7 +46,7 @@ class RenderIntentService:
             The rendered payload with its A2UI surface, plus the rejection
             reason when the model's choice was refused.
         """
-        portfolio = self._views.portfolio(principal)
+        portfolio = await self._views.portfolio(principal)
         try:
             payload = self._views.render_one(
                 portfolio, view=intent.view, options=intent.options

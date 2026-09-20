@@ -86,7 +86,7 @@ class SimulateSaleTool:
                 can recover from, rather than failing the turn.
         """
         options = SimulateSaleArguments.model_validate(dict(arguments))
-        portfolio = context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.subject)
         as_of = portfolio.as_of.isoformat()
         price = portfolio.price(options.symbol)
         try:

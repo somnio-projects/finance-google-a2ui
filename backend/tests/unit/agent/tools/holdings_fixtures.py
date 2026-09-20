@@ -53,9 +53,9 @@ def symbols_of(payload: object) -> list[object]:
     return [row["symbol"] for row in rows(payload)]
 
 
-def held(context: ToolContext) -> list[Holding]:
+async def held(context: ToolContext) -> list[Holding]:
     """Return the seeded positions straight from the domain."""
-    return context.portfolios.get(context.subject).holdings()
+    return (await context.portfolios.get(context.subject)).holdings()
 
 
 __all__ = ["AIRDROP", "held", "rows", "symbols_of", "tool"]

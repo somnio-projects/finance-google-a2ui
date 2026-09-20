@@ -97,22 +97,22 @@ async def test_render_rejects_an_unknown_view(
         )
 
 
-def test_only_the_current_portfolio_is_addressable(
+async def test_only_the_current_portfolio_is_addressable(
     service: ViewService, principal: Principal
 ) -> None:
-    assert service.portfolio(principal).as_of == FROZEN_NOW
+    assert (await service.portfolio(principal)).as_of == FROZEN_NOW
     with pytest.raises(NotFoundError, match="does not exist"):
-        service.portfolio(principal, portfolio_id="someone-else")
+        await service.portfolio(principal, portfolio_id="someone-else")
 
 
-def test_two_subjects_get_independent_portfolios(service: ViewService) -> None:
+async def test_two_subjects_get_independent_portfolios(service: ViewService) -> None:
     def make(subject: str) -> Principal:
         return Principal(
             subject=subject, provider="fake", token_fingerprint="0123456789abcdef"
         )
 
-    first = service.portfolio(make(f"user-{uuid.uuid4()}"))
-    second = service.portfolio(make(f"user-{uuid.uuid4()}"))
+    first = await service.portfolio(make(f"user-{uuid.uuid4()}"))
+    second = await service.portfolio(make(f"user-{uuid.uuid4()}"))
     assert first is not second
 
 
@@ -129,9 +129,9 @@ async def test_catalog_describes_every_registered_projection(
         assert projection.dto.model_validate(entry.example)
 
 
-def test_surface_goes_through_the_view_own_adapter(
+async def test_surface_goes_through_the_view_own_adapter(
     service: ViewService, principal: Principal
 ) -> None:
-    portfolio = service.portfolio(principal)
+    portfolio = await service.portfolio(principal)
     payload = service.render_one(portfolio, view=ALLOCATION, options={})
     assert service.surface(ALLOCATION, payload).component == "DonutChart"

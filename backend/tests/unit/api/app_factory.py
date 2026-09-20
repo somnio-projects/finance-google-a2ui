@@ -11,6 +11,7 @@ from fastapi import FastAPI
 
 from app.agent.registry import load_tools
 from app.api.container import AgentRuntime, Container
+from app.api.deps import get_portfolio_provider
 from app.bootstrap import create_app
 from app.core.config import Settings
 from app.core.principal import Principal
@@ -52,9 +53,16 @@ def make_app(
             system_prompt=build_system_prompt(tools=tools, views=REGISTRY.all()),
             card=build_agent_card(settings, tools, version="test"),
         ),
-        portfolio=InMemoryPortfolioProvider(clock=clock),
     )
-    return create_app(settings, container=container)
+    app = create_app(settings, container=container)
+    # The provider is per request and reads PostgreSQL (spec 0020). Unit tests
+    # point at an unreachable DSN on purpose, so the in-memory implementation
+    # is substituted here — it exists for exactly this. Anything that needs a
+    # row belongs in tests/integration.
+    app.dependency_overrides[get_portfolio_provider] = lambda: (
+        InMemoryPortfolioProvider(clock=clock)
+    )
+    return app
 
 
 __all__ = ["make_app"]
