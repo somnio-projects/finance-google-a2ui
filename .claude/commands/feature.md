@@ -35,7 +35,18 @@ Follow the Spec-Driven Development lifecycle end to end (repo
    `.claude/harness-log.md` (code + harness changes + what the next dev must
    know). If a durable decision was made, save it to memory too.
 9. **PR**: push and open it with `gh pr create` — base `develop`, title
-   `type(scope): description`, body with `Spec: specs/backend/NNNN-...`,
-   `Test decision: ...`, the gate output, and the GGU ticket link. English,
-   no AI attribution.
-10. **Wrap-up**: report the PR URL and the harness-log entry.
+   `type(scope): GGU-n — description`, body with `Spec:`, `Test decision:`, the
+   gate output **and a `Manual verification` section holding the real commands
+   run against `docker compose` and their real responses. Body cites
+   `Spec: specs/backend/NNNN-...`, the acceptance criteria and the GGU ticket
+   link. English, no AI attribution.
+10. **Jira**: move the ticket to **In Review** when the PR opens. It becomes
+    **Done** only when that PR is **merged**; if it stalls, **Blocked** with a
+    comment naming the blocker.
+11. **Stop at the open PR — never merge.** The merge is the TL's decision and
+    needs his explicit confirmation, for `develop` as much as for `main`, no
+    matter how clean the gate is. Leave the branch open, leave the ticket In
+    Review, and move on to the next ticket. Only when he names a PR does the
+    agent merge it and then move the ticket to Done.
+12. **Wrap-up**: report the PR URL and the harness-log entry, plus the list of
+    PRs still waiting on his confirmation.

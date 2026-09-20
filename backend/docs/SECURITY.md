@@ -47,7 +47,7 @@ or configuration and verified by tests; each row names where.
 
 - **Cross-user session access** (ADR-A): sessions in later specs must be keyed by `principal.subject`, never by a client-supplied id alone.
 - **Compromised provisioned account**: bounded by the per-token rate limit and the audit trail; revoke at the identity provider (`check_revoked` semantics belong to the provider adapter).
-- **Model key exfiltration**: the key never reaches the client; it is read only inside the adapter that talks to Gemini (future spec) and is `SecretStr`.
+- **Model key exfiltration**: the key never reaches the client; it is `SecretStr` and `get_secret_value()` is called in exactly one place, `app/infra/model/gemini_client.py` (spec 0006 AC-2), where it becomes an `x-goog-api-key` header — never a query string. A boundary test asserts both facts over the parsed source.
 - **Mid-stream token expiry** (ADR-B D-8): validate once at request open; streaming endpoints inherit this.
 
 ## Operating procedures (out of code)

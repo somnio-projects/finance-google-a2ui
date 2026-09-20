@@ -9,10 +9,19 @@ from pydantic import BaseModel, ConfigDict, Field
 class HealthResponse(BaseModel):
     """Liveness answer — the process is up; nothing downstream is probed."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={"examples": [{"status": "ok", "version": "0.1.0"}]},
+    )
 
     status: Literal["ok"] = Field(default="ok", description="Always `ok` when served.")
-    version: str = Field(description="Running application version.", examples=["0.1.0"])
+    version: str = Field(
+        description=(
+            "Release identifier of the running revision: `APP_RELEASE` when the "
+            "delivery pipeline injected one, otherwise the packaged version."
+        ),
+        examples=["0.1.0+a1b2c3d"],
+    )
 
 
 class DependencyStatus(BaseModel):
@@ -29,7 +38,17 @@ class DependencyStatus(BaseModel):
 class ReadinessResponse(BaseModel):
     """Readiness answer aggregating every probe."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "ready",
+                    "dependencies": [{"name": "database", "ready": True}],
+                }
+            ]
+        },
+    )
 
     status: Literal["ready", "degraded"] = Field(
         description="`ready` when every probe passed, `degraded` otherwise (503).",

@@ -25,7 +25,7 @@
 
 - **D-1** Credential = Firebase **ID token** only. The refresh token MUST NEVER be sent to our backend; a test asserts the outbound request carries none.
 - **D-2** Transport = `Authorization: Bearer <idToken>` on every A2A request, with `X-A2A-Extensions` preserved alongside it.
-- **D-3** `GET /.well-known/agent-card.json` and `GET /healthz` are **unauthenticated**. Every other path requires a valid token.
+- **D-3** `GET /.well-known/agent-card.json` and `GET /health` are **unauthenticated**. Every other path requires a valid token.
 - **D-4** Verification asserts `iss == https://securetoken.google.com/finance-a2ui`, `aud == finance-a2ui`, unexpired, `check_revoked=True`.
 - **D-5** ~~Allow-list required~~ — **amended 2026-09-18 (TL): no uid allow-list.** Access control is (a) email/password is the sole enabled provider and (b) accounts are provisioned by us, never self-signup.
 - **D-5a** **Email/password is the only enabled Firebase Auth provider.** Recorded as a ruling so that enabling a second provider is a deliberate amendment to this ADR rather than a silent console toggle — that toggle is the only way the D-5 control could quietly disappear.

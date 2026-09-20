@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done. Every cmd matches a step of `make gate` in backend/ and a job in .github/workflows/backend-ci.yaml \u2014 change one, change all three (.claude/rules/ci-conventions.md). Flutter gate lands with GGU-1.",
+  "_note": "Definition of Done, in two parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). Flutter gate lands with GGU-1.",
   "required": [
     {
       "id": "py.lint",
@@ -23,6 +23,11 @@
       "cmd": "uv run python scripts/check_file_budget.py"
     },
     {
+      "id": "py.catalog",
+      "cwd": "backend",
+      "cmd": "uv run python scripts/generate_catalog_contract.py --check"
+    },
+    {
       "id": "py.quality",
       "cwd": "backend",
       "cmd": "make quality"
@@ -36,6 +41,21 @@
       "id": "py.audit",
       "cwd": "backend",
       "cmd": "make audit"
+    },
+    {
+      "id": "infra.delivery-script",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_deploy_cloud_run.sh"
+    },
+    {
+      "id": "infra.credential-model",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_wif_conditions.sh"
+    },
+    {
+      "id": "infra.dev-environment",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_dev_environment.sh"
     }
   ],
   "_candidates": [

@@ -12,21 +12,29 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      # The frozen catalog contract is generated from backend/ and verified here,
+      # so a hand-edit of the document must start the run that rejects it.
+      - "docs/catalog/**"
       - "docker-compose.yml"
       - ".github/workflows/backend-ci.yaml"
-  push:
-    branches: [main, develop]
-    paths:
-      - "backend/**"
-      - "docker-compose.yml"
-      - ".github/workflows/backend-ci.yaml"
+  # `backend-cd` calls this workflow as a job on every push to develop and main,
+  # so that the deploy can `needs:` these jobs and cannot start unless they all
+  # succeeded. That is why there is no `push:` trigger here any more: it would
+  # run the same gate twice on the same commit and pay for it twice.
+  workflow_call:
 
 permissions:
   contents: read
 
 # One run per branch: a new push cancels the previous one instead of paying twice.
+#
+# `github.workflow` is the CALLER's name, so a run reached through backend-cd
+# lands in its own group and a pull-request run can never cancel a release run
+# (or the reverse). Deploys themselves are serialised by backend-cd's own
+# `cancel-in-progress: false` group, and cancelling a superseded commit's gate
+# before any traffic has moved is exactly what we want.
 concurrency:
-  group: backend-ci-${{ github.ref }}
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -68,6 +76,9 @@ jobs:
 
       - name: Enforce the 150-line file budget (check_file_budget.py)
         run: uv run python scripts/check_file_budget.py
+
+      - name: Verify the frozen catalog contract is current (generate_catalog_contract.py)
+        run: uv run python scripts/generate_catalog_contract.py --check
 
       - name: Detect code smells (xenon, vulture, interrogate, deptry, pylint, codespell)
         run: make quality
@@ -205,7 +216,7 @@ jobs:
             echo ""
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
-            echo "| Quality | ruff, basedpyright strict, 150-line budget, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
+            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
             echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
             echo "| Security | gitleaks (full history), Semgrep, pip-audit | ${{ needs.security.result }} |"
             echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"

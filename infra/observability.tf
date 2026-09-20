@@ -6,12 +6,24 @@ resource "google_logging_project_bucket_config" "default" {
   project        = var.project_id
   location       = "global"
   bucket_id      = "_Default"
-  retention_days = var.log_retention_days
+  retention_days = local.log_retention_days
 }
 
 # Data-access audit logs for the services that hold Confidential/Restricted data.
+#
+# Cloud SQL is `cloudsql.googleapis.com` here, not `sqladmin.googleapis.com`.
+# The two are not interchangeable: `sqladmin` is the *admin API* you enable to
+# manage instances, and it rejects a service-level audit config outright —
+#
+#   Service sqladmin.googleapis.com does not exist or does not support
+#   service level configuration of Google Cloud audit logging.
+#
+# — which is how the first dev apply found it. `cloudsql` is the service that
+# emits the data-access logs the compliance corpus claims (CLOUD_SERVICES.md
+# §4, SoA A.8.15/A.8.16). Before this, that claim was not merely unverified,
+# it was unapplyable.
 resource "google_project_iam_audit_config" "data_access" {
-  for_each = toset(["sqladmin.googleapis.com", "secretmanager.googleapis.com", "run.googleapis.com"])
+  for_each = toset(["cloudsql.googleapis.com", "secretmanager.googleapis.com", "run.googleapis.com"])
   project  = var.project_id
   service  = each.value
 
@@ -32,7 +44,13 @@ resource "google_monitoring_notification_channel" "oncall_email" {
   labels       = { email_address = var.alert_email }
 }
 
+# An external uptime check needs a hostname that exists before the apply. Dev's
+# address is Cloud Run's run.app URL, which the service only reports afterwards,
+# so dev has no uptime check and no readiness alert — the one observability
+# control it gives up, recorded in CLOUD_SERVICES.md §5. The 5xx and
+# auth-failure alerts below are log-based, cost nothing, and stay in dev.
 resource "google_monitoring_uptime_check_config" "readyz" {
+  count        = local.uptime_check_enabled ? 1 : 0
   display_name = "${local.name} /readyz"
   timeout      = "10s"
   period       = "60s"
@@ -51,6 +69,7 @@ resource "google_monitoring_uptime_check_config" "readyz" {
 }
 
 resource "google_monitoring_alert_policy" "readyz_down" {
+  count                 = local.uptime_check_enabled ? 1 : 0
   display_name          = "${local.name}: readiness failing"
   combiner              = "OR"
   notification_channels = [google_monitoring_notification_channel.oncall_email.id]
@@ -58,7 +77,7 @@ resource "google_monitoring_alert_policy" "readyz_down" {
   conditions {
     display_name = "uptime check failed"
     condition_threshold {
-      filter          = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.readyz.uptime_check_id}\""
+      filter          = "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND resource.type=\"uptime_url\" AND metric.label.check_id=\"${google_monitoring_uptime_check_config.readyz[0].uptime_check_id}\""
       comparison      = "COMPARISON_GT"
       threshold_value = 1
       duration        = "180s"

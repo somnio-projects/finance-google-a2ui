@@ -2,14 +2,24 @@
 # Ingress only from the load balancer; egress only to private ranges (Cloud SQL)
 # plus Google APIs; secrets mounted from Secret Manager; probes on the health
 # routes. SOC 2 CC6.6, CC7.2, A1.2 · ISO 27001 A.8.9, A.8.16, A.8.31.
+#
+# Two things differ in dev (derived from `local.ephemeral`, main.tf): ingress is
+# open, because there is no load balancer to be internal to, and the private
+# database is reached through direct VPC egress rather than a connector whose
+# two VMs would bill around the clock. Egress stays PRIVATE_RANGES_ONLY either
+# way, so the database is still only reachable from inside the VPC.
 
 locals {
   backend_env = {
-    ENVIRONMENT               = var.environment
-    LOG_LEVEL                 = "INFO"
-    PUBLIC_BASE_URL           = "https://${var.domain}"
-    CORS_ALLOWED_ORIGINS      = var.cors_allowed_origins
-    TRUSTED_HOSTS             = var.domain
+    ENVIRONMENT          = var.environment
+    APP_RELEASE          = var.backend_release
+    LOG_LEVEL            = "INFO"
+    PUBLIC_BASE_URL      = local.public_base_url
+    CORS_ALLOWED_ORIGINS = var.cors_allowed_origins
+    # The backend refuses the wildcard when ENVIRONMENT=production and permits
+    # it elsewhere (core/config.py). Dev takes it because the run.app hostname
+    # is not known until after the apply; staging and production name theirs.
+    TRUSTED_HOSTS             = local.trusted_hosts
     AUTH_PROVIDER             = "oidc"
     AUTH_ISSUER               = var.auth_issuer
     AUTH_AUDIENCE             = var.auth_audience
@@ -30,23 +40,50 @@ locals {
 resource "google_cloud_run_v2_service" "backend" {
   name                = "${local.name}-api"
   location            = var.region
-  ingress             = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress             = local.run_ingress
   deletion_protection = var.environment == "production"
   labels              = local.labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  # Two systems touch this service and they own different fields. Terraform
+  # owns the shape (identity, scaling, networking, secrets, probes); the
+  # delivery pipeline owns WHICH image runs and WHERE traffic points
+  # (spec 0007). Without this, the next `terraform apply` would re-point 100 %
+  # of traffic at the newest revision — undoing a rollback the pipeline had
+  # just performed — and revert the image to `var.backend_image`.
+  #
+  # `APP_RELEASE` is deliberately NOT ignored: an apply may create a revision
+  # carrying the placeholder release, but because `traffic` is ignored that
+  # revision never serves, and the next deploy supersedes it.
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      traffic,
+    ]
+  }
 
   template {
     service_account = google_service_account.backend.email
     labels          = local.labels
 
     scaling {
-      min_instance_count = var.min_instances
-      max_instance_count = var.max_instances
+      min_instance_count = local.min_instances
+      max_instance_count = local.max_instances
     }
 
+    # `one()` rather than a conditional: the connector's count is 0 in dev, so
+    # this is null there and the network_interfaces block below takes over.
     vpc_access {
-      connector = google_vpc_access_connector.run.id
+      connector = one(google_vpc_access_connector.run[*].id)
       egress    = "PRIVATE_RANGES_ONLY"
+
+      dynamic "network_interfaces" {
+        for_each = local.ephemeral ? [1] : []
+        content {
+          network    = google_compute_network.vpc.id
+          subnetwork = google_compute_subnetwork.connector.id
+        }
+      }
     }
 
     containers {
@@ -95,7 +132,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
       liveness_probe {
         http_get {
-          path = "/healthz"
+          path = "/health"
           port = 8000
         }
         period_seconds = 30
@@ -106,6 +143,81 @@ resource "google_cloud_run_v2_service" "backend" {
   traffic {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
+  }
+}
+
+# Schema migrations (spec 0020 §4.3). Same image, same secrets, no HTTP
+# surface — the only way the schema ever changes (`security.md`: migrations are
+# the only schema path; no `create_all` outside tests).
+#
+# **This did not exist until 2026-09-20, and nothing else ran migrations
+# either** — not the pipeline, not Terraform, not the container. The database
+# had the application pointed at it and none of its tables. `/readyz` passed
+# the whole time because it proves the connection, not the schema, so the gap
+# was invisible until the portfolio stopped living in process memory and
+# actually needed a table to read.
+#
+# A job rather than a startup hook on purpose: two instances booting together
+# would race each other through the same migration, and Alembic's version
+# table is not a lock. `deploy_cloud_run.sh` executes this once and waits for
+# it **before** a revision takes traffic, so no request ever reaches a schema
+# that is half-applied.
+resource "google_cloud_run_v2_job" "migrate" {
+  name                = "${local.name}-migrate"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # a failed migration is read, not retried blindly
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["alembic", "upgrade", "head"]
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
   }
 }
 
@@ -125,8 +237,16 @@ resource "google_cloud_run_v2_job" "purge_audit" {
       timeout         = "600s"
 
       vpc_access {
-        connector = google_vpc_access_connector.run.id
+        connector = one(google_vpc_access_connector.run[*].id)
         egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
       }
 
       containers {

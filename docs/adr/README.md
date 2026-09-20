@@ -28,6 +28,8 @@ review and the ship gate cite them by number.
 | [ADR-C](ADR-C-backend-module-layout.md) | Backend module layout | Accepted | GGU-45 |
 | [ADR-D](ADR-D-a2ui-streaming-transport.md) | A2UI streaming transport | Proposed | GGU-3, GGU-4 |
 | [ADR-E](ADR-E-money-representation.md) | Money representation and rounding | Accepted | GGU-5 |
+| [ADR-J](ADR-J-rest-api-and-a2a-surface.md) | Two surfaces: RESTful `/v1` + A2A protocol adapter | Accepted | GGU-3, GGU-46, Epic 1 |
+| [ADR-K](ADR-K-response-shaping.md) | Response shaping: server-side projections, not client transformation | Accepted | GGU-49, GGU-16–21, GGU-36–39, GGU-41 |
 | [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted | GGU-5, GGU-3 |
 | [ADR-G](ADR-G-secret-handling.md) | Secret handling in a public repository | Accepted | GGU-3, GGU-12 |
 | [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed | GGU-45 |

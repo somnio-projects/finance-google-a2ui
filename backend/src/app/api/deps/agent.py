@@ -1,0 +1,52 @@
+"""Providers for the agent host (spec 0006).
+
+No route resolves these yet — GGU-3 exposes the turn over the A2A surface
+(ADR-J D-2). They live here rather than inside that future controller so the
+transport lands as a controller, not as a second wiring path.
+"""
+
+from app.agent.contracts import ToolContext
+from app.api.deps.common import ContainerDep, PortfolioDep, PrincipalDep
+from app.schemas.agent_card import AgentCard
+from app.services.a2a_service import A2aService
+from app.services.agent_service import AgentService
+
+
+def get_agent_service(container: ContainerDep) -> AgentService:
+    """Provide the agent host (spec 0006).
+
+    No route resolves it yet: GGU-3 exposes the turn over the A2A surface and
+    GGU-46 supplies the history. The provider lives here so both land as a
+    controller, not as a second wiring path.
+    """
+    return AgentService(
+        model=container.agent.model,
+        tools=container.agent.tools,
+        reporter=container.reporter,
+        clock=container.clock,
+        max_iterations=container.settings.agent_max_tool_iterations,
+        system_prompt=container.agent.system_prompt,
+    )
+
+
+def get_tool_context(portfolio: PortfolioDep, principal: PrincipalDep) -> ToolContext:
+    """Provide the subject-scoped context every tool of a turn receives."""
+    return ToolContext(subject=principal.subject, portfolios=portfolio)
+
+
+def get_a2a_service(container: ContainerDep) -> A2aService:
+    """Provide the A2A protocol adapter over the agent host (ADR-J D-2)."""
+    return A2aService(agent=get_agent_service(container))
+
+
+def get_agent_card(container: ContainerDep) -> AgentCard:
+    """Provide the agent card built once at startup."""
+    return container.agent.card
+
+
+__all__ = [
+    "get_a2a_service",
+    "get_agent_card",
+    "get_agent_service",
+    "get_tool_context",
+]

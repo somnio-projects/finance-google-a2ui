@@ -21,8 +21,13 @@ Compose only sets the topology keys (`DATABASE_URL` → `db`, `PUBLIC_BASE_URL`,
 included — is read from `backend/.env`.
 
 - API: <http://localhost:8000> · OpenAPI: <http://localhost:8000/docs>
-- Liveness: `GET /healthz` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
+- Liveness: `GET /health` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
 - Feature flags: `GET/PUT /v1/admin/feature-flags[/{key}]` (scope `admin`) — see [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md)
+- View catalog: `GET /v1/views` — every projection the backend can render, with its options schema and an example payload
+- Portfolio projections: `GET /v1/portfolios/current/views?view=<id>&view=<id>` — repeat `view` for up to four projections in one request; omit it and a documented selection rule picks one. See [ADR-K](../docs/adr/ADR-K-response-shaping.md) and [spec 0005](../specs/backend/0005-presentation-layer.md)
+- Conversation sessions: `POST/GET /v1/sessions`, `GET/DELETE /v1/sessions/{id}`,
+  `POST/GET /v1/sessions/{id}/messages` — owned by the token's subject, flag
+  `sessions.api` ([spec 0004](../specs/backend/0004-session-identity.md))
 
 Without Docker:
 
@@ -33,6 +38,27 @@ cp env.example .env                     # fill the values, never commit .env
 uv run alembic upgrade head              # needs DATABASE_URL to point at Postgres
 uv run uvicorn app.main:app --reload
 ```
+
+## The demo portfolio — which symbol to ask about
+
+`src/app/domain/` holds a curated, entirely simulated portfolio (spec
+[`0003-portfolio-domain.md`](../specs/backend/0003-portfolio-domain.md)) and is
+the backend's **single source of price**. It is seeded per subject at a fixed
+`as_of`, so the numbers never move between two questions in the same session.
+
+Three cases are built into the seed on purpose. A demo driver who has never
+seen the data should ask about these symbols:
+
+| Flow | Symbol | Why that one |
+|---|---|---|
+| **Tax-lot flow** | **BTC** | Two lots straddling the 1-year line — `lot-btc-01` at 367 days (long-term) and `lot-btc-02` at 363 days (short-term, two days inside it). Selling picks a side. |
+| **Attribution story** | **ETH** (and **LINK**) | The losers. ETH is roughly −15 % against its blended cost basis while BTC and SOL are up, so attribution has something to explain instead of a wall of green. |
+| **Order / payoff** | **SOL** | 60 units bought, 20 sold, 40 still open — a simulated sale has a real history behind it, and the remaining lot is single-term so the payoff is easy to follow. |
+
+The boundary rule the tax flow depends on: a lot is **long-term only beyond 365
+days held** — the anniversary itself is still short-term
+(`src/app/domain/terms.py`). Price history is a deterministic 90-day daily
+series per symbol whose last point is exactly the current price.
 
 ## Verify — a change is not done without this
 
@@ -55,6 +81,7 @@ backend/
 │   ├── repositories/   persistence access, one per aggregate
 │   ├── models/         SQLAlchemy ORM entities
 │   ├── schemas/        pydantic request / response DTOs
+│   ├── domain/         the simulated portfolio: entities, invariants, seed, prices
 │   ├── auth/           token verification providers (JWT, OIDC/SSO) behind a Protocol
 │   ├── infra/          adapters: database engine/session, telemetry (Sentry)
 │   ├── core/           settings, error hierarchy, logging, shared Protocols

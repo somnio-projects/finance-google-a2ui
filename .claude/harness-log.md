@@ -7,6 +7,1170 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
+
+**Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
+
+**What the ticket asked for, and what it got.** GGU-41 asked for six component
+schemas to be **transcribed by hand** into a Figma page from Epic-2 tickets
+that do not exist in this repo. Under ADR-K D-14 the schema contract already
+*is* the projection registry, so a hand-copied inventory would be a second
+source of truth — and the second source is the one that goes stale, which is
+the exact failure the ticket exists to prevent. The intent shipped in full;
+the method was inverted. `docs/catalog/CONTRACT.md` is generated from
+`REGISTRY.all()`, and **"frozen" now means drift is detected**: `make
+catalog-check` regenerates, diffs and fails with the command to run. It is in
+`make gate`, `ship-gate.json`, the CI Quality job and pre-commit.
+
+It bit during this very integration: the four new projections landed and the
+gate went red on a stale contract before any human noticed.
+
+**Four charts, four agents, one convergent finding.** `taxlots.table.v1`,
+`scenario.comparison.v1`, `payoff.curve.v1` and `order.ticket.v1` were built
+in parallel by agents that could not see each other. Three of them
+independently reported the same thing, which is what makes it credible:
+
+> **ADR-K's `Projection` Protocol is bound to `Portfolio`.** D-6 says "domain
+> result + options → DTO"; the code says `Portfolio` in three places, and
+> `Callable` is contravariant in its arguments, so `render(SomeOtherResult, …)`
+> does not even type-check. The four charts fit *only* because their domain
+> results are derivable from a `Portfolio` by a pure function.
+
+Recorded in **ADR-K itself** (Consequences → "Known limit"), not in four
+specs, so the fifth person does not rediscover it. Deliberately **not** fixed:
+no projection needs it yet, and widening the seam speculatively costs every
+current view a type parameter it does not use.
+
+**The order ticket, without changing the ADR.** Interactivity cannot live in
+`render()` — a projection returns a payload and never receives an event. It
+lives in the *declaration*: the editable fields **are** the declared options
+(D-3), published as `TicketInput` descriptors; an edit is re-rendering the
+same view with one option changed. And the bounds it publishes are proved to
+be the bounds enforced — by a test that walks the **registry**, feeding every
+published bound back through `validated_options`.
+
+**What I fixed centrally, that no single agent could see**
+- **Four test files hard-coded the registered id list**, and three agents
+  "fixed" them three different ways (extend, derive-from-registry, loosen to
+  containment). Now one written-down list, `tests/catalog.py::SHIPPED_VIEWS`,
+  the same shape `EXPECTED_TOOLS` has for tools. Deliberately *not* derived
+  from `REGISTRY`: an expectation read from the thing under test cannot fail.
+- **`option_bounds` was lying to the model.** Anything it did not recognise
+  fell through to the literal `"list of names"`, so a nullable ticker reached
+  the model as `symbol (list of names)` and a list of enums as
+  `methods (list of names)`. **Two charts changed their own design to route
+  around the wording** rather than send a lie — which is how one defect in a
+  shared file becomes four private workarounds. It now follows `$ref`s into
+  `$defs`, describes each `anyOf` branch, and when it truly does not recognise
+  a shape it *says so* instead of guessing. `tests/unit/presentation/
+  test_prompt_bounds.py` walks the registry and fails if any option reaches
+  the model described as unrecognised.
+- Split into `option_text.py` when `prompt.py` went over budget, and the
+  `if`-chain became a dispatch table when xenon ranked it C.
+
+**Next person, read this**
+- **A guessed description is worse than an absent one**, because the model
+  acts on it. That is why the fallback names the gap.
+- The four Flow B/C charts all score `fitness = 0` — they are asked for by id
+  and never volunteered. A backend that offers a sale card over a plain
+  portfolio read is proposing a trade.
+- `scenario.comparison.v1` has **no** `recommended` field, and never sorts by
+  outcome — sorting by outcome is a ranking with the label filed off. Picking
+  a lot method is tax advice and depends on a marginal rate the backend does
+  not know.
+- After touching a projection: `cd backend && make catalog`, commit the
+  contract. Otherwise the gate is red, by design.
+
+---
+
+## 2026-09-19 — Closing the gates · no ticket
+
+**Branch:** `chore/close_the_gates`, straight onto `develop` after the thirteen
+PRs landed.
+
+**The hole this closes.** Three times in one iteration a property was written
+down, believed, and enforced by nothing — and every time the gate was green.
+The worst of them, `symbols` advertising a ten-character bound while accepting
+five thousand, was fixed in `get_holdings_summary` by review. **It was still
+live in `compute_attribution` after the merge**: `maxItems: 20` on the list,
+and items of `{"type": "string"}` with no bound at all.
+
+Fixing it again per tool does not scale — the next tool is written by whoever
+is next. So the rule is now enforced over the **registry**:
+`tests/unit/agent/test_tool_argument_bounds.py` walks every registered tool
+and fails, naming tool and field, on any leaf that can accept unbounded input.
+A new tool is covered the day it registers.
+
+Mutation check, run: reverting the `compute_attribution` fix turns it red with
+`compute_attribution.symbols is published to the model with no bound on its
+size`; restoring it goes green. The guard also tests itself — a bare string, a
+capped array of unbounded items, and `^\w+$` must all fail it.
+
+**One subtlety worth keeping.** The first version read the registry live and
+passed alone but failed in the full suite: other tests register doubles into
+the process-wide registry at runtime, so the gate depended on test order and a
+double's loose schema could fail a check about the tools this backend actually
+ships. It now snapshots at import, before any test runs.
+
+**Harness** — `.claude/rules/backend/testing.md` gained two sections: *A
+documented property needs a test that bites* (with the three instances, and
+the rules: two declarations of one fact get a test comparing them; wiring gets
+a mutation check; enforce over the registry, not per instance; branch coverage
+does not see a conditional expression) and *A payload is wrong when two of its
+own numbers disagree*.
+
+**Next person, read this**
+- The three gate definitions — `.claude/ship-gate.json`, `backend/Makefile`,
+  `.github/workflows/backend-ci.yaml` — were checked after the merges and are
+  still identical. They drift silently; check them after any integration.
+- The Flutter half of the gate still does not exist. `ship-gate.json` says it
+  lands with GGU-1, which is open as PR #26.
+
+---
+
+## 2026-09-19 — Delivery follow-ups · spec `specs/backend/0012-delivery-followups.md`
+
+**Branch:** `feat/backend_followups`, stacked on `feat/GGU-3_a2a_surface`. Six
+deep. **No Jira ticket** — every item here was already decided in ADR-K's
+*Delivery speed* section and carried as an open decision in specs 0005 and
+0010; none of it needed a new one.
+
+**Why it mattered.** ADR-K D-18/D-19/D-20 had shipped as written-down
+intentions. Three caveats were sitting in the tree as prose — "not
+incremental", "no batch", "no ETag" — which is the state where a decision
+quietly stops being true. The demo is judged on time-to-first-widget, and all
+three pushed the wrong way.
+
+**Code**
+- `agent/events.py` + `services/agent_loop.py` — the model/tool loop is now an
+  **async generator**. `AgentService.run_turn_events` yields a `SurfaceReady`
+  the moment a tool returns a render intent; `run_turn` stayed as a thin
+  collector, so no existing caller moved. The loop moved to its own module
+  because a generator that also owns telemetry and history is two jobs.
+- `services/a2a_events.py` + `a2a_service.py` — the adapter forwards a
+  `render-intent` event per surface, mid-turn. The event shapes moved next
+  door: A2A is alpha, and the module that follows it should not also be the
+  one that runs turns. **The terminal `message` still carries the full
+  `renderIntents` list**, so spec 0010 AC-2 holds and no client breaks.
+- `POST /v1/view-renders` (`api/v1/view_renders.py`, `…_openapi.py`,
+  `services/view_render_service.py`, `schemas/view_renders.py`) — the
+  heterogeneous batch, **per-entry status**. One unknown view is that entry's
+  404; the other entries still render. 201 with no `Location`, and the
+  operation says why.
+- `api/caching.py` — strong `ETag`, `Cache-Control`, `If-None-Match`, 304, as
+  a **dependency with its own tests**, applied to both view reads. The next
+  read endpoint gets revalidation for one parameter and one call.
+- `presentation/endpoints.py` — serving endpoints named once. Adding the batch
+  route would otherwise have meant editing every chart module, which is D-15's
+  coupling in reverse.
+- `core/errors.py` now owns `PROBLEM_TYPE_BASE`; `api/errors.py`,
+  `api/openapi.py` and the batch service share it instead of spelling the URI
+  three times.
+- `presentation/contract.py::catalog_entry` — one description of a catalog
+  entry, used by `ViewService.catalog()` **and** by the route's OpenAPI
+  example, so the documented catalog is the served catalog.
+
+**Harness**
+- **`.claude/rules/backend/api-design.md` §2 required a request and a response
+  example on every operation, and nothing enforced it.** `test_openapi_contract.py`
+  checked summaries, ids, tags, statuses, parameters and schema properties;
+  `test_openapi_projections.py` checked only the projection half. New
+  `tests/unit/api/test_openapi_examples.py` closes it, following `$ref`s so
+  `json_schema_extra` counts exactly as the rule says it should. It turned
+  eight existing operations red — `/healthz`, `/readyz`, both feature-flag
+  routes, `/v1/me`, `/v1/me/audit-events`, `/v1/views` and the agent card —
+  and **every one was fixed by adding a real example, none by relaxing the
+  test**. `POST /` (A2A) is the single exemption, named with its reason in
+  `WITHOUT_EXAMPLES`, and a third test fails if that list ever names a route
+  that no longer exists.
+- Diagrams updated in the same change: `05-agent-turn.md` (the loop yields;
+  `SessionService` drawn as planned), `06-response-shaping.md` (three callers,
+  the batch as a resource, the ETag box), `03-backend-layers.md` and
+  `04-request-lifecycle.md` (`ConditionalResponse` is a dependency, not
+  middleware).
+- `specs/README.md` indexes 0012; spec 0010's OD-3 now points at where it was
+  closed, and its OD-2 at why it was not.
+
+**`backend-reviewer` findings, all closed in the same commit**
+- **A model provider raising something untranslated reached no reporter and
+  emitted no `agent.turn` metric.** Pre-existing, but this change made the path
+  reachable *and* testable, so it is fixed here: `run_turn_events` now reports
+  and counts every failure (`outcome="error"`) before re-raising. The A2A
+  stream is the only transport that can swallow it — by then the client holds
+  a 200 — so the turn is the last place that can still report.
+- `Vary: Authorization` added beside `Cache-Control` on both reads: the bodies
+  are subject-scoped and `private` alone was the whole argument.
+- `max-age=60` replaced with `private, no-cache`. The old comment claimed the
+  window was short so a feature flag took effect quickly — but a `max-age`
+  means the client does *not* ask, so a switched-off endpoint kept rendering
+  client-side for a minute. The comment and the header now agree.
+- The catalog's entity tag is computed **once at import**, not per request: it
+  dumps every options schema, and doing that on the 304 path is exactly the
+  compute revalidation exists to avoid.
+- `reviewer@google.com` in the `/v1/me` example replaced with a reserved
+  `example.test` address — an e-mail is PII and this one is published in
+  `/openapi.json`.
+- `ViewDescriptor.endpoints`' field example was stale the moment the batch
+  route landed; it now matches what the catalog actually serves.
+
+**Verified locally before the PR**
+- `make gate`: 609 tests, **100 % branch coverage**, ruff/basedpyright/budget/
+  xenon/vulture/interrogate/deptry/pylint/codespell clean, pip-audit clean.
+- No mutation check needed: no new auth, rate-limit or masking logic. The
+  batch route reuses `PrincipalDep`, `require_feature` and the existing
+  problem handler, and the unauthenticated sweep in `test_openapi_contract.py`
+  covers it by construction — a missing `PrincipalDep` turns it red.
+
+**Next person should know**
+- **`contextId` is still not resolved, and that is deliberate** (spec 0012
+  OD-3). GGU-46's session code merged onto `ggu46-integration`; this stack was
+  never rebased onto it, so there is no `SessionService`, no
+  `conversation_session` model and no `session_repository` in this tree —
+  nothing to resolve a `contextId` *against*. `a2a_service.py` still passes
+  `history=[]` and says so. **Whoever rebases this stack onto the session work
+  owns that item**, and the rule is unchanged: resolve against the verified
+  subject or treat as unknown, never trust the id alone.
+- The A2A `render-intent` event kind is **ours, not the protocol's** (spec 0012
+  OD-2). A2A has no "surface ready" event and its artifact semantics are
+  unsettled, so guessing at `artifact-update` would have invented a contract we
+  do not control. It lives in one module; when A2A settles, one file changes.
+- ADR-K D-20's other half — memoising the domain build and each render — is
+  **not** done (OD-4). A 304 already removes the body from the wire; a render
+  cache keyed by *(subject, view, options)* is unbounded memory in a process
+  that seeds a portfolio per subject, so it needs an eviction decision, not a
+  decorator.
+- Docker is needed for the integration suite, and in a sandboxed shell the
+  daemon socket is refused — run `make test` with the sandbox off, or point
+  `TEST_DATABASE_URL` at a running PostgreSQL.
+- Adding a chart still touches only its own module, but it now imports
+  `PORTFOLIO_ENDPOINTS` from `presentation/endpoints.py` instead of spelling
+  its serving endpoints out.
+## 2026-09-19 — GGU-38 payoff tool · spec `specs/backend/0014-payoff-tool.md`
+
+**Branch:** `feat/GGU-38_payoff_tool`, stacked on GGU-39 (holdings). Seven deep.
+
+**What it answers.** "What does $500 of SOL do to me if the price drops 20 %?"
+— twenty-six numbers the model must not compute, including the dollars-to-units
+division. `payoff` returns them all pre-formatted, plus three named scenarios.
+
+**Code**
+- `domain/payoff.py` — `PayoffPoint`, `PayoffCurve`, `bracket()`.
+- `domain/payoff_pricing.py` — `payoff_curve` (the grid and the profit at each
+  point); `domain/orders.py` — `order_quantity` (the one division). Split from
+  the entities under the line budget, along seams that were already there.
+- `agent/tools/payoff{,_limits,_order,_rows}.py` — the tool, its bound table,
+  its declared arguments and its display shaping. No shared file edited;
+  `load_tools()` finds it.
+- `domain/errors.py` — `PayoffRangeError` for a grid with no steps.
+- `domain/symbols.py` — the `Ticker` type a tool accepts, moved out of
+  `holdings_query` now that two tools want the same bound (OD-13).
+
+**The honest half.** The ticket says "risk/payoff curve", which invites an
+options reading. This domain is a **spot** book — no strike, no expiry, no
+volatility — so the linear part ships and OD-8 names, in order, what would have
+to exist in `app.domain` before anything else could: an instrument entity, a
+volatility input, a pricing function. No Greeks were faked. The payload carries
+a `disclosure` string saying so, in every answer.
+
+**Thirteen open decisions, because the ticket predates this architecture.** The
+ones worth knowing: the grid is `steps` **per side** so the entry price is a
+sampled point and "P/L at entry is zero" is an equality, not a tolerance (OD-2);
+`range_pct` is an **integer percent** and the size a **decimal string**, because
+a float ratio cannot be made exact afterwards (OD-3/OD-4); the size is one field
+plus a `size_in` unit rather than two optional numeric fields, which removes a
+branch that could not be reached or tested (OD-4); an out-of-range request is
+**rejected, not clamped**, as the ticket asked — spec 0011 OD-7's precedent
+(OD-5); and `sell` is the mirror curve of a spot position, never a short (OD-6).
+
+**No render intent, on purpose (OD-7).** The registry holds a waterfall and an
+allocation donut. Neither draws a P/L curve over a price axis, so the tool emits
+none rather than aiming a confident wrong chart at a correct answer.
+`payoff.curve.v1` belongs to the ticket that owns the component. This is the
+first tool that returns figures and no intent by design, so
+`docs/diagrams/05-agent-turn.md` now says a render intent is optional.
+
+**What review found — three payloads that could mislead, and a silent test.**
+The gate was green for all four; none of them is a kind of defect a gate sees.
+
+1. **A row that contradicted itself.** On the sell path `positionValue` was
+   still `quantity × price`, so every row paired `"$7,924.80"` of position
+   value with `"-$1,828.80"` of profit — two figures moving in opposite
+   directions, in a payload the model copies verbatim. A sale leaves no
+   position, so the field is now `null` there (OD-12). The number was not
+   wrong arithmetic; it was arithmetic about something that does not exist.
+2. **A ladder that printed one price for twenty-six rows.** `{DOGE, range 5 %,
+   25 steps}` gave 51 points with **two** distinct displayed prices, a
+   break-even indistinguishable from a row losing six dollars, and support for
+   both "at $0.13 you make $6.36" and "at $0.13 you lose $6.36". OD-10 had
+   pre-approved a *coarse* ladder, not a *degenerate* one. The domain now
+   publishes `price_step` and the display asks for the smallest precision that
+   keeps two adjacent points apart — `money_display`'s own `precision`
+   argument, **not** a second money format, which is what OD-10 was protecting.
+3. **An AC with no test.** Commenting out `register(PayoffTool())` left the
+   suite green: the tool vanished from the agent, the prompt and the agent
+   card, silently. AC-1 now asserts discovery, and the mutation check was
+   re-run to watch it go red.
+
+**Verified**
+- `make gate`: **637 tests**, 100 % branch coverage, pylint 10.00/10,
+  interrogate 100 %, pip-audit clean.
+- Mutation check: `register(PayoffTool())` commented out → 1 failed, 613
+  passed; restored → green.
+
+**Next person should know**
+- A payoff ladder is the one surface where two-decimal money is not merely
+  coarse but self-contradictory, which is why it derives its own price
+  precision. **Every other surface still shows DOGE at `$0.13`** —
+  `get_holdings_summary` included. The durable fix is a per-asset price
+  precision on the curated market reference, like `name`, used everywhere at
+  once (OD-10, the shape spec 0011 OD-3 gave `logoUrl`).
+- `specs/README.md` was missing its 0011 row; added alongside 0014.
+- Spec numbers 0012 and 0013 are reserved by the tickets in flight beside this
+  one; 0014 was taken to stay out of their way.
+
+---
+
+## 2026-09-19 — GGU-39 holdings tool · spec `specs/backend/0011-holdings-tool.md`
+
+**Branch:** `feat/GGU-39_holdings_tool`, stacked on GGU-3. Six deep.
+
+**Why it mattered.** Spec 0006 shipped `get_holdings_summary` as the reference
+tool that proved the registration seam — one fixed ordering, no filter. GGU-39
+turns it into the surface the demo actually lands on, which is the entry point
+for all three flows. The three questions it could not answer ("just my BTC",
+"my biggest losers", "how am I doing overall") each pushed work onto the model
+that the numbers-from-tools invariant exists to keep away from it.
+
+**Code**
+- `domain/returns.py` — `return_on_cost`, returning `None` on a zero cost
+  basis. A return on nothing is undefined, and `0.00%` would call an
+  infinitely profitable position flat (OD-2).
+- `core/trend.py` — the up/down/flat token, decided from the **rounded**
+  figure so it cannot contradict the string beside it. Its own module: it was
+  the fifth concept in `display.py` and that file was at the line budget.
+- The tool is now four files: `holdings_sort` (the orders, as a table),
+  `holdings_query` (bounded arguments, what they select, whether a chart
+  fits), `holdings_rows` (how a position reads), `holdings_summary` (the tool).
+
+**What the reviewer caught that the gate could not**
+- `symbols` advertised `maxLength: 10` to the model and enforced **nothing**
+  per item — a 5 000-character "ticker" validated. The spec's security section
+  asserted the bound that did not exist. Fixed with `StringConstraints`, and
+  there is now a test comparing the advertised JSON Schema against the
+  enforced pydantic schema, because the comment claiming they agreed was
+  exactly what the hole hid behind.
+- The render-intent suppression closed the `symbols` hole and left the
+  identical `sort_by` hole open: "your two worst losers" under a donut of the
+  two largest positions. Both are now one predicate in `chart_options`.
+- Three tests that could not fail: an ordering oracle that called the same
+  production `SORTERS` entry the tool calls (invert the comparison and it
+  still passes), a weights assertion that never looked at the payload, and a
+  totals assertion that skipped the three figures this ticket added.
+
+**Next person, read this**
+- A tool's argument model and the JSON Schema it publishes are **two
+  declarations of the same bound**. Assert they agree; a comment is not a
+  test. This is now the third time a documented property turned out to be
+  unenforced.
+- 100 % branch coverage does not see a conditional *expression*. `ZERO if
+  ratio is None else ratio` inside a sort key was fully "covered" and never
+  once executed with `None`. If a rule is documented, assert it directly.
+- `weight` and `value` sort identically by construction and always will;
+  `gainers`/`losers` rank by return, not by absolute profit, because absolute
+  profit is dominated by position size (OD-4, OD-5).
+- `trend` describes the **money**, not the percentage: they round at different
+  scales and `up` beside `0.00%` is correct (OD-8).
+
+**Harness** — no rule, hook or command changed. `docs/diagrams/03-backend-layers.md`
+gained `core/trend`; `05-agent-turn.md` now draws the render intent as
+conditional, which is what OD-1 made it.
+
+---
+
+## 2026-09-19 — holdings price precision · follow-up, no ticket
+
+**Branch:** `fix/holdings_price_precision`, on GGU-37.
+
+**One line of code, and the reason it is worth a PR.** GGU-37's review found
+that `simulate_sale` printed DOGE at `$0.13` beside proceeds of `$1,527.60` —
+12,000 times $0.13 is $1,560.00, $32.40 apart in the same block. That tool
+fixed its own block with a new `core.display.price_display`, and deliberately
+did **not** touch `holdings_rows`, which had the identical bug: it was
+GGU-39's contract, reviewed one commit earlier, and editing it there would
+have collided.
+
+This closes it, with the same helper rather than a second one. Every holdings
+row now multiplies back: `$0.1273 × 12,000 = $1,527.60`. Assets quoted in
+whole cents are unchanged (`$64,250.00`).
+
+**Next person, read this**
+- There are now **two** precision helpers and they answer different questions:
+  `core.display.price_display` (how finely is this *asset* quoted) and
+  `payoff_rows.price_precision` (how finely must *adjacent grid points* differ
+  to stay distinguishable). Neither subsumes the other. Do not merge them;
+  do check which one a new surface needs.
+- The pattern that produced this bug is the one worth remembering: a figure
+  that is correct on its own, rendered beside another figure it no longer
+  agrees with. Three separate instances turned up in one day — this one, the
+  `positionValue` that rose while the P/L fell (GGU-38 OD-12), and a
+  break-even string shared with 25 losing rows (GGU-38 OD-10). **A payload is
+  wrong when two of its own numbers contradict each other, even when every
+  number is individually right.**
+
+**Harness** — no rule, hook or diagram changed.
+
+---
+
+## 2026-09-19 — GGU-37 simulate_sale · spec `specs/backend/0013-simulate-sale-tool.md`
+
+**Branch:** `feat/GGU-37_simulate_sale_tool`, stacked on GGU-39 (holdings).
+
+**What it is.** The deterministic tool behind Flow B's tax-lot comparator:
+*"what if I sold 0.5 BTC?"* — which lots the sale consumes under FIFO, LIFO or
+HIFO, the proceeds, the cost basis, the realised result split short-term vs
+long-term, and the position left over. The seed has been waiting for it since
+GGU-5: BTC's two lots sit at 367 and 363 days, one either side of the 1-year
+boundary, precisely so this answer has something to say.
+
+**Code**
+- `domain/lot_selection.py` — `LotMethod` and the three orders. Its own module
+  because *which lot goes first* is a policy; a fourth method touches nothing
+  else. Every order ends in `lot_id`, so a tie cannot reorder between runs.
+- `domain/sale_results.py` — `LotConsumption`, `SaleSimulation`. The short/long
+  split is **derived** (`pl_in`, `lots_in`), never stored, so it cannot
+  disagree with the rows it summarises. `closes()` mirrors the attribution
+  waterfall's own closure check.
+- `domain/sales.py` — the walk. Read-only: it never calls
+  `PortfolioProvider.save`.
+- `agent/tools/{simulate_sale,sale_request,sale_rows}.py` — tool, arguments,
+  display shaping. Registered from its own module; no shared file edited.
+- `agent/tools/ratios.py` — `return_display` lifted out of `holdings_rows`,
+  where it was private. Two tools now share one answer to "return on a zero
+  cost basis", instead of two copies free to drift.
+
+**Three decisions worth knowing (full set: spec §8, OD-1…OD-9).**
+- **Sizes cross as decimal strings**, not JSON numbers. `json.loads("0.5")` is
+  a `float` before this code runs, and `domain.money.reject_float` exists to
+  refuse exactly that. `quantity`/`amount_usd` are pattern-bounded strings.
+- **Over-sell is an answer, not an exception.** The turn loop flattens a
+  raising tool to `{"error": "tool-failed"}` — deliberately, since a message
+  can quote a holding. So the tool catches `PositionTooSmallError` and returns
+  `{"error": "position-too-small", "requestedDisplay", "heldDisplay"}`. The
+  model copies "you hold 0.6" instead of inventing it. Invalid *arguments*
+  still reject, unchanged (spec 0011 OD-7).
+- **No render intent.** Only `attribution.waterfall.v1` and
+  `holdings.allocation.v1` are registered, and neither renders a sell
+  scenario. A tool pointing at a view that does not exist is the same lie as
+  inventing a number. `tax_lots.table.v1` arrives with its component, in
+  Epic 2.
+
+**Ticket re-baselining.** GGU-37 was written against the deleted
+`backend_python/` sample — `tools.py`, `agent.py`, `tools=[...]` on an ADK
+`LlmAgent`, a `py.typed` marker and a pyproject that still needed pydantic.
+Every acceptance criterion survives; only the mechanism changed. Recorded as
+OD-1 so the ticket's plan is not followed by the next reader.
+
+**Harness** — no rule, hook or command changed. `specs/README.md` gained rows
+for **0013 and 0011**: the holdings PR added its spec without indexing it, and
+an index that omits a spec is worse than no index.
+
+**Review round (same PR).** The financial walk was hand-checked and held.
+Two test gaps did not, and both would have shipped a wrong figure silently.
+
+- **`register(...)` was unproven.** Commenting it out left the whole suite
+  green: the tool would have shipped invisible to the model with a clean
+  gate. The discovery test is now parametrized over **every** tool name this
+  backend ships, plus a companion that counts the modules ending in a
+  top-level `register(` call — so a tool added without being listed fails,
+  rather than the next person having to remember.
+- **The summary payload was never asserted.** Swapping `shortTermPlDisplay`
+  with `longTermPlDisplay` stayed green: the tax split inverted, which is the
+  entire product value of Flow B, and AC-2's "short plus long equals the
+  total" is symmetric under exactly that swap. The published §3 example is
+  now a **literal** oracle in `tests/unit/agent/tools/sale_payload.py`,
+  asserted whole.
+- **`price_display`, new in `core/display.py`.** OD-4 promised a reader can
+  multiply the price by the quantity and land on the proceeds. That was false
+  for DOGE, ADA and DOT: `$0.13 × 12,000` reads $1,560.00 against proceeds of
+  $1,527.60 in the same block. A price now carries `PRICE_PRECISION` (4 dp)
+  when cents are not enough, and a test over the curated reference fails if an
+  asset is ever quoted finer than that. **`holdings_rows` has the same bug and
+  is deliberately untouched** — it is GGU-39's contract, reviewed one commit
+  ago; the helper lives in `core` so that fix is a one-line import.
+- Both OD-4 tests could not fail (production compared against production);
+  they use literal oracles now. Added the cent either side of the whole
+  position, the sub-dollar price, and a `position-too-small` clause in the
+  tool description so OD-3 is declared to the model rather than hoped for.
+  `symbol` is bounded by pattern, not only by length.
+
+**Verified locally before the PR**
+- `make gate`: 657 tests, **100 % branch coverage**, ruff/basedpyright/budget/
+  xenon/vulture/interrogate/deptry/pylint/codespell clean, pip-audit clean.
+- Hand-check of the FIFO half-BTC case against the seed: proceeds $32,125.00,
+  cost basis $22,620.00, realised +$9,505.00 = +$8,925.00 long (lot-btc-01,
+  367 days) plus +$580.00 short (lot-btc-02, 363 days), leaving 0.1 BTC.
+- **Mutation evidence**, each applied then reverted: `register(...)` commented
+  out → 2 failures; short/long swapped → 1; `priceDisplay` from the proceeds
+  → 3; leftover basis from the consumed basis → 1. All four were green before
+  this round.
+- No auth, rate limiting or error masking touched, so no security mutation
+  check was required.
+
+**Next person should know**
+- The seed **cannot** tell LIFO from HIFO on BTC (its newest lot is also its
+  dearest), and cannot tell FIFO from HIFO on ETH. `test_sales.py` builds a
+  three-lot position whose age order and price order disagree; do not
+  "simplify" it back onto the seed.
+- Test files obey the 150-line budget too. This feature ships six of them,
+  split by responsibility, with the shared pieces in `sale_fixtures.py`,
+  `sale_payload.py` and `tests/unit/domain/conftest.py::make_portfolio`.
+- `percentage_display` does **not** prefix a `+`. Two spec examples in the
+  repo claim otherwise; 0013's were corrected.
+- `.claude/commands/feature.md` shows modified in this worktree and is **not**
+  in the commit. Writes under `.claude/commands/` are denied to the agent, so
+  the on-disk copy could not be updated to the branch's version; it is marked
+  `assume-unchanged` so a rebase is possible. Undo that outside the sandbox.
+
+---
+
+## 2026-09-19 — GGU-3 A2A surface · spec `specs/backend/0010-a2a-surface.md`
+
+**Branch:** `feat/GGU-3_a2a_surface`, stacked on GGU-14. Five deep.
+
+**Why it mattered most.** The agent host ran a turn, the presentation layer
+shaped payloads, the prompt taught the model both catalogues — and **none of
+it was reachable**. Every one of those tickets had merged as code nothing could
+invoke. This is the surface that makes them real.
+
+**Code**
+- `api/agent_card.py` — `GET /.well-known/agent-card.json`, **public**.
+- `api/a2a.py` — `POST /`, JSON-RPC, answering `text/event-stream`.
+- `services/a2a_service.py` — the thin adapter (ADR-J D-2). `AgentService`
+  still does not know the protocol exists, which is what lets A2A move (it is
+  alpha) without the services moving with it.
+- `services/agent_card_service.py` — skills generated from the tool registry,
+  same principle as the prompt catalogues.
+- `api/middleware/install.py` — lifted out of `bootstrap.py`, which the change
+  pushed over the budget. Middleware **order is a security contract**, so it
+  says so where it now lives.
+
+**Two error shapes, on purpose.** A fault *inside* the protocol is a JSON-RPC
+error object at HTTP 200. A fault *before* the envelope is reached — no token,
+rate limit — is still an RFC 9457 problem document at its real status. The
+manual run shows both. A client parses two shapes and the spec says so rather
+than letting it be discovered.
+
+**A second public route.** The agent card is the first addition to the
+unauthenticated list since the health probes. `.claude/rules/backend/security.md`
+requires a spec note and sign-off, so both exist, and the contract test's
+exemption is now a **named `PUBLIC` constant** with the reason attached —
+previously a bare set literal inline in one assertion. Adding a public route is
+now a visible diff rather than a route that quietly stops declaring a 401.
+
+**Verified**
+- `make gate`: **546 tests**, 100 % branch coverage, pylint 10.00/10.
+- Live server: the card reads unauthenticated and advertises
+  `https://api.finance-a2ui.example` (the **public** URL, ADR-D D-7 — the
+  sample advertised `0.0.0.0`) with both tools as skills; a turn streams
+  `working` → `message` → `completed`; `POST /` without a token answers a 401
+  problem document; `tasks/cancel` answers `-32004` and an unknown method
+  `-32601`, both at HTTP 200.
+
+**What review found, and the one that mattered.** The `backend-reviewer` agent
+was run over the four unreviewed commits in this stack. It reproduced a
+**blocker on the newest attack surface**: a `method` of 64 control characters
+is inside the field's 64-character bound, but `repr()` of it is far longer than
+the 256-character bound on the error message — so interpolating the caller's
+method into the reply raised a `ValidationError` **inside the very helper whose
+job is to avoid a transport error**, and the surface answered **HTTP 500**.
+That broke AC-3 and contradicted the spec's own claim that these messages are
+fixed strings.
+
+Protocol error messages are now **fixed strings, never built from the
+request**. The error *code* identifies the fault; echoing the caller's input
+back added nothing and cost correctness. Also from that review: `id` and
+`params` were the only unbounded fields in the module and `id` is reflected
+verbatim, so both are bounded now; the SSE generator caught only `AppError`,
+so anything else left the client with a truncated stream whose last state was
+`working` and no terminal event; and the controller carried the dispatch
+branching the architecture rule forbids, which is now `services/a2a_dispatch.py`.
+
+**The test that will keep paying.** The contract test asserted every non-public
+route *documents* a 401 — not that it *enforces* one. A controller that copied
+the documented responses and forgot `PrincipalDep` would have passed while
+being wide open. A new test calls every non-public route **without a token and
+insists on a 401**, so a route can only join the public set by being named in
+`PUBLIC`, never by omission. That is what makes the agent-card sign-off mean
+something.
+
+**Next person should know**
+- **Every turn currently starts with empty history.** `contextId` is echoed,
+  never resolved — sessions are GGU-46, on a different branch. The resolution
+  rule is already decided and unchanged (resolve against the subject or treat
+  as unknown).
+- **The stream is well-formed but not incremental.** `run_turn` returns a
+  finished turn rather than yielding, so the events arrive in one burst.
+  ADR-K D-19 wants per-surface streaming; making the loop a generator changes
+  `a2a_service.py` only.
+- **The body limit does not cover chunked encoding** (spec OD-6). `POST /` is
+  the first route that reads the raw body itself, which makes a pre-existing
+  middleware limitation load-bearing for the first time. Every envelope field
+  is bounded, so what is unbounded is the read, not the response.
+- **ADR-D is still `Proposed`.** This implements D-1, D-2, D-3, D-7 and D-9 as
+  written. If ratification moves any of them, this surface moves too (spec
+  OD-5). Treating a proposal as a decision silently would have been the easy
+  mistake.
+
+---
+
+## 2026-09-19 — GGU-14 system prompt · spec `specs/backend/0009-prompt-fragments.md`
+
+**Branch:** `feat/GGU-14_prompt_fragments`, stacked on GGU-36. Four deep.
+
+**The gap.** Two halves existed and nothing joined them: `agent/prompt.py`
+held the rules, `presentation/prompt.py` could render the projection registry
+as text, and the turn loop imported the rules as a constant and **sent neither
+catalogue**. The model was told it must pick a registered view and never told
+which views exist.
+
+They were never joined because they cannot be: `app.agent` may not import
+`app.presentation` (asserted over the parsed source). A **service** is where
+they meet, which is what `services/prompt_service.py` now is.
+
+**Both catalogues are generated.** The views came from the registry already
+(ADR-K D-14); the tools now do too. Registering a tool or a view is what
+teaches the model about it — there is no list to forget to update. The rules
+that stay hand-written deliberately **name no tool**: a rule saying "for a
+why-did-it-move question call `compute_attribution`" reads better and is the
+one line guaranteed to go stale, so a test asserts the rules mention no
+registered tool name (spec OD-1).
+
+**Also split:** `services/agent_telemetry.py`. The turn loop was already at the
+150-line ceiling — the reviewer of GGU-47 flagged it — and observability is the
+part that grows every time someone wants one more counter. It answers a
+different question from the loop: what an operator gets to see.
+
+**Verified**
+- `make gate`: **527 tests**, 100 % branch coverage, pylint 10.00/10.
+- Printed the real prompt: 2,585 characters, both tools and both views present
+  with their option bounds, generated from the two registries.
+
+**Next person should know**
+- `AgentService` no longer imports `SYSTEM_PROMPT`; it receives the built
+  prompt. The turn-loop tests inject their own, which is deliberate: the loop's
+  job is to send whatever prompt it was given, and pinning the real text there
+  would make every prompt edit break the turn-loop suite.
+- The prompt is built **once at startup**, so adding a tool needs a restart —
+  which is true of registration anyway (spec OD-4).
+
+---
+
+## 2026-09-19 — GGU-36 attribution tool · spec `specs/backend/0008-attribution-tool.md`
+
+**Branch:** `feat/GGU-36_attribution_tool`, stacked on GGU-49 (which is itself
+stacked on GGU-47). Three deep, which is the direct cost of shipping four
+tickets before any of them merges — worth naming rather than hiding.
+
+**The distinction the ticket turned on.** Flow A asks *"why did my portfolio
+move this week?"*. The existing `attribution.waterfall.v1` projection walks
+each holding's **unrealised P/L** — a comparison against what the position
+*cost*. The question asks about what it was *worth seven days ago*. A holding
+bought two years ago can be deeply profitable and have contributed nothing this
+week. Conflating the two would have put a confidently wrong chart in front of a
+reviewer, so this ticket adds a genuinely new domain computation rather than
+reusing the one that was already there. Recorded as spec OD-3: whoever builds
+the window projection gives it **its own id** instead of changing what `v1`
+means.
+
+**Code**
+- `app/domain/attribution.py` — pure `attribute_window(portfolio, window,
+  symbols)`. The totals are derived *from* the contributions, so the waterfall
+  closes structurally rather than by rounding luck.
+- `app/agent/tools/attribution.py` — the `compute_attribution` tool: a closed
+  set of windows, an optional symbol filter, `extra="forbid"`, and output that
+  is entirely `*Display` strings.
+
+**Two facts that look like bugs and are not** (both pinned by tests, both in
+the spec):
+- **The money closes exactly; the shares do not.** `contribution` is a
+  subtraction of exact amounts. `share` is a division, and division is inexact
+  in any finite base — the shares land one unit in the last place away from 1.
+  The chart is drawn from the contributions. A test says so, so nobody later
+  "fixes" the closure by rescaling the ratios.
+- **A share can exceed 100 % or go negative.** When holdings move in opposite
+  directions, one contributed 132 % of the net move while another offset
+  −32 %. That is what a waterfall shows and it is correct. Clamping it would
+  misstate the answer.
+
+**Verified**
+- `make gate`: **518 tests**, 100 % branch coverage, pylint 10.00/10, no CVEs.
+- Manual run of the tool: the 7-day window reports `-$3,175.95` / `-4.66%`,
+  the bars sum to exactly `-3175.950000000000`, `closes()` is True, a filtered
+  BTC+ETH 30-day run still closes against its own total, and two identical
+  calls produce identical payloads.
+
+**Next person should know**
+- Windows are a **closed set** (`1d`/`7d`/`30d`), not a free-form duration.
+  The seeded history is 90 days, so a free-form window would let the model ask
+  for a year and get a silently truncated answer. The closed set makes the
+  refusal explicit (spec OD-4).
+- One test in the first draft asserted nothing meaningful (a `max()` over a
+  constant, then `!= []`). The testing rule forbids exactly that, and it passed
+  anyway — worth re-reading your own new tests for it, because a green suite
+  will not tell you.
+
+---
+
+## 2026-09-19 — GGU-49 presentation layer · spec `specs/backend/0005-presentation-layer.md`
+
+**Branch:** `feat/GGU-49_presentation_layer`, **stacked on `feat/GGU-47_agent_host`**
+(see *Why this one is stacked* below). Built by a worktree agent in parallel
+with GGU-47 and GGU-48.
+
+**Code** — implements [ADR-K](../docs/adr/ADR-K-response-shaping.md) end to end:
+`presentation/{registry,spec,fragments,displays,options,selection,prompt,contract,resolve,errors,sample,surfaces}.py`
+plus two reference projections in `presentation/views/`, the `/v1/views`
+catalog, `?view=` on a portfolio read, and the agent-facing render intent.
+
+**Decisions worth knowing**
+- **`views/` is auto-discovered** (`pkgutil.iter_modules`), not a hand-kept
+  import list. The presentation rule blessed "one import line in the package
+  `__init__`"; the ticket said *no* shared file may be edited to add a chart.
+  Discovery satisfies both, and adding a chart is now literally one new file.
+- **Options are shared across a multi-view request.** `?view=a&view=b` works,
+  but `?view=attribution.waterfall.v1&top_n=3` is a **422** because the
+  waterfall declares no `top_n`. Per-view namespacing would need a query-string
+  interpreter, which ADR-K D-3 rejects; per-entry options belong to
+  `POST /v1/view-renders` (D-18, out of scope).
+- **`currency` is `Literal["USD"]`.** The backend invents no FX rate, so `EUR`
+  is an honest 422 rather than a fabricated figure.
+- **Selection stays additive**: each projection declares `fitness(portfolio)`
+  and the rule ranks the registry — no `if/elif` on ids.
+- **OpenAPI examples are rendered from the registry at operation level**, not
+  hand-copied into `json_schema_extra`: a schema-level example would have to
+  exist before the DTO class is complete.
+
+**Why this one is stacked on GGU-47 rather than cut straight to `develop`.**
+Built in parallel, the two tickets each created the piece the other also
+needed. ADR-E D-2 allows exactly **one** formatting module and both had one;
+the duplicate-code gate allows one AST helper for the boundary tests and both
+had one. Landing them side by side would have merged that duplication into
+`develop` and left someone to find it later. The integration commit on this
+branch resolves it instead:
+
+- `app/core/display.py` becomes the single `Decimal` → string boundary for both
+  layers, carrying GGU-49's locale support and GGU-47's explicit sign.
+  Quantities take a `trim` flag because a chart axis wants `"0.60000000"` and a
+  sentence the model reads aloud wants `"0.6"`. `presentation/formatting.py` is
+  gone.
+- The locale table, the rounding and the digit grouping move to
+  `app/core/locales.py` — *what kind of number this is* and *how digits are
+  written in a place* are different questions, and together they broke the
+  150-line budget.
+- `tests/boundaries.py` is the one AST reader for the domain, agent and
+  presentation suites; `tests/unit/import_graph.py` is gone.
+- The portfolio provider is a **container** field, not a member of
+  `AgentRuntime`: both the agent's tools and the projections read the same
+  portfolios.
+- **`app/api/deps` is now a package.** Merging both tickets' providers put the
+  single file at 168 lines. Controllers still write
+  `from app.api.deps import ...` unchanged, and services are still constructed
+  in one place — it is one directory instead of one file.
+
+**Verified**
+- `make gate` after the rebase: **485 tests, 100 % branch coverage**, pylint
+  10.00/10, interrogate 100 %, deptry clean, no CVEs.
+- Manual run against the compose Postgres: two projections in one request;
+  an undeclared option → 422 problem+json; `currency=EUR` → 422; no `view`
+  named → the selection rule chose; unknown view → 404; another portfolio →
+  404; no token → 401; `/v1/views` listed both projections with their options
+  schemas; OpenAPI showed the `oneOf` with a `discriminator` and one example
+  per member.
+
+**A third duplication, found by auditing the merged result.** After both
+branches were integrated, `total market value` was computed in **three**
+places — the agent's `holdings_summary` tool and both projections — and the
+`Portfolio` aggregate that owns the data exposed no total at all. None of them
+was wrong, which is the point: they agreed only because three separate pieces
+of code happened to be right. In a finance demo the agent says one of those
+numbers out loud while a chart draws another, so *drift between them is the
+most embarrassing failure available*. `Portfolio` now owns
+`total_market_value()`, `total_cost_basis()` and `total_unrealized_pl()`, and
+the three call sites read them. The residual "Other" bucket in the allocation
+chart keeps its own sum — that one really is a chart concern.
+
+Every pre-existing projection and tool test passed unchanged afterwards, which
+is the evidence that the three implementations had been computing the same
+figure.
+
+**Next person should know**
+- **`app/api/deps.py` no longer exists** — it is `app/api/deps/`. The
+  architecture rule and `backend/CLAUDE.md` still name the file; they are
+  correct about the *rule* (one place constructs services) and stale about the
+  path. Fix the wording when you next touch them.
+- Adding a chart is one file under `presentation/views/`. A test proves it:
+  it defines `cash.runway.v1` inside the test body and finds it in the
+  registry, in `GET /v1/views` and in the generated prompt fragments.
+- `test_openapi_contract.py` was split — the projection assertions live in
+  `test_openapi_projections.py` because the 150-line budget would not hold
+  both. Same gate, two files, with a pointer in the original docstring.
+- This entry and GGU-47's were written during integration, not by the building
+  agents: the sandbox denies writes to `.claude/` inside an agent worktree.
+
+---
+
+## 2026-09-19 — Harness rule: the agent opens PRs, the TL merges them
+
+**Harness only — no code change.**
+
+**Decision (Lautaro, TL, 2026-09-19).** An earlier instruction in the same day
+authorised the agent to merge its own PRs. It was withdrawn: **the agent never
+merges**. Opening the PR is where the agent's part of the lifecycle ends. The
+branch stays open, the Jira ticket stays **In Review**, and the merge happens
+only after the TL explicitly confirms it — for `develop` exactly as for `main`,
+and no matter how clean the gate is. When several PRs are waiting, the agent
+reports the list and moves on to the next ticket rather than merging any of
+them. Only when the TL names a PR (or says to merge them all) does the agent
+merge and then move the ticket to **Done**.
+
+**Changed**
+- `.claude/rules/backend/sdd.md` — the rule itself, next to the ticket-status
+  rule it completes; the `/feature` lifecycle line now reads "humans approve the
+  spec at the start and the merge at the end".
+- `.claude/commands/feature.md` — step 11 is now "stop at the open PR, never
+  merge"; the wrap-up also reports the PRs still waiting on confirmation.
+- Agent memory `pr-and-jira-workflow` updated with the same rule and the reason.
+
+**Why it is written down here.** `Done` already meant merged; what was missing
+was *who* merges. Without this, another developer's Claude reads a green gate as
+permission to close the loop itself, which takes the review decision away from
+the person who owns it.
+
+**Next person should know.** PRs accumulate on purpose. A queue of open PRs
+against `develop` is the expected steady state, not a backlog to clear.
+
+---
+
+## 2026-09-19 — GGU-46 session identity and isolation · spec `specs/backend/0004-session-identity.md`
+
+**PR:** #13 · built by a worktree agent, rebased, re-gated and manually verified here.
+
+**Re-baseline.** The ticket described the deleted ADK sample (`InMemorySessionService`,
+client-supplied `contextId` as the session key) and asked for token verification
+that PR #2 already shipped. What was actually missing — and what this delivers —
+is **persisted conversations owned by the verified subject**.
+
+**Code**
+- Migration `0004`: `conversation_sessions` + `conversation_messages` (cascade,
+  indexed on `(subject, created_at)` and `(session_id, created_at)`).
+- `SessionRepository` scopes **every** query by subject; `SessionService` answers
+  `NotFoundError` — never `AuthorizationError` — for another subject's id, so the
+  API does not reveal that the session exists.
+- Six fully documented REST operations under `/v1/sessions`, keyset pagination
+  through `helpers/cursor.py`, shared query params in `api/params.py`, the whole
+  router behind `require_feature("sessions.api")`.
+- Audit events `session.create`, `session.read`, `session.list`, `session.append`
+  carrying the session id as `target`.
+
+**Mutation check (required for auth changes)**
+- subject filter removed from `get_for_subject` → 4 isolation tests red;
+- removed from `delete_for_subject` → 2 red; restored → 9 green.
+
+**Next person should know**
+- `DELETE` answers **404** for an unknown or foreign id rather than a blanket 204:
+  idempotent on server state, and the isolation boundary stays testable from outside.
+- Coverage loses a controller's lines **after** an `await` that crosses SQLAlchemy's
+  greenlet bridge — `create_session`'s `Location` line is covered by a unit test with
+  a faked service. Any future controller with post-`await` statements hits the same thing.
+- Sessions live in the PostgreSQL the backend already owns; flagged as OD-1 against
+  ADR-F D-1 for the TL.
+## 2026-09-19 — GGU-48 continuous delivery · spec `specs/backend/0007-cd-pipeline.md`
+
+**Branch:** `feat/GGU-48_cd_pipeline` → `develop`. Built in a worktree while the
+GGU-49 and GGU-47 agents held `backend/src/app/presentation/` and
+`backend/src/app/agent/`; this ticket deliberately took the one area with no
+overlap (`.github/`, `infra/`).
+
+**Code**
+- `backend/src/app/core/release.py` — resolves `APP_RELEASE`, falls back to the
+  packaged `__version__`. `bootstrap.py` now feeds it to `HealthService` and to
+  the Sentry release, so a revision can say which build it is.
+- `infra/delivery.tf` — Artifact Registry (digest-addressed, retention
+  policies), the Workload Identity pool and provider **pinned to this GitHub
+  repository**, and a deployer service account holding only
+  `artifactregistry.writer`, `run.developer` and `serviceAccountUser` on the
+  runtime identity.
+- `infra/scripts/deploy_cloud_run.sh` — deploy with no traffic → require the
+  revision's `Ready` condition → shift traffic → verify `/healthz` reports
+  exactly the release → roll back on any failure.
+- `.github/workflows/backend-cd.yaml` — publish, deploy, tag, report.
+
+**Harness**
+- `.claude/ship-gate.json` gains `infra.delivery-script` and
+  `infra.credential-model`; the same two run in `pre-commit` and in the new
+  `delivery-scripts` job of `infra-ci.yaml`, keeping the three in step as
+  `.claude/rules/ci-conventions.md` §5 requires.
+- `.pre-commit-config.yaml` gains `shellcheck` — the repository now has shell
+  it depends on, so shell gets a linter.
+- `infra-ci.yaml` was rewritten to the job/step naming contract (it predated
+  the rule) and now ends in a `Report · …` summary like every other workflow.
+- `CLAUDE.md` gains a delivery convention; `docs/diagrams/08` and `09` updated
+  in this PR as `.claude/rules/diagrams.md` requires;
+  `docs/compliance/CHANGE_MANAGEMENT.md` §7 rewritten around the automated
+  record.
+
+**Why the deploy is a shell script and not inline workflow YAML.** A rollback
+path that has never executed is not a rollback path. As a script it runs
+against a stub `gcloud` on `PATH`, so the whole sequence — including the
+rollback — is exercised on a laptop in under a second. Inline YAML could only
+have been proven by breaking a real deploy.
+
+**What the `backend-reviewer` agent caught, and what changed because of it**
+
+The first version was gate-green and wrong in four ways. All four are fixed
+here; they are worth reading because three of them would only have shown up on
+the first real deploy.
+
+1. **The readiness probe could pass for the wrong revision.** It looked up the
+   candidate revision's tagged URL and fell back to the service's public URL
+   when the lookup missed — and the public URL still served the *previous*,
+   healthy revision. A missed lookup therefore verified the old code and then
+   shifted traffic to the unverified new one. An unresolvable revision is now a
+   hard failure, covered by its own test.
+2. **The probes could not have reached the service at all.** Ingress is
+   `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`, so the `*.run.app` hostnames are
+   unreachable from a GitHub-hosted runner and every deploy would have rolled
+   itself back. The pre-traffic gate is now the revision's own `Ready`
+   condition — which Cloud Run reports only after the startup probe on
+   `/readyz` passes — and the post-traffic check goes to the load balancer
+   domain (`PUBLIC_URL`), the only address that resolves from outside the VPC.
+   Recorded as spec OD-5.
+3. **The release tag could never be created.** The workflow granted
+   `contents: read` and then POSTed a ref, swallowing every error as "already
+   exists". The deploy job now has `contents: write` and distinguishes a 422
+   from a real failure.
+4. **One provider and one deployer variable cannot serve two projects.**
+   `delivery.tf` creates a pool, a provider and a deployer *per environment*,
+   but the workflow read repository-level variables and only branched on the
+   project id — so a `main` run would have authenticated as staging and pushed
+   into the production registry. A `settings` job now resolves the whole
+   per-environment set once and **fails naming the missing variable** instead.
+
+Also from that review: the release is read through `Settings.app_release`
+rather than `os.environ` (the architecture rule allows `os.environ` only in
+`core/config.py`); the release comparison is an exact match on the parsed
+`version` field instead of a substring, so `0.1.0` no longer "matches"
+`0.1.0+stale`; production federation additionally requires
+`assertion.ref == refs/heads/main`; `run.tf` declares `ignore_changes` on the
+image and the traffic split so a later `terraform apply` cannot undo a
+rollback (OD-6); `APP_RELEASE` is documented in `env.example` and compose; and
+the report job now fails on `skipped`, so a rejected production approval is not
+reported green.
+
+**Verified**
+- `make gate`: 266 tests, 100 % branch coverage, pylint 10.00/10, no CVEs.
+- `bash infra/scripts/tests/test_deploy_cloud_run.sh`: 36 passed, covering all
+  nine paths including deploy failure and an unidentifiable revision.
+  **Mutation check** — removing `shift_traffic "${previous}"` from `rollback()`
+  turned exactly 5 assertions red; restored → 36 passed.
+- `bash infra/scripts/tests/test_wif_conditions.sh`: 5 passed.
+- `terraform fmt -check -recursive` clean; `terraform validate` → *Success!*
+- `shellcheck` clean on all delivery scripts.
+- Container run with `APP_RELEASE=0.1.0+a1b2c3d` → `/healthz`
+  `{"status":"ok","version":"0.1.0+a1b2c3d"}`; without it → `"0.1.0"`;
+  `/readyz` ready; uid still 10001.
+
+**Next person should know**
+- **The pipeline is merged but has never run**: the GCP projects do not exist
+  until GGU-29 applies Terraform. AC-1, AC-2 and the live halves of AC-4/AC-5
+  are proven here by the script tests and `terraform validate`, not by a
+  deploy, and the PR says so rather than implying otherwise.
+- After GGU-29, set the repository **variables** (not secrets) from the
+  Terraform outputs. Everything except `GCP_REGION` is suffixed per
+  environment, because each environment has its own pool, provider and deployer:
+  `GCP_PROJECT_ID_*`, `GCP_WIF_PROVIDER_*`, `GCP_DEPLOYER_SA_*`, `PUBLIC_URL_*`.
+  Then add the required reviewer to the `production` GitHub Environment — that
+  reviewer *is* AC-2; the workflow only declares the environment.
+- A gate-green delivery pipeline proves very little. Everything that mattered
+  in this ticket was found by reading the failure paths, not by running the
+  suite; budget review time accordingly on anything that touches deploys.
+- `cleanup_policy` is `cleanup_policies` in the google provider v6. The first
+  spelling validates as an unsupported block, which is how it was caught.
+- Terraform provider downloads need network access the sandbox denies; run
+  `terraform init` outside it.
+## 2026-09-19 — GGU-28 open-source readiness · spec `specs/repo/0001-open-source-readiness.md`
+
+**Branch:** `docs/GGU-28_open_source_readiness` → `develop`. Documentation and
+one developer command; no application code changed.
+
+**The finding that shaped it.** The repository had **no `README.md` at all** —
+a public reference application whose audience is Google's reviewers, with no
+entry point. It also had no `NOTICE`, no architecture document, no contribution
+guide and no issue templates.
+
+**Added**
+- `README.md`, `NOTICE`, `docs/ARCHITECTURE.md`, `CONTRIBUTING.md`,
+  `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}`.
+- `backend/scripts/mint_dev_token.py` and `make token`. Not cosmetic: every
+  route except the health ones is authenticated, so without it the README's
+  clone-and-run promise was false — a fresh clone could not call anything.
+- `specs/repo/` as a spec area for repository-level work, registered in
+  `specs/README.md`.
+
+**The decision worth keeping.** The README describes **what is built, not what
+is planned**, and says so in its second paragraph: the backend is real, the
+Flutter client is still Google's upstream `restaurant_finder` sample, the
+delivery pipeline has never run, and the market data is invented. A reviewer
+who discovers the Flutter gap by failing to run the app trusts nothing else in
+the repository, so the gap leads rather than hides. `docs/ARCHITECTURE.md`
+ends in a "Known gaps" table naming the ticket that closes each one — which now
+has to shrink as GGU-3, Epic 1, GGU-29 and GGU-22 land. **Leaving that table
+stale is the main risk this change creates.**
+
+Per-file Apache headers were declined on backend sources (spec OD-2): `LICENSE`
+plus `NOTICE` satisfies the licence, the upstream client files keep their
+Google headers as required, and a 13-line header on files capped at 150 lines
+would consume the budget it is meant to protect.
+
+**Verified**
+- The README's own commands, run for real against a **clean** database:
+  compose up, `make token`, `GET /v1/me` → 200 `{"subject":"alice",...}`; the
+  same call with no token → 401 problem+json; `/healthz` and `/readyz` 200
+  unauthenticated; `/openapi.json` complete.
+- `gitleaks` over the **full history** — 71 commits, ~5 MB, **no leaks**.
+- `make gate` green: 262 tests, 100 % branch coverage, pylint 10.00/10.
+
+**Next person should know**
+- The shared compose database is at Alembic revision `0004` from the GGU-46
+  branch, which `develop` does not have yet — a container built from `develop`
+  refuses to start against it ("Can't locate revision identified by '0004'").
+  Use a throwaway database when verifying a branch that predates it.
+- `make token` is local only and refuses to run without `AUTH_JWT_SECRET`
+  rather than inventing a default. It cannot mint anything production would
+  accept, because production verifies RS256 through OIDC.
+## 2026-09-19 — GGU-47 agent host · spec `specs/backend/0006-agent-host.md`
+
+**Branch:** `feat/GGU-47_agent_host` → `develop`. Built by a worktree agent in
+parallel with GGU-49 (presentation) and GGU-48 (delivery), with
+non-overlapping file ownership agreed up front.
+
+**Why the ticket existed at all.** The board had tickets for the prompt
+fragments (GGU-14), the deterministic tools (GGU-36–39) and the transport
+(GGU-3), but nothing owned the piece that ties them together. The deleted ADK
+sample provided it for free; the FastAPI baseline does not. Without it every
+tool ticket would have merged as an unreachable pure function.
+
+**Code**
+- `core/model.py` (conversation DTOs), `core/display.py` (the single
+  `Decimal` → string boundary), `core/protocols.py` gains `ModelClient`.
+- `agent/{contracts,registry,prompt}.py` and `agent/tools/holdings_summary.py`
+  — tools register from their own module, so adding one never edits a shared
+  file. That seam is what GGU-37/38/39 depend on.
+- `infra/model/{payload,gemini_client,null_client,factory}.py` — the Gemini
+  adapter behind the Protocol, plus a deterministic `NullModelClient` wired
+  exactly like the existing `ErrorReporter`/`NullErrorReporter` pair.
+- `services/agent_service.py` (the turn loop) and `services/agent_tools.py`
+  (tool execution and failure masking, split out to stay inside the budget).
+
+**Decisions worth knowing**
+- **httpx, not the `google-genai` SDK.** No new dependency, no new pip-audit or
+  deptry surface, and the adapter mirrors `JwksKeyResolver`, a pattern already
+  proven in this codebase. Swapping to the SDK later is one module.
+- **The render intent is declared, not resolved.** `agent/contracts.py` defines
+  only `{view, options}` (ADR-K D-11). Validating it against the projection
+  registry and falling back on rejection is ADR-K D-12 and belongs to GGU-49 —
+  which is why the two tickets could run in parallel at all.
+- **One formatting module.** `core/display.py` sits in `core` because it is the
+  only place both `app/agent` and `app/presentation` may import (ADR-E D-2).
+  **The presentation layer must reuse it rather than add a second formatter.**
+- **The iteration bound counts model calls, not tool calls** (default 4: one
+  plan plus three corrections). On exhaustion the turn answers a fixed message
+  and sets `truncated=True`, rather than emitting half a sentence.
+- **A misbehaving tool never fails the turn.** The model receives
+  `{"error": ...}` and another iteration; only the exception object reaches the
+  `ErrorReporter`. An unknown tool is not reported at all — it is the model's
+  mistake, not ours.
+- `AgentRuntime` groups `model`/`tools`/`portfolios` in `api/container.py`:
+  three more singletons would have pushed `Container` past pylint's attribute
+  limit.
+
+**Verified**
+- `make gate`: 348 tests, 100 % branch coverage, pylint 10.00/10, interrogate
+  100 %, deptry clean, no CVEs.
+- **Mutation check** (required whenever error masking changes): removing the two
+  `except` clauses in `gemini_client.py` turned 9 tests red; restored → 32
+  green.
+- Manual run of a full turn against `NullModelClient` with a tool call: the
+  tool result was fed back to the model on the second call, the turn answered
+  with the pre-formatted figures, and the telemetry line carried
+  `model`/`outcome`/`duration_ms`/`iterations`/`tool_calls` and **no** prompt,
+  answer or subject.
+
+**What review changed.** The `backend-reviewer` agent approved it with no
+blockers and eleven should-fixes. Four were rule violations and are fixed here:
+`backend/docs/SECURITY.md` still described the model key as living in a "future
+spec", `backend/docs/OBSERVABILITY.md` did not list the new metric or events,
+`docs/diagrams/01-system-context.md` still drew Gemini as "(planned — GGU-47)"
+in the ticket that ships it, and the spec was `Draft` and missing from
+`specs/README.md`. The remaining seven are recorded as **OD-7 … OD-12 in the
+spec** rather than fixed here, each with the ticket that should fix it. The one
+worth reading is **OD-7: the Gemini wire format has never met the real API** —
+every test runs against stubs we wrote, so 100 % coverage proves the code
+matches *our assumption* of the format. GGU-3 carries the first live call and
+should treat a mapping fix as expected.
+
+**Next person should know**
+- **There is no HTTP route yet.** `api/v1/`, `router.py` and the OpenAPI
+  document are untouched by design; `get_agent_service` and `get_tool_context`
+  wait in `deps.py` for GGU-3 to expose the A2A surface (ADR-J D-2).
+- The default model id is `gemini-3.8-flash`, the only pin recorded in the repo
+  (ADR-D D-4). Nothing depends on it; `GEMINI_MODEL` overrides.
+- `tests/unit/import_graph.py` now holds the shared AST helpers that the domain
+  and agent boundary tests both use — pylint's duplicate-code check forced the
+  extraction, and the presentation layer's boundary test should reuse it too.
+- This entry was written during integration, not by the building agent: the
+  sandbox denies writes to `.claude/` inside an agent worktree. Budget for that
+  when delegating.
+
+---
+
+## 2026-09-19 — GGU-5 portfolio domain · spec `specs/backend/0003-portfolio-domain.md`
+
+**PR:** #12 · **Built by a worktree agent**, integrated and verified here.
+
+**Code**
+- `src/app/domain/` — 16 modules, each ≤150 lines: `money` (Decimal end to end,
+  float rejected at the boundary), `terms` (long = **strictly more than 365 days**,
+  leap year asserted), `lots`, `holdings`, `transactions`, `prices`/`history`
+  (deterministic **90-day** daily series ending on the current price),
+  `market` (curated reference — the deleted `crypto_data.json` is gone and the
+  domain is now the **single source of price**), `invariants` (exact Decimal
+  equality; weights within 0.0001), `portfolio`, `seed`, `provider`.
+- `PortfolioProvider` Protocol + in-memory implementation: portfolios are
+  per-subject and `as_of` is fixed at first access, so a lot cannot flip term
+  mid-demo. No `datetime.now()` anywhere — a test parses the AST to prove it.
+
+**Decisions recorded in the spec**
+- OD-1 (blocked GGU-5): 90-day window, answered by GGU-36's owner in Jira.
+- `Portfolio` is a frozen dataclass, not a pydantic model — a `validate()` read
+  method would shadow pydantic's deprecated `BaseModel.validate`.
+- `price_series`: `min(window, 89)+1` points, truncates above history,
+  `window=0` → 1 point, negative → `WindowOutOfRangeError`.
+- `provider.get` **seeds** instead of raising for an unknown subject: a demo
+  session must not open on an error, and that is what fixes `as_of`.
+- Divergence from ADR-C D-7 (stdlib logging): the provider uses
+  `app.core.logging` because this backend configures structlog in `bootstrap`;
+  D-7 was written for the deleted `backend_python/`.
+
+**Next person should know**
+- The shared dev database was stamped at revision `0004` by the GGU-46 worktree
+  while this branch only has `0001`–`0003`; run the suite with testcontainers
+  (the default) or re-create the local volume.
+- `docs/specs/GGU-5/domain-contract.md` (written before the rewrite) is
+  superseded by spec 0003 §8 — it should be marked as such when GGU-46 lands.
+
+---
+
 ## 2026-09-19 — REST + OpenAPI contract, quality tooling, CI redesign
 
 **Decisions (Lautaro):** every endpoint strictly RESTful and *exhaustively*
@@ -216,3 +1380,75 @@ tickets will be re-baselined against this foundation.
   exports it.
 - Flutter gate is still a `_candidates` entry in `ship-gate.json` until
   GGU-45/GGU-1 land.
+
+---
+
+## 2026-09-20 — GGU-29: the dev environment, applied for real (#29, #31, #32)
+
+**Specs:** `specs/infra/0001-dev-environment.md` (new, §10b is the interesting part)
+
+**Code.** A POC-sized `dev` environment: one local, `ephemeral = var.environment
+== "dev"`, derives every durability/exposure/cost decision, so `dev.tfvars`
+cannot make dev expensive and `production.tfvars` cannot make production cheap.
+Staging was dropped rather than built and left idle. CD retargeted: `develop` →
+dev behind a **real `needs: [ci]` edge** (backend-ci gained `workflow_call` and
+runs as backend-cd's `ci` job) rather than a `workflow_run` trigger that has to
+remember to inspect `conclusion`.
+
+**Harness.** `test_dev_environment.sh` (34 assertions). `.claude/ship-gate.json`
+gained `infra.dev-environment`; ci-conventions §5 now names the three runners.
+
+**What actually matters here: six defects, none of which any check in this
+repository could have caught.** Every one lives in the gap between two things
+that were each internally consistent, and nothing read both:
+
+1. Cloud SQL `edition` unset → defaulted to ENTERPRISE_PLUS, which rejects
+   every shared-core tier. `terraform plan` accepted it: **plan validates the
+   schema, not the API's compatibility rules.** Spec OD-2 had predicted the
+   tier question and recorded a fallback that would have failed identically.
+2. `sqladmin.googleapis.com` does not accept a service-level audit config —
+   wrong one of two real API names. The compliance corpus claimed those logs;
+   the claim was unapplyable.
+3. Secret Manager's service agent: created and used inside one apply, and IAM
+   could not see it yet. A 30 s wait is in the config, not in a runbook step.
+4. **`ENVIRONMENT=dev` was not a value the backend would accept.** Terraform
+   passes `var.environment` straight through; `Environment` in `config.py`
+   listed local/test/staging/production. The container would have died at
+   startup, after everything else was built.
+5. A mounted-but-empty optional secret arrives as `""`, not absent, so the
+   factories that branch on `is None` would have built `sentry_sdk.init(dsn="")`
+   and a keyless Gemini client.
+6. **Google's edge intercepts the exact path `/healthz` on `*.run.app`** and
+   never delivers it to the container. Liveness is now `/health`.
+
+**Next person should know**
+
+- **`terraform validate` cannot see Python and `make gate` cannot see
+  Terraform.** Defect 4 is the canonical example, and the fix is the pattern:
+  `test_dev_environment.sh` now reads `variables.tf` *and* `config.py` and
+  compares the environment names. When a fact is declared on both sides of
+  that wall, the test belongs in the shell suite — it is the only place that
+  can see both.
+- **A deployment hands the application things no test ever hands it.** Defects
+  4 and 5 are both that shape. An empty secret and an unknown environment name
+  are not exotic; they are what a real mount and a real env var look like.
+- **`/healthz` is unusable on Cloud Run's run.app domain.** Proven with two
+  controls from two networks (see the PR #32 body). Six alternative paths were
+  probed before choosing `/health`. Do not "fix" this back.
+- **Read the first apply, not just the first plan.** The spec told the reader
+  to read the plan. The plan was clean and five of the six defects were still
+  waiting. Plan is necessary and nowhere near sufficient.
+- **`gcloud storage buckets describe --format=json` reports versioning under
+  `versioning_enabled`**, not `versioning`. A wrong key reads as "off" and
+  invites you to re-enable something that was already on.
+- Secret Manager **rejects an empty payload**, so a deliberately-absent secret
+  is stored as a single space and labelled `state=intentionally-blank`. This is
+  why the blank-is-unset validator strips whitespace instead of comparing to
+  `""`.
+- **Still open, and it is the only thing between dev and a green pipeline:**
+  the Cloud Run service has no `run.invoker` binding, so it answers 403 to any
+  caller without a Google identity — including the pipeline's own post-deploy
+  probe, which is unauthenticated by contract. `iam.tf` carries the dev-only
+  binding and it plans clean; applying it is an exposure decision left to the
+  TL (OD-4). The rollback path was exercised for real by this failure and
+  worked: traffic was restored to the previous revision.

@@ -1,37 +1,64 @@
-# Infrastructure as code gate (docs/compliance/VULNERABILITY_MANAGEMENT.md §1,
-# policy-as-code row). Validates and scans infra/ on every change.
+# Infrastructure-as-code gate (docs/compliance/VULNERABILITY_MANAGEMENT.md §1,
+# policy-as-code row) plus the delivery scripts' own tests.
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
 name: infra-ci
 
+# The delivery-scripts job asserts properties that span infra/ and the two
+# backend workflows (what dev is, and that a release waits for a green gate),
+# so a change to either side has to start this run.
+# (Actions does not expand YAML anchors, so the two lists are spelled out.)
 on:
   pull_request:
-    paths: ["infra/**", ".github/workflows/infra-ci.yaml"]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yaml"
+      - ".github/workflows/backend-cd.yaml"
+      - ".github/workflows/backend-ci.yaml"
   push:
     branches: [main, develop]
-    paths: ["infra/**", ".github/workflows/infra-ci.yaml"]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-ci.yaml"
+      - ".github/workflows/backend-cd.yaml"
+      - ".github/workflows/backend-ci.yaml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: infra-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   terraform:
-    name: terraform fmt · validate · trivy config
+    name: "Infrastructure · the Terraform is valid and free of misconfigurations"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
         working-directory: infra
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Install Terraform (hashicorp/setup-terraform)
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.9.8"
-      - name: fmt
+
+      - name: Verify the configuration is canonically formatted (terraform fmt)
         run: terraform fmt -check -recursive
-      - name: init (no backend)
+
+      - name: Initialise the providers without a remote state (terraform init)
         run: terraform init -backend=false -input=false
-      - name: validate
+
+      - name: Validate the configuration (terraform validate)
         run: terraform validate -no-color
-      - name: Misconfiguration scan (Trivy — tfsec/checkov rule sets)
+
+      - name: Scan for insecure infrastructure (trivy config)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
@@ -39,3 +66,45 @@ jobs:
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
+
+  delivery-scripts:
+    name: "Delivery · the deploy script rolls back and the pipeline holds no keys"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Lint the delivery shell scripts (shellcheck)
+        run: shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh
+
+      - name: Prove the deploy verifies and rolls back (test_deploy_cloud_run.sh)
+        run: bash infra/scripts/tests/test_deploy_cloud_run.sh
+
+      - name: Prove no long-lived key exists and the provider is repository-pinned (test_wif_conditions.sh)
+        run: bash infra/scripts/tests/test_wif_conditions.sh
+
+      - name: Prove dev stays cheap by derivation and releases only behind a green gate (test_dev_environment.sh)
+        run: bash infra/scripts/tests/test_dev_environment.sh
+
+  report:
+    name: "Report · infrastructure gate summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [terraform, delivery-scripts]
+    if: always()
+    steps:
+      - name: Write the gate result to the run summary (GITHUB_STEP_SUMMARY)
+        run: |
+          {
+            echo "## Infrastructure gate"
+            echo ""
+            echo "| Gate | Proves | Result |"
+            echo "|---|---|---|"
+            echo "| Terraform | formatting, validity, no CRITICAL/HIGH misconfiguration | ${{ needs.terraform.result }} |"
+            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate | ${{ needs.delivery-scripts.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run when any gate failed (bash)
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

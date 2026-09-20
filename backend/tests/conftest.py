@@ -52,6 +52,18 @@ class FakeVerifier:
         return self.principal
 
 
+class FakeFlags:
+    """Feature-flag service that answers every gate with its default."""
+
+    def __init__(self, *, enabled: bool = True) -> None:
+        self.enabled = enabled
+        self.calls: list[str] = []
+
+    async def is_enabled(self, key: str, *, default: bool = True) -> bool:
+        self.calls.append(key)
+        return self.enabled
+
+
 def make_settings(**overrides: object) -> Settings:
     """Build valid test settings without reading any ``.env`` file."""
     values: dict[str, object] = {

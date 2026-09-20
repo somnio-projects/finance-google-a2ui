@@ -12,9 +12,25 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
+    # Used for exactly one resource: `google_project_service_identity`, which
+    # creates a Google-managed service agent (secrets.tf). It has no GA
+    # equivalent, and the alternative — granting a role to a service account
+    # that Google has not created yet — fails the apply. Same version line as
+    # the GA provider so the two never drift apart.
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 6.0"
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
+    }
+    # One resource: the propagation wait for Secret Manager's service agent
+    # (secrets.tf). `time_sleep` is the supported way to express "this Google
+    # -managed identity is not visible to IAM yet"; a provisioner would not be.
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
     }
   }
 
@@ -24,6 +40,11 @@ terraform {
 }
 
 provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+provider "google-beta" {
   project = var.project_id
   region  = var.region
 }

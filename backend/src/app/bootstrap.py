@@ -10,28 +10,29 @@ from datetime import timedelta
 
 import structlog
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app import __version__
-from app.api.container import Container
+from app.agent.registry import load_tools
+from app.api.container import AgentRuntime, Container
 from app.api.errors import register_error_handlers
-from app.api.middleware.body_limit import BodyLimitMiddleware
-from app.api.middleware.rate_limit import FixedWindowLimiter, RateLimitMiddleware
-from app.api.middleware.request_id import RequestIdMiddleware
-from app.api.middleware.security_headers import SecurityHeadersMiddleware
+from app.api.middleware.install import install_middleware
 from app.api.openapi import API_DESCRIPTION, TAGS_METADATA
 from app.api.router import api_router
 from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
-from app.core.protocols import Clock, ErrorReporter, TokenVerifier
+from app.core.protocols import Clock, ErrorReporter, ModelClient, TokenVerifier
+from app.core.release import resolve_release
 from app.helpers.clock import SystemClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
+from app.infra.model.factory import build_model_client
 from app.infra.telemetry.factory import build_error_reporter
+from app.presentation.registry import REGISTRY
+from app.services.agent_card_service import build_agent_card
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
+from app.services.prompt_service import build_system_prompt
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
@@ -42,11 +43,16 @@ def build_container(
     clock: Clock | None = None,
     reporter: ErrorReporter | None = None,
     verifier: TokenVerifier | None = None,
+    model: ModelClient | None = None,
 ) -> Container:
     """Wire the singletons; optional arguments let tests inject doubles."""
     clock = clock or SystemClock()
-    reporter = reporter or build_error_reporter(settings, release=__version__)
+    release = resolve_release(settings.app_release)
+    reporter = reporter or build_error_reporter(settings, release=release)
     verifier = verifier or build_token_verifier(settings, clock)
+    model = model or build_model_client(settings)
+    tools = load_tools()
+    prompt = build_system_prompt(tools=tools, views=REGISTRY.all())
     engine = create_engine(settings)
     return Container(
         settings=settings,
@@ -55,35 +61,17 @@ def build_container(
         verifier=verifier,
         engine=engine,
         session_factory=create_session_factory(engine),
-        health=HealthService(
-            version=__version__, probes=[DatabaseReadinessProbe(engine)]
-        ),
+        health=HealthService(version=release, probes=[DatabaseReadinessProbe(engine)]),
         flag_cache=FeatureFlagCache(
             ttl=timedelta(seconds=settings.feature_flags_cache_ttl_seconds), clock=clock
         ),
-    )
-
-
-def _install_middleware(app: FastAPI, container: Container) -> None:
-    """Order matters: outermost first (request id) to innermost (rate limit)."""
-    settings = container.settings
-    app.add_middleware(
-        RateLimitMiddleware,
-        limiter=FixedWindowLimiter(
-            limit=settings.rate_limit_per_minute, clock=container.clock
+        agent=AgentRuntime(
+            model=model,
+            tools=tools,
+            system_prompt=prompt,
+            card=build_agent_card(settings, tools, version=__version__),
         ),
     )
-    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_request_body_bytes)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_allowed_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-    )
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
-    app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
-    app.add_middleware(RequestIdMiddleware)
 
 
 def _build_lifespan(
@@ -105,7 +93,7 @@ def _build_lifespan(
 def _configure_app(app: FastAPI, container: Container) -> None:
     """Attach state, middleware, error handlers and routes — in that order."""
     app.state.container = container
-    _install_middleware(app, container)
+    install_middleware(app, container)
     register_error_handlers(app, container.reporter)
     app.include_router(api_router)
 

@@ -55,3 +55,6 @@ infra/.terraform/
 *.tfstate
 *.tfstate.*
 infra/.terraform.tfstate.lock.info
+
+# Agent worktrees (Claude Code isolation)
+.claude/worktrees/

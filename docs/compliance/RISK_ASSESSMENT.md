@@ -43,24 +43,30 @@
 | R-6 | AS-1 | Data loss (bad migration, accidental drop, volume loss) | 2 | 5 | 10 | Modify | Alembic-only schema path, immutable merged revisions, backups + quarterly restore drill (BACKUP_AND_RECOVERY, RESTORE_DRILL_LOG); Cloud SQL automated backups planned | 1×4 = 4 |
 | R-7 | AS-1/5 | PII or token leaked through logs/telemetry | 3 | 4 | 12 | Modify | `redact_sensitive`, fingerprint instead of token, Sentry `send_default_pii=False`, body never sent, error masking | 1×4 = 4 |
 | R-8 | AS-2 | Unauthorised feature-flag toggle (privilege escalation) | 2 | 3 | 6 | Modify | `admin` scope enforced in service, audit event per toggle, MFA (`amr`) requirement for admin in production (ACCESS_CONTROL) | 1×3 = 3 |
-| R-9 | AS-6 | Malicious or careless change merged without review | 2 | 4 | 8 | Modify | CODEOWNERS, ship gate == CI, `backend-reviewer`, harness log; branch-protection ruleset on `main` exported but **not enforced yet** (enable before PR #2 merges — treatment plan) | 2×4 = 8 until enforced, then 1×4 = 4 |
+| R-9 | AS-6 | Malicious or careless change merged without review | 2 | 4 | 8 | Modify | CODEOWNERS + **active** `protected-branches` ruleset on `main` and `develop` (1 code-owner approval, stale approvals dismissed, threads resolved, squash-only, no force-push/deletion), ship gate == CI, `backend-reviewer`, harness log | 1×4 = 4 |
 | R-10 | AS-6 | AI-generated code introduces a defect or insecure pattern | 3 | 3 | 9 | Modify | Spec approval, 100 % branch coverage, ruff `S`, Semgrep, human PR review; AI_GOVERNANCE | 2×2 = 4 |
 | R-11 | AS-8 | Regional outage / single instance unavailable | 3 | 3 | 9 | Retain (demo) → Modify (prod) | Health probes, stateless service, RPO/RTO in BCP; Cloud Run min-instances + Cloud SQL REGIONAL HA + PITR defined in `infra/` — apply before non-demo exposure | 2×3 = 6 |
 | R-12 | AS-9 | Contributor account or workstation compromise | 2 | 4 | 8 | Modify / Share | GitHub 2FA required by org, DEVICE_POLICY baseline, onboarding/offboarding checklist, least-privilege repo roles | 1×4 = 4 |
 | R-13 | AS-4/5 | Vendor (Sentry, Google) changes data handling or suffers a breach | 2 | 3 | 6 | Share | VENDOR_MANAGEMENT register, DPAs, annual review, PII never sent to Sentry | 1×3 = 3 |
 | R-14 | AS-1 | Retention violation (data kept forever, erasure impossible) | 3 | 3 | 9 | Modify | DATA_RETENTION policy, `audit_events` purge (repository method + scheduled job), erasure procedure | 1×3 = 3 |
 | R-15 | AS-8 | Unencrypted data at rest in production | 2 | 4 | 8 | Modify | Cloud SQL encryption at rest (Google-managed keys), private IP and TLS-only in `infra/database.tf`; decision in DATA_RESIDENCY_AND_TENANCY; local compose is dev only | 1×4 = 4 |
+| R-16 | AS-8 | The **`dev`** environment runs without the edge and durability controls production has: no Cloud Armor WAF, no edge rate limit or adaptive DDoS, no regional HA, no PITR, 2 retained backups, no uptime check, deletion protection off | 3 | 2 | 6 | Retain | Deliberate, scoped and written down: `specs/infra/0001-dev-environment.md` §5 and each control's own document here. Impact is bounded by **synthetic data only** and `max-instances = 2`; the application-layer controls (bearer auth, per-principal rate limit, error masking, audit events, private DB IP, TLS-only, Secret Manager, keyless pipeline) are **unchanged** in dev | 3×2 = 6 |
 
 All residual scores are ≤ 6 (accepted). R-11 is explicitly **retained** while
 the service is a demo behind Google reviewer credentials; the acceptance
 expires when the service is exposed beyond the demo (owner: TL backend).
+
+R-16 is **retained** on one condition: `dev` holds synthetic data only. Placing
+real, client or production-derived data in `dev` invalidates the acceptance
+immediately and requires the environment to be re-sized to the production
+control set before the data is loaded (owner: TL backend).
 
 ## 4. Risk treatment plan (Cl. 6.1.3)
 
 | Action | Closes | Owner | Due | Status |
 |---|---|---|---|---|
 | Publish this policy set and the SoA | R-9, R-10, governance gaps | Security owner | 2026-09-19 | done |
-| Enable the `main` ruleset: 1 code-owner approval, required checks (`gate`, `gitleaks`, `semgrep`, `docker build`), no force-push/deletion, admins included | R-9 | TL backend (repo admin) | before PR #2 merges | pending — ruleset exists disabled (`evidence/branch-protection-ruleset.json`) |
+| Enable the branch ruleset on `main` and `develop` | R-9 | TL backend (repo admin) | 2026-09-19 | **done** — active, exported to `evidence/branch-protection-ruleset.json` |
 | `audit_events` retention purge + scheduled job | R-14 | TL backend | 2026-09-19 (method), job at deploy (GGU-29) | in progress |
 | MFA (`amr`) requirement on admin routes, on by default in production | R-8 | TL backend | 2026-09-19 | done |
 | Weekly scheduled scan + Semgrep SAST in CI | R-5, R-10 | TL backend | 2026-09-19 | done |

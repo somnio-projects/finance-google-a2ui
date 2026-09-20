@@ -8,7 +8,19 @@ from pydantic import BaseModel, ConfigDict, Field
 class MeResponse(BaseModel):
     """What the API knows about the caller — never the token itself."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "subject": "firebase:uid-8f2c",
+                    "provider": "oidc",
+                    "email": "reviewer@example.test",
+                    "scopes": ["read"],
+                }
+            ]
+        },
+    )
 
     subject: str = Field(
         description="Stable identifier from the identity provider (`sub`).",
@@ -20,7 +32,7 @@ class MeResponse(BaseModel):
     email: str | None = Field(
         default=None,
         description="E-mail claim when the provider supplies one; never stored.",
-        examples=["reviewer@google.com"],
+        examples=["reviewer@example.test"],
     )
     scopes: list[str] = Field(
         description="Granted scopes, lower-cased and sorted.", examples=[["admin"]]
@@ -30,7 +42,21 @@ class MeResponse(BaseModel):
 class AuditEventResponse(BaseModel):
     """One audit trail entry."""
 
-    model_config = ConfigDict(frozen=True, from_attributes=True)
+    model_config = ConfigDict(
+        frozen=True,
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "action": "feature_flag.update",
+                    "target": "views.batch-render",
+                    "provider": "jwt",
+                    "request_id": "3ed55388-087e-419f-acbe-34f663fc04c4",
+                    "created_at": "2026-09-19T12:43:39.042545Z",
+                }
+            ]
+        },
+    )
 
     action: str = Field(
         description="What was done, as `<domain>.<verb>`.",
