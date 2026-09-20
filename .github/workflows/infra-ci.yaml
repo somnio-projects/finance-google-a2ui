@@ -7,11 +7,16 @@
 name: infra-ci
 
 # The delivery-scripts job asserts properties that span infra/, the two backend
-# workflows (what dev is, and that a release waits for a green gate) and the
-# harness rules index, so a change to any of those sides has to start this run.
+# workflows (what dev is, and that a release waits for a green gate), the
+# harness rules index and the declared rate limit, so a change to any of those
+# sides has to start this run.
 # CLAUDE.md and .claude/rules/** are named for the same reason backend-ci names
 # docs/catalog/**: the rules index is rewritten by a tool outside this
 # repository, so the edit that drops a row must start the run that rejects it.
+# The three backend paths below are named for the rate limit: the documented
+# limit, the configured default and the sample environment are compared against
+# the Terraform instance ceiling, so the edit that breaks the pair must start
+# the run that rejects it (GGU-83).
 # (Actions does not expand YAML anchors, so the two lists are spelled out.)
 on:
   pull_request:
@@ -22,6 +27,10 @@ on:
       - ".github/workflows/backend-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
+      - "backend/docs/SECURITY.md"
+      - "backend/src/app/core/config.py"
+      - "backend/env.example"
+      - "docs/diagrams/08-infrastructure.md"
   push:
     branches: [main, develop]
     paths:
@@ -31,6 +40,10 @@ on:
       - ".github/workflows/backend-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
+      - "backend/docs/SECURITY.md"
+      - "backend/src/app/core/config.py"
+      - "backend/env.example"
+      - "docs/diagrams/08-infrastructure.md"
 
 permissions:
   contents: read
@@ -97,6 +110,9 @@ jobs:
       - name: Prove every rule file is listed and every row exists (test_rules_index.sh)
         run: bash infra/scripts/tests/test_rules_index.sh
 
+      - name: Prove the documented rate limit is the one the instance count can deliver (test_rate_limit_ceiling.sh)
+        run: bash infra/scripts/tests/test_rate_limit_ceiling.sh
+
   report:
     name: "Report · infrastructure gate summary"
     runs-on: ubuntu-latest
@@ -112,7 +128,7 @@ jobs:
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
             echo "| Terraform | formatting, validity, no CRITICAL/HIGH misconfiguration | ${{ needs.terraform.result }} |"
-            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate; every rule file carries a row in the CLAUDE.md index and every row a file | ${{ needs.delivery-scripts.result }} |"
+            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate; every rule file carries a row in the CLAUDE.md index and every row a file; the documented per-principal rate limit matches the configured default and the instance count it depends on | ${{ needs.delivery-scripts.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail the run when any gate failed (bash)

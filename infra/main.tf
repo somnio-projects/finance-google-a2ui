@@ -65,7 +65,21 @@ locals {
   # the largest single line in dev's bill after the database — that is the
   # trade being made, on purpose.
   min_instances = coalesce(var.min_instances, 1)
-  max_instances = coalesce(var.max_instances, local.ephemeral ? 2 : 4)
+  # ONE instance, because the rate limiter only works at one (GGU-83).
+  #
+  # `api/middleware/rate_limit.py` counts hits in process memory, so the
+  # effective per-principal budget is `max_instances` × the configured limit —
+  # dev's 2 made the limit twice what backend/docs/SECURITY.md documents. The
+  # pin does not make the limiter correct; it makes the configuration match the
+  # limiter's actual capability, which is what the document describes. The real
+  # fix is the shared backing store (spec `backend/0001` OD-2), and this line is
+  # what reverts the day it lands.
+  #
+  # Paired with the documented limit by
+  # `infra/scripts/tests/test_rate_limit_ceiling.sh`: raise this and the gate
+  # goes red naming both declarations, which is the only reason the defect
+  # cannot come back the way it arrived.
+  max_instances = coalesce(var.max_instances, 1)
 
   # Observability (observability.tf). An external uptime check needs a hostname
   # that exists before the apply; in dev there is none, so the check and the

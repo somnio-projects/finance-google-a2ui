@@ -148,6 +148,15 @@ repos:
         entry: bash infra/scripts/tests/test_rules_index.sh
         language: system
         files: ^(\.claude/rules/|CLAUDE\.md$)
+      # The rate limiter counts per process, so the documented per-principal
+      # limit is only true at one instance (GGU-83). The instance count lives in
+      # Terraform and the limit in Markdown and Python, and nothing else reads
+      # all three — so this runs when any of them moves.
+      - id: infra-rate-limit-ceiling
+        name: Prove the documented rate limit matches the instance count (test_rate_limit_ceiling.sh)
+        entry: bash infra/scripts/tests/test_rate_limit_ceiling.sh
+        language: system
+        files: ^(infra/|backend/docs/SECURITY\.md$|backend/src/app/core/config\.py$|backend/env\.example$|docs/diagrams/08-infrastructure\.md$)
         pass_filenames: false
 
       # Fast enough for every commit; the DB-backed suite runs on push.
