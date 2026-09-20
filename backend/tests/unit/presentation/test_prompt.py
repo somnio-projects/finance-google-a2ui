@@ -7,13 +7,9 @@ instead of teaching the model a view that no longer exists.
 
 import pytest
 
+from app.presentation.option_text import NO_OPTIONS, option_bounds
 from app.presentation.options import ProjectionOptions
-from app.presentation.prompt import (
-    NO_OPTIONS,
-    PROMPT_HEADER,
-    option_bounds,
-    prompt_fragment,
-)
+from app.presentation.prompt import PROMPT_HEADER, prompt_fragment
 from app.presentation.registry import REGISTRY
 from app.presentation.spec import ProjectionSpec
 from app.presentation.views.holdings_allocation import (
@@ -63,9 +59,13 @@ def test_fragment_says_none_for_a_projection_without_options() -> None:
         ({"enum": ["a", "b"]}, "one of 'a', 'b'"),
         ({"type": "integer", "minimum": 1, "maximum": 20}, "integer 1..20"),
         ({"type": "boolean"}, "true or false"),
-        ({"anyOf": [{"type": "array"}, {"type": "null"}]}, "list of names"),
+        (
+            {"type": "string", "pattern": "^[0-9]{1,9}$"},
+            "string matching ^[0-9]{1,9}$",
+        ),
+        ({"anyOf": [{"type": "array"}, {"type": "null"}]}, "list, or omit it"),
     ],
-    ids=["const", "enum", "integer", "boolean", "optional-array"],
+    ids=["const", "enum", "integer", "boolean", "pattern-string", "optional-array"],
 )
 def test_option_bounds_describes_each_schema_shape(
     spec: dict[str, object], expected: str
