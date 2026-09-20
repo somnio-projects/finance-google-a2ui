@@ -1558,3 +1558,53 @@ deduplicated (0003, 0006, 0013 were each listed twice) and completed (0004,
   were found and written into a spec section titled "not fixed here". Two of
   them are closed by this change, four days later, because someone was asked to
   look — not because the record surfaced them.
+
+---
+
+## 2026-09-20 — ADR-B D-4: a revocation check that was never built (GGU-87)
+
+**Documentation only.** No code, no dependency, no threshold moved.
+
+**What was wrong.** ADR-B D-4 required `check_revoked=True` and D-6 listed an
+`auth/revoked-token` error code. Neither exists. `check_revoked` is a keyword
+argument of `firebase_admin.auth.verify_id_token`, and `firebase-admin` is in
+neither `backend/pyproject.toml` nor `backend/uv.lock`. What shipped instead is
+a provider-agnostic verifier — `OidcTokenVerifier` is a single `jwt.decode`
+against a JWKS, asserting signature, `iss`, `aud`, `exp`, `iat` and `sub` and
+nothing more. Generalising the verifier is what dropped the one Firebase-
+specific assertion, because revocation is not an OIDC concept.
+
+**What changed.** D-4 is struck and superseded by D-11 (what verification
+actually asserts — six things, with issuer and audience as configuration rather
+than the hard-coded literals D-4 named) and D-12 (there is no revocation check;
+revocation latency equals the token's remaining lifetime). D-6's
+`auth/revoked-token` is struck in place. `backend/docs/SECURITY.md` gains a
+**Known gaps** section, `ACCESS_CONTROL.md` §3 gains the cross-reference, and
+the stale row in `docs/specs/GGU-3/api-contract.md` §6 is struck.
+
+**Next person should know**
+
+- **The comfortable version of this gap is wrong, and it is the version everyone
+  reaches for.** "A revoked token reads as `auth/invalid-token`, so the client
+  signs out" is false. Revoking a Firebase session invalidates the *refresh*
+  token and sets a valid-since watermark; the ID token already issued keeps its
+  valid signature, `iss`, `aud` and `exp`, and nothing in `auth/claims.py` reads
+  a watermark. For the rest of that hour the request is **accepted with a 200**.
+  What signs the user out is D-7 — at expiry the refresh fails at Firebase. The
+  client is correct; the mechanism is expiry, not rejection. Check the mechanism
+  before calling a gap harmless.
+- **A control mapping that overstates is the defect.** The SECURITY.md matrix
+  never claimed revocation in a row — that part was clean. The overstatement was
+  a *threat note* saying "`check_revoked` semantics belong to the provider
+  adapter", which reads as a control assigned to a layer, and no adapter has it.
+  Prose beside a control matrix is read as part of the mapping. Audit it too.
+- **Two records can be individually right and jointly wrong.** `ACCESS_CONTROL.md`
+  §3 has said "revoke at the IdP — takes effect at the next token expiry (≤ 1 h)"
+  all along, which is exactly correct and flatly contradicts ADR-B D-4. Nobody
+  read both. This is the same failure shape as `infra.shell-lint` in
+  `ci-conventions.md` §5, and the same fix: when you write a claim, grep for the
+  other places that claim lives.
+- **Copy the supersession convention, do not invent a second one.** The shape is
+  PR #43's (ADR-F D-4): strike the ruling with `~~…~~`, keep it, add
+  `superseded YYYY-MM-DD by D-n`, renumber forward, and put the reasoning in a
+  dated amendment section. Citations by number must keep resolving.
