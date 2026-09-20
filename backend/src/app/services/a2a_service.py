@@ -55,12 +55,19 @@ class A2aService:
         self._agent = agent
 
     async def stream(
-        self, *, message: ClientMessage, task_id: str, context: ToolContext
+        self,
+        *,
+        message: ClientMessage,
+        prompt: str,
+        task_id: str,
+        context: ToolContext,
     ) -> AsyncIterator[str]:
         """Yield the events of one turn, in protocol order.
 
         Args:
             message: The client's message, already validated.
+            prompt: The turn's input, from ``prepared_prompt`` — the prose a
+                person typed, or the sentence the backend composed for an action.
             task_id: Correlation id for this turn.
             context: The subject-scoped tool context.
 
@@ -74,7 +81,7 @@ class A2aService:
         """
         yield sse(status(task_id, message.context_id, WORKING))
         try:
-            async for event in self._turn(message, task_id, context):
+            async for event in self._turn(message, prompt, task_id, context):
                 yield event
         except AppError as exc:
             for event in failed(task_id, message.context_id, exc.code, exc.detail):
@@ -90,13 +97,17 @@ class A2aService:
                 yield sse(event)
 
     async def _turn(
-        self, message: ClientMessage, task_id: str, context: ToolContext
+        self,
+        message: ClientMessage,
+        prompt: str,
+        task_id: str,
+        context: ToolContext,
     ) -> AsyncIterator[str]:
         """Forward the turn's own events, surfaces first, terminal pair last."""
         context_id = message.context_id
         results: list[TurnResult] = []
         async for event in self._agent.run_turn_events(
-            prompt=message.text(), history=[], context=context
+            prompt=prompt, history=[], context=context
         ):
             if isinstance(event, SurfaceReady):
                 yield sse(surface(task_id, context_id, event.index, event.intent))

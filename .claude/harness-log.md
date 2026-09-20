@@ -2294,3 +2294,75 @@ exists, on the failure path only).
   repo's own rule that test data is unique per test. CI always starts clean, so
   it is permanently green there. **Not fixed here — it is not this ticket's
   code.** Flagged for a ticket of its own.
+
+---
+
+## 2026-09-20 (cont.) — GGU-78: surface actions, and a catalog that was under-reporting
+
+**Spec:** `specs/backend/0022-surface-actions.md` (Draft → Implemented; the file
+arrives from PR #44, which is spec-only — expect a whole-file conflict there).
+**ADR:** ADR-J gains **D-7**, the decision D-6 requires before the JSON-RPC
+surface may be extended.
+
+**What changed in code**
+
+- `app/actions/` — a framework-free peer of `presentation/`: contract, spec,
+  registry, resolver, the `SurfaceActionRef` a payload publishes, the curated
+  suggestion table, and one module per action under `defined/`. Adding an
+  action edits no shared file, the way adding a chart does not.
+- The A2A envelope accepts one `data` part carrying `{action, args}` — bounded
+  to eight scalar arguments, no nesting, no arrays — resolved **before** the
+  stream opens, so a refusal is a JSON-RPC error rather than a stream that
+  fails on its first event. Flag `surface.actions`, dark-launched **off**.
+- `attribution.waterfall.v1` declares `drill.attribution.v1`; the declaration
+  reaches the payload, the A2UI props, `GET /v1/views` and `CONTRACT.md` from
+  one derivation.
+- `order.ticket.v1` now names `size` and `size_in` as payload fields.
+
+**The defect worth remembering**
+
+`order.ticket.v1` offered four editable controls and the generated contract
+reported **two**. Nothing was wrong with either declaration on its own:
+`inputs[]` published all four, and the document's rule — *an editable field is
+a payload field named exactly as the option that sets it* (spec 0019 OD-3) —
+was applied correctly. They simply disagreed, because `symbol` and `side`
+happened to share a name with a payload field and `size`/`size_in` did not.
+**Nothing compared the two declarations**, so the document quietly advertised
+half of what the component accepts, and a client binding to it could not know
+`size` was editable.
+
+The rename is not the deliverable; `test_declared_interactivity.py` is. It
+walks the **registry**, so the next component to get this wrong fails the gate
+instead of shipping, and the failure names the projection and both sides of
+the disagreement rather than printing a bare set mismatch.
+
+**Next person should know**
+
+- **A third declaration of one fact is a third place to drift.** This package
+  now has two derived ones — `TicketInput` from the options schema,
+  `SurfaceActionRef` from the arguments schema — and both are derived
+  precisely so they cannot be retyped. Keep deriving.
+- **A derived figure is never an input.** `quantity` was the obvious thing to
+  rename to `size`, and it would have been wrong: under `size_in="usd"` it is
+  the size *divided by the entry price*, so the contract would have advertised
+  as editable a value the options model refuses.
+- **An error message is an output with a bound.** Argument names are capped at
+  32 characters and a rejection names only arguments the action *declares*,
+  replacing anything else with `<undeclared>` — because that name came from
+  the caller and lands in a 256-character JSON-RPC field. `a2a_dispatch`
+  already learned this the expensive way (a 500 from an over-long `repr`).
+- **A test that only passes on an empty table is worth less than no test.**
+  The first draft of `tests/integration/test_a2a_actions_flow.py` asserted the
+  flag was off *before* any test turned it on: green on a virgin database,
+  red on the second run of the same file. Every test there now sets the state
+  it needs and puts it back, and "off by default" is asserted in the unit
+  suite, where it is a property of the call rather than of a stored row.
+- **`docs/diagrams/05-agent-turn.md` was a corrupted double-paste** — two
+  merged versions, duplicate `participant` lines, an undeclared `DB`. It would
+  not have rendered. Repaired while adding the action path to it; worth a look
+  at whether other diagrams carry the same scar.
+- **Pre-existing and not fixed here:** `test_list_recent_and_list_for_subject_
+  order_newest_first` is order-dependent — three audit rows written in one
+  transaction share a timestamp, so "newest first" is a tie the database
+  breaks arbitrarily. Filed as its own task; the ordering guarantee belongs in
+  the repository, not in the test.

@@ -19,16 +19,25 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.agent.contracts import ToolContext
 from app.api.a2a_openapi import REQUEST_EXAMPLE, RPC_ERROR_EXAMPLE, STREAM_EXAMPLE
-from app.api.deps import PrincipalDep, get_a2a_service, get_tool_context
+from app.api.deps import (
+    PrincipalDep,
+    RequestIdDep,
+    get_a2a_service,
+    get_surface_action_service,
+    get_tool_context,
+)
 from app.api.openapi import problem_responses
+from app.services.a2a_actions import prepared_prompt
 from app.services.a2a_dispatch import message_of, parse
 from app.services.a2a_service import A2aService
+from app.services.surface_action_service import SurfaceActionService
 
 router = APIRouter(tags=["a2a"])
 
 EVENT_STREAM = "text/event-stream"
 
 A2aDep = Annotated[A2aService, Depends(get_a2a_service)]
+ActionsDep = Annotated[SurfaceActionService, Depends(get_surface_action_service)]
 ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
 
 
@@ -77,7 +86,9 @@ async def call(
     request: Request,
     principal: PrincipalDep,
     service: A2aDep,
+    actions: ActionsDep,
     context: ContextDep,
+    request_id: RequestIdDep,
 ) -> StreamingResponse | JSONResponse:
     """Dispatch one JSON-RPC call to the agent host.
 
@@ -86,13 +97,15 @@ async def call(
             methods and the body cannot be typed by the route.
         principal: The authenticated caller; the turn runs as this subject.
         service: The protocol adapter, which owns the dispatch.
+        actions: The surface-action dispatcher, for a `data` part.
         context: The subject-scoped tool context.
+        request_id: Correlation id, carried into an audited action's event.
 
     Returns:
         An event stream for `message/stream`, or a JSON-RPC error body at
-        HTTP 200 for anything the adapter refused.
+        HTTP 200 for anything the adapter refused — including a surface
+        action it would not run (spec 0022 AC-4, AC-5, AC-13).
     """
-    del principal  # resolved so the route is authenticated; the context carries it
     body = await _decode(request)
     envelope = parse(body)
     if isinstance(envelope, dict):
@@ -100,8 +113,19 @@ async def call(
     message = message_of(envelope)
     if isinstance(message, dict):
         return JSONResponse(content=message)
+    prompt = await prepared_prompt(
+        actions,
+        principal=principal,
+        message=message,
+        rpc_id=envelope.id,
+        request_id=request_id,
+    )
+    if isinstance(prompt, dict):
+        return JSONResponse(content=prompt)
     return StreamingResponse(
-        service.stream(message=message, task_id=str(uuid4()), context=context),
+        service.stream(
+            message=message, prompt=prompt, task_id=str(uuid4()), context=context
+        ),
         media_type=EVENT_STREAM,
         headers={"Cache-Control": "no-store"},
     )

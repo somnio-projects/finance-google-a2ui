@@ -1,6 +1,6 @@
 # 06 — Response shaping: who chooses the payload
 
-Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md).
+Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md).
 
 Solid = built. Dashed = planned, with the ticket that owns it.
 
@@ -20,7 +20,8 @@ flowchart TB
         vn["…the next one: one new file"]
     end
     frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display"]
-    out["Payload the widget binds<br/>discriminated by `view`"]
+    decl["actions/declared.py<br/>SurfaceActionRef, derived from the<br/>action's own args schema"]
+    out["Payload the widget binds<br/>discriminated by `view`<br/>+ inputs[] (editable options)<br/>+ actions[] (what it may send back)"]
     etag["Strong ETag + Cache-Control<br/>(resource, view, options, as_of) → 304"]
     a2ui["A2UI surface adapter"]
     cat["GET /v1/views catalog"]
@@ -35,6 +36,7 @@ flowchart TB
     reg -- "no preference" --> sel --> views
     reg --> views
     views --> frag
+    views --> decl --> out
     views --> out
     out --> etag
     views --> a2ui
@@ -57,6 +59,15 @@ flowchart TB
     %% The client's rejection is a 422/404; inside a batch it is that entry's
     %% problem document; the model's is a recorded fallback (ADR-K D-12).
     %% ETag covers the two GET reads only: a POST batch is not revalidated.
+    %% A payload declares interactivity TWICE and the two must agree, which
+    %% is what GGU-78 found they did not:
+    %%   inputs[]  — the editable options, each named EXACTLY as the option
+    %%               that sets it, which is what the contract document reads
+    %%               to fill its Input column (spec 0019 OD-3)
+    %%   actions[] — what a tap may send BACK, and that is a new agent turn,
+    %%               not a re-render (spec 0022)
+    %% The rule that keeps them apart: if the answer is the same view with
+    %% different numbers it is an OPTION; if it is a new turn it is an ACTION.
 ```
 
 ## Where each box lives

@@ -43,10 +43,27 @@ async def test_get_unknown_id_raises_not_found(session: AsyncSession) -> None:
 async def test_list_recent_and_list_for_subject_order_newest_first(
     session: AsyncSession,
 ) -> None:
+    """`created_at DESC`, asserted with three genuinely distinct instants.
+
+    The rows used to be written with the server default, which in PostgreSQL
+    is the **transaction** timestamp: all three shared it to the microsecond,
+    so "newest first" was a tie the planner broke as it liked — insertion
+    order on a small table, index order once the table grew. It passed for
+    months and then failed on a fuller database (GGU-78).
+
+    Stamping each row fixes what this test is *about*: the ordering, not the
+    default. Whether the endpoint should also be deterministic for rows that
+    genuinely share an instant is a real question about
+    `/v1/me/audit-events` pagination, and it is filed separately rather than
+    answered by weakening this assertion.
+    """
     repo = AuditRepository(session)
     subject = f"s-{uuid.uuid4()}"
-    for action in ("first", "second", "third"):
-        await repo.add(_event(subject, action))
+    base = datetime.now(UTC) - timedelta(minutes=5)
+    for offset, action in enumerate(("first", "second", "third")):
+        event = _event(subject, action)
+        event.created_at = base + timedelta(seconds=offset)
+        await repo.add(event)
     recent = await repo.list_recent(limit=2)
     assert len(recent) == 2
     mine = await repo.list_for_subject(subject, limit=10)

@@ -14,6 +14,7 @@ from hashlib import sha256
 from json import dumps
 from typing import Final
 
+from app.presentation.catalog_actions import actions_table
 from app.presentation.catalog_preamble import PREAMBLE
 from app.presentation.catalog_tables import (
     INDEX_HEADER,
@@ -80,6 +81,8 @@ def _section(projection: Projection) -> str:
             options_table(projection.options.model_json_schema()),
             "### Field inventory",
             inventory_table(fields),
+            "### Actions",
+            actions_table(list(catalog_entry(projection)["actions"])),
             "### Example payload",
             "```json\n" + dumps(dict(projection.example), indent=2) + "\n```",
         )

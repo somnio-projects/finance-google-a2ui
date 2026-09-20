@@ -1,6 +1,6 @@
 # 05 — An agent turn: question to streamed surfaces
 
-How a sentence becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md). Dashed = planned.
+How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md). Dashed = planned.
 
 The turn is everything between `run_turn_events(...)` and `TurnCompleted`. It
 is **session-free**: it takes the history as an argument, bounds itself to
@@ -20,6 +20,11 @@ exits (the streamed surface and the final `TurnResult`) carry a view the
 registry accepted. A refused choice is recorded and replaced by the endpoint's
 default projection; it never fails the turn (ADR-K D-12).
 
+What changed with spec 0022 is *who may start one*. A message carries either
+prose or **one `data` part** naming a registered action; the action is resolved
+and its arguments validated **before the stream opens**, and the prompt the
+turn receives is composed in backend code (ADR-J D-7).
+
 `SessionService` (GGU-46) — which would supply and persist the history, and
 resolve `contextId` against the verified subject — is **not on this branch**:
 every turn starts empty (spec 0012 OD-3).
@@ -29,6 +34,7 @@ sequenceDiagram
     autonumber
     participant C as Flutter client
     participant A as A2A adapter (root)
+    participant X as SurfaceActionService
     participant S as SessionService (planned)
     participant H as AgentService
     participant L as TurnLoop
@@ -39,6 +45,16 @@ sequenceDiagram
     C->>A: message/stream + Bearer + contextId
     A-->>S: resolve contextId AGAINST the verified subject, load history
     S-->>A: (planned — GGU-46; today history = [])
+
+    alt message carries a data part (a tap)
+        A->>X: prompt_for(principal, {action, args})
+        X->>X: flag surface.actions · registry lookup · bounded args
+        X-->>A: refused → JSON-RPC error at HTTP 200, stream never opens
+        X->>A: accepted → the prompt the BACKEND composed
+    else message carries text (a sentence)
+        A->>A: prompt = the text parts, joined
+    end
+
     A->>H: run_turn_events(prompt, history, ToolContext)
     A->>C: status-update{working}
     H->>L: run(messages, context, state)
@@ -74,14 +90,16 @@ sequenceDiagram
     %% model, outcome, duration, counters — never prompt, result or subject.
     %% The incremental events add NO log line: the shape of a conversation
     %% is the user's, and a per-surface log would put it in the logs.
+    %% An unknown or raising tool becomes {"error": ...} fed back, not a failed
+    %% turn — the message is dropped, because it can quote a holding. A tool
+    %% with something useful to say about a refusal returns its own
+    %% {"error": ...} payload instead of raising (spec 0013 OD-3).
     %% A tool emits a render intent only when a registered projection actually
     %% fits the answer it just produced: a filtered or re-ordered result whose
     %% chart would contradict it carries none (spec 0011 OD-1), and a tool no
-    %% projection draws at all — payoff (spec 0014 OD-7) — returns figures only.
-    %% An unknown or raising tool becomes {"error": "tool-failed"} fed back, not
-    %% a failed turn — the message is dropped, because it can quote a holding. A
-    %% tool with something useful to say about a refusal returns its own
-    %% {"error": ...} payload instead of raising (spec 0013 OD-3).
+    %% projection draws at all — payoff (spec 0014 OD-7) — returns figures
+    %% only, so the turn answers in text rather than aiming an ill-fitting
+    %% chart at a correct sentence.
     %% The model picks a view; it never invents a shape or a number.
     %% The "tool schemas" on the call to M are not the schemas the tools
     %% publish: infra/model/tool_schema.py translates them into the subset
@@ -100,4 +118,10 @@ sequenceDiagram
     %%      then a failure. The loop and the event order are unchanged.
     %% A provider rejection is masked outward as dependency-unavailable AND
     %% logged inward at warning with the provider's own text (GGU-90 AC-4).
+    %% An ACTION is resolved before `status-update{working}` is emitted, which
+    %% is the whole reason it is a clean JSON-RPC error rather than a stream
+    %% that fails on its first event (spec 0022 AC-4). Rejection is terminal:
+    %% unlike an invalid render intent there is no default to fall back to.
+    %% The client sends an id and scalars; the sentence, the tool and the view
+    %% all come from backend code (ADR-K D-3, ADR-J D-7).
 ```

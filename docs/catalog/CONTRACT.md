@@ -139,18 +139,18 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `e866358af26d` | 24 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `63d89e469006` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
-| [`order.ticket.v1`](#orderticketv1) | `0a2904b9b52d` | 25 | `symbol`, `side` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `205668c78931` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `d996313186c4` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `dfc041e6746d` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `0f84189d6d68` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `194e130cf9de` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
+| [`order.ticket.v1`](#orderticketv1) | `80e81a6bf2f7` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `f52eb1ea3307` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `b2e006b3b306` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `0790bed806a8` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `attribution.waterfall.v1`
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `e866358af26d`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `0f84189d6d68`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -192,6 +192,19 @@ Three of the four states design needs are facts about the schema. One is not:
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
+| `actions` | array | default `[]` | `container` | empty | — |
+| `actions[].action` | string ≤64 chars | required | `text` | — | — |
+| `actions[].label` | string ≤64 chars | required | `text` | — | — |
+| `actions[].arg` | string ≤32 chars | required | `text` | — | — |
+| `actions[].control` | enum choice / text | required | `enum` | variant | — |
+| `actions[].choices` | array ≤16 items | default `[]` | `container` | empty | — |
+| `actions[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
+
+### Actions
+
+| Action | Label | Argument | Control | Accepts |
+|---|---|---|---|---|
+| `drill.attribution.v1` | Break this down | `driver` | choice | 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' |
 
 ### Example payload
 
@@ -288,6 +301,25 @@ Three of the four states design needs are facts about the schema. One is not:
       "label": "Net",
       "text": "$8,113.60"
     }
+  ],
+  "actions": [
+    {
+      "action": "drill.attribution.v1",
+      "label": "Break this down",
+      "arg": "driver",
+      "control": "choice",
+      "choices": [
+        "ADA",
+        "AVAX",
+        "BTC",
+        "DOGE",
+        "DOT",
+        "ETH",
+        "LINK",
+        "SOL"
+      ],
+      "pattern": null
+    }
   ]
 }
 ```
@@ -296,7 +328,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `63d89e469006`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `194e130cf9de`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -331,6 +363,10 @@ Three of the four states design needs are facts about the schema. One is not:
 | `categories[].weight` | object | required | `container` | — | — |
 | `categories[].weight.value` | decimal | required | `raw` | — | — |
 | `categories[].weight.display` | string ≤16 chars | required | `display` | — | — |
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
 
 ### Example payload
 
@@ -414,10 +450,10 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.
 
-- **Frozen id:** `order.ticket.v1` · **digest:** `0a2904b9b52d`
+- **Frozen id:** `order.ticket.v1` · **digest:** `80e81a6bf2f7`
 - **Payload type:** `OrderTicketPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
-- **Editable fields:** `symbol`, `side`
+- **Editable fields:** `symbol`, `side`, `size`, `size_in`
 
 ### Options
 
@@ -440,6 +476,8 @@ Three of the four states design needs are facts about the schema. One is not:
 | `symbol` | string ≤10 chars | required | `text` | — | input · one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' |
 | `name` | string ≤64 chars | required | `text` | — | — |
 | `side` | enum buy / sell | required | `enum` | variant | input · one of 'buy', 'sell' |
+| `size` | string ≤32 chars | required | `text` | — | input · string matching ^[0-9]{1,9}(\.[0-9]{1,8})?$ |
+| `size_in` | enum units / usd | required | `enum` | variant | input · one of 'units', 'usd' |
 | `quantity` | object | required | `container` | — | — |
 | `quantity.units` | decimal | required | `raw` | — | — |
 | `quantity.display` | string ≤32 chars | required | `display` | — | — |
@@ -461,6 +499,10 @@ Three of the four states design needs are facts about the schema. One is not:
 | `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
 | `disclosure` | string ≤300 chars | required | `text` | — | — |
 
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
 ### Example payload
 
 ```json
@@ -470,6 +512,8 @@ Three of the four states design needs are facts about the schema. One is not:
   "symbol": "BTC",
   "name": "Bitcoin",
   "side": "buy",
+  "size": "1",
+  "size_in": "units",
   "quantity": {
     "units": "1",
     "display": "1"
@@ -543,7 +587,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `205668c78931`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `f52eb1ea3307`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -585,6 +629,10 @@ Three of the four states design needs are facts about the schema. One is not:
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
 
 ### Example payload
 
@@ -823,7 +871,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `d996313186c4`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `b2e006b3b306`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** `subject.symbol`
@@ -883,6 +931,10 @@ Three of the four states design needs are facts about the schema. One is not:
 | `notes` | array | default `[]` | `container` | empty | — |
 | `notes[].label` | string ≤64 chars | required | `text` | — | — |
 | `notes[].text` | string ≤200 chars | required | `text` | — | — |
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
 
 ### Example payload
 
@@ -1006,7 +1058,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `dfc041e6746d`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `0790bed806a8`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -1076,6 +1128,10 @@ Three of the four states design needs are facts about the schema. One is not:
 | `remaining` | array | default `[]` | `container` | empty | — |
 | `remaining[].label` | string ≤64 chars | required | `text` | — | — |
 | `remaining[].text` | string ≤200 chars | required | `text` | — | — |
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
 
 ### Example payload
 

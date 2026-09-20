@@ -91,12 +91,18 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         from the same call, so the documented catalog cannot drift from the
         served one.
     """
+    example = dict(projection.example)
     return {
         "id": projection.id,
         "summary": projection.summary,
         "endpoints": list(projection.endpoints),
         "options_schema": projection.options.model_json_schema(),
-        "example": dict(projection.example),
+        # Read off the rendered example rather than from a new Protocol
+        # member: a projection that declares actions publishes them to the
+        # catalog by rendering them, so adding one still edits no shared file
+        # (ADR-K D-15, spec 0022 AC-11).
+        "actions": list(example.get("actions", ())),
+        "example": example,
     }
 
 
