@@ -257,9 +257,43 @@ environment does not have.
 | OD-1 | Does dev get its own GCP project, or share `finance-a2ui`? `CHANGE_MANAGEMENT.md` §2 says one project per environment, and sharing would put a dev deployer identity in the same project as a future production. | TL | `dev.tfvars` names `finance-a2ui` — the only project with billing today, and nothing else is deployed in it. Production must get its own project **before** it is first applied; every resource name is already environment-suffixed, so no code changes either way. |
 | OD-2 | ~~Is `db-f1-micro` accepted for `POSTGRES_16`?~~ **Resolved at the first apply, and the guessed fallback was wrong.** | — | The tier was never the problem; the **edition** was. `edition` was not set, the API does *not* infer it from the tier, and it defaulted to `ENTERPRISE_PLUS`, which accepts only `db-perf-optimized-N-*`: `Invalid Tier (db-f1-micro) for (ENTERPRISE_PLUS) Edition`. `db-g1-small` would have failed identically, so the recorded fallback would not have helped. `edition` is now pinned to `ENTERPRISE` in `main.tf` for every environment — see §11. `terraform plan` accepted the invalid combination, which is the general lesson: plan validates the *schema*, not the API's own compatibility rules. |
 | OD-3 | ~~Is a `/26` right for direct VPC egress?~~ **Resolved: it applied and the service runs.** | — | `/26` against a 2-instance ceiling. The service reached Cloud SQL over the private IP on the first try (`/readyz` → `{"status":"ready","dependencies":[{"name":"database","ready":true}]}`). |
+| OD-5 | `APP_RELEASE` is managed by Terraform *and* by the pipeline, so a manual apply blanks it and `/health` misreports the running release until the next deploy. Every code fix is worse than the problem (see §10a). | TL | Keep the rule: the pipeline is the last word on releases; re-run it after a manual apply. Revisit if manual applies against live environments become routine, which for a POC they should not. |
 | OD-4 | Do staging and production need the `allUsers` → `run.invoker` binding that dev now has? A serverless NEG behind the HTTPS load balancer normally does, with `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` as the network control rather than IAM. | TL at their first apply | Almost certainly yes, but **unverified** — neither environment has ever been applied, and guessing would either break the LB path or open an API. `iam.tf`'s binding is `count = local.ephemeral ? 1 : 0` so dev is fixed without asserting anything about the others. |
 | OD-4 | Does staging come back? It has no project and is now nobody's deploy target. | TL | It stays as tfvars and Terraform behaviour, deployed by nothing. If it returns, `backend-cd`'s `settings` job grows a third branch; the Terraform already supports it. |
 | OD-5 | Is the `dev` GitHub Environment left unprotected? | TL | Yes — an unattended deploy from `develop` is the point. |
+
+## 10a. Terraform and the pipeline both touch the service — who wins
+
+`run.tf` already puts `template[0].containers[0].image` and `traffic` in
+`ignore_changes`, because the pipeline owns both. **`APP_RELEASE` is not in
+that list**, and it is the same kind of fact: a deploy-time truth, not a
+configuration one. So a `terraform apply` run after a deploy blanks it —
+
+```
+- env { name = "APP_RELEASE"  value = "0.1.0+005ba9e" }
++ env { name = "APP_RELEASE" }
+```
+
+— observed on the apply that granted the invoker binding.
+
+The image is not rolled back, so nothing breaks. What breaks is the *reporting*:
+`/health` then announces the packaged version instead of the release actually
+running, and `deploy_cloud_run.sh` compares exactly that field against the
+release it deployed (spec 0007 AC-5). A stray apply therefore makes the
+service misreport itself until the next deploy corrects it.
+
+**Not fixed, on purpose.** The obvious repair is to add the env block to
+`ignore_changes`, and that is worse: the block is `dynamic` over
+`local.backend_env`, so ignoring it would also stop Terraform managing
+`ENVIRONMENT`, `TRUSTED_HOSTS`, `CORS_ALLOWED_ORIGINS` and the secret
+references. Removing `APP_RELEASE` from Terraform does not help either —
+Terraform declares the whole env list, so the next apply would delete an
+entry the pipeline added.
+
+The honest resolution is a rule rather than code: **the pipeline is the last
+word on what is released.** After a manual `terraform apply` against a live
+environment, run the pipeline (or accept that `/health` reports the packaged
+version until the next deploy). Recorded as OD-5.
 
 ## 10b. What the first real apply found
 
