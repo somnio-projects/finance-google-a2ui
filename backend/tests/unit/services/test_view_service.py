@@ -21,6 +21,7 @@ from tests.conftest import FROZEN_NOW
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
+TAX_LOTS = "tax_lots.table.v1"
 
 
 @pytest.fixture
@@ -117,7 +118,7 @@ async def test_catalog_describes_every_registered_projection(
     service: ViewService,
 ) -> None:
     catalog = await service.catalog()
-    assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION]
+    assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION, TAX_LOTS]
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry.summary == projection.summary
         assert entry.endpoints == list(projection.endpoints)

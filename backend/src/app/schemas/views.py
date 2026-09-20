@@ -18,7 +18,8 @@ from app.presentation.options import Locale, SortOrder
 MAX_VIEWS: Final[int] = 4
 DEFAULT_VIEW: Final[str] = "holdings.allocation.v1"
 CURRENT_PORTFOLIO: Final[str] = "current"
-VIEW_ID_PATTERN: Final[str] = r"^[a-z][a-z0-9]*(\.[a-z0-9_]+)+\.v[0-9]{1,3}$"
+#: ``_`` is legal in the first segment too, as it always was in the rest (0015 OD-2).
+VIEW_ID_PATTERN: Final[str] = r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+\.v[0-9]{1,3}$"
 PORTFOLIO_ID_PATTERN: Final[str] = r"^[a-z0-9-]{1,64}$"
 
 ViewId = Annotated[str, Field(max_length=64, pattern=VIEW_ID_PATTERN)]
