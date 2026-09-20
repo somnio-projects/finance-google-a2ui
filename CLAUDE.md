@@ -8,7 +8,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc | Flutter rules in `.claude/rules/flutter/` |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL HA, Secret Manager, Cloud Run, Cloud Armor, logging/alerts — validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
-| `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
+| `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
 
 GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 
@@ -28,7 +28,7 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 
 ```bash
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
-cd backend && make gate                # lint · types · budget · quality (smells) · tests 100 % · audit
+cd backend && make gate                # lint · types · budget · catalog contract · quality (smells) · tests 100 % · audit
 cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
 ```
 

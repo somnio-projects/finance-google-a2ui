@@ -47,14 +47,28 @@ field and never supplies a formatted number. When neither caller expresses a
 preference, the endpoint's documented **selection rule** chooses from the data,
 and that rule is tested (ADR-K D-13).
 
-## 4. The registry feeds four consumers
+## 4. The registry feeds five consumers
 
 Registering once publishes the projection to: the **OpenAPI** document, the
 **`GET /v1/views` catalog** (id, serving endpoints, options schema, example),
 the **prompt fragments** that teach the model the catalog (generated, never
-hand-copied), and the **A2UI surface** adapter for the genui client. `genui`,
-`genui_a2a` and `a2ui_core` are alpha: keeping the A2UI mapping in one adapter
-per projection is what makes a library bump a contained change.
+hand-copied), the **A2UI surface** adapter for the genui client, and the
+**frozen design contract** [`docs/catalog/CONTRACT.md`](../../../docs/catalog/CONTRACT.md)
+— the field inventory design binds to (GGU-41, spec `backend/0019`), also
+generated. `genui`, `genui_a2a` and `a2ui_core` are alpha: keeping the A2UI
+mapping in one adapter per projection is what makes a library bump a contained
+change.
+
+The contract is **gated**: `make gate` re-renders it and diffs it, so a
+projection cannot change without the document changing in the same commit.
+After touching a projection, run `cd backend && make catalog` and commit the
+result. Two conventions it reads:
+
+- **Pre-formatted** is derived from the ADR-E pair (a string beside a figure),
+  not from the `display` name — keep shipping pairs and it classifies itself.
+- **An editable field is a payload field named exactly as the option that sets
+  it.** That naming *is* the interactivity declaration; a component with an
+  input that does not round-trip through a declared option breaks D-3.
 
 ## 5. Delivery speed is part of the contract
 
@@ -80,4 +94,5 @@ budget is a defect like a failing test.
 - [ ] A2UI adapter + its test.
 - [ ] `register(...)` called from the module; nothing else edited.
 - [ ] Appears in `/v1/views`, in OpenAPI with an example, and in the generated prompt fragments.
+- [ ] `cd backend && make catalog` run and `docs/catalog/CONTRACT.md` committed — the gate fails on a stale contract.
 - [ ] Spec updated (`specs/backend/NNNN-*.md`) and the decision recorded if anything in ADR-K changed.

@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget quality test test-unit test-integration audit gate run migrate purge-audit
+.PHONY: install lint format typecheck budget catalog catalog-check quality test test-unit test-integration audit gate run migrate purge-audit
 
 install:
 	$(UV) sync --all-groups
@@ -21,6 +21,15 @@ typecheck:
 
 budget:
 	$(UV) run python scripts/check_file_budget.py
+
+# The frozen design contract (GGU-41): docs/catalog/CONTRACT.md is rendered from
+# the projection registry, never hand-written. `catalog` regenerates it;
+# `catalog-check` fails the gate when a projection changed and the file did not.
+catalog:
+	$(UV) run python scripts/generate_catalog_contract.py
+
+catalog-check:
+	$(UV) run python scripts/generate_catalog_contract.py --check
 
 test:
 	$(UV) run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml
@@ -54,7 +63,7 @@ quality:
 	$(UV) run pylint src/app tests
 	$(UV) run codespell src tests docs scripts
 
-gate: lint typecheck budget quality test audit
+gate: lint typecheck budget catalog-check quality test audit
 	@echo "ship gate green"
 
 run:
