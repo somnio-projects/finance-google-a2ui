@@ -13,6 +13,7 @@ from tests.conftest import make_token
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
+SCENARIO = "scenario.comparison.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 
 
@@ -56,7 +57,11 @@ def test_an_option_the_view_does_not_declare_is_422(
 def test_the_catalog_is_served(integration_client: TestClient) -> None:
     response = integration_client.get("/v1/views", headers=_headers())
     assert response.status_code == 200
-    assert {entry["id"] for entry in response.json()} == {ALLOCATION, WATERFALL}
+    assert {entry["id"] for entry in response.json()} == {
+        ALLOCATION,
+        WATERFALL,
+        SCENARIO,
+    }
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:
