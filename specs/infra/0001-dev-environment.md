@@ -354,7 +354,7 @@ and is the TL's to make. See OD-4.
 Noted while working, **not fixed here** — each is someone's call, not a
 drive-by:
 
-- **ADR-F D-4 says Cloud Run runs `min-instances=1, max-instances=1`** because
+- ~~**ADR-F D-4 says Cloud Run runs `min-instances=1, max-instances=1`** because
   session state is in process memory and a scaled-out follow-up turn would hit
   an instance with no session. The committed Terraform has always used 1/4
   (production) and 0/2 (staging), and dev now derives 0/2. The ADR looks
@@ -362,10 +362,21 @@ drive-by:
   (`alembic/versions/20260919_0004_sessions.py`, `session_repository.py`) — but
   it is still marked Accepted and nothing records the supersession. Someone
   should either amend ADR-F or write the ADR that replaces it; until then the
-  repo asserts a constraint the code does not honour.
+  repo asserts a constraint the code does not honour.~~
+  **Recorded 2026-09-20 in [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md)** —
+  D-4 is superseded by D-7/D-8/D-9 (Proposed; the TL ratifies). Two
+  corrections to what this bullet said: dev derives **1/2**, not 0/2
+  (`min_instances = coalesce(var.min_instances, 1)` — §5 of this spec is the
+  reason), and sessions were only half the story: the portfolio was still a
+  per-process cache until spec [`backend/0020`](../backend/0020-portfolio-persistence.md).
+  A divergence noted in a spec section is a divergence nobody finds; this is
+  why the amendment went to the ADR.
 - `infra/README.md` and `docs/diagrams/08-infrastructure.md` both described
   "one environment per GCP project (`staging`, `production`)" as settled. Both
   are updated here; the underlying question is OD-1.
-- `specs/README.md`'s index has **duplicate rows** (0003, 0006 and 0013 each
+- ~~`specs/README.md`'s index has **duplicate rows** (0003, 0006 and 0013 each
   appear twice). Left alone apart from adding the `infra/` area — fixing the
-  index is a separate, trivially reviewable change.
+  index is a separate, trivially reviewable change.~~ **Fixed 2026-09-20** in
+  the same change as the ADR-F amendment. The three duplicates were real; the
+  index was also missing rows for `backend/0004`, `backend/0007` and
+  `backend/0020`, which is the failure mode a duplicated row hides.

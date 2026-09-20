@@ -17,7 +17,7 @@ flowchart TB
         subgraph vpc["VPC (private, deny-all ingress, flow logs)"]
             conn["Serverless VPC connector<br/>(production only — dev uses<br/>Cloud Run direct VPC egress)"]
             subgraph runtime["Cloud Run"]
-                svc["backend service · uid 10001<br/>prod: min-instances ≥ 1, LB-only ingress<br/>dev: scales to zero, open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
+                svc["backend service · uid 10001<br/>prod: 1–4 instances, LB-only ingress<br/>dev: 1–2 instances, open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
                 job["purge job<br/>audit_events retention"]
             end
             sql[("Cloud SQL PostgreSQL 16<br/>PRIVATE IP · TLS only — both environments<br/>prod: REGIONAL HA · PITR · 30 backups<br/>dev: ZONAL · no PITR · 2 backups · destroyable")]
@@ -61,6 +61,10 @@ flowchart TB
     %% are identical in every environment: dev gives up durability, not privacy.
     %% The deployer can publish an image and create a revision. It cannot read
     %% a secret, reach the database, or act as any other identity.
+    %% Instance counts are capacity, not correctness: session and portfolio
+    %% state are in Cloud SQL, so any instance can answer any follow-up turn
+    %% (ADR-F D-7). min-instances = 1 is bought for demo latency (D-8), and is
+    %% NOT a state-sharing guarantee — ADR-F D-4 used to conflate the two.
 ```
 
 ## What dev does not have
@@ -71,6 +75,7 @@ flowchart TB
 | Load balancer, reserved IP, managed certificate, TLS policy | TLS on Cloud Run's own certificate |
 | Regional HA, PITR, 30 backups, deletion protection | daily backups (2 retained), synthetic data only |
 | Uptime check and readiness alert | 5xx and auth-failure alerts; the deploy's own `/health` verify-and-rollback |
-| Always-on VPC connector, warm instance | private database IP, TLS-only, `PRIVATE_RANGES_ONLY` egress, deny-all ingress |
+| Always-on VPC connector (dev uses direct VPC egress) | private database IP, TLS-only, `PRIVATE_RANGES_ONLY` egress, deny-all ingress |
+| — *(nothing: dev keeps the warm instance)* | `min-instances = 1`, the one place dev does **not** take the cheap option — the demo must not pay a cold start (ADR-F D-8) |
 
 Full reasoning and the compliance record: [`specs/infra/0001-dev-environment.md`](../../specs/infra/0001-dev-environment.md) §5, §8.

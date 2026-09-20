@@ -1509,3 +1509,52 @@ more useful than any one of them:
   sat unmergeable-by-construction for weeks with nothing saying why.
 - **`/healthz` is unusable on run.app.** Proven with two controls from two
   networks. Do not "fix" it back.
+
+---
+
+## 2026-09-20 — ADR-F D-4: recording what replaced the single-instance constraint
+
+**Documentation only.** No code, no Terraform, no threshold moved.
+
+**What was wrong.** ADR-F D-4 required Cloud Run to run
+`min-instances=1, max-instances=1` because session and portfolio state lived in
+process memory. Two things had happened to it: no environment ever ran 1/1
+(production 1/4, staging 0/2, dev 1/2 derived), and the reason had been removed
+— sessions in PostgreSQL since GGU-46, the portfolio since spec `backend/0020`.
+The divergence was known and lived in `specs/infra/0001` §11 and three Jira
+comments, which is not where anyone reads a constraint.
+
+**What changed.** D-4 is struck and superseded by D-7 (scaling out is capacity,
+not correctness — the unique constraint on `portfolios.subject` is the
+load-bearing part), D-8 (`min-instances = 1` survives as a **cost** decision for
+the 2026-09-28 demo and must never be cited as a safety property) and D-9 (the
+two in-process caches D-4 was silently bounding: the fixed-window rate limiter
+and the feature-flag TTL cache). D-1, D-2 and D-5 are annotated as overtaken in
+fact; D-3 is annotated as **resolved — the seam it bought was spent**. The
+amendment is **Proposed**: ratification is the TL's.
+
+**Also.** Diagrams 07 (three portfolio tables, migration 0005, and the reason
+they exist) and 08 (dev is 1–2 instances, not scale-to-zero). `specs/README.md`
+deduplicated (0003, 0006, 0013 were each listed twice) and completed (0004,
+0007 and 0020 had no row at all). Two `ADR-F-*.md` links in specs `0007` and
+`0020` pointed at filenames that do not exist.
+
+**Next person should know**
+
+- **The registry gained a status.** `Accepted · D-n superseded by D-m` is now in
+  `docs/adr/README.md`'s vocabulary, for when the context changes under one
+  ruling rather than under a whole record. Strike the old `D-n`, never delete
+  it — code and specs cite rulings by number and those citations must resolve.
+- **A number that outlives its reason is worse than no number.** `min-instances
+  = 1` is unchanged in the Terraform and means something completely different
+  from what it meant two days earlier. D-8 exists only so nobody re-derives the
+  old reason from the surviving value.
+- **Removing a constraint un-bounds whatever was quietly leaning on it.** D-4
+  was also the only thing making the in-process rate limiter a hard ceiling. It
+  is now `N × limit` across `N` instances. Spec `0001` OD-2 had already named
+  the Redis adapter as the fix "when `max-instances > 1`"; that condition is
+  true today and nothing announced it.
+- **`specs/infra/0001` §11 is the pattern to avoid.** Three real divergences
+  were found and written into a spec section titled "not fixed here". Two of
+  them are closed by this change, four days later, because someone was asked to
+  look — not because the record surfaced them.
