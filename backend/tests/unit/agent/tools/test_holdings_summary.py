@@ -43,7 +43,7 @@ async def test_the_totals_agree_with_the_domain(
     Asserted on a trimmed call on purpose: the block describes the
     **portfolio**, not the rows returned.
     """
-    portfolio = tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.subject)
     profit = portfolio.total_unrealized_pl()
     ratio = return_on_cost(profit, portfolio.total_cost_basis())
     assert ratio is not None
@@ -66,7 +66,7 @@ async def test_every_row_carries_the_figures_the_domain_computed(
 ) -> None:
     """AC-2 — the payload's own numbers, not the domain's, compared per row."""
     outcome = await tool.run({}, tool_context)
-    by_symbol = {item.symbol: item for item in held(tool_context)}
+    by_symbol = {item.symbol: item for item in await held(tool_context)}
 
     for row in rows(outcome.data["holdings"]):
         symbol = row["symbol"]
@@ -87,7 +87,7 @@ async def test_the_weights_of_every_position_sum_to_one(
     asserting something false about arithmetic.
     """
     outcome = await tool.run({}, tool_context)
-    positions = held(tool_context)
+    positions = await held(tool_context)
 
     assert len(rows(outcome.data["holdings"])) == len(positions)
     total = sum((item.weight for item in positions), ZERO)

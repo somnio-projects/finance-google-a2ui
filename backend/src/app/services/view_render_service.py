@@ -49,15 +49,17 @@ class ViewRenderService:
             rendered payload or the problem that entry alone produced.
         """
         return ViewRenderBatchResult(
-            results=[self._render_one(principal, entry) for entry in batch.renders]
+            results=[
+                await self._render_one(principal, entry) for entry in batch.renders
+            ]
         )
 
-    def _render_one(
+    async def _render_one(
         self, principal: Principal, entry: ViewRenderRequest
     ) -> ViewRenderResult:
         """Render one entry, or describe why it could not be rendered."""
         try:
-            portfolio = self._views.portfolio(
+            portfolio = await self._views.portfolio(
                 principal, portfolio_id=entry.portfolio_id
             )
             payload = self._views.render_one(

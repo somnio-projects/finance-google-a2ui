@@ -23,7 +23,6 @@ from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.protocols import Clock, ErrorReporter, ModelClient, TokenVerifier
 from app.core.release import resolve_release
-from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import SystemClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
 from app.infra.db.session import create_session_factory
@@ -72,7 +71,6 @@ def build_container(
             system_prompt=prompt,
             card=build_agent_card(settings, tools, version=__version__),
         ),
-        portfolio=InMemoryPortfolioProvider(clock=clock),
     )
 
 

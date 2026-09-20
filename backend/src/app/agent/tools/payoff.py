@@ -77,7 +77,7 @@ class PayoffTool:
         """
         options = PayoffArguments.model_validate(dict(arguments))
         asset = market_asset(options.symbol)
-        portfolio = context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.subject)
         entry_price = portfolio.price(asset.symbol)
         curve = payoff_curve(
             symbol=asset.symbol,

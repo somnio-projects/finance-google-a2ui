@@ -51,7 +51,7 @@ async def test_the_size_orders_rank_the_largest_position_first(
 ) -> None:
     outcome = await tool.run({"sort_by": sort_by}, tool_context)
 
-    assert symbols_of(outcome.data["holdings"]) == _by_size(held(tool_context))
+    assert symbols_of(outcome.data["holdings"]) == _by_size(await held(tool_context))
 
 
 @pytest.mark.parametrize(
@@ -67,7 +67,7 @@ async def test_the_return_orders_rank_by_profit_on_what_was_paid(
 ) -> None:
     """OD-5 — by return, not by absolute profit, which position size dominates."""
     outcome = await tool.run({"sort_by": sort_by}, tool_context)
-    expected = _by_return(held(tool_context), best_first=best_first)
+    expected = _by_return(await held(tool_context), best_first=best_first)
 
     assert symbols_of(outcome.data["holdings"]) == expected
 

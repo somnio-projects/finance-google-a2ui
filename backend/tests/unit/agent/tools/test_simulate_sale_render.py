@@ -85,7 +85,7 @@ async def test_the_rendered_table_names_what_the_answer_names(
     intent that dropped `lot_method` would still render a plausible table,
     and only this comparison would notice.
     """
-    portfolio = tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.subject)
     outcome = await tool.run({**HALF_A_BITCOIN, "lot_method": "HIFO"}, tool_context)
 
     assert outcome.render is not None
@@ -121,7 +121,7 @@ async def test_a_dollar_sized_ask_travels_as_the_units_it_resolved_to(
     assert isinstance(options, TaxLotsTableOptions)
     assert options.quantity == block(outcome.data["summary"])["quantityDisplay"]
 
-    portfolio = tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.subject)
     payload = projection.render(portfolio, options)
 
     assert isinstance(payload, TaxLotsTablePayload)

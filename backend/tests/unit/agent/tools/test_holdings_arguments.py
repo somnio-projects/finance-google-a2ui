@@ -41,7 +41,7 @@ async def test_an_unknown_symbol_matches_nothing_rather_than_failing(
 
     assert rows(outcome.data["holdings"]) == []
     assert isinstance(totals, dict)
-    assert totals["count"] == len(held(tool_context))
+    assert totals["count"] == len(await held(tool_context))
 
 
 async def test_top_n_cuts_after_sorting_not_before(

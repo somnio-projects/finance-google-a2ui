@@ -13,15 +13,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.container import Container
 from app.core.principal import Principal
+from app.domain.provider import PortfolioProvider
 from app.infra.db.session import session_scope
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.feature_flag_repository import FeatureFlagRepository
+from app.repositories.portfolio_repository import PortfolioRepository
 from app.repositories.session_repository import SessionRepository
 from app.services.audit_service import AuditService
 from app.services.auth_service import AuthService
 from app.services.feature_flag_service import FeatureFlagService
 from app.services.health_service import HealthService
 from app.services.identity_service import IdentityService
+from app.services.portfolio_service import PersistentPortfolioProvider
 from app.services.session_service import SessionService
 
 
@@ -78,6 +81,27 @@ async def get_current_principal(
 
 
 PrincipalDep = Annotated[Principal, Depends(get_current_principal)]
+
+
+def get_portfolio_provider(
+    container: ContainerDep, session: SessionDep
+) -> PersistentPortfolioProvider:
+    """Provide the portfolio over the request's session (spec 0020 §4.2).
+
+    Per request, never per process: the repository holds this session and
+    `session_scope` owns its commit. The process-wide `Container.portfolio`
+    that used to serve this was removed with spec 0020 — it was the in-memory
+    cache that gave one subject two `as_of` across two instances.
+    """
+    return PersistentPortfolioProvider(
+        repository=PortfolioRepository(session), clock=container.clock
+    )
+
+
+#: Consumers depend on the **Protocol**, never on the implementation: that is
+#: what lets a unit test substitute the in-memory double through
+#: `dependency_overrides` without the app knowing which one it got.
+PortfolioDep = Annotated[PortfolioProvider, Depends(get_portfolio_provider)]
 
 
 def get_audit_service(session: SessionDep) -> AuditService:

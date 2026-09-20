@@ -114,7 +114,7 @@ class ComputeAttributionTool:
                 can recover from, rather than failing the turn.
         """
         options = AttributionArguments.model_validate(dict(arguments))
-        portfolio = context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.subject)
         result = attribute_window(
             portfolio,
             window=timedelta(days=WINDOWS[options.window]),

@@ -14,6 +14,7 @@ from app.api.deps.agent import (
 )
 from app.api.deps.common import (
     ContainerDep,
+    PortfolioDep,
     PrincipalDep,
     RequestIdDep,
     SessionDep,
@@ -24,6 +25,7 @@ from app.api.deps.common import (
     get_feature_flag_service,
     get_health_service,
     get_identity_service,
+    get_portfolio_provider,
     get_request_id,
     get_session,
     get_session_service,
@@ -36,6 +38,7 @@ from app.api.deps.views import (
 
 __all__ = [
     "ContainerDep",
+    "PortfolioDep",
     "PrincipalDep",
     "RequestIdDep",
     "SessionDep",
@@ -49,6 +52,7 @@ __all__ = [
     "get_feature_flag_service",
     "get_health_service",
     "get_identity_service",
+    "get_portfolio_provider",
     "get_render_intent_service",
     "get_request_id",
     "get_session",
