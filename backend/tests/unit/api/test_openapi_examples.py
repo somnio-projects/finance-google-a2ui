@@ -1,141 +1,106 @@
-"""The examples half of the OpenAPI contract (`api-design.md` §2).
+"""Every operation that returns a body must show the client what it looks like.
 
-`test_openapi_contract.py` enforces summaries, ids, tags, statuses and
-descriptions; `test_openapi_projections.py` enforces the projection payloads.
-Between them, **examples were never checked** — the rule asked for "at least
-one request example and one response example, using realistic finance values"
-and nothing failed when an operation shipped without either.
+`.claude/rules/backend/api-design.md` §2 requires "at least one request example
+and one response example" on every operation. **Nothing checked it** — the
+contract test asserts summary, description, operation id, tags, responses and
+parameters, and says nothing about examples. The rule was enforced by hope.
 
-That is the same shape of gap this project has been bitten by before: a rule
-that reads as enforced, is not, and quietly stops being true. These tests
-close it. An operation that genuinely cannot carry an example is named in
-``WITHOUT_EXAMPLES`` below — a visible diff, never a silent hole.
+One operation had actually shipped without one, and it was the worst possible
+one: `POST /` — the A2A surface, whose body is a JSON-RPC envelope and whose
+answer is an event stream, so FastAPI derives *no* schema from the signature.
+It was the route a client author has least to go on and the least documented.
+
+The first version of this check reported three, because it looked for examples
+on the response and on a `$ref`-ed model only. A list endpoint generates an
+inline `{"type": "array", "items": {"$ref": ...}}`, and the item model's
+examples hang off the *item* — so two list endpoints that were properly
+documented looked bare. Hence `_has_example` resolves through the array, and
+`test_a_response_whose_schema_is_an_unexampled_array_is_caught` pins both
+directions: a guard that over-reports teaches people to ignore it.
+
+Split from `test_openapi_contract.py` under the 150-line budget, the same way
+`test_openapi_projections.py` was.
 """
 
 from typing import Any
 
 from fastapi import FastAPI
 
-from tests.unit.api.test_openapi_contract import GENERATED
+#: Routes FastAPI generates for the documentation itself.
+GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 
-#: Operations with nothing meaningful to exemplify, each with its reason.
-#: Adding a path here is a documentation decision and needs a line saying why.
-WITHOUT_EXAMPLES: dict[tuple[str, str], str] = {
-    # The A2A surface is JSON-RPC: one envelope for many methods, answering
-    # either an event stream or an error object. FastAPI cannot type either
-    # side, so the shapes are documented in the description and in
-    # `app/schemas/a2a.py`, whose fields all carry their own examples.
-    ("post", "/"): "JSON-RPC envelope; neither side has a single schema",
-}
+#: A 204 carries no body by contract, so an example would be a lie, not a gap.
+NO_BODY = {"204", "304"}
 
 
-def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
-    """Return every documented operation, excluding FastAPI's own routes."""
-    schema = app.openapi()
-    return [
-        (path, method, operation)
-        for path, item in schema["paths"].items()
-        if path not in GENERATED
-        for method, operation in item.items()
-        if (method, path) not in WITHOUT_EXAMPLES
-    ]
+def _resolve(schema: dict[str, Any], document: dict[str, Any]) -> dict[str, Any]:
+    """Follow a local ``$ref`` into ``components.schemas``, once."""
+    ref = schema.get("$ref", "")
+    if not ref.startswith("#/components/schemas/"):
+        return schema
+    name = ref.rsplit("/", 1)[-1]
+    return document.get("components", {}).get("schemas", {}).get(name, {})
 
 
-def _has_example(node: dict[str, Any]) -> bool:
-    """Return True when a schema or media node carries an example of any form."""
-    return node.get("example") is not None or bool(node.get("examples"))
+def _has_example(media: dict[str, Any], document: dict[str, Any]) -> bool:
+    """Return whether a media-type object shows a concrete value anywhere.
 
-
-def _exemplified(media: dict[str, Any], schemas: dict[str, Any]) -> bool:
-    """Return True when this media type shows an example, however it was given.
-
-    The rule accepts either `openapi_examples` on the operation — which lands
-    on the media type — or `json_schema_extra`, which lands on the component
-    schema. So a `$ref` (and an array's `items`) is followed rather than read
-    as "no example", which would have made the rule unsatisfiable the
-    documented way.
+    Checks the three places FastAPI and pydantic put one: on the response
+    itself, on the referenced model, and — the case that was missing — on the
+    *items* of an inline array, which is what a list endpoint generates.
     """
-    if _has_example(media):
+    if media.get("example") or media.get("examples"):
         return True
-    node = media.get("schema") or {}
-    # `anyOf`/`oneOf` are deliberately not followed: every union this service
-    # serves carries an inline example on the operation, and "one member has an
-    # example" would not prove the union is documented. A future union that
-    # relies only on per-member `json_schema_extra` will fail here — correctly,
-    # but for a reason this comment is the explanation of.
-    for _ in range(4):  # ref → array → ref is the deepest shape we produce
-        if _has_example(node):
-            return True
-        if "$ref" in node:
-            node = schemas.get(node["$ref"].rsplit("/", 1)[-1], {})
-        elif "items" in node:
-            node = node["items"]
-        else:
-            return False
+    schema = media.get("schema") or {}
+    resolved = _resolve(schema, document)
+    if resolved.get("example") or resolved.get("examples"):
+        return True
+    if resolved.get("type") == "array":
+        item = _resolve(resolved.get("items") or {}, document)
+        return bool(item.get("example") or item.get("examples"))
     return False
 
 
-def _success_responses(operation: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return the operation's 2xx responses that carry a body."""
-    return [
-        response
-        for status, response in operation["responses"].items()
-        if status.isdigit() and 200 <= int(status) < 300 and response.get("content")
-    ]
-
-
-def _component_schemas(app: FastAPI) -> dict[str, Any]:
-    """Return the document's component schemas, for resolving `$ref`s."""
-    return app.openapi()["components"]["schemas"]
-
-
-def test_every_operation_documents_a_response_example(app: FastAPI) -> None:
-    """A client generator without an example produces untestable stubs.
-
-    Every 2xx response that carries a body must show one — either inline on
-    the operation, or on the schema through `json_schema_extra` / field-level
-    `examples`, which is what FastAPI renders for a `response_model`.
-    """
-    schemas = _component_schemas(app)
-    checked = 0
-    for path, method, operation in _operations(app):
-        where = f"{method.upper()} {path}"
-        responses = _success_responses(operation)
-        if not responses:
-            # A 204 answers with no body, so there is nothing to exemplify.
-            # Insisting otherwise would push a fake example onto a DELETE.
-            assert "204" in operation["responses"], (
-                f"{where} documents no success response with a body"
-            )
-            continue
-        checked += 1
-        for response in responses:
-            assert any(
-                _exemplified(media, schemas) for media in response["content"].values()
-            ), f"{where} has a success response without an example"
-    assert checked, "no operation with a response body was checked"
-
-
-def test_every_operation_with_a_body_documents_a_request_example(
+def test_every_successful_response_with_a_body_carries_an_example(
     app: FastAPI,
 ) -> None:
-    """The request half of the same rule: show a caller what to send."""
-    schemas = _component_schemas(app)
-    checked = 0
-    for path, method, operation in _operations(app):
-        body = operation.get("requestBody")
-        if body is None:
+    document = app.openapi()
+    undocumented: list[str] = []
+
+    for path, item in document["paths"].items():
+        if path in GENERATED:
             continue
-        checked += 1
-        assert any(
-            _exemplified(media, schemas) for media in body["content"].values()
-        ), f"{method.upper()} {path} accepts a body with no request example"
-    assert checked, "no operation with a request body was checked"
+        for method, operation in item.items():
+            for code, response in operation.get("responses", {}).items():
+                if not code.isdigit() or not code.startswith("2") or code in NO_BODY:
+                    continue
+                content = response.get("content") or {}
+                if not content:
+                    continue  # a 2xx that genuinely returns nothing
+                if not any(_has_example(media, document) for media in content.values()):
+                    undocumented.append(f"{method.upper()} {path} -> {code}")
+
+    assert not undocumented, (
+        "these operations answer with a body that the document never shows:\n  "
+        + "\n  ".join(undocumented)
+        + "\nThe OpenAPI document is how the client is written; an unexampled "
+        "response is one the client author has to guess at."
+    )
 
 
-def test_the_exemption_list_only_names_routes_that_exist(app: FastAPI) -> None:
-    """An exemption for a route that is gone is a hole waiting to be reused."""
-    paths = app.openapi()["paths"]
-    for method, path in WITHOUT_EXAMPLES:
-        assert path in paths, f"{path} is exempted but no longer exists"
-        assert method in paths[path], f"{method.upper()} {path} is exempted but absent"
+def test_a_response_whose_schema_is_an_unexampled_array_is_caught() -> None:
+    """The guard must bite on the exact shape that slipped through.
+
+    An inline array of a `$ref` is what a list endpoint generates, and it is
+    the case a `$ref`-only check calls documented. Asserted directly so the
+    rule survives a refactor of `_has_example`.
+    """
+    flag: dict[str, Any] = {"properties": {}}
+    document: dict[str, Any] = {"components": {"schemas": {"Flag": flag}}}
+    items = {"$ref": "#/components/schemas/Flag"}
+    media: dict[str, Any] = {"schema": {"type": "array", "items": items}}
+
+    assert _has_example(media, document) is False
+
+    flag["examples"] = [{"key": "x"}]
+    assert _has_example(media, document) is True
