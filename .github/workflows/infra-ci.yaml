@@ -6,9 +6,12 @@
 #   step name = "<Verb> <object> (<tool>)"
 name: infra-ci
 
-# The delivery-scripts job asserts properties that span infra/ and the two
-# backend workflows (what dev is, and that a release waits for a green gate),
-# so a change to either side has to start this run.
+# The delivery-scripts job asserts properties that span infra/, the two backend
+# workflows (what dev is, and that a release waits for a green gate) and the
+# harness rules index, so a change to any of those sides has to start this run.
+# CLAUDE.md and .claude/rules/** are named for the same reason backend-ci names
+# docs/catalog/**: the rules index is rewritten by a tool outside this
+# repository, so the edit that drops a row must start the run that rejects it.
 # (Actions does not expand YAML anchors, so the two lists are spelled out.)
 on:
   pull_request:
@@ -17,6 +20,8 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      - "CLAUDE.md"
+      - ".claude/rules/**"
   push:
     branches: [main, develop]
     paths:
@@ -24,6 +29,8 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      - "CLAUDE.md"
+      - ".claude/rules/**"
 
 permissions:
   contents: read
@@ -87,6 +94,9 @@ jobs:
       - name: Prove dev stays cheap by derivation and releases only behind a green gate (test_dev_environment.sh)
         run: bash infra/scripts/tests/test_dev_environment.sh
 
+      - name: Prove every rule file is listed and every row exists (test_rules_index.sh)
+        run: bash infra/scripts/tests/test_rules_index.sh
+
   report:
     name: "Report · infrastructure gate summary"
     runs-on: ubuntu-latest
@@ -102,7 +112,7 @@ jobs:
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
             echo "| Terraform | formatting, validity, no CRITICAL/HIGH misconfiguration | ${{ needs.terraform.result }} |"
-            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate | ${{ needs.delivery-scripts.result }} |"
+            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate; every rule file carries a row in the CLAUDE.md index and every row a file | ${{ needs.delivery-scripts.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail the run when any gate failed (bash)

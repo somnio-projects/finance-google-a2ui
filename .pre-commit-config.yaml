@@ -139,6 +139,17 @@ repos:
         files: ^(infra/|\.github/workflows/backend-c[di]\.yaml$)
         pass_filenames: false
 
+      # The rules index in CLAUDE.md sits inside the block /harness-init
+      # regenerates, so a row can disappear without anyone editing it by hand —
+      # and a rule with no row silently stops loading (GGU-86). Runs when either
+      # side of the comparison moves: the table, or the rules directory.
+      - id: harness-rules-index
+        name: Prove every rule file is listed and every row exists (test_rules_index.sh)
+        entry: bash infra/scripts/tests/test_rules_index.sh
+        language: system
+        files: ^(\.claude/rules/|CLAUDE\.md$)
+        pass_filenames: false
+
       # Fast enough for every commit; the DB-backed suite runs on push.
       - id: backend-unit-tests
         name: Run the unit suite (pytest -m unit)
