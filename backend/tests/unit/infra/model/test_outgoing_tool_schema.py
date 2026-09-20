@@ -21,6 +21,17 @@ from app.infra.model.tool_schema_keys import REJECTED_KEYS
 
 #: Keys that carry a constraint. Sanitising must not be an excuse to lose one
 #: (AC-3): whatever the tool declared, the model still gets to read.
+#:
+#: The four at the end are the ones this guard was missing, and they are the
+#: only ones that matter: every key above them is *accepted* by Gemini and so
+#: survives the allow-list untouched, which made ``lost`` empty by
+#: construction. ``exclusiveMinimum``, ``exclusiveMaximum``, ``multipleOf``
+#: and ``uniqueItems`` are in ``REJECTED_KEYS`` and are dropped — a tool
+#: declaring ``Field(gt=0)`` or ``multiple_of=5`` would have reached the model
+#: with no lower bound and no step, with this file green. No shipped tool
+#: declares one today; this fails loudly on the first that does, rather than
+#: guessing a translation. (``exclusiveMinimum`` is not ``minimum``: rewriting
+#: it admits the endpoint the tool excluded.)
 BOUND_KEYS = frozenset(
     {
         "enum",
@@ -32,6 +43,10 @@ BOUND_KEYS = frozenset(
         "minItems",
         "minLength",
         "pattern",
+        "exclusiveMaximum",
+        "exclusiveMinimum",
+        "multipleOf",
+        "uniqueItems",
     }
 )
 
@@ -49,6 +64,23 @@ def _rejected_keys_in(node: object) -> set[str]:
         return found
     if isinstance(node, list):
         return set().union(*(_rejected_keys_in(item) for item in node), set())
+    return set()
+
+
+def _bound_keys_in(node: object) -> set[str]:
+    """Return every constraint-carrying keyword anywhere below ``node``.
+
+    Anywhere, not at the top level: a bound inside ``items`` or ``anyOf`` binds
+    the argument just as tightly as one beside ``type``, and a check that only
+    reads the first level cannot see it go.
+    """
+    if isinstance(node, dict):
+        found = {key for key in node if key in BOUND_KEYS}
+        for value in node.values():
+            found |= _bound_keys_in(value)
+        return found
+    if isinstance(node, list):
+        return set().union(*(_bound_keys_in(item) for item in node), set())
     return set()
 
 
@@ -90,7 +122,7 @@ def test_every_argument_keeps_its_shape_and_its_bounds_on_the_wire(
     assert set(sent) == set(properties), "an argument went missing on the wire"
     for field, schema in properties.items():
         assert sent[field], f"{tool}.{field} crossed as an empty schema"
-        lost = (BOUND_KEYS & set(schema)) - set(sent[field])
+        lost = _bound_keys_in(schema) - _bound_keys_in(sent[field])
         assert not lost, f"{tool}.{field} lost {sorted(lost)} on the way out"
 
 
@@ -107,6 +139,26 @@ def test_the_finder_would_catch_a_refused_keyword() -> None:
     ) == {"examples"}
     assert _rejected_keys_in([{"anyOf": [{"const": "SELL"}]}]) == {"const"}
     assert _rejected_keys_in({"type": "string", "maxLength": 10}) == set()
+
+
+def test_the_bound_check_would_catch_a_dropped_constraint() -> None:
+    """The guard above is worthless if it cannot see a bound disappear.
+
+    It could not. ``BOUND_KEYS`` listed only keywords Gemini *accepts*, so
+    every one of them survived the allow-list and ``lost`` was empty whatever
+    the sanitiser did. The two cases below are the ones that were invisible:
+    a refused bound at the top level, and one nested inside ``items``.
+    """
+    assert _bound_keys_in({"type": "number", "exclusiveMinimum": 0}) == {
+        "exclusiveMinimum"
+    }
+    assert _bound_keys_in({"items": {"multipleOf": 5}}) == {"multipleOf"}
+    assert _bound_keys_in({"anyOf": [{"uniqueItems": True}]}) == {"uniqueItems"}
+    assert _bound_keys_in({"type": "string", "description": "free text"}) == set()
+
+    declared = {"type": "array", "items": {"type": "number", "multipleOf": 5}}
+    stripped = {"type": "array", "items": {"type": "number"}}
+    assert _bound_keys_in(declared) - _bound_keys_in(stripped) == {"multipleOf"}
 
 
 def test_at_least_one_tool_was_checked() -> None:
