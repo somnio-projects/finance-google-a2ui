@@ -230,6 +230,7 @@ assert "a failed migration rolls back" \
 # it is exactly the property — after the shift, requests meet a schema the
 # running code does not expect.
 migrate_line="$(grep -nF 'if ! migrate "' "${SCRIPT}" | head -1 | cut -d: -f1)"
+# shellcheck disable=SC2016  # the literal `${revision}` is what we search for
 shift_line="$(grep -nF 'shift_traffic "${revision}"' "${SCRIPT}" | tail -1 | cut -d: -f1)"
 if [[ -n "${migrate_line}" && -n "${shift_line}" && "${migrate_line}" -lt "${shift_line}" ]]; then
   echo "  PASS  migrations run before the traffic shift (${migrate_line} < ${shift_line})"

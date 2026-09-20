@@ -156,7 +156,7 @@ jobs:
       release: ${{ steps.release.outputs.release }}
     steps:
       - name: Check out the commit being released (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Derive the release identifier from the version and the commit (bash)
         id: release
@@ -178,11 +178,11 @@ jobs:
         run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
 
       - name: Set up BuildKit (docker/setup-buildx-action)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and push the runtime image (docker/build-push-action)
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: true
@@ -213,7 +213,7 @@ jobs:
       name: ${{ needs.settings.outputs.environment }}
     steps:
       - name: Check out the deploy scripts (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
         uses: google-github-actions/auth@v2

@@ -97,7 +97,18 @@ with a runner and a workflow that must stay identical to it:
 | Half | Runner | Workflow | Also in |
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
-| `infra.*` | `bash infra/scripts/tests/*.sh` from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
+| `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
+
+**"Identical" means the command, not the intent.** `infra.shell-lint` was
+missing from `ship-gate.json` while `infra-ci` had been running
+`shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh` all
+along. Both halves were individually sensible and nobody compared them, so a
+shellcheck finding **in a test script** passed every local check and failed on
+a runner — after the branch had already merged.
+
+The lesson is narrow and worth keeping: when you add a check to a workflow,
+copy its command string into `ship-gate.json` rather than describing what it
+does. A paraphrase is where the two drift.
 
 A PR that changes one without its pair is incomplete. If a third runner ever
 appears, it goes in this table rather than in a comment.
