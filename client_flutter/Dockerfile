@@ -37,12 +37,18 @@
 # ---------------------------------------------------------------------------
 # Decision 2 — the CSP admits `wasm-unsafe-eval`, and NOT `unsafe-eval`.
 # ---------------------------------------------------------------------------
-# Measured, not assumed — see specs/client/0002-client-delivery.md OD-3 for the
-# console output behind this. This app builds with the default web renderer,
-# which is CanvasKit: a WebAssembly module. `script-src` therefore has to
-# permit WebAssembly instantiation, and the narrow directive for exactly that
-# is `'wasm-unsafe-eval'` (Chrome 97+, Firefox 102+, Safari 16.4+). It permits
+# This app builds with the default web renderer, which is CanvasKit: a
+# WebAssembly module. `script-src` therefore has to permit WebAssembly
+# instantiation, and the narrow directive for exactly that is
+# `'wasm-unsafe-eval'` (Chrome 97+, Firefox 102+, Safari 16.4+). It permits
 # WebAssembly and nothing else — `eval()` and `new Function()` stay blocked.
+#
+# NOT YET MEASURED. specs/client/0002-client-delivery.md OD-3 says this is
+# answered empirically, and the run that would answer it has not happened —
+# the host ran out of disk before the image built. The directives below are
+# reasoned, not observed. Whoever first serves this bundle should load it with
+# the console open, confirm there are no CSP violations, and replace this
+# paragraph with what they saw.
 #
 # The broad `'unsafe-eval'` is NOT needed, because `flutter build web --csp`
 # tells dart2js to stop generating code dynamically. Dropping that flag is what
@@ -56,6 +62,19 @@
 # That costs nothing at the far end: `flutter build web` emits JavaScript, wasm
 # and assets, none of which are architecture-specific, so the runtime stage is
 # free to follow the target platform.
+#
+# !! THIS PIN IS KNOWN TO BE WRONG AND IS LEFT HERE DELIBERATELY. !!
+# 3.35.7 is what client_flutter/pubspec.yaml declares as the minimum
+# (`flutter: ">=3.35.7"`), and it *cannot build this workspace*: it ships Dart
+# 3.9.2, while the checked-in pubspec.lock resolves against `dart: ">=3.12.0"`
+# / `flutter: ">=3.44.0"`, so `flutter pub get` fails version solving. That is
+# a defect in the manifest, not here — see spec 0002 OD-5 and §9.
+#
+# It stays pinned to the declared version rather than being silently bumped,
+# because bumping it would hide the manifest defect and because a digest for
+# another tag has to be *pulled* to be real — inventing one would be worse
+# than a build that fails loudly. Whoever fixes the manifest replaces both the
+# tag and the digest here, in the same change.
 FROM --platform=linux/amd64 instrumentisto/flutter:3.35.7@sha256:affe9ea8b542a622531f55f347898ba86e26722308f12a663c4e6a8b76165894 AS builder
 
 WORKDIR /src

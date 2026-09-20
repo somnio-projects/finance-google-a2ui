@@ -175,8 +175,11 @@ its own and the runtime value wins once the loader exists.
 
 ### OD-3 — the renderer needs `wasm-unsafe-eval`, not `unsafe-eval`
 
-Answered by loading the served page under the real header and reading the
-console, not by reasoning about it. Evidence in the PR body.
+**Status: reasoned, not yet measured.** OD-3 says "answered empirically", and
+the empirical half did not happen — the host ran out of disk before the image
+built (GGU-82 PR). What follows is the reasoning and the directives it
+produced; the run that confirms it is still owed, and the PR says so rather
+than implying otherwise.
 
 - This app uses the **default web renderer, CanvasKit** — `app/web/index.html`
   is the stock bootstrap and nothing selects a renderer, and the build emits
@@ -233,6 +236,13 @@ console, not by reasoning about it. Evidence in the PR body.
 
 There is no Dart code in this change, so there are no Dart tests in it. The
 subject is a container, and the evidence is the container answering.
+
+> **None of the container rows below has been run.** The host ran out of disk
+> during GGU-82 and the Docker daemon went down with it, so the image was never
+> built end to end. "PR body" in the table is therefore where the evidence
+> *belongs*, not where it is — the PR says so explicitly, and
+> `client_flutter/docs/SECURITY.md` G-11 tracks it. **AC-1 to AC-5 are
+> unverified; AC-6 is the only container-adjacent one that was actually run.**
 
 | AC | How it is proven | Where |
 |---|---|---|
