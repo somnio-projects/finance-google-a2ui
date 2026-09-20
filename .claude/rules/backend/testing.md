@@ -32,6 +32,47 @@ Unit tests of the HTTP layer build the real app with `tests/unit/api/conftest.py
 - Patch at the import site of the module under test (`app.infra.telemetry.sentry_reporter.sentry_sdk.init`), with `autospec=True`.
 - Settings come from `make_settings(**overrides)`; never read `.env` in tests.
 
+## A documented property needs a test that bites
+
+Three times in one iteration a property was written down, believed, and
+enforced by nothing. Each was found by a human reading one file; none was
+found by the gate. The pattern is worth naming because it does not look like
+a bug — everything is green:
+
+| What was claimed | What was true |
+|---|---|
+| `symbols` is bounded at ten characters per ticker (spec 0011 §5) | a 5 000-character ticker validated; the bound was in the JSON Schema the model reads, not in the model that enforces |
+| the tool is registered and reachable (spec AC-1) | commenting out `register(...)` left the whole suite green and the tool invisible to the model |
+| every operation documents an example (`api-design.md` §2) | eight operations did not, and the rule had never been checked |
+
+So:
+
+- **A property that spans two declarations gets a test comparing them.** An
+  advertised bound and an enforced bound are two declarations of one fact.
+  A comment saying they agree is not a test — it is where the hole hides.
+- **Wiring gets a mutation check.** If removing one line (a `register(...)`,
+  a `include_router(...)`, a middleware) leaves the suite green, that line is
+  untested. Run it, confirm red, restore, and say so in the PR.
+- **Prefer enforcing over the registry, not per instance.** `tests/unit/agent/
+  test_tool_argument_bounds.py` walks every registered tool, so the next tool
+  is covered the day it registers rather than the day someone remembers.
+- **100 % branch coverage does not see a conditional expression.**
+  `ZERO if ratio is None else ratio` was fully "covered" and never once
+  executed with `None`. Assert documented rules directly.
+
+## A payload is wrong when two of its own numbers disagree
+
+Every figure can be individually correct and the answer still false, because
+a reader multiplies, subtracts and compares across the row:
+
+- a price rendered `$0.13` beside a market value it does not multiply back to;
+- a `positionValue` **rising** beside a profit that is **falling**;
+- a break-even string shared with twenty-five losing rows.
+
+Unit tests that check one figure at a time cannot see any of these. When a
+payload puts figures next to each other, **assert the relationship**, not just
+the parts.
+
 ## Mutation check for security code
 
 When you touch authentication, rate limiting or error masking, prove the test bites: comment the middleware/guard out, run the affected tests, confirm they go red, restore. Say so in the PR under `Test decision:`.
