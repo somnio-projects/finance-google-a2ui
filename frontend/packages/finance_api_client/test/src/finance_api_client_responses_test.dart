@@ -97,7 +97,24 @@ void main() {
       final result = await harness.client.getJson('/v1/views');
       final failure = (result as Err<JsonResponse>).failure;
       expect(failure, isA<TransportFailure>());
-      expect(failure.message, equals('connection refused'));
+      expect(failure.code, equals('transport-unavailable'));
+    });
+
+    test("never lets the http library's own text reach a failure", () async {
+      // SECURITY.md: `http.ClientException.message` is package:http's
+      // wording, and on BrowserClient it reads
+      // "XMLHttpRequest error." with the target URL attached. The
+      // message a user sees is ours.
+      final harness = ClientHarness(
+        (_) async => throw http.ClientException(
+          'XMLHttpRequest error. uri=https://internal.example/v1/secret',
+        ),
+      );
+      final result = await harness.client.getJson('/v1/views');
+      final failure = (result as Err<JsonResponse>).failure;
+      expect(failure.message, equals('the server could not be reached'));
+      expect(failure.message, isNot(contains('XMLHttpRequest')));
+      expect(failure.message, isNot(contains('internal.example')));
     });
 
     test('turns a timeout into a $TransportFailure', () async {

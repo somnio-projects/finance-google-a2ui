@@ -2077,6 +2077,10 @@ listed gaps.
 
 ## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#TBD)
 
+---
+
+## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#58)
+
 **Spec:** `specs/frontend/0001-frontend-skeleton.md` · **ADR:** ADR-L (Proposed)
 
 **Code.** A new top-level `frontend/`: a pub workspace with one lockfile and
@@ -2124,4 +2128,17 @@ building it first:
 - **Dart has no runtime reflection on the web**, so an unimported library is tree-shaken and its registration never runs. "Adding a component edits no existing file" is therefore only true because the one file that imports them is **generated and diffed by the gate** — the same shape as the backend's frozen catalog.
 - **`go_router`'s configuration is empty until it is attached to a widget tree.** Asserting on `currentConfiguration` from a bare `buildRouter()` fails with `Bad state: No element`; route tests have to pump.
 - **A hand-assembled Flutter package has no platform scaffold, and nothing local tells you.** `make gate` was green, 159 tests passed, and `flutter build web` said *"This project is not configured for the web."* The gate's local half cannot prove a bundle compiles; that is why `frontend-ci.yaml` has a `build` job, and it earned its place on the first run. `flutter create . --platforms web` also drops in an `analysis_options.yaml`, a `README.md`, a `.gitignore` and a default `widget_test.dart` — the first of those would have silently shadowed the workspace analyzer configuration. Delete all four; keep `.metadata`.
+- **The review round found four things the gate asserted and did not hold.** Recorded because the shape repeats — a property written down, enforced by nothing — and it is the same shape as every defect in the entry above.
+
+  | Claimed | What was true |
+  |---|---|
+  | "errors shown to a user are the backend's safe text" | the transport passed `http.ClientException.message` straight through — package:http's own wording, and on `BrowserClient` it carries the target URL. A comment two lines from the render site asserted the opposite. The cited test only ever built a `ProblemFailure`, so it **could not** fail for the half that was wrong. |
+  | "no client-side interpretation of server strings, verified by the layering test" | that file had no such rule. The property was true by construction; the citation was a gap dressed as a control. |
+  | `*.iml` is gitignored | `.gitignore` has no inline comments — `#` only opens one at column 0 — so the pattern was the literal string `*.iml  # IntelliJ…` and matched nothing. `git check-ignore` exits 1 and says so. |
+  | "100 % line coverage per file" | really "100 % of the files the tests happened to load". lcov writes **no record** for a library nothing imports, so a new untested file passed silently. 30 files on disk, 26 records. |
+
+  The last is the one to carry forward: **a coverage gate that iterates the report can only ever see what the report contains.** `check_coverage.dart` now takes the file list from disk and fails on a missing record, deciding "no executable code" by parsing rather than by a hardcoded barrel list. An untested `lib/` file turns it red — mutation-checked.
+
+- **A filename rule cannot separate two classes that share a file.** The first attempt at "only a `*_page.dart` may read a repository" passed its own mutation check *green*, because `PortfolioViewsView` lived inside `portfolio_views_page.dart`. The fix was to split the file, which the page/view split wanted anyway. The mutation caught it; reading it twice had not.
+- **Needle lists have holes on the `try` prefix.** `double.parse` does **not** match `double.tryParse` as a substring, and `tryParse` is the form a developer reaches for first. Both spellings of `double`, `num` and `int` are now listed, plus `DateTime.timestamp()` beside `DateTime.now()`.
 - **The frontend gate cannot be run without a Flutter SDK, and this machine had none.** It was verified against a pinned 3.47.5 downloaded for the session. Anyone reproducing it needs that SDK, not merely Dart — `dart test` covers the three pure packages but not the widget suite.

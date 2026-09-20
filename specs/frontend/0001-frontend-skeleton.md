@@ -88,11 +88,11 @@ material points:
 
 1. **AC-1** — `cd frontend && make gate` is green, and runs format, analyze, the 150-line budget, the manifest freshness check, every suite and the coverage threshold.
 2. **AC-2** — A file over 150 lines fails the gate. Verified by mutation.
-3. **AC-3** — A forbidden import (Flutter under `packages/`, the api client in a bloc, a second construction of `ViewsRepository` outside `bootstrap.dart`) fails `layering_test.dart`. Verified by mutation.
-4. **AC-4** — `NumberFormat`, `package:intl`, `dart:math`, `toStringAsFixed`, `double.parse` or `DateTime.now()` anywhere under `lib/` fails `layering_test.dart`. Verified by mutation.
+3. **AC-3** — A forbidden import (Flutter under `packages/`, the api client in a bloc, a second construction of `ViewsRepository` outside `bootstrap.dart`, a `context.read<ViewsRepository>()` outside a `*_page.dart`) fails `layering_test.dart`. Verified by mutation.
+4. **AC-4** — Any of twelve number mechanisms (including both the `parse` and `tryParse` spelling of `double`, `num` and `int`), any clock read, or any interpreter mechanism under `lib/` fails `binding_rules_test.dart`. Verified by mutation.
 5. **AC-5** — Every public symbol carries a doc comment, enforced by `public_member_api_docs` under `dart analyze --fatal-infos`.
 6. **AC-6** — A new component is added by creating one directory and running `make manifest`; **no hand-written file is edited**. A component directory absent from the generated manifest fails the gate. Verified by mutation.
-7. **AC-7** — Line coverage is 100 % for every non-exempt file, enforced per file; exemptions are listed with a reason in `tool/check_coverage.dart`.
+7. **AC-7** — Line coverage is 100 % for every non-exempt file, enforced **per file**, **and every `lib/` file with executable code has a coverage record at all** — an untested new file fails rather than passing unseen. Exemptions are listed with a reason in `tool/check_coverage.dart`.
 8. **AC-8** — `holdings.allocation.v1` is fetched, decoded and rendered, and every figure on screen is the backend's `*.display` string byte for byte. A test asserts the raw members do **not** appear.
 9. **AC-9** — A 304 resolves to the cached envelope and is treated as success; a 304 with nothing cached is reported, not rendered as empty.
 10. **AC-10** — A payload missing a bound field shows a contract violation naming the path, rather than a blank, a zero or a crash (N-3).
@@ -107,11 +107,11 @@ material points:
 |---|---|---|
 | AC-1 | — | `make gate` output in the PR body |
 | AC-2 | `tool/check_file_budget.dart` (mutation: a 151-line file) | — |
-| AC-3 | `app/test/architecture/layering_test.dart` (6 boundary tests) | — |
-| AC-4 | `layering_test.dart::nothing formats or computes a number`, `::nothing reads the device clock` | — |
+| AC-3 | `app/test/architecture/layering_test.dart` (8 boundary tests) | — |
+| AC-4 | `binding_rules_test.dart::nothing formats or computes a number`, `::nothing reads the device clock`, `::nothing interprets a server-supplied string`, `::payload paths are literals, never variables` | — |
 | AC-5 | `dart analyze --fatal-infos` | — |
-| AC-6 | `layering_test.dart::every component module registers exactly one component`, `architecture/component_manifest_test.dart` | `component_registry_test.dart::accepts a seventh component without any change to itself` |
-| AC-7 | `tool/check_coverage.dart` over four lcov reports | — |
+| AC-6 | `binding_rules_test.dart::every component module registers exactly one component`, `architecture/component_manifest_test.dart` | `component_registry_test.dart::accepts a seventh component without any change to itself` |
+| AC-7 | `tool/check_coverage.dart` over four lcov reports, cross-checked against the files on disk (mutation: an untested `lib/` file) | — |
 | AC-8 | `finance_views_repository/test/src/view_payload_test.dart` | `holdings_allocation_component_test.dart::binds every display string verbatim`, `::never puts a raw figure on screen` |
 | AC-9 | `views_repository_cache_test.dart` (5 tests) | — |
 | AC-10 | `view_payload_test.dart` (throws naming the path) | `component_host_test.dart::shows the violation when the payload breaks its contract` |
@@ -137,6 +137,7 @@ stack is the PR's evidence instead.
 | OD-3 | The backend ships no formatted `as_of`. Showing "valued at …" needs either a display string from the backend (the N-3 answer) or a client-side date format (forbidden by the spirit of N-1). | TL + backend | Do not render `as_of` at all, which is what this PR does. Raise a backend ticket for an `as_of_display` when a screen needs it. |
 | OD-4 | Two Flutter apps now exist. If `client_flutter/` is retired, `frontend/` inherits its Jira tickets and its `specs/client/` numbering. | TL | Keep both; `specs/frontend/` numbers this app, `specs/client/` keeps the contract spec shared by both. |
 | OD-5 | No dependency vulnerability scan runs over the Dart dependency graph (`SECURITY.md` G-5). | Lautaro | Add OSV scanning of `pubspec.lock` to `frontend-ci.yaml` in a follow-up; the backend's `pip-audit` has no direct Dart equivalent in the toolchain today. |
+| OD-6 | **The gate has no `quality` target.** The backend's runs xenon (complexity), vulture (dead code), interrogate (docstrings), deptry, pylint (duplication) and codespell. The frontend gate covers docstrings (`public_member_api_docs`) and spelling (repo-wide, PR #54), but has **no dead-code, duplication or complexity check** — `RenderedViews.withEtag` and `ViewPayload.json` were both found by review, not by a tool. | Lautaro | Add `dart_code_metrics` or `dart analyze`'s unused-element lints as a `quality` target before the component set lands. Until then this is a known hole, not a silent one. |
 
 ## 9. Rollout & observability
 

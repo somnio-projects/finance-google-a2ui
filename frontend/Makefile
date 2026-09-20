@@ -1,9 +1,11 @@
 # Developer entry points for the A2UI finance client.
 #
-# `make gate` is the ship gate — identical to .github/workflows/frontend-ci.yaml
-# and to the `dart.*` / `flutter.*` entries in ../.claude/ship-gate.json. When
-# you change one, change its pair: `.claude/rules/ci-conventions.md` §5 exists
-# because a paraphrase drifted until a finding reached `develop`.
+# `make gate` is the ship gate — identical to the `quality` and `tests` jobs
+# of .github/workflows/frontend-ci.yaml and to the `frontend.*` entries in
+# ../.claude/ship-gate.json. (That workflow also builds the web bundle, which
+# is slow and belongs on a runner — the same split as backend-ci's `image`
+# job.) When you change one, change its pair: `.claude/rules/ci-conventions.md`
+# §5 exists because a paraphrase drifted until a finding reached `develop`.
 PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository
 PACKAGE_CONFIG := $(CURDIR)/.dart_tool/package_config.json
 LCOV := app/coverage/lcov.info \

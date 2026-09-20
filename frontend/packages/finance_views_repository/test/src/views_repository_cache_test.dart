@@ -66,6 +66,19 @@ void main() {
       );
       expect(harness.sent.last.headers['if-none-match'], equals('"e1"'));
     });
+
+    test('evicts the oldest entry rather than growing without bound', () async {
+      // The cache is ETag bookkeeping, not a store. Past the cap the oldest
+      // entry goes, so the very first request has to be re-fetched in full.
+      final harness = RepositoryHarness(
+        (_) async => envelopeResponse(etag: '"e1"'),
+      );
+      for (var i = 0; i <= ViewsRepository.maxCachedEnvelopes; i++) {
+        await harness.fetch(options: <String, String>{'top_n': '$i'});
+      }
+      await harness.fetch(options: <String, String>{'top_n': '0'});
+      expect(harness.sent.last.headers.containsKey('if-none-match'), isFalse);
+    });
   });
 
   group('$ViewsRepository clearCache', () {

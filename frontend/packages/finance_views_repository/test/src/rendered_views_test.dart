@@ -50,16 +50,6 @@ void main() {
       );
     });
 
-    group('withEtag', () {
-      test('re-labels the envelope and changes nothing else', () {
-        final envelope = RenderedViews.fromJson(renderedViewsEnvelope());
-        final relabelled = envelope.withEtag('"new"');
-        expect(relabelled.etag, equals('"new"'));
-        expect(relabelled.asOf, equals(envelope.asOf));
-        expect(relabelled.views, equals(envelope.views));
-      });
-    });
-
     group('fromJson', () {
       test('throws when the body is not an object', () {
         expect(

@@ -3,7 +3,7 @@ import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_card.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_component.dart';
 import 'package:finance_app/features/portfolio_views/bloc/portfolio_views_bloc.dart';
-import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
+import 'package:finance_app/features/portfolio_views/view/portfolio_views_view.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

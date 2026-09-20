@@ -29,8 +29,9 @@ abstract class ViewComponent {
   ///
   /// Every string bound here is a value the backend already formatted. An
   /// implementation that formats, computes, re-orders or derives anything
-  /// breaks the contract (N-1, N-2, N-3, N-10); `frontend/tool/check_layering`
-  /// fails the gate on the mechanisms that would let it.
+  /// breaks the contract (N-1, N-2, N-3, N-10);
+  /// `app/test/architecture/binding_rules_test.dart` fails the gate on the
+  /// mechanisms that would let it.
   ///
   /// May throw [PayloadContractException] when the payload omits a field the
   /// component binds; the host catches it and shows the violation.

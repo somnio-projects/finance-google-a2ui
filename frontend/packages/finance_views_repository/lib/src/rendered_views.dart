@@ -67,15 +67,6 @@ class RenderedViews extends Equatable {
   /// The strong `ETag` this envelope was served with, for revalidation.
   final String? etag;
 
-  /// Re-labels the envelope with [etag], used when a 304 confirms the cached
-  /// copy is still current.
-  RenderedViews withEtag(String? etag) => RenderedViews(
-    asOf: asOf,
-    portfolioId: portfolioId,
-    views: views,
-    etag: etag,
-  );
-
   @override
   List<Object?> get props => <Object?>[asOf, portfolioId, views, etag];
 }

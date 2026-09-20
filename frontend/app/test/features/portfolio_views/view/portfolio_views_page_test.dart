@@ -1,4 +1,5 @@
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
+import 'package:finance_app/features/portfolio_views/view/portfolio_views_view.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';

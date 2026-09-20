@@ -46,8 +46,14 @@ class FinanceApiClient {
     try {
       final response = await _httpClient.get(uri, headers: headers);
       return _decode(response, path);
-    } on http.ClientException catch (error) {
-      return Err<JsonResponse>(TransportFailure(error.message));
+    } on http.ClientException {
+      // Deliberately NOT `error.message`. That string is package:http's
+      // own, and on BrowserClient it carries the target URL — neither is
+      // ours to show a user (SECURITY.md, N-14). The failure kind is what
+      // a caller branches on; the wording is ours.
+      return const Err<JsonResponse>(
+        TransportFailure('the server could not be reached'),
+      );
     } on TimeoutException {
       return const Err<JsonResponse>(TransportFailure('the request timed out'));
     }

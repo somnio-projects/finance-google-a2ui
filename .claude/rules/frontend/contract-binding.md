@@ -23,9 +23,19 @@ put something on screen, it is wrong.
 
 ## 1. The numbers rule is absolute, and it is a test
 
-`app/test/architecture/layering_test.dart` fails on any of `NumberFormat`,
-`package:intl`, `dart:math`, `toStringAsFixed`, `double.parse`, `num.parse`,
-`DateTime.now(`. `ViewPayload` deliberately exposes **no numeric accessor**.
+`app/test/architecture/binding_rules_test.dart` fails on twelve mechanisms:
+`NumberFormat`, `package:intl`, `dart:math`, `toStringAsFixed`,
+`toStringAsPrecision`, `toStringAsExponential`, and **both** the `parse` and
+`tryParse` spelling of `double`, `num` and `int`. `double.parse` does not
+match `double.tryParse` as a substring, and the `try*` form is the one a
+developer reaches for first — listing only one would have been a rule with
+a hole in it. Clock reads (`DateTime.now(`, `DateTime.timestamp(`,
+`Stopwatch(`) fail the same way.
+
+`ViewPayload` deliberately exposes **no numeric accessor, and no raw map**:
+a `json` getter would have let `payload.json['total']['amount']` reach a
+`Decimal` with nothing stopping arithmetic on it. It was removed for that
+reason — do not add it back.
 
 - **N-1** Never format a number. No currency symbol, no thousands separator, no percent sign, no `+`/`−` prefix. Every figure already arrives as a `*Display` string.
 - **N-2** Never compute a figure. No sums, differences, percentages, running totals, break-evens, weights or spreads. `cumulative`, `spread`, `by_term` and `markers` are all supplied.
@@ -49,7 +59,7 @@ one, and do not choose a colour by parsing the string — use the supplied
 ## 3. Rendering
 
 - **N-9** Never drop a disclosure or a note. `disclosure`, `notes[]` and server-written `label`/`text` are compliance statements and are rendered verbatim.
-- **N-5** Never interpret a template. No expression, format string or field path from the server is evaluated. `ViewPayload` paths are literals written by a component's author. This is a security rule (`frontend/SECURITY.md`).
+- **N-5** Never interpret a template. No expression, format string or field path from the server is evaluated. `ViewPayload` paths are literals written by a component's author, and `binding_rules_test.dart` enforces both halves: `::nothing interprets a server-supplied string` bans `dart:mirrors`, `Function.apply` and `jsonDecode` outside the transport, and `::payload paths are literals, never variables` rejects `payload.text(someVariable)`. This is a security rule (`frontend/SECURITY.md`).
 - A view id with no registered component is **not an error** — `ComponentHost` shows a placeholder and the other surfaces still render. The catalog grows on its own schedule.
 - No payload carries an `isLoading` flag. Loading and failure are **transport** states and live in bloc state, never in a payload.
 

@@ -7,9 +7,13 @@ import 'package:finance_core/src/problem_details.dart';
 /// and adding a failure kind makes every incomplete handler a compile error
 /// instead of a silent fall-through.
 ///
-/// Every subtype carries a [code] that is safe to log and a [message] that is
-/// safe to show: nothing here ever carries a token, a URL with credentials, or
-/// a library exception's text (`.claude/rules/backend/security.md`, N-14).
+/// Every subtype carries a [code] that is safe to log and a [message] that
+/// is safe to show. Keeping that true is the *producer's* job, not this
+/// file's: a `TransportFailure` built from `http.ClientException.message`
+/// would smuggle the library's own text — and, on `BrowserClient`, the
+/// target URL — straight to a widget. `FinanceApiClient` therefore writes
+/// its own wording, and a test holds it to that (`frontend/SECURITY.md`,
+/// N-14).
 sealed class AppFailure extends Equatable {
   const AppFailure();
 

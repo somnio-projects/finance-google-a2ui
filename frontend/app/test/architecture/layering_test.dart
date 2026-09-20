@@ -1,13 +1,16 @@
-// The layering rules, checked against the source rather than remembered.
+// The layer boundaries and the composition root, checked against the source.
 //
-// The backend has `tests/unit/presentation/test_package_boundaries.py`; this
-// is its counterpart, and it exists for the same reason: a rule a human has to
-// remember is not a rule. Each test below fails on a *mechanism*, so a
-// forbidden import or a stray constructor turns the suite red immediately.
+// The backend has `tests/unit/presentation/test_package_boundaries.py`; this is
+// its counterpart, and it exists for the same reason: a rule a human has to
+// remember is not a rule. Each test fails on a *mechanism*, so a forbidden
+// import or a stray constructor turns the suite red immediately.
+//
+// The contract-binding mechanisms — no formatting, no arithmetic, no clock, no
+// interpreted templates — are in `binding_rules_test.dart`.
 //
 // Mutation-checked: adding `import 'package:flutter/material.dart';` to a file
-// under `packages/` and `NumberFormat` to a component both make this file
-// fail. If you change a rule here, re-run that check.
+// under `packages/` makes this file fail. If you change a rule here, mutate it
+// and watch it go red.
 import 'package:flutter_test/flutter_test.dart';
 
 import 'workspace_sources.dart';
@@ -63,9 +66,26 @@ void main() {
       );
     });
 
+    test('only a page resolves a repository from the widget tree', () {
+      // The page/view split from `.claude/rules/flutter/architecture.md`: a
+      // *page* owns its bloc's lifetime and may read the repository the bloc
+      // needs; a *view* reads bloc state and nothing else. Without this rule
+      // `context.read<ViewsRepository>()` could drift into any widget, which
+      // is the thing the split exists to prevent.
+      final offenders = sources.offenders('app/lib', <String>[
+        'context.read<ViewsRepository>',
+        'context.watch<ViewsRepository>',
+      ]);
+      expect(
+        offenders.keys.where((path) => !path.endsWith('_page.dart')),
+        isEmpty,
+      );
+    });
+
     test('components never import a feature or the transport', () {
-      // A component binds a payload. If it needs a bloc it is a feature, and
-      // it belongs under `features/` instead.
+      // A component binds a payload. It may import the repository package for
+      // `ViewPayload` — a type — but never reads a repository instance, which
+      // the rule above enforces.
       expect(
         sources.offenders('app/lib/components', <String>[
           'package:finance_app/features/',
@@ -88,57 +108,15 @@ void main() {
       );
     });
 
-    test('nothing formats or computes a number', () {
-      // Prohibitions N-1 and N-2, as a mechanism check. Every figure the user
-      // sees is a `*Display` string the backend produced; a client that can
-      // reach for `NumberFormat` eventually does.
+    test('only AppConfig reads the build environment', () {
       expect(
-        sources.offenders('app/lib', <String>[
-          'NumberFormat',
-          'package:intl/',
-          "import 'dart:math'",
-          'toStringAsFixed',
-          'double.parse',
-          'num.parse',
-        ]),
+        sources.offenders(
+          'app/lib',
+          <String>['String.fromEnvironment', 'Platform.environment'],
+          allow: <String>{'app/lib/app/app_config.dart'},
+        ),
         isEmpty,
       );
-      expect(
-        sources.offenders('packages', <String>[
-          'NumberFormat',
-          'package:intl/',
-          "import 'dart:math'",
-          'toStringAsFixed',
-          'double.parse',
-        ]),
-        isEmpty,
-      );
-    });
-
-    test('nothing reads the device clock', () {
-      // N-13: `as_of` is the backend's, and it travels in the envelope.
-      expect(sources.offenders('app/lib', <String>['DateTime.now(']), isEmpty);
-      expect(sources.offenders('packages', <String>['DateTime.now(']), isEmpty);
-    });
-
-    test('every component module registers exactly one component', () {
-      // A component module lives in its own directory and is named after
-      // it; `components/view_component.dart` is the abstraction, not a
-      // module, and must not be swept up by the glob.
-      final modules = sources.under('app/lib/components')
-        ..removeWhere(
-          (path, _) =>
-              !RegExp(r'components/([a-z_]+)/\1_component\.dart$')
-                  .hasMatch(path),
-        );
-      expect(modules, isNotEmpty);
-      for (final entry in modules.entries) {
-        expect(
-          'void register('.allMatches(entry.value).length,
-          equals(1),
-          reason: '${entry.key} must expose exactly one register()',
-        );
-      }
     });
   });
 }

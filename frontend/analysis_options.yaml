@@ -41,9 +41,9 @@ linter:
     # API. The `: _apiClient = apiClient` form keeps the seam clean.
     prefer_initializing_formals: false
     # The client renders what the backend formatted (ADR-K D-5, spec 0003 N-1).
-    # `dart:math` and number formatting have no legitimate use in this app, and
-    # `tool/check_layering.dart` fails the gate on either — these two are the
-    # cheap first line of defence while typing.
+    # `dart:math` and number formatting have no legitimate use in this app,
+    # and `app/test/architecture/binding_rules_test.dart` fails the gate on
+    # either — these are the cheap first line of defence while typing.
     avoid_double_and_int_checks: true
     prefer_const_constructors: true
     prefer_const_declarations: true

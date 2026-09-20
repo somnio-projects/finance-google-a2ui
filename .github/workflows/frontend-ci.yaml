@@ -8,8 +8,10 @@
 # scratch dependency resolution against the committed lock, and a release web
 # build.
 #
-# Every `run:` below is the command string from .claude/ship-gate.json and from
-# `frontend/Makefile`, copied rather than paraphrased (ci-conventions §5).
+# Every `run:` in the `quality` and `tests` jobs is the command string from
+# .claude/ship-gate.json and from `frontend/Makefile`, copied rather than
+# paraphrased (ci-conventions §5). The `build` job is deliberately beyond
+# the gate — slow, and a runner's job, exactly like backend-ci's `image`.
 name: frontend-ci
 
 on:

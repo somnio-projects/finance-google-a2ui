@@ -11,7 +11,6 @@ void main() {
     group('fromJson', () {
       test('reads the view discriminator', () {
         expect(subject().view, equals('holdings.allocation.v1'));
-        expect(subject().json, equals(holdingsAllocationExample));
       });
 
       test('throws when the payload is not an object', () {

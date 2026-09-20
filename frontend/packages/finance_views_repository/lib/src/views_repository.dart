@@ -16,6 +16,13 @@ class ViewsRepository {
   /// Most views the read endpoint accepts in one request (`MAX_VIEWS`).
   static const int maxViewsPerRequest = 4;
 
+  /// Most envelopes kept for revalidation.
+  ///
+  /// Small and bounded on purpose: this is `ETag` bookkeeping, not a
+  /// store. Uncapped it would grow for the life of the app, which is a
+  /// leak dressed as a cache.
+  static const int maxCachedEnvelopes = 16;
+
   final FinanceApiClient _apiClient;
   final Map<String, RenderedViews> _cache = <String, RenderedViews>{};
 
@@ -82,6 +89,9 @@ class ViewsRepository {
         response.body,
         etag: response.etag,
       );
+      if (_cache.length >= maxCachedEnvelopes) {
+        _cache.remove(_cache.keys.first);
+      }
       _cache[key] = envelope;
       return Ok<RenderedViews>(envelope);
     } on PayloadContractException catch (error) {
@@ -94,12 +104,14 @@ class ViewsRepository {
     List<String> views,
     Map<String, String> options,
   ) {
-    // Sorted so that the same request written two ways is one cache entry.
+    // Both halves sorted, so the same request written two ways is one entry:
+    // ?view=a&view=b and ?view=b&view=a name the same response.
+    final sortedViews = <String>[...views]..sort();
     final pairs =
         options.entries
             .map((option) => '${option.key}=${option.value}')
             .toList()
           ..sort();
-    return '$path?${views.join(",")}&${pairs.join("&")}';
+    return '$path?${sortedViews.join(",")}&${pairs.join("&")}';
   }
 }

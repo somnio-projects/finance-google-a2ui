@@ -22,9 +22,12 @@ never silent.
 ## 1. The layers, and what each may import
 
 ```
-app/lib/**/view/      widgets. Read state from a bloc. Never a repository, never http.
+app/lib/**/view/*_page.dart   owns its bloc's lifetime. MAY read the repository
+                              that bloc needs — and that is the only reason.
+app/lib/**/view/*_view, _View widgets. Read bloc state. Never a repository.
 app/lib/**/bloc/      Bloc. Calls a repository. Never the api client, never http, never a widget.
-app/lib/components/   bind a payload to widgets. Never a feature, never a repository.
+app/lib/components/   bind a payload to widgets. Import ViewPayload (a type);
+                      never read a repository instance; never a feature.
 packages/finance_views_repository/   composes the api client. Pure Dart.
 packages/finance_api_client/         the ONLY HTTP speaker. Pure Dart.
 packages/finance_core/               Result, failures, problem details. Depends on nothing.
@@ -34,11 +37,22 @@ Dependencies point one way, and never skip a layer. The first three packages
 are **pure Dart**, so importing Flutter into them is a compile error rather
 than a review note — that is the point of the workspace.
 
-`app/test/architecture/layering_test.dart` checks every one of these. It is the
-counterpart of the backend's `tests/unit/presentation/test_package_boundaries.py`
-and it fails on the *mechanism*: the forbidden import, the stray constructor.
-**If you change a rule there, mutate it and watch it go red.** A green check is
-evidence only if it could have been red.
+The **page/view split** is the shape `.claude/rules/flutter/architecture.md`
+prescribes and its own example uses: a page builds the bloc, so it needs the
+repository the bloc takes. A widget that is not a page has no business
+holding one — `layering_test.dart::only a page resolves a repository from
+the widget tree` allows `context.read<ViewsRepository>()` **only** in a file
+named `*_page.dart`, and it is drawn in
+[diagram 11](../../../docs/diagrams/11-frontend-layers.md).
+
+Two test files hold all of this, split to stay inside the budget:
+`app/test/architecture/layering_test.dart` (imports, the composition root,
+the page rule) and `binding_rules_test.dart` (numbers, clock, interpreters,
+component registration). Together they are the counterpart of the backend's
+`tests/unit/presentation/test_package_boundaries.py`, and they fail on the
+*mechanism*: the forbidden import, the stray constructor.
+**If you change a rule there, mutate it and watch it go red.** A green check
+is evidence only if it could have been red.
 
 ## 2. One composition root
 

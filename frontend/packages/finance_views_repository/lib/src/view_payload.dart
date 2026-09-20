@@ -42,9 +42,6 @@ class ViewPayload extends Equatable {
 
   final Map<String, dynamic> _json;
 
-  /// The raw decoded object, for a component that needs to iterate it.
-  Map<String, dynamic> get json => _json;
-
   /// Reads the string at [path], e.g. `total.amount.display`.
   ///
   /// Throws [PayloadContractException] when the path is absent or is not a
