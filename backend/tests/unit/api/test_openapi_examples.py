@@ -97,14 +97,23 @@ def test_every_operation_documents_a_response_example(app: FastAPI) -> None:
     `examples`, which is what FastAPI renders for a `response_model`.
     """
     schemas = _component_schemas(app)
+    checked = 0
     for path, method, operation in _operations(app):
         where = f"{method.upper()} {path}"
         responses = _success_responses(operation)
-        assert responses, f"{where} documents no success response with a body"
+        if not responses:
+            # A 204 answers with no body, so there is nothing to exemplify.
+            # Insisting otherwise would push a fake example onto a DELETE.
+            assert "204" in operation["responses"], (
+                f"{where} documents no success response with a body"
+            )
+            continue
+        checked += 1
         for response in responses:
             assert any(
                 _exemplified(media, schemas) for media in response["content"].values()
             ), f"{where} has a success response without an example"
+    assert checked, "no operation with a response body was checked"
 
 
 def test_every_operation_with_a_body_documents_a_request_example(

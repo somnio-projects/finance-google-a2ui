@@ -18,6 +18,8 @@ from app.api.v1 import (
     health,
     identity,
     portfolio_views,
+    session_messages,
+    sessions,
     view_renders,
     views,
 )
@@ -33,5 +35,7 @@ api_router.include_router(views.router)
 # only non-RESTful router here (ADR-J).
 api_router.include_router(agent_card.router)
 api_router.include_router(a2a.router)
+api_router.include_router(sessions.router)
+api_router.include_router(session_messages.router)
 
 __all__ = ["api_router"]

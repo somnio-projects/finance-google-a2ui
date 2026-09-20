@@ -15,7 +15,13 @@ class HealthResponse(BaseModel):
     )
 
     status: Literal["ok"] = Field(default="ok", description="Always `ok` when served.")
-    version: str = Field(description="Running application version.", examples=["0.1.0"])
+    version: str = Field(
+        description=(
+            "Release identifier of the running revision: `APP_RELEASE` when the "
+            "delivery pipeline injected one, otherwise the packaged version."
+        ),
+        examples=["0.1.0+a1b2c3d"],
+    )
 
 
 class DependencyStatus(BaseModel):
