@@ -50,9 +50,21 @@ locals {
   # managed certificate, no reserved global IP and no fixed monthly forwarding
   # charge. The endpoint is Cloud Run's own run.app URL, which only resolves
   # because dev's ingress is open; every other environment stays LB-only.
-  edge_enabled  = !local.ephemeral
-  run_ingress   = local.ephemeral ? "INGRESS_TRAFFIC_ALL" : "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
-  min_instances = coalesce(var.min_instances, local.ephemeral ? 0 : 1)
+  edge_enabled = !local.ephemeral
+  run_ingress  = local.ephemeral ? "INGRESS_TRAFFIC_ALL" : "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  # One warm instance in every environment, dev included. This is the single
+  # place where dev deliberately does NOT take the cheap option.
+  #
+  # `min_instances = 0` is correct for an idle proof of concept and wrong for
+  # this one: the demo is a person opening the app in front of an audience on
+  # 2026-09-28, and the first request after an idle period pays a cold start —
+  # container boot, then a Cloud SQL connection over the VPC. The ticket
+  # (GGU-29 AC-5) always said "min-instances ≥1 so the demo isn't
+  # cold-start-janky"; the POC sizing overrode it on cost grounds, and the TL
+  # has now overridden that back. A warm instance bills continuously and is
+  # the largest single line in dev's bill after the database — that is the
+  # trade being made, on purpose.
+  min_instances = coalesce(var.min_instances, 1)
   max_instances = coalesce(var.max_instances, local.ephemeral ? 2 : 4)
 
   # Observability (observability.tf). An external uptime check needs a hostname

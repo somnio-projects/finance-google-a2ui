@@ -149,6 +149,35 @@ assert "a run with any failed, cancelled or skipped job is red" \
   "contains\(needs\.\*\.result, 'skipped'\)" "${CD}"
 
 echo
+echo "delivery is manual, and the PR gate still covers what the push gate used to"
+
+# Merging must build and deploy nothing: the TL asked for a button, not a
+# pipeline that spends on every merge. `refute` is the whole assertion here —
+# a `push:` trigger creeping back is exactly the regression to catch.
+refute "no push trigger — merging to develop deploys nothing" '^  push:$' "${CD}"
+assert "the deploy is a button" '^  workflow_dispatch:$' "${CD}"
+
+# Removing the push trigger removed the run that used to gate a hand-edited
+# frozen contract on `develop`. That coverage is not lost: `develop` is branch
+# protected, so every change arrives through a pull request, and backend-ci's
+# pull_request paths still name the contract and the gate definition itself.
+assert "a hand-edited frozen contract still starts the gate on a PR" \
+  '^      - "docs/catalog/\*\*"$' "${CI}"
+assert "editing the gate definition still starts the gate on a PR" \
+  '^      - "\.github/workflows/backend-ci\.yaml"$' "${CI}"
+
+echo
+echo "one warm instance everywhere, dev included"
+
+# The one place dev does not take the cheap option (GGU-29 AC-5). `coalesce`
+# with a bare 1 rather than a ternary is the assertion: a ternary here would
+# mean someone reintroduced a dev-specific zero.
+assert "dev keeps an instance warm for the demo" \
+  '^  min_instances = coalesce\(var\.min_instances, 1\)$' "${ROOT}/infra/main.tf"
+refute "no environment derives min_instances = 0" \
+  'min_instances = coalesce\(var\.min_instances, local\.ephemeral \? 0' "${ROOT}/infra/main.tf"
+
+echo
 echo "every deployable environment name is one the backend will accept"
 
 # The one check neither side can make alone. `infra/variables.tf` decides what
