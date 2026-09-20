@@ -63,9 +63,13 @@ def test_fragment_says_none_for_a_projection_without_options() -> None:
         ({"enum": ["a", "b"]}, "one of 'a', 'b'"),
         ({"type": "integer", "minimum": 1, "maximum": 20}, "integer 1..20"),
         ({"type": "boolean"}, "true or false"),
+        (
+            {"type": "string", "pattern": "^[0-9]{1,9}$"},
+            "string matching ^[0-9]{1,9}$",
+        ),
         ({"anyOf": [{"type": "array"}, {"type": "null"}]}, "list of names"),
     ],
-    ids=["const", "enum", "integer", "boolean", "optional-array"],
+    ids=["const", "enum", "integer", "boolean", "pattern-string", "optional-array"],
 )
 def test_option_bounds_describes_each_schema_shape(
     spec: dict[str, object], expected: str

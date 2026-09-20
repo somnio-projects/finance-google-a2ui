@@ -38,6 +38,8 @@ def option_bounds(spec: Mapping[str, Any]) -> str:
         return f"integer {spec.get('minimum')}..{spec.get('maximum')}"
     if spec.get("type") == "boolean":
         return "true or false"
+    if spec.get("type") == "string":
+        return f"string matching {spec['pattern']}"
     return "list of names"
 
 

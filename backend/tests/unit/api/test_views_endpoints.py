@@ -101,7 +101,7 @@ def test_catalog_describes_every_registered_projection(
     response = views_client.get("/v1/views", headers=AUTH)
     assert response.status_code == 200
     catalog = response.json()
-    assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION]
+    assert {WATERFALL, ALLOCATION} <= {entry["id"] for entry in catalog}
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry["endpoints"] == list(projection.endpoints)
         assert entry["options_schema"]["properties"]

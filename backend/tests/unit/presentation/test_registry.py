@@ -85,11 +85,11 @@ def test_registry_remove_is_idempotent(registry: ProjectionRegistry) -> None:
     assert registry.all() == ()
 
 
-def test_the_process_registry_holds_both_reference_projections() -> None:
-    assert [p.id for p in REGISTRY.all()] == [
-        "attribution.waterfall.v1",
-        "holdings.allocation.v1",
-    ]
+def test_the_process_registry_holds_the_reference_projections() -> None:
+    """Containment, not equality: every new chart adds one id here (D-15)."""
+    ids = [p.id for p in REGISTRY.all()]
+    assert {"attribution.waterfall.v1", "holdings.allocation.v1"} <= set(ids)
+    assert ids == sorted(ids)
 
 
 def test_validated_options_fills_the_declared_defaults() -> None:
