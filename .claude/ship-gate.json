@@ -40,12 +40,12 @@
     {
       "id": "dart.format",
       "cwd": "client_flutter",
-      "cmd": "dart format --output=none --set-exit-if-changed ."
+      "cmd": "dart format --output=none --set-exit-if-changed app/lib app/test e2e_test"
     },
     {
       "id": "dart.analyze",
       "cwd": "client_flutter",
-      "cmd": "dart analyze --fatal-infos --fatal-warnings"
+      "cmd": "dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test"
     },
     {
       "id": "client.tokens",

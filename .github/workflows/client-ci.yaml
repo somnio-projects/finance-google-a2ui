@@ -55,11 +55,14 @@ jobs:
       - name: Resolve the workspace dependencies (flutter pub get)
         run: flutter pub get
 
+      # Source directories only. `dart format` has no exclude flag, and
+      # `flutter pub get` unpacks plugin sources under app/build/, which a bare
+      # `.` would happily reformat — and then fail on.
       - name: Verify formatting is canonical (dart format)
-        run: dart format --output=none --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed app/lib app/test e2e_test
 
       - name: Analyse under strict casts, inference and raw types (dart analyze)
-        run: dart analyze --fatal-infos --fatal-warnings
+        run: dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test
 
       # The two grep gates client_flutter/README.md documents. They are cheap
       # and they guard architecture, not style: a colour literal or an endpoint

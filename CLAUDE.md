@@ -30,7 +30,9 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
 cd backend && make gate                # lint · types · budget · quality (smells) · tests 100 % · audit
 cd client_flutter && flutter pub get   # once per clone; SDK version pinned in .fvmrc
-dart format --output=none --set-exit-if-changed . && dart analyze --fatal-infos --fatal-warnings
+# Both take the source dirs explicitly: build/ holds plugin sources with their own pubspec.
+dart format --output=none --set-exit-if-changed app/lib app/test e2e_test
+dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test
 bash tool/check_tokens.sh && bash tool/check_config.sh          # theme and config boundaries
 cd app && flutter test --coverage && flutter build web --release
 ```

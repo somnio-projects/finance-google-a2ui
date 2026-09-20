@@ -47,9 +47,18 @@ dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
-**Client.** `dart format --set-exit-if-changed`, `dart analyze --fatal-infos
---fatal-warnings` (strict casts · inference · raw types, plus the lint set in
-`client_flutter/analysis_options.yaml`), the two grep gates
+**Client.** `dart format --set-exit-if-changed` and `dart analyze
+--fatal-infos --fatal-warnings`, both **over `app/lib app/test e2e_test`,
+never a bare `.`**. `flutter pub get` unpacks plugin sources under
+`app/build/` — firebase_auth ships its own tests through Swift Package
+Manager — and those trees carry **their own `pubspec.yaml`**, which makes each
+of them a separate package root. That is why `analysis_options.yaml`'s
+`exclude: ["**/build/**"]` does **not** cover them (it only reaches inside our
+own package, and it is kept for the IDE) and why `dart format` cannot be
+fixed at all from config: it has no exclude flag. Passing the source
+directories is the only thing that holds for both, so both commands carry the
+same list and it is one decision. Symptom when this regresses: hundreds of
+foreign lints and reformatted files nobody wrote. Then the two grep gates
 (`tool/check_tokens.sh` — no colour literals outside `theme/`;
 `tool/check_config.sh` — no endpoint URLs outside `config/`), `flutter test
 --coverage`, and `flutter build web --release`. The grep gates guard

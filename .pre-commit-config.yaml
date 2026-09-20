@@ -140,16 +140,18 @@ repos:
       # a resolved workspace: run `cd client_flutter && flutter pub get` once
       # per clone. The release web build is the only slow one, so it waits for
       # push, exactly like the backend's DB-backed suite.
+      # Source directories only: `dart format` has no exclude flag, and
+      # app/build/ holds plugin sources unpacked by `flutter pub get`.
       - id: client-format
         name: Verify Dart formatting is canonical (dart format)
-        entry: bash -c 'cd client_flutter && dart format --output=none --set-exit-if-changed .'
+        entry: bash -c 'cd client_flutter && dart format --output=none --set-exit-if-changed app/lib app/test e2e_test'
         language: system
         files: ^client_flutter/.*\.dart$
         pass_filenames: false
 
       - id: client-analyze
         name: Analyse the client in strict mode (dart analyze)
-        entry: bash -c 'cd client_flutter && dart analyze --fatal-infos --fatal-warnings'
+        entry: bash -c 'cd client_flutter && dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test'
         language: system
         files: ^client_flutter/.*\.(dart|yaml)$
         pass_filenames: false
