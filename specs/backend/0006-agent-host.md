@@ -132,9 +132,15 @@ class RenderIntent(BaseModel):   # frozen
 ```
 
 The agent host **produces** these and returns them in `TurnResult`. It does
-not render them, does not resolve them and does not validate them against the
-projection registry — GGU-49 owns that, and ADR-K D-12 rejection/fallback
-lands with it (OD-2).
+not render them: the payload is the client's own request. It does now judge
+them — GGU-84 gave `AgentService` one more collaborator,
+`services/agent_renders.TurnRenderResolver` over `RenderIntentService`, and
+`services/agent_tools.execute_tool` calls it before an intent is appended to
+the turn, so a view id the registry does not hold, or an option outside the
+projection's model, becomes the endpoint's default with a recorded rejection
+rather than a surface the client cannot draw (ADR-K D-11/D-12, spec 0005
+AC-9). OD-2 below was answered by nothing for three tickets: read it with
+that in mind.
 
 ### 3.3 The turn loop (`app/services/agent_service.py`)
 
@@ -329,7 +335,7 @@ error masking. Removing the `except` that translates provider failures in
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
 | OD-1 | Gemini via the official `google-genai` SDK or over the already-vendored `httpx`? | TL | **`httpx`** — resolved here: no new dependency, no `pip-audit`/`deptry` surface, and the adapter is the same shape as `JwksKeyResolver`, which is the pattern the tree already proves. Swapping to the SDK later is one module. |
-| OD-2 | Who validates a render intent against the projection registry? | TL | **GGU-49** — this ticket emits `{view, options}` and validates nothing; ADR-K D-12 rejection + fallback lands with the registry. |
+| OD-2 | Who validates a render intent against the projection registry? | TL | **GGU-49** — this ticket emits `{view, options}` and validates nothing; ADR-K D-12 rejection + fallback lands with the registry. **Closed by GGU-84:** GGU-49 built `RenderIntentService` and stopped at a `Depends` provider nothing resolved, so for three tickets the answer to this question was *nobody*. The turn now calls it (`agent_renders` → `agent_tools`), and the call site has a mutation check. |
 | OD-3 | Which model id is the default? | TL | **`gemini-3.8-flash`** — the only model pin recorded in the repo (ADR-D D-4). Overridable with `GEMINI_MODEL`; nothing in the code depends on the id. |
 | OD-4 | Should the turn loop stream partial surfaces? | TL | **No** — ADR-D/ADR-K D-19 put streaming in GGU-3. `run_turn` is the unit GGU-3 wraps. |
 | OD-5 | Where does `Decimal` → display formatting live, given `app/presentation/` is being created in parallel? | TL | **`app/core/display.py`** — ADR-E D-2 demands *one* formatting module; `core` is the only place both `app/agent` and `app/presentation` may import. The presentation layer reuses it rather than adding a second. |

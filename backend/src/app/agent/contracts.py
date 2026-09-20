@@ -20,7 +20,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.provider import PortfolioProvider
 
-VIEW_PATTERN = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.v[0-9]+$"
+#: A **bound on the string**, not a check on the view: it keeps a tool's id
+#: parseable and not unbounded input, and `totally.invented.v9` satisfies it.
+#: Whether the view exists and its options are in range is the projection
+#: registry's, through `RenderIntentService` — the only authority (ADR-K
+#: D-11/D-12). Reading this as the validation is what GGU-84 was.
+VIEW_ID_SHAPE = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.v[0-9]+$"
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,15 +40,16 @@ class RenderIntent(BaseModel):
     """A request to render a registered projection (ADR-K D-11).
 
     This is the **minimal** shape the agent host produces and the presentation
-    layer consumes. Resolving it, validating the options against the
-    projection's option model and falling back on rejection (ADR-K D-12) are
-    GGU-49's, not this package's — nothing here renders anything.
+    layer consumes; nothing here renders anything. The registry lookup, the
+    options model and the fallback on rejection (ADR-K D-12) belong to
+    ``RenderIntentService``, which the turn calls through
+    ``app.services.agent_renders`` before this reaches a client (GGU-84).
     """
 
     model_config = ConfigDict(frozen=True)
 
     view: str = Field(
-        pattern=VIEW_PATTERN,
+        pattern=VIEW_ID_SHAPE,
         max_length=64,
         description="Projection id, ``<component>.<variant>.v<N>``.",
     )
@@ -134,7 +140,7 @@ class TurnState:
 
 
 __all__ = [
-    "VIEW_PATTERN",
+    "VIEW_ID_SHAPE",
     "RenderIntent",
     "Tool",
     "ToolContext",

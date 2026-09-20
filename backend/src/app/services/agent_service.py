@@ -6,10 +6,8 @@ module owns what surrounds it — the history the turn starts from, the single
 metric and log line it records, and the failure it reports.
 
 **Two entry points, one loop.** ``run_turn_events`` is the real one: it yields
-each surface the moment it is ready, which is what ADR-K D-19 asks for and
-what the A2A adapter streams. ``run_turn`` is a thin collector kept for every
-caller that just wants the finished turn, so nothing had to move when the loop
-learned to yield.
+each surface the moment it is ready (ADR-K D-19), and the A2A adapter streams
+that. ``run_turn`` is a thin collector for callers that want the finished turn.
 
 **Sessions are not here.** Both entry points take the history as an argument
 and hold no state between turns; this module imports no session module.
@@ -29,6 +27,7 @@ from app.core.errors import DependencyUnavailableError
 from app.core.model import MessageRole, ModelMessage
 from app.core.protocols import Clock, ErrorReporter, ModelClient
 from app.services.agent_loop import TurnLoop
+from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_telemetry import TURN_METRIC, record_turn
 
 
@@ -41,6 +40,7 @@ class AgentService:
         model: ModelClient,
         tools: ToolRegistry,
         reporter: ErrorReporter,
+        renders: TurnRenderResolver,
         clock: Clock,
         max_iterations: int,
         system_prompt: str,
@@ -49,11 +49,15 @@ class AgentService:
 
         The prompt arrives built because it carries catalogues generated from
         both registries (GGU-14), which this package cannot reach on its own.
+        ``renders`` is the projection registry's verdict on what the tools
+        ask the client to draw: without it a turn would stream a view id
+        nothing has ever checked (GGU-84).
         """
         self._loop = TurnLoop(
             model=model,
             tools=tools,
             reporter=reporter,
+            renders=renders,
             system_prompt=system_prompt,
             max_iterations=max_iterations,
         )
@@ -101,11 +105,7 @@ class AgentService:
         self._record(started, state, outcome="ok")
 
     async def run_turn(
-        self,
-        *,
-        prompt: str,
-        history: Sequence[ModelMessage],
-        context: ToolContext,
+        self, *, prompt: str, history: Sequence[ModelMessage], context: ToolContext
     ) -> TurnResult:
         """Run a turn and return only its finished result.
 

@@ -31,6 +31,34 @@ class RenderIntent(BaseModel):
     )
 
 
+class AcceptedIntent(BaseModel):
+    """What the registry allows, once the model's choice has been judged.
+
+    The verdict without the payload: the agent turn needs to know *which*
+    view may be rendered long before anything is rendered, and paying for a
+    portfolio read to find out a view id is unknown would put the cost of a
+    bad guess on every good one.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    view: str = Field(
+        max_length=64,
+        description="The projection that may be rendered — the default on fallback.",
+        examples=["attribution.waterfall.v1"],
+    )
+    options: dict[str, Any] = Field(
+        default_factory=dict,
+        description="The accepted options; empty when the fallback was used.",
+        examples=[{"precision": 2}],
+    )
+    rejection: str | None = Field(
+        default=None,
+        description="Why the model's choice was refused; `null` when accepted.",
+        examples=["view 'nope.v1' is not registered"],
+    )
+
+
 class RenderedIntent(BaseModel):
     """The rendered answer, plus why a fallback happened when one did."""
 
@@ -52,4 +80,4 @@ class RenderedIntent(BaseModel):
     )
 
 
-__all__ = ["RenderIntent", "RenderedIntent"]
+__all__ = ["AcceptedIntent", "RenderIntent", "RenderedIntent"]

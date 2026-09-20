@@ -45,8 +45,8 @@ view is a failed implementation and must be refactored rather than extended.
   requested view, as a discriminated union.
 - `GET /v1/views` — the catalog: id, serving endpoints, options JSON schema,
   example payload.
-- `RenderIntentService` — the service-level entry point GGU-47 calls with
-  `{view, options}`; validates against the same registry, reports rejections
+- `RenderIntentService` — the service-level entry point the agent turn calls
+  with `{view, options}`; validates against the same registry, reports rejections
   through the injected `ErrorReporter` and falls back to the endpoint default.
 - The OpenAPI contract test extended so a projection without an example, an
   options schema or its discriminator literal fails the gate.
@@ -153,6 +153,22 @@ renders the endpoint default instead. It returns
 `RenderedIntent(view, payload, surface, rejection)` so GGU-47 can stream the
 surface and log why a fallback happened. The model picks; it never invents.
 
+`RenderIntentService.accept(view=…, options=…, default=…)` is the same verdict
+without the payload, and it is what the **agent turn** calls (GGU-84, through
+`services/agent_renders.TurnRenderResolver`, from `services/agent_tools.py`).
+It returns `AcceptedIntent(view, options, rejection)`. The split exists because
+a turn must judge every surface it emits while the wire still carries only
+`{view, options}`: rendering a payload per intent would cost a portfolio read
+each time and throw the result away. `render` is `accept` followed by the
+render, so there is one verdict and one place it can change.
+
+**This was written down long before anything called it.** Between GGU-47 and
+GGU-84 the enforcement above existed, was unit-tested, had a `Depends`
+provider — and no call site, so what actually guarded a tool-emitted view id
+was `VIEW_ID_SHAPE`, a regex `totally.invented.v9` satisfies, and options were
+never judged at all. A provider looks wired by virtue of existing; the seam is
+where the hole was.
+
 **Layering.** `app/presentation/` is an inner layer beside `app/domain/`: it
 imports stdlib, pydantic, `app.core` and `app.domain` only, and nothing from
 `api`, `services`, `repositories`, `models`, `infra` or `auth`. `app/schemas/views.py`
@@ -258,7 +274,9 @@ is weakened.
    the same registry; a rejected intent is recorded through the injected
    `ErrorReporter` and answered with the endpoint's default projection, with
    the rejection reason carried on the result. An accepted intent renders the
-   requested view and reports nothing.
+   requested view and reports nothing. **The agent turn calls this** (GGU-84):
+   every render intent a tool emits is judged before it reaches the client,
+   and a rejection falls back rather than failing the turn.
 10. **AC-10** With no `view` supplied, the documented selection rule picks from
     the data: the seeded portfolio (winners **and** losers) selects
     `attribution.waterfall.v1`; a portfolio of winners only selects
@@ -293,7 +311,7 @@ is weakened.
 | AC-6 | `tests/unit/api/test_views_endpoints.py::test_two_views_are_rendered_in_one_request`, `::test_response_documents_a_discriminated_union_with_one_example_per_view` | `tests/integration/test_views_flow.py::test_portfolio_views_returns_two_projections_in_one_request` |
 | AC-7 | `tests/unit/api/test_views_endpoints.py::test_bad_option_is_a_problem_document` (ids `undeclared-parameter`, `out-of-range`, `too-many-views`, `option-the-view-does-not-declare`), `::test_unknown_view_id_is_404` | `tests/integration/test_views_flow.py::test_out_of_range_option_is_422` |
 | AC-8 | `tests/unit/api/test_views_endpoints.py::test_catalog_describes_every_registered_projection`, `tests/unit/presentation/test_contract.py::test_every_example_validates_against_its_dto` | `tests/integration/test_views_flow.py::test_catalog_is_served` |
-| AC-9 | `tests/unit/services/test_render_intent_service.py::test_accepted_intent_renders_the_requested_view`, `::test_unknown_view_falls_back_and_is_reported`, `::test_undeclared_option_falls_back_and_is_reported` | — |
+| AC-9 | `tests/unit/services/test_render_intent_service.py::test_accepted_intent_renders_the_requested_view`, `::test_a_rejected_intent_falls_back_and_is_reported`, and — at the seam, over the registry (GGU-84) — `tests/unit/services/test_agent_render_intents.py::test_a_registered_view_reaches_the_client_unchanged`, `::test_a_view_the_registry_never_heard_of_falls_back_to_the_default`, `::test_an_option_a_known_view_refuses_falls_back_too` | — |
 | AC-10 | `tests/unit/presentation/test_selection.py::test_selection_prefers_the_waterfall_when_the_portfolio_has_a_loser`, `::test_selection_falls_back_to_allocation_without_a_loser`, `::test_selection_uses_the_endpoint_default_when_nothing_fits`, `::test_selection_breaks_ties_by_id`, `::test_selection_uses_the_default_for_an_empty_registry` | — |
 | AC-11 | `tests/unit/presentation/test_prompt.py::test_fragment_lists_every_projection_with_its_options`, `::test_fragment_is_generated_from_the_registry` | — |
 | AC-12 | `tests/unit/api/test_openapi_contract.py::test_every_projection_has_an_openapi_example`, `::test_every_projection_dto_declares_its_discriminator_literal`, `::test_every_projection_publishes_an_options_schema` | — |

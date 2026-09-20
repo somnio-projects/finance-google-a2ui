@@ -1729,3 +1729,64 @@ front door because no bounded alternative was offered.
   so render intents from tools are only pattern-checked today. Found while
   mapping this ticket; it needs its own ticket before `surface.actions` is
   switched on.
+
+---
+
+## 2026-09-20 — GGU-84: the render-intent enforcement finally has a call site
+
+**Spec:** `specs/backend/0005-presentation-layer.md` (AC-9), `specs/backend/0006-agent-host.md` (OD-2, now closed).
+
+**Code.** `RenderIntentService` — the class that enforces ADR-K D-11/D-12 —
+was called by nothing. Not by a controller, not by the turn: its provider
+`get_render_intent_service` was constructed and handed to nobody, and the only
+test touching the wiring asserted the factory returned something. What
+actually guarded a tool-emitted view id was `VIEW_PATTERN`, a regex on the
+string's shape that `totally.invented.v9` satisfies, and **options were never
+validated on that path at all**.
+
+- `RenderIntentService.accept(view=…, options=…, default=…)` is the verdict
+  without the payload (registry + options model + `REJECTED_METRIC` + fallback);
+  `render` is now `accept` followed by the render, so there is one verdict.
+- `services/agent_renders.TurnRenderResolver` translates between the agent's
+  `RenderIntent` and that verdict; `AgentService` takes it as one more
+  collaborator and `services/agent_tools.execute_tool` calls it at the single
+  point an intent enters a turn — which covers both ways one leaves (the
+  streamed `SurfaceReady` and the final `TurnResult`).
+- `VIEW_PATTERN` → `VIEW_ID_SHAPE`, with the comment saying what it is: a bound
+  on the string, never the check.
+
+**Harness.** `tests/unit/api/test_deps_are_wired.py` asserts the *class* of
+defect away: every `get_*` that `app.api.deps` exports must be reachable from
+a route of the real app, following both FastAPI's dependency graph and the
+provider-calls-provider edges read out of the package's own source. Its second
+test deletes the `get_agent_service` → `get_render_intent_service` edge and
+requires the guard to go red, because a reachability check that passes
+everything is worse than none.
+
+**Next person should know**
+
+- **A `Depends` provider looks wired by virtue of existing.** That is the whole
+  illusion: it type-checks, it has a unit test, it is re-exported in `__all__`,
+  and no request ever resolves it. Nine defects of this class in one iteration;
+  this is the first one where the missing line was *never written* rather than
+  deleted, so no diff could have shown it.
+- **Assert at the seam, over the registry.** The new suite drives a
+  tool-emitted intent through a real turn, parametrised over every registered
+  projection — so a chart whose options model a turn cannot satisfy fails in
+  CI rather than in a conversation. On the way it proved the sweep can be
+  vacuous: run alone, the file collected **zero** projections, because
+  importing `app.presentation.views` is what fills `REGISTRY`. A sweep needs a
+  test that the sweep found something.
+- **A rejection must answer, not fail.** ADR-K D-12 is the easy half to get
+  wrong: it would have been simpler to raise. The fallback is what keeps a
+  model's bad guess from ending a conversation, and it is asserted at the HTTP
+  surface, not only on the class.
+- **`docs/diagrams/05-agent-turn.md` had been merged twice into itself** —
+  duplicated participants, two contradictory claims about who validates an
+  intent (`H-->>P` said the turn, another line said the client). Rewritten as
+  one diagram. Worth a look at the others.
+- **What could not run here:** Docker (host disk full), so the integration
+  suite and the compose stack did not run and coverage reads 97.56 % with the
+  DB suite deselected — every file this PR touches is at 100 %. The manual run
+  in the PR drives the real A2A route in process with the in-memory portfolio
+  provider instead; CI has the real verdict.
