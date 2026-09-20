@@ -149,5 +149,35 @@ assert "a run with any failed, cancelled or skipped job is red" \
   "contains\(needs\.\*\.result, 'skipped'\)" "${CD}"
 
 echo
+echo "every deployable environment name is one the backend will accept"
+
+# The one check neither side can make alone. `infra/variables.tf` decides what
+# a deployment may be CALLED; `backend/src/app/core/config.py` decides what the
+# process will ACCEPT being called. Both were internally consistent and nothing
+# read both, so `dev` existed as an environment for which the container died at
+# startup on a ValidationError — after the infrastructure had been applied.
+# `terraform validate` cannot see Python and `make gate` cannot see Terraform;
+# this is the seam, so the assertion lives here.
+TFVARS_ENVS="$(sed -n 's/.*contains(\[\(.*\)\], var.environment).*/\1/p' \
+  "${ROOT}/infra/variables.tf" | tr -d '" ' | tr ',' '\n' | grep .)"
+PY_ENVS="$(sed -n 's/^Environment = Literal\[\(.*\)\]$/\1/p' \
+  "${ROOT}/backend/src/app/core/config.py" | tr -d '" ' | tr ',' '\n' | grep .)"
+
+[[ -n "${TFVARS_ENVS}" ]] || { echo "  FAIL  could not read environments from variables.tf"; FAILED=$((FAILED + 1)); }
+[[ -n "${PY_ENVS}" ]] || { echo "  FAIL  could not read the Environment literal from config.py"; FAILED=$((FAILED + 1)); }
+
+while read -r env; do
+  [[ -z "${env}" ]] && continue
+  if grep -qx "${env}" <<< "${PY_ENVS}"; then
+    echo "  ok    '${env}' is deployable and the backend accepts it"
+    PASSED=$((PASSED + 1))
+  else
+    echo "  FAIL  '${env}' is a deployable environment that the backend would reject at startup"
+    echo "        add it to Environment in backend/src/app/core/config.py"
+    FAILED=$((FAILED + 1))
+  fi
+done <<< "${TFVARS_ENVS}"
+
+echo
 echo "${PASSED} passed, ${FAILED} failed"
 [[ "${FAILED}" -eq 0 ]]

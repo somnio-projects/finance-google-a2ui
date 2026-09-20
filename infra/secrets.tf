@@ -8,11 +8,45 @@ resource "google_pubsub_topic" "secret_rotation" {
   depends_on = [google_project_service.apis]
 }
 
-# Secret Manager's service agent must be able to publish rotation events.
+# Secret Manager's service agent must be able to publish rotation events — but
+# it does not exist until something asks for it. Enabling the API is not enough,
+# and granting a role to an identity that has not been created fails with
+#
+#   Service account service-<n>@gcp-sa-secretmanager.iam.gserviceaccount.com
+#   does not exist.
+#
+# which is what the first dev apply hit. Creating it explicitly also removes the
+# implicit dependency: the member below now references a resource, so Terraform
+# orders the two instead of racing them.
+resource "google_project_service_identity" "secret_manager" {
+  provider = google-beta
+  service  = "secretmanager.googleapis.com"
+
+  depends_on = [google_project_service.apis]
+}
+
+# The resource above returns as soon as the agent is *requested*, and IAM does
+# not see it for a few seconds afterwards — so the grant below failed with
+# "does not exist" even on the apply that had just created it. Ordering alone
+# cannot fix that; the dependency was already correct. Granting the same role
+# by hand a minute later succeeded, which is what identifies this as
+# propagation rather than a missing identity.
+#
+# A fresh project is the only place this bites, and it is exactly where it
+# hurts most: the first apply of a new environment. An apply that needs a
+# manual re-run is a broken "reproducible deploy" (GGU-29 AC-4), so the wait
+# is in the configuration rather than in a runbook step someone has to know.
+resource "time_sleep" "secret_manager_identity_propagation" {
+  depends_on      = [google_project_service_identity.secret_manager]
+  create_duration = "30s"
+}
+
 resource "google_pubsub_topic_iam_member" "secret_manager_publisher" {
   topic  = google_pubsub_topic.secret_rotation.id
   role   = "roles/pubsub.publisher"
-  member = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-secretmanager.iam.gserviceaccount.com"
+  member = "serviceAccount:${google_project_service_identity.secret_manager.email}"
+
+  depends_on = [time_sleep.secret_manager_identity_propagation]
 }
 
 locals {

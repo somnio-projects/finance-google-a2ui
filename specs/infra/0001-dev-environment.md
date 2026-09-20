@@ -255,10 +255,38 @@ environment does not have.
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
 | OD-1 | Does dev get its own GCP project, or share `finance-a2ui`? `CHANGE_MANAGEMENT.md` §2 says one project per environment, and sharing would put a dev deployer identity in the same project as a future production. | TL | `dev.tfvars` names `finance-a2ui` — the only project with billing today, and nothing else is deployed in it. Production must get its own project **before** it is first applied; every resource name is already environment-suffixed, so no code changes either way. |
-| OD-2 | Is `db-f1-micro` accepted for `POSTGRES_16`? Shared-core tiers are outside the Cloud SQL SLA and their availability varies by edition. Not verifiable without an apply, which this work does not do. | TL at first plan | If the plan rejects it, pass `db_tier = "db-g1-small"` in `dev.tfvars`. `var.db_tier` exists precisely so this needs no code change — but it is then a hand-set knob, so record it in the file's comment. |
-| OD-3 | Is a `/26` right for direct VPC egress? Google's sizing guidance is per running instance; dev's ceiling is 2. | TL at first plan | `/26` (64 addresses) against a 2-instance ceiling. Widen if the plan objects; it costs nothing. |
+| OD-2 | ~~Is `db-f1-micro` accepted for `POSTGRES_16`?~~ **Resolved at the first apply, and the guessed fallback was wrong.** | — | The tier was never the problem; the **edition** was. `edition` was not set, the API does *not* infer it from the tier, and it defaulted to `ENTERPRISE_PLUS`, which accepts only `db-perf-optimized-N-*`: `Invalid Tier (db-f1-micro) for (ENTERPRISE_PLUS) Edition`. `db-g1-small` would have failed identically, so the recorded fallback would not have helped. `edition` is now pinned to `ENTERPRISE` in `main.tf` for every environment — see §11. `terraform plan` accepted the invalid combination, which is the general lesson: plan validates the *schema*, not the API's own compatibility rules. |
+| OD-3 | ~~Is a `/26` right for direct VPC egress?~~ **Resolved: it applied and the service runs.** | — | `/26` against a 2-instance ceiling. The service reached Cloud SQL over the private IP on the first try (`/readyz` → `{"status":"ready","dependencies":[{"name":"database","ready":true}]}`). |
+| OD-4 | Do staging and production need the `allUsers` → `run.invoker` binding that dev now has? A serverless NEG behind the HTTPS load balancer normally does, with `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` as the network control rather than IAM. | TL at their first apply | Almost certainly yes, but **unverified** — neither environment has ever been applied, and guessing would either break the LB path or open an API. `iam.tf`'s binding is `count = local.ephemeral ? 1 : 0` so dev is fixed without asserting anything about the others. |
 | OD-4 | Does staging come back? It has no project and is now nobody's deploy target. | TL | It stays as tfvars and Terraform behaviour, deployed by nothing. If it returns, `backend-cd`'s `settings` job grows a third branch; the Terraform already supports it. |
 | OD-5 | Is the `dev` GitHub Environment left unprotected? | TL | Yes — an unattended deploy from `develop` is the point. |
+
+## 10b. What the first real apply found
+
+Five defects that no check in this repository could have caught, because every
+one of them lives in the gap between two things that were each internally
+consistent. `terraform validate` cannot see Python; `make gate` cannot see
+Terraform; and `terraform plan` does not ask the API whether a combination it
+accepts syntactically is one the API will honour.
+
+| # | Defect | Why nothing caught it | Fixed by |
+|---|---|---|---|
+| 1 | `edition` unset defaulted to `ENTERPRISE_PLUS`, which rejects every shared-core tier | `plan` validates the schema, not tier/edition compatibility | `local.db_edition = "ENTERPRISE"`, pinned (`main.tf`) |
+| 2 | `sqladmin.googleapis.com` does not accept a service-level audit config | The name is real and the API is real — it is the wrong one of two | `cloudsql.googleapis.com` (`observability.tf`) |
+| 3 | Secret Manager's service agent did not exist, then existed but was not yet visible to IAM | An identity created and used inside one apply | `google_project_service_identity` + a 30 s propagation wait (`secrets.tf`) |
+| 4 | **`ENVIRONMENT=dev` was not a value the backend would accept** — the container would have died at startup on a `ValidationError` | `variables.tf` and `config.py` each held half the answer and nothing read both | `dev` added to `Environment`; the two lists are now compared by `test_dev_environment.sh` |
+| 5 | A mounted-but-empty optional secret arrives as `""`, not as absent, so `sentry_sdk.init(dsn="")` and a keyless Gemini client would have been constructed | The factories branch on `is None` and unit tests never mount an empty secret | `OptionalCredentialParsing` collapses blank to `None` (`config_parsing.py`) |
+
+Defects 4 and 5 are the interesting pair: both are **a deployment handing the
+application something no test ever hands it**. The lesson is in
+`.claude/rules/backend/testing.md` already — *a property that spans two
+declarations gets a test comparing them* — and #4 now has exactly that test.
+
+A sixth is **not** fixed here and is the one thing standing between this
+environment and AC-1: the service had no `run.invoker` binding at all, so it
+answers 403 to any caller without a Google identity. The Terraform is written
+(`iam.tf`, dev-only) and planned; applying it is a deliberate exposure decision
+and is the TL's to make. See OD-4.
 
 ## 11. Divergences found in the existing Terraform
 

@@ -12,9 +12,17 @@ from typing import Annotated, Literal
 from pydantic import Field, PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-from app.core.config_parsing import WILDCARD, CsvParsing
+from app.core.config_parsing import WILDCARD, CsvParsing, OptionalCredentialParsing
 
-Environment = Literal["local", "test", "staging", "production"]
+# Must stay in step with `infra/variables.tf`'s `environment` validation: that
+# list is what a deployment can be called, this is what the process will accept
+# being called, and a name in one and not the other is a container that dies at
+# startup on a `ValidationError` — which is how `dev` was found, after the
+# environment existed. `infra/scripts/tests/test_dev_environment.sh` now
+# compares the two, because neither `terraform validate` nor `make gate` can:
+# each side is internally consistent, and nothing was reading both.
+# `local` and `test` are extra here on purpose — they never reach Terraform.
+Environment = Literal["local", "test", "dev", "staging", "production"]
 AuthProviderName = Literal["jwt", "oidc"]
 # ``NoDecode``: pydantic-settings would otherwise JSON-decode list fields from
 # the environment; we accept plain comma-separated values
@@ -22,7 +30,7 @@ AuthProviderName = Literal["jwt", "oidc"]
 CsvList = Annotated[list[str], NoDecode]
 
 
-class Settings(CsvParsing, BaseSettings):
+class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
     """Typed view over the process environment.
 
     Attributes are grouped by concern; see ``env.example`` for documentation

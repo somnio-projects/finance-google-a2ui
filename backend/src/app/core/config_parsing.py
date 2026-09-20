@@ -41,4 +41,36 @@ class CsvParsing:
         return value
 
 
-__all__ = ["WILDCARD", "CsvParsing"]
+class OptionalCredentialParsing:
+    """Treat an empty optional credential as absent rather than as a value.
+
+    Every field listed here is documented as *unset means fall back*: no key
+    yields ``NullModelClient``, no DSN yields the null reporter, and the
+    factories branch on ``is None``. But a deployment does not hand these over
+    as "absent" — it mounts them, and a secret with nothing in it arrives as
+    ``""``. That is not ``None``, so the factories take the configured path
+    with an empty credential: ``sentry_sdk.init(dsn="")``, a Gemini client
+    holding no key.
+
+    Nothing downstream can recover from that, because by then the distinction
+    is gone. So it is collapsed at the boundary, where "the operator left this
+    blank" still means what it says. Found while first deploying `dev`, where
+    Secret Manager holds both secrets and neither has a value yet.
+    """
+
+    @field_validator(
+        "auth_jwt_secret",
+        "auth_oidc_jwks_url",
+        "gemini_api_key",
+        "sentry_dsn",
+        mode="before",
+    )
+    @classmethod
+    def _blank_optional_is_unset(cls, value: object) -> object:
+        """Return ``None`` for a blank string, otherwise the value unchanged."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+
+__all__ = ["WILDCARD", "CsvParsing", "OptionalCredentialParsing"]

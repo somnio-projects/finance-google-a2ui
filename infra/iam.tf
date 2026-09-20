@@ -49,3 +49,36 @@ resource "google_cloud_run_v2_job_iam_member" "scheduler_invokes_purge" {
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.scheduler.email}"
 }
+
+# Who may invoke the API service.
+#
+# There was no such binding at all, so the deployed service answers 403 to
+# every caller without a Google identity — including on `/healthz`, which
+# GGU-29 AC-1 requires to be green *on the public URL*. The delivery pipeline
+# probes that URL as well (`infra/scripts/deploy_cloud_run.sh`), so this is not
+# only a demo problem: the verify-before-shifting-traffic step could not have
+# passed either.
+#
+# `allUsers` here does not mean "the API is open". Cloud Run invocation is the
+# outer door; the application still requires a bearer token on every route
+# except the handful listed in `tests/unit/api/test_openapi_contract.py::PUBLIC`,
+# and the per-principal rate limiter and the security headers are unchanged.
+# What this grants is the right to *reach* the service — which in dev is the
+# entire point: there is no load balancer, the endpoint is the run.app URL, and
+# a reviewer holding no Google identity has to be able to open it.
+#
+# Scoped to dev deliberately. Staging and production are
+# `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`, and a serverless NEG behind the
+# HTTPS load balancer is *expected* to need the same binding, with ingress
+# rather than IAM as the network control. Expected, not verified: neither
+# environment has ever been applied. Recorded in
+# specs/infra/0001-dev-environment.md §11 to be confirmed at their first apply
+# instead of guessed at here.
+resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
+  count = local.ephemeral ? 1 : 0
+
+  name     = google_cloud_run_v2_service.backend.name
+  location = var.region
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

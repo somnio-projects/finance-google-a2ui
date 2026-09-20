@@ -19,6 +19,7 @@ resource "google_sql_database_instance" "postgres" {
 
   settings {
     tier              = local.db_tier
+    edition           = local.db_edition      # pinned, not inferred — see main.tf
     availability_type = local.db_availability # REGIONAL = synchronous standby in another zone (BCP §5)
     disk_type         = local.db_disk_type
     disk_autoresize   = true

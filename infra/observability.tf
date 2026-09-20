@@ -10,8 +10,20 @@ resource "google_logging_project_bucket_config" "default" {
 }
 
 # Data-access audit logs for the services that hold Confidential/Restricted data.
+#
+# Cloud SQL is `cloudsql.googleapis.com` here, not `sqladmin.googleapis.com`.
+# The two are not interchangeable: `sqladmin` is the *admin API* you enable to
+# manage instances, and it rejects a service-level audit config outright —
+#
+#   Service sqladmin.googleapis.com does not exist or does not support
+#   service level configuration of Google Cloud audit logging.
+#
+# — which is how the first dev apply found it. `cloudsql` is the service that
+# emits the data-access logs the compliance corpus claims (CLOUD_SERVICES.md
+# §4, SoA A.8.15/A.8.16). Before this, that claim was not merely unverified,
+# it was unapplyable.
 resource "google_project_iam_audit_config" "data_access" {
-  for_each = toset(["sqladmin.googleapis.com", "secretmanager.googleapis.com", "run.googleapis.com"])
+  for_each = toset(["cloudsql.googleapis.com", "secretmanager.googleapis.com", "run.googleapis.com"])
   project  = var.project_id
   service  = each.value
 
