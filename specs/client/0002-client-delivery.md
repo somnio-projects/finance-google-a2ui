@@ -81,7 +81,9 @@ The delivery-relevant parts:
 
 **Container.** Runs as uid 101 (the base image's `nginx` user), read-only root
 filesystem, `no-new-privileges:true`, `/tmp` as tmpfs, both stages pinned by
-digest, Alpine security updates applied at build, and the runtime stage copies
+digest and the Flutter SDK by published SHA-256, Alpine security updates
+applied at build (observed: `libssl3` 3.3.3-r0 → 3.3.7-r1, `ca-certificates`
+20241121 → 20260909), and the runtime stage copies
 `build/web` and two config files and nothing else — no SDK, no pub cache, no
 Dart source.
 
@@ -124,7 +126,7 @@ mapped — including as a gap — in `client_flutter/docs/SECURITY.md`.
 | OD-2 | `BACKEND_BASE_URL` compiled in, or read at runtime | **TL** | **read at runtime** — decided, see below |
 | OD-3 | Does this app's web renderer force `unsafe-eval` in the CSP | — | **No** — answered empirically, see below |
 | OD-4 | Whether the client image is scanned by Trivy in CI like the backend's | **TL** | yes, in `client-ci.yaml`, when GGU-1's workflow lands |
-| OD-5 | Whether the stale `environment:` block in `client_flutter/pubspec.yaml` is corrected | **TL** | corrected in GGU-1's lane — see §9 |
+| OD-5 | Whether the stale `environment:` block in `client_flutter/pubspec.yaml` is corrected | **TL** | corrected in GGU-1's lane — see §9. The container pins **3.47.5** and does not wait for it |
 
 ### OD-1 — hosting: Cloud Run (default), and why not the two alternatives
 
@@ -175,11 +177,14 @@ its own and the runtime value wins once the loader exists.
 
 ### OD-3 — the renderer needs `wasm-unsafe-eval`, not `unsafe-eval`
 
-**Status: reasoned, not yet measured.** OD-3 says "answered empirically", and
-the empirical half did not happen — the host ran out of disk before the image
-built (GGU-82 PR). What follows is the reasoning and the directives it
-produced; the run that confirms it is still owed, and the PR says so rather
-than implying otherwise.
+**Status: answered empirically, 2026-09-20.** The reasoning below was written
+first and the measurement came later; both are kept, because the measurement
+found one thing the reasoning had stated too strongly (see the `style-src`
+bullet). What the run established: the app renders under
+`script-src 'self' 'wasm-unsafe-eval'` with a clean console, and the *same*
+bundle served under `script-src 'self'` is a blank page with
+`WebAssembly.compileStreaming(): … blocked by Content Security Policy
+directive`. Necessary and sufficient, with `'unsafe-eval'` absent.
 
 - This app uses the **default web renderer, CanvasKit** — `app/web/index.html`
   is the stock bootstrap and nothing selects a renderer, and the build emits
@@ -196,11 +201,16 @@ than implying otherwise.
   `'unsafe-eval'`, which would make the CSP worth very little. Anyone touching
   either must touch both.
 - **Residual risk, recorded rather than hidden:** `style-src` keeps
-  `'unsafe-inline'`. The Flutter engine injects `<style>` elements at runtime
-  and there is no supported nonce/hash path for them. An injected script is
-  still blocked; injected *styles* are not, which leaves CSS-based exfiltration
-  and UI-redress inside the page's own origin. Accepted for the showcase,
-  listed in `docs/SECURITY.md`, and revisited if Flutter gains nonce support.
+  `'unsafe-inline'`, and the run confirmed it is required rather than inherited
+  from a template: the engine injects one `<style>` element and sets `style`
+  attributes on seven elements, and under `style-src 'self'` the browser blocks
+  both. One correction to the original wording — it said there is "no supported
+  nonce/hash path"; the violation report does offer per-element hashes, so the
+  accurate statement is that Flutter has no supported way to *emit* them and
+  they would churn with every engine revision. An injected script is still
+  blocked; injected *styles* are not, which leaves CSS-based exfiltration and
+  UI-redress inside the page's own origin. Accepted for the showcase, listed in
+  `docs/SECURITY.md` as G-6, revisited if Flutter gains nonce support.
 - Also recorded: `img-src`/`worker-src`/`child-src` admit `blob:` because the
   engine decodes images and spawns workers from blob URLs.
 
@@ -208,8 +218,10 @@ than implying otherwise.
 
 1. **AC-1** — `docker build client_flutter` produces an image whose runtime
    layer contains the built web bundle and no Flutter SDK, pub cache or Dart
-   source; both stages are pinned by digest.
-2. **AC-2** — `docker run <image> id` reports a non-root uid, and the container
+   source; both stages are pinned by digest and the SDK by published SHA-256.
+2. **AC-2** — `docker run --entrypoint id <image>` reports a non-root uid (the
+   entrypoint has to be overridden — it requires `BACKEND_BASE_URL` and exits
+   before any command argument is reached), and the container
    runs with a read-only root filesystem and `no-new-privileges:true`.
 3. **AC-3** — `curl -I` against the running container returns every header in
    §5 with those values; the CSP contains `wasm-unsafe-eval` and does **not**
@@ -237,12 +249,13 @@ than implying otherwise.
 There is no Dart code in this change, so there are no Dart tests in it. The
 subject is a container, and the evidence is the container answering.
 
-> **None of the container rows below has been run.** The host ran out of disk
-> during GGU-82 and the Docker daemon went down with it, so the image was never
-> built end to end. "PR body" in the table is therefore where the evidence
-> *belongs*, not where it is — the PR says so explicitly, and
-> `client_flutter/docs/SECURITY.md` G-11 tracks it. **AC-1 to AC-5 are
-> unverified; AC-6 is the only container-adjacent one that was actually run.**
+> **Run on 2026-09-20.** The image builds and AC-1 to AC-6 were each observed
+> against a running container; the evidence is pasted in PR #49 and the
+> `Verified by` column of `client_flutter/docs/SECURITY.md` now records what was
+> watched rather than what someone should type. Two qualifications, kept rather
+> than rounded off: the hardening flags were applied with `docker run` and not
+> with `docker compose` (which will not parse without `backend/.env`) — G-11 —
+> and AC-9 is still CI's to prove, not a laptop's.
 
 | AC | How it is proven | Where |
 |---|---|---|
@@ -271,22 +284,38 @@ down in §9 rather than left for a reader to notice.
 - **Nothing deploys from this PR.** There is no client delivery workflow yet;
   the container is reachable through compose only. `client-cd.yaml` is written
   after OD-1, and copies `backend-cd.yaml`'s probe-then-shift.
-- **Checks this expects in `client-ci.yaml` (GGU-1):** build the image; `docker
-  run --rm <img> id` asserting a non-root uid; `curl -I` asserting the header
-  set and the absence of `unsafe-eval`; Trivy on the image with the backend's
-  CRITICAL/HIGH gate; `hadolint` on the Dockerfile; `shellcheck` on
-  `docker/entrypoint.sh`. Each of these is a property this spec claims and that
-  **nothing currently enforces** — which is why they are listed by name.
-- **A defect this work uncovered, for whoever owns OD-5.**
-  `client_flutter/pubspec.yaml` declares `environment: sdk: ">=3.10.0 <4.0.0"`
-  and `flutter: ">=3.35.7 <4.0.0"`, but the checked-in `pubspec.lock` resolves
-  against `dart: ">=3.12.0"` / `flutter: ">=3.44.0"`. The declared minimum
-  Flutter therefore **cannot** build this workspace — `flutter pub get` on
-  3.35.7 fails with *"Because showcase_flutter_client_workspace requires SDK
-  version >=3.10.0 <4.0.0, version solving failed"*. It was found by building
-  the image, which is the first thing in this repo that had ever installed the
-  declared version. The Dockerfile pins the version that actually satisfies the
-  lock; the manifest is in GGU-1's lane and is not corrected here.
+- **Checks this expects in `client-ci.yaml` (GGU-1):** build the image;
+  `docker run --rm --entrypoint id <img>` asserting a non-root uid; `curl -I`
+  asserting the header set and the absence of `unsafe-eval`; **the page loaded
+  headless with the console asserted empty of CSP violations** — the one check
+  here that a header grep cannot stand in for, since a CSP can be present and
+  still break the app; **`docker compose --profile client up` and
+  `docker inspect` asserting `ReadonlyRootfs`/`SecurityOpt`**, which closes
+  G-11; Trivy on the image with the backend's CRITICAL/HIGH gate; `hadolint` on
+  the Dockerfile; `shellcheck` on `docker/entrypoint.sh`. The build itself must
+  keep `flutter pub get --enforce-lockfile` — without it a mismatched SDK
+  re-resolves silently, which is how G-12 hid for as long as it did. Each of
+  these is a property this spec claims and that **nothing currently enforces**.
+- **A defect this work uncovered, for whoever owns OD-5 — worse than first
+  reported.** `client_flutter/pubspec.yaml` declares `sdk: ">=3.10.0 <4.0.0"`
+  and `flutter: ">=3.35.7 <4.0.0"`. The declared minimum **cannot** build this
+  workspace: `flutter pub get` on 3.35.7 fails with *"Because
+  showcase_flutter_client_workspace requires SDK version >=3.10.0 <4.0.0,
+  version solving failed"*, because 3.35.7 ships Dart 3.9.2.
+
+  The second build attempt showed the lock is stricter than its own
+  `flutter: ">=3.44.0"` line implies. **3.44.9 does not reproduce it either**:
+  `flutter pub get --enforce-lockfile` answers *"Unable to satisfy
+  `pubspec.yaml` using `pubspec.lock` … Would change 14 dependencies"*, because
+  the SDK vendors part of what the lock pins — 3.44 pins `meta 1.18.0` and
+  `vector_math 2.2.0` exactly, while the lock holds `1.19.0` / `2.4.2`, which
+  only 3.47.x admits. The lock's `sdks:` range is a floor derived from package
+  constraints, not a record of the toolchain that produced it.
+
+  So the Dockerfile installs **3.47.5** and passes `--enforce-lockfile`, which
+  is the only thing that would have caught this. `pubspec.yaml` is untouched —
+  3.47.5 satisfies its declared floor, and correcting a manifest is GGU-1's
+  lane. Tracked as G-12 and G-13 in `client_flutter/docs/SECURITY.md`.
 - **Observability:** nginx access and error logs go to stdout/stderr, so Cloud
   Logging picks them up with no agent. They are plain-text, not the backend's
   structlog JSON — a deliberate non-goal for a static file server, and a

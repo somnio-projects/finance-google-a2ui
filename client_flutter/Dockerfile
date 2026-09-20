@@ -43,19 +43,22 @@
 # `'wasm-unsafe-eval'` (Chrome 97+, Firefox 102+, Safari 16.4+). It permits
 # WebAssembly and nothing else — `eval()` and `new Function()` stay blocked.
 #
-# NOT YET MEASURED. specs/client/0002-client-delivery.md OD-3 says this is
-# answered empirically, and the run that would answer it has not happened —
-# the host ran out of disk before the image built. The directives below are
-# reasoned, not observed. Whoever first serves this bundle should load it with
-# the console open, confirm there are no CSP violations, and replace this
-# paragraph with what they saw.
+# MEASURED, 2026-09-20, both directions:
+#   - with 'wasm-unsafe-eval'  -> the app renders, console clean.
+#   - with script-src 'self'   -> blank page, and the console says
+#     "WebAssembly.compileStreaming(): Compiling or instantiating … blocked by
+#      Content Security Policy directive: script-src 'self'".
+# So the directive is necessary, and since the page renders with it and no
+# other eval token, it is also sufficient. Evidence in PR #49.
 #
 # The broad `'unsafe-eval'` is NOT needed, because `flutter build web --csp`
 # tells dart2js to stop generating code dynamically. Dropping that flag is what
 # forces `'unsafe-eval'`, so the flag and the header are a pair: change one and
-# the other is wrong. `style-src 'unsafe-inline'` IS required — the Flutter
-# engine injects <style> elements at runtime — and is recorded as a residual
-# risk in client_flutter/docs/SECURITY.md rather than papered over.
+# the other is wrong. `style-src 'unsafe-inline'` IS required, also measured:
+# under `style-src 'self'` the browser blocks the <style> element the engine
+# injects and the style attributes it sets, reporting "Applying inline style
+# violates … The action has been blocked." It is recorded as a residual risk
+# (G-6) in client_flutter/docs/SECURITY.md rather than papered over.
 # ---------------------------------------------------------------------------
 
 # The Flutter SDK ships for linux/amd64 only, so the builder is pinned to it.
@@ -63,28 +66,95 @@
 # and assets, none of which are architecture-specific, so the runtime stage is
 # free to follow the target platform.
 #
-# !! THIS PIN IS KNOWN TO BE WRONG AND IS LEFT HERE DELIBERATELY. !!
-# 3.35.7 is what client_flutter/pubspec.yaml declares as the minimum
-# (`flutter: ">=3.35.7"`), and it *cannot build this workspace*: it ships Dart
-# 3.9.2, while the checked-in pubspec.lock resolves against `dart: ">=3.12.0"`
-# / `flutter: ">=3.44.0"`, so `flutter pub get` fails version solving. That is
-# a defect in the manifest, not here — see spec 0002 OD-5 and §9.
+# The SDK is INSTALLED FROM GOOGLE'S RELEASE ARCHIVE, not taken from a
+# community image. That is a change from the first draft of this file, and the
+# reason is that no community image can build this workspace:
 #
-# It stays pinned to the declared version rather than being silently bumped,
-# because bumping it would hide the manifest defect and because a digest for
-# another tag has to be *pulled* to be real — inventing one would be worse
-# than a build that fails loudly. Whoever fixes the manifest replaces both the
-# tag and the digest here, in the same change.
-FROM --platform=linux/amd64 instrumentisto/flutter:3.35.7@sha256:affe9ea8b542a622531f55f347898ba86e26722308f12a663c4e6a8b76165894 AS builder
+#   - pubspec.lock resolves against `dart: ">=3.12.0"` / `flutter: ">=3.44.0"`,
+#     and the first stable pairing that satisfies both is Flutter 3.44.0 /
+#     Dart 3.12.0 (releases_linux.json).
+#   - instrumentisto/flutter — what this file pinned first — stops at 3.41.6 /
+#     Dart 3.11.4 and has not published since 2026-03-27. There is no tag of it
+#     that can resolve this lock.
+#   - ghcr.io/cirruslabs/flutter:3.44.0 does exist and would fit, but ghcr.io
+#     is refused by this project's Docker registry policy, so nobody here can
+#     pull it to verify it. A pin that cannot be pulled is a pin that cannot be
+#     checked, which is the thing this Dockerfile is trying not to ship.
+#
+# So: Debian by digest, plus the SDK tarball by version AND by the SHA-256 that
+# Google publishes for it. Both halves are immutable and both are verifiable
+# offline, which is strictly better provenance than a community image digest —
+# it narrows gap G-8 in docs/SECURITY.md rather than restating it.
+#
+# WHICH version: 3.47.5, and the lock is what chose it — not the manifest.
+#
+# `flutter: ">=3.44.0"` in pubspec.lock is only a floor, and building against
+# the floor is not the same as building against the lock. 3.44.9 gets as far as
+# resolution and then `pub get --enforce-lockfile` says
+# "Unable to satisfy `pubspec.yaml` using `pubspec.lock` … Would change 14
+# dependencies", because the SDK *vendors* some of what the lock pins:
+# Flutter 3.44.9 pins `meta 1.18.0` and `vector_math 2.2.0` exactly, while the
+# checked-in lock holds `meta 1.19.0` and `vector_math 2.4.2`. Only 3.47.x
+# widens those to `^1.18.3` / `^2.4.0` and admits the locked versions. So the
+# lock was generated by a 3.47 SDK, and 3.47.5 (the current stable, Dart
+# 3.13.4) is the one that reproduces it byte for byte.
+#
+# The lesson worth keeping: the lock's own `flutter:` range does not identify
+# the SDK that produced it. `--enforce-lockfile` does, by failing.
+#
+# client_flutter/pubspec.yaml is deliberately NOT touched. It declares
+# `flutter: ">=3.35.7"` / `sdk: ">=3.10.0"`, which 3.47.5 satisfies, so the
+# build needs no change there — but that floor is still a lie (3.35.7 ships
+# Dart 3.9.2 and fails version solving outright, and no version in the 3.35–
+# 3.44 range can satisfy the lock either), and correcting a manifest belongs to
+# GGU-1. It stays as gap G-12.
+FROM --platform=linux/amd64 debian:12-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251 AS builder
+
+# Pull base-layer security updates, and install exactly what the SDK needs to
+# unpack and run: git (the SDK is a git checkout and refuses to run without
+# it), xz/unzip for the archives, curl and CA roots for the download.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates curl git unzip xz-utils \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG FLUTTER_VERSION=3.47.5
+# From https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
+# — the `sha256` field of the 3.47.5 stable entry. Changing FLUTTER_VERSION
+# without changing this makes the build fail, which is the point.
+ARG FLUTTER_SHA256=2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb
+
+RUN curl -fsSL -o /tmp/flutter.tar.xz \
+      "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
+ && echo "${FLUTTER_SHA256}  /tmp/flutter.tar.xz" | sha256sum -c - \
+ && tar -xf /tmp/flutter.tar.xz -C /opt \
+ && rm /tmp/flutter.tar.xz \
+ && git config --global --add safe.directory /opt/flutter
+
+ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
+
+# Off by default in a container, but say so rather than rely on it: a build
+# must not phone home, and `flutter --version` warms the tool cache so that the
+# first real command is not also a download.
+RUN flutter config --no-analytics >/dev/null \
+ && flutter --version
 
 WORKDIR /src
 
 # Resolve dependencies from the manifests alone, so editing Dart source does
 # not re-run pub. `resolution: workspace` means pub resolves from the root.
+#
+# --enforce-lockfile: resolve to exactly what pubspec.lock pins, or fail. The
+# default `pub get` would silently re-resolve if the lock did not fit the SDK,
+# and a container that quietly builds a different dependency set than the one
+# reviewed is worse than one that stops. This is also what makes the
+# "resolved from a checked-in lockfile" row in docs/SECURITY.md true.
 COPY pubspec.yaml pubspec.lock ./
 COPY app/pubspec.yaml ./app/
 COPY e2e_test/pubspec.yaml ./e2e_test/
-RUN flutter pub get
+RUN flutter pub get --enforce-lockfile
 
 COPY . .
 
