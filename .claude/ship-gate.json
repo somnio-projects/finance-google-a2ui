@@ -23,6 +23,11 @@
       "cmd": "uv run python scripts/check_file_budget.py"
     },
     {
+      "id": "py.catalog",
+      "cwd": "backend",
+      "cmd": "uv run python scripts/generate_catalog_contract.py --check"
+    },
+    {
       "id": "py.quality",
       "cwd": "backend",
       "cmd": "make quality"

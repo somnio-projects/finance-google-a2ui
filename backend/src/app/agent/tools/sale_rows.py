@@ -94,6 +94,28 @@ def remaining(result: SaleSimulation) -> Mapping[str, object]:
     }
 
 
+def scenario(result: SaleSimulation, *, method: str) -> Mapping[str, object]:
+    """Name the simulated sale as ``taxlots.table.v1`` declares its options.
+
+    Args:
+        result: The simulation, so the scenario named is the one that was
+            actually costed — a dollar-sized ask has already become units.
+        method: The lot-selection method, echoed as the view declares it.
+
+    Returns:
+        The options of the render intent. ``quantity`` is formatted with
+        ``:f`` rather than ``str()``: a ``Decimal`` quantized to eight places
+        renders as ``1E-8`` in scientific notation, which the view's bounded
+        size pattern rejects. Spec 0015 AC-13 validates this against the
+        projection's own options model rather than trusting the shape here.
+    """
+    return {
+        "symbol": result.symbol,
+        "quantity": f"{result.quantity:f}",
+        "lot_method": method,
+    }
+
+
 def too_small(
     *, symbol: str, requested: Decimal, held: Decimal
 ) -> Mapping[str, object]:
@@ -117,4 +139,4 @@ def too_small(
     }
 
 
-__all__ = ["lot_row", "remaining", "summary", "too_small"]
+__all__ = ["lot_row", "remaining", "scenario", "summary", "too_small"]

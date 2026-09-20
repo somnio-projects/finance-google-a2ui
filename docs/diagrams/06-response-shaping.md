@@ -15,8 +15,8 @@ flowchart TB
     rej["422 / 404 to the client · per-entry problem in a batch<br/>fallback + telemetry for the model"]
     sel["Selection rule<br/>(nobody chose → highest fitness)"]
     subgraph views["presentation/views/* — one module each"]
-        v1["holdings.allocation.v1"]
-        v2["attribution.waterfall.v1"]
+        v1["holdings.allocation.v1<br/>attribution.waterfall.v1<br/><i>fitness > 0 — selectable</i>"]
+        v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
         vn["…the next one: one new file"]
     end
     frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display"]
@@ -26,6 +26,7 @@ flowchart TB
     cat["GET /v1/views catalog"]
     oa["OpenAPI oneOf + one example per view"]
     pf["Generated prompt fragments (GGU-14)"]
+    doc["docs/catalog/CONTRACT.md<br/>regenerated, diffed in the gate"]
 
     cl --> reg
     batch --> reg
@@ -40,10 +41,11 @@ flowchart TB
     views --> cat
     views --> oa
     views -.-> pf
+    views -.-> doc
     v1 -.- vn
     v2 -.- vn
 
-    %% Registering once publishes to four consumers; adding a chart touches
+    %% Registering once publishes to five consumers; adding a chart touches
     %% only its own module (ADR-K D-14, D-15) — views/ is auto-discovered,
     %% so not even an import line is edited.
     %% The batch is a RESOURCE, not an RPC call: POST creates it, 201 returns

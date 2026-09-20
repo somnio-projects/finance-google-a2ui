@@ -6,9 +6,11 @@ and hands the model pre-formatted strings (ADR-E D-2, ADR-K D-5). The model
 copies them: it never multiplies a quantity by a price, never subtracts a cost
 basis and never decides whether a lot is short- or long-term.
 
-It emits **no render intent**. No registered projection renders a sell
-scenario, and pointing at one that does not exist is the same lie as inventing
-a number (spec 0013 OD-5, ADR-K D-11).
+It emits a render intent for ``taxlots.table.v1`` (spec 0015), which is the
+projection OD-5 refused to invent before the component existed. Only on a
+**successful** simulation: a ``position-too-small`` refusal has no table to
+draw, and a chart that contradicts the sentence under it is the failure spec
+0011 OD-1 named.
 
 Registration is the module's own last line, so adding this tool edited no
 shared file (spec 0006 AC-7).
@@ -17,7 +19,7 @@ shared file (spec 0006 AC-7).
 from collections.abc import Mapping
 from typing import Final
 
-from app.agent.contracts import ToolContext, ToolOutcome
+from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
 from app.agent.registry import register
 from app.agent.tools import sale_rows
 from app.agent.tools.sale_request import SimulateSaleArguments
@@ -25,6 +27,11 @@ from app.domain.errors import PositionTooSmallError
 from app.domain.sales import simulate_sale
 
 NAME: Final[str] = "simulate_sale"
+#: The projection this answer is drawn with (spec 0015). Spelled here, as
+#: every tool spells its view: ``app.agent`` does not import
+#: ``app.presentation``, and a test resolves this id through the real registry
+#: so the two declarations cannot drift apart.
+VIEW: Final[str] = "taxlots.table.v1"
 
 
 class SimulateSaleTool:
@@ -65,12 +72,13 @@ class SimulateSaleTool:
             context: The subject and the portfolio provider.
 
         Returns:
-            The payload the model reads, and no render intent (OD-5). An
-            over-sell comes back as a structured ``position-too-small``
-            answer carrying both quantities formatted, rather than as a
-            raising tool the loop would flatten to ``tool-failed`` — the
-            shortfall is the useful part, and the model must copy it rather
-            than invent it (OD-3).
+            The payload the model reads, plus a ``taxlots.table.v1`` render
+            intent naming the sale that was actually costed. An over-sell
+            comes back as a structured ``position-too-small`` answer carrying
+            both quantities formatted — and **no** render intent, because
+            there are no lots to draw — rather than as a raising tool the loop
+            would flatten to ``tool-failed``; the shortfall is the useful
+            part, and the model must copy it rather than invent it (OD-3).
 
         Raises:
             ValidationError: When the model sent an unknown or out-of-range
@@ -99,9 +107,10 @@ class SimulateSaleTool:
             "remaining": sale_rows.remaining(result),
             "lots": [sale_rows.lot_row(row) for row in result.consumed],
         }
-        return ToolOutcome(data=data)
+        scenario = sale_rows.scenario(result, method=options.lot_method)
+        return ToolOutcome(data=data, render=RenderIntent(view=VIEW, options=scenario))
 
 
 register(SimulateSaleTool())
 
-__all__ = ["NAME", "SimulateSaleTool"]
+__all__ = ["NAME", "VIEW", "SimulateSaleTool"]

@@ -34,6 +34,15 @@ on:
       - "backend/**"
       - "infra/**"
       - ".github/workflows/backend-cd.yaml"
+      # backend-ci no longer has its own `push:` trigger — it runs as this
+      # workflow's `ci` job. So the paths that used to start the gate on a push
+      # must start THIS workflow, or they would reach `develop` ungated: a
+      # hand-edited frozen contract (GGU-41 put `docs/catalog/**` on the gate
+      # precisely so the run that rejects it starts), and an edit to the gate
+      # definition itself. Neither deploys anything when the gate is red —
+      # `publish`/`deploy` sit behind `needs: [ci]`.
+      - "docs/catalog/**"
+      - ".github/workflows/backend-ci.yaml"
   workflow_dispatch:
     inputs:
       rollback_to:

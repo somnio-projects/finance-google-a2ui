@@ -8,7 +8,7 @@ run at a glance**, and **we do not pay CI minutes for what a laptop can prove**.
 
 | Prove it… | …here | Why |
 |---|---|---|
-| Formatting, lint, types, file budget, complexity, dead code, duplication, docstrings, typos, unit tests, secrets in the diff, `terraform fmt`, workflow syntax | **pre-commit** (`pre-commit install`) | instant feedback, zero CI cost |
+| Formatting, lint, types, file budget, freshness of a generated artefact, complexity, dead code, duplication, docstrings, typos, unit tests, secrets in the diff, `terraform fmt`, workflow syntax | **pre-commit** (`pre-commit install`) | instant feedback, zero CI cost |
 | Full `make gate` including the DB-backed suite | **pre-push** hook | catches it before it ever reaches a runner |
 | The same checks on a clean machine, integration tests against a real PostgreSQL, container build + CVE scan, secret scan over the **full history**, dependency CVEs | **CI** | a laptop cannot guarantee these |
 | Anything slow, scheduled or org-wide (weekly scans, SBOM) | **scheduled workflow** | keeps the PR path fast |
@@ -46,6 +46,15 @@ clean checkout.
 dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
+
+`catalog-check` sits between `budget` and `quality`: it re-renders
+`docs/catalog/CONTRACT.md` from the projection registry into a temporary buffer
+and diffs it against the checked-in file (GGU-41, spec `backend/0019`).
+
+**A generated artefact is gated by regeneration, never by trust.** Anything the
+build produces is checked in *and* re-rendered by the gate and diffed, and the
+check fails with the exact command that fixes it. A second such artefact copies
+that shape rather than relying on a reviewer remembering to look.
 
 ## 5. When you change one, change its pair
 

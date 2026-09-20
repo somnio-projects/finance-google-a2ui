@@ -16,8 +16,9 @@ Docs at http://localhost:8000/docs (disabled when `ENVIRONMENT=production`).
 ## Verify — a change is not done without this
 
 ```bash
-cd backend && make gate            # lint · typecheck · budget · quality · test 100 % · audit
+cd backend && make gate            # lint · typecheck · budget · catalog-check · quality · test 100 % · audit
 cd backend && make quality         # code smells: complexity, dead code, docstrings, deps, duplication, typos
+cd backend && make catalog         # regenerate docs/catalog/CONTRACT.md after touching a projection
 ```
 
 - `make gate` == CI == `.claude/ship-gate.json`. Red gate = not done. Never lower `fail_under`, never add `# pragma: no cover` without a one-line reason.

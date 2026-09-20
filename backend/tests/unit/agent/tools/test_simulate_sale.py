@@ -2,7 +2,8 @@
 
 The lot walk itself is `tests/unit/domain/test_sales.py`, and how a size is
 named is `test_simulate_sale_sizes.py`. This file is the payload: the schema,
-the formatting invariant, determinism and the absent render intent.
+the formatting invariant and determinism. The render intent it emits is
+`test_simulate_sale_render.py`.
 """
 
 from decimal import Decimal
@@ -113,13 +114,12 @@ async def test_the_same_question_twice_gives_the_same_answer(
     assert first.data == second.data
 
 
-async def test_it_asks_for_no_chart_because_none_fits(
+async def test_the_payload_names_no_view_of_its_own(
     tool: SimulateSaleTool, tool_context: ToolContext
 ) -> None:
-    """AC-8, OD-5 — no registered projection renders a sell scenario."""
+    """The view is a render intent, never a field the model reads (ADR-K D-12)."""
     outcome = await tool.run(HALF_A_BITCOIN, tool_context)
 
-    assert outcome.render is None
     assert "view" not in outcome.data
 
 

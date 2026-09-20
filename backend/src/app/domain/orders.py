@@ -32,4 +32,22 @@ def order_quantity(amount: Decimal, price: Decimal) -> Decimal:
     return amount / price
 
 
-__all__ = ["order_quantity"]
+def order_notional(quantity: Decimal, price: Decimal) -> Decimal:
+    """Return what ``quantity`` units are worth at ``price``.
+
+    The mirror of :func:`order_quantity` and the ticket's other figure: an
+    order's value in USD. It lives here rather than in the presenter that
+    prints it, because what an order is worth is a financial statement and a
+    presenter holds no business rule (ADR-K D-6).
+
+    Args:
+        quantity: Units the order covers; zero is an order for nothing.
+        price: The price a unit is bought or sold at.
+
+    Returns:
+        The exact product, unrounded — rounding happens once, at display.
+    """
+    return quantity * price
+
+
+__all__ = ["order_notional", "order_quantity"]

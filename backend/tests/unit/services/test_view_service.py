@@ -17,10 +17,13 @@ from app.presentation.errors import UnknownViewError
 from app.presentation.registry import REGISTRY
 from app.schemas.views import CURRENT_PORTFOLIO, ViewQuery
 from app.services.view_service import ViewService
+from tests.catalog import SHIPPED_VIEWS
 from tests.conftest import FROZEN_NOW
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
+TAX_LOTS = "taxlots.table.v1"
+SCENARIO = "scenario.comparison.v1"
 
 
 @pytest.fixture
@@ -117,7 +120,8 @@ async def test_catalog_describes_every_registered_projection(
     service: ViewService,
 ) -> None:
     catalog = await service.catalog()
-    assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION]
+    assert tuple([entry.id for entry in catalog]) == SHIPPED_VIEWS
+    assert {WATERFALL, ALLOCATION} <= {entry.id for entry in catalog}
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry.summary == projection.summary
         assert entry.endpoints == list(projection.endpoints)

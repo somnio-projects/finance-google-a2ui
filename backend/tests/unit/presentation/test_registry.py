@@ -21,6 +21,7 @@ from app.presentation.views.holdings_allocation import (
     render,
     surface,
 )
+from tests.catalog import SHIPPED_VIEWS
 
 
 def make_spec(view_id: str = "test.thing.v1") -> ProjectionSpec:
@@ -85,11 +86,21 @@ def test_registry_remove_is_idempotent(registry: ProjectionRegistry) -> None:
     assert registry.all() == ()
 
 
-def test_the_process_registry_holds_both_reference_projections() -> None:
-    assert [p.id for p in REGISTRY.all()] == [
-        "attribution.waterfall.v1",
-        "holdings.allocation.v1",
-    ]
+def test_the_process_registry_holds_every_shipped_projection() -> None:
+    """Equality, against the one written-down list (tests/catalog.py).
+
+    Not containment: containment passes when a projection silently vanishes,
+    which is the half of the contract that actually goes wrong. Not derived
+    from ``REGISTRY`` either — an expectation read from the thing under test
+    cannot fail.
+    """
+    assert tuple(p.id for p in REGISTRY.all()) == SHIPPED_VIEWS
+
+
+def test_the_registry_returns_projections_in_a_stable_order() -> None:
+    """Two identical turns must send the model an identical prompt."""
+    ids = [p.id for p in REGISTRY.all()]
+    assert ids == sorted(ids)
 
 
 def test_validated_options_fills_the_declared_defaults() -> None:
