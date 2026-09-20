@@ -7,7 +7,9 @@ the same list — a second artefact gated by a second script is how the two woul
 start disagreeing.
 
 Adding a third rendering is one entry in ``ARTIFACTS`` and its renderer; the
-script, the gate step and the drift check need no change.
+script, the gate step and the drift check need no change. Everything the
+generator needs — the list, the diff and the command that fixes a stale file —
+is reachable from here, so it imports one module rather than three.
 """
 
 from collections.abc import Callable, Sequence
@@ -19,7 +21,11 @@ from app.presentation.catalog_doc import (
     contract_document,
     contract_drift,
 )
-from app.presentation.catalog_json import SNAPSHOT_PATH, snapshot_document
+from app.presentation.catalog_json import (
+    FIX_COMMAND,
+    SNAPSHOT_PATH,
+    snapshot_document,
+)
 from app.presentation.registry import Projection
 
 
@@ -75,4 +81,4 @@ def render_all(projections: Sequence[Projection]) -> tuple[Rendered, ...]:
     )
 
 
-__all__ = ["ARTIFACTS", "Artifact", "Rendered", "render_all"]
+__all__ = ["ARTIFACTS", "FIX_COMMAND", "Artifact", "Rendered", "render_all"]

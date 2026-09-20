@@ -47,6 +47,12 @@ was the one string no gate watched. That is the drift GGU-53 describes
   `REGISTRY.all()` plus a single pinned example (`holdings.allocation.v1 →
   DonutChart`). Listing all six components would rebuild the hardcoded
   inventory 0019 OD-2 deleted and would fail the day a seventh registers.
+- **A double gate has to be symmetric.** The JSON was checked from inside the
+  suite and the Markdown only by the generator script, which coverage does not
+  measure (`source = ["app"]`). `test_contract_matches_the_registry` closes it:
+  both artefacts are now compared against the registry by a test, so a
+  generator that stopped reporting one cannot let a stale file through. Found
+  by the `backend-reviewer` agent, which is what it is for.
 - **Prose hits the line budget too.** The cross-reference paragraph pushed
   `catalog_preamble.py` to 162 lines; the legend moved to
   `catalog_legend.py` at the seam between "what is frozen" and "how to read a

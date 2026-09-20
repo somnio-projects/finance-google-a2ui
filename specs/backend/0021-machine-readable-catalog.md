@@ -144,9 +144,24 @@ All unit; nothing here touches the database or the network.
 | `test_the_snapshot_carries_every_field_path_of_the_payload` | AC-2 |
 | `test_the_shipped_example_deserialises_into_its_payload_type` | AC-4 |
 | `test_the_snapshot_is_one_json_document_ending_in_a_single_newline` | AC-7 |
+| `test_a_field_that_drives_nothing_reads_null_rather_than_an_em_dash` | AC-2 |
 | `test_a_moved_projection_makes_the_snapshot_drift` | AC-5 |
 | `test_a_missing_snapshot_is_drift_rather_than_a_pass` | AC-5 |
 | `test_both_catalog_artifacts_come_from_one_render_pass` | AC-5 |
+
+and one test added to `test_catalog_doc.py`, so the double gate is symmetric:
+`test_contract_matches_the_registry` compares the **committed** Markdown with
+the registry the way the snapshot's test does (AC-6). Without it the Markdown
+was gated only by the script, so a generator that stopped reporting one
+artefact — the `all(outcomes)` in `main` becoming an `any` — would have let a
+stale `CONTRACT.md` through every check while the JSON stayed honest. Proven by
+hand-editing one line of `docs/catalog/CONTRACT.md`:
+
+```
+E   AssertionError: docs/catalog/CONTRACT.md is stale — a projection moved.
+    Regenerate it: cd backend && make catalog
+1 failed, 8 passed in 0.22s
+```
 
 Mutation checks required: **yes** — the whole point of the artefact is a
 property nothing enforced before.
@@ -191,4 +206,6 @@ suite is green again (350 passed).
 | OD-2 | The ticket sequences the server end "with the first backend projection ticket (GGU-50 or GGU-52)"; all six projections already exist. | TL — **land it now, alone** | The sequencing exists so the snapshot precedes anything that could drift from it. Six projections have already shipped and one of them has already drifted from the component tickets, so the snapshot is late rather than early. Landing it on its own keeps the Flutter harness (blocked by GGU-1) from blocking the artefact its test needs. |
 | OD-3 | Should a test assert the six component names, so "the JSON carries `DonutChart` verbatim" is enforced? | TL — **one named case, never the list** | Asserting all six would reintroduce the hardcoded inventory of components that 0019 OD-2 removed, and would fail the day a seventh projection registers. The suite instead asserts the *rule* over the whole registry — the snapshot's component equals what the adapter emits, and it is a `PascalCase` identifier — plus **one** named case (`holdings.allocation.v1 → DonutChart`) that pins the verbatim-naming property the client depends on. The same shape the rest of the presentation suite uses. |
 | OD-4 | `fields` as bare paths (the ticket's wording) or as the full inventory row? | TL — **the full row** | The generator already computes presence, binding, state and input for the Markdown table, so carrying them costs nothing and makes the JSON a superset of the ticket's ask. The client test reads `path`; a future gallery (GGU-22) reads the rest rather than re-deriving it from a schema. Dropping to bare paths later is a shape change with a version bump; adding fields to an artefact nobody consumes yet is free. |
-| OD-5 | `catalog_preamble.py` went over the 150-line budget when the cross-reference paragraph was added. | TL — **split the prose, never the budget** | The legend moved to `catalog_legend.py`, at the natural seam: the preamble answers "what is frozen and who enforces it", the legend answers "how do I read a row". Raising the budget for prose would be lowering a team threshold in a feature PR. The generated document is byte-identical apart from the new paragraph. |
+| OD-5 | The Markdown prints `—` where a field drives no state and takes no input. Does the JSON carry the dash? | TL — **`null`, and only in the JSON** | A dash reads well in a table and is a trap in JSON: a client would compare against a punctuation mark to learn that a field is read-only. `_absent` maps the placeholder to `null` in the snapshot only, which is what "rendered for a machine" means — the same fact, told the way each reader can act on it. `test_a_field_that_drives_nothing_reads_null_rather_than_an_em_dash` pins it from both sides: read-only fields are `null`, and `order.ticket.v1` still reports its editable ones. |
+| OD-6 | `snapshot_entry` lists `summary`, `endpoints`, `options_schema` and `example`, which `contract.py::catalog_entry` already assembles for `GET /v1/views` (keyed `id`) and `catalog_doc._section` a third way. A third occurrence is normally a refactor (`api-design.md` §3). | TL — **deliberately independent** | The two answer to different masters. The snapshot is **frozen** — its shape is pinned by a digest a client binds to — while `/v1/views` is an HTTP contract that may gain a field, paginate or change its keys under `/v2`. Sharing one builder would make every HTTP change a contract change, and a frozen artefact that moves because a route moved is precisely the drift this file exists to detect. What they *do* share is the thing that must not diverge: the projection itself, and `catalog_doc.digest`. Recorded here rather than left as an unexplained duplication. |
+| OD-7 | `catalog_preamble.py` went over the 150-line budget when the cross-reference paragraph was added. | TL — **split the prose, never the budget** | The legend moved to `catalog_legend.py`, at the natural seam: the preamble answers "what is frozen and who enforces it", the legend answers "how do I read a row". Raising the budget for prose would be lowering a team threshold in a feature PR. The generated document is byte-identical apart from the new paragraph. |

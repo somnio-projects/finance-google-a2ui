@@ -7,6 +7,7 @@ whatever the calendar says today.
 
 from collections.abc import Iterator
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,6 +20,14 @@ from app.helpers.clock import FixedClock
 from app.presentation.registry import ProjectionRegistry
 from tests.conftest import FROZEN_NOW, FakeReporter, make_settings
 from tests.unit.api.conftest import UNREACHABLE_DSN, make_views_client
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+
+
+def committed(path: str) -> str:
+    """Return a generated artefact as checked in, or "" when it is missing."""
+    target = REPO_ROOT / path
+    return target.read_text(encoding="utf-8") if target.exists() else ""
 
 
 def make_holding(

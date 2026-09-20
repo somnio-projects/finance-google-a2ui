@@ -20,6 +20,7 @@ from typing import Any, Final
 from app.presentation.catalog_doc import digest, fields_of
 from app.presentation.inventory import InventoryField
 from app.presentation.registry import Projection
+from app.presentation.schema_facts import NONE
 
 #: Where the rendered snapshot is checked in, relative to the repository root.
 SNAPSHOT_PATH: Final[str] = "docs/catalog/view-catalog.snapshot.json"
@@ -50,15 +51,25 @@ def component_of(projection: Projection) -> str:
     return projection.surface(payload).component
 
 
-def _field(field: InventoryField) -> dict[str, str]:
+def _absent(cell: str) -> str | None:
+    """Return ``None`` where the Markdown table prints its em-dash placeholder.
+
+    The dash reads well in a table and is a trap in JSON: a client would have
+    to compare against a punctuation mark to learn that a field drives no state
+    and takes no input. Same fact, rendered for the reader of each artefact.
+    """
+    return None if cell == NONE else cell
+
+
+def _field(field: InventoryField) -> dict[str, str | None]:
     """Describe one payload field, the same row the Markdown table prints."""
     return {
         "path": field.path,
         "type": field.kind,
         "presence": field.presence,
         "binding": field.binding,
-        "state": field.state,
-        "input": field.interaction,
+        "state": _absent(field.state),
+        "input": _absent(field.interaction),
     }
 
 

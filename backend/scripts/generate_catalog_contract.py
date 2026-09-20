@@ -19,8 +19,7 @@ Usage:
 import sys
 from pathlib import Path
 
-from app.presentation.catalog_artifacts import Rendered, render_all
-from app.presentation.catalog_json import FIX_COMMAND
+from app.presentation.catalog_artifacts import FIX_COMMAND, Rendered, render_all
 from app.presentation.registry import REGISTRY
 from app.presentation.views import LOADED
 

@@ -107,103 +107,103 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"attribution.waterfall.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'attribution.waterfall.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "start",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "start.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "start.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "start.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "start.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "end",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "end.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "end.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "end.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "end.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "buckets",
           "presence": "default `[]`",
           "state": "empty",
@@ -211,63 +211,63 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "buckets[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "buckets[].delta",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "buckets[].delta.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "buckets[].delta.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "buckets[].cumulative",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "buckets[].cumulative.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "buckets[].cumulative.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "enum",
-          "input": "—",
+          "input": null,
           "path": "buckets[].direction",
           "presence": "required",
           "state": "variant",
@@ -275,7 +275,7 @@
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "annotations",
           "presence": "default `[]`",
           "state": "empty",
@@ -283,18 +283,18 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "annotations[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "annotations[].text",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤200 chars"
         }
       ],
@@ -450,63 +450,63 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"holdings.allocation.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'holdings.allocation.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "total",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "total.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "total.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "total.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "total.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "categories",
           "presence": "required",
           "state": "empty",
@@ -514,66 +514,66 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "categories[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "categories[].key",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "categories[].value",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "categories[].value.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "categories[].value.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "categories[].weight",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "categories[].weight.value",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "categories[].weight.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤16 chars"
         }
       ],
@@ -727,18 +727,18 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"order.ticket.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'order.ticket.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
@@ -746,15 +746,15 @@
           "input": "input · one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL'",
           "path": "symbol",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤10 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "name",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
@@ -767,95 +767,95 @@
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "quantity",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "quantity.units",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "quantity.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "entry_price",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "entry_price.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "entry_price.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "notional",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "notional.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "notional.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "notional.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "notional.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "inputs",
           "presence": "required",
           "state": "empty",
@@ -863,23 +863,23 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "inputs[].option",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "inputs[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "enum",
-          "input": "—",
+          "input": null,
           "path": "inputs[].control",
           "presence": "required",
           "state": "variant",
@@ -887,15 +887,15 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "inputs[].value",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "inputs[].choices",
           "presence": "default `[]`",
           "state": "empty",
@@ -903,7 +903,7 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "inputs[].pattern",
           "presence": "default `null`",
           "state": "null",
@@ -911,18 +911,18 @@
         },
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "effect",
           "presence": "default `\"recalculate\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'recalculate'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "disclosure",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤300 chars"
         }
       ],
@@ -1266,31 +1266,31 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"payoff.curve.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'payoff.curve.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "disclosure",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤400 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "totals",
           "presence": "default `[]`",
           "state": "empty",
@@ -1298,39 +1298,39 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "totals[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "totals[].amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "totals[].amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "totals[].amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "series",
           "presence": "default `[]`",
           "state": "empty",
@@ -1338,15 +1338,15 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "series[].name",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "series[].points",
           "presence": "required",
           "state": "empty",
@@ -1354,39 +1354,39 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "series[].points[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "series[].points[].value",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "series[].points[].value.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "series[].points[].value.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "annotations",
           "presence": "default `[]`",
           "state": "empty",
@@ -1394,18 +1394,18 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "annotations[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "annotations[].text",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤200 chars"
         }
       ],
@@ -1679,34 +1679,34 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"scenario.comparison.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'scenario.comparison.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "subject",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "subject.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
@@ -1714,68 +1714,68 @@
           "input": "input · string matching ^[A-Za-z]{2,10}$, or omit it",
           "path": "subject.symbol",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "subject.quantity_display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "subject.price",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "subject.price.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "subject.price.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "subject.proceeds",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "subject.proceeds.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "subject.proceeds.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns",
           "presence": "required",
           "state": "empty",
@@ -1783,7 +1783,7 @@
         },
         {
           "binding": "enum",
-          "input": "—",
+          "input": null,
           "path": "columns[].method",
           "presence": "required",
           "state": "variant",
@@ -1791,127 +1791,127 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "columns[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns[].cost_basis",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].cost_basis.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "columns[].cost_basis.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns[].realized_pl",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].realized_pl.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "columns[].realized_pl.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns[].short_term_pl",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].short_term_pl.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "columns[].short_term_pl.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns[].long_term_pl",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].long_term_pl.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "columns[].long_term_pl.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].short_term_lots",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "integer 0..None"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "columns[].long_term_lots",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "integer 0..None"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "columns[].lots",
           "presence": "required",
           "state": "empty",
@@ -1919,39 +1919,39 @@
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "spread",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "spread.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "spread.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "spread.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "flag",
-          "input": "—",
+          "input": null,
           "path": "spread.differs",
           "presence": "required",
           "state": "variant",
@@ -1959,7 +1959,7 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "spread.highest",
           "presence": "default `null`",
           "state": "null",
@@ -1967,7 +1967,7 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "spread.lowest",
           "presence": "default `null`",
           "state": "null",
@@ -1975,7 +1975,7 @@
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "notes",
           "presence": "default `[]`",
           "state": "empty",
@@ -1983,18 +1983,18 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "notes[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "notes[].text",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤200 chars"
         }
       ],
@@ -2241,191 +2241,191 @@
       "fields": [
         {
           "binding": "constant",
-          "input": "—",
+          "input": null,
           "path": "view",
           "presence": "default `\"taxlots.table.v1\"`",
-          "state": "—",
+          "state": null,
           "type": "const 'taxlots.table.v1'"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "title",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤120 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "subtitle",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤200 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "price",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "price.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "price.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "price.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "price.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "proceeds",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "proceeds.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "proceeds.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "proceeds.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "proceeds.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "cost_basis",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "cost_basis.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "cost_basis.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "cost_basis.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "cost_basis.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "realized",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "realized.label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "realized.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "realized.amount.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "realized.amount.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "by_term",
           "presence": "required",
           "state": "empty",
@@ -2433,15 +2433,15 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "by_term[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "enum",
-          "input": "—",
+          "input": null,
           "path": "by_term[].term",
           "presence": "required",
           "state": "variant",
@@ -2449,39 +2449,39 @@
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "by_term[].lots",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "integer 0..None"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "by_term[].realized",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "by_term[].realized.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "by_term[].realized.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "lots",
           "presence": "default `[]`",
           "state": "empty",
@@ -2489,23 +2489,23 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "lots[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "lots[].acquired_on",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string"
         },
         {
           "binding": "enum",
-          "input": "—",
+          "input": null,
           "path": "lots[].term",
           "presence": "required",
           "state": "variant",
@@ -2513,95 +2513,95 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "lots[].units",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "lots[].cost_basis",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "lots[].cost_basis.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "lots[].cost_basis.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "lots[].proceeds",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "lots[].proceeds.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "lots[].proceeds.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "lots[].gain_loss",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "object"
         },
         {
           "binding": "raw",
-          "input": "—",
+          "input": null,
           "path": "lots[].gain_loss.amount",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "decimal"
         },
         {
           "binding": "display",
-          "input": "—",
+          "input": null,
           "path": "lots[].gain_loss.display",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤32 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "lots[].trend",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤8 chars"
         },
         {
           "binding": "flag",
-          "input": "—",
+          "input": null,
           "path": "lots[].fully_sold",
           "presence": "required",
           "state": "variant",
@@ -2609,7 +2609,7 @@
         },
         {
           "binding": "container",
-          "input": "—",
+          "input": null,
           "path": "remaining",
           "presence": "default `[]`",
           "state": "empty",
@@ -2617,18 +2617,18 @@
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "remaining[].label",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤64 chars"
         },
         {
           "binding": "text",
-          "input": "—",
+          "input": null,
           "path": "remaining[].text",
           "presence": "required",
-          "state": "—",
+          "state": null,
           "type": "string ≤200 chars"
         }
       ],

@@ -1,20 +1,16 @@
 """AC-1..AC-7 of spec 0021 — the machine-readable catalog, and its drift check.
 
-The Markdown contract is gated by the generator script; this file gates the
-JSON twin from inside the suite, which is what GGU-53 asks for: a projection
-that is added, renamed or reshaped without `make catalog` turns `make gate` red
-here as well as in `catalog-check`.
-
-Everything is read from the registry. No view id, no component name and no
-field path is listed as an expectation except the one case that pins the
-*verbatim* component naming the Flutter `FinanceCatalog` registers against.
+This file gates the JSON twin from inside the suite, which is what GGU-53 asks
+for: a projection added, renamed or reshaped without `make catalog` turns
+`make gate` red here as well as in `catalog-check`. Everything is read from the
+registry — no view id, component name or field path is an expectation except
+the one case pinning the *verbatim* naming `FinanceCatalog` registers against.
 """
 
 from json import loads
-from pathlib import Path
 from typing import Any
 
-from app.presentation.catalog_artifacts import ARTIFACTS, render_all
+from app.presentation.catalog_artifacts import ARTIFACTS, FIX_COMMAND, render_all
 from app.presentation.catalog_doc import CONTRACT_PATH, contract_document, fields_of
 from app.presentation.catalog_json import (
     SNAPSHOT_PATH,
@@ -24,21 +20,14 @@ from app.presentation.catalog_json import (
     snapshot_entry,
 )
 from app.presentation.registry import REGISTRY
+from app.presentation.schema_facts import NONE
 from app.presentation.spec import ProjectionSpec
-
-REPO_ROOT = Path(__file__).resolve().parents[4]
-FIX = "cd backend && make catalog"
-
-
-def committed_snapshot() -> str:
-    """Return the checked-in snapshot, or ``""`` when it is missing."""
-    target = REPO_ROOT / SNAPSHOT_PATH
-    return target.read_text(encoding="utf-8") if target.exists() else ""
+from tests.unit.presentation.conftest import committed
 
 
 def entries() -> dict[str, Any]:
     """Return the committed snapshot's entries, keyed by view id."""
-    views = loads(committed_snapshot())["views"]
+    views = loads(committed(SNAPSHOT_PATH))["views"]
     return {entry["view"]: entry for entry in views}
 
 
@@ -46,8 +35,8 @@ def test_snapshot_matches_the_registry() -> None:
     """The gate: regenerate in memory and compare with the committed file."""
     generated = snapshot_document(REGISTRY.all())
 
-    assert committed_snapshot() == generated, (
-        f"{SNAPSHOT_PATH} is stale — a projection moved. Regenerate it: {FIX}"
+    assert committed(SNAPSHOT_PATH) == generated, (
+        f"{SNAPSHOT_PATH} is stale — a projection moved. Regenerate it: {FIX_COMMAND}"
     )
 
 
@@ -80,6 +69,15 @@ def test_the_snapshot_carries_every_field_path_of_the_payload() -> None:
     assert entry["endpoints"] == list(projection.endpoints)
 
 
+def test_a_field_that_drives_nothing_reads_null_rather_than_an_em_dash() -> None:
+    """A client compares against null, never against a punctuation mark."""
+    read_only = entries()["holdings.allocation.v1"]["fields"]
+
+    assert all(field["input"] is None for field in read_only)
+    assert not any(NONE in (field["input"], field["state"]) for field in read_only)
+    assert [f["path"] for f in entries()["order.ticket.v1"]["fields"] if f["input"]]
+
+
 def test_the_shipped_example_deserialises_into_its_payload_type() -> None:
     """What the client test asserts, asserted here first: the example is real."""
     for projection in REGISTRY.all():
@@ -92,7 +90,7 @@ def test_the_shipped_example_deserialises_into_its_payload_type() -> None:
 
 def test_the_snapshot_is_one_json_document_ending_in_a_single_newline() -> None:
     """A generated file a tool reads, and a file a human diffs."""
-    text = committed_snapshot()
+    text = committed(SNAPSHOT_PATH)
     document = loads(text)
 
     assert text.endswith("}\n")
