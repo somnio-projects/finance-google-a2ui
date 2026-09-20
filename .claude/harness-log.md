@@ -1975,8 +1975,29 @@ listed gaps.
   manifest and would have fitted; every pull answers `denied` while Docker Hub
   works. Anything that needs ghcr has to be resolved with whoever owns that
   policy, not worked around.
-- **G-11 survives, deliberately and much smaller.** The hardening was proven
-  with `docker run` and the flags compose declares, not through `docker compose`
-  itself — it will not parse without `backend/.env`, which the repo does not
-  ship. So the *image* is proven and the *compose wiring* is not. That is a real
-  difference and it keeps its marker.
+- **G-11 is closed, and the way it closed is reusable.** The hardening was
+  first proven with `docker run` and the flags compose declares, which is not
+  the same claim — it leaves a typo in `docker-compose.yml` undetected. Compose
+  will not parse this project without `backend/.env`. The way through is a
+  throwaway overlay that resets only the *backend* service's env_file:
+
+  ```yaml
+  services:
+    backend:
+      env_file: !reset null
+  ```
+
+  `docker compose -f docker-compose.yml -f overlay.yml --profile client up -d
+  --no-deps client` then works with no credential anywhere, and the `client`
+  service stays exactly as committed. `docker inspect` on the container compose
+  created reports `Config.User=101`, `ReadonlyRootfs=true`,
+  `SecurityOpt=[no-new-privileges:true]`, `Tmpfs=map[/tmp:]` and
+  `Up (healthy)` — declared and applied agree. **`client-ci.yaml` should use
+  this overlay rather than putting a real `.env` on a runner**, and that is now
+  written into spec 0002 §9.
+- **The obvious way to unblock compose was to borrow the developer's real
+  `backend/.env`. Don't.** It holds a live `GEMINI_API_KEY`, the harness denies
+  `**/.env` precisely so an agent cannot reach it, and a key that reaches a
+  transcript is a key that has to be rotated. The overlay above gets the same
+  proof and touches nothing secret. If a future task looks like it needs that
+  file, it almost certainly needs an overlay instead.

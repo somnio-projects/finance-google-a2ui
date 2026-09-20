@@ -252,10 +252,13 @@ subject is a container, and the evidence is the container answering.
 > **Run on 2026-09-20.** The image builds and AC-1 to AC-6 were each observed
 > against a running container; the evidence is pasted in PR #49 and the
 > `Verified by` column of `client_flutter/docs/SECURITY.md` now records what was
-> watched rather than what someone should type. Two qualifications, kept rather
-> than rounded off: the hardening flags were applied with `docker run` and not
-> with `docker compose` (which will not parse without `backend/.env`) — G-11 —
-> and AC-9 is still CI's to prove, not a laptop's.
+> watched rather than what someone should type. AC-2 and AC-4 were then redone
+> **through `docker compose up`**, inspecting the container compose created, so
+> the claim is that the declared flags are the applied ones and not merely that
+> an equivalent `docker run` works — that closed G-11. Compose will not parse
+> this project without `backend/.env`; the run used a throwaway overlay
+> (`services.backend.env_file: !reset null`) that leaves the `client` service
+> exactly as committed and involves no credential. AC-9 remains CI's to prove.
 
 | AC | How it is proven | Where |
 |---|---|---|
@@ -291,7 +294,10 @@ down in §9 rather than left for a reader to notice.
   here that a header grep cannot stand in for, since a CSP can be present and
   still break the app; **`docker compose --profile client up` and
   `docker inspect` asserting `ReadonlyRootfs`/`SecurityOpt`**, which closes
-  G-11; Trivy on the image with the backend's CRITICAL/HIGH gate; `hadolint` on
+  G-11 — and it can do this **without a secret on the runner**, by overlaying
+  `services.backend.env_file: !reset null` so compose parses with no
+  `backend/.env`, which is exactly how G-11 was closed; Trivy on the image with
+  the backend's CRITICAL/HIGH gate; `hadolint` on
   the Dockerfile; `shellcheck` on `docker/entrypoint.sh`. The build itself must
   keep `flutter pub get --enforce-lockfile` — without it a mismatched SDK
   re-resolves silently, which is how G-12 hid for as long as it did. Each of
