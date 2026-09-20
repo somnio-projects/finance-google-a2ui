@@ -1452,3 +1452,60 @@ that were each internally consistent, and nothing read both:
   binding and it plans clean; applying it is an exposure decision left to the
   TL (OD-4). The rollback path was exercised for real by this failure and
   worked: traffic was restored to the previous revision.
+
+---
+
+## 2026-09-20 (cont.) — persistence, delivery, and four claims nothing checked (#35, #37, #38, #39, #40, #41)
+
+**Specs:** `specs/backend/0020-portfolio-persistence.md`
+
+**Code.** The portfolio left process memory for PostgreSQL. Delivery became a
+button (`workflow_dispatch` only — merging deploys nothing). Migrations run as
+a Cloud Run job *before* the traffic shift. Five GitHub Actions bumped, and
+Dependabot pointed at `develop`. The views endpoint now accepts the options
+its own catalog advertises.
+
+**The pattern, again.** Every defect found today was a property someone had
+written down and nothing enforced. Listing them together because the shape is
+more useful than any one of them:
+
+| Claim | What was true |
+|---|---|
+| `dev` is a deployable environment | `Environment` in `config.py` had no `dev`; the container would have died at startup |
+| the compliance corpus's Cloud SQL audit logs | `sqladmin` does not accept a service-level audit config — the claim was *unapplyable* |
+| `/healthz` is the liveness endpoint | Google's edge intercepts that exact path on `*.run.app`; it never reached the container |
+| migrations run on deploy | nothing ran them anywhere — `/readyz` proves the connection, not the schema |
+| the catalog's options are the endpoint's options | nine advertised options answered 422; four of six projections unreachable from the client |
+| every operation documents an example | `POST /` — the A2A surface — had none, and it is the route a client is most written against |
+| `ship-gate.json` == CI | CI linted `tests/*.sh`, the gate did not; my own shellcheck finding reached `develop` |
+
+**Next person should know**
+
+- **Verify from outside the thing you are verifying.** Four of the seven above
+  were found by sweeping the *deployed* service or the *running* stack, not by
+  reading code. The sweep that found the options gap was generated from
+  `/v1/views` so it could not miss one; had I written the list by hand I would
+  have written the same nine names the endpoint already knew.
+- **A contrast isolates a defect faster than a stack trace.** `POST
+  /v1/view-renders` served the identical options with a 201 while `?view=`
+  answered 422. That one comparison moved the bug from "the projections are
+  broken" to "the query model is stale" in a single request.
+- **Two of my own verifications lied before they told the truth.** A schema
+  probe passed its Python through `gcloud --args`, which splits on commas, so
+  the container ran `import asyncio` and exited 0 — a pass with no output. And
+  an error-path test raised `IntegrityError` from `execute`, where the *read*
+  handler caught and translated it, so the write path was never exercised. A
+  green check is evidence only if it could have been red.
+- **A real database finds what a fake never will.** An `IntegrityError` aborts
+  the whole PostgreSQL transaction, so the loser of the seeding race could not
+  re-read the winner until `replace` was wrapped in a SAVEPOINT. No fake
+  repository has that behaviour to imitate.
+- **`NUMERIC(38,18)` changes a `Decimal`'s string form.** Returning the freshly
+  seeded object made a session's *first* answer differ from every answer after
+  it, which ADR-K D-20 forbids. `get` re-reads after seeding. The integration
+  flow test caught it — written months before persistence existed.
+- **Dependabot needs `target-branch`.** Without it, it opens against the
+  repository default (`main`), and this project merges to `develop`. Five PRs
+  sat unmergeable-by-construction for weeks with nothing saying why.
+- **`/healthz` is unusable on run.app.** Proven with two controls from two
+  networks. Do not "fix" it back.
