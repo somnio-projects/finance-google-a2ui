@@ -7,6 +7,51 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — Closing the gates · no ticket
+
+**Branch:** `chore/close_the_gates`, straight onto `develop` after the thirteen
+PRs landed.
+
+**The hole this closes.** Three times in one iteration a property was written
+down, believed, and enforced by nothing — and every time the gate was green.
+The worst of them, `symbols` advertising a ten-character bound while accepting
+five thousand, was fixed in `get_holdings_summary` by review. **It was still
+live in `compute_attribution` after the merge**: `maxItems: 20` on the list,
+and items of `{"type": "string"}` with no bound at all.
+
+Fixing it again per tool does not scale — the next tool is written by whoever
+is next. So the rule is now enforced over the **registry**:
+`tests/unit/agent/test_tool_argument_bounds.py` walks every registered tool
+and fails, naming tool and field, on any leaf that can accept unbounded input.
+A new tool is covered the day it registers.
+
+Mutation check, run: reverting the `compute_attribution` fix turns it red with
+`compute_attribution.symbols is published to the model with no bound on its
+size`; restoring it goes green. The guard also tests itself — a bare string, a
+capped array of unbounded items, and `^\w+$` must all fail it.
+
+**One subtlety worth keeping.** The first version read the registry live and
+passed alone but failed in the full suite: other tests register doubles into
+the process-wide registry at runtime, so the gate depended on test order and a
+double's loose schema could fail a check about the tools this backend actually
+ships. It now snapshots at import, before any test runs.
+
+**Harness** — `.claude/rules/backend/testing.md` gained two sections: *A
+documented property needs a test that bites* (with the three instances, and
+the rules: two declarations of one fact get a test comparing them; wiring gets
+a mutation check; enforce over the registry, not per instance; branch coverage
+does not see a conditional expression) and *A payload is wrong when two of its
+own numbers disagree*.
+
+**Next person, read this**
+- The three gate definitions — `.claude/ship-gate.json`, `backend/Makefile`,
+  `.github/workflows/backend-ci.yaml` — were checked after the merges and are
+  still identical. They drift silently; check them after any integration.
+- The Flutter half of the gate still does not exist. `ship-gate.json` says it
+  lands with GGU-1, which is open as PR #26.
+
+---
+
 ## 2026-09-19 — Delivery follow-ups · spec `specs/backend/0012-delivery-followups.md`
 
 **Branch:** `feat/backend_followups`, stacked on `feat/GGU-3_a2a_surface`. Six

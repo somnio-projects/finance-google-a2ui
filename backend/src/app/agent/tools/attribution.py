@@ -21,6 +21,7 @@ from app.agent.registry import register
 from app.core.display import money_display, percentage_display
 from app.core.display import signed_money_display as signed
 from app.domain.attribution import WindowAttribution, attribute_window
+from app.domain.symbols import Ticker
 
 NAME: Final[str] = "compute_attribution"
 VIEW: Final[str] = "attribution.waterfall.v1"
@@ -42,7 +43,7 @@ class AttributionArguments(BaseModel):
         description="How far back to attribute the move.",
         examples=["7d"],
     )
-    symbols: tuple[str, ...] | None = Field(
+    symbols: tuple[Ticker, ...] | None = Field(
         default=None,
         max_length=MAX_SYMBOLS,
         description=(
