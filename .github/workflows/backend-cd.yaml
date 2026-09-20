@@ -4,9 +4,24 @@
 #   job name  = "<Area> · <what it proves>"
 #   step name = "<Verb> <object> (<tool>)"
 #
-# What reaches each environment:
-#   develop -> dev,        no human step
-#   main    -> production, behind the `production` Environment's required reviewer
+# Delivery is MANUAL. There is no `push:` trigger: merging to `develop` builds
+# and deploys nothing. Someone presses "Run workflow" in the Actions tab and
+# picks the branch, and the branch decides the environment —
+#
+#   run from `develop` -> dev
+#   run from `main`    -> production, behind the `production` Environment's
+#                         required reviewer, exactly as before
+#
+# Why: a POC does not merge and deploy in the same motion, and paying for a
+# build plus a deploy on every merge is the largest avoidable line in the CI
+# bill. PR checks are untouched — `backend-ci` still runs on every pull request
+# that touches `backend/**`, which is where a regression should be caught.
+#
+# The button only appears once this file exists on the repository's DEFAULT
+# branch. GitHub reads `workflow_dispatch` from the default branch only, so a
+# workflow that lives solely on `develop` is invisible in the UI and
+# `gh workflow run` answers "not found on the default branch". Releasing
+# `develop` into `main` is what makes the button real.
 #
 # Nothing is built or deployed until the full backend gate has passed ON THIS
 # COMMIT. `backend-ci.yaml` is called as the `ci` job below and `publish` and
@@ -28,21 +43,7 @@
 name: backend-cd
 
 on:
-  push:
-    branches: [develop, main]
-    paths:
-      - "backend/**"
-      - "infra/**"
-      - ".github/workflows/backend-cd.yaml"
-      # backend-ci no longer has its own `push:` trigger — it runs as this
-      # workflow's `ci` job. So the paths that used to start the gate on a push
-      # must start THIS workflow, or they would reach `develop` ungated: a
-      # hand-edited frozen contract (GGU-41 put `docs/catalog/**` on the gate
-      # precisely so the run that rejects it starts), and an edit to the gate
-      # definition itself. Neither deploys anything when the gate is red —
-      # `publish`/`deploy` sit behind `needs: [ci]`.
-      - "docs/catalog/**"
-      - ".github/workflows/backend-ci.yaml"
+  # Manual only, on purpose — see the header. Nothing here reacts to a push.
   workflow_dispatch:
     inputs:
       rollback_to:

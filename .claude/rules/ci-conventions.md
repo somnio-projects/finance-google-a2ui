@@ -56,6 +56,39 @@ build produces is checked in *and* re-rendered by the gate and diffed, and the
 check fails with the exact command that fixes it. A second such artefact copies
 that shape rather than relying on a reviewer remembering to look.
 
+## 4b. One pipeline per stack, and delivery is a button
+
+**Nothing runs on a merge.** `backend-ci` has no `push:` trigger (it would run
+the same gate twice on the same commit) and `backend-cd` has none either —
+delivery is `workflow_dispatch` only. The cost model for this project is: pay
+on pull requests, where a regression is actually caught, and pay for a deploy
+when somebody asks for one.
+
+That is safe only because `develop` is branch protected, so every change
+arrives through a pull request and is gated there. If protection is ever
+removed, the push triggers have to come back with it.
+
+**A change to one stack must not start the other stack's pipeline.** Every
+workflow is scoped by `paths:` to the directory it proves:
+
+| workflow | runs on | scope |
+|---|---|---|
+| `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file |
+| `client-ci` | pull requests | `client_flutter/**`, its own file |
+| `infra-ci` | pull requests | `infra/**`, the delivery workflows |
+| `backend-cd` | **the button only** | — |
+
+A new stack gets its own `<area>-ci.yaml` with its own `paths:`. Adding jobs to
+an existing workflow so that "everything runs together" is the thing this table
+exists to prevent: a Dart formatting fix must never pay for a PostgreSQL
+container, and a Python change must never wait on a Flutter build.
+
+**The button lives on the default branch.** GitHub reads `workflow_dispatch`
+from the default branch only, so a delivery workflow that exists only on
+`develop` is invisible in the Actions tab and `gh workflow run` answers *"not
+found on the default branch"*. Releasing `develop` into `main` is what makes
+the button appear.
+
 ## 5. When you change one, change its pair
 
 `.claude/ship-gate.json` is the Definition of Done and has two halves, each

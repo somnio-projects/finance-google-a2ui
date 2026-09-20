@@ -35,7 +35,7 @@ flowchart LR
     rep --> merge["Squash merge<br/>1 code-owner approval"]
     merge --> gate --> pub --> dep --> ver
     ver -- "not healthy" --> rb
-    dep -. "develop" .-> dv["Cloud Run dev<br/>(no human step)<br/>probed at its run.app URL"]
+    dep -. "run from develop" .-> dv["Cloud Run dev<br/>(started by hand)<br/>probed at its run.app URL"]
     dep -. "main, after environment approval" .-> prd["Cloud Run production<br/>probed at the LB domain"]
     merge --> wk
 
