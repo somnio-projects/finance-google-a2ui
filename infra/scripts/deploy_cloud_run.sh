@@ -156,6 +156,28 @@ main() {
     return 0
   fi
 
+migrate() {
+  # Runs the schema forward before anything serves the new image.
+  #
+  # Order matters and is the whole point: the job runs on the image being
+  # released, and it runs **before** the traffic shift. A migration after the
+  # shift would mean requests hitting a schema the code does not expect; a
+  # migration at container start would mean two booting instances racing
+  # through it, which Alembic's version table does not guard.
+  #
+  # A failure here is a hard stop with traffic untouched — the previous
+  # revision keeps serving the schema it was written for.
+  local job="$1"
+  echo "running migrations with the released image"
+  if ! gcloud run jobs execute "${job}" \
+    --region="${REGION}" --project="${PROJECT}" \
+    --update-env-vars="APP_RELEASE=${RELEASE}" \
+    --wait 2>&1; then
+    return 1
+  fi
+  return 0
+}
+
   require_env IMAGE RELEASE PUBLIC_URL
 
   echo "deploying ${IMAGE} to ${SERVICE} without traffic"
@@ -181,6 +203,12 @@ main() {
   if ! revision_is_ready "${revision}"; then
     rollback "${previous}" "${revision}" \
       "revision ${revision} did not become Ready (startup probe on /readyz)"
+  fi
+
+  # Schema first, then traffic. See `migrate` above for why this order is the
+  # one that cannot serve a half-applied schema.
+  if ! migrate "${SERVICE%-api}-migrate"; then
+    rollback "${previous}" "${revision}" "migrations failed; the schema was not moved"
   fi
 
   echo "shifting traffic to ${revision}"

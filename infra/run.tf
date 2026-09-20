@@ -146,6 +146,81 @@ resource "google_cloud_run_v2_service" "backend" {
   }
 }
 
+# Schema migrations (spec 0020 §4.3). Same image, same secrets, no HTTP
+# surface — the only way the schema ever changes (`security.md`: migrations are
+# the only schema path; no `create_all` outside tests).
+#
+# **This did not exist until 2026-09-20, and nothing else ran migrations
+# either** — not the pipeline, not Terraform, not the container. The database
+# had the application pointed at it and none of its tables. `/readyz` passed
+# the whole time because it proves the connection, not the schema, so the gap
+# was invisible until the portfolio stopped living in process memory and
+# actually needed a table to read.
+#
+# A job rather than a startup hook on purpose: two instances booting together
+# would race each other through the same migration, and Alembic's version
+# table is not a lock. `deploy_cloud_run.sh` executes this once and waits for
+# it **before** a revision takes traffic, so no request ever reaches a schema
+# that is half-applied.
+resource "google_cloud_run_v2_job" "migrate" {
+  name                = "${local.name}-migrate"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # a failed migration is read, not retried blindly
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["alembic", "upgrade", "head"]
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
+}
+
 # Monthly audit-trail retention purge (DATA_RETENTION.md §2) — same image,
 # same secrets, no HTTP surface.
 resource "google_cloud_run_v2_job" "purge_audit" {
