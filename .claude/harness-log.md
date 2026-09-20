@@ -178,6 +178,64 @@ start the run that rejects it.**
 
 ---
 
+## 2026-09-20 — GGU-81: the tool schemas Gemini actually accepts · spec `specs/backend/0006-agent-host.md`
+
+**Branch:** `fix/GGU-81_gemini_tool_schema`.
+
+**The product's core flow had never worked, and 1180 tests said it had.**
+Every agent turn against the real `GeminiModelClient` came back
+`{"kind":"error","code":"dependency-unavailable"}` with `outcome:
+model-unavailable`, which reads like a provider outage and is not one. The
+request was a 400: `parameters` in a `functionDeclaration` is an **OpenAPI 3
+`Schema` proto**, decoded with proto3 JSON rules, and proto3 rejects an
+unknown field instead of ignoring it. `payload.py` was passing pydantic's JSON
+Schema through unchanged, so `additionalProperties` and `examples` — both of
+which our own rules *require* tools to carry — made every turn fail.
+
+**The two consumers of one schema want different dialects.** `api-design.md`
+says every field is documented and exemplified; OpenAPI wants that, Gemini
+refuses it. The fix is a translation at the adapter boundary
+(`infra/model/tool_schema.py`), never a weakening of the tools: the
+declarations, the OpenAPI document and
+`tests/unit/agent/test_tool_argument_bounds.py` all still see the full schema.
+
+**The subset was measured, not remembered.** One POST per keyword against
+`gemini-3.8-flash`, at the `parameters` root and inside a property, keeping
+whatever answered 200. 21 keywords are refused, including four that carry a
+bound — `const`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf` — and
+`$ref`/`$defs`, which carry *everything*. `$ref` is therefore **resolved**, and
+`const` rewritten as a single-valued `enum`; dropping either would delete a
+bound from what the model reads, which is the failure the bounds gate exists
+to prevent. The lists live in `tool_schema_keys.py` with the note that they
+came from the API.
+
+**What the suite learned.** `tests/unit/infra/model/test_outgoing_tool_schema.py`
+builds the real outgoing body from the **real registry** and asserts no refused
+keyword survives, plus that no argument lost a bound on the way out. No
+network. Mutation-checked: putting `examples` back in the allow-list turns it
+red for three of the four tools.
+
+**Next person should know**
+
+- **A fake that is never compared to the real thing is a shared belief, not a
+  test.** `payload.py` had 100 % branch coverage against stubs we wrote from
+  our own assumption of the format. Spec 0006 OD-7 had even written the risk
+  down — *"the Gemini wire mapping has never met the real API"* — and it still
+  took a human reproducing the 400 by hand to collect. Coverage cannot see a
+  wrong premise; only the provider can.
+- **An error taxonomy can hide the defect it reports.** Every provider failure
+  leaves as `DependencyUnavailableError("model provider unavailable")`, by
+  design (no status, no provider text, ADR-J). That is right for the client
+  and blinding for us: a 400 that will never succeed is indistinguishable from
+  a 503 that will. Worth a look at whether non-retryable statuses deserve a
+  distinguishable log field — the body still must not travel.
+- **Gemini 3 answers with `thoughtSignature` on the part beside a
+  `functionCall`.** `payload.from_response` ignores unknown fields, so it is
+  dropped today. If a future multi-step turn starts failing on the *second*
+  model call, look there first.
+
+---
+
 ## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
 
 **Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
