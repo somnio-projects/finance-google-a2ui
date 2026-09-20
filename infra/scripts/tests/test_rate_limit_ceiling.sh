@@ -30,7 +30,7 @@
 # Terraform. This is the seam, so the assertion lives here, beside
 # test_dev_environment.sh, which exists for exactly the same reason.
 #
-# Every value is PARSED rather than grepped for, and an unparseable declaration
+# Every value is PARSED rather than grepped for, and an unparsable declaration
 # is a hard FAILURE, never an empty string that trivially agrees with another
 # empty string: a check that quietly matches nothing is worse than no check, and
 # a renamed heading in SECURITY.md must break the build rather than pass it

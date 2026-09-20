@@ -372,7 +372,7 @@ drive-by:
   (`alembic/versions/20260919_0004_sessions.py`, `session_repository.py`) — but
   it is still marked Accepted and nothing records the supersession. Someone
   should either amend ADR-F or write the ADR that replaces it; until then the
-  repo asserts a constraint the code does not honour.~~
+  repo asserts a constraint the code does not honour.
   **Recorded 2026-09-20 in [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md)** —
   D-4 is superseded by D-7/D-8/D-9 (Proposed; the TL ratifies). Two
   corrections to what this bullet said: dev derives **1/2**, not 0/2
