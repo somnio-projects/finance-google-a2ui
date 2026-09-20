@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done, in two parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). Flutter gate lands with GGU-1.",
+  "_note": "Definition of Done, in two parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md \u00a75). `infra.shell-lint` is here because it was not, and the two halves drifted: CI ran shellcheck over the test scripts as well as the deploy script while this file listed neither, so a finding in a test script passed every local check and failed on a runner. The scope below is the workflow step verbatim. Flutter gate lands with GGU-1.",
   "required": [
     {
       "id": "py.lint",
@@ -41,6 +41,11 @@
       "id": "py.audit",
       "cwd": "backend",
       "cmd": "make audit"
+    },
+    {
+      "id": "infra.shell-lint",
+      "cwd": ".",
+      "cmd": "shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh"
     },
     {
       "id": "infra.delivery-script",
