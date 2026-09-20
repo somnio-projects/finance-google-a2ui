@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done, in two parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). Flutter gate lands with GGU-1.",
+  "_note": "Definition of Done, in three parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `dart.*` / `client.*` / `flutter.*` commands are exactly the jobs of .github/workflows/client-ci.yaml and the matching pre-commit hooks; `client.tokens` and `client.config` are the two grep gates client_flutter/README.md documents. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5).",
   "required": [
     {
       "id": "py.lint",
@@ -38,18 +38,6 @@
       "cmd": "make audit"
     },
     {
-      "id": "infra.delivery-script",
-      "cwd": ".",
-      "cmd": "bash infra/scripts/tests/test_deploy_cloud_run.sh"
-    },
-    {
-      "id": "infra.credential-model",
-      "cwd": ".",
-      "cmd": "bash infra/scripts/tests/test_wif_conditions.sh"
-    }
-  ],
-  "_candidates": [
-    {
       "id": "dart.format",
       "cwd": "client_flutter",
       "cmd": "dart format --output=none --set-exit-if-changed ."
@@ -60,6 +48,16 @@
       "cmd": "dart analyze --fatal-infos --fatal-warnings"
     },
     {
+      "id": "client.tokens",
+      "cwd": "client_flutter",
+      "cmd": "bash tool/check_tokens.sh"
+    },
+    {
+      "id": "client.config",
+      "cwd": "client_flutter",
+      "cmd": "bash tool/check_config.sh"
+    },
+    {
       "id": "flutter.test",
       "cwd": "client_flutter/app",
       "cmd": "flutter test --coverage"
@@ -68,6 +66,16 @@
       "id": "flutter.web",
       "cwd": "client_flutter/app",
       "cmd": "flutter build web --release"
+    },
+    {
+      "id": "infra.delivery-script",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_deploy_cloud_run.sh"
+    },
+    {
+      "id": "infra.credential-model",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_wif_conditions.sh"
     }
   ]
 }

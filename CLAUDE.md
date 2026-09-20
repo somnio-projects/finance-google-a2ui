@@ -29,10 +29,13 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 ```bash
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
 cd backend && make gate                # lint · types · budget · quality (smells) · tests 100 % · audit
-cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
+cd client_flutter && flutter pub get   # once per clone; SDK version pinned in .fvmrc
+dart format --output=none --set-exit-if-changed . && dart analyze --fatal-infos --fatal-warnings
+bash tool/check_tokens.sh && bash tool/check_config.sh          # theme and config boundaries
+cd app && flutter test --coverage && flutter build web --release
 ```
 
-`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`) and `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
+`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`, `client-ci.yaml`, `infra-ci.yaml`), `make gate` and the client commands above verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
 
 ## How work flows (SDD)
 

@@ -1,0 +1,152 @@
+# Flutter client ship gate.
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+# Cost contract: anything a laptop can prove runs in pre-commit, not here.
+# CI re-proves it on a clean machine, where no stale .dart_tool/ or pub cache
+# can make a broken resolution look green, and adds the release web build.
+name: client-ci
+
+on:
+  pull_request:
+    paths:
+      - "client_flutter/**"
+      - ".github/workflows/client-ci.yaml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "client_flutter/**"
+      - ".github/workflows/client-ci.yaml"
+
+permissions:
+  contents: read
+
+# One run per branch: a new push cancels the previous one instead of paying twice.
+concurrency:
+  group: client-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned to client_flutter/.fvmrc so CI and every laptop compile the same
+  # SDK. Bump both together or the two disagree silently.
+  FLUTTER_VERSION: "3.47.3"
+
+defaults:
+  run:
+    working-directory: client_flutter
+
+jobs:
+  quality:
+    name: "Client · formatting, strict analysis, theme and config boundaries"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve the workspace dependencies (flutter pub get)
+        run: flutter pub get
+
+      - name: Verify formatting is canonical (dart format)
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyse under strict casts, inference and raw types (dart analyze)
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      # The two grep gates client_flutter/README.md documents. They are cheap
+      # and they guard architecture, not style: a colour literal or an endpoint
+      # URL outside its layer is a design regression the analyser cannot see.
+      - name: Assert no colour literals outside the theme layer (check_tokens.sh)
+        run: bash tool/check_tokens.sh
+
+      - name: Assert no endpoint URLs outside the config layer (check_config.sh)
+        run: bash tool/check_config.sh
+
+  tests:
+    name: "Client · widget and unit suite with coverage"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve the workspace dependencies (flutter pub get)
+        run: flutter pub get
+
+      - name: Run the client suite with coverage (flutter test)
+        working-directory: client_flutter/app
+        run: flutter test --coverage
+
+      - name: Publish the coverage report (actions/upload-artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-coverage
+          path: client_flutter/app/coverage/lcov.info
+          retention-days: 14
+
+  build:
+    name: "Client · release web bundle compiles"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only after the cheap jobs pass — a branch that fails analysis never pays
+    # for a release compile.
+    needs: [quality, tests]
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v4
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve the workspace dependencies (flutter pub get)
+        run: flutter pub get
+
+      - name: Compile the release web bundle (flutter build web)
+        working-directory: client_flutter/app
+        run: flutter build web --release
+
+  report:
+    name: "Report · client ship-gate summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality, tests, build]
+    if: always()
+    steps:
+      - name: Write the gate result to the run summary (GITHUB_STEP_SUMMARY)
+        working-directory: .
+        run: |
+          {
+            echo "## Client ship gate"
+            echo ""
+            echo "| Gate | Proves | Result |"
+            echo "|---|---|---|"
+            echo "| Quality | dart format, strict analyze, theme-token and config-URL boundaries | ${{ needs.quality.result }} |"
+            echo "| Tests | widget and unit suite with coverage | ${{ needs.tests.result }} |"
+            echo "| Build | the release web bundle compiles | ${{ needs.build.result }} |"
+            echo ""
+            echo "Local equivalent: the \`dart.*\`, \`client.*\` and \`flutter.*\` entries of \`.claude/ship-gate.json\`; pre-commit runs the cheap ones before every commit."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run when any gate failed (bash)
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

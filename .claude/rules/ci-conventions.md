@@ -40,22 +40,34 @@ clean checkout.
 
 ## 4. Quality gates the project keeps
 
-`make gate` == pre-push == CI, in this order: `lint` (ruff check + format),
-`typecheck` (basedpyright strict), `budget` (150 lines), `quality`
+**Backend.** `make gate` == pre-push == CI, in this order: `lint` (ruff check +
+format), `typecheck` (basedpyright strict), `budget` (150 lines), `quality`
 (xenon complexity · vulture dead code · interrogate 100 % docstrings · deptry
 dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
+**Client.** `dart format --set-exit-if-changed`, `dart analyze --fatal-infos
+--fatal-warnings` (strict casts · inference · raw types, plus the lint set in
+`client_flutter/analysis_options.yaml`), the two grep gates
+(`tool/check_tokens.sh` — no colour literals outside `theme/`;
+`tool/check_config.sh` — no endpoint URLs outside `config/`), `flutter test
+--coverage`, and `flutter build web --release`. The grep gates guard
+architecture rather than style, which is why they are gates and not review
+notes. The Flutter SDK is pinned in `client_flutter/.fvmrc`; CI reads the same
+version, and bumping one without the other makes local and CI disagree
+silently.
+
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done and has two halves, each
+`.claude/ship-gate.json` is the Definition of Done and has three parts, each
 with a runner and a workflow that must stay identical to it:
 
-| Half | Runner | Workflow | Also in |
+| Part | Runner | Workflow | Also in |
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
+| `dart.*` · `client.*` · `flutter.*` | the entries themselves, from `client_flutter/` and `client_flutter/app/` — there is no client Makefile | `client-ci.yaml` | pre-commit (format, analyze, grep gates, tests) + pre-push (the web build) |
 | `infra.*` | `bash infra/scripts/tests/*.sh` from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 
-A PR that changes one without its pair is incomplete. If a third runner ever
+A PR that changes one without its pair is incomplete. If a fourth runner ever
 appears, it goes in this table rather than in a comment.
