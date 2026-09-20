@@ -42,7 +42,7 @@ jobs:
         working-directory: infra
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Terraform (hashicorp/setup-terraform)
         uses: hashicorp/setup-terraform@v3
@@ -73,7 +73,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Lint the delivery shell scripts (shellcheck)
         run: shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh
