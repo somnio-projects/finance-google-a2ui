@@ -13,7 +13,7 @@
 #   2. assert that revision's Ready condition is True — explicitly, because a
 #      deploy that "succeeded" without a ready revision must not take traffic
 #   3. only then shift 100 % of traffic to it
-#   4. verify PUBLIC_URL/healthz reports exactly the release we deployed
+#   4. verify PUBLIC_URL/health reports exactly the release we deployed
 #   5. on any failure, put traffic back on the revision that was serving before
 #
 # Why the post-shift check uses PUBLIC_URL rather than a hostname this script
@@ -25,7 +25,7 @@
 # dev there is no load balancer, ingress is open, and PUBLIC_URL is the
 # service's own run.app URL — which is exactly why dev's ingress is open
 # (specs/infra/0001-dev-environment.md AC-6). Either way the caller passes one
-# address, /healthz is unauthenticated by contract, and the verify-then-roll-
+# address, /health is unauthenticated by contract, and the verify-then-roll-
 # back sequence below is identical.
 #
 # The pre-shift check stays the revision's Ready condition rather than an HTTP
@@ -186,14 +186,14 @@ main() {
   echo "shifting traffic to ${revision}"
   shift_traffic "${revision}"
 
-  if ! health="$(probe "${PUBLIC_URL}/healthz")"; then
-    rollback "${previous}" "${revision}" "healthz did not answer 200 after the traffic shift"
+  if ! health="$(probe "${PUBLIC_URL}/health")"; then
+    rollback "${previous}" "${revision}" "health did not answer 200 after the traffic shift"
   fi
 
   reported="$(printf '%s' "${health}" | json_field version || true)"
   if [[ "${reported}" != "${RELEASE}" ]]; then
     rollback "${previous}" "${revision}" \
-      "healthz reports release '${reported}', expected '${RELEASE}'"
+      "health reports release '${reported}', expected '${RELEASE}'"
   fi
 
   echo "deployed ${revision} (${RELEASE})"
@@ -205,7 +205,7 @@ main() {
     "| Revision | \`${revision}\` |" \
     "| Release | \`${RELEASE}\` |" \
     "| Readiness | Ready before the traffic shift |" \
-    "| Verified at | ${PUBLIC_URL}/healthz |"
+    "| Verified at | ${PUBLIC_URL}/health |"
 }
 
 main "$@"

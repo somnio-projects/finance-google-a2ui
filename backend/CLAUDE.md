@@ -73,7 +73,7 @@ Rules that are checked, not suggested:
 
 ## Security posture (SOC 2 / ISO 27001 — see docs/SECURITY.md)
 
-Bearer-token auth on everything except `/healthz`, `/readyz`, `/openapi.json`, `/docs`; admin routes additionally require scope `admin`; feature-flag gates answer 404 before auth; strict security headers; CORS and `TrustedHost` allow-lists from settings; body-size limit; per-token rate limit; audit trail (`audit_events`) for identity actions; non-root read-only container; no secrets in code, images or logs; problem responses never carry stack traces.
+Bearer-token auth on everything except `/health`, `/readyz`, `/openapi.json`, `/docs`; admin routes additionally require scope `admin`; feature-flag gates answer 404 before auth; strict security headers; CORS and `TrustedHost` allow-lists from settings; body-size limit; per-token rate limit; audit trail (`audit_events`) for identity actions; non-root read-only container; no secrets in code, images or logs; problem responses never carry stack traces.
 
 ## Do not touch
 

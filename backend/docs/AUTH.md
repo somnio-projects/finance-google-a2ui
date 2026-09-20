@@ -2,7 +2,7 @@
 
 ## Contract
 
-Every route except `/healthz`, `/readyz`, `/openapi.json`, `/docs` requires
+Every route except `/health`, `/readyz`, `/openapi.json`, `/docs` requires
 
 ```
 Authorization: Bearer <token>

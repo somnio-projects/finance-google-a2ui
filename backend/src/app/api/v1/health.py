@@ -1,4 +1,28 @@
-"""Health controllers — unauthenticated by contract (ADR-B D-3)."""
+"""Health controllers — unauthenticated by contract (ADR-B D-3).
+
+The liveness path is ``/health``, not the ``/healthz`` convention it used to
+be. **Google's edge intercepts the exact path ``/healthz`` on ``*.run.app``**
+and answers its own HTML 404; the request never reaches the container. It was
+found by deploying: the pipeline's post-shift verification failed ten times in
+a row against a service that was serving fine.
+
+Proven rather than assumed, with two controls and from two independent
+networks (a laptop and a GitHub Actions runner):
+
+===================  ==========================  =========================
+path                 response                    reached the container?
+===================  ==========================  =========================
+``/HEALTHZ``         ``{"detail":"Not Found"}``  yes, in the request log
+``/nonexistent``     ``{"detail":"Not Found"}``  yes, in the request log
+``/healthz``         Google's HTML 404           **never logged**
+===================  ==========================  =========================
+
+``/health``, ``/livez``, ``/_health``, ``/healthcheck``, ``/status`` and
+``/alivez`` were all probed before choosing: every one reaches the app, so the
+interception is specific to ``/healthz`` and the replacement was picked on
+evidence. The endpoint's behaviour, DTO and contract are unchanged — only the
+string. Recorded in specs/infra/0001-dev-environment.md §10b.
+"""
 
 from typing import Annotated
 
@@ -14,7 +38,7 @@ HealthDep = Annotated[HealthService, Depends(get_health_service)]
 
 
 @router.get(
-    "/healthz",
+    "/health",
     response_model=HealthResponse,
     operation_id="read_liveness",
     summary="Report process liveness",
@@ -25,7 +49,7 @@ HealthDep = Annotated[HealthService, Depends(get_health_service)]
     ),
     responses=problem_responses(429, 500),
 )
-def healthz(service: HealthDep) -> HealthResponse:
+def health(service: HealthDep) -> HealthResponse:
     """Return 200 while the process is alive. Never probes dependencies."""
     return service.liveness()
 

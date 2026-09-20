@@ -137,7 +137,7 @@ these are the controls it does not have:
 | Adaptive L7 DDoS | Cloud Armor | **none** | Cloud Run's own scaling ceiling (`max-instances = 2`) bounds the blast radius to a small bill, not an outage of something that matters |
 | TLS policy of our choosing | `MODERN`, TLS 1.2+ | Google's `run.app` defaults | still TLS-only, still a Google-managed certificate; we simply do not pick the profile |
 | Edge access log | LB logs, sampled 1.0 | **none** | Cloud Run request logs still record every request |
-| Uptime check + readiness alert | yes | **none** | the 5xx and auth-failure alerts still page; the deploy itself verifies `/healthz` and rolls back |
+| Uptime check + readiness alert | yes | **none** | the 5xx and auth-failure alerts still page; the deploy itself verifies `/health` and rolls back |
 | Regional HA | synchronous standby | **none** | a zone failure loses dev until it is re-applied. Acceptable: the data is synthetic and the environment is disposable |
 | Point-in-time recovery | to the minute | **none** | 2 daily backups; RPO is up to 24 h |
 | Backup retention | 30 | 2 | — |
@@ -171,7 +171,7 @@ must be re-sized first.
    production, and setting it on dev is refused rather than ignored.
 6. **AC-6** — In dev the API is reachable at Cloud Run's own URL, which the
    `public_url` output reports from the service's real address; the deploy
-   script's post-shift `/healthz` probe therefore works unchanged in dev.
+   script's post-shift `/health` probe therefore works unchanged in dev.
 7. **AC-7** — Every control in §5 that dev does not have is stated in the
    compliance corpus, in the document that otherwise asserts it.
 8. **AC-8** — A merge to `develop` deploys to **dev**, and `publish`/`deploy`
@@ -282,7 +282,34 @@ application something no test ever hands it**. The lesson is in
 `.claude/rules/backend/testing.md` already — *a property that spans two
 declarations gets a test comparing them* — and #4 now has exactly that test.
 
-A sixth is **not** fixed here and is the one thing standing between this
+**6 — Google's edge intercepts the exact path `/healthz` on `*.run.app`.**
+The liveness endpoint was never reached: the pipeline's post-shift
+verification probed it ten times and got Google's own HTML 404 each time,
+against a service that was serving normally. Proven rather than assumed, from
+two independent networks (a laptop and a GitHub Actions runner) and against
+two controls:
+
+| path | response | reached the container? |
+|---|---|---|
+| `/HEALTHZ` | `{"detail":"Not Found"}` | yes, in the request log |
+| `/nonexistent-path` | `{"detail":"Not Found"}` | yes, in the request log |
+| `/healthz` | Google's HTML 404 | **never logged** |
+
+`/health`, `/livez`, `/_health`, `/healthcheck`, `/status` and `/alivez` were
+all probed before choosing — every one reaches the app, so the interception is
+specific to `/healthz` and the replacement was picked on evidence, not
+convention. The path is now `/health` everywhere; behaviour, DTO and contract
+are unchanged. Historical records (`CHANGELOG.md`, the harness log, archived
+`docs/specs/GGU-*`) keep saying `/healthz` because that is what was true when
+they were written.
+
+Note this would *not* have shown up behind the load balancer, which is our own
+frontend — it is specific to the run.app domain, which is exactly what dev
+uses because it has no LB. An endpoint that works in some environments and not
+others is worse than one path that works everywhere, which is why this is a
+rename rather than a dev-only workaround.
+
+A seventh is **not** fixed here and is the one thing standing between this
 environment and AC-1: the service had no `run.invoker` binding at all, so it
 answers 403 to any caller without a Google identity. The Terraform is written
 (`iam.tf`, dev-only) and planned; applying it is a deliberate exposure decision

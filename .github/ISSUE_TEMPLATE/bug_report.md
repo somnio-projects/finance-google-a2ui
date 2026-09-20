@@ -30,5 +30,5 @@ what came back
 ## Environment
 
 - Part of the system: backend / client / infrastructure
-- Commit or version (`GET /healthz` reports it):
+- Commit or version (`GET /health` reports it):
 - How you ran it: `docker compose up` / `make run` / deployed

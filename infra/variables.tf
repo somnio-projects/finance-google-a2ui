@@ -25,7 +25,7 @@ variable "github_repository" {
 }
 
 variable "backend_release" {
-  description = "Release identifier reported by GET /healthz (APP_RELEASE). The pipeline passes <version>+<git-sha>; Terraform alone deploys the packaged default."
+  description = "Release identifier reported by GET /health (APP_RELEASE). The pipeline passes <version>+<git-sha>; Terraform alone deploys the packaged default."
   type        = string
   default     = ""
 }

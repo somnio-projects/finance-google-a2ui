@@ -80,7 +80,7 @@ migrations already applied.
 |---|---|
 | Interactive API documentation | <http://localhost:8000/docs> |
 | OpenAPI document | <http://localhost:8000/openapi.json> |
-| Liveness | <http://localhost:8000/healthz> |
+| Liveness | <http://localhost:8000/health> |
 | Readiness, including the database | <http://localhost:8000/readyz> |
 
 Every route except the health ones needs a bearer token. With the default

@@ -42,10 +42,10 @@ To add a backend (OpenTelemetry, Datadog): implement the Protocol in
 
 ## Health
 
-- `GET /healthz` — liveness. Never probes dependencies (a Gemini/DB blip must not restart the service).
+- `GET /health` — liveness. Never probes dependencies (a Gemini/DB blip must not restart the service).
 - `GET /readyz` — readiness. Runs every `ReadinessProbe` (`database` today); 503 + `status: degraded` when any fails. Add probes by implementing the Protocol and passing them to `HealthService` in `bootstrap.build_container`.
 
-Compose and the Dockerfile health-check `/healthz`; Cloud Run should use it as
+Compose and the Dockerfile health-check `/health`; Cloud Run should use it as
 the startup probe.
 
 ## Local

@@ -15,7 +15,7 @@ The full control mapping is `backend/docs/SECURITY.md`. These are the rules that
 
 ## Authentication & authorization (CC6.1, CC6.3 · A.5.15, A.5.17, A.8.5)
 
-- Every route is authenticated through `PrincipalDep` except `/healthz`, `/readyz`, `/openapi.json`, `/docs` and `/.well-known/agent-card.json`. Adding a public route requires a note in the feature spec and the reviewer's sign-off. The agent card is public because a client cannot present a token before it has bootstrapped (spec 0010 OD-1); it carries no subject data, only what the service is and what it can be asked for. The list is spelled out in `tests/unit/api/test_openapi_contract.py::PUBLIC`, so adding one is a visible diff rather than a route that quietly stops declaring a 401.
+- Every route is authenticated through `PrincipalDep` except `/health`, `/readyz`, `/openapi.json`, `/docs` and `/.well-known/agent-card.json`. Adding a public route requires a note in the feature spec and the reviewer's sign-off. The agent card is public because a client cannot present a token before it has bootstrapped (spec 0010 OD-1); it carries no subject data, only what the service is and what it can be asked for. The list is spelled out in `tests/unit/api/test_openapi_contract.py::PUBLIC`, so adding one is a visible diff rather than a route that quietly stops declaring a 401.
 - Only Firebase/OIDC ID tokens or HS256 service tokens are accepted; refresh tokens, API keys in query strings and cookies are never credentials.
 - Verify `iss`, `aud`, `exp`, `iat` and signature; require `sub`. Leeway ≤ 300 s.
 - Authorization decisions (scopes/roles) live in services, using `principal.has_scope(...)`; never in controllers, never by string comparison on raw claims.
@@ -50,5 +50,5 @@ The full control mapping is `backend/docs/SECURITY.md`. These are the rules that
 ## Supply chain & runtime (CC8.1 · A.8.8, A.8.19, A.8.31)
 
 - Dependencies pinned through `uv.lock`; `make audit` (pip-audit) and gitleaks run in CI; new dependencies are named in the PR with the reason.
-- Container runs as non-root (`uid 10001`), read-only filesystem, `no-new-privileges`, health check on `/healthz`; nothing but the runtime and source is copied into the image.
+- Container runs as non-root (`uid 10001`), read-only filesystem, `no-new-privileges`, health check on `/health`; nothing but the runtime and source is copied into the image.
 - Migrations are the only schema path (`alembic upgrade head`); no `create_all` outside tests.

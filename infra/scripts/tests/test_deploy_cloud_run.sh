@@ -23,9 +23,9 @@ FAILED=0
 #   deploy_fails      `gcloud run deploy` exits non-zero
 #   no_revision       the service reports no latestCreatedRevisionName
 #   not_ready         the revision never reaches Ready=True
-#   health_fail       /healthz never answers 200 after the shift
-#   release_mismatch  /healthz answers 200 but reports another release
-#   release_prefix    /healthz reports a release the expected one is a PREFIX of
+#   health_fail       /health never answers 200 after the shift
+#   release_mismatch  /health answers 200 but reports another release
+#   release_prefix    /health reports a release the expected one is a PREFIX of
 make_stubs() {
   local scenario="$1"
   mkdir -p "${WORK}/bin"
@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
 done
 body=""; status="200"
 case "${url}" in
-  */healthz)
+  */health)
     case "${SCENARIO}" in
       health_fail) status="500"; body="boom" ;;
       release_mismatch) body='{"status":"ok","version":"0.1.0+stale00"}' ;;
@@ -176,7 +176,7 @@ assert_contains "then traffic went back"              "${calls}" "${SHIFT_OLD}"
 assert_contains "the reason names the release found" "$(cat "${WORK}/out.txt")" "reports release '0.1.0+stale00'"
 
 # ---------------------------------------------------------------- case 4
-echo "case 4 · healthz never answers after the shift — rolled back (AC-4)"
+echo "case 4 · health never answers after the shift — rolled back (AC-4)"
 make_stubs health_fail
 assert_exit_nonzero "exits non-zero"
 assert_contains "traffic went back" "$(cat "${WORK}/calls.log")" "${SHIFT_OLD}"

@@ -26,7 +26,7 @@ GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 #: path here is a security decision: it needs a note in the feature spec and
 #: the reviewer's sign-off, which is why the list is spelled out rather than
 #: inferred from whether a route happens to declare a 401.
-PUBLIC = {"/healthz", "/readyz", "/.well-known/agent-card.json"}
+PUBLIC = {"/health", "/readyz", "/.well-known/agent-card.json"}
 
 
 def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
