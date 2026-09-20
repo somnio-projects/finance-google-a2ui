@@ -16,7 +16,7 @@ from json import dumps
 from typing import Any, Final
 
 from app.presentation.inventory import InventoryField
-from app.presentation.prompt import option_bounds
+from app.presentation.option_text import option_bounds
 from app.presentation.schema_facts import NONE, collapse, describe
 
 OPTION_HEADER: Final[tuple[str, ...]] = (

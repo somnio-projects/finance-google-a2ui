@@ -21,9 +21,20 @@ presentation/
     holdings_allocation.py     …
 ```
 
-`views/<name>.py` is the **only** file a new chart touches. If adding a chart
-makes you edit `registry.py`, an enum, a union list or an `if/elif`, the design
-is wrong — fix the seam, do not extend the chain (ADR-K D-15).
+A new chart **edits no existing file**. If adding one makes you touch
+`registry.py`, an enum, a union list or an `if/elif`, the design is wrong —
+fix the seam, do not extend the chain (ADR-K D-15).
+
+It may **create** more than one. `views/<name>.py` holds the projection and
+its `register(...)`, and for a simple chart that is the whole of it; a chart
+whose options are a domain object in their own right will not fit its DTO,
+options model and builders into 150 lines, and the budget is a gate while
+"one module" is a preference. All four charts added by GGU-41 split three or
+four ways. The helpers sit **beside** `views/`, not inside it —
+`tests/unit/presentation/test_package_boundaries.py` requires exactly one
+`register(...)` per module in that package, which is what keeps discovery
+unambiguous. Name them after the view (`taxlots.py`, `taxlot_scenario.py`,
+`taxlot_render.py`) so the group is obvious in a directory listing.
 
 ## 2. The rules that are checked in review
 

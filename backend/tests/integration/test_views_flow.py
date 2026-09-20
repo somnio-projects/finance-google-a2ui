@@ -9,7 +9,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
-from app.presentation.registry import REGISTRY
+from tests.catalog import SHIPPED_VIEWS
 from tests.conftest import make_token
 
 ALLOCATION = "holdings.allocation.v1"
@@ -60,7 +60,7 @@ def test_the_catalog_is_served(integration_client: TestClient) -> None:
     response = integration_client.get("/v1/views", headers=_headers())
     assert response.status_code == 200
     served = {entry["id"] for entry in response.json()}
-    assert served == {ALLOCATION, WATERFALL, TAX_LOTS}
+    assert served == set(SHIPPED_VIEWS)
 
 
 def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -> None:
@@ -73,14 +73,6 @@ def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -
     assert payload["subtitle"] == "Sell 0.5 BTC under FIFO"
     assert [half["term"] for half in payload["by_term"]] == ["short", "long"]
     assert payload["price"]["amount"]["display"] == "$64,250.00"
-
-    assert served == {projection.id for projection in REGISTRY.all()}
-    assert {entry["id"] for entry in response.json()} == {
-        ALLOCATION,
-        WATERFALL,
-        SCENARIO,
-    }
-    assert {ALLOCATION, WATERFALL} <= {entry["id"] for entry in response.json()}
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:

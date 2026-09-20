@@ -14,6 +14,7 @@ from app.api.container import Container
 from app.api.deps import get_render_intent_service, get_view_service
 from app.presentation.registry import REGISTRY
 from app.schemas.views import MAX_VIEWS
+from tests.catalog import SHIPPED_VIEWS
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
@@ -103,9 +104,7 @@ def test_catalog_describes_every_registered_projection(
     response = views_client.get("/v1/views", headers=AUTH)
     assert response.status_code == 200
     catalog = response.json()
-    assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION, TAX_LOTS]
-    assert [entry["id"] for entry in catalog] == [p.id for p in REGISTRY.all()]
-    assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION, SCENARIO]
+    assert tuple([entry["id"] for entry in catalog]) == SHIPPED_VIEWS
     assert {WATERFALL, ALLOCATION} <= {entry["id"] for entry in catalog}
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry["endpoints"] == list(projection.endpoints)

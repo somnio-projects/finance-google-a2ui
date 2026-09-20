@@ -10,6 +10,11 @@ schema, so widening a bound updates the prompt in the same commit.
 from collections.abc import Mapping, Sequence
 from typing import Any, Final
 
+from app.presentation.option_text import (
+    NO_OPTIONS,
+    Defs,
+    option_bounds,
+)
 from app.presentation.registry import Projection
 
 PROMPT_HEADER: Final[str] = (
@@ -18,38 +23,15 @@ PROMPT_HEADER: Final[str] = (
     "rejected and the default view is rendered instead. Never invent a payload "
     "shape, a field or a formatted number."
 )
-NO_OPTIONS: Final[str] = "none"
-
-
-def option_bounds(spec: Mapping[str, Any]) -> str:
-    """Return a one-line description of the values one option accepts.
-
-    Args:
-        spec: The option's JSON-schema fragment.
-
-    Returns:
-        Wording the model can act on, such as ``integer 1..20``.
-    """
-    if "const" in spec:
-        return f"only {spec['const']!r}"
-    if "enum" in spec:
-        return "one of " + ", ".join(repr(value) for value in spec["enum"])
-    if spec.get("type") == "integer":
-        return f"integer {spec.get('minimum')}..{spec.get('maximum')}"
-    if spec.get("type") == "boolean":
-        return "true or false"
-    if spec.get("type") == "string":
-        return f"string matching {spec['pattern']}"
-    return "list of names"
 
 
 def _options_line(projection: Projection) -> str:
     """Return the option summary of one projection, from its JSON schema."""
-    properties: Mapping[str, Any] = projection.options.model_json_schema().get(
-        "properties", {}
-    )
+    schema = projection.options.model_json_schema()
+    properties: Mapping[str, Any] = schema.get("properties", {})
+    defs: Defs = schema.get("$defs")
     described = ", ".join(
-        f"{name} ({option_bounds(spec)})" for name, spec in properties.items()
+        f"{name} ({option_bounds(spec, defs)})" for name, spec in properties.items()
     )
     return f"  options: {described or NO_OPTIONS}"
 
@@ -71,4 +53,4 @@ def prompt_fragment(projections: Sequence[Projection]) -> str:
     return "\n".join(lines)
 
 
-__all__ = ["NO_OPTIONS", "PROMPT_HEADER", "option_bounds", "prompt_fragment"]
+__all__ = ["PROMPT_HEADER", "prompt_fragment"]

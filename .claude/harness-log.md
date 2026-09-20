@@ -7,6 +7,82 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
+
+**Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
+
+**What the ticket asked for, and what it got.** GGU-41 asked for six component
+schemas to be **transcribed by hand** into a Figma page from Epic-2 tickets
+that do not exist in this repo. Under ADR-K D-14 the schema contract already
+*is* the projection registry, so a hand-copied inventory would be a second
+source of truth — and the second source is the one that goes stale, which is
+the exact failure the ticket exists to prevent. The intent shipped in full;
+the method was inverted. `docs/catalog/CONTRACT.md` is generated from
+`REGISTRY.all()`, and **"frozen" now means drift is detected**: `make
+catalog-check` regenerates, diffs and fails with the command to run. It is in
+`make gate`, `ship-gate.json`, the CI Quality job and pre-commit.
+
+It bit during this very integration: the four new projections landed and the
+gate went red on a stale contract before any human noticed.
+
+**Four charts, four agents, one convergent finding.** `taxlots.table.v1`,
+`scenario.comparison.v1`, `payoff.curve.v1` and `order.ticket.v1` were built
+in parallel by agents that could not see each other. Three of them
+independently reported the same thing, which is what makes it credible:
+
+> **ADR-K's `Projection` Protocol is bound to `Portfolio`.** D-6 says "domain
+> result + options → DTO"; the code says `Portfolio` in three places, and
+> `Callable` is contravariant in its arguments, so `render(SomeOtherResult, …)`
+> does not even type-check. The four charts fit *only* because their domain
+> results are derivable from a `Portfolio` by a pure function.
+
+Recorded in **ADR-K itself** (Consequences → "Known limit"), not in four
+specs, so the fifth person does not rediscover it. Deliberately **not** fixed:
+no projection needs it yet, and widening the seam speculatively costs every
+current view a type parameter it does not use.
+
+**The order ticket, without changing the ADR.** Interactivity cannot live in
+`render()` — a projection returns a payload and never receives an event. It
+lives in the *declaration*: the editable fields **are** the declared options
+(D-3), published as `TicketInput` descriptors; an edit is re-rendering the
+same view with one option changed. And the bounds it publishes are proved to
+be the bounds enforced — by a test that walks the **registry**, feeding every
+published bound back through `validated_options`.
+
+**What I fixed centrally, that no single agent could see**
+- **Four test files hard-coded the registered id list**, and three agents
+  "fixed" them three different ways (extend, derive-from-registry, loosen to
+  containment). Now one written-down list, `tests/catalog.py::SHIPPED_VIEWS`,
+  the same shape `EXPECTED_TOOLS` has for tools. Deliberately *not* derived
+  from `REGISTRY`: an expectation read from the thing under test cannot fail.
+- **`option_bounds` was lying to the model.** Anything it did not recognise
+  fell through to the literal `"list of names"`, so a nullable ticker reached
+  the model as `symbol (list of names)` and a list of enums as
+  `methods (list of names)`. **Two charts changed their own design to route
+  around the wording** rather than send a lie — which is how one defect in a
+  shared file becomes four private workarounds. It now follows `$ref`s into
+  `$defs`, describes each `anyOf` branch, and when it truly does not recognise
+  a shape it *says so* instead of guessing. `tests/unit/presentation/
+  test_prompt_bounds.py` walks the registry and fails if any option reaches
+  the model described as unrecognised.
+- Split into `option_text.py` when `prompt.py` went over budget, and the
+  `if`-chain became a dispatch table when xenon ranked it C.
+
+**Next person, read this**
+- **A guessed description is worse than an absent one**, because the model
+  acts on it. That is why the fallback names the gap.
+- The four Flow B/C charts all score `fitness = 0` — they are asked for by id
+  and never volunteered. A backend that offers a sale card over a plain
+  portfolio read is proposing a trade.
+- `scenario.comparison.v1` has **no** `recommended` field, and never sorts by
+  outcome — sorting by outcome is a ranking with the label filed off. Picking
+  a lot method is tax advice and depends on a marginal rate the backend does
+  not know.
+- After touching a projection: `cd backend && make catalog`, commit the
+  contract. Otherwise the gate is red, by design.
+
+---
+
 ## 2026-09-19 — Closing the gates · no ticket
 
 **Branch:** `chore/close_the_gates`, straight onto `develop` after the thirteen
