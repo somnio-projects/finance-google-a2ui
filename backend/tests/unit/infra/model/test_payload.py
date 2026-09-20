@@ -1,9 +1,9 @@
-"""Spec 0006 §3.4 — the Gemini wire mapping, in both directions."""
+"""Spec 0006 §3.4 — building the Gemini request. Reading it is ``test_reply``."""
 
 import pytest
 
 from app.core.model import MessageRole, ModelMessage, ToolCall, ToolSpec
-from app.infra.model.payload import from_response, to_request
+from app.infra.model.payload import to_request
 
 SPEC = ToolSpec(
     name="get_holdings_summary",
@@ -85,7 +85,9 @@ def test_to_request_renders_a_tool_result_as_a_function_response(
 
     assert body["contents"] == [
         {
-            "role": "function",
+            # GGU-90: "function" is refused by the API; a functionResponse
+            # part is what marks this as a tool result, not the role.
+            "role": "user",
             "parts": [
                 {
                     "functionResponse": {
@@ -104,46 +106,3 @@ def test_to_request_drops_a_message_that_renders_to_no_part() -> None:
     )
 
     assert body["contents"] == []
-
-
-def test_from_response_reads_the_candidate_text() -> None:
-    reply = from_response(
-        {"candidates": [{"content": {"parts": [{"text": "answer"}]}}]}
-    )
-
-    assert reply.text == "answer"
-    assert reply.tool_calls == ()
-
-
-def test_from_response_reads_tool_calls_and_joins_surrounding_text() -> None:
-    reply = from_response(
-        {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [
-                            {"text": "one moment"},
-                            {"functionCall": {"name": "t", "args": {"top_n": 3}}},
-                            {"functionCall": {"name": "u"}},
-                        ]
-                    }
-                }
-            ]
-        }
-    )
-
-    assert reply.text == "one moment"
-    assert [call.name for call in reply.tool_calls] == ["t", "u"]
-    assert reply.tool_calls[0].arguments == {"top_n": 3}
-    assert reply.tool_calls[1].arguments == {}
-    assert reply.tool_calls[0].call_id == "1-t"
-
-
-def test_from_response_without_candidates_raises() -> None:
-    with pytest.raises(ValueError, match="no candidate"):
-        from_response({"candidates": []})
-
-
-def test_from_response_on_a_body_that_is_not_a_gemini_reply_raises() -> None:
-    with pytest.raises(ValueError, match="candidates"):
-        from_response({"candidates": "not-a-list"})

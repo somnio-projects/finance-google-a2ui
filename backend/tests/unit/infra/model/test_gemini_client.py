@@ -5,6 +5,7 @@ status handling, no socket.
 """
 
 import pytest
+import structlog
 
 from app.core.errors import DependencyUnavailableError
 from app.infra.model.gemini_client import UNAVAILABLE
@@ -123,3 +124,27 @@ async def test_provider_text_never_reaches_the_raised_error() -> None:
     assert str(raised.value) == UNAVAILABLE
     assert PROVIDER_TEXT not in str(raised.value)
     assert raised.value.__cause__ is not None
+
+
+async def test_provider_text_the_caller_never_sees_is_still_in_the_server_log() -> None:
+    """GGU-90 AC-4 — masked outward, recorded inward.
+
+    Without this the test above is only half a contract: it proves nothing
+    leaks, and says nothing about whether anyone could ever diagnose the
+    failure. Two turn-breaking 400s hid in exactly that gap for an hour each.
+    """
+    stub = Stub(rejected)
+
+    with structlog.testing.capture_logs() as logs:
+        with pytest.raises(DependencyUnavailableError) as raised:
+            await make_client(stub).generate(system="rules", messages=[], tools=[])
+
+    assert PROVIDER_TEXT not in str(raised.value)
+    assert logs == [
+        {
+            "event": "model_provider_rejected",
+            "log_level": "warning",
+            "status": 400,
+            "detail": PROVIDER_TEXT,
+        }
+    ]

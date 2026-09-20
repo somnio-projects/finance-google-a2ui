@@ -6,6 +6,13 @@ provider's wire format: mapping to Gemini's ``generateContent`` shape happens
 in ``app.infra.model.payload`` and nowhere else, so a provider change is one
 adapter, not a refactor of the turn loop.
 
+One thing a provider-agnostic contract still has to carry is provider state
+it cannot interpret: some models hand back a token with a tool call and refuse
+the next request without it (Gemini 3's ``thoughtSignature`` — GGU-88). That
+is ``ToolCall.provider_state``: an opaque bag the adapter fills and the
+adapter empties. Naming it after one provider's field would put Gemini in the
+core; dropping it ends every multi-step turn at a 400.
+
 Every model is frozen. A message that has been sent is history, and history
 does not get edited in place.
 """
@@ -58,6 +65,15 @@ class ToolCall(BaseModel):
     )
     arguments: Mapping[str, object] = Field(
         default_factory=dict, description="Raw arguments; validated by the tool."
+    )
+    provider_state: Mapping[str, object] = Field(
+        default_factory=dict,
+        description=(
+            "Opaque data the provider attached to this call and requires back "
+            "verbatim on the next request. Never read, never rewritten, never "
+            "invented here — the adapter that produced it is the only thing "
+            "that knows what is inside."
+        ),
     )
 
 

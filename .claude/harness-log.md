@@ -2235,3 +2235,62 @@ projection. Spec `frontend/0001` still owns that.
 - **A permission deny is not a reason to lower a gate.** The gate stayed where it
   was, the PR said plainly what it could not do, and a human took the decision.
   That is the shape to copy the next time the sandbox blocks a verification.
+
+---
+
+## 2026-09-20 (cont.) — GGU-90 + GGU-88: the turn that actually completes · spec `specs/backend/0006-agent-host.md`
+
+**What changed in code.** Two defects in `infra/model/payload.py`, fixed
+together because either one alone still leaves the turn at a 400 on the
+*second* model call:
+
+| Defect | Fix |
+|---|---|
+| `MessageRole.TOOL` → role `"function"`, which Gemini refuses outright (GGU-90) | → `"user"`. Gemini has **no tool role**; the `functionResponse` *part* is what marks a tool result. Accepted roles measured in the new `infra/model/wire_roles.py` |
+| `from_response` dropped Gemini 3's `thoughtSignature`, and the next request is refused without it (GGU-88) | it round-trips as `ToolCall.provider_state`, an opaque bag the adapter fills and empties |
+
+`payload.py` was split: request mapping stays, response mapping moves to the
+new `reply.py` (both were at the 150-line cap). `gemini_client.py` handed its
+retry triage to the new `provider_errors.py`, which also carries GGU-90 AC-4.
+
+**The masking was half a contract.** The adapter masked every provider failure
+as `dependency-unavailable` — correct at the API boundary — and then threw the
+text away, so two 400s that broke *every* agent turn looked like an unavailable
+provider and cost an hour each to find by replaying the call by hand. Masking
+outward and recording inward are different decisions; we had only the first.
+`log_provider_failure` now writes the provider's own bounded diagnostic to the
+server log at `warning`. Nothing the caller sees changed, and there is a test
+asserting both halves at once.
+
+**What changed in the harness.** Nothing in `.claude/rules/**`. The diagram
+`docs/diagrams/05-agent-turn.md` gained the two provider facts that make the
+"tool results fed back" edge work; spec 0006 gained OD-13, the two new modules
+in its file table, and an honest amendment to AC-13 (a second log line now
+exists, on the failure path only).
+
+**Next person should know**
+
+- **A test that compares our constant to a copy of our constant is not a test.**
+  `test_payload.py` asserted a tool result went out under role `"function"`,
+  and it did, and it passed for as long as the code was broken — the assertion
+  was the mapping, written from the same belief on the same day. `wire_roles.py`
+  holds an answer the *provider* gave, quoted from its own refusal, and
+  `test_wire_roles.py` walks `MessageRole` so the next role is checked the day
+  it is added. Same shape as `tool_schema_keys.py` (GGU-81). This is the
+  thirteenth instance of this pattern in this iteration.
+- **Defects on one code path stack, and only the outermost is visible.** GGU-81
+  hid GGU-90, which hid GGU-88. Each was "the" reason turns failed. Fixing one
+  and declaring the path healthy would have been wrong three times; the only
+  honest check was driving a real turn after each fix.
+- **A/B against the live provider beats any amount of reading.** The same
+  question, same key, same stack, two images minutes apart: pre-fix ends at
+  `status-update(failed)` + `dependency-unavailable`; post-fix reaches the
+  terminal `message`. That contrast is the whole evidence, and it is cheap.
+- **The integration suite is not idempotent against a reused database** and
+  nothing fails when it is not — 1214 tests stay green and only `fail_under`
+  notices, because `portfolio_repository.py`'s lost-race branch needs an empty
+  table. Fresh volume: 100 %. Second run: 99.96 %. The integration tests use
+  fixed literal subjects (`subject-restart`, `subject-once`, …) against this
+  repo's own rule that test data is unique per test. CI always starts clean, so
+  it is permanently green there. **Not fixed here — it is not this ticket's
+  code.** Flagged for a ticket of its own.
