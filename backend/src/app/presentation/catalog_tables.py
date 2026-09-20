@@ -42,7 +42,6 @@ INDEX_HEADER: Final[tuple[str, ...]] = (
     "Purpose",
 )
 NO_OPTIONS: Final[str] = "_This projection declares no options._"
-NO_ACTIONS: Final[str] = "_This surface sends nothing back: tapping it starts no turn._"
 READ_ONLY: Final[str] = "read-only"
 
 

@@ -8,17 +8,33 @@ apart from *what the projection is*. Pure, like everything in this layer.
 from collections.abc import Sequence
 from decimal import Decimal
 from itertools import accumulate
-from typing import Any, Final
+from typing import Final, Protocol
 
 from app.domain.holdings import Holding
+from app.presentation.displays import MoneyDisplay
 from app.presentation.fragments import Annotation, Bucket
 
 #: How many movers the chart names in words beside it.
 ANNOTATED: Final[int] = 2
 
 
+class Money(Protocol):
+    """The one thing these builders need from an options model.
+
+    A Protocol rather than the concrete ``AttributionWaterfallOptions``:
+    importing the view would make this helper depend on the module that
+    imports it. ``Any`` would also compile, and would silently stop
+    checking ``options.money(...)`` under strict — the type the helpers
+    had before they were split out.
+    """
+
+    def money(self, value: Decimal) -> MoneyDisplay:
+        """Format ``value`` under this render's locale and precision."""
+        ...
+
+
 def buckets(
-    rows: Sequence[Holding], *, start: Decimal, options: Any
+    rows: Sequence[Holding], *, start: Decimal, options: Money
 ) -> tuple[Bucket, ...]:
     """Walk each holding's unrealised P/L, carrying the running total."""
     running = accumulate((row.unrealized_pl for row in rows), initial=start)
@@ -35,7 +51,7 @@ def buckets(
 
 
 def notes(
-    rows: Sequence[Holding], net: Decimal, options: Any
+    rows: Sequence[Holding], net: Decimal, options: Money
 ) -> tuple[Annotation, ...]:
     """Name the biggest movers and the net move, in words the widget shows."""
     movers = (
@@ -45,4 +61,4 @@ def notes(
     return (*movers, Annotation(label="Net", text=options.money(net).display))
 
 
-__all__ = ["ANNOTATED", "buckets", "notes"]
+__all__ = ["ANNOTATED", "Money", "buckets", "notes"]

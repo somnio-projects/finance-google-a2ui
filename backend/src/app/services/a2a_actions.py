@@ -20,12 +20,23 @@ tapped is worse than saying no.
 from typing import Final
 
 from app.actions.errors import UnknownActionError
-from app.core.errors import AppError, FeatureDisabledError
+from app.core.errors import (
+    AppError,
+    FeatureDisabledError,
+    ValidationFailedError,
+)
 from app.core.principal import Principal
 from app.schemas.a2a import INVALID_PARAMS, METHOD_NOT_FOUND, ClientMessage
 from app.services.a2a_dispatch import failure
 from app.services.surface_action_service import SurfaceActionService
 
+#: The refusals this surface translates. Anything else is infrastructure
+#: failure and must not be dressed up as a client mistake.
+REFUSALS: Final[tuple[type[AppError], ...]] = (
+    FeatureDisabledError,
+    UnknownActionError,
+    ValidationFailedError,
+)
 UNKNOWN_ACTION: Final[str] = "UNKNOWN_ACTION"
 ACTIONS_DISABLED: Final[str] = "Surface actions are not enabled."
 
@@ -79,7 +90,13 @@ async def prepared_prompt(
         return message.text()
     try:
         return await actions.prompt_for(principal, data, request_id=request_id)
-    except AppError as exc:
+    except REFUSALS as exc:
+        # Deliberately NOT `AppError`. A DependencyUnavailableError from the
+        # audit write of an `audited=True` action is a 503, and catching it
+        # here would report infrastructure trouble as invalid params *and*
+        # put its detail on the wire. It belongs to the 500 handler, which
+        # masks it. Nothing declares `audited=True` today; this is the seam
+        # being kept honest before the first action that does.
         return action_failure(rpc_id, exc)
 
 

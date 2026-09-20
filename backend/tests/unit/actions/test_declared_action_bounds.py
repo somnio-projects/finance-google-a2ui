@@ -11,6 +11,8 @@ the A2A path makes — and anything outside the declaration is refused. The next
 action is covered the day it registers, not the day somebody remembers.
 """
 
+import re
+
 import pytest
 
 from app.actions.contracts import SurfaceAction
@@ -21,6 +23,8 @@ from app.core.errors import ValidationFailedError
 
 #: Nothing any action's bound admits, and long enough to expose a missing cap.
 OUTSIDE = "☠" * 64
+#: A pattern bounds a string only if it cannot match arbitrarily long input.
+UNBOUNDED = re.compile(r"[*+]")
 
 ACTIONS_UNDER_TEST = list(ACTIONS.all())
 IDS = [action.id for action in ACTIONS_UNDER_TEST]
@@ -32,13 +36,24 @@ def _ref(action: SurfaceAction) -> SurfaceActionRef:
 
 
 @pytest.mark.parametrize("action", ACTIONS_UNDER_TEST, ids=IDS)
-def test_every_choice_an_action_advertises_is_accepted(
+def test_every_bound_an_action_advertises_is_the_bound_it_enforces(
     action: SurfaceAction,
 ) -> None:
+    """Branch on the control, because ``declared.py`` already supports both.
+
+    Asserting `choices` is non-empty for *every* action would fail the day
+    somebody ships the `control="text"` action the descriptor already allows —
+    a guard that breaks on a legal shape is a guard that gets deleted.
+    """
     ref = _ref(action)
-    assert ref.choices, "a choice control with no choices offers nothing"
-    for value in ref.choices:
-        assert validated_args(action, {ref.arg: value})
+    if ref.control == "choice":
+        assert ref.choices, "a choice control with no choices offers nothing"
+        for value in ref.choices:
+            assert validated_args(action, {ref.arg: value})
+        return
+    assert ref.pattern, "a text control with no pattern publishes no bound"
+    assert ref.pattern.startswith("^") and ref.pattern.endswith("$")
+    assert not UNBOUNDED.search(ref.pattern)
 
 
 @pytest.mark.parametrize("action", ACTIONS_UNDER_TEST, ids=IDS)
@@ -51,13 +66,16 @@ def test_a_value_outside_the_published_bound_is_rejected(
 
 
 @pytest.mark.parametrize("action", ACTIONS_UNDER_TEST, ids=IDS)
-def test_the_published_choices_are_the_enforced_enum(
+def test_the_published_bound_is_read_from_the_arguments_schema(
     action: SurfaceAction,
 ) -> None:
     ref = _ref(action)
     schema = action.args.model_json_schema()["properties"][ref.arg]
 
-    assert tuple(schema["enum"]) == ref.choices
+    if ref.control == "choice":
+        assert tuple(schema["enum"]) == ref.choices
+        return
+    assert schema["pattern"] == ref.pattern
 
 
 @pytest.mark.parametrize("action", ACTIONS_UNDER_TEST, ids=IDS)

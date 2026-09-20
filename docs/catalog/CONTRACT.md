@@ -139,7 +139,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `0f84189d6d68` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `0edca33bd65b` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `194e130cf9de` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
 | [`order.ticket.v1`](#orderticketv1) | `80e81a6bf2f7` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `f52eb1ea3307` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
@@ -150,7 +150,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `0f84189d6d68`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `0edca33bd65b`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -202,9 +202,7 @@ Three of the four states design needs are facts about the schema. One is not:
 
 ### Actions
 
-| Action | Label | Argument | Control | Accepts |
-|---|---|---|---|---|
-| `drill.attribution.v1` | Break this down | `driver` | choice | 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' |
+_This surface sends nothing back: tapping it starts no turn._
 
 ### Example payload
 
@@ -302,25 +300,7 @@ Three of the four states design needs are facts about the schema. One is not:
       "text": "$8,113.60"
     }
   ],
-  "actions": [
-    {
-      "action": "drill.attribution.v1",
-      "label": "Break this down",
-      "arg": "driver",
-      "control": "choice",
-      "choices": [
-        "ADA",
-        "AVAX",
-        "BTC",
-        "DOGE",
-        "DOT",
-        "ETH",
-        "LINK",
-        "SOL"
-      ],
-      "pattern": null
-    }
-  ]
+  "actions": []
 }
 ```
 

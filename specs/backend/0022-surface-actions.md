@@ -348,10 +348,18 @@ Maps to `backend/docs/SECURITY.md` §input validation and §audit.
     `surface_action.invoke` event for the authenticated subject; the two shipped
     actions write none. No log line or metric tag carries an argument value or
     the composed prompt.
-11. **AC-11** — `attribution.waterfall.v1` publishes its action in its payload,
-    in its A2UI props, in `GET /v1/views` and in `docs/catalog/CONTRACT.md`;
-    `make catalog` is run and the regenerated contract is committed (a stale
-    contract fails the gate).
+11. **AC-11** — a projection that declares an action publishes it in its
+    payload, in its A2UI props, in `GET /v1/views` and in
+    `docs/catalog/CONTRACT.md` from **one** derivation; `make catalog` is run
+    and the regenerated contract is committed (a stale contract fails the
+    gate). **Amended by the implementing PR:** the *declaration* is gated on
+    the same constant as execution (`app.actions.capability.SHIPPED_ENABLED`),
+    so while `surface.actions` ships **off** `attribution.waterfall.v1`
+    declares nothing and the catalogue advertises nothing. The pipeline is
+    proven by a projection registered in the test suite that does declare one
+    — asserting it over a registry where nothing declares an action would
+    execute nothing. Flipping the constant is what GGU-31 does, and the
+    declaration then appears in all four places at once.
 12. **AC-12** — Every projection that declares **no** action produces no
     actionable prop, and `order.ticket.v1` in particular still carries no submit,
     no endpoint and no callback (0018 AC-8 re-asserted against this change).
@@ -401,6 +409,18 @@ Three divergences from §2, all naming or placement, none behavioural:
 - **`UnknownActionError` lives in `actions/errors.py`**, mirroring
   `presentation/errors.py`; `registry.py` re-exports it, so the import path
   §2 names still works.
+
+**The declaration is gated, not annotated.** §2 and AC-11 asked for the
+waterfall to declare its action, and §9 asked for the flag to ship off. Those
+are consistent for *execution* and contradictory for the *contract*: a
+declaration reaches `docs/catalog/CONTRACT.md` and `GET /v1/views`, which
+GGU-53/GGU-55 hand to the client as a machine-readable artefact, so a shipped
+declaration would advertise an affordance that answers `-32601`. A footnote
+cannot reach a machine-readable document, so both now read one constant,
+`app.actions.capability.SHIPPED_ENABLED`. The skew is one-directional on
+purpose: enabling the flag at runtime without flipping the constant means the
+capability works and nothing advertises it, which is safe; the reverse is the
+defect. A static artefact cannot track a dynamic flag, so it claims less.
 
 One bound the spec did not state, added because the implementation needed it:
 an argument **name** is capped at 32 characters. A rejection may mention the

@@ -21,6 +21,7 @@ Three properties the tests hold this to:
 
 from typing import Final
 
+from app.actions.capability import FEATURE_KEY, SHIPPED_ENABLED
 from app.actions.registry import ACTIONS
 from app.actions.resolve import composed_prompt
 from app.core.errors import AppError, FeatureDisabledError
@@ -30,7 +31,6 @@ from app.schemas.a2a_parts import ActionData
 from app.services.audit_service import AuditService
 from app.services.feature_flag_service import FeatureFlagService
 
-FEATURE_KEY: Final[str] = "surface.actions"
 ACCEPTED_METRIC: Final[str] = "surface.action.accepted"
 REJECTED_METRIC: Final[str] = "surface.action.rejected"
 AUDIT_ACTION: Final[str] = "surface_action.invoke"
@@ -53,7 +53,7 @@ class SurfaceActionService:
 
     async def enabled(self) -> bool:
         """Say whether `surface.actions` is on; dark-launched off (0022 §9)."""
-        return await self._flags.is_enabled(FEATURE_KEY, default=False)
+        return await self._flags.is_enabled(FEATURE_KEY, default=SHIPPED_ENABLED)
 
     async def prompt_for(
         self, principal: Principal, data: ActionData, *, request_id: str

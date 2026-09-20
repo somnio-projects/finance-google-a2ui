@@ -9,6 +9,7 @@ from typing import Final, Literal
 
 from pydantic import Field
 
+from app.actions.capability import SHIPPED_ENABLED
 from app.actions.declared import SurfaceActionRef, declared_action
 from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.domain.portfolio import Portfolio
@@ -32,6 +33,14 @@ SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
 #: the action's own arguments schema, so the published bound *is* the enforced
 #: one — never a second copy written down beside it.
 DRILL_REF: Final[SurfaceActionRef] = declared_action(DRILL)
+
+#: What this surface actually publishes. Empty while the capability ships
+#: off: a declaration reaches the catalogue design and the client bind to,
+#: and advertising an affordance that answers -32601 is worse than
+#: advertising none (``app.actions.capability``).
+DECLARED_ACTIONS: Final[tuple[SurfaceActionRef, ...]] = (
+    (DRILL_REF,) if SHIPPED_ENABLED else ()
+)
 
 
 class AttributionWaterfallOptions(opt.DisplayOptions, opt.FieldSelection):
@@ -89,7 +98,7 @@ def render(
         end=Total(label="Market value", amount=options.money(value)),
         buckets=walk,
         annotations=said,
-        actions=(DRILL_REF,),
+        actions=DECLARED_ACTIONS,
     )
 
 
@@ -127,4 +136,12 @@ PROJECTION: Final = register(
     )
 )
 
-__all__ = ["DRILL_REF", "PROJECTION", "SECTIONS", "VIEW_ID", "render", "surface"]
+__all__ = [
+    "DECLARED_ACTIONS",
+    "DRILL_REF",
+    "PROJECTION",
+    "SECTIONS",
+    "VIEW_ID",
+    "render",
+    "surface",
+]

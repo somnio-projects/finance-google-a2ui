@@ -13,6 +13,7 @@ from app.core.errors import DependencyUnavailableError, NotFoundError
 from app.jobs import purge_audit
 from app.models.audit_event import AuditEvent
 from app.repositories.audit_repository import AuditRepository
+from tests.conftest import FROZEN_NOW
 
 
 def _event(subject: str, action: str = "test") -> AuditEvent:
@@ -59,7 +60,7 @@ async def test_list_recent_and_list_for_subject_order_newest_first(
     """
     repo = AuditRepository(session)
     subject = f"s-{uuid.uuid4()}"
-    base = datetime.now(UTC) - timedelta(minutes=5)
+    base = FROZEN_NOW - timedelta(minutes=5)
     for offset, action in enumerate(("first", "second", "third")):
         event = _event(subject, action)
         event.created_at = base + timedelta(seconds=offset)

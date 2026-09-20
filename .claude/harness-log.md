@@ -2366,3 +2366,55 @@ the disagreement rather than printing a bare set mismatch.
   transaction share a timestamp, so "newest first" is a tie the database
   breaks arbitrarily. Filed as its own task; the ordering guarantee belongs in
   the repository, not in the test.
+
+### Review round on #57 — two findings that were both right
+
+**A vacuous test that claimed the opposite.** `test_declared_interactivity.py`
+was written to walk the registry, and the PR body said its third case "covers
+the projections with no `inputs[]` too". The reviewer enumerated the registry
+and found that for **four of six** projections all three cases executed *zero*
+assertions: case 1 subtracted from an empty set, case 2 skipped, and case 3
+looped over an empty list. Worse, the vacuous set contained
+`attribution.waterfall.v1` — the projection the PR changes.
+
+The fix was to stop asserting over a *derived set* and start asserting the
+**rendered claim**: `read-only` is itself a claim that can be wrong, so
+checking it gives a read-only projection a real assertion. Proven by mutating
+`inputs_note` to never return `READ_ONLY`, which now turns exactly those four
+projections red. A vacuity guard (`test_the_registry_still_produces_both_kinds_of_case`)
+pins that at least one projection of each kind exists, so the file cannot
+quietly go empty again.
+
+The lesson is narrower than "write better tests": **a parametrised test over a
+registry reports as N passing cases whether or not its body ran.** Green
+parametrised output is not evidence of coverage; count the assertions.
+
+**A contract that shipped on while the capability shipped off.** The waterfall
+declared `drill.attribution.v1` unconditionally while `surface.actions` ships
+off, so `CONTRACT.md`, `/v1/views`, the payload and the A2UI props all
+advertised an affordance that answers `-32601`. "Dark-launched" was true of
+execution and false of the contract.
+
+Both now read one constant, `app.actions.capability.SHIPPED_ENABLED`. The
+skew is one-directional on purpose: enabling the flag at runtime without
+flipping the constant means the capability works and nothing advertises it,
+which is safe; advertising more than the service will do is the defect. A
+footnote was the alternative and was rejected — #45/#48 ship that catalogue to
+the client as a **machine-readable** artefact, and a footnote in Markdown does
+not reach a JSON consumer.
+
+**Next person should know**
+
+- **Gating a declaration cascades into the tests that prove the declaration.**
+  Three tests went vacuous the moment nothing declared an action, and had to
+  be re-pointed at a projection registered inside the suite. If you flip
+  `SHIPPED_ENABLED`, expect the reverse cascade and check the probes still
+  earn their place.
+- **`vulture` will not find an unused module-level constant.** `NO_ACTIONS`
+  was defined identically in two modules, and coverage stayed at 100 % because
+  the assignment *executes*. `min_confidence = 80`; an unused module-level
+  assignment scores 60.
+- **`except AppError` at a protocol boundary is too wide.** In `a2a_actions`
+  it would have mapped a `DependencyUnavailableError` from an audited action's
+  audit write onto `-32602` *and put its detail on the wire*. Narrowed to the
+  three refusals that are genuinely the caller's fault.
