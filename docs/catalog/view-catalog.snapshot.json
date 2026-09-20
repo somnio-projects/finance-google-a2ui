@@ -1,0 +1,2740 @@
+{
+  "$comment": "GENERATED FILE — do not edit by hand. Regenerate with: cd backend && make catalog",
+  "source": "the projection registry in backend/src/app/presentation/",
+  "version": 1,
+  "views": [
+    {
+      "component": "WaterfallChart",
+      "digest": "e866358af26d",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "annotations": [
+          {
+            "label": "Bitcoin",
+            "text": "$10,230.00"
+          },
+          {
+            "label": "Ethereum",
+            "text": "-$2,797.50"
+          },
+          {
+            "label": "Net",
+            "text": "$8,113.60"
+          }
+        ],
+        "buckets": [
+          {
+            "cumulative": {
+              "amount": "67155.000000",
+              "display": "$67,155.00"
+            },
+            "delta": {
+              "amount": "10230.000000",
+              "display": "$10,230.00"
+            },
+            "direction": "up",
+            "label": "Bitcoin"
+          },
+          {
+            "cumulative": {
+              "amount": "64357.500000",
+              "display": "$64,357.50"
+            },
+            "delta": {
+              "amount": "-2797.500000",
+              "display": "-$2,797.50"
+            },
+            "direction": "down",
+            "label": "Ethereum"
+          },
+          {
+            "cumulative": {
+              "amount": "65853.500000",
+              "display": "$65,853.50"
+            },
+            "delta": {
+              "amount": "1496.000000",
+              "display": "$1,496.00"
+            },
+            "direction": "up",
+            "label": "Solana"
+          },
+          {
+            "cumulative": {
+              "amount": "65191.000000",
+              "display": "$65,191.00"
+            },
+            "delta": {
+              "amount": "-662.500000",
+              "display": "-$662.50"
+            },
+            "direction": "down",
+            "label": "Chainlink"
+          },
+          {
+            "cumulative": {
+              "amount": "65038.600000000000",
+              "display": "$65,038.60"
+            },
+            "delta": {
+              "amount": "-152.400000000000",
+              "display": "-$152.40"
+            },
+            "direction": "down",
+            "label": "Dogecoin"
+          }
+        ],
+        "end": {
+          "amount": {
+            "amount": "65038.600000000000",
+            "display": "$65,038.60"
+          },
+          "label": "Market value"
+        },
+        "start": {
+          "amount": {
+            "amount": "56925.00",
+            "display": "$56,925.00"
+          },
+          "label": "Cost basis"
+        },
+        "title": "Unrealised P/L attribution",
+        "view": "attribution.waterfall.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"attribution.waterfall.v1\"`",
+          "state": "—",
+          "type": "const 'attribution.waterfall.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "start",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "start.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "start.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "start.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "start.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "end",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "end.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "end.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "end.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "end.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "buckets",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "buckets[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "buckets[].delta",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "buckets[].delta.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "buckets[].delta.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "buckets[].cumulative",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "buckets[].cumulative.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "buckets[].cumulative.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "—",
+          "path": "buckets[].direction",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "annotations",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "annotations[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "annotations[].text",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤200 chars"
+        }
+      ],
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``attribution.waterfall.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sections to render; omit for all of them. A section this view does not offer is rejected, never ignored.",
+            "examples": [
+              [
+                "buckets"
+              ]
+            ],
+            "title": "Fields"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          }
+        },
+        "title": "AttributionWaterfallOptions",
+        "type": "object"
+      },
+      "payload_type": "AttributionWaterfallPayload",
+      "summary": "Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.",
+      "view": "attribution.waterfall.v1"
+    },
+    {
+      "component": "DonutChart",
+      "digest": "63d89e469006",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "categories": [
+          {
+            "key": "BTC",
+            "label": "Bitcoin",
+            "value": {
+              "amount": "38550.000000",
+              "display": "$38,550.00"
+            },
+            "weight": {
+              "display": "59.27%",
+              "value": "0.5927249356535964796290203049"
+            }
+          },
+          {
+            "key": "ETH",
+            "label": "Ethereum",
+            "value": {
+              "amount": "15902.500000",
+              "display": "$15,902.50"
+            },
+            "weight": {
+              "display": "24.45%",
+              "value": "0.2445086456350536450661607107"
+            }
+          },
+          {
+            "key": "SOL",
+            "label": "Solana",
+            "value": {
+              "amount": "6096.000000",
+              "display": "$6,096.00"
+            },
+            "weight": {
+              "display": "9.37%",
+              "value": "0.09372895480530023708997426144"
+            }
+          },
+          {
+            "key": "LINK",
+            "label": "Chainlink",
+            "value": {
+              "amount": "2962.500000",
+              "display": "$2,962.50"
+            },
+            "weight": {
+              "display": "4.55%",
+              "value": "0.04554987345976081895981770825"
+            }
+          },
+          {
+            "key": "DOGE",
+            "label": "Dogecoin",
+            "value": {
+              "amount": "1527.600000000000",
+              "display": "$1,527.60"
+            },
+            "weight": {
+              "display": "2.35%",
+              "value": "0.02348759044628881925502701473"
+            }
+          }
+        ],
+        "title": "Allocation by holding",
+        "total": {
+          "amount": {
+            "amount": "65038.600000000000",
+            "display": "$65,038.60"
+          },
+          "label": "Total market value"
+        },
+        "view": "holdings.allocation.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"holdings.allocation.v1\"`",
+          "state": "—",
+          "type": "const 'holdings.allocation.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "total",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "total.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "total.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "total.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "total.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "categories",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "categories[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "categories[].key",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "categories[].value",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "categories[].value.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "categories[].value.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "categories[].weight",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "categories[].weight.value",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "categories[].weight.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤16 chars"
+        }
+      ],
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``holdings.allocation.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "include_other": {
+            "default": true,
+            "description": "Aggregate everything beyond `top_n` into an `Other` row.",
+            "examples": [
+              true
+            ],
+            "title": "Include Other",
+            "type": "boolean"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "value_desc",
+            "description": "Row order: by value descending, ascending, or by label.",
+            "enum": [
+              "value_desc",
+              "value_asc",
+              "label"
+            ],
+            "examples": [
+              "value_desc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "top_n": {
+            "default": 5,
+            "description": "How many rows to render before the residual bucket.",
+            "examples": [
+              5
+            ],
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Top N",
+            "type": "integer"
+          }
+        },
+        "title": "HoldingsAllocationOptions",
+        "type": "object"
+      },
+      "payload_type": "HoldingsAllocationPayload",
+      "summary": "Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.",
+      "view": "holdings.allocation.v1"
+    },
+    {
+      "component": "OrderTicket",
+      "digest": "0a2904b9b52d",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "disclosure": "Illustrative ticket. This showcase has no broker and no execution: changing a field re-renders these figures, and nothing is ever sent, placed or settled.",
+        "effect": "recalculate",
+        "entry_price": {
+          "amount": "64250.00",
+          "display": "$64,250.00"
+        },
+        "inputs": [
+          {
+            "choices": [
+              "ADA",
+              "AVAX",
+              "BTC",
+              "DOGE",
+              "DOT",
+              "ETH",
+              "LINK",
+              "SOL"
+            ],
+            "control": "choice",
+            "label": "Asset",
+            "option": "symbol",
+            "pattern": null,
+            "value": "BTC"
+          },
+          {
+            "choices": [
+              "buy",
+              "sell"
+            ],
+            "control": "choice",
+            "label": "Side",
+            "option": "side",
+            "pattern": null,
+            "value": "buy"
+          },
+          {
+            "choices": [],
+            "control": "text",
+            "label": "Size",
+            "option": "size",
+            "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$",
+            "value": "1"
+          },
+          {
+            "choices": [
+              "units",
+              "usd"
+            ],
+            "control": "choice",
+            "label": "Size in",
+            "option": "size_in",
+            "pattern": null,
+            "value": "units"
+          }
+        ],
+        "name": "Bitcoin",
+        "notional": {
+          "amount": {
+            "amount": "64250.00",
+            "display": "$64,250.00"
+          },
+          "label": "Order value"
+        },
+        "quantity": {
+          "display": "1",
+          "units": "1"
+        },
+        "side": "buy",
+        "symbol": "BTC",
+        "title": "Proposed order",
+        "view": "order.ticket.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"order.ticket.v1\"`",
+          "state": "—",
+          "type": "const 'order.ticket.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "text",
+          "input": "input · one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL'",
+          "path": "symbol",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤10 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "name",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "input · one of 'buy', 'sell'",
+          "path": "side",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum buy / sell"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "quantity",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "quantity.units",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "quantity.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "entry_price",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "entry_price.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "entry_price.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "notional",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "notional.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "notional.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "notional.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "notional.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "inputs",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "inputs[].option",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "inputs[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "—",
+          "path": "inputs[].control",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum choice / text"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "inputs[].value",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "inputs[].choices",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array ≤16 items"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "inputs[].pattern",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "effect",
+          "presence": "default `\"recalculate\"`",
+          "state": "—",
+          "type": "const 'recalculate'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "disclosure",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤300 chars"
+        }
+      ],
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``order.ticket.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "side": {
+            "default": "buy",
+            "description": "Which way the order goes; `sell` disposes of units held.",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "examples": [
+              "buy"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "size": {
+            "default": "1",
+            "description": "How big the order is, as a decimal string (ADR-E D-5).",
+            "examples": [
+              "0.25"
+            ],
+            "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$",
+            "title": "Size",
+            "type": "string"
+          },
+          "size_in": {
+            "default": "units",
+            "description": "What `size` counts: units of the asset, or US dollars.",
+            "enum": [
+              "units",
+              "usd"
+            ],
+            "examples": [
+              "usd"
+            ],
+            "title": "Size In",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "BTC",
+            "description": "Asset the order is written for, from the market reference.",
+            "enum": [
+              "ADA",
+              "AVAX",
+              "BTC",
+              "DOGE",
+              "DOT",
+              "ETH",
+              "LINK",
+              "SOL"
+            ],
+            "examples": [
+              "SOL"
+            ],
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "OrderTicketOptions",
+        "type": "object"
+      },
+      "payload_type": "OrderTicketPayload",
+      "summary": "Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.",
+      "view": "order.ticket.v1"
+    },
+    {
+      "component": "LineChart",
+      "digest": "205668c78931",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "annotations": [
+          {
+            "label": "Entry",
+            "text": "$152.40"
+          },
+          {
+            "label": "Break-even",
+            "text": "$152.40"
+          },
+          {
+            "label": "Low",
+            "text": "at $106.68: -$150.00"
+          },
+          {
+            "label": "High",
+            "text": "at $198.12: $150.00"
+          }
+        ],
+        "disclosure": "Illustrative linear spot payoff on the demo portfolio's simulated prices: profit or loss is (price - entry) x quantity, with no fees, no slippage and no financing. There is no strike, no expiry, no implied volatility and no time decay behind this line. A sell is the mirror of the position and leaves no position to value.",
+        "series": [
+          {
+            "name": "Profit / loss",
+            "points": [
+              {
+                "label": "$106.68",
+                "value": {
+                  "amount": "-150.0000000000000000000000000",
+                  "display": "-$150.00"
+                }
+              },
+              {
+                "label": "$110.49",
+                "value": {
+                  "amount": "-137.5000000000000000000000000",
+                  "display": "-$137.50"
+                }
+              },
+              {
+                "label": "$114.30",
+                "value": {
+                  "amount": "-125.0000000000000000000000000",
+                  "display": "-$125.00"
+                }
+              },
+              {
+                "label": "$118.11",
+                "value": {
+                  "amount": "-112.5000000000000000000000000",
+                  "display": "-$112.50"
+                }
+              },
+              {
+                "label": "$121.92",
+                "value": {
+                  "amount": "-99.99999999999999999999999999",
+                  "display": "-$100.00"
+                }
+              },
+              {
+                "label": "$125.73",
+                "value": {
+                  "amount": "-87.49999999999999999999999999",
+                  "display": "-$87.50"
+                }
+              },
+              {
+                "label": "$129.54",
+                "value": {
+                  "amount": "-74.99999999999999999999999999",
+                  "display": "-$75.00"
+                }
+              },
+              {
+                "label": "$133.35",
+                "value": {
+                  "amount": "-62.49999999999999999999999999",
+                  "display": "-$62.50"
+                }
+              },
+              {
+                "label": "$137.16",
+                "value": {
+                  "amount": "-49.99999999999999999999999999",
+                  "display": "-$50.00"
+                }
+              },
+              {
+                "label": "$140.97",
+                "value": {
+                  "amount": "-37.49999999999999999999999999",
+                  "display": "-$37.50"
+                }
+              },
+              {
+                "label": "$144.78",
+                "value": {
+                  "amount": "-25.00000000000000000000000000",
+                  "display": "-$25.00"
+                }
+              },
+              {
+                "label": "$148.59",
+                "value": {
+                  "amount": "-12.50000000000000000000000000",
+                  "display": "-$12.50"
+                }
+              },
+              {
+                "label": "$152.40",
+                "value": {
+                  "amount": "0E-30",
+                  "display": "$0.00"
+                }
+              },
+              {
+                "label": "$156.21",
+                "value": {
+                  "amount": "12.50000000000000000000000000",
+                  "display": "$12.50"
+                }
+              },
+              {
+                "label": "$160.02",
+                "value": {
+                  "amount": "25.00000000000000000000000000",
+                  "display": "$25.00"
+                }
+              },
+              {
+                "label": "$163.83",
+                "value": {
+                  "amount": "37.49999999999999999999999999",
+                  "display": "$37.50"
+                }
+              },
+              {
+                "label": "$167.64",
+                "value": {
+                  "amount": "49.99999999999999999999999999",
+                  "display": "$50.00"
+                }
+              },
+              {
+                "label": "$171.45",
+                "value": {
+                  "amount": "62.49999999999999999999999999",
+                  "display": "$62.50"
+                }
+              },
+              {
+                "label": "$175.26",
+                "value": {
+                  "amount": "74.99999999999999999999999999",
+                  "display": "$75.00"
+                }
+              },
+              {
+                "label": "$179.07",
+                "value": {
+                  "amount": "87.49999999999999999999999999",
+                  "display": "$87.50"
+                }
+              },
+              {
+                "label": "$182.88",
+                "value": {
+                  "amount": "99.99999999999999999999999999",
+                  "display": "$100.00"
+                }
+              },
+              {
+                "label": "$186.69",
+                "value": {
+                  "amount": "112.5000000000000000000000000",
+                  "display": "$112.50"
+                }
+              },
+              {
+                "label": "$190.50",
+                "value": {
+                  "amount": "125.0000000000000000000000000",
+                  "display": "$125.00"
+                }
+              },
+              {
+                "label": "$194.31",
+                "value": {
+                  "amount": "137.5000000000000000000000000",
+                  "display": "$137.50"
+                }
+              },
+              {
+                "label": "$198.12",
+                "value": {
+                  "amount": "150.0000000000000000000000000",
+                  "display": "$150.00"
+                }
+              }
+            ]
+          }
+        ],
+        "title": "Payoff across a price range: buy Solana",
+        "totals": [
+          {
+            "amount": {
+              "amount": "152.40",
+              "display": "$152.40"
+            },
+            "label": "Entry price"
+          },
+          {
+            "amount": {
+              "amount": "152.40",
+              "display": "$152.40"
+            },
+            "label": "Break-even price"
+          },
+          {
+            "amount": {
+              "amount": "499.9999999999999999999999999",
+              "display": "$500.00"
+            },
+            "label": "Notional"
+          }
+        ],
+        "view": "payoff.curve.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"payoff.curve.v1\"`",
+          "state": "—",
+          "type": "const 'payoff.curve.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "disclosure",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤400 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "totals",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "totals[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "totals[].amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "totals[].amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "totals[].amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "series",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "series[].name",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "series[].points",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "series[].points[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "series[].points[].value",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "series[].points[].value.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "series[].points[].value.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "annotations",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "annotations[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "annotations[].text",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤200 chars"
+        }
+      ],
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``payoff.curve.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sections to render; omit for all of them. A section this view does not offer is rejected, never ignored.",
+            "examples": [
+              [
+                "buckets"
+              ]
+            ],
+            "title": "Fields"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "range_pct": {
+            "default": 30,
+            "description": "How far above and below the entry price to plot, in percent.",
+            "examples": [
+              30
+            ],
+            "maximum": 90,
+            "minimum": 5,
+            "title": "Range Pct",
+            "type": "integer"
+          },
+          "side": {
+            "default": "buy",
+            "description": "`buy` plots the position, `sell` plots its mirror.",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "examples": [
+              "buy"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "size": {
+            "default": 500,
+            "description": "How big the order is, counted in `size_in`. A whole number: a JSON float can no longer be made exact (ADR-E D-5).",
+            "examples": [
+              500
+            ],
+            "maximum": 1000000000,
+            "minimum": 1,
+            "title": "Size",
+            "type": "integer"
+          },
+          "size_in": {
+            "default": "usd",
+            "description": "What `size` counts: units of the asset, or US dollars.",
+            "enum": [
+              "units",
+              "usd"
+            ],
+            "examples": [
+              "usd"
+            ],
+            "title": "Size In",
+            "type": "string"
+          },
+          "steps": {
+            "default": 12,
+            "description": "Price steps per side; the line is twice this plus one point.",
+            "examples": [
+              12
+            ],
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Steps",
+            "type": "integer"
+          },
+          "symbol": {
+            "default": "SOL",
+            "description": "Asset the order is for.",
+            "enum": [
+              "ADA",
+              "AVAX",
+              "BTC",
+              "DOGE",
+              "DOT",
+              "ETH",
+              "LINK",
+              "SOL"
+            ],
+            "examples": [
+              "SOL"
+            ],
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "PayoffCurveOptions",
+        "type": "object"
+      },
+      "payload_type": "PayoffCurvePayload",
+      "summary": "Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.",
+      "view": "payoff.curve.v1"
+    },
+    {
+      "component": "ComparisonCard",
+      "digest": "d996313186c4",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "columns": [
+          {
+            "cost_basis": {
+              "amount": "7740.00",
+              "display": "$7,740.00"
+            },
+            "label": "FIFO — oldest lots first",
+            "long_term_lots": 1,
+            "long_term_pl": {
+              "amount": "3825.000000",
+              "display": "+$3,825.00"
+            },
+            "lots": [
+              "lot-btc-01"
+            ],
+            "method": "FIFO",
+            "realized_pl": {
+              "amount": "3825.000000",
+              "display": "+$3,825.00"
+            },
+            "short_term_lots": 0,
+            "short_term_pl": {
+              "amount": "0",
+              "display": "$0.00"
+            }
+          },
+          {
+            "cost_basis": {
+              "amount": "10260.00",
+              "display": "$10,260.00"
+            },
+            "label": "LIFO — newest lots first",
+            "long_term_lots": 0,
+            "long_term_pl": {
+              "amount": "0",
+              "display": "$0.00"
+            },
+            "lots": [
+              "lot-btc-02"
+            ],
+            "method": "LIFO",
+            "realized_pl": {
+              "amount": "1305.000000",
+              "display": "+$1,305.00"
+            },
+            "short_term_lots": 1,
+            "short_term_pl": {
+              "amount": "1305.000000",
+              "display": "+$1,305.00"
+            }
+          },
+          {
+            "cost_basis": {
+              "amount": "10260.00",
+              "display": "$10,260.00"
+            },
+            "label": "HIFO — dearest lots first",
+            "long_term_lots": 0,
+            "long_term_pl": {
+              "amount": "0",
+              "display": "$0.00"
+            },
+            "lots": [
+              "lot-btc-02"
+            ],
+            "method": "HIFO",
+            "realized_pl": {
+              "amount": "1305.000000",
+              "display": "+$1,305.00"
+            },
+            "short_term_lots": 1,
+            "short_term_pl": {
+              "amount": "1305.000000",
+              "display": "+$1,305.00"
+            }
+          }
+        ],
+        "notes": [
+          {
+            "label": "Before tax",
+            "text": "The realised result and its short/long split, before any tax rate, fee or wash-sale rule."
+          },
+          {
+            "label": "Not advice",
+            "text": "No method is recommended: which result is preferable depends on a tax situation this demo does not know."
+          }
+        ],
+        "spread": {
+          "amount": {
+            "amount": "2520.000000",
+            "display": "$2,520.00"
+          },
+          "differs": true,
+          "highest": "FIFO",
+          "lowest": "LIFO"
+        },
+        "subject": {
+          "label": "Bitcoin",
+          "price": {
+            "amount": "64250.00",
+            "display": "$64,250.00"
+          },
+          "proceeds": {
+            "amount": "11565.000000",
+            "display": "$11,565.00"
+          },
+          "quantity_display": "0.18",
+          "symbol": "BTC"
+        },
+        "title": "Same sale, different lot method",
+        "view": "scenario.comparison.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"scenario.comparison.v1\"`",
+          "state": "—",
+          "type": "const 'scenario.comparison.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "subject",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "subject.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "input · string matching ^[A-Za-z]{2,10}$, or omit it",
+          "path": "subject.symbol",
+          "presence": "required",
+          "state": "—",
+          "type": "string"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "subject.quantity_display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "subject.price",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "subject.price.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "subject.price.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "subject.proceeds",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "subject.proceeds.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "subject.proceeds.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "enum",
+          "input": "—",
+          "path": "columns[].method",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum FIFO / LIFO / HIFO"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "columns[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns[].cost_basis",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].cost_basis.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "columns[].cost_basis.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns[].realized_pl",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].realized_pl.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "columns[].realized_pl.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns[].short_term_pl",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].short_term_pl.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "columns[].short_term_pl.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns[].long_term_pl",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].long_term_pl.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "columns[].long_term_pl.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].short_term_lots",
+          "presence": "required",
+          "state": "—",
+          "type": "integer 0..None"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "columns[].long_term_lots",
+          "presence": "required",
+          "state": "—",
+          "type": "integer 0..None"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "columns[].lots",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "spread",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "spread.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "spread.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "spread.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "flag",
+          "input": "—",
+          "path": "spread.differs",
+          "presence": "required",
+          "state": "variant",
+          "type": "boolean"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "spread.highest",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "spread.lowest",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "object"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "notes",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "notes[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "notes[].text",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤200 chars"
+        }
+      ],
+      "options_schema": {
+        "$defs": {
+          "LotMethod": {
+            "description": "How a sale picks which open lots to consume.",
+            "enum": [
+              "FIFO",
+              "LIFO",
+              "HIFO"
+            ],
+            "title": "LotMethod",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Declared knobs of ``scenario.comparison.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "methods": {
+            "default": [
+              "FIFO",
+              "LIFO",
+              "HIFO"
+            ],
+            "description": "Lot-selection methods to compare, in the order they are shown. At least two, all distinct — two identical columns would claim a difference that does not exist.",
+            "examples": [
+              [
+                "FIFO",
+                "HIFO"
+              ]
+            ],
+            "items": {
+              "$ref": "#/$defs/LotMethod"
+            },
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Methods",
+            "type": "array"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,8}0*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Units the sale disposes of; omit for that position's smallest open lot — the smallest sale that still makes the methods differ.",
+            "examples": [
+              "0.18"
+            ],
+            "title": "Quantity"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "pattern": "^[A-Za-z]{2,10}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Position to cost the sale against, in any case; omit for the one whose open tax lots are worth the most, ties broken by ticker.",
+            "examples": [
+              "BTC"
+            ],
+            "title": "Symbol"
+          }
+        },
+        "title": "ScenarioComparisonOptions",
+        "type": "object"
+      },
+      "payload_type": "ScenarioComparisonPayload",
+      "summary": "The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.",
+      "view": "scenario.comparison.v1"
+    },
+    {
+      "component": "TaxLotTable",
+      "digest": "dfc041e6746d",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "by_term": [
+          {
+            "label": "Short-term",
+            "lots": 1,
+            "realized": {
+              "amount": "580.000000",
+              "display": "+$580.00"
+            },
+            "term": "short"
+          },
+          {
+            "label": "Long-term",
+            "lots": 1,
+            "realized": {
+              "amount": "8925.000000",
+              "display": "+$8,925.00"
+            },
+            "term": "long"
+          }
+        ],
+        "cost_basis": {
+          "amount": {
+            "amount": "22620.00",
+            "display": "$22,620.00"
+          },
+          "label": "Cost basis"
+        },
+        "lots": [
+          {
+            "acquired_on": "2025-01-13",
+            "cost_basis": {
+              "amount": "18060.00",
+              "display": "$18,060.00"
+            },
+            "fully_sold": true,
+            "gain_loss": {
+              "amount": "8925.000000",
+              "display": "+$8,925.00"
+            },
+            "label": "lot-btc-01",
+            "proceeds": {
+              "amount": "26985.000000",
+              "display": "$26,985.00"
+            },
+            "term": "long",
+            "trend": "up",
+            "units": "0.42"
+          },
+          {
+            "acquired_on": "2025-01-17",
+            "cost_basis": {
+              "amount": "4560.00",
+              "display": "$4,560.00"
+            },
+            "fully_sold": false,
+            "gain_loss": {
+              "amount": "580.000000",
+              "display": "+$580.00"
+            },
+            "label": "lot-btc-02",
+            "proceeds": {
+              "amount": "5140.000000",
+              "display": "$5,140.00"
+            },
+            "term": "short",
+            "trend": "up",
+            "units": "0.08"
+          }
+        ],
+        "price": {
+          "amount": {
+            "amount": "64250.00",
+            "display": "$64,250.00"
+          },
+          "label": "Price"
+        },
+        "proceeds": {
+          "amount": {
+            "amount": "32125.000000",
+            "display": "$32,125.00"
+          },
+          "label": "Proceeds"
+        },
+        "realized": {
+          "amount": {
+            "amount": "9505.000000",
+            "display": "+$9,505.00"
+          },
+          "label": "Realised P/L"
+        },
+        "remaining": [
+          {
+            "label": "Units left",
+            "text": "0.1"
+          },
+          {
+            "label": "Cost basis",
+            "text": "$5,700.00"
+          },
+          {
+            "label": "Market value",
+            "text": "$6,425.00"
+          },
+          {
+            "label": "Open lots",
+            "text": "1"
+          }
+        ],
+        "subtitle": "Sell 0.5 BTC under FIFO",
+        "title": "Tax lots this sale consumes",
+        "view": "taxlots.table.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": "—",
+          "path": "view",
+          "presence": "default `\"taxlots.table.v1\"`",
+          "state": "—",
+          "type": "const 'taxlots.table.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "title",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "subtitle",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤200 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "price",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "price.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "price.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "price.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "price.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "proceeds",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "proceeds.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "proceeds.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "proceeds.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "proceeds.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "cost_basis",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "cost_basis.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "cost_basis.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "cost_basis.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "cost_basis.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "realized",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "realized.label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "realized.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "realized.amount.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "realized.amount.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "by_term",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "by_term[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "—",
+          "path": "by_term[].term",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum short / long"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "by_term[].lots",
+          "presence": "required",
+          "state": "—",
+          "type": "integer 0..None"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "by_term[].realized",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "by_term[].realized.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "by_term[].realized.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "lots",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "lots[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "lots[].acquired_on",
+          "presence": "required",
+          "state": "—",
+          "type": "string"
+        },
+        {
+          "binding": "enum",
+          "input": "—",
+          "path": "lots[].term",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum short / long"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "lots[].units",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "lots[].cost_basis",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "lots[].cost_basis.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "lots[].cost_basis.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "lots[].proceeds",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "lots[].proceeds.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "lots[].proceeds.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "lots[].gain_loss",
+          "presence": "required",
+          "state": "—",
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": "—",
+          "path": "lots[].gain_loss.amount",
+          "presence": "required",
+          "state": "—",
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": "—",
+          "path": "lots[].gain_loss.display",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "lots[].trend",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤8 chars"
+        },
+        {
+          "binding": "flag",
+          "input": "—",
+          "path": "lots[].fully_sold",
+          "presence": "required",
+          "state": "variant",
+          "type": "boolean"
+        },
+        {
+          "binding": "container",
+          "input": "—",
+          "path": "remaining",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "remaining[].label",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": "—",
+          "path": "remaining[].text",
+          "presence": "required",
+          "state": "—",
+          "type": "string ≤200 chars"
+        }
+      ],
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``taxlots.table.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sections to render; omit for all of them. A section this view does not offer is rejected, never ignored.",
+            "examples": [
+              [
+                "buckets"
+              ]
+            ],
+            "title": "Fields"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "lot_method": {
+            "default": "FIFO",
+            "description": "Which lots the sale consumes first: FIFO the oldest, LIFO the newest, HIFO the dearest.",
+            "enum": [
+              "FIFO",
+              "LIFO",
+              "HIFO"
+            ],
+            "examples": [
+              "FIFO"
+            ],
+            "title": "Lot Method",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "quantity": {
+            "default": "0.5",
+            "description": "Units to sell, written as a decimal string ('0.5'). A dollar-sized ask is resolved to units by the `simulate_sale` tool; copy the units it returned rather than dividing (spec 0015 OD-4).",
+            "examples": [
+              "0.5"
+            ],
+            "pattern": "^\\d{1,12}(\\.\\d{1,8})?$",
+            "title": "Quantity",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "BTC",
+            "description": "Ticker being sold, in any case.",
+            "examples": [
+              "BTC"
+            ],
+            "maxLength": 10,
+            "pattern": "^[A-Za-z]{2,10}$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "TaxLotsTableOptions",
+        "type": "object"
+      },
+      "payload_type": "TaxLotsTablePayload",
+      "summary": "Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.",
+      "view": "taxlots.table.v1"
+    }
+  ]
+}

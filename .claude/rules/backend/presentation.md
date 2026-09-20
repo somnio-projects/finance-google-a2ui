@@ -64,16 +64,28 @@ Registering once publishes the projection to: the **OpenAPI** document, the
 **`GET /v1/views` catalog** (id, serving endpoints, options schema, example),
 the **prompt fragments** that teach the model the catalog (generated, never
 hand-copied), the **A2UI surface** adapter for the genui client, and the
-**frozen design contract** [`docs/catalog/CONTRACT.md`](../../../docs/catalog/CONTRACT.md)
-— the field inventory design binds to (GGU-41, spec `backend/0019`), also
-generated. `genui`, `genui_a2a` and `a2ui_core` are alpha: keeping the A2UI
-mapping in one adapter per projection is what makes a library bump a contained
-change.
+**frozen design contract** — the field inventory design binds to (GGU-41, spec
+`backend/0019`), also generated. `genui`, `genui_a2a` and `a2ui_core` are
+alpha: keeping the A2UI mapping in one adapter per projection is what makes a
+library bump a contained change.
 
-The contract is **gated**: `make gate` re-renders it and diffs it, so a
-projection cannot change without the document changing in the same commit.
-After touching a projection, run `cd backend && make catalog` and commit the
-result. Two conventions it reads:
+The contract is published in **two renderings, from one render pass**
+(`presentation/catalog_artifacts.py`):
+
+| Artefact | For | Carries |
+|---|---|---|
+| [`docs/catalog/CONTRACT.md`](../../../docs/catalog/CONTRACT.md) | the designer | options, field inventory, example, digest |
+| [`docs/catalog/view-catalog.snapshot.json`](../../../docs/catalog/view-catalog.snapshot.json) | the Flutter catalog test (GGU-53, spec `backend/0021`) | **component type**, view id, field paths, options schema, example, digest |
+
+A third rendering is one entry in `ARTIFACTS` plus its renderer — never a
+second script and never a second gate step.
+
+Both are **gated**: `make gate` re-renders them and diffs them, so a projection
+cannot change without the artefacts changing in the same commit. After touching
+a projection, run `cd backend && make catalog` and commit the result. The
+component name in the snapshot is read from the projection's own A2UI adapter
+and is what the client registers against, verbatim — rename it and the gate
+fails on both the snapshot and the suite. Two conventions the contract reads:
 
 - **Pre-formatted** is derived from the ADR-E pair (a string beside a figure),
   not from the `display` name — keep shipping pairs and it classifies itself.
@@ -105,5 +117,5 @@ budget is a defect like a failing test.
 - [ ] A2UI adapter + its test.
 - [ ] `register(...)` called from the module; nothing else edited.
 - [ ] Appears in `/v1/views`, in OpenAPI with an example, and in the generated prompt fragments.
-- [ ] `cd backend && make catalog` run and `docs/catalog/CONTRACT.md` committed — the gate fails on a stale contract.
+- [ ] `cd backend && make catalog` run and **both** `docs/catalog/CONTRACT.md` and `docs/catalog/view-catalog.snapshot.json` committed — the gate fails on a stale artefact, twice.
 - [ ] Spec updated (`specs/backend/NNNN-*.md`) and the decision recorded if anything in ADR-K changed.

@@ -47,9 +47,13 @@ dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
-`catalog-check` sits between `budget` and `quality`: it re-renders
-`docs/catalog/CONTRACT.md` from the projection registry into a temporary buffer
-and diffs it against the checked-in file (GGU-41, spec `backend/0019`).
+`catalog-check` sits between `budget` and `quality`: it re-renders **every**
+generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
+`backend/0019`) and `docs/catalog/view-catalog.snapshot.json` (GGU-53, spec
+`backend/0021`) — from the projection registry into a buffer and diffs each
+against the checked-in file. One command, one render pass: a new artefact is an
+entry in `presentation/catalog_artifacts.ARTIFACTS`, not a new gate step, so
+`ship-gate.json` and the workflows keep matching verbatim.
 
 **A generated artefact is gated by regeneration, never by trust.** Anything the
 build produces is checked in *and* re-rendered by the gate and diffed, and the

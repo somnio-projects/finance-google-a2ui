@@ -117,12 +117,15 @@ def contract_document(projections: Sequence[Projection]) -> str:
     return "\n\n".join(parts) + "\n"
 
 
-def contract_drift(*, checked_in: str, generated: str) -> str:
+def contract_drift(
+    *, checked_in: str, generated: str, path: str = CONTRACT_PATH
+) -> str:
     """Return a unified diff of the two, empty when the file is current.
 
     Args:
-        checked_in: What ``docs/catalog/CONTRACT.md`` holds today.
+        checked_in: What the checked-in artefact holds today.
         generated: What the registry says it should hold.
+        path: The artefact compared, named in the diff header.
 
     Returns:
         A diff a developer can read, or ``""`` when nothing drifted.
@@ -131,7 +134,7 @@ def contract_drift(*, checked_in: str, generated: str) -> str:
         unified_diff(
             checked_in.splitlines(keepends=True),
             generated.splitlines(keepends=True),
-            fromfile=CONTRACT_PATH,
+            fromfile=path,
             tofile="generated from the registry",
         )
     )

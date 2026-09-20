@@ -22,9 +22,11 @@ typecheck:
 budget:
 	$(UV) run python scripts/check_file_budget.py
 
-# The frozen design contract (GGU-41): docs/catalog/CONTRACT.md is rendered from
-# the projection registry, never hand-written. `catalog` regenerates it;
-# `catalog-check` fails the gate when a projection changed and the file did not.
+# The frozen design contract, in both of its renderings: docs/catalog/CONTRACT.md
+# for the designer (GGU-41) and docs/catalog/view-catalog.snapshot.json for the
+# Flutter catalog test (GGU-53). One render pass over the projection registry,
+# never hand-written. `catalog` regenerates both; `catalog-check` fails the gate
+# when a projection changed and an artefact did not.
 catalog:
 	$(UV) run python scripts/generate_catalog_contract.py
 

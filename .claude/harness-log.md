@@ -7,6 +7,53 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-20 — GGU-53 the catalog contract as JSON · spec `specs/backend/0021-machine-readable-catalog.md`
+
+**Branch:** `feat/GGU-53_catalog_json`. Server half of GGU-53 only; the Flutter
+harness and `catalog_contract_test.dart` stay with the client half (blocked by
+GGU-1).
+
+**What changed.** `docs/catalog/CONTRACT.md` proved the contract to a human and
+to nobody else — a Dart test cannot parse a table, so the one fact the client
+binds to (the A2UI component name) was published nowhere a machine could read.
+`docs/catalog/view-catalog.snapshot.json` now ships beside it: per view the
+component type, the view id, the digest, the field paths, the options schema
+and the rendered example. `presentation/catalog_artifacts.py` holds both
+renderings as a list, `render_all(REGISTRY.all())` produces them in **one**
+pass, and the existing generator script writes and `--check`s each. No new gate
+step, no new Makefile target, no change to `ship-gate.json` — the command it
+already names covers both files, which is what §5 of the CI rule asks for.
+
+**The mutation check found the point of the ticket.** Renaming one adapter's
+component (`DonutChart` → `PieChart`, nothing else touched) turns the new suite
+red three ways and `catalog-check` red on the snapshot — while
+**`CONTRACT.md` stays current**. The Markdown prints payload fields, not the
+adapter's output, so the string the Flutter `FinanceCatalog` registers against
+was the one string no gate watched. That is the drift GGU-53 describes
+(`WaterfallChart` vs `attribution_waterfall`), reproduced on demand.
+
+**For the next person:**
+
+- **A generated artefact is an entry in a list now, not a script.** Adding a
+  third rendering of the registry means one `Artifact(path, render)` in
+  `ARTIFACTS` and its renderer. If you find yourself writing a second
+  `--check` script or a second gate step, stop.
+- **The component name is read, never written.** `component_of` validates the
+  shipped example back into the DTO and asks the projection's own adapter, so
+  the snapshot cannot carry a name the backend does not emit — and the round
+  trip proves the example still deserialises, which is the client test's
+  property asserted server-side.
+- **One named case, never the list.** The suite asserts the *rule* over
+  `REGISTRY.all()` plus a single pinned example (`holdings.allocation.v1 →
+  DonutChart`). Listing all six components would rebuild the hardcoded
+  inventory 0019 OD-2 deleted and would fail the day a seventh registers.
+- **Prose hits the line budget too.** The cross-reference paragraph pushed
+  `catalog_preamble.py` to 162 lines; the legend moved to
+  `catalog_legend.py` at the seam between "what is frozen" and "how to read a
+  row". Budgets are not raised for prose.
+
+---
+
 ## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
 
 **Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
