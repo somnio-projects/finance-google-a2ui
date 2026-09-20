@@ -91,6 +91,11 @@ def test_the_process_registry_holds_every_reference_projection() -> None:
         "holdings.allocation.v1",
         "taxlots.table.v1",
         "payoff.curve.v1",
+def test_the_process_registry_holds_every_shipped_projection() -> None:
+    assert [p.id for p in REGISTRY.all()] == [
+        "attribution.waterfall.v1",
+        "holdings.allocation.v1",
+        "scenario.comparison.v1",
     ]
 
 

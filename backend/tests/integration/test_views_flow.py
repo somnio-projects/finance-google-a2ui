@@ -15,6 +15,7 @@ from tests.conftest import make_token
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
 TAX_LOTS = "taxlots.table.v1"
+SCENARIO = "scenario.comparison.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 
 
@@ -74,6 +75,11 @@ def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -
     assert payload["price"]["amount"]["display"] == "$64,250.00"
 
     assert served == {projection.id for projection in REGISTRY.all()}
+    assert {entry["id"] for entry in response.json()} == {
+        ALLOCATION,
+        WATERFALL,
+        SCENARIO,
+    }
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:

@@ -18,6 +18,7 @@ from app.schemas.views import MAX_VIEWS
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
 TAX_LOTS = "taxlots.table.v1"
+SCENARIO = "scenario.comparison.v1"
 VIEWS_URL = "/v1/portfolios/current/views"
 AUTH = {"Authorization": "Bearer good"}
 
@@ -104,6 +105,7 @@ def test_catalog_describes_every_registered_projection(
     catalog = response.json()
     assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION, TAX_LOTS]
     assert [entry["id"] for entry in catalog] == [p.id for p in REGISTRY.all()]
+    assert [entry["id"] for entry in catalog] == [WATERFALL, ALLOCATION, SCENARIO]
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry["endpoints"] == list(projection.endpoints)
         assert entry["options_schema"]["properties"]
