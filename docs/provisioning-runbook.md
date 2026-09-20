@@ -33,10 +33,24 @@ one, and do not type it anywhere it will be stored in plain text.
 ## Verifying it, before handover
 
 ```bash
-export DEMO_PASSWORD='…'              # from the password manager, never inline
+read -rs DEMO_PASSWORD && export DEMO_PASSWORD
 export FIREBASE_WEB_API_KEY='…'       # Firebase console → project settings
 ./scripts/verify_demo_account.sh reviewer@example.com
 ```
+
+Run it from the repository root, not from `infra/` or `backend/`.
+
+**`read -rs` is the point, not a style preference.** It does not echo, so the
+password never reaches the screen, the shell history or the scroll-back — and
+a terminal session can then be pasted into a chat, a ticket or a bug report
+without disclosing it. This block used to show an `export` with the value
+inline, directly under the words *never inline*; the instruction and the
+example disagreed, and the example is what people copy. Three passwords leaked
+that way in one afternoon.
+
+`FIREBASE_WEB_API_KEY` is different: it is the browser-embedded key, public by
+design, and it identifies the project rather than authorising anything. It
+still is not committed, because a key in a repository is a key nobody rotates.
 
 Exit 0 means: the credentials return a real ID token, the backend verifies it,
 the portfolio renders with formatted figures, and the A2A surface accepts the
@@ -52,18 +66,18 @@ Fill one row per account. Metadata only.
 
 | Field | Value |
 |---|---|
-| Email | |
+| Email | `reviewer@somniosoftware.com` |
 | Firebase project | `finance-a2ui` |
-| Created by | |
-| Created at | |
-| Verified by (script, exit 0) | |
-| Verified at | |
-| Environment verified against | |
+| Created by | Lautaro Bertuzzi (Firebase console) |
+| Created at | 2026-09-20 |
+| Verified by (script, exit 0) | Lautaro Bertuzzi |
+| Verified at | 2026-09-20 — steps 1–4 all `ok` |
+| Environment verified against | dev · `https://finance-a2ui-dev-api-crqogdubva-uc.a.run.app` · `APP_RELEASE=0.1.0+9a94346` |
 | Delivery channel | password-manager share / one-time secret link |
-| Delivered to | |
-| Delivered at | |
-| Protected from cleanup until | |
-| UAT sign-off (date · platforms · by whom) | |
+| Delivered to | _not yet delivered_ |
+| Delivered at | _not yet delivered_ |
+| Protected from cleanup until | _to be set when the review window is agreed_ |
+| UAT sign-off (date · platforms · by whom) | **not done** — UAT-3…UAT-6 are human judgements the script cannot settle |
 
 **Delivery channel:** a password-manager share or a one-time secret link.
 Never email, never chat, never a Jira comment.
