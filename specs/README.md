@@ -14,8 +14,13 @@ specs/
 ├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
 ├── infra/             NNNN-<topic>.md   — Google Cloud infrastructure (infra/) and the delivery pipeline
 ├── repo/              NNNN-<topic>.md   — repository-level work: licensing, docs, hygiene
-└── client/            NNNN-<feature>.md — Flutter client (client_flutter/)
+├── client/            NNNN-<feature>.md — the client_flutter/ app and the backend contract both apps bind
+└── frontend/          NNNN-<feature>.md — the A2UI client (frontend/)
 ```
+
+One area per solution folder, so `frontend/`'s specs are found where its code
+is. `client/` keeps the specs that are not one app's — chiefly
+`0003-client-backend-contract.md`, which both Flutter apps bind.
 
 Numbers are per area, zero-padded, never reused. The filename is stable once
 merged; a replaced spec is marked `Superseded by NNNN` and kept.
@@ -69,3 +74,4 @@ duplicated one are both visible at a glance.
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
+| [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |

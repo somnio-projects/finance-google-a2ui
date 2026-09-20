@@ -63,7 +63,7 @@ repos:
         # word list knows nothing about the Flutter or docs vocabulary, so this
         # hook flagged `bloc` on every Flutter file it touched. Two configs for
         # one check is the drift .claude/rules/ci-conventions.md §5 is about.
-        exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|backend/reports/)
+        exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|frontend/pubspec\.lock|backend/reports/)
 
   # ---------------------------------------------------------------- yaml & actions
   - repo: https://github.com/rhysd/actionlint
@@ -176,5 +176,46 @@ repos:
         entry: bash -c 'cd backend && make gate'
         language: system
         files: ^backend/
+        pass_filenames: false
+        stages: [pre-push]
+
+      # ------------------------------------------------ frontend gate (local tools)
+      # The cheap half of `cd frontend && make gate`. Command strings are
+      # copied from frontend/Makefile and .claude/ship-gate.json, not
+      # paraphrased (.claude/rules/ci-conventions.md 5). The suites and the
+      # coverage threshold run in CI and in the pre-push gate below.
+      - id: frontend-format
+        name: Verify Dart formatting is canonical (dart format)
+        entry: bash -c 'cd frontend && dart format --output=none --set-exit-if-changed .'
+        language: system
+        files: ^frontend/.*\.dart$
+        pass_filenames: false
+
+      - id: frontend-analyze
+        name: Analyse with infos and warnings fatal (dart analyze)
+        entry: bash -c 'cd frontend && dart analyze --fatal-infos --fatal-warnings'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: frontend-budget
+        name: Enforce the 150-line file budget (check_file_budget.dart)
+        entry: bash -c 'cd frontend && dart run tool/check_file_budget.dart'
+        language: system
+        files: ^frontend/.*\.dart$
+        pass_filenames: false
+
+      - id: frontend-manifest
+        name: Verify the generated component manifest is current (generate_component_manifest.dart)
+        entry: bash -c 'cd frontend && dart run tool/generate_component_manifest.dart --check'
+        language: system
+        files: ^frontend/app/lib/components/
+        pass_filenames: false
+
+      - id: frontend-full-gate
+        name: Run the full frontend ship gate before pushing (make gate)
+        entry: bash -c 'cd frontend && make gate'
+        language: system
+        files: ^frontend/
         pass_filenames: false
         stages: [pre-push]

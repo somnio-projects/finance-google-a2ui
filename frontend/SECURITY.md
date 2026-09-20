@@ -1,0 +1,56 @@
+# Security controls — SOC 2 (TSC 2017) and ISO/IEC 27001:2022 mapping
+
+This is the **client** half of a public open-source reference application. It
+holds no secret of its own: the model key, the database and the identity
+verification all live server-side (`backend/docs/SECURITY.md`). Its threat
+surface is what it *sends*, what it *renders*, and what it *keeps*.
+
+The same honesty rule as the compliance corpus applies here, and it matters
+more than the table: **a control that is not implemented is a gap with an
+owner, never a satisfied row.** This app is a skeleton, so the gap list below
+is longer than the control matrix, and that is the accurate picture.
+
+## Control matrix — implemented and verified
+
+| Control | Implementation | Verified by | SOC 2 TSC | ISO 27001 Annex A |
+|---|---|---|---|---|
+| The credential is produced in one place | `app/lib/bootstrap.dart::devTokenProvider`, injected as `AuthTokenProvider` | `app/test/bootstrap_test.dart` | CC6.1 | A.5.15 |
+| The credential is read in one place and only as a bearer header | `packages/finance_api_client/lib/src/finance_api_client.dart::_headers` | `finance_api_client_test.dart::puts the credential in the Authorization header and nowhere else` | CC6.1, CC6.7 | A.8.5 |
+| No credential in a URL, a query string or a log | same; the client logs nothing at all | same test asserts the token is absent from the request URI | CC6.7, CC7.2 | A.8.15, A.8.24 |
+| No credential is persisted | nothing is written to disk, `SharedPreferences` or IndexedDB — the app has no storage dependency | absence is structural; `pubspec.yaml` declares no storage package | CC6.7 | A.8.10 |
+| Cached data is dropped on sign-out | `ViewsRepository.clearCache` | `views_repository_cache_test.dart::drops the ETags so a later read re-fetches in full` | CC6.1 | A.8.10 |
+| Errors shown to a user are the backend's safe text, never a library message or stack trace | `AppFailure` carries `code` + `message`; `_FailureView` renders them verbatim | `portfolio_views_view_test.dart::shows the backend safe detail and code on failure` | CC7.4 | A.8.9 |
+| A malformed or hostile response cannot crash a surface | `ProblemDetails.tryParse` returns `null` rather than guessing; `ComponentHost` catches a contract violation and renders it | `problem_details_test.dart`, `component_host_test.dart` | CC7.4 | A.8.28 |
+| No client-side interpretation of server-supplied strings | no template, expression or field path from the server is evaluated (N-5); `ViewPayload` paths are literals in component code | `layering_test.dart`, code review | CC6.6 | A.8.28 |
+| No arithmetic or formatting of financial figures on the client | `layering_test.dart::nothing formats or computes a number` fails on `NumberFormat`, `intl`, `dart:math`, `toStringAsFixed`, `double.parse` | that test, mutation-checked | CC7.4 | A.8.28 |
+| Layer boundaries are enforced, not reviewed | `app/test/architecture/layering_test.dart` (6 boundary tests) | itself, mutation-checked | CC8.1 | A.8.25 |
+| Pinned, reproducible dependency graph | one `pubspec.lock`; every install and every CI job uses `flutter pub get --enforce-lockfile`; Flutter pinned to 3.47.5 in `frontend-ci.yaml` | CI | CC8.1 | A.8.8, A.8.32 |
+| 100 % line coverage per file, analyzer strict with infos fatal | `tool/check_coverage.dart`, `very_good_analysis` | `make gate`, `frontend-ci.yaml` | CC8.1 | A.8.25, A.8.29 |
+| Change control and review ownership | branch protection on `develop`, `.github/CODEOWNERS`, PR template | GitHub | CC8.1 | A.8.32 |
+
+## Gaps — not implemented, with an owner
+
+| # | Gap | Why it matters | Owner | Planned close |
+|---|---|---|---|---|
+| **G-1** | **The only credential path is a `--dart-define` development token.** A dart-define is compiled into the bundle and is readable by anyone who can read the build output. | A production credential placed here would be published. | Lautaro | The auth ticket replaces `devTokenProvider` with a Firebase ID-token provider (ADR-B D-1). Until then: local stacks only, tokens minted by `cd backend && make token`. `AppConfig.devBearerToken` carries this warning in its own doc comment. |
+| **G-2** | **No 401/403 policy.** ADR-B D-7 requires force-refresh and exactly one retry on `auth/expired-token`, immediate sign-out on `auth/invalid-token`, and no retry on `forbidden`. None of it exists; every failure is simply surfaced. | An expired token shows an error instead of recovering; there is no bounded retry to get wrong yet, which is the only reason this is not worse. | Lautaro | Lands with the auth ticket, in the repository layer, with a test per branch. |
+| **G-3** | **No sign-out.** `clearCache()` exists and nothing calls it. | Cached portfolio data would outlive a session if one existed. | Lautaro | Auth ticket. The seam is in place. |
+| **G-4** | **No CSP, SRI or security headers on the hosted bundle.** | A web client without a content-security policy is exposed to injected script if the host is ever compromised. | TL + `specs/client/0002-client-delivery.md` | Owned by the delivery spec; this app is not deployed by any pipeline today. |
+| **G-5** | **No dependency vulnerability scan over the Dart graph.** The backend runs `pip-audit`; the frontend gate has no equivalent. | A vulnerable transitive package would not be noticed. | Lautaro | Spec `frontend/0001` OD-5 — add OSV scanning of `pubspec.lock` to `frontend-ci.yaml`. |
+| **G-6** | **No secret scanning scoped to `frontend/`.** `gitleaks` runs over the full history in `backend-ci`, which does cover these files in practice, but no frontend job asserts it. | A committed token would be caught by the backend job today and silently would not be if that job were ever narrowed. | Lautaro | Follow-up: either widen the scan's ownership or add a job here. |
+| **G-7** | **No telemetry, and therefore no evidence of client-side failures.** | A defect in a user's browser is invisible. | TL | Deliberate for now: the first reporter added must be one that cannot carry a token or a payload body (the backend's `send_default_pii=False` shape). |
+| **G-8** | **No accessibility audit beyond semantics on the one component.** Contrast comes from Material 3's generated scheme rather than from a measured check. | WCAG 4.5:1 is claimed by the framework, not verified here. | Lautaro | Add a contrast assertion and `flutter test --update-goldens` coverage when the component set lands. |
+
+## Threat notes
+
+- **The client is not a trust boundary.** Every authorization decision is the backend's; the client renders what it is given. Nothing here may be relied on to enforce access — a user can edit a web bundle.
+- **Payload-driven rendering is the interesting surface.** The client renders server-supplied strings (`title`, `label`, `disclosure`, `notes[]`) verbatim into `Text` widgets. Flutter `Text` does not interpret markup, so this is safe today; introducing any rich-text or HTML rendering of a server string would change that and needs its own review.
+- **N-5 is a security rule, not a style rule.** No expression, template or field path supplied by the server is ever evaluated. `ViewPayload` paths are literals written by a component's author; an interpreter over server input would be an injection surface that cannot be documented or covered (ADR-K D-3's neglected alternative).
+- **Cache scope.** The `ETag` cache is in-memory, per `ViewsRepository` instance, and keyed by path + view ids + options. It is not keyed by subject, because the instance's lifetime is the app's and there is one subject; **when sign-in lands, either key it by subject or clear it on every identity change** — G-3's ticket owns that, and it is the kind of thing that is easy to miss.
+- **`as_of` is never read from the device clock** (N-13). A client clock is attacker-controlled and would silently mislabel a valuation.
+
+## Operating procedures (out of code)
+
+This app stores nothing and deploys nowhere today. When
+`specs/client/0002-client-delivery.md` gives it a host, that spec owns the
+CSP, the cache headers and the TLS posture, and this document gains the rows.

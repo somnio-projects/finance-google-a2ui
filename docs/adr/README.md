@@ -34,7 +34,8 @@ review and the ship gate cite them by number.
 | [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted · **D-4 superseded by D-7/D-8/D-9 (Proposed, 2026-09-20)** | GGU-5, GGU-3, GGU-29 |
 | [ADR-G](ADR-G-secret-handling.md) | Secret handling in a public repository | Accepted | GGU-3, GGU-12 |
 | [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed | GGU-45 |
-| [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating | Accepted | GGU-1, GGU-2 |
+| [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating (`client_flutter/` only; amended for `frontend/` by ADR-L D-5) | Accepted | GGU-1, GGU-2 |
+| [ADR-L](ADR-L-client-architecture.md) | The `frontend/` client architecture | Proposed | GGU-91 |
 
 Letters are provisional identifiers from the refinement pass. Renumber to `ADR-0001…` on first
 amendment if the team prefers sequential numbering; update the citations in the GGU-6 tickets at the

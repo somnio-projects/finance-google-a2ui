@@ -1,0 +1,50 @@
+# One analyzer configuration for the whole workspace; every package includes it.
+#
+# `very_good_analysis` is the strict Very Good Ventures rule set — the same
+# lineage as the Bloc/testing conventions in `.claude/rules/flutter/`. Two of
+# its rules do work this project would otherwise need a bespoke script for:
+#
+#   * `public_member_api_docs` — documentation on every public symbol, which is
+#     the backend's `interrogate src` at 100 %, enforced by the analyzer.
+#   * `lines_longer_than_80_chars` — the 80-column rule from best-practices.md.
+#
+# `dart analyze --fatal-infos --fatal-warnings` in the gate is what turns these
+# from advice into a red build.
+include: package:very_good_analysis/analysis_options.11.0.0.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # A TODO without a ticket is a note to nobody.
+    todo: warning
+  exclude:
+    - "**/*.g.dart"
+
+linter:
+  rules:
+    # Two rules from the included set are switched OFF here, deliberately and
+    # with a reason, because both push towards Dart 3.13 syntax that makes this
+    # codebase worse. Turning a lint off in this file is a team decision and is
+    # argued in ADR-L D-10; silencing one with a scattered `// ignore:` is not.
+    #
+    # `unnecessary_type_name_in_constructor` rewrites `const Foo(...)` into the
+    # new `const new(...)` shorthand. It is valid, it is also two months old,
+    # and a skeleton every later ticket copies should read like the Flutter the
+    # team already knows.
+    unnecessary_type_name_in_constructor: false
+    # `prefer_initializing_formals` wants `required this._apiClient`, which
+    # makes the *parameter* private: call sites become
+    # `ViewsRepository(_apiClient: …)`, leaking a private name into the public
+    # API. The `: _apiClient = apiClient` form keeps the seam clean.
+    prefer_initializing_formals: false
+    # The client renders what the backend formatted (ADR-K D-5, spec 0003 N-1).
+    # `dart:math` and number formatting have no legitimate use in this app, and
+    # `tool/check_layering.dart` fails the gate on either — these two are the
+    # cheap first line of defence while typing.
+    avoid_double_and_int_checks: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    unawaited_futures: true
