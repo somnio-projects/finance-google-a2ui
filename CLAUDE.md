@@ -5,7 +5,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 | Folder | What | Manual |
 |---|---|---|
 | `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
-| `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc | Flutter rules in `.claude/rules/flutter/` |
+| `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc — binds the backend's projections and transforms nothing | [`client_flutter/CLAUDE.md`](client_flutter/CLAUDE.md); project rules in `.claude/rules/client/`, generic ones in `.claude/rules/flutter/` |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL, Secret Manager, Cloud Run, logging/alerts — one shape per `environment`, with HA/PITR/Cloud Armor derived **on outside `dev`** (`specs/infra/0001-dev-environment.md`). Validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
 | `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract, as Markdown for the designer and JSON for the client test — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
@@ -80,6 +80,10 @@ matching path is touched.
 | .claude/rules/backend/security.md | python | SOC 2 / ISO 27001 controls while writing backend code, Dockerfile, compose. |
 | .claude/rules/backend/testing.md | python | 100 % branch coverage contract, unit vs integration, fixtures and naming. |
 | .claude/rules/backend/sdd.md | all | Spec-driven workflow, harness log, `/feature` lifecycle (specs/, .claude/). |
+| .claude/rules/client/architecture.md | flutter | Client layering, the feature slice, what a Bloc may not do, the 220-line Dart budget (client_flutter/*/lib, client_flutter/CLAUDE.md). |
+| .claude/rules/client/presentation.md | flutter | The client half of ADR-K — bind, never format/compute/derive/interpret/invent (client_flutter views, blocs, repositories). |
+| .claude/rules/client/testing.md | flutter | Coverage bar and who checks it, unit vs widget vs bloc, the verbatim-binding test, Dart mutation checks (client_flutter/*/test). |
+| .claude/rules/client/security.md | flutter | Token handling, what a --dart-define may carry, secrets, logging, TLS, the absent deep-link surface (client_flutter Dart, web shell, manifests). |
 | .claude/rules/python/code-style.md | python | Ruff gate, naming, imports, Google docstrings. |
 | .claude/rules/python/data-validation.md | python | pydantic at boundaries, pydantic-settings, typed responses. |
 | .claude/rules/python/error-handling.md | python | EAFP, narrowest except, custom hierarchy, translate at boundaries. |
