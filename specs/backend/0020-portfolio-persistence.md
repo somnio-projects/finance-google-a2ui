@@ -2,7 +2,7 @@
 
 - **Status:** Approved (TL, 2026-09-20)
 - **Ticket:** GGU-29 follow-up · **Supersedes:** spec `0003` OD-6 (in-memory provider)
-- **Related:** [ADR-F](../../docs/adr/ADR-F-infrastructure.md), [ADR-E](../../docs/adr/ADR-E-money-representation.md), `0003-portfolio-domain.md`
+- **Related:** [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md), [ADR-E](../../docs/adr/ADR-E-money-representation.md), `0003-portfolio-domain.md`
 
 ## 1. Problem
 
@@ -142,4 +142,4 @@ as it does today.
 | OD-2 | Per-request provider vs a session-less singleton | TL | **Per-request**, per the session-per-request rule. `Container.portfolio` is removed rather than left holding something it must not hold. |
 | OD-3 | Keep the in-memory provider for tests | TL | **Yes**, renamed and kept as a test double — unit tests must not need PostgreSQL. It stops being the production path. |
 | OD-4 | Re-seed on deploy, or keep what is stored | TL | **Keep.** A deploy that silently rewrites the demo portfolio is the surprise this spec exists to end. Re-seeding is a deliberate act: delete the row. |
-| OD-5 | Does this restore ADR-F D-4? | TL | It **removes D-4's reason**. The ADR still says `min=1, max=1` and is still marked Accepted; amending it is a separate change, already flagged in `specs/infra/0001` §11. |
+| OD-5 | Does this restore ADR-F D-4? | TL | It **removes D-4's reason**. ~~The ADR still says `min=1, max=1` and is still marked Accepted; amending it is a separate change, already flagged in `specs/infra/0001` §11.~~ **Done 2026-09-20:** that separate change landed — D-4 is superseded by [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md) D-7 (scaling out is a capacity decision), D-8 (`min-instances = 1` survives as a *cost* decision for the demo) and D-9 (the two in-process caches D-4 was silently bounding). The amendment is Proposed until the TL ratifies it. |

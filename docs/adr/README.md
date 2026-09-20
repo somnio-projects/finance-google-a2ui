@@ -18,6 +18,7 @@ review and the ship gate cite them by number.
 | **Accepted** | Ratified by the TL. Binding. |
 | **Proposed** | Drafted, awaiting ratification. Tickets citing it carry a "pending ADR" Open Decision. |
 | **Superseded by ADR-N** | Replaced. Kept for history; never deleted. |
+| **Accepted · D-n superseded by D-m** | The record stands; one ruling inside it was replaced by a later ruling in the same record. The old `D-n` is struck through and kept — a citation by number must still resolve, and *why it was true once* is the part worth reading. Used when the context changed under a ruling rather than under the whole decision (ADR-F D-4, 2026-09-20). |
 
 ## Registry
 
@@ -30,7 +31,7 @@ review and the ship gate cite them by number.
 | [ADR-E](ADR-E-money-representation.md) | Money representation and rounding | Accepted | GGU-5 |
 | [ADR-J](ADR-J-rest-api-and-a2a-surface.md) | Two surfaces: RESTful `/v1` + A2A protocol adapter | Accepted | GGU-3, GGU-46, Epic 1 |
 | [ADR-K](ADR-K-response-shaping.md) | Response shaping: server-side projections, not client transformation | Accepted | GGU-49, GGU-16–21, GGU-36–39, GGU-41 |
-| [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted | GGU-5, GGU-3 |
+| [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted · **D-4 superseded by D-7/D-8/D-9 (Proposed, 2026-09-20)** | GGU-5, GGU-3, GGU-29 |
 | [ADR-G](ADR-G-secret-handling.md) | Secret handling in a public repository | Accepted | GGU-3, GGU-12 |
 | [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed | GGU-45 |
 | [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating | Accepted | GGU-1, GGU-2 |
