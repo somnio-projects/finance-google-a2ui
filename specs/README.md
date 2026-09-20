@@ -63,7 +63,7 @@ duplicated one are both visible at a glance.
 | [backend/0018-order-ticket-projection.md](backend/0018-order-ticket-projection.md) | Draft | GGU-41 |
 | [backend/0019-frozen-catalog-contract.md](backend/0019-frozen-catalog-contract.md) | Implemented | GGU-41 (re-baselined) |
 | [backend/0020-portfolio-persistence.md](backend/0020-portfolio-persistence.md) | Approved | GGU-29 follow-up |
-| [backend/0021-surface-actions.md](backend/0021-surface-actions.md) | Draft | GGU-78 |
+| [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Draft | GGU-78 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |

@@ -1,4 +1,4 @@
-# 0021 — Surface actions: what a generated surface is allowed to send back
+# 0022 — Surface actions: what a generated surface is allowed to send back
 
 - **Area:** backend
 - **Status:** Draft
@@ -194,7 +194,7 @@ needs structure amends this table with its reason.
 | Situation | Answer |
 |---|---|
 | No token, rate limited | RFC 9457 problem document at its real status (pre-envelope, unchanged) |
-| Malformed envelope / unparseable part | JSON-RPC `-32602` invalid-params, **HTTP 200** (unchanged) |
+| Malformed envelope / unparsable part | JSON-RPC `-32602` invalid-params, **HTTP 200** (unchanged) |
 | Unknown action id | JSON-RPC `-32602`, HTTP 200, fixed message `UNKNOWN_ACTION` |
 | Undeclared or out-of-range argument | JSON-RPC `-32602`, HTTP 200, message names the **argument**, never the value |
 | `surface.actions` flag off | JSON-RPC `-32601` method-not-found — a disabled capability is one that does not exist, mirroring the REST 404-for-feature-disabled rule |

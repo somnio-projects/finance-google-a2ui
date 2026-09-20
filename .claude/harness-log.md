@@ -1637,7 +1637,7 @@ the stale row in `docs/specs/GGU-3/api-contract.md` §6 is struck.
 
 ## 2026-09-20 (cont.) — GGU-78: what a surface is allowed to send back (spec only)
 
-**Spec:** `specs/backend/0021-surface-actions.md` — Draft, awaiting TL approval.
+**Spec:** `specs/backend/0022-surface-actions.md` — Draft, awaiting TL approval.
 No code. The SDD rule is that a human approves the spec before implementation,
 and this one carries a product decision rather than a mechanical one.
 
