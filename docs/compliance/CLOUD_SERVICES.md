@@ -79,7 +79,7 @@ plan §5.
 |---|---|---|
 | Unhandled exceptions, error-rate spike | Sentry (`SENTRY_DSN` set in staging/production; alert rule "≥ 10 events / 5 min") | Slack `#finance-google-a2ui-dev` + on-call |
 | Auth failures spike (`auth.rejected` counter) | Sentry metrics / Cloud Monitoring log-based metric on `auth/*` error codes | Slack + on-call (possible credential stuffing) |
-| Readiness | Cloud Monitoring uptime check on `/readyz` every 60 s, 3 failures. **Not created in dev** — an uptime check needs a hostname that exists before the apply, and dev's address is only known afterwards; the deploy's own `/healthz` verification and rollback still run there | Slack + on-call |
+| Readiness | Cloud Monitoring uptime check on `/readyz` every 60 s, 3 failures. **Not created in dev** — an uptime check needs a hostname that exists before the apply, and dev's address is only known afterwards; the deploy's own `/health` verification and rollback still run there | Slack + on-call |
 | 5xx ratio, latency p95 | Cloud Run metrics | Slack |
 | Backup failure | Cloud SQL operation alert | Slack + TL backend |
 | Feature-flag toggles | `feature_flag.toggled` metric + audit rows | dashboard (no alert) |

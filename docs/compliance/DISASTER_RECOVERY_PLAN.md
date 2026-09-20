@@ -23,7 +23,7 @@ Targets: **RPO 24 h (1 h with Cloud SQL PITR) · RTO 4 h** — from
 ### S2 — Backend instance / host lost
 
 1. Rebuild from source: `docker compose up --build -d backend` (or deploy the last known-good image tag to Cloud Run).
-2. Entry point runs migrations idempotently; verify `/healthz`, `/readyz`.
+2. Entry point runs migrations idempotently; verify `/health`, `/readyz`.
 3. No data step needed — the service is stateless.
 
 ### S3 — Region unavailable (production)

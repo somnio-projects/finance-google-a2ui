@@ -15,7 +15,7 @@ accounts; service tokens carry their own `sub`).
 
 | Layer | Rule | Where |
 |---|---|---|
-| Authentication | Bearer token on every route except `/healthz`, `/readyz`, `/openapi.json`, `/docs` | `api/deps.py::get_current_principal` |
+| Authentication | Bearer token on every route except `/health`, `/readyz`, `/openapi.json`, `/docs` | `api/deps.py::get_current_principal` |
 | Token verification | signature, `iss`, `aud`, `exp`, `iat`, `sub` required; leeway ≤ 300 s | `auth/providers/*`, `core/config.py` |
 | Providers | `oidc` (RS256/ES256 via JWKS — Firebase/Google/any SSO) for users; `jwt` (HS256 shared secret) for service-to-service and local dev only | `auth/registry.py` |
 | Authorization | scopes from `scope` / `scp` / `roles` claims, lower-cased; decisions in services via `principal.has_scope()` | `core/principal.py`, services |

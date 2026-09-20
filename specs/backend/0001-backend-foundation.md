@@ -28,7 +28,7 @@ domain (GGU-5), Flutter client wiring (GGU-2), Cloud Run deploy (GGU-29).
 
 | Method & path | Auth | Response | Errors |
 |---|---|---|---|
-| `GET /healthz` | none | `HealthResponse{status:"ok", version}` | — |
+| `GET /health` | none | `HealthResponse{status:"ok", version}` | — |
 | `GET /readyz` | none | `ReadinessResponse{status, dependencies[]}` | `503` when degraded |
 | `GET /v1/me` | Bearer | `MeResponse{subject, provider, email, scopes[]}` | `auth/missing-token`, `auth/invalid-token`, `auth/expired-token` → 401 |
 | `GET /v1/me/audit-events?limit=1..100` | Bearer | `list[AuditEventResponse]` | `malformed-request → 422`, auth codes |
@@ -59,7 +59,7 @@ read-only container. Full mapping: `backend/docs/SECURITY.md`.
 ## 6. Acceptance criteria
 
 1. **AC-1** `make gate` is green from a clean clone: ruff, format, basedpyright strict, file budget (≤150 lines), pytest with 100 % branch coverage.
-2. **AC-2** `/healthz` and `/readyz` are unauthenticated; `/readyz` returns 503 with `status: degraded` when PostgreSQL is unreachable and 200 `ready` otherwise.
+2. **AC-2** `/health` and `/readyz` are unauthenticated; `/readyz` returns 503 with `status: degraded` when PostgreSQL is unreachable and 200 `ready` otherwise.
 3. **AC-3** `/v1/me` without a token → 401 `auth/missing-token`; garbage/wrong-secret/wrong-audience/wrong-issuer → 401 `auth/invalid-token`; expired → 401 `auth/expired-token`; none of the bodies contain library text or stack traces.
 4. **AC-4** A valid token → 200 with subject/provider/email/scopes and one `audit_events` row whose `request_id` equals the response `X-Request-ID`; the token never appears in responses or logs.
 5. **AC-5** OIDC provider verifies RS256 tokens against a JWKS document, caches keys for the TTL and rejects unknown `kid`/issuer.
@@ -80,7 +80,7 @@ read-only container. Full mapping: `backend/docs/SECURITY.md`.
 | AC-5 | `auth/test_oidc_provider.py`, `auth/test_jwks.py`, `auth/test_registry.py` | — |
 | AC-6, AC-7 | `api/test_middleware.py` | — |
 | AC-8 | `api/test_error_handlers.py`, `infra/test_telemetry.py` | — |
-| AC-9 | — | manual: `docker compose up --build`, `curl /healthz` (recorded in PR) |
+| AC-9 | — | manual: `docker compose up --build`, `curl /health` (recorded in PR) |
 | AC-10 | `core/test_config.py` | — |
 
 Mutation checks: auth middleware and rate limiter — yes (performed before PR).

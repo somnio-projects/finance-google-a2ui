@@ -22,7 +22,7 @@ dev gives up, and why that is acceptable, is
 | `database.tf` | Cloud SQL PostgreSQL 16 — private IP only, TLS required and connection logging **in every environment**; **regional HA**, **PITR**, 30 retained backups and deletion protection **outside dev** (dev: zonal, smallest tier, 2 backups, no PITR, destroyable) | A1.2 · A.8.13, A.8.14, A.8.24 |
 | `secrets.tf` | Secret Manager: one secret per setting, regional replication, **90-day rotation** events on Pub/Sub; `DATABASE_URL` and `AUTH_JWT_SECRET` generated; `SENTRY_DSN`/`GEMINI_API_KEY` populated out of band | CC6.1 · A.5.17, A.8.24 |
 | `iam.tf` | Runtime service account with `cloudsql.client`, log/metric writers and **per-secret** accessor; scheduler account limited to running the purge job | CC6.1, CC6.3 · A.5.15, A.8.2 |
-| `run.tf` | Cloud Run v2 service (private egress, probes on `/readyz` and `/healthz`, secrets as env; LB-only ingress outside dev, open ingress in dev because there is no LB), Cloud Run **job** (`python -m app.jobs.purge_audit`) + Cloud Scheduler for the monthly `audit_events` purge | CC7.2, A1.2 · A.8.9, A.8.16 |
+| `run.tf` | Cloud Run v2 service (private egress, probes on `/readyz` and `/health`, secrets as env; LB-only ingress outside dev, open ingress in dev because there is no LB), Cloud Run **job** (`python -m app.jobs.purge_audit`) + Cloud Scheduler for the monthly `audit_events` purge | CC7.2, A1.2 · A.8.9, A.8.16 |
 | `edge.tf` | Global external HTTPS LB, managed certificate, TLS 1.2+ policy, **Cloud Armor** (OWASP SQLi/XSS/RCE/LFI, per-IP throttling, adaptive L7 DDoS), HTTP→HTTPS redirect, edge access logs. **Every resource here is absent in dev** | CC6.6 · A.8.21, A.8.23 |
 | `delivery.tf` | Artifact Registry repository (digest-addressed images, keep 20, drop untagged after 30 days), the **Workload Identity** pool and provider pinned to this GitHub repository, and the **deployer** service account (`artifactregistry.writer`, `run.developer`, `serviceAccountUser` on the runtime identity only). **No service-account key exists anywhere in this directory** | CC6.1, CC6.3, CC8.1 · A.5.15, A.8.4, A.8.32 |
 | `observability.tf` | `_Default` log bucket retention (**90 days**, 30 in dev), data-access **audit logs** for Cloud SQL / Secret Manager / Cloud Run, 5xx and auth-failure alerts to the on-call channel; uptime check on `/readyz` and the readiness alert **outside dev only** (they need a hostname that exists before the apply) | CC7.2 · A.8.15, A.8.16 |
@@ -97,7 +97,7 @@ after CI and then has to remember to check the conclusion.
 
 The sequence lives in `infra/scripts/deploy_cloud_run.sh` — create the revision
 with **no traffic** (its startup runs `alembic upgrade head`), probe `/readyz`
-on that revision, shift 100 % of traffic, verify `/healthz` reports the released
+on that revision, shift 100 % of traffic, verify `/health` reports the released
 identifier, and **restore the previous revision** if any of that fails.
 
 To roll back by hand, without waiting for a pipeline:

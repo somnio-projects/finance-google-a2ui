@@ -20,7 +20,7 @@ flowchart LR
         gate["Gate · backend-ci called as a job<br/>publish and deploy need: it"]
         pub["Image · build, push by digest to Artifact Registry"]
         dep["Deploy · revision with no traffic → /readyz → shift 100%"]
-        ver["Verify · /healthz reports the released identifier"]
+        ver["Verify · /health reports the released identifier"]
         rb["Rollback · traffic back to the previous revision, run fails"]
     end
     subgraph sched["Scheduled"]

@@ -53,7 +53,7 @@ resource "google_cloud_run_v2_job_iam_member" "scheduler_invokes_purge" {
 # Who may invoke the API service.
 #
 # There was no such binding at all, so the deployed service answers 403 to
-# every caller without a Google identity — including on `/healthz`, which
+# every caller without a Google identity — including on `/health`, which
 # GGU-29 AC-1 requires to be green *on the public URL*. The delivery pipeline
 # probes that URL as well (`infra/scripts/deploy_cloud_run.sh`), so this is not
 # only a demo problem: the verify-before-shifting-traffic step could not have

@@ -19,7 +19,7 @@ a control gap.
 Two further gaps follow from the same hole. There is no published identity for
 GitHub Actions to assume, so the first person to wire a deploy would reach for
 a long-lived service-account key in a repository secret. And the running
-service cannot say **which** build it is: `/healthz` reports the hard-coded
+service cannot say **which** build it is: `/health` reports the hard-coded
 package version, so a revision that failed to update looks identical to one
 that succeeded.
 
@@ -41,7 +41,7 @@ that succeeded.
   the risky logic — deploy without traffic, confirm the revision is Ready,
   shift traffic, verify the release, roll back on failure — so the behaviour is
   testable without a cloud account.
-- **Release identity**: `APP_RELEASE` reaches the container, and `/healthz`
+- **Release identity**: `APP_RELEASE` reaches the container, and `/health`
   reports it instead of a constant.
 - **Records**: run summary naming image digest and revision, `CHANGELOG.md`
   entry, deploy log per `CHANGE_MANAGEMENT.md` §7.
@@ -62,7 +62,7 @@ No new HTTP surface. One existing response changes meaning:
 
 | Method & path | Auth | Request | Response | Errors |
 |---|---|---|---|---|
-| `GET /healthz` | none | — | `HealthResponse` — `version` is now the **release identifier** | unchanged |
+| `GET /health` | none | — | `HealthResponse` — `version` is now the **release identifier** | unchanged |
 
 `version` resolves as: `APP_RELEASE` when set and non-blank, otherwise the
 packaged `__version__`. The field keeps its type and its OpenAPI description is
@@ -116,11 +116,11 @@ after that revision answers `/readyz`.
    authentication is Workload Identity Federation, and the provider only
    accepts tokens whose `repository` claim is this repository.
 4. **AC-4** — When any verification fails — the revision never becomes Ready,
-   the revision cannot be identified, `/healthz` does not answer, or it reports
+   the revision cannot be identified, `/health` does not answer, or it reports
    another release — the script leaves the previously serving revision serving
    and exits non-zero. A failed `gcloud run deploy` never touches traffic at
    all.
-5. **AC-5** — The deployed revision answers `/healthz` 200 with `version` equal
+5. **AC-5** — The deployed revision answers `/health` 200 with `version` equal
    to the release identifier that was deployed, not a constant.
 6. **AC-6** — Every job and step in `backend-cd.yaml` and `infra-ci.yaml`
    follows the naming contract in `.claude/rules/ci-conventions.md`, no
@@ -133,8 +133,8 @@ after that revision answers `/readyz`.
 | AC-1 | — | `terraform validate`; `actionlint`; first real run needs GGU-29 |
 | AC-2 | — | workflow declares `environment: production`; approval is a GitHub setting |
 | AC-3 | `infra/scripts/tests/test_wif_conditions.sh` greps the provider for the repository condition and fails if a `google_service_account_key` resource ever appears | `trivy config`; `gitleaks` over full history |
-| AC-4 | `infra/scripts/tests/test_deploy_cloud_run.sh` runs the script against a **stub `gcloud`** and a **stub `curl`** on `PATH`, covering all nine paths: happy, not-Ready, wrong release, release-is-a-prefix, `/healthz` down, deploy failure, unidentifiable revision, explicit rollback, missing variables | same test in `infra-ci` |
-| AC-5 | `backend/tests/unit/core/test_release.py` — configured, padded, blank, absent | container run with and without `APP_RELEASE`, `/healthz` read both times |
+| AC-4 | `infra/scripts/tests/test_deploy_cloud_run.sh` runs the script against a **stub `gcloud`** and a **stub `curl`** on `PATH`, covering all nine paths: happy, not-Ready, wrong release, release-is-a-prefix, `/health` down, deploy failure, unidentifiable revision, explicit rollback, missing variables | same test in `infra-ci` |
+| AC-5 | `backend/tests/unit/core/test_release.py` — configured, padded, blank, absent | container run with and without `APP_RELEASE`, `/health` read both times |
 | AC-6 | `actionlint` in pre-commit | reading the run summary |
 
 Mutation checks required: **yes, for AC-4.** Removing the rollback call from the
@@ -150,7 +150,7 @@ disabled.
 | OD-2 | Canary traffic splitting before full shift? | TL | **No** for the showcase. Deploy without traffic, verify readiness, shift 100 %. A canary needs traffic and metrics we will not have before the demo, and an unobserved canary is theatre. |
 | OD-3 | Does `main` auto-tag a release, or is tagging manual? | TL | The workflow creates the tag `v<version>+<sha>` on a successful production deploy, so the tag can only exist for something that actually ran. |
 | OD-4 | Is the first real deploy blocked on GGU-29? | TL — **yes, decided** | AC-1, AC-2, AC-4 (live) and AC-5 (live) cannot be demonstrated until the projects exist and Terraform is applied. They are proven here by the script tests and `terraform validate`; the PR says so plainly rather than claiming a deploy that did not happen. |
-| OD-5 | How does a GitHub-hosted runner verify a service whose ingress is internal-load-balancer only? | TL — **decided** | It does not reach the `*.run.app` hostnames at all. **Before traffic**, the gate is the revision's own `Ready` condition, which Cloud Run only reports once the startup probe on `/readyz` passes (`infra/run.tf`). **After traffic**, the check goes to `PUBLIC_URL` — the load balancer domain, which is the only address that resolves from outside the VPC — where `/healthz` is unauthenticated by contract. |
+| OD-5 | How does a GitHub-hosted runner verify a service whose ingress is internal-load-balancer only? | TL — **decided** | It does not reach the `*.run.app` hostnames at all. **Before traffic**, the gate is the revision's own `Ready` condition, which Cloud Run only reports once the startup probe on `/readyz` passes (`infra/run.tf`). **After traffic**, the check goes to `PUBLIC_URL` — the load balancer domain, which is the only address that resolves from outside the VPC — where `/health` is unauthenticated by contract. |
 | OD-6 | Who owns the Cloud Run image and traffic fields, Terraform or the pipeline? | TL — **decided** | The pipeline. `infra/run.tf` declares `ignore_changes` on the container image and on `traffic`, so a later `terraform apply` cannot re-point traffic at a revision the pipeline had just rolled back from. Terraform still owns the shape: identity, scaling, networking, secrets and probes. |
 
 ## 9. Rollout & observability

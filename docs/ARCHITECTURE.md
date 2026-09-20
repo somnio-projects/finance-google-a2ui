@@ -77,7 +77,7 @@ starts doing two jobs, which is earlier than anyone would split it voluntarily.
 
 See [04 — request lifecycle](diagrams/04-request-lifecycle.md).
 
-Every route except `/healthz` and `/readyz` is authenticated. Middleware runs
+Every route except `/health` and `/readyz` is authenticated. Middleware runs
 outermost-first: request id, security headers, trusted host, CORS, body limit,
 rate limit. The controller resolves the caller through one dependency, the
 service makes the authorization decision, the repository runs the query, and

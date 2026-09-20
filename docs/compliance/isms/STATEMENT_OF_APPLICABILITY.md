@@ -95,7 +95,7 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.13 | Information backup | Applicable | Implemented | BACKUP_AND_RECOVERY.md; RESTORE_DRILL_LOG.md drill #1 pass; Cloud SQL backups planned |
 | A.8.14 | Redundancy of information processing facilities | Applicable | Partially implemented | stateless service + health checks today; Cloud Run min-instances + Cloud SQL REGIONAL HA in `infra/run.tf`, `database.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
 | A.8.15 | Logging | Applicable | Implemented | structlog JSON with request_id; audit_events; retention in CLOUD_SERVICES.md §4 |
-| A.8.16 | Monitoring activities | Applicable | Implemented | /healthz, /readyz, Sentry, alert routing in CLOUD_SERVICES.md §5 |
+| A.8.16 | Monitoring activities | Applicable | Implemented | /health, /readyz, Sentry, alert routing in CLOUD_SERVICES.md §5 |
 | A.8.17 | Clock synchronisation | Applicable | Implemented (delegated) | container/Cloud Run host NTP; app uses injected Clock; JWT leeway ≤ 300 s |
 | A.8.18 | Use of privileged utility programs | Applicable | Implemented | no shell in production image beyond runtime; non-root uid 10001; read-only FS; Alembic the only schema path |
 | A.8.19 | Installation of software on operational systems | Applicable | Implemented | immutable images built in CI from the lockfile; no runtime installs |

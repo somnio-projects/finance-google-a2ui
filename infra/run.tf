@@ -132,7 +132,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
       liveness_probe {
         http_get {
-          path = "/healthz"
+          path = "/health"
           port = 8000
         }
         period_seconds = 30
