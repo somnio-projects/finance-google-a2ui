@@ -79,6 +79,27 @@ def views_response_model(
     )
 
 
+def catalog_entry(projection: Projection) -> dict[str, Any]:
+    """Describe one projection the way `GET /v1/views` answers it (ADR-K D-8).
+
+    Args:
+        projection: The registered projection to describe.
+
+    Returns:
+        Its id, purpose, serving endpoints, options schema and a rendered
+        example. The route builds its DTOs from this and its OpenAPI example
+        from the same call, so the documented catalog cannot drift from the
+        served one.
+    """
+    return {
+        "id": projection.id,
+        "summary": projection.summary,
+        "endpoints": list(projection.endpoints),
+        "options_schema": projection.options.model_json_schema(),
+        "example": dict(projection.example),
+    }
+
+
 def response_examples(
     projections: Sequence[Projection], *, as_of: str, portfolio_id: str
 ) -> dict[str, Any]:
@@ -112,4 +133,9 @@ def _example_body(
     }
 
 
-__all__ = ["payload_annotation", "response_examples", "views_response_model"]
+__all__ = [
+    "catalog_entry",
+    "payload_annotation",
+    "response_examples",
+    "views_response_model",
+]

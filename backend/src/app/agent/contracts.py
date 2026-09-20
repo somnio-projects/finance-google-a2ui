@@ -106,11 +106,31 @@ class TurnResult:
 
 @dataclass(slots=True)
 class TurnState:
-    """Mutable counters a turn accumulates, so telemetry never branches."""
+    """Mutable counters a turn accumulates, so telemetry never branches.
+
+    Attributes:
+        iterations: Model calls spent so far.
+        tool_calls: Tool calls executed so far.
+        renders: Every render intent collected, in order.
+        emitted: How many of ``renders`` have already left the loop as events.
+    """
 
     iterations: int = 0
     tool_calls: int = 0
     renders: list[RenderIntent] = field(default_factory=list)
+    emitted: int = 0
+
+    def take_renders(self) -> tuple[tuple[int, RenderIntent], ...]:
+        """Return the render intents collected since the last call, with indexes.
+
+        Returns:
+            Each new intent paired with its position in the turn. Draining
+            here rather than diffing in the loop is what lets a surface be
+            emitted the moment it exists (ADR-K D-19).
+        """
+        fresh = tuple(enumerate(self.renders[self.emitted :], start=self.emitted))
+        self.emitted = len(self.renders)
+        return fresh
 
 
 __all__ = [

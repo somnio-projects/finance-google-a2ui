@@ -8,9 +8,10 @@ examples without this file changing (ADR-K D-15).
 
 from typing import Annotated, Any, Final
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Response
 from pydantic import BaseModel
 
+from app.api.caching import NOT_MODIFIED_RESPONSE, ConditionalDep, strong_etag
 from app.api.deps import PrincipalDep, get_view_service
 from app.api.feature_gate import require_feature
 from app.api.openapi import AUTHENTICATED, problem_responses
@@ -78,7 +79,11 @@ SUCCESS: Final[dict[int | str, dict[str, Any]]] = {
         "option the requested projection does not declare answers 422, and an "
         "unknown view id answers 404. Spec 0005 AC-6, AC-7, AC-10."
     ),
-    responses={**SUCCESS, **problem_responses(*AUTHENTICATED, 404, 422, 503)},
+    responses={
+        **SUCCESS,
+        **NOT_MODIFIED_RESPONSE,
+        **problem_responses(*AUTHENTICATED, 404, 422, 503),
+    },
     dependencies=[require_feature("views.read")],
 )
 async def read_portfolio_views(
@@ -86,11 +91,26 @@ async def read_portfolio_views(
     query: Annotated[ViewQuery, Query()],
     principal: PrincipalDep,
     service: ViewsDep,
-) -> PortfolioViewsResponse:
-    """Render every requested projection in one round trip. Spec 0005 AC-6."""
-    return await service.render(
+    conditional: ConditionalDep,
+) -> PortfolioViewsResponse | Response:
+    """Render every requested projection in one round trip. Spec 0005 AC-6.
+
+    The body is a pure function of the subject, the portfolio, the views, the
+    options and ``as_of``, so it carries a strong ``ETag`` built from exactly
+    those and revalidates to 304 (ADR-K D-20, spec 0012 AC-7).
+    """
+    body = await service.render(
         principal, portfolio_id=portfolio_id, query=query, default=DEFAULT_VIEW
     )
+    etag = strong_etag(
+        "portfolio-views",
+        principal.subject,
+        portfolio_id,
+        sorted(body.views),
+        query.options(),
+        body.as_of,
+    )
+    return conditional.resolve(body, etag=etag)
 
 
 __all__ = ["DOCUMENTED", "VIEWS", "router"]

@@ -3,8 +3,8 @@
 from collections.abc import Sequence
 
 from app.agent.registry import ToolRegistry
-from app.core.errors import DependencyUnavailableError
 from app.core.model import MessageRole, ModelMessage, ModelReply, ToolCall, ToolSpec
+from app.core.protocols import ModelClient
 from app.helpers.clock import FixedClock
 from app.infra.model.null_client import NullModelClient
 from app.services.agent_service import AgentService
@@ -24,7 +24,7 @@ def call(name: str = "fake_tool", *, call_id: str = "0-fake") -> ToolCall:
 
 
 def make_service(
-    model: NullModelClient,
+    model: ModelClient,
     *,
     tools: Sequence[FakeTool] = (),
     max_iterations: int = 4,
@@ -55,11 +55,16 @@ def tool_results(model: NullModelClient) -> list[object]:
 
 
 class FailingModel:
-    """A ``ModelClient`` that always fails the way a dead provider does."""
+    """A ``ModelClient`` that always raises whatever the test handed it.
+
+    Typed as ``Exception`` rather than ``DependencyUnavailableError`` because
+    the adapter has two failure paths to prove: the typed one it reports with
+    the error's own code, and the untyped one it must still terminate.
+    """
 
     name = "failing"
 
-    def __init__(self, error: DependencyUnavailableError) -> None:
+    def __init__(self, error: Exception) -> None:
         self.error = error
 
     async def generate(

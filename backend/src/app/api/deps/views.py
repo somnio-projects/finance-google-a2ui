@@ -8,6 +8,7 @@ are visibly the same path.
 from app.api.deps.common import ContainerDep
 from app.presentation.registry import REGISTRY
 from app.services.render_intent_service import RenderIntentService
+from app.services.view_render_service import ViewRenderService
 from app.services.view_service import ViewService
 
 
@@ -27,4 +28,13 @@ def get_render_intent_service(container: ContainerDep) -> RenderIntentService:
     )
 
 
-__all__ = ["get_render_intent_service", "get_view_service"]
+def get_view_render_service(container: ContainerDep) -> ViewRenderService:
+    """Provide the batch render resource's service (ADR-K D-18, 0012 AC-4)."""
+    return ViewRenderService(views=get_view_service(container))
+
+
+__all__ = [
+    "get_render_intent_service",
+    "get_view_render_service",
+    "get_view_service",
+]

@@ -20,6 +20,7 @@ from app.api.v1 import (
     portfolio_views,
     session_messages,
     sessions,
+    view_renders,
     views,
 )
 
@@ -28,6 +29,7 @@ api_router.include_router(health.router)
 api_router.include_router(feature_flags.router)
 api_router.include_router(identity.router)
 api_router.include_router(portfolio_views.router)
+api_router.include_router(view_renders.router)
 api_router.include_router(views.router)
 # Last on purpose: the A2A surface owns `/` and a well-known path, and is the
 # only non-RESTful router here (ADR-J).

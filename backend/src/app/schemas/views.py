@@ -19,6 +19,7 @@ MAX_VIEWS: Final[int] = 4
 DEFAULT_VIEW: Final[str] = "holdings.allocation.v1"
 CURRENT_PORTFOLIO: Final[str] = "current"
 VIEW_ID_PATTERN: Final[str] = r"^[a-z][a-z0-9]*(\.[a-z0-9_]+)+\.v[0-9]{1,3}$"
+PORTFOLIO_ID_PATTERN: Final[str] = r"^[a-z0-9-]{1,64}$"
 
 ViewId = Annotated[str, Field(max_length=64, pattern=VIEW_ID_PATTERN)]
 SectionName = Annotated[str, Field(max_length=32, pattern=r"^[a-z_]{1,32}$")]
@@ -103,7 +104,7 @@ class ViewDescriptor(BaseModel):
     )
     endpoints: list[str] = Field(
         description="The endpoints that serve this projection.",
-        examples=[["GET /v1/portfolios/{portfolio_id}/views"]],
+        examples=[["GET /v1/portfolios/{portfolio_id}/views", "POST /v1/view-renders"]],
     )
     options_schema: dict[str, Any] = Field(
         description="JSON schema of the options this projection declares.",
@@ -138,6 +139,7 @@ __all__ = [
     "CURRENT_PORTFOLIO",
     "DEFAULT_VIEW",
     "MAX_VIEWS",
+    "PORTFOLIO_ID_PATTERN",
     "VIEW_ID_PATTERN",
     "PortfolioViewsResponse",
     "SectionName",

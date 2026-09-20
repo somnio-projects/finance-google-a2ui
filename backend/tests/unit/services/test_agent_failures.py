@@ -79,3 +79,31 @@ async def test_run_turn_reports_and_reraises_a_model_failure(
     assert reporter.metrics == [
         (TURN_METRIC, {"model": "failing", "outcome": "model-unavailable"})
     ]
+
+
+async def test_run_turn_reports_and_counts_an_untyped_failure(
+    tool_context: ToolContext,
+) -> None:
+    """A provider that raises something untranslated must still be reported.
+
+    This is the one path the A2A adapter can only turn into a terminal event:
+    by then the client holds a 200, so the stream swallows the exception. If
+    the turn did not report and count it here, an exploding model provider
+    would be invisible — no Sentry event and no `agent.turn` metric at all.
+    """
+    failure = RuntimeError("the provider SDK changed its mind")
+    reporter = FakeReporter()
+    service = AgentService(
+        model=FailingModel(failure),
+        tools=ToolRegistry(),
+        reporter=reporter,
+        clock=FixedClock(FROZEN_NOW),
+        max_iterations=4,
+        system_prompt=TEST_PROMPT,
+    )
+
+    with pytest.raises(RuntimeError, match="changed its mind"):
+        await service.run_turn(prompt="hi", history=[], context=tool_context)
+
+    assert reporter.exceptions == [failure]
+    assert reporter.metrics == [(TURN_METRIC, {"model": "failing", "outcome": "error"})]

@@ -8,7 +8,7 @@ flowchart TB
         mw["middleware<br/>request id · security headers · trusted host<br/>CORS · body limit · rate limit"]
         ctl["api/v1/*.py<br/>controllers: resolve Depends, call ONE service"]
         deps["api/deps.py<br/>the only place services are constructed"]
-        oapi["api/openapi.py<br/>shared problem responses · tags"]
+        oapi["api/openapi.py · api/caching.py<br/>shared problem responses · tags<br/>ETag · If-None-Match · 304"]
     end
     subgraph app["Application"]
         svc["services/*.py<br/>use cases, authorization, audit"]
