@@ -117,7 +117,7 @@ async def test_catalog_describes_every_registered_projection(
     service: ViewService,
 ) -> None:
     catalog = await service.catalog()
-    assert [entry.id for entry in catalog] == [WATERFALL, ALLOCATION]
+    assert [entry.id for entry in catalog] == [p.id for p in REGISTRY.all()]
     for entry, projection in zip(catalog, REGISTRY.all(), strict=True):
         assert entry.summary == projection.summary
         assert entry.endpoints == list(projection.endpoints)

@@ -85,10 +85,11 @@ def test_registry_remove_is_idempotent(registry: ProjectionRegistry) -> None:
     assert registry.all() == ()
 
 
-def test_the_process_registry_holds_both_reference_projections() -> None:
+def test_the_process_registry_holds_every_reference_projection() -> None:
     assert [p.id for p in REGISTRY.all()] == [
         "attribution.waterfall.v1",
         "holdings.allocation.v1",
+        "payoff.curve.v1",
     ]
 
 
