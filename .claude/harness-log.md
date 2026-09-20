@@ -1608,3 +1608,27 @@ the stale row in `docs/specs/GGU-3/api-contract.md` §6 is struck.
   PR #43's (ADR-F D-4): strike the ruling with `~~…~~`, keep it, add
   `superseded YYYY-MM-DD by D-n`, renumber forward, and put the reasoning in a
   dated amendment section. Citations by number must keep resolving.
+- **AC-4 went to the other PR's branch, not to `develop`.** `specs/client/0003`
+  exists only on PR #48, so §4.4 and OD-3 were fixed in a separate one-file PR
+  **based on #48's branch** (#56), not folded into this one — a reviewer of #48
+  should see that change on its own. It was **not** pushed onto
+  `docs/GGU-82_client_contract` directly: that branch is checked out in another
+  agent's live worktree, and `git worktree list` is the cheap way to find that
+  out before racing someone. Sequence: #48 → #56, and #43 → #55.
+- **§4.4 carried the same comfortable fiction, and was the worse place for it.**
+  An ADR states a decision; a client contract tells a developer what to branch
+  on. "The backend rejects a revoked token" and "a timer bounds it" prescribe
+  different client behaviour — the first invites polling for a rejection that
+  never arrives. Fixed there too.
+- **Swept `docs/specs/**` for other stale copies** (it predates the current
+  specs and was written against the deleted sample). Only one live claim — the
+  struck `check_revoked` row in `GGU-3/api-contract.md` §6. Two other hits are
+  prose *about* the problem, not claims of a control: `GGU-3` §6's opening
+  sentence and `GGU-6/refinement-report.md:155` both say the client "cannot
+  distinguish expired from revoked", which is still true. Left alone.
+- **Run a new repo-wide gate with its own config before trusting its verdict.**
+  Against PR #54's `repo.spelling`, a bare `codespell` from the root reports
+  five findings that are all false — `bloc`, `pres`, `re-use` and the untracked
+  `backend/reports/`. None survive #54's `.codespellrc`, which lists each with
+  the reason it is an exception. Run the check the way the gate runs it
+  (`--config` the real file), or the noise buries the one real hit.
