@@ -2059,3 +2059,16 @@ listed gaps.
   transcript is a key that has to be rotated. The overlay above gets the same
   proof and touches nothing secret. If a future task looks like it needs that
   file, it almost certainly needs an overlay instead.
+
+---
+
+- **A check with two configurations drifts like a check with two command
+  strings.** `make gate` ran codespell over `backend/` only while pre-commit
+  ran it over everything, so a typo in `specs/` passed a green gate — measured
+  both ways: the new root check exits 65 on it, the old scope exits 0. The
+  second half was subtler. The hook read `backend/pyproject.toml`, whose word
+  list knows nothing about Flutter, so it flagged `bloc` three times on a
+  single `login_bloc.dart` and failed every commit that touched one. A hook
+  that fails on correct code teaches people to bypass it — and a bypassed hook
+  is how the `specs/` typo reached `develop` in the first place. The scope gap
+  and the false positives were the same defect seen from two ends.

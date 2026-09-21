@@ -1,0 +1,25 @@
+# Repository-wide spelling, for everything `backend/pyproject.toml`'s
+# [tool.codespell] does not reach.
+#
+# `cd backend && make gate` runs codespell over `src tests docs scripts`,
+# all of them inside `backend/`. The pre-commit hook runs it over the whole
+# repository. Both were individually sensible and nobody compared them, so a
+# typo in `specs/`, root `docs/`, `.claude/` or any root Markdown passed the
+# gate and was caught only at commit time — and only if the author had not
+# bypassed the hook. This file exists so the two halves agree, and so
+# `make gate`'s verdict means something for the documentation-only changes
+# that make up a large share of this repository's pull requests.
+#
+# Same class of defect as `infra.shell-lint`; see .claude/rules/ci-conventions.md §5.
+[codespell]
+skip = ./.git,./.claude/worktrees,./backend/.venv,./backend/uv.lock,./backend/reports,./backend/htmlcov,./client_flutter/pubspec.lock,./client_flutter/app/ios,./client_flutter/app/macos,./frontend/pubspec.lock
+# Each of these is a deliberate exception, not a silenced nuisance:
+#   bloc     the state-management library the Flutter rules mandate
+#   blocs    its plural, which appears in prose about the client
+#   pres     the Mermaid node id for `presentation/*` in the layers diagram;
+#            renaming it would break the diagram, not fix a typo
+#   re-use   ISO 27001 Annex A control A.7.14 is titled "Secure disposal or
+#            re-use of equipment". The Statement of Applicability quotes it
+#            verbatim, and a compliance document that paraphrases a control
+#            title no longer cites the standard. Never "fix" this one.
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use

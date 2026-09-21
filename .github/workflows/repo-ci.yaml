@@ -1,0 +1,73 @@
+# Repository-wide checks — the ones that belong to no single stack.
+#
+# This workflow exists because the other two are scoped, correctly, by
+# `paths:`: `backend-ci` to `backend/**` and `infra-ci` to `infra/**`. A
+# repository-wide check placed in either would run only when that directory
+# changed, which is precisely when it is least needed. This repository is
+# documentation-heavy — ADRs, specs, diagrams, a compliance corpus, a
+# generated catalog contract, `.claude/rules/**` — and a large share of its
+# pull requests touch only those. So this workflow carries **no `paths:`
+# filter**: it runs on every pull request, and it is cheap enough (seconds)
+# that doing so costs nothing worth saving.
+#
+# Naming contract (.claude/rules/ci-conventions.md §2):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+#
+# The command below is byte-identical to `repo.spelling` in
+# .claude/ship-gate.json and to the pre-commit hook's configuration source
+# (.codespellrc). Change one, change its pair — §5.
+name: repo-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.19"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  spelling:
+    name: "Repository · prose and identifiers are spelled as intended"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: "Check out the repository (actions/checkout)"
+        uses: actions/checkout@v7
+
+      - name: "Install the Python toolchain (astral-sh/setup-uv)"
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: "Spell-check every tracked file outside backend/ (codespell)"
+        run: uv run --project backend codespell
+
+  report:
+    name: "Report · repository gate summary"
+    runs-on: ubuntu-latest
+    needs: [spelling]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: "Write the gate outcome to the run summary (GitHub Actions)"
+        run: |
+          {
+            echo "### Repository gate"
+            echo
+            echo "| Check | What it proves | Result |"
+            echo "|---|---|---|"
+            echo "| Spelling | prose and identifiers are spelled as intended, repository-wide | ${{ needs.spelling.result }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

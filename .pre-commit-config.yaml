@@ -58,7 +58,11 @@ repos:
     hooks:
       - id: codespell
         additional_dependencies: [tomli]
-        args: [--toml, backend/pyproject.toml]
+        # Reads .codespellrc at the repository root — the same configuration
+        # `repo.spelling` uses. It used to read backend/pyproject.toml, whose
+        # word list knows nothing about the Flutter or docs vocabulary, so this
+        # hook flagged `bloc` on every Flutter file it touched. Two configs for
+        # one check is the drift .claude/rules/ci-conventions.md §5 is about.
         exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|backend/reports/)
 
   # ---------------------------------------------------------------- yaml & actions
