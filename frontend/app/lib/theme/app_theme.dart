@@ -1,4 +1,4 @@
-import 'package:finance_app/charts/chart_tokens.dart';
+import 'package:finance_app/charts/chart_extensions.dart';
 import 'package:finance_app/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -29,16 +29,14 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
-      extensions: <ThemeExtension<dynamic>>[
+      extensions: <ThemeExtension<Object?>>[
         AppSpacing.standard,
-        // The chart palette is not derived from the seed: gain, loss and
+        // Chart palettes are not derived from the seed: gain, loss and
         // "a total" are semantic roles Material 3 has no slot for, and the
-        // values are the design's measured ones (ChartTokens).
-        ChartTokens.forBrightness(brightness),
-        // The categorical ramp an allocation donut colours its slices from.
-        // Separate from the chart palette because "the third category" is not
-        // a semantic role the way gain and loss are (ADR-L D-13).
-        ChartTokens.allocationFor(brightness),
+        // values are the design's measured ones. Spread rather than listed,
+        // so a new chart palette is an edit to `chart_tokens.dart` and never
+        // to this file (ADR-L D-3, `specs/frontend/0005` OD-9).
+        ...chartExtensions(brightness),
       ],
       cardTheme: CardThemeData(
         elevation: 0,
