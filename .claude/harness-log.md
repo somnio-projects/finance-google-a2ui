@@ -1850,3 +1850,15 @@ everything is worse than none.
   DB suite deselected — every file this PR touches is at 100 %. The manual run
   in the PR drives the real A2A route in process with the in-memory portfolio
   provider instead; CI has the real verdict.
+
+---
+
+- **An instruction loses to the example beside it.** The reviewer-account
+  runbook said *never inline* and then showed `export DEMO_PASSWORD='…'`
+  directly underneath. Three passwords reached a session transcript in one
+  afternoon, each one pasted from that example by someone following the
+  document. The words were right and nobody read them, because the block below
+  was runnable and the sentence above was not. `read -rs` does not echo, so the
+  same session can be pasted into a chat or a ticket without disclosing
+  anything — the fix is a mechanism, not a stronger warning. When a document
+  tells someone what not to do, check that the copyable part agrees.

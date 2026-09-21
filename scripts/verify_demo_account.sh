@@ -17,10 +17,17 @@
 #
 # ── Usage ──────────────────────────────────────────────────────────────────
 #
-#   export DEMO_PASSWORD='…'                # never on the command line
+#   read -rs DEMO_PASSWORD && export DEMO_PASSWORD
 #   export FIREBASE_WEB_API_KEY='…'         # Firebase console → project settings
 #   export BACKEND_URL='https://…run.app'   # defaults to the dev service
 #   ./scripts/verify_demo_account.sh reviewer@example.com
+#
+# `read -rs` does not echo. The password never reaches the screen, the shell
+# history or the scroll-back, so a terminal session can be pasted into a chat,
+# a ticket or a bug report without disclosing it. An `export` with the value
+# inline fails all three, which is why this example is not one — it was, and
+# the password leaked three times in one afternoon before anybody noticed the
+# instruction and the example disagreed.
 #
 # `FIREBASE_WEB_API_KEY` is the browser-embedded key, not a secret in the
 # credential sense — but it is still not committed, because a key in a repo is
