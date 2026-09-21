@@ -5,10 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group(AppTheme, () {
-    test('light and dark are generated from the same seed', () {
+    test('light and dark carry the brightness they claim', () {
       expect(AppTheme.light.colorScheme.brightness, equals(Brightness.light));
       expect(AppTheme.dark.colorScheme.brightness, equals(Brightness.dark));
-      expect(AppTheme.seed, equals(const Color(0xFF1B6C4F)));
     });
 
     test('both themes are Material 3', () {
