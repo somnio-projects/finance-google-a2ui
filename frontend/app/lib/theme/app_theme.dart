@@ -29,12 +29,14 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
-      extensions: <ThemeExtension<dynamic>>[
+      extensions: <ThemeExtension<Object?>>[
         AppSpacing.standard,
-        // The chart palette is not derived from the seed: gain, loss and
+        // Chart palettes are not derived from the seed: gain, loss and
         // "a total" are semantic roles Material 3 has no slot for, and the
-        // values are the design's measured ones (ChartTokens).
-        ChartTokens.forBrightness(brightness),
+        // values are the design's measured ones. Spread rather than listed,
+        // so a new chart palette is an edit to `chart_tokens.dart` and never
+        // to this file (ADR-L D-3, `specs/frontend/0005` OD-9).
+        ...chartExtensions(brightness),
       ],
       cardTheme: CardThemeData(
         elevation: 0,
