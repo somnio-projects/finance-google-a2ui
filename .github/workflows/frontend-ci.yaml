@@ -12,6 +12,16 @@
 # .claude/ship-gate.json and from `frontend/Makefile`, copied rather than
 # paraphrased (ci-conventions §5). The `build` job is deliberately beyond
 # the gate — slow, and a runner's job, exactly like backend-ci's `image`.
+#
+# The SDK version is NOT written here. It lives in `frontend/.fvmrc`, which
+# every job below reads and which `frontend/tool/check_toolchain.sh` reads on a
+# laptop (GGU-94). It used to ALSO be a `FLUTTER_VERSION` env var in this file,
+# where no local command could reach it — so the pin existed and the gate a
+# developer actually ran was free to disagree with it. `scripts/check_gate_pairs.sh`
+# now fails if `FLUTTER_VERSION` reappears in any workflow, or if a second
+# tracked file starts naming a Flutter version. Pinned, not floating: `stable`
+# would silently change the toolchain under a committed lockfile, the exact
+# class of surprise `--enforce-lockfile` exists to prevent.
 name: frontend-ci
 
 on:
@@ -27,13 +37,6 @@ concurrency:
   group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Pinned, not floating. `stable` would silently change the toolchain under a
-  # committed lockfile — the exact class of surprise `--enforce-lockfile` below
-  # exists to prevent. 3.47.5 vendors Dart 3.13.4, the SDK floor in every
-  # pubspec.
-  FLUTTER_VERSION: "3.47.5"
-
 defaults:
   run:
     working-directory: frontend
@@ -47,12 +50,24 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
+
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        run: bash tool/check_toolchain.sh
+
+      # Runs against a STUBBED SDK, so it exercises the rejection paths the
+      # runner can never reach — the runner always has the pinned SDK.
+      - name: Prove the preflight rejects a wrong or missing SDK (test_check_toolchain.sh)
+        run: bash tool/tests/test_check_toolchain.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile
@@ -77,12 +92,19 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
+
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        run: bash tool/check_toolchain.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile
@@ -114,12 +136,22 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
+
+      # The `build` job is outside the gate, but it gets the preflight too: it
+      # is the one job that could otherwise compile under a different SDK than
+      # the two that proved the branch, and nobody would see it.
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        run: bash tool/check_toolchain.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile

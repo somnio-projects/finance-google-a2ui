@@ -7,6 +7,133 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0004-scenario-comparison.md`
+
+**Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.
+Serves GGU-18 and design GGU-42.
+
+**What changed.** The third catalog component: `scenario.comparison.v1`, the
+same sale costed under FIFO / LIFO / HIFO side by side. Twelve files under
+`app/lib/components/scenario_comparison/`, nine test files, two goldens, and
+the regenerated manifest. **No hand-written file was edited** — the seam held
+end to end for the first component added since GGU-79 closed it, so this is
+also the first independent confirmation that it works.
+
+**The design asked for a winner and the card does not name one.** Its schema
+declares `scenarios[].recommended` and `metrics[].betterWhen`; its artboards
+badge one column `★ Recommended` and tint the better cell of each row green
+with a tick. Spec `backend/0017` OD-4 rules both out and the backend emits
+neither, so rendering them would be the client inventing a claim. The reason
+is not process: marking one disposal strategy "recommended" is tax advice, and
+whether FIFO's `+$3,825.00` (all long-term) beats LIFO's `+$1,305.00` (all
+short-term) depends on a marginal rate and a jurisdiction nothing here knows.
+The card renders `spread` — the arithmetic difference and which method sits at
+each end, which is data the columns already show — with the backend's own
+`Not advice` note verbatim beneath it. `specs/frontend/0004` OD-3 carries the
+full argument so nobody has to rediscover it.
+
+**A finding worth keeping: Flutter's border is not CSS's border.** The design
+is `box-sizing: border-box`, so its 1 px hairline sits *inside* the declared
+width. `DecoratedBox` and `CustomPaint` paint over the child and reserve no
+space, so the same padding left the content box 2 px too wide and every grid
+track wrong — 209.30 / 155.03 against the designer's 208.48 / 154.44. Every
+bordered element now pads by `ScenarioComparisonLayout.hairline` as well. The
+geometry test found it; **no golden of this card could have**, which is the
+next point.
+
+**The golden is narrow because the card is all text.** ADR-L D-15's measured
+noise floor is 0.69 % and it lives in glyph edges; a card with no bars and no
+connectors is nothing but glyph edges, and the defect most worth catching here
+— a token one step off, `#F0EDF5` against `#F0EEF5` — moves well under 1 %. So
+the colours are asserted **directly**, against the rendered `BoxDecoration`,
+which catches a one-step error exactly; the goldens capture only the column
+header's painted hairline, with no text in frame. First cut used the design's
+track width and a radius mutation moved 1.66 % against a 1.5 % tolerance — a
+margin of 1.1×, not a gate worth trusting. Cropping the frame to 56×30 raised
+it to **5.00 %**, 3.3× the tolerance. **The tolerance was not touched**; it
+goes down as noise is understood, never up to absorb a failure.
+
+**Harness.** No rule, hook, command or diagram changed. Diagram 12 is
+layer-level and a third component adds no layer, package or import rule —
+which is the seam claim restated as a diff.
+
+### What the next person should know
+
+- **`frontend/CLAUDE.md`'s "only file naming a `Color`" sentence is false, and
+  GGU-57 is fixing it — independently.** It and `chart_tokens.dart` both say
+  `chart_tokens.dart` is *the only file in `app/lib/` naming a `Color`*;
+  `scenario_comparison_tokens.dart` names eight. The alternative was adding
+  four fields to `ChartPalette` **and** `ChartTokens` — two shared
+  hand-written files edited in order to add a component, which ADR-L D-3
+  exists to prevent — and three of the four are not chart roles anyway (a
+  table's row rule, a header hairline, a caption). No test enforced the claim,
+  so nothing went red.
+
+  **Two components hit this from two directions in the same week and reached
+  the same answer without coordinating**: GGU-57's tax-lot table has its own
+  token file for the same reason, and its PR (#71) replaces the count with a
+  rule in `frontend/CLAUDE.md`. Whichever merges first fixes it; the second
+  conflicts on that line and should take the rule form. `specs/frontend/0004`
+  OD-8 keeps the reasoning and asks for the rule to get a **test**, since
+  replacing one unenforced sentence with another only resets the clock.
+- **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
+  The card reads the two ends instead — and **the review caught that the first
+  cut of that rule was wrong.** It required *both* ends, while the contract
+  makes `spread.highest` and `spread.lowest` `default null` **independently**
+  and ties neither to `differs`: a payload naming one end would have had the
+  card drop a name the backend sent *and* claim the methods coincide. The rule
+  is now `||`, lives once on the model as `namesAnyEnd`, and the `||` → `&&`
+  mutation turns two tests red — it turned none before. If a second component
+  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own; that is a
+  **deferral, not a prohibition** — ADR-L D-3's subject is dispatch, and
+  `geometry` set the precedent that widening `ViewPayload` is an amendment
+  (OD-2, reworded after review).
+- **Four contract fields are bound by nothing**: `short_term_lots`,
+  `long_term_lots` and `lots` per column. The counts are raw integers with no
+  `*Display` companion, so printing one is the client turning a number into
+  text; `lots` is internal ids. OD-6, not an oversight.
+- **Two more things the design asks for have no field**: row labels (its
+  `metrics[].label` — ours are client copy, OD-1) and a colour for a gain or a
+  loss (`scenario.comparison.v1` carries no `direction` enum the way the
+  waterfall's buckets do, and reading the sign out of `"+$3,825.00"` is exactly
+  what the rule forbids — OD-7).
+- **Measure the rendered DOM, still.** Eight colours and eleven geometry values
+  were read with `getComputedStyle` off the served page. The metric-name colour
+  cross-confirms against the catalog index's own token legend.
+- **A `.dc.html` design page opened from `file://` renders its chrome but does
+  not boot its data binding** — the table shows `{{ h.label }}` / `{{ r.label }}`
+  where the figures belong. Over `http://` the same file boots fully (547
+  nodes, no placeholders). Both were observed on this page, minutes apart, so
+  it is the scheme and not the wait. **Check for `{{` before measuring
+  anything off one of these pages**; a pixel claim taken off a placeholder is
+  worse than no claim. Other pages in the set reportedly do boot under
+  `file://`, so test the page in front of you rather than assuming either way.
+- **The newer fourteen-screen design export changes nothing here — except one
+  thing.** Re-measured `.design-refs/Catalog_ScenarioComparison.dc.html` in
+  both artboards: every colour, padding, radius, width and both grid rules are
+  identical to the earlier export. The miss it caught is that the `Metric`
+  caption is weight **500 with normal tracking**, not the eyebrow's 600 at
+  `0.08em` — this card had been reusing `caption` for it. Now its own slot,
+  asserted against `caption`'s weight so they cannot silently converge.
+- **The design index still says `ComparisonCard`.** Its detail page and the
+  backend both say `ScenarioComparison`; the schema block is authoritative and
+  `catalog_contract_test.dart` is what would catch getting it wrong.
+- **Spec numbering has no gate, and it has now collided twice.** This spec was
+  written as `0003` and renamed to **`0004`** because GGU-57 (#71) was landing
+  `0003-taxlot-table.md` with an `assets/0003-taxlot-table/` directory beside
+  it — renaming this one was the cheaper move. That is the *second* instance:
+  `develop` already carries two files numbered `0002`
+  (`0002-a2ui-agent-path.md` and `0002-chart-primitives-and-waterfall.md`).
+  `.claude/rules/backend/sdd.md` says `NNNN` is "the next free number", but
+  nothing computes it and nothing checks it, so two branches cut in the same
+  week reliably pick the same one. Left as-is here — the `0002` pair is
+  pre-existing and not this ticket's to move — but it wants either a gate
+  (a check that no two specs in a directory share a prefix, the same
+  anti-collision shape `manifest-check` already has) or a convention that does
+  not depend on branch timing.
+
+---
+
 ## 2026-09-20 — GGU-53 the catalog contract as JSON · spec `specs/backend/0021-machine-readable-catalog.md`
 
 **Branch:** `feat/GGU-53_catalog_json`. Server half of GGU-53 only; the Flutter
@@ -2773,65 +2900,151 @@ rename that GGU-53 found on the backend.
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
 
-## 2026-09-21 — GGU-57, the tax-lot table
+## 2026-09-21 — GGU-93, GGU-94: the evidence a PR carries gets a field for what was not run
 
-**Spec:** [`specs/frontend/0003-taxlot-table.md`](../specs/frontend/0003-taxlot-table.md)
-· serves GGU-17 and GGU-42 (the design).
+**Spec:** none. This is a harness change, recorded where the harness is
+recorded: the rule in `.claude/rules/backend/sdd.md`, the CI rule in
+`.claude/rules/ci-conventions.md` §5, and this entry. A
+`specs/backend/NNNN-*.md` would have been the wrong home — nothing here is a
+backend feature, no endpoint or DTO moves, and the decisions belong to the
+process rather than to the product. `sdd.md`'s own decision table says so: *"a
+rule the agent must follow every time"* goes to `.claude/rules/**`, *"what
+changed in an iteration and why"* goes here.
 
-The third catalog component, and the first whose **design and backend contract
-disagree substantially**. GGU-42's page declares an A2UI schema
-(`lots[].shares`, `selectedLotIds`, `realizedSummary`, `onLotToggle(id)`) that
-`taxlots.table.v1` does not serve. Nine gaps are recorded as OD-1…OD-9 in the
-spec; none was closed by inventing a field on the client.
+**Test decision:** one new suite, `scripts/tests/test_check_manual_run.sh`,
+registered as `repo.manual-run`. It asserts four rejections and one acceptance,
+because the defect being fixed is *evidence that cannot be distinguished from
+real evidence* — and a check nobody has seen reject reproduces it exactly.
 
-### Code
+### One defect, seen twice
 
-`app/lib/components/taxlots_table/` — thirteen files, none over budget. The
-component binds by dotted path, maps `term` and `trend` through declared
-enums, and calls `ViewPayload.geometry` **not at all**: a table has no canvas,
-so ADR-L D-14's exemption is unused here.
+GGU-93 is the runtime half: a manual run that does not say which build answered.
+GGU-94 is the toolchain half: a gate that cannot run, announcing itself as a
+formatting diff. Both are the same sentence — **the evidence format has no
+field for what was not run**, so an incomplete verification and a complete one
+produce identical-looking PR bodies. Both tickets' AC-5 anticipated being done
+once; they were.
 
-### Harness
+### What already existed, and was not read
 
-Nothing in `.claude/` changed. Two things worth carrying forward:
+`GET /health` has reported `<version>+<short sha>` since spec `backend/0007`
+AC-5 — `APP_RELEASE` → `Settings.app_release` → `core/release.py` →
+`HealthService`. **Nothing needed building.** Two things were wrong around it:
 
-- **The gate has a latent defect and this branch worked around it rather than
-  editing it** (spec OD-9). `tool/coverage_sources.dart::hasExecutableCode`
-  calls any non-comment, non-import line executable, so a file of only
-  `static const` declarations is required to have an lcov record that lcov
-  will never write. It was written for `export` barrels. Three files here
-  would have tripped it; each was given the behaviour its call sites already
-  wanted instead — `TaxLotType`'s roles became functions of their colour,
-  `TaxLotMetrics` grew `BorderRadius` getters, and `TaxLotTerm` gained
-  `colorsIn(palette)`. All three read better than what they replaced, which is
-  why it is a workaround and not a compromise. **The next const-only file will
-  hit it again**; it wants a ticket.
-- **A component can add a `ThemeExtension`-shaped thing without editing
-  `AppTheme`.** `TaxLotPalette` is a plain class whose `of(context)` reads the
-  brightness the theme already carries. Registering an extension would have
-  meant editing a shared file to add a component, which ADR-L D-3 forbids.
+1. `docker-compose.yml` hard-coded `APP_RELEASE: local`, so the local stack —
+   the one a manual run actually uses — could not name its own commit. It now
+   reads `${APP_RELEASE:-local}`, and the documented way up is
+   `APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build`.
+2. Nobody read it. The deployed dev service was answering `0.1.0+9a94346`,
+   **26 commits behind `develop`**, while the Flutter client was being built
+   against it — no GGU-53 catalog snapshot, no GGU-78 surface actions, no
+   GGU-90 agent-turn fixes. The identity was on `/health` the whole time.
+
+### The correction worth keeping: ancestry is too weak
+
+GGU-93 AC-3 asked that the reviewer check the manual run's sha is *an ancestor
+of the PR's head*. Implemented literally, that would have **passed the pull
+request that produced the ticket**: PR #69's branch was cut from the stale
+commit, so the stale commit was a perfectly good ancestor. Ancestry proves the
+build is from this line of history; only identity with the head proves it
+contains the change under review. `scripts/check_manual_run.sh` therefore has
+three verdicts — head (pass), ancestor (fail, *"it ran and it did not exercise
+this branch"*), anything else (fail).
+
+### And the reviewer instruction is a script, not a sentence
+
+`.claude/agents/*-reviewer.md` do not ask the agent to compare shas by eye.
+They run one command and quote it. An LLM reviewer *can* run `git merge-base
+--is-ancestor`; what it cannot be relied on to do is remember to. The same
+reasoning that produced `repo.gate-pairs` — three instances of a reviewer being
+asked to be careful — applies here at the first instance, because the first
+instance already cost a retracted bug report and a closed PR.
+
+### GGU-94: the pin had no local reader
+
+`FLUTTER_VERSION: "3.47.5"` lived only in `frontend-ci.yaml`. The floor
+`sdk: ^3.13.0` in `frontend/pubspec.yaml` is not consulted by `dart format`, so
+Homebrew's `dart-sdk 3.12.1` ran the gate happily and reported three tracked
+files as unformatted — 3 changed / exit 65 under 3.12.1, 0 changed / exit 0
+under the pin, on the same commit. The version now lives in
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
+every SDK-setup step in the workflow, and `frontend.toolchain` is the **first**
+entry of the frontend gate.
+
+`.fvmrc` over `.fvmrc`: plain text that `cat` and the CI action both
+read, with no implied claim that fvm is the supported install path.
 
 ### What the next person should know
 
-- **No golden, on purpose, and it is the same reasoning that produced the
-  waterfall's.** `frontend/0002` measured whole-card goldens at 0.54–0.70 %
-  cross-platform drift against a 1.26 % smallest defect, and answered by
-  goldening the chart — the part with no text. A tax-lot card is text end to
-  end and has no such region, so the decoration is asserted off the widget
-  tree instead: the row's fill, hairline, rail colour and radius from its
-  `BoxDecoration`, the cell colours from their `TextStyle`. A failure names
-  the defect rather than saying something moved.
-- **The footer is a `Wrap`, not a `Row`, and that is a real bug it fixed.** A
-  split pill carries a server string whose length this app does not choose
-  (`+$8,925.00 Long-term`), and the first version overflowed by 148 px. A
-  `RenderFlex` overflow is a test failure, so the suite caught it.
-- **Two column captions deliberately do not match the artboard** (OD-7): these
-  are lots the sale *consumes*, so the figure is realised, not *Unrealized*,
-  and the backend's own label for the money column is `Proceeds`, not *Market
-  value*. Matching the design there would have meant mislabelling the data.
-- **The measured values were read from the rendered DOM again**, as GGU-55's
-  lesson says. The index's shared token legend is where short-term amber
-  (`#F0A52E` / `#FFBF5C`) and long-term teal (`#0F9D8F` / `#3FC8B8`) come
-  from, not this page. `taxlot_tokens_test.dart::agrees with the chart palette
-  on every shared role` pins the five roles both palettes carry, so the two
-  files cannot drift while staying separate.
+- **`flutter --version` crashes in an agent sandbox** and `dart --version` from
+  the same `bin/` does not. The cause is the tool's telemetry writer failing to
+  delete `~/.dart-tool/dart-flutter-telemetry.log`, inside flutter's own error
+  handler — a secondary crash that hides whatever the first failure was. The
+  preflight uses `flutter --version --machine --suppress-analytics`, which also
+  returns `dartSdkVersion` and `flutterRoot` as JSON. A preflight that crashes
+  is worse than no preflight.
+- **macOS `mktemp -d` with no template ignores `TMPDIR`** and uses the confstr
+  directory, which is outside the agent sandbox's write set. Same command, two
+  behaviours, red only on a laptop. Always pass a template.
+- **`repo.manual-run` needs history.** Its fixtures are `HEAD` and `HEAD~2`, so
+  its `repo-ci` job checks out with `fetch-depth: 0` and the suite says so
+  rather than failing obscurely on a shallow clone.
+- **Agent worktrees keep leaking machine state into a public repository.**
+  `.gitignore` now covers `.claude/launch.json` (commit `5f6e09c` shipped one
+  naming a path on one laptop) and `.design-refs/` (the design bundles only
+  render from inside the project folder).
+- **Making agent worktrees track `develop` automatically is still not done**,
+  deliberately — GGU-93 puts it out of scope. It is the better *preventive*
+  fix and it is a different ticket: this one is about evidence being
+  **checkable**, not about the mistake being impossible. A process that only
+  works when nobody is behind is the thing being replaced.
+
+### The review round, which found the same defect inside the fix
+
+Both reviewer agents flagged the same blocker, and they were right: **the first
+version of this change added a second pin file.** `frontend/.fvmrc` was already
+tracked, already contained `{"flutter": "3.47.5"}`, and was already cited as the
+pin by `frontend/README.md` and `docs/DEV_HARNESS.md`. The branch added
+`frontend/.flutter-version` beside it and then asserted, in nine places, that
+the version lived in one home and nowhere else. Two machine-readable pins free
+to drift is precisely the defect GGU-94 exists to remove, recreated one file
+over, by the change that removes it.
+
+`.fvmrc` is now the single home and `.flutter-version` is gone. The lesson is
+not "look harder": it is that the claim was **prose**, so nothing could check
+it. `scripts/check_gate_pairs.sh` now also asserts that no workflow sets
+`FLUTTER_VERSION` and that no second tracked pin file exists — §5's third
+question, machine-checked like the first.
+
+Four more findings worth recording, because each was a case of the new
+mechanism failing its own standard:
+
+- **The documented bring-up produced a value the checker rejected.**
+  `core/release.py::resolve_release` returns `APP_RELEASE` **verbatim** — the
+  `<version>+<sha>` shape is composed by `infra/scripts/deploy_cloud_run.sh`,
+  not by the app. So `APP_RELEASE="$(git rev-parse --short HEAD)"` gave
+  `"version":"5b942f1"`, with no `+`, and the check read no identity at all. A
+  developer following `CLAUDE.md` verbatim would have failed the check they
+  were told to pass. The documented command is now `local+$(…)`, and the suite
+  has a case pinning the bare-sha failure so the docs cannot drift back.
+- **The check contradicted the rule it enforces.** `sdd.md` says a deployed run
+  that is behind is pasted "as well, never instead"; the script looped over
+  every identity and failed the body for the context one. It now asks whether
+  **any** identity is the head, and prints the rest as context.
+- **The identity parse matched any `+<hex>` in the body**, so a line like
+  `v1.2.3+abc1234` sank a good pull request. It is scoped to the `"version"`
+  field of a `/health` payload.
+- **Nothing ran the check against a real PR body.** `repo-ci` now does, on
+  every pull request, pointed at `github.event.pull_request.head.sha` — a PR
+  checkout's `HEAD` is the ephemeral merge commit, which is not what the manual
+  run was served by. A body with **no** identity exits 3 and is reported rather
+  than failed: `sdd.md` explicitly allows a declared, reasoned "not run", and
+  no grep can tell that from an omission. That one judgement stays with the
+  reviewer; everything a machine can decide is decided by one.
+
+And the preflight got the suite it should have shipped with
+(`frontend/tool/tests/test_check_toolchain.sh`, `frontend.toolchain-test`). It
+stubs `flutter` and `dart` on `PATH`, so it runs in a second on a machine with
+no Flutter at all — which matters because it is the **first** step of the
+frontend gate, so a false failure blocks everything behind it, and because on a
+runner it can never be seen rejecting: CI always installs the pin.

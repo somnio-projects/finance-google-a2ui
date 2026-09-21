@@ -14,13 +14,29 @@ LCOV := app/coverage/lcov.info \
 	packages/finance_views_repository/coverage/lcov.info \
 	packages/finance_charts/coverage/lcov.info
 
-.PHONY: install format format-check analyze budget manifest manifest-check \
-	test test-tool test-packages test-app coverage gate clean
+.PHONY: install toolchain toolchain-test format format-check analyze budget \
+	manifest manifest-check test test-tool test-packages test-app coverage gate clean
+
+# The first thing the gate proves, because everything after it is read through
+# `dart` and `flutter` (GGU-94). The pinned version lives in `.flutter-version`
+# — one file, read here and by frontend-ci.yaml's SDK setup step. Without this,
+# a machine carrying the wrong Dart announced itself as three unformatted files
+# and exit 65, which reads like a red branch and is not one.
+toolchain:
+	bash tool/check_toolchain.sh
+
+# The preflight's own suite, with a stubbed SDK on PATH. It is here because
+# `toolchain` is the first gate step for the whole frontend — a false failure
+# blocks everything behind it — and because on a runner it can never be seen
+# rejecting, since CI installs exactly the pinned SDK. Its rejection paths have
+# nowhere else to be exercised.
+toolchain-test:
+	bash tool/tests/test_check_toolchain.sh
 
 # --enforce-lockfile from day one. Plain `pub get` silently re-resolves, so a
 # build can differ from the one that was reviewed; the strict flag fails
 # instead of quietly changing the dependency graph.
-install:
+install: toolchain
 	flutter pub get --enforce-lockfile
 
 format:
@@ -72,7 +88,7 @@ test-app:
 coverage:
 	dart run tool/check_coverage.dart $(LCOV)
 
-gate: format-check analyze budget manifest-check test coverage
+gate: toolchain toolchain-test format-check analyze budget manifest-check test coverage
 	@echo "frontend ship gate green"
 
 clean:
