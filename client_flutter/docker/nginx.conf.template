@@ -1,0 +1,129 @@
+# nginx configuration for the static Flutter web bundle.
+#
+# Rendered by docker/entrypoint.sh into /tmp/nginx/nginx.conf with envsubst.
+# Only ${PORT} and ${CONNECT_SRC} are substituted — the entrypoint passes that
+# exact list to envsubst, because an unrestricted envsubst would happily blank
+# every nginx variable in this file ($uri, $host, $status, …) and the result
+# would still start.
+#
+# The root filesystem is read-only, so every path nginx wants to write to is
+# moved under /tmp, which the container mounts as tmpfs.
+
+worker_processes  auto;
+pid               /tmp/nginx/nginx.pid;
+error_log         /dev/stderr warn;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    # CanvasKit must arrive as application/wasm or streaming instantiation
+    # refuses it. nginx has shipped this mapping in mime.types since 1.21.1, so
+    # on the pinned base image this is belt-and-braces and may log a
+    # "duplicate extension" warning — which is the failure mode to prefer over
+    # a base image that quietly drops the mapping and serves octet-stream.
+    types {
+        application/wasm  wasm;
+    }
+
+    access_log  /dev/stdout;
+
+    client_body_temp_path  /tmp/nginx/body;
+    proxy_temp_path        /tmp/nginx/proxy;
+    fastcgi_temp_path      /tmp/nginx/fastcgi;
+    uwsgi_temp_path        /tmp/nginx/uwsgi;
+    scgi_temp_path         /tmp/nginx/scgi;
+
+    sendfile       on;
+    tcp_nopush     on;
+    server_tokens  off;          # do not advertise the nginx version
+
+    # This server answers GET and HEAD for static files and nothing else.
+    # Nothing is ever uploaded to it, so the body limit is a formality.
+    client_max_body_size  1k;
+
+    gzip              on;
+    gzip_vary         on;
+    gzip_min_length   1024;
+    gzip_types        text/plain text/css application/javascript application/json
+                      application/wasm image/svg+xml;
+
+    # Cache-Control is decided here rather than per-location, because an
+    # `add_header` inside a location REPLACES every inherited add_header —
+    # a per-location Cache-Control would silently drop the CSP from exactly
+    # the responses that need it. One map, one add_header, no inheritance trap.
+    #
+    # Flutter's web output is not content-hashed (main.dart.js keeps its name
+    # across builds), so nothing here may be cached immutably; `no-cache` means
+    # "revalidate", and the ETag makes that a cheap 304.
+    map $uri $client_cache_control {
+        default        "no-cache";
+        "/config.json" "no-store";
+    }
+
+    server {
+        listen       ${PORT};
+        server_name  _;
+        root         /usr/share/nginx/html;
+        index        index.html;
+
+        # Everything below is `always`, so the headers are also on 4xx/5xx.
+        #
+        # 'wasm-unsafe-eval' and not 'unsafe-eval': see Decision 2 in the
+        # Dockerfile. 'unsafe-inline' for styles is a genuine Flutter engine
+        # requirement and is recorded as residual risk in docs/SECURITY.md.
+        # ${CONNECT_SRC} is the backend's origin, derived at start from
+        # $BACKEND_BASE_URL — the client talks to exactly one API origin.
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${CONNECT_SRC}; worker-src 'self' blob:; child-src blob:; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'" always;
+
+        # Two years, with subdomains, because the demo origin is HTTPS-only
+        # behind the load balancer. No `preload`: that is a submission to a
+        # browser-vendor list and an irreversible commitment for the parent
+        # domain, which is not this container's decision to make.
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+
+        add_header X-Content-Type-Options "nosniff" always;
+
+        # The app puts identifiers in the URL (portfolio ids); a Referer would
+        # leak them to any origin the page links to. Nothing here needs one.
+        add_header Referrer-Policy "no-referrer" always;
+
+        # frame-ancestors 'none' above is the real clickjacking control;
+        # X-Frame-Options is kept for pre-CSP2 user agents only.
+        add_header X-Frame-Options "DENY" always;
+
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+
+        add_header Cache-Control $client_cache_control always;
+
+        # Liveness. `return` adds no header at this level, so the server-level
+        # headers above are still inherited here.
+        location = /health {
+            access_log    off;
+            default_type  text/plain;
+            return        200 "ok\n";
+        }
+
+        # Written by the entrypoint from $BACKEND_BASE_URL (Decision 1). It
+        # lives outside the image's read-only root, so it is served by alias.
+        location = /config.json {
+            alias /tmp/nginx/www/config.json;
+        }
+
+        # Single-page app: unknown paths are routes, not missing files.
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Anything that is not a GET or HEAD of a static file is not this
+        # server's business.
+        if ($request_method !~ ^(GET|HEAD)$) {
+            return 405;
+        }
+    }
+}
