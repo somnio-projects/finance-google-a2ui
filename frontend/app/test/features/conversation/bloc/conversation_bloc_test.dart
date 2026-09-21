@@ -33,7 +33,9 @@ void main() {
       'treats input_required as a success, not a failure',
       // N-11 / ADR-D D-3 — the state a widget-bearing turn ends in.
       build: () => buildBloc(
-        events: const <AgentEvent>[AgentTurnEnded(AgentTurnState.inputRequired)],
+        events: const <AgentEvent>[
+          AgentTurnEnded(AgentTurnState.inputRequired),
+        ],
       ),
       act: (bloc) => bloc.add(const ConversationMessageSent('hello')),
       verify: (bloc) {
@@ -74,6 +76,5 @@ void main() {
         );
       },
     );
-
   });
 }

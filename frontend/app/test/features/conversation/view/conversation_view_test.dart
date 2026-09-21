@@ -40,12 +40,23 @@ void main() {
       ).thenAnswer((_) => Stream<AgentEvent>.fromIterable(events));
     }
 
-    Future<void> pump(WidgetTester tester) => tester.pumpApp(
-      const ConversationPage(),
-      viewsRepository: views,
-      agentRepository: agent,
-      componentRegistry: buildComponentRegistry(),
-    );
+    Future<void> pump(WidgetTester tester) {
+      // A taller surface than the 800x600 default, because the transcript is
+      // a lazy `ListView`: with a full-height surface card in the middle, the
+      // answer that follows it is never built and `find.text` cannot see a
+      // widget that does not exist. This is a test-harness fact, not a
+      // product one — nothing in the app depends on the window size.
+      tester.view.physicalSize = const Size(1200, 3000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      return tester.pumpApp(
+        const ConversationPage(),
+        viewsRepository: views,
+        agentRepository: agent,
+        componentRegistry: buildComponentRegistry(),
+      );
+    }
 
     Future<void> ask(WidgetTester tester, String text) async {
       await tester.enterText(find.byType(TextField), text);

@@ -11,9 +11,12 @@ void main() {
   group('decodeEventStream', () {
     test('decodes one framed event', () async {
       final events = await decode('data: {"kind":"message"}\n\n');
-      expect(events, equals(<Map<String, dynamic>>[
-        <String, dynamic>{'kind': 'message'},
-      ]));
+      expect(
+        events,
+        equals(<Map<String, dynamic>>[
+          <String, dynamic>{'kind': 'message'},
+        ]),
+      );
     });
 
     test('decodes the transcript the backend actually emits', () async {
@@ -27,9 +30,10 @@ void main() {
       expect(events, hasLength(4));
       expect(events.first['kind'], equals('status-update'));
       expect(events[1]['kind'], equals('render-intent'));
-      expect(events.last['status'], equals(<String, dynamic>{
-        'state': 'input_required',
-      }));
+      expect(
+        events.last['status'],
+        equals(<String, dynamic>{'state': 'input_required'}),
+      );
     });
 
     test('strips exactly one space after the colon', () async {

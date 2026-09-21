@@ -18,9 +18,7 @@ AgentRepository repositoryReplaying(String body, {int status = 200}) {
           Stream<List<int>>.value(utf8.encode(body)),
           status,
           headers: <String, String>{
-            'content-type': isStream
-                ? 'text/event-stream'
-                : 'application/json',
+            'content-type': isStream ? 'text/event-stream' : 'application/json',
           },
         ),
       ),
@@ -127,10 +125,7 @@ void main() {
       expect(
         events.single,
         equals(
-          const AgentFailed(
-            code: 'auth/invalid-token',
-            message: 'Bad token.',
-          ),
+          const AgentFailed(code: 'auth/invalid-token', message: 'Bad token.'),
         ),
       );
     });

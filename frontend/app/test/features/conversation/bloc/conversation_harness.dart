@@ -36,9 +36,7 @@ ConversationBloc buildBloc({
       views: any(named: 'views'),
       options: any(named: 'options'),
     ),
-  ).thenAnswer(
-    (_) async => viewsResult ?? Ok<RenderedViews>(renderedViews()),
-  );
+  ).thenAnswer((_) async => viewsResult ?? Ok<RenderedViews>(renderedViews()));
   return ConversationBloc(agentRepository: agent, viewsRepository: reads);
 }
 

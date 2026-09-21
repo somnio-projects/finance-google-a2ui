@@ -114,11 +114,7 @@ void main() {
           'nested': <String, dynamic>{'a': 1},
           'list': <int>[1, 2],
         }),
-        equals(<String, String>{
-          'top_n': '5',
-          'sort': 'weight',
-          'raw': 'true',
-        }),
+        equals(<String, String>{'top_n': '5', 'sort': 'weight', 'raw': 'true'}),
       );
     });
 
