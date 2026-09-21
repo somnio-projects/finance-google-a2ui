@@ -19,12 +19,18 @@ import 'package:flutter_test/flutter_test.dart';
 ///
 /// | change | pixels differing |
 /// |---|---|
-/// | macOS golden vs the Linux runner, same tree (card goldens) | 0.54–0.70 % |
+/// | macOS golden vs the Linux runner — **the noise floor** | **0.69 %** |
 /// | the value scale's domain wrong | 6.9–7.3 % |
 /// | one bar drawn in the wrong mark | 5.0 % |
 /// | a bar's corner radius 4 px → 3 px | 0.08–0.11 % |
 ///
-/// So a defect worth catching moves ten to a hundred times the tolerance.
+/// The threshold sits between the first row and the smallest of the real
+/// defects: **2.2× above the measured noise, 3.3× below a defect worth
+/// catching.** Both ends are measurements, which is the difference between
+/// setting a threshold and fitting one — the first guess here was 0.5 %,
+/// CI rejected it at 0.69 %, and the fix was to measure both ends rather
+/// than nudge the number until the run went green.
+///
 /// The last row is the honest limit: a sub-pixel radius change is **below**
 /// what a cross-platform raster can resolve, so it is asserted as a constant
 /// (`WaterfallPainter.barRadius`) rather than left to a golden. The exact
@@ -46,9 +52,11 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 class _TolerantComparator extends LocalFileComparator {
   _TolerantComparator(super.testFile);
 
-  /// One pixel in two hundred may differ — see the table above for why that
-  /// sits an order of magnitude below any defect worth catching.
-  static const double maxDifferentPixelFraction = 0.005;
+  /// Derived from the table above: 1.5 % is 2.2× the measured cross-platform
+  /// noise floor and 3.3× below the smallest defect worth catching. It goes
+  /// **down** as the noise is understood better, never up to absorb a
+  /// failure.
+  static const double maxDifferentPixelFraction = 0.015;
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {

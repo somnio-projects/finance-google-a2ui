@@ -132,7 +132,13 @@ path still cannot be chosen at runtime.
 | AC-12 | `frontend/test/tool/check_coverage_exit_test.dart::fails when the walk finds no lib/ sources` — the script is spawned and its **exit code** asserted, because the empty map was only the precondition. Mutation-checked by deleting the guard |
 | AC-13 | `make gate` |
 
-**Mutation checks required: yes**, and performed:
+**Mutation checks required: yes**, and performed. The golden tolerance is
+itself derived from two measurements — a cross-platform noise floor of
+**0.69 %** (the same tree, macOS golden against the Linux runner) and a
+smallest-defect signal of **4.97 %** (one bar drawn in the wrong mark) — and
+sits at 1.5 %, between them. A bar's corner radius changing 4 px → 3 px moves
+0.08 %, below what a cross-platform raster resolves; that constant is
+asserted directly instead (ADR-L D-15).
 
 | Rule | Mutation | Result |
 |---|---|---|
