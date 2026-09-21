@@ -1632,3 +1632,47 @@ the stale row in `docs/specs/GGU-3/api-contract.md` §6 is struck.
   `backend/reports/`. None survive #54's `.codespellrc`, which lists each with
   the reason it is an exception. Run the check the way the gate runs it
   (`--config` the real file), or the noise buries the one real hit.
+
+---
+
+## 2026-09-20 (cont.) — GGU-78: what a surface is allowed to send back (spec only)
+
+**Spec:** `specs/backend/0022-surface-actions.md` — Draft, awaiting TL approval.
+No code. The SDD rule is that a human approves the spec before implementation,
+and this one carries a product decision rather than a mechanical one.
+
+**The question.** GGU-15's round-trip has a backend half nobody had designed:
+what a generated surface may send *back*. Two interactions do not fit the
+options mechanism — a waterfall tap that should make the agent recompose deeper
+(GGU-31) and a chip that should start a turn (GGU-32).
+
+**What the spec decides.**
+
+| Question | Answer |
+|---|---|
+| Is a new mechanism needed at all? | Only for those two. Everything else in the six-component catalog is an option change and needs nothing. |
+| The shape | a registered action **id** plus scalar args bounded by the action's own pydantic model. The client never sends prose, a template, a field path, a tool name or a view id; the turn's prompt is a constant in backend code with validated arguments substituted in. |
+| Where it goes | **back into the A2A turn**, as an A2A `data` part — not a REST resource. Every action's observable result is a stream of surfaces, and `/v1` would add a second round trip and a third error shape for the client to parse. |
+| Audit | declared per action (`audited`), off for both shipped actions; the seam is tested now so the first deciding action inherits a trail instead of an omission. |
+| Idempotency | none, deliberately — nothing in scope mutates. The registry **refuses** `mutating=True` outright, so the first mutating action cannot be added without amending the spec. |
+
+**The line worth keeping.** *If the answer is the same view with different
+numbers, it is an option. If the answer is a new agent turn, it is an action.*
+The failure this spec exists to prevent is a second, looser copy of the options
+mechanism — the design ADR-K D-3 already argues against, arriving through the
+front door because no bounded alternative was offered.
+
+**Next person should know**
+
+- **Approving this spec obliges an ADR change.** ADR-J D-6 requires a recorded
+  decision to extend the JSON-RPC surface, so the implementing PR must add
+  ADR-J D-7 (or a short ADR-L). Written as OD-6 so it cannot be missed.
+- **A cheaper answer exists and is on the table.** OD-7: if GGU-31 is scoped to
+  "the same chart, focused", a bounded `focus` option does it and this spec is
+  unnecessary — a chip is then plain `text` and GGU-32 needs nothing either.
+  Recorded so that choice is made on purpose rather than by momentum.
+- **`RenderIntentService` has no call site on the agent turn path.** It is what
+  enforces ADR-K D-11/D-12, its docstring names GGU-47, and nothing calls it —
+  so render intents from tools are only pattern-checked today. Found while
+  mapping this ticket; it needs its own ticket before `surface.actions` is
+  switched on.
