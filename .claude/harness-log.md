@@ -2900,6 +2900,85 @@ rename that GGU-53 found on the backend.
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
 
+## 2026-09-21 — GGU-61: the order ticket, and the round trip that recomputes it
+
+**Spec:** [`specs/frontend/0006-order-ticket.md`](../specs/frontend/0006-order-ticket.md).
+`order.ticket.v1` (component `OrderTicket`) is the catalog's only interactive
+surface, and the only place the product's central claim is either demonstrated
+or quietly broken. An edit changes a **declared option** and re-requests the
+same view; the client computes no figure and reads no raw member.
+
+### What changed in the code
+
+- `app/lib/components/order_ticket/` — the binding, the card, the impact
+  panel, the controls, and `changedFigures`, which decides what to *mark* by
+  comparing display **strings** before and after. No subtraction, no sign: the
+  client still cannot tell which way a figure moved, and does not need to.
+- `app/lib/features/order_ticket/` — bloc, page and view. The bloc owns the
+  option map, debounces (300 ms, trailing, injected so a test drives it), and
+  guards against a superseded response landing after the one that replaced it
+  by comparing the in-flight options map **by identity**.
+- `ViewPayload.strings(path)` — the contract publishes `inputs[].choices` as an
+  array of strings, which `rows()` cannot read because it requires objects. The
+  reader simply had no accessor for it.
+- `/order-ticket` in the router table, and diagram 12 gained the edge that
+  goes with it.
+
+### What changed in the harness
+
+- `binding_rules_test.dart`'s literal-path regex now names `strings` alongside
+  `text`/`optionalText`/`rows`/`geometry`. **An accessor added to the reader
+  and forgotten in that regex is a hole in N-5 exactly the width of the new
+  method** — so the list is now kept in step with the class, and the regex was
+  mutation-checked on its own (a variable path goes red, a literal stays
+  quiet).
+- `frontend/SECURITY.md` gained a threat note: this is the first surface where
+  user-typed input *leaves* the client, and it leaves only as a declared
+  option's value, encoded by `Uri.replace`. There is no client-side validation
+  and that is deliberate (N-8) — a rule beside the server's is a second
+  declaration that drifts, and an editable bundle cannot enforce one anyway.
+
+### What the next person should know
+
+- **The design and the frozen contract are two different components sharing a
+  name, and this is not a detail.** `Catalog_OrderTicket.dc.html` draws a
+  *multi-leg equity* order — NVDA/AVGO/AMD, `legs[]`, `impact.estShares`,
+  `cashRemaining`, `constraints.maxCash` — with an `onSubmit()` and a "Review
+  order" button. `order.ticket.v1` is a *single-leg crypto* ticket whose only
+  figures are `quantity`, `entry_price` and `notional`, with `actions: []` and
+  a disclosure saying nothing is ever placed. The visual language and the three
+  states were adopted; the field inventory was not, because a client cannot
+  invent a payload field (N-3). OD-1 and OD-2 carry it, and GGU-19 owns the
+  resolution. **If the design is what ships, this needs an `order.ticket.v2`.**
+- **Zone 3's prompt fragment tells the client to recompute** — *"let the client
+  recompute impact on edit"* — and the mock does exactly that
+  (`'$' + l.price.toFixed(2)`). A mock computing its own numbers is
+  unremarkable; a **system-prompt fragment** saying so is a defect, because it
+  ships to the model and contradicts the one invariant this showcase exists to
+  demonstrate. OD-3. Raised, not followed.
+- **Rendering a `.dc.html` artboard over `file://` gives you an inert
+  snapshot.** The preview tool rewrites the page to a `data:` URL, so the
+  relative `./support.js` never resolves, the bundle never boots, and Zone 1
+  shows `{{ l.symbol }}` where the figures should be — while the *static*
+  prose in the page header reads perfectly, which is what makes it convincing.
+  Serve the directory over HTTP instead (the sandbox denies `socket.bind`, so
+  that one command needs the sandbox off). Every measured value in spec 0006
+  §6 AC-16 came from the HTTP render; the first set, taken from `file://`,
+  was discarded. **A pixel-perfect claim built on unbound placeholders is
+  indistinguishable from a correct one.**
+- **`ViewComponent.build` has no slot for a callback**, so an interactive
+  surface cannot go through `ComponentHost`. `OrderTicketView` builds its card
+  directly and attaches `onOptionChanged` — and therefore has to repeat what
+  the host does with a `PayloadContractException`. It did not, at first: a
+  contract violation was a red screen until a test caught it. If a third such
+  surface appears, the callback belongs on the seam, as an ADR-L amendment.
+- **A test harness that keys its fixture from the code under test proves
+  nothing.** The bloc suite keyed its envelope with `OrderTicketBloc.viewId`
+  and looked it up with the same constant, so a typo agreed with itself. The
+  envelopes are now keyed from the **catalog snapshot** while the bloc is given
+  the **component's** id — two declarations that must match. The constant is
+  gone: the page passes the component's `viewId`, so N-6's "a literal in one
+  place" holds again.
 ## 2026-09-21 — GGU-93, GGU-94: the evidence a PR carries gets a field for what was not run
 
 **Spec:** none. This is a harness change, recorded where the harness is

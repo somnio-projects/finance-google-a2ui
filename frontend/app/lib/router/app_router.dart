@@ -1,4 +1,5 @@
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,6 +13,15 @@ abstract final class AppRoutes {
 
   /// The conversation surface, where the agent answers in interfaces.
   static const String conversation = '/ask';
+
+  /// The interactive order ticket.
+  ///
+  /// A surface of its own because its options must travel alone: the read
+  /// endpoint applies one flat option set to every view in a request, so the
+  /// ticket's `side` sent beside the portfolio's other views would 422 all of
+  /// them (N-7, spec `frontend/0006` OD-5). The component still registers and
+  /// still appears read-only in the portfolio list.
+  static const String orderTicket = '/order-ticket';
 }
 
 /// Builds the app's router.
@@ -47,6 +57,10 @@ GoRouter buildRouter({String? initialLocation}) {
       GoRoute(
         path: AppRoutes.conversation,
         builder: (context, state) => const ConversationPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.orderTicket,
+        builder: (context, state) => const OrderTicketPage(),
       ),
     ],
   );
