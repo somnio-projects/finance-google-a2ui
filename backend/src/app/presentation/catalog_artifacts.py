@@ -19,8 +19,8 @@ from typing import Final
 from app.presentation.catalog_doc import (
     CONTRACT_PATH,
     contract_document,
-    contract_drift,
 )
+from app.presentation.catalog_drift import contract_drift
 from app.presentation.catalog_json import (
     FIX_COMMAND,
     SNAPSHOT_PATH,
