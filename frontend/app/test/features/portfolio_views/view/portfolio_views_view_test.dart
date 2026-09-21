@@ -61,7 +61,7 @@ void main() {
         ),
       );
       expect(find.byType(HoldingsAllocationCard), findsOneWidget);
-      expect(find.text(r'$65,038.60'), findsOneWidget);
+      expect(find.text(r'$482,915.20'), findsOneWidget);
     });
 
     testWidgets('separates the surfaces when several are returned', (

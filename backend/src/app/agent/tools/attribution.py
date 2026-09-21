@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
 from app.agent.registry import register
 from app.core.display import money_display, percentage_display
-from app.core.display import signed_money_display as signed
+from app.core.signed_display import signed_money_display as signed
 from app.domain.attribution import WindowAttribution, attribute_window
 from app.domain.symbols import Ticker
 
@@ -51,7 +51,7 @@ class AttributionArguments(BaseModel):
             "portfolio. The totals then cover only the named holdings, so the "
             "waterfall still closes against its own total."
         ),
-        examples=[["BTC", "ETH"]],
+        examples=[["NVDA", "AAPL"]],
     )
 
 

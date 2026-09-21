@@ -1,6 +1,7 @@
 import 'package:finance_app/charts/chart_extensions.dart';
 import 'package:finance_app/theme/app_colors.dart';
 import 'package:finance_app/theme/app_spacing.dart';
+import 'package:finance_app/theme/home_palettes.dart';
 import 'package:flutter/material.dart';
 
 /// The app's Material 3 themes.
@@ -33,6 +34,9 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: colorScheme.surfaceContainer,
       extensions: <ThemeExtension<Object?>>[
         AppSpacing.standard,
+        // The shell's measured colours (spec 0026 §2) — not a chart palette,
+        // so it sits beside the spacing rather than inside `chartExtensions`.
+        homeTokensFor(brightness),
         // Chart palettes stay separate: gain, loss and "a total" are semantic
         // roles Material 3 has no slot for, and they are measured the same way
         // the scheme above now is. Spread rather than listed,

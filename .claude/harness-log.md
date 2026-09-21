@@ -3365,3 +3365,39 @@ stubs `flutter` and `dart` on `PATH`, so it runs in a second on a machine with
 no Flutter at all — which matters because it is the **first** step of the
 frontend gate, so a false failure blocks everything behind it, and because on a
 runner it can never be seen rejecting: CI always installs the pin.
+
+## 2026-09-21 — GGU-110 · the Home tab, tal cual, and the portfolio behind it
+
+`feat/GGU-110_equities`. Backend spec `backend/0025` (the equities portfolio,
+17 tickers, four classes, six sectors, previous closes solved so the design's
+six day-change figures all hold) and `backend/0026` (the Home shell:
+`portfolio.summary.v1`, and `group_by` · day change · centre count · all-time
+gain on `holdings.allocation.v1`). Frontend: `HomeTokens` (29 measured
+colours, light and dark), the sparkline primitive, the four-tab shell, the
+Home page and its bloc, the Activity placeholder, and the allocation component
+extended for the class grouping (ring ramp, centre label, stacked bar, day
+change per row). Both gates green: backend 1477 tests · 100 % branch; frontend
+507 tests · 100 % line over 156 files.
+
+What the run taught:
+
+- **A degenerate example is a gate that cannot fail.** The first equities seed
+  gave NVDA two lots at one cost, so every lot method consumed the same figure
+  and `scenario.comparison.v1` published a `$0.00` spread with no ends named —
+  the component's whole point, absent from its own example, and the frontend
+  tests that assert "names both ends" would have had to be *weakened* to pass.
+  The seed now carries two costs (OD-9), balanced so no design figure moves.
+- **Two numbers in two places are one number nowhere.** `Symbol` was declared
+  in `order_sizing` and `payoff_order`; pylint's duplicate-code check caught
+  it, and the fix was the domain's `symbols.py` owning it. The same shape hid
+  twice more as `16`: `MAX_CHOICES` in `presentation/tickets.py` and in
+  `actions/declared.py`, each sized to the crypto reference by coincidence.
+- **Overwriting a module you did not read.** `domain/symbols.py` already
+  existed; a `Write` replaced it and twenty-three imports went red. Restored
+  from `HEAD`, extended instead. Read before write, even for a "new" file.
+- **A red gate is not red for your reason (again).** The frontend gate's 65
+  failures were four defects: stale crypto literals across six component
+  suites, `No Material` under an `InkWell` (now a `GestureDetector`), rows
+  that overflow at phone width (now `Text.rich` and `Flexible`), and a test
+  fixture whose root route moved. The catalog snapshot was regenerated
+  **three** times before the literals were final — copy them last.

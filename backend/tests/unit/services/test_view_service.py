@@ -58,7 +58,7 @@ async def test_render_applies_the_shared_options_to_every_view(
         default=ALLOCATION,
     )
     dumped = response.views[ALLOCATION].model_dump()
-    assert dumped["total"]["amount"]["display"] == "$65,039"
+    assert dumped["total"]["amount"]["display"] == "$482,915"
 
 
 async def test_render_uses_the_selection_rule_when_no_view_is_named(

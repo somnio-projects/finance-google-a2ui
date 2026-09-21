@@ -71,6 +71,8 @@ duplicated one are both visible at a glance.
 | [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Implemented | GGU-78 |
 | [backend/0023-catalog-serves-the-client.md](backend/0023-catalog-serves-the-client.md) | Implemented | GGU-53 |
 | [backend/0024-contract-serves-the-designs.md](backend/0024-contract-serves-the-designs.md) | Implemented | GGU-99 (closes GGU-101/103/104 in part) |
+| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | In progress | *unassigned* |
+| [backend/0026-the-home-shell.md](backend/0026-the-home-shell.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |

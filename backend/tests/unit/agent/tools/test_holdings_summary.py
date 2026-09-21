@@ -9,7 +9,8 @@ import re
 
 from app.agent.contracts import ToolContext
 from app.agent.tools.holdings_summary import HoldingsSummaryTool
-from app.core.display import money_display, percentage_display, signed_money_display
+from app.core.display import money_display, percentage_display
+from app.core.signed_display import signed_money_display
 from app.core.trend import trend_of
 from app.domain.invariants import WEIGHT_TOLERANCE
 from app.domain.money import ONE, ZERO

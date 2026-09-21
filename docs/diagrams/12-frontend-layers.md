@@ -66,6 +66,8 @@ graph TD
   %%   bloc  -> api      (a bloc may not know HTTP exists)
   %%   view  -> repo     (only a *_page.dart may; the _View may not)
   %%   comp  -> features (a component that needs a bloc is a feature)
+  %% features/shell is the StatefulShellRoute host and its tab bar (spec 0026):
+  %%   a feature with no bloc, and the only one the router hands its shell to.
   %%   pure/ -> flutter  (also a compile error — that is the point of the workspace)
   %%   anything but boot constructing http.Client / FinanceApiClient /
   %%     ViewsRepository / A2aClient / AgentRepository

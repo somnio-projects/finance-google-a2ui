@@ -24,12 +24,12 @@ from tests.unit.domain.conftest import make_portfolio
 
 def test_what_is_left_is_what_was_not_sold(portfolio: Portfolio) -> None:
     """AC-6 — the leftover position, and nothing negative anywhere."""
-    lots = portfolio.tax_lots("BTC")
+    lots = portfolio.tax_lots("NVDA")
     held = sum((lot.quantity for lot in lots), ZERO)
 
-    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.5"))
+    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
 
-    assert result.remaining_quantity == held - Decimal("0.5")
+    assert result.remaining_quantity == held - Decimal(75)
     assert result.remaining_cost_basis == (
         sum((lot.cost_basis for lot in lots), ZERO) - result.cost_basis
     )
@@ -39,7 +39,7 @@ def test_what_is_left_is_what_was_not_sold(portfolio: Portfolio) -> None:
 
 def test_selling_the_whole_position_leaves_nothing(portfolio: Portfolio) -> None:
     """The walk runs out of lots rather than out of units."""
-    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.6"))
+    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(90))
 
     assert len(result.consumed) == 2
     assert all(row.exhausted for row in result.consumed)
@@ -52,18 +52,18 @@ def test_a_sale_that_ends_on_a_lot_boundary_takes_no_more(
     portfolio: Portfolio,
 ) -> None:
     """Exactly one lot's worth stops there, leaving the next lot untouched."""
-    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.42"))
+    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(60))
 
-    assert [row.lot_id for row in result.consumed] == ["lot-btc-01"]
+    assert [row.lot_id for row in result.consumed] == ["lot-nvda-01"]
     assert result.consumed[0].exhausted
     assert result.remaining_lots == 1
-    assert result.remaining_quantity == Decimal("0.18")
+    assert result.remaining_quantity == Decimal(30)
 
 
 def test_a_sale_larger_than_the_position_is_rejected(portfolio: Portfolio) -> None:
     """AC-6, OD-3 — no partial fill; costing out a smaller sale answers nothing."""
     with pytest.raises(PositionTooSmallError, match="holds fewer units than that"):
-        simulate_sale(portfolio, symbol="BTC", quantity=Decimal("1.5"))
+        simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(225))
 
 
 def test_the_rejection_carries_both_quantities_but_says_neither(
@@ -71,18 +71,18 @@ def test_the_rejection_carries_both_quantities_but_says_neither(
 ) -> None:
     """§5 — the figures are attributes; the message is what a 422 body shows."""
     with pytest.raises(PositionTooSmallError) as caught:
-        simulate_sale(portfolio, symbol="BTC", quantity=Decimal("1.5"))
+        simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(225))
 
-    assert caught.value.symbol == "BTC"
-    assert caught.value.requested == Decimal("1.5")
-    assert caught.value.held == Decimal("0.6")
-    assert "0.6" not in caught.value.detail
+    assert caught.value.symbol == "NVDA"
+    assert caught.value.requested == Decimal(225)
+    assert caught.value.held == Decimal(90)
+    assert "90" not in caught.value.detail
 
 
 def test_a_symbol_in_the_market_but_not_held_reports_holding_none() -> None:
     """AC-6 — "you hold none" is the honest answer, not an empty success."""
     with pytest.raises(PositionTooSmallError) as caught:
-        simulate_sale(make_portfolio(), symbol="ADA", quantity=Decimal(1))
+        simulate_sale(make_portfolio(), symbol="JNJ", quantity=Decimal(1))
 
     assert caught.value.held == ZERO
 
@@ -93,7 +93,7 @@ def test_a_symbol_in_the_market_but_not_held_reports_holding_none() -> None:
 def test_a_non_positive_sale_is_rejected(portfolio: Portfolio, quantity: str) -> None:
     """AC-6 — a sale of zero or fewer units is not a scenario."""
     with pytest.raises(SaleQuantityError, match="positive number of units"):
-        simulate_sale(portfolio, symbol="BTC", quantity=Decimal(quantity))
+        simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(quantity))
 
 
 def test_an_unknown_symbol_is_rejected_before_the_position_is_read(
@@ -107,7 +107,7 @@ def test_an_unknown_symbol_is_rejected_before_the_position_is_read(
 def test_a_simulation_whose_rows_do_not_reach_its_totals_does_not_close() -> None:
     """``closes()`` can fail, or asserting it elsewhere would prove nothing."""
     row = LotConsumption(
-        lot_id="lot-btc-01",
+        lot_id="lot-nvda-01",
         acquired_on=FROZEN_NOW.date(),
         term=LotTerm.SHORT,
         quantity=Decimal(1),
@@ -117,7 +117,7 @@ def test_a_simulation_whose_rows_do_not_reach_its_totals_does_not_close() -> Non
         exhausted=True,
     )
     broken = SaleSimulation(
-        symbol="BTC",
+        symbol="NVDA",
         price=Decimal("64250.00"),
         quantity=Decimal(1),
         proceeds=Decimal(99),

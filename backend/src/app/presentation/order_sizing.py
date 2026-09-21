@@ -19,12 +19,12 @@ from pydantic import Field
 
 from app.domain.orders import order_quantity
 from app.domain.payoff import Side
+from app.domain.symbols import Symbol
 from app.presentation.options import DisplayOptions
 
 #: The assets a ticket may be written for: the curated market reference
 #: (``app.domain.market``) spelled as a bound. Two declarations of one fact, so
 #: a test compares them instead of a comment claiming they agree.
-Symbol = Literal["ADA", "AVAX", "BTC", "DOGE", "DOT", "ETH", "LINK", "SOL"]
 
 #: What a size counts. ``usd`` is divided by the entry price server-side.
 SizeUnit = Literal["units", "usd"]
@@ -47,9 +47,9 @@ class OrderTicketOptions(DisplayOptions):
     """Declared knobs of ``order.ticket.v1``; nothing else is accepted."""
 
     symbol: Symbol = Field(
-        default="BTC",
+        default="NVDA",
         description="Asset the order is written for, from the market reference.",
-        examples=["SOL"],
+        examples=["VOO"],
     )
     side: Side = Field(
         default="buy",

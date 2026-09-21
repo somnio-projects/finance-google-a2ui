@@ -24,11 +24,11 @@ def test_every_editable_option_is_a_payload_field_of_exactly_its_own_name(
     ``test_declared_interactivity.py``; this pins the ticket itself.
     """
     payload = render(
-        portfolio, OrderTicketOptions(symbol="SOL", side="sell", size="2.5")
+        portfolio, OrderTicketOptions(symbol="VOO", side="sell", size="2.5")
     )
 
     assert set(LABELS) <= set(payload.model_dump())
-    assert (payload.symbol, payload.side) == ("SOL", "sell")
+    assert (payload.symbol, payload.side) == ("VOO", "sell")
     assert (payload.size, payload.size_in) == ("2.5", "units")
 
 
@@ -42,8 +42,8 @@ def test_the_size_a_ticket_echoes_is_what_was_asked_for_not_what_was_derived(
     not accept: `size` must come back as the dollar figure the caller sent.
     """
     payload = render(
-        portfolio, OrderTicketOptions(symbol="DOGE", size="500", size_in="usd")
+        portfolio, OrderTicketOptions(symbol="XOM", size="500", size_in="usd")
     )
 
     assert (payload.size, payload.size_in) == ("500", "usd")
-    assert payload.quantity.display == "3927.72977219"
+    assert payload.quantity.display == "14.6113384"

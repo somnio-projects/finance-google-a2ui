@@ -34,7 +34,7 @@ REQUEST_ID = "req-7"
 
 def _data(action: str = DRILL, **args: Any) -> ActionData:
     """Build the `data` part a surface would have sent."""
-    return ActionData(action=action, args=args or {"driver": "DOGE"})
+    return ActionData(action=action, args=args or {"driver": "XOM"})
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ async def test_a_validated_action_becomes_the_server_composed_prompt(
     prompt = await service.prompt_for(principal, _data(), request_id=REQUEST_ID)
 
     assert prompt == (
-        "Break down the contribution of DOGE in more detail for the same "
+        "Break down the contribution of XOM in more detail for the same "
         "window, and show the result."
     )
     assert reporter.metrics == [(ACCEPTED_METRIC, {"action": DRILL})]
@@ -103,10 +103,10 @@ async def test_no_telemetry_carries_an_argument_value_or_the_prompt(
     """AC-10 — the tag set is asserted exactly, not merely checked for absence."""
     service, reporter, _ = make_service()
 
-    await service.prompt_for(principal, _data(driver="SOL"), request_id=REQUEST_ID)
+    await service.prompt_for(principal, _data(driver="VOO"), request_id=REQUEST_ID)
 
     assert [tags for _, tags in reporter.metrics] == [{"action": DRILL}]
-    assert all("SOL" not in str(tags) for _, tags in reporter.metrics)
+    assert all("VOO" not in str(tags) for _, tags in reporter.metrics)
 
 
 async def test_the_shipped_actions_record_no_audit_event(

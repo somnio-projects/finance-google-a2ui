@@ -39,7 +39,7 @@ async def test_accepted_intent_renders_the_requested_view(
     assert result.view == WATERFALL
     assert result.rejection is None
     assert result.surface.component == "AttributionWaterfall"
-    assert result.payload.model_dump()["start"]["amount"]["display"] == "$56,925"
+    assert result.payload.model_dump()["start"]["amount"]["display"] == "$421,711"
     assert reporter.metrics == []
 
 

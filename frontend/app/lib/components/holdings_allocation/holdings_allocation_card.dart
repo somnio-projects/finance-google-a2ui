@@ -1,18 +1,16 @@
+import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/donut_chart.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_bar.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_center.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_empty.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_header.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
 
-/// Renders `holdings.allocation.v1` as the design's card.
-///
-/// The chrome is the design's, measured from the rendered catalog page: a
-/// 16 px radius, a 1 px hairline, and 16/18 padding. Selection is **local
-/// state** — tapping an arc or a legend row marks it and nothing leaves the
-/// widget, because the frozen catalog gives this view `"actions": []` and
-/// there is nothing to dispatch.
+/// The `HoldingsSummary` card: header (unless a shell draws it), the ring
+/// with its centre count, the legend, and the stacked bar (spec 0026 §2).
 class HoldingsAllocationCard extends StatefulWidget {
   /// Creates the card.
   const HoldingsAllocationCard({
@@ -21,33 +19,29 @@ class HoldingsAllocationCard extends StatefulWidget {
     super.key,
   });
 
-  /// The card's corner radius, measured from the design.
+  /// Corner radius.
   static const double radius = 16;
 
-  /// The card's padding, measured from the design (`padding:16px 18px`).
+  /// Inner padding.
   static const EdgeInsets padding = EdgeInsets.fromLTRB(18, 16, 18, 16);
 
-  /// The gap between the ring and its legend, measured from the design.
+  /// Gap between ring and legend.
   static const double chartGap = 22;
 
-  /// Below this content width the card stacks the ring above the legend.
-  ///
-  /// Interpolated, not measured directly: the design lays the ring **beside**
-  /// the legend in its primary card (~400 px of content) and **above** it in
-  /// both secondary cards (~300 px), so the switch is somewhere between. 340
-  /// is the midpoint, and it is the one number on this card the design does
-  /// not pin — `specs/frontend/0007` OD-3 carries it.
+  /// Below this width the ring stacks above the legend.
   static const double stackBelowWidth = 340;
 
-  /// The ring's diameter when the card stacks, as the design's secondary
-  /// cards draw it.
+  /// Ring size when stacked.
   static const double stackedDiameter = 112;
 
-  /// What to draw.
+  /// Ring size beside a legend when a shell draws the header — the Home
+  /// card's 104. The catalog card keeps [DonutChart.designDiameter].
+  static const double compactDiameter = 104;
+
+  /// The model.
   final AllocationData data;
 
-  /// The category selected before any tap, which is how a test and a golden
-  /// reach the selected state without driving a gesture.
+  /// A slice to start selected, for goldens.
   final int? initialSelectedIndex;
 
   @override
@@ -66,6 +60,11 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
   @override
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
+    final data = widget.data;
+    final body = data.isEmpty
+        ? const HoldingsAllocationEmpty()
+        : LayoutBuilder(builder: _body);
+    if (!data.headline) return body;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: palette.surface,
@@ -78,12 +77,9 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            HoldingsAllocationHeader(data: widget.data),
+            HoldingsAllocationHeader(data: data),
             const SizedBox(height: 14),
-            if (widget.data.isEmpty)
-              const HoldingsAllocationEmpty()
-            else
-              LayoutBuilder(builder: _body),
+            body,
           ],
         ),
       ),
@@ -91,20 +87,34 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
   }
 
   Widget _body(BuildContext context, BoxConstraints constraints) {
+    final data = widget.data;
+    final ramp = AllocationPalette.of(context).rampFor(data.groupBy);
     final stacked =
         constraints.maxWidth < HoldingsAllocationCard.stackBelowWidth;
     final chart = DonutChart(
-      weights: widget.data.weights,
+      weights: data.weights,
       selectedIndex: _selectedIndex,
       onSliceTap: _select,
+      swatches: ramp,
+      center: HoldingsAllocationCenter(
+        count: data.centerCount,
+        unit: data.centerUnit,
+      ),
       diameter: stacked
           ? HoldingsAllocationCard.stackedDiameter
-          : DonutChart.designDiameter,
+          : data.headline
+          ? DonutChart.designDiameter
+          : HoldingsAllocationCard.compactDiameter,
     );
     final legend = HoldingsAllocationLegend(
-      categories: widget.data.categories,
+      categories: data.categories,
       selectedIndex: _selectedIndex,
       onCategoryTap: _select,
+      swatches: ramp,
+    );
+    final bar = Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: HoldingsAllocationBar(weights: data.weights, colors: ramp),
     );
     if (stacked) {
       return Column(
@@ -114,19 +124,26 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
           Center(child: chart),
           const SizedBox(height: HoldingsAllocationCard.chartGap),
           legend,
+          bar,
         ],
       );
     }
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        chart,
-        const SizedBox(width: HoldingsAllocationCard.chartGap),
-        Expanded(child: legend),
+        Row(
+          children: <Widget>[
+            chart,
+            const SizedBox(width: HoldingsAllocationCard.chartGap),
+            Expanded(child: legend),
+          ],
+        ),
+        bar,
       ],
     );
   }
 
-  /// Toggles the selection, so tapping the selected slice clears it.
   void _select(int index) =>
       setState(() => _selectedIndex = _selectedIndex == index ? null : index);
 }

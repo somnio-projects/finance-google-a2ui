@@ -33,12 +33,15 @@ void main() {
         surfaceSize: const Size(1000, 1400),
       );
       expect(find.text('Allocation by holding'), findsOneWidget);
-      expect(find.text('Total market value'), findsOneWidget);
-      expect(find.text(r'$65,038.60'), findsOneWidget);
+      expect(
+        find.text(r'▲ +$61,204 (+14.5%)  all-time', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.text(r'$482,915.20'), findsOneWidget);
       for (final row in <List<String>>[
-        <String>['Bitcoin', r'$38,550.00', '59.27%'],
-        <String>['Ethereum', r'$15,902.50', '24.45%'],
-        <String>['Dogecoin', r'$1,527.60', '2.35%'],
+        <String>['NVIDIA Corp', r'$108,419.40', '22.45%'],
+        <String>['Apple Inc.', r'$69,954.00', '14.49%'],
+        <String>['Other', r'$163,631.80', '33.88%'],
       ]) {
         expect(find.text(row[0]), findsOneWidget);
         expect(find.text(row[1]), findsOneWidget);
@@ -53,9 +56,9 @@ void main() {
         _subject(component, example),
         surfaceSize: const Size(1000, 1400),
       );
-      expect(find.text('0.5927249356535964796290203049'), findsNothing);
-      expect(find.text('65038.600000000000'), findsNothing);
-      expect(find.text('38550.000000'), findsNothing);
+      expect(find.text('0.2245102245694482178237504224'), findsNothing);
+      expect(find.text('482915.200000'), findsNothing);
+      expect(find.text('108419.400000'), findsNothing);
     });
 
     test('reads the raw weight only as geometry, never as text', () {
@@ -64,9 +67,9 @@ void main() {
       // `weightDisplay` is the backend's string. Neither is derived from the
       // other, and this pins that they disagree in type as well as in value.
       final data = component.read(ViewPayload.fromJson(example));
-      final bitcoin = data.categories.first;
-      expect(bitcoin.weight, closeTo(0.5927249356535964, 1e-15));
-      expect(bitcoin.weightDisplay, equals('59.27%'));
+      final nvidia = data.categories.first;
+      expect(nvidia.weight, closeTo(0.22451022456944822, 1e-15));
+      expect(nvidia.weightDisplay, equals('22.45%'));
       expect(data.weights, hasLength(data.categories.length));
     });
 
@@ -76,7 +79,7 @@ void main() {
       final data = component.read(ViewPayload.fromJson(example));
       expect(
         data.categories.map((row) => row.key),
-        equals(<String>['BTC', 'ETH', 'SOL', 'LINK', 'DOGE']),
+        equals(<String>['NVDA', 'AAPL', 'GLD', 'MSFT', 'VOO', 'other']),
       );
     });
 
@@ -99,7 +102,7 @@ void main() {
       );
       expect(data.isEmpty, isTrue);
       expect(data.weights, isEmpty);
-      expect(data.totalDisplay, equals(r'$65,038.60'));
+      expect(data.totalDisplay, equals(r'$482,915.20'));
     });
 
     testWidgets('raises a missing field instead of reconstructing it', (

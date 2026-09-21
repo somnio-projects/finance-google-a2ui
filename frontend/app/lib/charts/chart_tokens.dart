@@ -75,6 +75,12 @@ abstract final class ChartTokens {
     legendWeight: Color(0xFF8A8D96),
     legendValue: Color(0xFF44464E),
     legendDivider: Color(0xFFF2EFF7),
+    classSwatches: <Color>[
+      Color(0xFF4F5DFF),
+      Color(0xFF0F9D8F),
+      Color(0xFF9AA0AA),
+      Color(0xFFF0A52E),
+    ],
   );
 
   /// The allocation ramp and legend colours, dark (`D1 · Dark · 1024`).
@@ -95,6 +101,12 @@ abstract final class ChartTokens {
     legendWeight: Color(0xFF8A8D96),
     legendValue: Color(0xFFC9CBD4),
     legendDivider: Color(0xFF23242C),
+    classSwatches: <Color>[
+      Color(0xFF7A83FF),
+      Color(0xFF3FC8B8),
+      Color(0xFF6F7280),
+      Color(0xFFF5B942),
+    ],
   );
 
   /// The allocation palette for [brightness].

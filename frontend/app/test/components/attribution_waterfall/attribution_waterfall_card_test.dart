@@ -11,6 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 
+/// The centre of band [index] of the sixteen the example walks — start,
+/// fourteen holdings, end — measured off the plot the test pumped.
+Offset bandCentre(WidgetTester tester, int index) {
+  final plot = tester.getRect(find.byKey(WaterfallChart.plotKey));
+  final band = plot.width / 16;
+  return Offset(plot.left + band * (index + 0.5), plot.center.dy);
+}
+
 void main() {
   group(AttributionWaterfallCard, () {
     late AttributionWaterfallData data;
@@ -54,18 +62,18 @@ void main() {
       await tester.pumpApp(subject());
       expect(find.text('Unrealised P/L attribution'), findsOneWidget);
       // N-9: notes are compliance statements and none is dropped.
-      expect(find.text(r'Bitcoin $10,230.00'), findsOneWidget);
-      expect(find.text(r'Ethereum -$2,797.50'), findsOneWidget);
-      expect(find.text(r'Net $8,113.60'), findsOneWidget);
+      expect(find.text(r'NVIDIA Corp $34,019.40'), findsOneWidget);
+      expect(find.text(r'Apple Inc. $29,334.00'), findsOneWidget);
+      expect(find.text(r'Net $61,204.05'), findsOneWidget);
     });
 
     testWidgets('never shows a raw decimal', (tester) async {
       // N-4, the assertion the testing rule asks for by name: the raw
       // members reached the chart as geometry and must not be on screen.
       await tester.pumpApp(subject());
-      expect(find.textContaining('56925.00'), findsNothing);
-      expect(find.textContaining('65038.6'), findsNothing);
-      expect(find.textContaining('-2797.500000'), findsNothing);
+      expect(find.textContaining('421711.15'), findsNothing);
+      expect(find.textContaining('482915.2'), findsNothing);
+      expect(find.textContaining('-10500.000000'), findsNothing);
     });
 
     testWidgets('shows no detail until a band is tapped', (tester) async {
@@ -78,22 +86,20 @@ void main() {
     ) async {
       final tapped = <String>[];
       await tester.pumpApp(subject(onSegmentTap: tapped.add));
-      final plot = tester.getTopLeft(find.byKey(WaterfallChart.plotKey));
-      // Seven bands over 571 px: the second band's centre is at ~122.
-      await tester.tapAt(plot + const Offset(122, 100));
+      // Sixteen bands over the plot: the second is NVDA, the first holding.
+      await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();
-      expect(tapped, <String>['BTC']);
+      expect(tapped, <String>['NVDA']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
-      expect(find.text(r'$67,155.00'), findsOneWidget);
+      expect(find.text(r'$455,730.55'), findsOneWidget);
     });
 
     testWidgets('a second tap on the same bucket clears the selection', (
       tester,
     ) async {
-      await tester.pumpApp(subject(initialSelectedKey: 'BTC'));
+      await tester.pumpApp(subject(initialSelectedKey: 'NVDA'));
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
-      final plot = tester.getTopLeft(find.byKey(WaterfallChart.plotKey));
-      await tester.tapAt(plot + const Offset(122, 100));
+      await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
     });
@@ -103,8 +109,7 @@ void main() {
       // nothing to drill into.
       final tapped = <String>[];
       await tester.pumpApp(subject(onSegmentTap: tapped.add));
-      final plot = tester.getTopLeft(find.byKey(WaterfallChart.plotKey));
-      await tester.tapAt(plot + const Offset(40, 100));
+      await tester.tapAt(bandCentre(tester, 0));
       await tester.pumpAndSettle();
       expect(tapped, isEmpty);
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
@@ -118,8 +123,8 @@ void main() {
     });
 
     testWidgets('colours a gain with the gain mark', (tester) async {
-      await tester.pumpApp(subject(initialSelectedKey: 'BTC'));
-      final gain = tester.widget<Text>(find.text(r'$10,230.00'));
+      await tester.pumpApp(subject(initialSelectedKey: 'NVDA'));
+      final gain = tester.widget<Text>(find.text(r'$34,019.40'));
       expect(gain.style?.color, ChartTokens.light.barGain);
     });
 
@@ -127,8 +132,8 @@ void main() {
       // A separate test rather than a second pump: the card's `State`
       // survives a re-pump of the same widget type, so its selection would
       // not change and the assertion would quietly read the first one.
-      await tester.pumpApp(subject(initialSelectedKey: 'ETH'));
-      final loss = tester.widget<Text>(find.text(r'-$2,797.50'));
+      await tester.pumpApp(subject(initialSelectedKey: 'GLD'));
+      final loss = tester.widget<Text>(find.text(r'-$10,500.00'));
       expect(loss.style?.color, ChartTokens.light.barLoss);
     });
   });

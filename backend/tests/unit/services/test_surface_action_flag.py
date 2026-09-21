@@ -26,7 +26,7 @@ REQUEST_ID = "req-7"
 
 def _drill() -> ActionData:
     """Build the `data` part a waterfall tap would have sent."""
-    return ActionData(action=DRILL, args={"driver": "DOGE"})
+    return ActionData(action=DRILL, args={"driver": "XOM"})
 
 
 async def test_the_capability_is_dark_launched_off_when_no_row_exists() -> None:

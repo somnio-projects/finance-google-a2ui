@@ -27,7 +27,7 @@ async def test_a_filtered_call_asks_for_no_chart(
     tool: HoldingsSummaryTool, tool_context: ToolContext
 ) -> None:
     """AC-7, OD-1 — a whole-portfolio donut would contradict two rows."""
-    outcome = await tool.run({"symbols": ["BTC"]}, tool_context)
+    outcome = await tool.run({"symbols": ["NVDA"]}, tool_context)
 
     assert outcome.render is None
 

@@ -8,7 +8,7 @@ the knobs a projection can be asked for.
 options of its own, and nothing extended the endpoint's query model — which
 carries `extra="forbid"`. So `GET /v1/views` advertised `symbol`, `quantity`,
 `lot_method`, `methods`, `side`, `size`, `size_in`, `range_pct` and `steps`,
-and `GET /v1/portfolios/{id}/views?view=…&symbol=BTC` answered **422** for
+and `GET /v1/portfolios/{id}/views?view=…&symbol=NVDA` answered **422** for
 every one of them. Four of six projections were unreachable by the client
 path while the catalog promised them, and `POST /v1/view-renders` — which
 forwards options as a dict and lets the projection validate — served the
@@ -35,6 +35,10 @@ from pydantic import BaseModel, Field
 
 #: Lot-selection strategies (`domain/lot_selection.py`).
 LotMethod = Literal["FIFO", "LIFO", "HIFO"]
+#: Periods the Home hero can be measured over (`presentation/summary_options.py`).
+Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
+#: Groupings of the allocation donut (`presentation/allocation_rows.py`).
+GroupBy = Literal["holding", "asset_class", "sector"]
 #: Which way an order goes.
 Side = Literal["buy", "sell"]
 #: What an order's `size` counts.
@@ -53,7 +57,7 @@ class ProjectionOptions(BaseModel):
         description=(
             "Asset the view is about; the projection rejects one it does not hold."
         ),
-        examples=["BTC"],
+        examples=["NVDA"],
     )
     quantity: Annotated[str, Field(pattern=DECIMAL_PATTERN)] | None = Field(
         default=None,
@@ -105,13 +109,30 @@ class ProjectionOptions(BaseModel):
         description="Price steps per side; the line is twice this plus one point.",
         examples=[12],
     )
+    range: Range | None = Field(
+        default=None,
+        description="Period the Home hero's change is measured over.",
+        examples=["1d"],
+    )
+    group_by: GroupBy | None = Field(
+        default=None,
+        description="How the allocation donut is sliced.",
+        examples=["asset_class"],
+    )
+    headline: bool | None = Field(
+        default=None,
+        description="Whether the allocation card carries its total and gain block.",
+        examples=[False],
+    )
 
 
 __all__ = [
     "DECIMAL_PATTERN",
     "TICKER_PATTERN",
+    "GroupBy",
     "LotMethod",
     "ProjectionOptions",
+    "Range",
     "Side",
     "SizeIn",
 ]

@@ -21,6 +21,7 @@ class DonutPainter extends CustomPainter {
     required this.layout,
     required this.palette,
     this.selectedIndex,
+    this.swatches,
   });
 
   /// How much wider the selected slice's stroke is drawn, in logical pixels.
@@ -39,8 +40,12 @@ class DonutPainter extends CustomPainter {
   /// The slice the reader has selected, if any.
   final int? selectedIndex;
 
+  /// A ramp overriding the palette's default, for the class grouping.
+  final List<Color>? swatches;
+
   @override
   void paint(Canvas canvas, Size size) {
+    final ramp = swatches ?? palette.swatches;
     if (layout.isEmpty || layout.thickness <= 0) return;
     final center = Offset(layout.center.x, layout.center.y);
     final rect = Rect.fromCircle(center: center, radius: layout.strokeRadius);
@@ -53,7 +58,7 @@ class DonutPainter extends CustomPainter {
         arc.sweepAngle,
         false,
         Paint()
-          ..color = palette.swatchFor(arc.index)
+          ..color = ramp[arc.index % ramp.length]
           ..style = PaintingStyle.stroke
           ..strokeWidth = layout.thickness + (selected ? selectedGrowth : 0.0),
       );
@@ -64,5 +69,6 @@ class DonutPainter extends CustomPainter {
   bool shouldRepaint(DonutPainter oldDelegate) =>
       oldDelegate.layout != layout ||
       oldDelegate.palette != palette ||
-      oldDelegate.selectedIndex != selectedIndex;
+      oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.swatches != swatches;
 }

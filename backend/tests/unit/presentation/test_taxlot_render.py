@@ -26,8 +26,8 @@ from app.schemas.views import ViewQuery
 @pytest.mark.parametrize(
     ("quantity", "lots", "displays"),
     [
-        ("0.5", [1, 1], ["+$580.00", "+$8,925.00"]),
-        ("0.4", [0, 1], ["$0.00", "+$8,500.00"]),
+        ("75", [1, 1], ["+$3,669.90", "+$26,679.60"]),
+        ("60", [0, 1], ["$0.00", "+$26,679.60"]),
     ],
     ids=["both-terms", "long-only"],
 )
@@ -53,18 +53,18 @@ def test_the_term_split_sums_to_the_realized_total(portfolio: Portfolio) -> None
 def test_money_is_paired_with_its_exact_decimal(portfolio: Portfolio) -> None:
     payload = render(portfolio, TaxLotsTableOptions())
     row = payload.lots[0]
-    assert row.proceeds.display == "$26,985.00"
-    assert row.proceeds.amount == Decimal("26985.000000")  # exact, unrounded
-    assert row.cost_basis.amount == Decimal("18060.00")
+    assert row.proceeds.display == "$72,279.60"
+    assert row.proceeds.amount == Decimal("72279.600000")  # exact, unrounded
+    assert row.cost_basis.amount == Decimal("45600.00")
 
 
 def test_a_gain_and_a_loss_are_signed(portfolio: Portfolio) -> None:
-    """LINK is the seeded loser, so the sign is not decoration (AC-4)."""
+    """PYPL is the seeded loser, so the sign is not decoration (AC-4)."""
     gain = render(portfolio, TaxLotsTableOptions())
-    loss = render(portfolio, TaxLotsTableOptions(symbol="LINK", quantity="250"))
-    assert gain.lots[0].gain_loss.display == "+$8,925.00"
+    loss = render(portfolio, TaxLotsTableOptions(symbol="PYPL", quantity="250"))
+    assert gain.lots[0].gain_loss.display == "+$26,679.60"
     assert gain.lots[0].trend == "up"
-    assert loss.lots[0].gain_loss.display == "-$662.50"
+    assert loss.lots[0].gain_loss.display == "-$5,825.00"
     assert loss.lots[0].trend == "down"
 
 
@@ -76,10 +76,10 @@ def test_precision_governs_the_realised_figures(portfolio: Portfolio) -> None:
     quotes a sub-cent price, and `test_sale_rows.py` is where that is asserted
     now.
     """
-    doge = TaxLotsTableOptions(symbol="DOGE", quantity="5000")
-    assert render(portfolio, doge).proceeds.amount.display == "$636.50"
-    coarse = doge.model_copy(update={"precision": 0})
-    assert render(portfolio, coarse).proceeds.amount.display == "$636"
+    xom = TaxLotsTableOptions(symbol="XOM", quantity="100")
+    assert render(portfolio, xom).proceeds.amount.display == "$3,422.00"
+    coarse = xom.model_copy(update={"precision": 0})
+    assert render(portfolio, coarse).proceeds.amount.display == "$3,422"
 
 
 def test_units_arrive_as_a_pair_and_the_printable_half_is_trimmed(
@@ -102,8 +102,8 @@ def test_the_acquisition_date_arrives_written_out(portfolio: Portfolio) -> None:
 
 def test_render_honours_the_locale(portfolio: Portfolio) -> None:
     payload = render(portfolio, TaxLotsTableOptions(locale="es-AR"))
-    assert payload.proceeds.amount.display == "US$ 32.125,00"
-    assert payload.by_term[1].realized.display == "+US$ 8.925,00"
+    assert payload.proceeds.amount.display == "US$ 90.349,50"
+    assert payload.by_term[1].realized.display == "+US$ 26.679,60"
 
 
 def test_surface_maps_the_payload_onto_the_table(portfolio: Portfolio) -> None:
@@ -116,9 +116,9 @@ def test_surface_maps_the_payload_onto_the_table(portfolio: Portfolio) -> None:
         "Realised P/L",
     ]
     assert [half["term"] for half in rendered.props["byTerm"]] == ["short", "long"]
-    assert rendered.props["rows"][0]["label"] == "lot-btc-01"
+    assert rendered.props["rows"][0]["label"] == "lot-nvda-01"
     assert "remaining" not in rendered.props
-    assert rendered.props["subtitle"] == "Sell 0.5 BTC under FIFO"
+    assert rendered.props["subtitle"] == "Sell 75 NVDA under FIFO"
 
 
 def test_the_view_id_is_reachable_by_every_caller() -> None:

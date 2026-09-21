@@ -21,7 +21,8 @@ rather than merely unlikely.
 from decimal import Decimal
 
 from app.core.dates import date_display
-from app.core.display import quantity_display, signed_money_display
+from app.core.display import quantity_display
+from app.core.signed_display import signed_money_display
 from app.core.trend import trend_of
 from app.domain.sale_results import LotConsumption, SaleSimulation
 from app.domain.terms import LotTerm

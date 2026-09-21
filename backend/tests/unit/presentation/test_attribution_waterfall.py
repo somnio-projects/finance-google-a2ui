@@ -47,9 +47,9 @@ def test_render_marks_direction_per_bucket(portfolio: Portfolio) -> None:
 @pytest.mark.parametrize(
     ("locale", "expected"),
     [
-        ("en-US", "$56,925.00"),
-        ("es-AR", "US$ 56.925,00"),
-        ("de-DE", "56.925,00 $"),
+        ("en-US", "$421,711.15"),
+        ("es-AR", "US$ 421.711,15"),
+        ("de-DE", "421.711,15 $"),
     ],
     ids=["en-US", "es-AR", "de-DE"],
 )
@@ -65,7 +65,7 @@ def test_render_honours_locale(
 
 def test_render_honours_precision(portfolio: Portfolio) -> None:
     payload = render(portfolio, AttributionWaterfallOptions(precision=0))
-    assert payload.start.amount.display == "$56,925"
+    assert payload.start.amount.display == "$421,711"
 
 
 def test_render_annotates_the_movers_and_the_net(portfolio: Portfolio) -> None:
@@ -106,8 +106,8 @@ def test_surface_maps_the_payload_onto_the_waterfall(portfolio: Portfolio) -> No
     assert rendered.component == "AttributionWaterfall"
     assert rendered.view == VIEW_ID
     assert rendered.props["start"]["label"] == "Cost basis"
-    assert len(rendered.props["steps"]) == 5
-    assert rendered.props["notes"][-1] == "$8,113.60"  # net, written server-side
+    assert len(rendered.props["steps"]) == 14
+    assert rendered.props["notes"][-1] == "$61,204.05"  # net, written server-side
 
 
 def test_fitness_needs_a_winner_and_a_loser(

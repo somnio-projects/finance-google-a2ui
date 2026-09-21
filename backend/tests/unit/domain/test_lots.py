@@ -25,8 +25,8 @@ def test_seeded_lots_add_up_to_the_holding_market_value(
     portfolio: Portfolio,
 ) -> None:
     btc = portfolio.holdings()[0]
-    price = portfolio.price("BTC")
+    price = portfolio.price("NVDA")
     lots_value = sum(
-        (lot.market_value(price) for lot in portfolio.tax_lots("BTC")), Decimal(0)
+        (lot.market_value(price) for lot in portfolio.tax_lots("NVDA")), Decimal(0)
     )
     assert lots_value == btc.market_value

@@ -15,7 +15,7 @@ def build_lot(lot_id: str, *, day: int, cost_basis: str) -> TaxLot:
     """Build a one-unit lot on a given day of January 2026."""
     return TaxLot(
         lot_id=lot_id,
-        symbol="BTC",
+        symbol="NVDA",
         acquired_on=date(2026, 1, day),
         quantity=Decimal(1),
         cost_basis=Decimal(cost_basis),

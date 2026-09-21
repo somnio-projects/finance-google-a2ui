@@ -11,13 +11,14 @@ constant in this file with the validated symbol substituted in: the client
 supplies a value, never the sentence, the tool or the view (ADR-K D-3).
 """
 
-from typing import Final, Literal
+from typing import Final
 
 from pydantic import Field
 
 from app.actions.contracts import ActionArgs
 from app.actions.registry import register
 from app.actions.spec import SurfaceActionSpec
+from app.domain.symbols import Symbol
 
 ACTION_ID: Final[str] = "drill.attribution.v1"
 LABEL: Final[str] = "Break this down"
@@ -26,16 +27,16 @@ LABEL: Final[str] = "Break this down"
 #: (``app.domain.market``) spelled as a bound, the same way
 #: ``OrderTicketOptions.symbol`` spells it. Two declarations of one fact, so a
 #: test compares them instead of a comment claiming they agree (0022 AC-7).
-Driver = Literal["ADA", "AVAX", "BTC", "DOGE", "DOT", "ETH", "LINK", "SOL"]
+Driver = Symbol
 
 
 class DrillAttributionArgs(ActionArgs):
     """The one argument a drill takes; anything else is a rejection."""
 
     driver: Driver = Field(
-        default="BTC",
+        default="NVDA",
         description="Asset to break down further, from the market reference.",
-        examples=["DOGE"],
+        examples=["XOM"],
     )
 
 

@@ -22,9 +22,10 @@ from typing import Any, Final, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 #: Controls published today; a numeric one is absent on purpose, and
-#: ``MAX_CHOICES`` keeps a descriptor's own list bounded (spec 0018 OD-4).
+#: ``MAX_CHOICES`` keeps a descriptor's own list bounded (spec 0018 OD-4). The
+#: seeded reference set names 17 tickers, so the bound sits above that.
 Control = Literal["choice", "text"]
-MAX_CHOICES: Final[int] = 16
+MAX_CHOICES: Final[int] = 24
 
 
 class TicketInput(BaseModel):

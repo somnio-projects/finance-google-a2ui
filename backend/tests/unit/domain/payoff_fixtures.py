@@ -10,7 +10,7 @@ from decimal import Decimal
 from app.domain.payoff import PayoffCurve, Side
 from app.domain.payoff_pricing import payoff_curve
 
-ENTRY = Decimal("152.40")
+ENTRY = Decimal("528.00")
 QUANTITY = Decimal("40")
 RANGE_PCT = 30
 STEPS = 12
@@ -23,10 +23,10 @@ def build(
     range_pct: int = RANGE_PCT,
     steps: int = STEPS,
 ) -> PayoffCurve:
-    """Return a curve over the seeded SOL price, varying one thing at a time."""
+    """Return a curve over the seeded VOO price, varying one thing at a time."""
     return payoff_curve(
-        symbol="SOL",
-        name="Solana",
+        symbol="VOO",
+        name="Vanguard S&P 500 ETF",
         entry_price=ENTRY,
         quantity=quantity,
         side=side,

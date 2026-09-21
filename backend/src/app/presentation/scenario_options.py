@@ -41,7 +41,7 @@ class ScenarioComparisonOptions(DisplayOptions):
             "Position to cost the sale against, in any case; omit for the one "
             "whose open tax lots are worth the most, ties broken by ticker."
         ),
-        examples=["BTC"],
+        examples=["NVDA"],
     )
     quantity: Units | None = Field(
         default=None,

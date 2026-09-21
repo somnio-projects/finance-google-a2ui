@@ -51,8 +51,10 @@ class OrderTicketPayload(ProjectionDto):
         default=VIEW_ID, description="Projection discriminator.", examples=[VIEW_ID]
     )
     title: str = Field(max_length=120, description="Heading shown.", examples=[TITLE])
-    symbol: str = Field(max_length=10, description="Ticker ordered.", examples=["BTC"])
-    name: str = Field(max_length=64, description="Asset name.", examples=["Bitcoin"])
+    symbol: str = Field(max_length=10, description="Ticker ordered.", examples=["NVDA"])
+    name: str = Field(
+        max_length=64, description="Asset name.", examples=["NVIDIA Corp"]
+    )
     side: Side = Field(description="Which way the order goes.", examples=["buy"])
     size: str = Field(
         max_length=32,

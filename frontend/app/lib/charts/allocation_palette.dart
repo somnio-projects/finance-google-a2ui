@@ -23,6 +23,7 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
     required this.legendWeight,
     required this.legendValue,
     required this.legendDivider,
+    this.classSwatches = const <Color>[],
   });
 
   /// Reads the palette from [context].
@@ -40,6 +41,10 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
   /// payload **can** outrun the ramp — [swatchFor] wraps rather than running
   /// out, and a test pumps 14 categories to prove every one is drawn.
   final List<Color> swatches;
+
+  /// The ramp for the four asset classes — indigo, teal, **grey for cash**,
+  /// amber — measured from `Home.dc.html`; the default ramp when empty.
+  final List<Color> classSwatches;
 
   /// A legend row's weight figure, e.g. `59.27%`.
   final Color legendWeight;
@@ -59,6 +64,12 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
   /// legend solves; a category drawn in no colour at all is a missing row.
   Color swatchFor(int index) => swatches[index % swatches.length];
 
+  /// The ramp for [groupBy]: the class ramp for `asset_class`, else default.
+  List<Color> rampFor(String groupBy) =>
+      groupBy == 'asset_class' && classSwatches.isNotEmpty
+      ? classSwatches
+      : swatches;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -74,6 +85,7 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
     legendWeight,
     legendValue,
     legendDivider,
+    classSwatches,
   );
 
   @override
@@ -82,21 +94,24 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
     Color? legendWeight,
     Color? legendValue,
     Color? legendDivider,
+    List<Color>? classSwatches,
   }) => AllocationPalette(
     swatches: swatches ?? this.swatches,
     legendWeight: legendWeight ?? this.legendWeight,
     legendValue: legendValue ?? this.legendValue,
     legendDivider: legendDivider ?? this.legendDivider,
+    classSwatches: classSwatches ?? this.classSwatches,
   );
 
   @override
   AllocationPalette lerp(covariant AllocationPalette? other, double t) {
     if (other == null) return this;
     return AllocationPalette(
-      swatches: _lerpRamp(other.swatches, t),
+      swatches: _lerpRamp(swatches, other.swatches, t),
       legendWeight: _lerp(legendWeight, other.legendWeight, t),
       legendValue: _lerp(legendValue, other.legendValue, t),
       legendDivider: _lerp(legendDivider, other.legendDivider, t),
+      classSwatches: _lerpRamp(classSwatches, other.classSwatches, t),
     );
   }
 
@@ -106,11 +121,11 @@ class AllocationPalette extends ThemeExtension<AllocationPalette> {
   /// interpolate, and inventing one would blend the third hue into the
   /// fourth. Snapping at the midpoint is the honest answer, and the case
   /// only arises if a future theme ships a different count.
-  List<Color> _lerpRamp(List<Color> other, double t) {
-    if (other.length != swatches.length) return t < 0.5 ? swatches : other;
+  static List<Color> _lerpRamp(List<Color> from, List<Color> other, double t) {
+    if (other.length != from.length) return t < 0.5 ? from : other;
     return <Color>[
-      for (var index = 0; index < swatches.length; index++)
-        _lerp(swatches[index], other[index], t),
+      for (var index = 0; index < from.length; index++)
+        _lerp(from[index], other[index], t),
     ];
   }
 

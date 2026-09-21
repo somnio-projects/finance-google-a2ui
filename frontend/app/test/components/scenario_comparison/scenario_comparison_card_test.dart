@@ -60,7 +60,7 @@ void main() {
     testWidgets('shows the title and the position it is about', (tester) async {
       await pumpScenarioCard(tester, scenarioData());
       expect(find.text('Same sale, different lot method'), findsOneWidget);
-      expect(find.text('Bitcoin'), findsOneWidget);
+      expect(find.text('NVIDIA Corp'), findsOneWidget);
     });
 
     testWidgets('states the sale once, as caption and figure', (tester) async {
@@ -70,22 +70,22 @@ void main() {
         find.text(ScenarioComparisonSubject.symbolCaption),
         findsOneWidget,
       );
-      expect(find.text('BTC'), findsOneWidget);
-      expect(find.text('0.18'), findsOneWidget);
-      expect(find.text(r'$64,250.00'), findsOneWidget);
-      expect(find.text(r'$11,565.00'), findsOneWidget);
+      expect(find.text('NVDA'), findsOneWidget);
+      expect(find.text('30'), findsOneWidget);
+      expect(find.text(r'$1,204.66'), findsOneWidget);
+      expect(find.text(r'$36,139.80'), findsOneWidget);
     });
 
     testWidgets('puts every display string on screen verbatim', (tester) async {
       // N-1: the figures are exactly the strings the backend formatted —
       // the sign is baked in and nothing here prepends one.
       await pumpScenarioCard(tester, scenarioData());
-      expect(find.text(r'$7,740.00'), findsOneWidget);
-      expect(find.text(r'$10,260.00'), findsNWidgets(2));
-      expect(find.text(r'+$3,825.00'), findsNWidgets(2));
-      expect(find.text(r'+$1,305.00'), findsNWidgets(4));
+      expect(find.text(r'$22,800.00'), findsOneWidget);
+      expect(find.text(r'$28,800.00'), findsNWidgets(2));
+      expect(find.text(r'+$13,339.80'), findsNWidgets(2));
+      expect(find.text(r'+$7,339.80'), findsNWidgets(4));
       expect(find.text(r'$0.00'), findsNWidgets(3));
-      expect(find.text(r'$2,520.00'), findsOneWidget);
+      expect(find.text(r'$6,000.00'), findsOneWidget);
     });
 
     testWidgets('never puts a raw figure on screen', (tester) async {
@@ -93,13 +93,13 @@ void main() {
       // so it reads no raw member at all.
       await pumpScenarioCard(tester, scenarioData());
       for (final raw in <String>[
-        '7740.00',
-        '10260.00',
-        '3825.000000',
-        '1305.000000',
-        '64250.00',
-        '11565.000000',
-        '2520.000000',
+        '22800.00',
+        '28800.00',
+        '13339.800000',
+        '7339.800000',
+        '1204.66',
+        '36139.800000',
+        '6000.000000',
         '0',
       ]) {
         expect(find.text(raw), findsNothing, reason: 'raw $raw reached a Text');
