@@ -4,8 +4,9 @@
   "version": 1,
   "views": [
     {
+      "actions": [],
       "component": "WaterfallChart",
-      "digest": "0edca33bd65b",
+      "digest": "346f66433e4a",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -425,8 +426,9 @@
       "view": "attribution.waterfall.v1"
     },
     {
+      "actions": [],
       "component": "DonutChart",
-      "digest": "194e130cf9de",
+      "digest": "b3e63654825c",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -702,8 +704,9 @@
       "view": "holdings.allocation.v1"
     },
     {
+      "actions": [],
       "component": "OrderTicket",
-      "digest": "80e81a6bf2f7",
+      "digest": "6113a769ca5f",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1104,8 +1107,9 @@
       "view": "order.ticket.v1"
     },
     {
+      "actions": [],
       "component": "LineChart",
-      "digest": "f52eb1ea3307",
+      "digest": "4bad44b9b787",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1632,8 +1636,9 @@
       "view": "payoff.curve.v1"
     },
     {
+      "actions": [],
       "component": "ComparisonCard",
-      "digest": "b2e006b3b306",
+      "digest": "5a6bb8f0c23e",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2194,8 +2199,9 @@
       "view": "scenario.comparison.v1"
     },
     {
+      "actions": [],
       "component": "TaxLotTable",
-      "digest": "0790bed806a8",
+      "digest": "ff09defa71f3",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"

@@ -17,6 +17,7 @@ from app.actions.declared import SurfaceActionRef, declared_action
 from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.actions.registry import ACTIONS
 from app.domain.portfolio import Portfolio
+from app.presentation.catalog_json import snapshot_entry
 from app.presentation.contract import catalog_entry
 from app.presentation.fragments import ProjectionDto
 from app.presentation.options import PrecisionOptions
@@ -75,17 +76,62 @@ def declaring_projection() -> Iterator[Projection]:
     REGISTRY.remove(PROBE_VIEW)
 
 
-def test_a_declared_action_reaches_the_payload_the_props_and_the_catalog(
+def test_a_declared_action_reaches_every_rendering(
     declaring_projection: Projection,
 ) -> None:
-    """AC-11 — one derivation, three renderings, compared instead of trusted."""
+    """AC-11 — one derivation, four renderings, compared instead of trusted.
+
+    This assertion has now been lost twice. The title said four and the body
+    asserted three (GGU-92); the fix added the fourth, and a later merge
+    regenerating the same module removed the key **and** this assertion
+    together — which is exactly why seventeen checks stayed green. A guard
+    deleted alongside what it guards cannot report its own absence, so the
+    only thing that catches it is a human reading the served payload.
+    """
     projection = declaring_projection
     payload = _render_probe(sample_portfolio(), PrecisionOptions())
-    props = projection.surface(payload).props
-    entry = catalog_entry(projection)
 
     in_payload = [ref.model_dump(mode="json") for ref in payload.actions]
     assert in_payload, "the probe must declare something for this to mean anything"
-    assert props["actions"] == in_payload
-    assert list(entry["actions"]) == in_payload
+
+    #: ``.get`` rather than ``[...]``, so a rendering that drops the key fails
+    #: with the message below naming it, not a bare ``KeyError`` three frames
+    #: deep. Dropping the key is the failure that actually happened, twice.
+    renderings = {
+        "A2UI props": projection.surface(payload).props.get("actions"),
+        "GET /v1/views": catalog_entry(projection).get("actions"),
+        "view-catalog.snapshot.json": snapshot_entry(projection).get("actions"),
+    }
+    for name, rendered in renderings.items():
+        assert rendered is not None, (
+            f"{name} has no `actions` key at all, so it cannot describe what "
+            f"this component declares — the renderings have drifted apart"
+        )
+        assert list(rendered) == in_payload, (
+            f"{name} does not carry the action the payload declares"
+        )
+
     assert ACTIONS.get(str(in_payload[0]["action"])) is DRILL
+
+
+def test_every_rendering_names_the_component(
+    declaring_projection: Projection,
+) -> None:
+    """The component name reaches the API too, not only the two artefacts.
+
+    ``GET /v1/views`` published ``actions`` but not ``component``, while the
+    snapshot published ``component`` but not ``actions``. Only the Markdown
+    carried both, so no single reader could see them disagree.
+    """
+    projection = declaring_projection
+    from_api = catalog_entry(projection).get("component")
+    from_snapshot = snapshot_entry(projection).get("component")
+
+    assert from_api is not None, "GET /v1/views does not name the component"
+    assert (
+        from_api
+        == from_snapshot
+        == projection.surface(
+            _render_probe(sample_portfolio(), PrecisionOptions())
+        ).component
+    )

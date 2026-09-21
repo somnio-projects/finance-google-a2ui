@@ -17,6 +17,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, create_model
 
+from app.presentation.component_name import component_of
 from app.presentation.registry import Projection
 
 
@@ -94,6 +95,8 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
     example = dict(projection.example)
     return {
         "id": projection.id,
+        # What a client registers a widget against — absent here until GGU-92.
+        "component": component_of(projection),
         "summary": projection.summary,
         "endpoints": list(projection.endpoints),
         "options_schema": projection.options.model_json_schema(),

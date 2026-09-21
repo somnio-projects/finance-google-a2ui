@@ -139,18 +139,18 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `0edca33bd65b` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `194e130cf9de` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
-| [`order.ticket.v1`](#orderticketv1) | `80e81a6bf2f7` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `f52eb1ea3307` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `b2e006b3b306` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `0790bed806a8` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `346f66433e4a` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `b3e63654825c` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
+| [`order.ticket.v1`](#orderticketv1) | `6113a769ca5f` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `4bad44b9b787` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `5a6bb8f0c23e` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `ff09defa71f3` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `attribution.waterfall.v1`
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `0edca33bd65b`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `346f66433e4a`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -308,7 +308,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `194e130cf9de`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `b3e63654825c`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -430,7 +430,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.
 
-- **Frozen id:** `order.ticket.v1` · **digest:** `80e81a6bf2f7`
+- **Frozen id:** `order.ticket.v1` · **digest:** `6113a769ca5f`
 - **Payload type:** `OrderTicketPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** `symbol`, `side`, `size`, `size_in`
@@ -567,7 +567,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `f52eb1ea3307`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `4bad44b9b787`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -851,7 +851,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `b2e006b3b306`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `5a6bb8f0c23e`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** `subject.symbol`
@@ -1038,7 +1038,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `0790bed806a8`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `ff09defa71f3`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only

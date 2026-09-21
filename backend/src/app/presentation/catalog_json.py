@@ -18,6 +18,7 @@ from json import dumps
 from typing import Any, Final
 
 from app.presentation.catalog_doc import digest, fields_of
+from app.presentation.component_name import component_of
 from app.presentation.inventory import InventoryField
 from app.presentation.registry import Projection
 from app.presentation.schema_facts import NONE
@@ -30,25 +31,6 @@ SNAPSHOT_PATH: Final[str] = "docs/catalog/view-catalog.snapshot.json"
 SNAPSHOT_VERSION: Final[int] = 1
 #: The command that regenerates both catalog artefacts.
 FIX_COMMAND: Final[str] = "cd backend && make catalog"
-
-
-def component_of(projection: Projection) -> str:
-    """Return the A2UI component the client registers this projection under.
-
-    The name is never transcribed into this module: the shipped example is
-    validated back into the payload DTO and handed to the projection's own
-    A2UI adapter, so the snapshot carries the component the backend actually
-    emits (``DonutChart``, ``WaterfallChart``) and the round trip proves the
-    example still deserialises.
-
-    Args:
-        projection: The registered projection to ask.
-
-    Returns:
-        The catalog component name, verbatim as the adapter emits it.
-    """
-    payload = projection.dto.model_validate(dict(projection.example))
-    return projection.surface(payload).component
 
 
 def _absent(cell: str) -> str | None:
@@ -84,6 +66,7 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         paths, options schema and rendered example — what a client test needs
         to prove it binds the shape the backend serves.
     """
+    example = dict(projection.example)
     return {
         "view": projection.id,
         "component": component_of(projection),
@@ -93,7 +76,11 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         "endpoints": list(projection.endpoints),
         "fields": [_field(row) for row in fields_of(projection)],
         "options_schema": projection.options.model_json_schema(),
-        "example": dict(projection.example),
+        # Restored: PR #61 added this and PR #66 removed it again while
+        # regenerating, together with the assertion that guarded it — which is
+        # why seventeen checks stayed green. See GGU-92.
+        "actions": list(example.get("actions", ())),
+        "example": example,
     }
 
 
