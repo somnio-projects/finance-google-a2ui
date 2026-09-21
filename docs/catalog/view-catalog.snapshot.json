@@ -444,8 +444,8 @@
     },
     {
       "actions": [],
-      "component": "AllocationSummary",
-      "digest": "7c827ee9a8b8",
+      "component": "HoldingsSummary",
+      "digest": "c4758d6ecbe3",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1127,8 +1127,8 @@
     },
     {
       "actions": [],
-      "component": "PayoffChart",
-      "digest": "6a69670692d0",
+      "component": "RiskPayoffChart",
+      "digest": "cc0144f00eda",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1153,6 +1153,22 @@
           }
         ],
         "disclosure": "Illustrative linear spot payoff on the demo portfolio's simulated prices: profit or loss is (price - entry) x quantity, with no fees, no slippage and no financing. There is no strike, no expiry, no implied volatility and no time decay behind this line. A sell is the mirror of the position and leaves no position to value.",
+        "markers": {
+          "break_even": {
+            "at": {
+              "amount": "152.40",
+              "display": "$152.40"
+            },
+            "label": "Break-even"
+          },
+          "current": {
+            "at": {
+              "amount": "152.40",
+              "display": "$152.40"
+            },
+            "label": "Current price"
+          }
+        },
         "series": [
           {
             "name": "Profit / loss",
@@ -1485,6 +1501,94 @@
           "presence": "required",
           "state": null,
           "type": "string ≤400 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "markers",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "markers.break_even",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "markers.break_even.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "markers.break_even.at",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "markers.break_even.at.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "markers.break_even.at.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "markers.current",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "markers.current.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "markers.current.at",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "markers.current.at.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "markers.current.at.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -2349,7 +2453,7 @@
     {
       "actions": [],
       "component": "TaxLotTable",
-      "digest": "c9cc43ace0f0",
+      "digest": "d88ca1d6600e",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2385,6 +2489,7 @@
         "lots": [
           {
             "acquired_on": "2025-01-13",
+            "acquired_on_display": "01/13/2025",
             "cost_basis": {
               "amount": "18060.00",
               "display": "$18,060.00"
@@ -2401,10 +2506,12 @@
             },
             "term": "long",
             "trend": "up",
-            "units": "0.42"
+            "units": "0.4200",
+            "units_display": "0.42"
           },
           {
             "acquired_on": "2025-01-17",
+            "acquired_on_display": "01/17/2025",
             "cost_basis": {
               "amount": "4560.00",
               "display": "$4,560.00"
@@ -2421,16 +2528,10 @@
             },
             "term": "short",
             "trend": "up",
-            "units": "0.08"
+            "units": "0.0800",
+            "units_display": "0.08"
           }
         ],
-        "price": {
-          "amount": {
-            "amount": "64250.00",
-            "display": "$64,250.00"
-          },
-          "label": "Price"
-        },
         "proceeds": {
           "amount": {
             "amount": "32125.000000",
@@ -2445,24 +2546,6 @@
           },
           "label": "Realised P/L"
         },
-        "remaining": [
-          {
-            "label": "Units left",
-            "text": "0.1"
-          },
-          {
-            "label": "Cost basis",
-            "text": "$5,700.00"
-          },
-          {
-            "label": "Market value",
-            "text": "$6,425.00"
-          },
-          {
-            "label": "Open lots",
-            "text": "1"
-          }
-        ],
         "subtitle": "Sell 0.5 BTC under FIFO",
         "title": "Tax lots this sale consumes",
         "view": "taxlots.table.v1"
@@ -2491,46 +2574,6 @@
           "presence": "required",
           "state": null,
           "type": "string ≤200 chars"
-        },
-        {
-          "binding": "container",
-          "input": null,
-          "path": "price",
-          "presence": "required",
-          "state": null,
-          "type": "object"
-        },
-        {
-          "binding": "text",
-          "input": null,
-          "path": "price.label",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤64 chars"
-        },
-        {
-          "binding": "container",
-          "input": null,
-          "path": "price.amount",
-          "presence": "required",
-          "state": null,
-          "type": "object"
-        },
-        {
-          "binding": "raw",
-          "input": null,
-          "path": "price.amount.amount",
-          "presence": "required",
-          "state": null,
-          "type": "decimal"
-        },
-        {
-          "binding": "display",
-          "input": null,
-          "path": "price.amount.display",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -2733,6 +2776,14 @@
           "type": "string"
         },
         {
+          "binding": "text",
+          "input": null,
+          "path": "lots[].acquired_on_display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
           "binding": "enum",
           "input": null,
           "path": "lots[].term",
@@ -2741,9 +2792,17 @@
           "type": "enum short / long"
         },
         {
-          "binding": "text",
+          "binding": "raw",
           "input": null,
           "path": "lots[].units",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lots[].units_display",
           "presence": "required",
           "state": null,
           "type": "string ≤32 chars"
@@ -2835,30 +2894,6 @@
           "presence": "required",
           "state": "variant",
           "type": "boolean"
-        },
-        {
-          "binding": "container",
-          "input": null,
-          "path": "remaining",
-          "presence": "default `[]`",
-          "state": "empty",
-          "type": "array"
-        },
-        {
-          "binding": "text",
-          "input": null,
-          "path": "remaining[].label",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤64 chars"
-        },
-        {
-          "binding": "text",
-          "input": null,
-          "path": "remaining[].text",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤200 chars"
         }
       ],
       "guidance": {

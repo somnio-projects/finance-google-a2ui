@@ -54,7 +54,11 @@ def test_the_surface_binds_the_payload_without_computing_anything(
     assert rendered.props["subject"]["symbol"] == "BTC"
     assert len(rendered.props["columns"]) == len(card.columns)
     assert rendered.props["spread"]["differs"] is True
-    assert rendered.props["notes"] == [note.text for note in card.notes]
+    # Label included: N-9 makes both halves of a note compliance text, and the
+    # adapter used to drop the label (spec 0024 §6).
+    assert rendered.props["notes"] == [
+        {"label": note.label, "text": note.text} for note in card.notes
+    ]
 
 
 def test_the_card_is_never_auto_selected(portfolio: Portfolio) -> None:

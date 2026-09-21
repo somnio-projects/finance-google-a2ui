@@ -7,6 +7,85 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-21 — GGU-99 the contract serves what the designs draw · spec `specs/backend/0024-contract-serves-the-designs.md`
+
+**Branch:** `feat/GGU-99_contract_serves_the_designs`. Backend only. Seven TL
+rulings closing the design-versus-contract gaps GGU-99..GGU-104 measured.
+
+**What changed.** Two components renamed to what their own Zone 2 block says
+(`PayoffChart` → `RiskPayoffChart`, `AllocationSummary` → `HoldingsSummary`).
+`payoff.curve.v1` gained a required `markers` `{break_even, current}` block, so
+the break-even is placed by a field path instead of by matching the string
+`"Break-even price"`. `taxlots.table.v1` gained `acquired_on_display` and
+`units_display`, and lost `price` and `remaining[]`. The scenario card's A2UI
+adapter stopped dropping each note's label. All six Zone 3 prompt fragments
+were audited against the numbers-from-tools invariant.
+
+### Why each thing is where it is
+
+- **The rulings went into a spec, not a PR body.** `sdd.md`'s table sends
+  feature-level decisions to the spec, and six weeks from now the interesting
+  artefact is not the diff — it is *why the payload lacks a field somebody can
+  see in a design*. Spec 0024 is that, with one section per ruling, and the
+  four specs it amends carry a pointer back.
+- **`docs/catalog/design/README.md` grew a Zone 3 audit table and two settled
+  rows.** The OD-4 disagreement had been sitting there marked *"Live
+  disagreement — needs the TL"*; a ruling that closes it and stays in Jira has
+  not been recorded. Same for the N-9 slot question.
+- **No diagram moved.** `06-response-shaping.md` draws the mechanism — callers,
+  registry, selection, renderings — and nothing in this branch adds a layer, an
+  option mechanism or a selection rule. `PriceMarker` is view-local, not a new
+  `fragments.py` primitive, so the box listing those is still accurate.
+
+### What the next person should know
+
+- **The gallery-card fallback is a fallback, not a tie-break.** 0023 §3 named a
+  component by its own Zone 2 block and fell back to its gallery card where no
+  detail page existed. Three pages arrived and two of those fallbacks lost. The
+  README's table now says a row filled from a gallery card is *provisional*, so
+  the next reader revisits it when a page lands rather than when a client is
+  found registering a widget under a name design never wrote.
+- **A Zone 3 fragment is prompt text, so audit it before transcribing it.**
+  The `OrderTicket` page describes the component as one that *"recomputes
+  weights, cash and shares live as parameters change"*. Shipped as guidance
+  that is the product's central invariant broken in the one place built to
+  teach the model the rules — and it is not what `effect: "recalculate"` means.
+  The one-line replacement for design is written out in the README; until then
+  the fragment is **not** transcribed, and the contract still prints "no design
+  page yet" for two components. That sentence is now imprecise rather than
+  false, and the README says which.
+- **A rename is only checked because a *second* declaration exists.** The
+  mutation check is in the PR: renaming one adapter turns four renderings red.
+  That test came from GGU-53, and this branch is the first time it earned its
+  keep — it caught the rename in five places at once.
+- **`price`, `remaining[]` and the `cost_basis`/`proceeds` totals were all
+  candidates for deletion and only two went.** `taxlots_table_component.dart`
+  binds `cost_basis.label` and `proceeds.label` as column captions, on purpose,
+  because a Dart constant would not follow the `locale` option. **Check what the
+  client actually binds before removing a field** — the five open client PRs are
+  the evidence, and a `label` is a binding.
+- **There are no equities in this backend**, and one instruction in the ruling
+  assumed there were. `domain/market.py` is eight crypto assets and `seed_data`
+  holds five of them; the only equity ticker anywhere is `NVDA` in two prose
+  examples. `order.ticket.v1`'s sample stays `BTC`. This is spec 0024 OD-1, a
+  comment on GGU-102, and a prerequisite on GGU-108, where it also blocks the
+  design's sector-weight rows.
+- **A live manual run *was* possible, and the first attempt to record otherwise
+  was wrong.** This entry originally said `portfolios` is empty and nothing
+  seeds it, so nothing renders. Both halves were false. A portfolio is created
+  for the caller's `subject` on first read, and every view renders against it;
+  what actually failed was the request — `{portfolio_id}` is the well-known
+  `current`, not a UUID, and it says so in the controller's own `Path`
+  description. A UUID read out of the table answers 404 *correctly*, and that
+  404 was misread as absent data.
+
+  The lesson is the one GGU-93 already paid for, one level in: **a failing
+  request is not evidence that the feature is missing.** The run is now in the
+  PR body and it renders `markers`, `acquired_on_display` and `units_display`
+  live, and shows `price` and `remaining[]` gone from the payload — the three
+  rulings this branch is about, proven by the service rather than by a test
+  that shares their assumptions.
+
 ## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0004-scenario-comparison.md`
 
 **Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.

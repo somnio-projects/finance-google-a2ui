@@ -54,7 +54,7 @@ def test_every_registered_view_declares_a_client_component() -> None:
 
 def test_the_snapshot_names_the_component_the_backend_emits_verbatim() -> None:
     """The client registers against this string, so it is copied, not derived."""
-    assert entries()["holdings.allocation.v1"]["component"] == "AllocationSummary"
+    assert entries()["holdings.allocation.v1"]["component"] == "HoldingsSummary"
 
 
 def test_the_snapshot_carries_every_field_path_of_the_payload() -> None:

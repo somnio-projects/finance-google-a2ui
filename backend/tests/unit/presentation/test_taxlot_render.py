@@ -68,26 +68,36 @@ def test_a_gain_and_a_loss_are_signed(portfolio: Portfolio) -> None:
     assert loss.lots[0].trend == "down"
 
 
-def test_a_sub_cent_price_keeps_four_decimals(portfolio: Portfolio) -> None:
-    """`$0.13 x 12,000` would miss the proceeds beside it (spec 0013 OD-4)."""
-    payload = render(portfolio, TaxLotsTableOptions(symbol="DOGE", quantity="5000"))
-    assert payload.price.amount.display == "$0.1273"
-    assert payload.proceeds.amount.display == "$636.50"
+def test_precision_governs_the_realised_figures(portfolio: Portfolio) -> None:
+    """`precision` rounds what the table totals (OD-5's surviving half).
+
+    The unit price it used to be contrasted against left the payload with the
+    `price` total in spec 0024 §7 — no component bound it. The tool still
+    quotes a sub-cent price, and `test_sale_rows.py` is where that is asserted
+    now.
+    """
+    doge = TaxLotsTableOptions(symbol="DOGE", quantity="5000")
+    assert render(portfolio, doge).proceeds.amount.display == "$636.50"
+    coarse = doge.model_copy(update={"precision": 0})
+    assert render(portfolio, coarse).proceeds.amount.display == "$636"
 
 
-def test_precision_never_rounds_the_unit_price(portfolio: Portfolio) -> None:
-    """`precision` governs the results, not the figure they multiply (OD-5)."""
-    payload = render(
-        portfolio, TaxLotsTableOptions(symbol="DOGE", quantity="5000", precision=0)
-    )
-    assert payload.price.amount.display == "$0.1273"
-    assert payload.proceeds.amount.display == "$636"
-
-
-def test_units_are_trimmed(portfolio: Portfolio) -> None:
+def test_units_arrive_as_a_pair_and_the_printable_half_is_trimmed(
+    portfolio: Portfolio,
+) -> None:
+    """AC-2 — the Shares column binds `units_display`, never `units`."""
     payload = render(portfolio, TaxLotsTableOptions(quantity="0.12345678"))
-    assert payload.lots[0].units == "0.12345678"
-    assert payload.remaining[0].text == "0.47654322"
+    assert payload.lots[0].units == Decimal("0.12345678")
+    assert payload.lots[0].units_display == "0.12345678"
+
+
+def test_the_acquisition_date_arrives_written_out(portfolio: Portfolio) -> None:
+    """AC-1 — no ISO date reaches a widget, and the locale reaches the date."""
+    payload = render(portfolio, TaxLotsTableOptions())
+    row = payload.lots[0]
+    assert row.acquired_on_display == f"{row.acquired_on:%m/%d/%Y}"
+    german = render(portfolio, TaxLotsTableOptions(locale="de-DE"))
+    assert german.lots[0].acquired_on_display == f"{row.acquired_on:%d.%m.%Y}"
 
 
 def test_render_honours_the_locale(portfolio: Portfolio) -> None:
@@ -96,29 +106,18 @@ def test_render_honours_the_locale(portfolio: Portfolio) -> None:
     assert payload.by_term[1].realized.display == "+US$ 8.925,00"
 
 
-def test_the_remainder_describes_the_position_left_over(portfolio: Portfolio) -> None:
-    payload = render(portfolio, TaxLotsTableOptions())
-    assert [(note.label, note.text) for note in payload.remaining] == [
-        ("Units left", "0.1"),
-        ("Cost basis", "$5,700.00"),
-        ("Market value", "$6,425.00"),
-        ("Open lots", "1"),
-    ]
-
-
 def test_surface_maps_the_payload_onto_the_table(portfolio: Portfolio) -> None:
     rendered = surface(render(portfolio, TaxLotsTableOptions()))
     assert rendered.component == "TaxLotTable"
     assert rendered.view == VIEW_ID
     assert [total["label"] for total in rendered.props["totals"]] == [
-        "Price",
         "Proceeds",
         "Cost basis",
         "Realised P/L",
     ]
     assert [half["term"] for half in rendered.props["byTerm"]] == ["short", "long"]
     assert rendered.props["rows"][0]["label"] == "lot-btc-01"
-    assert rendered.props["remaining"][0]["text"] == "0.1"
+    assert "remaining" not in rendered.props
     assert rendered.props["subtitle"] == "Sell 0.5 BTC under FIFO"
 
 

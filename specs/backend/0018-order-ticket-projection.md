@@ -227,3 +227,11 @@ view with a bad option is rejected and counted like any other
 (`presentation.render_intent.rejected`, spec 0005 AC-9). The projection is a
 handful of `Decimal` operations over an eight-row reference list, so it is
 comfortably inside the ADR-K p95 budget.
+
+> **Amended 2026-09-21 by spec [0024](0024-contract-serves-the-designs.md)
+> (GGU-102).** `order.ticket.v1` **stays single-leg.** The design's
+> multi-leg ticket is not a backwards-compatible addition to this payload —
+> it is `order.ticket.v2`, raised as GGU-108 and post-demo. The default
+> `symbol` is unchanged: see 0024 §3 for why 'use an equity' could not be
+> carried out. The page's Zone 3 fragment is **not** transcribed — as
+> written it instructs the reader to recompute figures (0024 §5).

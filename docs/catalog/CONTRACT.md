@@ -140,11 +140,11 @@ Three of the four states design needs are facts about the schema. One is not:
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `04a53053167d` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `AllocationSummary` | `7c827ee9a8b8` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `c4758d6ecbe3` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `6cbd19f8949e` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `PayoffChart` | `6a69670692d0` | 21 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `cc0144f00eda` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `fe62a7725690` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `c9cc43ace0f0` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `d88ca1d6600e` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `attribution.waterfall.v1`
 
@@ -320,8 +320,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `7c827ee9a8b8`
-- **Component:** `AllocationSummary`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `c4758d6ecbe3`
+- **Component:** `HoldingsSummary`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -589,8 +589,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `6a69670692d0`
-- **Component:** `PayoffChart`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `cc0144f00eda`
+- **Component:** `RiskPayoffChart`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -617,6 +617,17 @@ _This surface sends nothing back: tapping it starts no turn._
 | `view` | const 'payoff.curve.v1' | default `"payoff.curve.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
 | `disclosure` | string ≤400 chars | required | `text` | — | — |
+| `markers` | object | required | `container` | — | — |
+| `markers.break_even` | object | required | `container` | — | — |
+| `markers.break_even.label` | string ≤64 chars | required | `text` | — | — |
+| `markers.break_even.at` | object | required | `container` | — | — |
+| `markers.break_even.at.amount` | decimal | required | `raw` | — | — |
+| `markers.break_even.at.display` | string ≤32 chars | required | `display` | — | — |
+| `markers.current` | object | required | `container` | — | — |
+| `markers.current.label` | string ≤64 chars | required | `text` | — | — |
+| `markers.current.at` | object | required | `container` | — | — |
+| `markers.current.at.amount` | decimal | required | `raw` | — | — |
+| `markers.current.at.display` | string ≤32 chars | required | `display` | — | — |
 | `totals` | array | default `[]` | `container` | empty | — |
 | `totals[].label` | string ≤64 chars | required | `text` | — | — |
 | `totals[].amount` | object | required | `container` | — | — |
@@ -651,6 +662,22 @@ _This surface sends nothing back: tapping it starts no turn._
   "view": "payoff.curve.v1",
   "title": "Payoff across a price range: buy Solana",
   "disclosure": "Illustrative linear spot payoff on the demo portfolio's simulated prices: profit or loss is (price - entry) x quantity, with no fees, no slippage and no financing. There is no strike, no expiry, no implied volatility and no time decay behind this line. A sell is the mirror of the position and leaves no position to value.",
+  "markers": {
+    "break_even": {
+      "label": "Break-even",
+      "at": {
+        "amount": "152.40",
+        "display": "$152.40"
+      }
+    },
+    "current": {
+      "label": "Current price",
+      "at": {
+        "amount": "152.40",
+        "display": "$152.40"
+      }
+    }
+  },
   "totals": [
     {
       "label": "Entry price",
@@ -1174,7 +1201,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `c9cc43ace0f0`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `d88ca1d6600e`
 - **Component:** `TaxLotTable`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1199,11 +1226,6 @@ _This surface sends nothing back: tapping it starts no turn._
 | `view` | const 'taxlots.table.v1' | default `"taxlots.table.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
 | `subtitle` | string ≤200 chars | required | `text` | — | — |
-| `price` | object | required | `container` | — | — |
-| `price.label` | string ≤64 chars | required | `text` | — | — |
-| `price.amount` | object | required | `container` | — | — |
-| `price.amount.amount` | decimal | required | `raw` | — | — |
-| `price.amount.display` | string ≤32 chars | required | `display` | — | — |
 | `proceeds` | object | required | `container` | — | — |
 | `proceeds.label` | string ≤64 chars | required | `text` | — | — |
 | `proceeds.amount` | object | required | `container` | — | — |
@@ -1229,8 +1251,10 @@ _This surface sends nothing back: tapping it starts no turn._
 | `lots` | array | default `[]` | `container` | empty | — |
 | `lots[].label` | string ≤64 chars | required | `text` | — | — |
 | `lots[].acquired_on` | string | required | `text` | — | — |
+| `lots[].acquired_on_display` | string ≤32 chars | required | `text` | — | — |
 | `lots[].term` | enum short / long | required | `enum` | variant | — |
-| `lots[].units` | string ≤32 chars | required | `text` | — | — |
+| `lots[].units` | decimal | required | `raw` | — | — |
+| `lots[].units_display` | string ≤32 chars | required | `text` | — | — |
 | `lots[].cost_basis` | object | required | `container` | — | — |
 | `lots[].cost_basis.amount` | decimal | required | `raw` | — | — |
 | `lots[].cost_basis.display` | string ≤32 chars | required | `display` | — | — |
@@ -1242,9 +1266,6 @@ _This surface sends nothing back: tapping it starts no turn._
 | `lots[].gain_loss.display` | string ≤32 chars | required | `display` | — | — |
 | `lots[].trend` | string ≤8 chars | required | `text` | — | — |
 | `lots[].fully_sold` | boolean | required | `flag` | variant | — |
-| `remaining` | array | default `[]` | `container` | empty | — |
-| `remaining[].label` | string ≤64 chars | required | `text` | — | — |
-| `remaining[].text` | string ≤200 chars | required | `text` | — | — |
 
 ### When the agent picks this
 
@@ -1262,13 +1283,6 @@ _This surface sends nothing back: tapping it starts no turn._
   "view": "taxlots.table.v1",
   "title": "Tax lots this sale consumes",
   "subtitle": "Sell 0.5 BTC under FIFO",
-  "price": {
-    "label": "Price",
-    "amount": {
-      "amount": "64250.00",
-      "display": "$64,250.00"
-    }
-  },
   "proceeds": {
     "label": "Proceeds",
     "amount": {
@@ -1314,8 +1328,10 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "label": "lot-btc-01",
       "acquired_on": "2025-01-13",
+      "acquired_on_display": "01/13/2025",
       "term": "long",
-      "units": "0.42",
+      "units": "0.4200",
+      "units_display": "0.42",
       "cost_basis": {
         "amount": "18060.00",
         "display": "$18,060.00"
@@ -1334,8 +1350,10 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "label": "lot-btc-02",
       "acquired_on": "2025-01-17",
+      "acquired_on_display": "01/17/2025",
       "term": "short",
-      "units": "0.08",
+      "units": "0.0800",
+      "units_display": "0.08",
       "cost_basis": {
         "amount": "4560.00",
         "display": "$4,560.00"
@@ -1350,24 +1368,6 @@ _This surface sends nothing back: tapping it starts no turn._
       },
       "trend": "up",
       "fully_sold": false
-    }
-  ],
-  "remaining": [
-    {
-      "label": "Units left",
-      "text": "0.1"
-    },
-    {
-      "label": "Cost basis",
-      "text": "$5,700.00"
-    },
-    {
-      "label": "Market value",
-      "text": "$6,425.00"
-    },
-    {
-      "label": "Open lots",
-      "text": "1"
     }
   ]
 }

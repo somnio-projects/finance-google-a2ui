@@ -96,6 +96,33 @@ it is *right*. Only a second, independent declaration can do that, which is why
 `test_component_names.py` holds design's six names as a literal and compares
 them against the adapter, the snapshot, the Markdown and `/v1/views`.
 
+**A design page's guidance is prompt text, so audit it before transcribing
+it.** A Zone 3 fragment is generated into the catalog the model reads, so a
+sentence in it that tells a reader to work a figure out is the
+numbers-from-tools invariant broken in the one place built to teach the model
+the rules. Read every fragment against that question before it ships, and
+record the ones you decline rather than dropping them silently — spec 0024 §5
+is the worked example: the `OrderTicket` page says the component *"recomputes
+weights, cash and shares live as parameters change"*, which is exactly what
+`effect: "recalculate"` does **not** mean. A fragment is design-owned prose,
+and this is the one thing it is not free to say.
+
+**A gallery-card name is provisional.** Where a component's detail page was
+never exported, its gallery card is the only declaration it has and therefore
+wins — as a *fallback*, not a tie-break. When the page arrives, the name is
+decided again from its own Zone 2 block, and it may move: two of three did on
+2026-09-21 (spec 0024 §2). The day a page lands is the day to revisit
+`docs/catalog/design/README.md`, not the day somebody notices the client
+registering a widget under a name design never wrote.
+
+**Before removing a field nothing appears to bind, read the clients.** A field
+nobody binds is a field nobody maintains, so it goes — but "nothing binds it"
+is a claim about code that exists, including open pull requests. `price` and
+`remaining[]` left `taxlots.table.v1` under spec 0024 §7; `cost_basis` and
+`proceeds` stayed, because the component binds their **labels** as column
+captions (a Dart constant there would not follow the `locale` option). A
+`label` is a binding.
+
 Two conventions the contract reads:
 
 - **Pre-formatted** is derived from the ADR-E pair (a string beside a figure),

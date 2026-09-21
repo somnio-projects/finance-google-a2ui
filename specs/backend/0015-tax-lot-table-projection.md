@@ -267,3 +267,12 @@ tag, which is the signal that would show the prompt fragments teaching the
 scenario options badly. Renders are not logged — the projection is pure, so a
 payload is reproducible from `(as_of, view, options)` alone, and a sale
 scenario in a log line is a trade-shaped statement nobody made.
+
+> **Amended 2026-09-21 by spec [0024](0024-contract-serves-the-designs.md)
+> (GGU-99).** `lots[]` gained `acquired_on_display` and `units_display` —
+> without them a raw ISO date was rendering and the Shares column had been
+> dropped. The `price` total and the `remaining[]` notes were **withdrawn**:
+> no component bound either, and `remaining` is no longer an accepted
+> `fields` section. `cost_basis` and `proceeds` stay — their labels are two
+> of the table's column captions. OD-5's unit-price rule now lives only in
+> the `simulate_sale` tool, where it is still asserted.

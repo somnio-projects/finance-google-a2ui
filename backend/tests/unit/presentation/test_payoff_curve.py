@@ -138,11 +138,12 @@ def test_the_surface_binds_the_line_the_markers_and_the_disclosure(
 
     drawn = surface(payload)
 
-    assert drawn.component == "PayoffChart"
+    assert drawn.component == "RiskPayoffChart"
     assert drawn.view == VIEW_ID
     assert drawn.props["lines"][0]["points"][1]["label"] == ENTRY_SOL
-    assert [mark["label"] for mark in drawn.props["markers"]][:2] == [
-        "Entry",
-        "Break-even",
-    ]
+    # `markers` is the keyed block; the labelled sentences it used to hold
+    # now travel as `annotations`, which is what they are (spec 0024 §4).
+    assert drawn.props["markers"]["break_even"]["at"]["display"] == ENTRY_SOL
+    notes = [note["label"] for note in drawn.props["annotations"]]
+    assert notes[:2] == ["Entry", "Break-even"]
     assert drawn.props["disclosure"] == DISCLOSURE

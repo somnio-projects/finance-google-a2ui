@@ -101,7 +101,14 @@ def render(
 
 
 def surface(payload: ScenarioComparisonPayload) -> Surface:
-    """Map the payload onto the A2UI comparison card the genui client shows."""
+    """Map the payload onto the A2UI comparison card the genui client shows.
+
+    ``notes`` carries the whole ``Annotation``, label included. It used to
+    flatten to ``note.text``, which dropped *Before tax* and *Not advice* —
+    server-written strings the client must render verbatim under N-9, and one
+    of them is this card's compliance statement. The DTO path and the A2UI
+    path now hand a widget the same thing (spec 0024 §6).
+    """
     return Surface(
         component="ScenarioComparison",
         view=payload.view,
@@ -110,7 +117,7 @@ def surface(payload: ScenarioComparisonPayload) -> Surface:
             "subject": payload.subject.model_dump(mode="json"),
             "columns": [row.model_dump(mode="json") for row in payload.columns],
             "spread": payload.spread.model_dump(mode="json"),
-            "notes": [note.text for note in payload.notes],
+            "notes": [note.model_dump(mode="json") for note in payload.notes],
         },
     )
 

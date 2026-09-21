@@ -37,25 +37,24 @@ from tests.unit.presentation.conftest import committed
 #: **How a name was chosen when the design disagreed with itself**, recorded in
 #: spec 0023 §3: a component is named by its **own A2UI schema block** (Zone 2
 #: of its detail page), which is the literal the client would read off a
-#: payload. The page breadcrumb and the prompt fragment agree with that block
-#: on all three exported pages; the gallery badge and the index card do not,
-#: and they are decoration. Where no detail page was exported, the component's
-#: own gallery card is the only declaration it has and therefore wins. A name
-#: used for a component on *another* component's page is never authoritative —
-#: that is how `HoldingsSummary` appears on the waterfall page for the
-#: component the index calls `AllocationSummary`.
+#: payload. The gallery badge and the index card do not always agree, and they
+#: are decoration. Where no detail page was exported the gallery card was the
+#: only declaration and therefore won — a **fallback**, not a tie-break, so it
+#: loses the day the page arrives. It did: the last three pages were exported
+#: on 2026-09-21 and two adopted names moved (GGU-101, GGU-103; spec 0024).
+#: A name used on *another* component's page is still never authoritative —
+#: `HoldingsSummary` was already visible on the waterfall page, and what
+#: renamed this component is its **own** Zone 2 block, not that.
 DESIGN_CATALOG: Final[dict[str, str]] = {
-    # Zone 2 schema + breadcrumb + prompt fragment say `AttributionWaterfall`;
-    # the badge and the index card say `WaterfallChart`.
+    # Zone 2 + breadcrumb + fragment; badge and index card say `WaterfallChart`.
     "attribution.waterfall.v1": "AttributionWaterfall",
-    # No detail page exported — the index card is the only declaration.
-    "holdings.allocation.v1": "AllocationSummary",
-    # No detail page exported — the index card is the only declaration.
+    # Page now exported: Zone 2 + breadcrumb + badge. Index: `AllocationSummary`.
+    "holdings.allocation.v1": "HoldingsSummary",
+    # Page now exported and it changed nothing: every rendering agrees.
     "order.ticket.v1": "OrderTicket",
-    # No detail page exported — the index card is the only declaration.
-    "payoff.curve.v1": "PayoffChart",
-    # Zone 2 schema + breadcrumb + prompt fragment say `ScenarioComparison`;
-    # the index card says `ComparisonCard`.
+    # Page now exported: Zone 2 + breadcrumb + badge. Index: `PayoffChart`.
+    "payoff.curve.v1": "RiskPayoffChart",
+    # Zone 2 + breadcrumb + fragment; the index card says `ComparisonCard`.
     "scenario.comparison.v1": "ScenarioComparison",
     # The one component every rendering already agreed on.
     "taxlots.table.v1": "TaxLotTable",

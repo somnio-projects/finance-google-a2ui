@@ -110,7 +110,7 @@ def render(
 def surface(payload: HoldingsAllocationPayload) -> Surface:
     """Map the payload onto the A2UI donut the genui client instantiates."""
     return Surface(
-        component="AllocationSummary",
+        component="HoldingsSummary",
         view=payload.view,
         title=payload.title,
         props={
