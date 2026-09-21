@@ -1,21 +1,15 @@
 import 'package:finance_app/bootstrap.dart';
-import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/router/app_router.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/pump_app.dart';
-
-class _MockViewsRepository extends Mock implements ViewsRepository;
-
-class _MockAgentRepository extends Mock implements AgentRepository;
+import 'app_router_harness.dart';
 
 void main() {
   group(AppRoutes, () {
@@ -34,7 +28,7 @@ void main() {
     late ViewsRepository repository;
 
     setUp(() {
-      repository = _MockViewsRepository();
+      repository = MockViewsRepository();
       when(
         () => repository.fetchPortfolioViews(
           portfolioId: any(named: 'portfolioId'),
@@ -53,31 +47,10 @@ void main() {
       router.dispose();
     });
 
-    Future<void> pumpRouter(
-      WidgetTester tester,
-      GoRouter router, {
-      ComponentRegistry? registry,
-    }) {
-      return tester.pumpWidget(
-        MultiRepositoryProvider(
-          providers: <RepositoryProvider<dynamic>>[
-            RepositoryProvider<ViewsRepository>.value(value: repository),
-            RepositoryProvider<AgentRepository>.value(
-              value: _MockAgentRepository(),
-            ),
-            RepositoryProvider<ComponentRegistry>.value(
-              value: registry ?? ComponentRegistry(),
-            ),
-          ],
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
-    }
-
     testWidgets('places the portfolio surface at the root location', (
       tester,
     ) async {
-      await pumpRouter(tester, buildRouter());
+      await pumpRouter(tester, buildRouter(), repository: repository);
       await tester.pumpAndSettle();
       expect(find.byType(PortfolioViewsPage), findsOneWidget);
     });
@@ -86,6 +59,7 @@ void main() {
       await pumpRouter(
         tester,
         buildRouter(initialLocation: AppRoutes.portfolio),
+        repository: repository,
       );
       await tester.pumpAndSettle();
       expect(find.byType(PortfolioViewsPage), findsOneWidget);
@@ -101,7 +75,12 @@ void main() {
       // app ships, so adding the seventh component extends the assertion for
       // free rather than needing a second edit here.
       final registry = buildComponentRegistry();
-      await pumpRouter(tester, buildRouter(), registry: registry);
+      await pumpRouter(
+        tester,
+        buildRouter(),
+        repository: repository,
+        registry: registry,
+      );
       await tester.pumpAndSettle();
 
       final captured = verify(
@@ -124,6 +103,7 @@ void main() {
       await pumpRouter(
         tester,
         buildRouter(initialLocation: AppRoutes.conversation),
+        repository: repository,
       );
       await tester.pumpAndSettle();
       expect(find.byType(ConversationPage), findsOneWidget);
@@ -138,7 +118,7 @@ void main() {
       // today. This asserts the seam is wired and open, so the test that
       // closes it later has somewhere to go.
       final router = buildRouter();
-      await pumpRouter(tester, router);
+      await pumpRouter(tester, router, repository: repository);
       await tester.pumpAndSettle();
       expect(
         router.routerDelegate.currentConfiguration.uri.toString(),

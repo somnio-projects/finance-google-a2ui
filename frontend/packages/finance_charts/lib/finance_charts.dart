@@ -8,8 +8,11 @@
 /// needs `dart:ui` and `packages/` may not have it.
 library;
 
+export 'src/arctangent.dart';
 export 'src/band_scale.dart';
 export 'src/chart_geometry.dart';
+export 'src/donut_hit_test.dart';
+export 'src/donut_layout.dart';
 export 'src/linear_scale.dart';
 export 'src/tick_steps.dart';
 export 'src/waterfall_layout.dart';

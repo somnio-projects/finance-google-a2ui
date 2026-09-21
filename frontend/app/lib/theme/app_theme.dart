@@ -35,6 +35,10 @@ abstract final class AppTheme {
         // "a total" are semantic roles Material 3 has no slot for, and the
         // values are the design's measured ones (ChartTokens).
         ChartTokens.forBrightness(brightness),
+        // The categorical ramp an allocation donut colours its slices from.
+        // Separate from the chart palette because "the third category" is not
+        // a semantic role the way gain and loss are (ADR-L D-13).
+        ChartTokens.allocationFor(brightness),
       ],
       cardTheme: CardThemeData(
         elevation: 0,

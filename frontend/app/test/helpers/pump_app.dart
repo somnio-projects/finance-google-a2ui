@@ -17,14 +17,24 @@ extension PumpApp on WidgetTester {
   /// [brightness] picks which of the two real themes wraps the subject. A
   /// chart's palette differs between them, so a golden or a colour assertion
   /// that can only reach one of the two is only half a check.
+  ///
+  /// [surfaceSize] sets the test surface, which is how a responsive component
+  /// is pumped at phone and at desktop width. The default 800×600 is small
+  /// enough that a tall card overflows, and an overflow is a red test rather
+  /// than a layout anybody wanted.
   Future<void> pumpApp(
     Widget widget, {
     ViewsRepository? viewsRepository,
     AgentRepository? agentRepository,
     ComponentRegistry? componentRegistry,
     Brightness brightness = Brightness.light,
-  }) {
-    return pumpWidget(
+    Size? surfaceSize,
+  }) async {
+    if (surfaceSize != null) {
+      await binding.setSurfaceSize(surfaceSize);
+      addTearDown(() => binding.setSurfaceSize(null));
+    }
+    return await pumpWidget(
       MultiRepositoryProvider(
         providers: <RepositoryProvider<dynamic>>[
           if (viewsRepository != null)

@@ -2900,6 +2900,68 @@ rename that GGU-53 found on the backend.
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
 
+## 2026-09-21 — GGU-65, the allocation summary draws
+
+**Spec:** `specs/frontend/0007-allocation-summary.md`. Completes
+`holdings.allocation.v1` / `AllocationSummary`: donut geometry and hit testing
+in `packages/finance_charts`, painter and categorical palette in
+`app/lib/charts/`, and the component split into model/header/legend/row/empty.
+
+What the next person should know:
+
+- **A design for this component exists now** — `.design-refs/Catalog_HoldingsSummary.dc.html`
+  and `.design-refs/Holdings.dc.html`, from Patricio's fourteen-screen export.
+  Nothing under `.design-refs/` is committed.
+- **`file://` renders of those pages are inert, and measuring one is worse than
+  not measuring.** The preview tool rewrites a local page to a `data:` URL, so
+  its relative `./support.js` never loads, nothing binds, and every value stays
+  `{{ … }}`. Inlining the script into a copy does not help — the tool re-serves
+  the original. **Serve the directory over HTTP instead**, which needs the
+  sandbox off for that one command (`socket.bind` is blocked inside it).
+  Measured both ways here: `mustache` 35 → 1 between the two.
+- **The design page and the frozen catalog disagree in six places**, including
+  the component's *name* (`HoldingsSummary` vs `AllocationSummary`) and a
+  per-row day-change the contract has no field for. Spec §3a lists them;
+  `catalog_contract_test.dart` now pins both halves so reconciling them has to
+  be a decision. The backend's `test_component_names.py` holds design's names
+  as a literal, so these two declarations are already meant to agree.
+- **`manifest-check` does not catch a deleted `register`.** Mutation-checked:
+  the generator lists *directories* under `app/lib/components/` and emits a
+  `register` call per directory without checking the function exists, so the
+  manifest stays byte-identical and the gate goes red at **`analyze`** instead.
+  The gate catches it either way; the prose in `frontend/CLAUDE.md` implies the
+  wrong step.
+- **`.abs()` is banned from `app/lib` with no carve-out, and that is load-bearing.**
+  The first draft of the donut's hit test used it, `binding_rules_compute_test.dart`
+  caught it, and the fix was to move the arithmetic into `finance_charts` where
+  it belongs anyway (ADR-L D-13) and write it without the mechanism at all. The
+  rule also greps *prose*: naming a banned mechanism in a doc comment trips it.
+- **Two test files that were not this ticket's were edited, both for real
+  defects.** `app_router_test.dart` built its `MaterialApp.router` with no
+  `theme:`, so it was testing an app unlike the real one; it went unnoticed
+  while every rendered component read `AppSpacing`, which falls back, and the
+  first component to read `ChartPalette` (which deliberately does not) turned
+  it red. `conversation_view_test.dart` had no test for a turn that answers
+  with no surface — GGU-65 AC-2 — only for its complement.
+- **The `frontend-reviewer` agent earned its keep on this one, twice.** It
+  found a real defect the whole suite was structurally unable to catch: the
+  donut's hit test used a monotonic surrogate for the angle and compared it
+  against arc boundaries in **true radians**, which is a category error —
+  monotonicity orders surrogate values against each other, it does not put a
+  surrogate value in the same interval as the true angle. Wrong slice for
+  **3.50 %** of directions on the catalog's own payload, worst error 4.075°,
+  against a smallest slice 8.5° wide. Every existing test used four equal
+  quarters or `[0.5, 0, 0.5]` — layouts whose boundaries all land on an axis,
+  which is the one family where the surrogate is exact. Reproduced
+  independently before fixing. `arctangent.dart` now writes the series out
+  (the `tick_steps.dart` bargain), and the new test holds reference taps
+  computed with `dart:math` 1.5° either side of every real boundary.
+  **The lesson is about the fixture, not the formula:** a test whose inputs
+  are all symmetric cannot see an asymmetric bug.
+- **`.fold<double>(` slipped past `binding_rules_compute_test.dart`**, whose
+  needle was the fixed string `.fold(`. Same near-miss shape as `double.parse`
+  vs `double.tryParse`. Both type-argument spellings are needled now, and the
+  fix is mutation-checked: planting `.fold<double>(` in `app/lib` turns it red.
 ## 2026-09-21 — GGU-61: the order ticket, and the round trip that recomputes it
 
 **Spec:** [`specs/frontend/0006-order-ticket.md`](../specs/frontend/0006-order-ticket.md).
