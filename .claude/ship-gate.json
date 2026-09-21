@@ -66,6 +66,11 @@
       "id": "infra.rules-index",
       "cwd": ".",
       "cmd": "bash infra/scripts/tests/test_rules_index.sh"
+    },
+    {
+      "id": "infra.rate-limit-ceiling",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_rate_limit_ceiling.sh"
     }
   ],
   "_candidates": [

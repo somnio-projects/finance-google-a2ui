@@ -94,7 +94,7 @@ Mutation checks: gate dependency disabled → AC-1 tests red (performed 2026-09-
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
 | OD-1 | Should a disabled endpoint answer 404 or 503? | Lautaro | 404 `feature-disabled` (does not advertise the route) |
-| OD-2 | Cache TTL for a multi-instance future | Lautaro | 15 s; move to Redis pub/sub if `max-instances > 1` |
+| OD-2 | Cache TTL for a multi-instance future | Lautaro | **Resolved 2026-09-20 (GGU-83).** 15 s, and `max_instances` is pinned to 1, so there is one cache and no cross-instance propagation window — a toggle takes effect within the TTL. The `FEATURE_FLAGS_FORCE_DISABLED` kill-switch never depended on this: it is an environment variable read at startup on every instance. Re-opens with spec `backend/0001` OD-2, on the same condition (any environment needing `max_instances > 1`); the answer then is Redis pub/sub or an accepted, documented TTL window |
 | OD-3 | Who holds the `admin` scope in Firebase tokens | Pato / Lautaro | custom claim `roles: ["admin"]` set with the Admin SDK on provisioned operator accounts |
 
 ## 9. Rollout & observability

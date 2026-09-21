@@ -120,6 +120,64 @@ one of those checks cite it by id with "lands with GGU-1", the way
 
 ---
 
+## 2026-09-20 — GGU-83 one instance, because the limiter only works at one
+
+**Branch:** `fix/GGU-83_single_instance`. **Spec:** `specs/backend/0001-backend-foundation.md` (OD-2
+resolved) · **ADR:** ADR-F **D-9** settled.
+
+**The defect.** The fixed-window rate limiter and the feature-flag TTL cache both hold state in
+process memory. ADR-F **D-4** had required `max-instances = 1`, which bounded them. Dev ran `1/2`,
+so the per-principal limit was **twice** what `backend/docs/SECURITY.md` documents — a SOC 2 CC6.6
+control describing behaviour the service did not have.
+
+**Why it survived.** D-4 carried *two* properties in one sentence: `as_of` consistency and the
+boundedness of these caches. Spec `0020` removed the first reason and retired D-4 with it; the
+second went unexamined. Spec `0001` OD-2 had already named the fix, conditional on
+"`max-instances > 1`" — and that condition came true when dev was scaled for the cold-start budget,
+on cost grounds, against a constraint living in a different document. **Nobody evaluates a condition
+written in prose.**
+
+**The decision (TL, Option B).** Pin `max_instances = 1` rather than build a distributed limiter a
+week before the demo. `min_instances = 1` is untouched — it is what keeps the instance warm, and
+scaling out was never what bought that. Memorystore (Option A) stays the real fix.
+
+**What is actually the deliverable.** Not the Terraform line. The line makes the configuration match
+the limiter's capability today; it does nothing the moment someone raises the value.
+`infra/scripts/tests/test_rate_limit_ceiling.sh` is what survives the decision being reversed: it
+reads the ceiling out of `infra/main.tf` and every `*.tfvars`, the limit out of `core/config.py` and
+`env.example`, and both numbers out of `SECURITY.md`, and fails naming every declaration that
+disagrees. Registered verbatim as `infra.rate-limit-ceiling` in `.claude/ship-gate.json`, in
+`infra-ci.yaml` and in pre-commit (ci-conventions §5 — copied, never paraphrased).
+
+Mutation-checked both ways before it was trusted: Terraform ceiling → 2 goes red naming both
+declarations and printing `120 x 2 = 240`; the documented limit → 200 goes red against
+`config.py`'s default. A gate that has never been seen red is not evidence.
+
+**The harness change.** `infra-ci.yaml` now also triggers on `backend/docs/SECURITY.md`,
+`backend/src/app/core/config.py`, `backend/env.example` and `docs/diagrams/08-infrastructure.md` —
+the same reasoning that put `docs/catalog/**` on `backend-ci`: **the edit that breaks a pair must
+start the run that rejects it.**
+
+**Next person should know**
+
+- **A cross-declaration test is only worth writing if an unreadable declaration is a FAILURE.**
+  Every value is parsed and an unparseable one fails loudly with what was looked for. A check that
+  quietly matches nothing is worse than no check — the guard idiom from `test_rules_index.sh`.
+- **Resolving an open decision means naming what re-opens it.** OD-2 now lists three conditions, the
+  first of which (`max_instances > 1`) is the one the gate enforces. "Resolved" without a re-opening
+  condition is how OD-2 stayed conditional and unevaluated for weeks in the first place.
+- **The instance count was declared in nine places.** Terraform (`main.tf` + three `*.tfvars`), two
+  specs, the infrastructure diagram, the risk register, a domain docstring and a migration
+  docstring. Eight are now consistent; `20260920_0005_portfolios.py` still says `max_instances = 2`
+  in its module docstring and was left alone because merged migrations are not edited.
+  `infra/network.tf`'s `min_instances = 2` is the **VPC connector**, not Cloud Run — do not "fix" it.
+- **This is the eighth defect this iteration with the same shape: a property written down and
+  enforced by nothing.** The previous seven were caught by reading. This one was caught by an
+  *amendment* forcing a re-read of the decision it superseded — which is the argument for amending
+  over silently superseding.
+
+---
+
 ## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
 
 **Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.

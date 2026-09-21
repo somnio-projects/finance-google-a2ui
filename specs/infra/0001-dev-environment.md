@@ -75,7 +75,7 @@ The `environment` variable also refuses the word: it validates against
 | Cloud Armor (OWASP WAF, per-IP throttle, adaptive DDoS) | **none** | yes |
 | HTTP→HTTPS redirect | none | yes |
 | Cloud Run ingress | `ALL` (run.app is the endpoint) | internal + load balancer |
-| Cloud Run min / max instances | 0 / 2 | 1 / 4 (staging 0 / 2) |
+| Cloud Run min / max instances | 1 / 1 | 1 / 1 (staging 0 / 1) — **max is pinned to 1 in every environment** by GGU-83: the rate limiter counts per process, so the documented per-principal limit only holds at one instance (ADR-F D-9, spec `backend/0001` OD-2) |
 | VPC egress path | direct VPC egress | Serverless VPC connector (2 VMs) |
 | Egress scope | `PRIVATE_RANGES_ONLY` | **same** |
 | Deny-all ingress firewall, flow logs, private services access | **same** | same |
@@ -134,7 +134,7 @@ these are the controls it does not have:
 |---|---|---|---|
 | WAF (OWASP SQLi/XSS/RCE/LFI) | Cloud Armor | **none** | the API takes no SQL, no HTML and no file paths from input; parameterised queries and pydantic validation at every boundary |
 | Edge rate limit | Cloud Armor, per IP | **none** | the application's own per-principal limiter (ADR-G D-7) is unchanged and is the control the threat model actually rests on |
-| Adaptive L7 DDoS | Cloud Armor | **none** | Cloud Run's own scaling ceiling (`max-instances = 2`) bounds the blast radius to a small bill, not an outage of something that matters |
+| Adaptive L7 DDoS | Cloud Armor | **none** | Cloud Run's own scaling ceiling (`max-instances = 1` since GGU-83) bounds the blast radius to a small bill, not an outage of something that matters — a tighter ceiling than when this row was written, so the argument only got stronger |
 | TLS policy of our choosing | `MODERN`, TLS 1.2+ | Google's `run.app` defaults | still TLS-only, still a Google-managed certificate; we simply do not pick the profile |
 | Edge access log | LB logs, sampled 1.0 | **none** | Cloud Run request logs still record every request |
 | Uptime check + readiness alert | yes | **none** | the 5xx and auth-failure alerts still page; the deploy itself verifies `/health` and rolls back |
@@ -354,7 +354,17 @@ and is the TL's to make. See OD-4.
 Noted while working, **not fixed here** — each is someone's call, not a
 drive-by:
 
-- ~~**ADR-F D-4 says Cloud Run runs `min-instances=1, max-instances=1`** because
+- **Resolved 2026-09-20 (GGU-83).** The paragraph below stood open until the
+  ADR-F amendment re-read it. D-4's *reason* was indeed superseded — session and
+  portfolio state are in PostgreSQL — but `max-instances = 1` turned out to be
+  carrying a **second** property nobody had separated out: the in-process rate
+  limiter and feature-flag cache are only correct at one instance. Dev's derived
+  2 made the per-principal limit twice what `backend/docs/SECURITY.md`
+  documents. The ceiling is now pinned to 1 everywhere and paired with the
+  document by `infra/scripts/tests/test_rate_limit_ceiling.sh`. See ADR-F **D-9**
+  and spec `backend/0001` **OD-2**. The original note follows.
+
+- **ADR-F D-4 says Cloud Run runs `min-instances=1, max-instances=1`** because
   session state is in process memory and a scaled-out follow-up turn would hit
   an instance with no session. The committed Terraform has always used 1/4
   (production) and 0/2 (staging), and dev now derives 0/2. The ADR looks
@@ -362,7 +372,7 @@ drive-by:
   (`alembic/versions/20260919_0004_sessions.py`, `session_repository.py`) — but
   it is still marked Accepted and nothing records the supersession. Someone
   should either amend ADR-F or write the ADR that replaces it; until then the
-  repo asserts a constraint the code does not honour.~~
+  repo asserts a constraint the code does not honour.
   **Recorded 2026-09-20 in [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md)** —
   D-4 is superseded by D-7/D-8/D-9 (Proposed; the TL ratifies). Two
   corrections to what this bullet said: dev derives **1/2**, not 0/2

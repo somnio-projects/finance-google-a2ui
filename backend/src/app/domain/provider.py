@@ -10,11 +10,13 @@ double, so unit tests do not need PostgreSQL. The persistent implementation is
 `services.portfolio_service.PersistentPortfolioProvider`, which lives there
 because the domain may not import a repository.
 
-**Why this changed.** Dev runs `min_instances = 1, max_instances = 2` so the
+**Why this changed.** Dev ran `min_instances = 1, max_instances = 2` so the
 demo does not pay a cold start. Two processes meant two caches, each seeded
 from its own clock: one subject, two portfolios, two `as_of`. The figures
 agreed; the moment they were taken did not, and the `ETag` derives from it
-(ADR-K D-20). Spec 0020 has the full account.
+(ADR-K D-20). Spec 0020 has the full account. The ceiling is 1 again since
+GGU-83 — for the rate limiter, not for this — and the portfolio no longer
+depends on it either way.
 """
 
 from typing import Protocol

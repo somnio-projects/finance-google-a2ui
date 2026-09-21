@@ -90,10 +90,42 @@ Mutation checks: auth middleware and rate limiter — yes (performed before PR).
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
 | OD-1 | Where does the A2UI/A2A agent live — mounted inside this FastAPI app or a sibling service? | Lautaro + Mario | Mount the A2A Starlette app under this FastAPI app behind the same auth middleware (one deployable) |
-| OD-2 | Rate-limit backend for multi-instance deploys | Lautaro | In-memory (single instance, ADR-F D-4); Redis adapter when `max-instances > 1` |
+| OD-2 | Rate-limit backend for multi-instance deploys | Lautaro | **Resolved 2026-09-20 (GGU-83) — see below.** In-memory, with `max_instances` pinned to 1 so the documented limit is the enforced one. Re-opens on the condition named below, not on a date. |
 | OD-3 | Firebase JWKS URL / issuer values for `finance-a2ui` | Pato / Lautaro | `oidc` provider with Google's securetoken JWKS; issuer `https://securetoken.google.com/finance-a2ui`, audience `finance-a2ui` |
 | OD-4 | `TrustedHostMiddleware` 400 is plain text, not problem+json | Lautaro | Accept for Epic 0; replace with a custom Host check returning problem+json when the client needs to parse it |
 | OD-5 | `FORWARDED_ALLOW_IPS` defaults to `*` (Cloud Run's LB is the only ingress) | Lautaro | Keep `*` on Cloud Run; set the proxy CIDR anywhere clients can reach uvicorn directly |
+
+### OD-2 resolved — 2026-09-20 (GGU-83)
+
+OD-2 was written as *"Redis adapter when `max-instances > 1`"*. That condition became **true** when
+dev was scaled to `1/2` for the cold-start budget, and nothing noticed: the scaling change was made
+on cost grounds and the constraint it violated lived in another document. The per-principal limit was
+silently twice what `backend/docs/SECURITY.md` documents. **A condition nobody evaluates is not a
+condition** — which is why the resolution below is enforced by a test rather than by a sentence.
+
+**Resolution (TL, Option B):** keep the in-memory limiter and pin the instance count instead.
+`infra/main.tf` derives `max_instances = 1` and every `infra/environments/*.tfvars` sets 1, which
+makes the documented limit the enforced one. This does not make the limiter correct; it makes the
+configuration match what the limiter can do.
+
+**The condition under which OD-2 re-opens** — any one of these, not a date:
+
+1. Any environment needs `max_instances > 1` (load, availability, or a rollout strategy that runs
+   two revisions at once). The pin is the only thing holding the limit, so raising it re-opens this.
+2. The limiter has to survive a revision restart, or the limit must be shared with any other
+   process — a second service, a worker, or a job.
+3. The per-principal limit becomes a hard commitment to a third party rather than the compensating
+   control [ADR-G](../../docs/adr/ADR-G-secret-handling.md) D-7 describes.
+
+When it re-opens, the fix is the one this OD always named: a shared backing store (Memorystore was
+Option A, costed on GGU-83) behind `FixedWindowLimiter`, which is a small class precisely so the swap
+stays contained. The feature-flag cache takes the same treatment or keeps its TTL window, documented.
+
+**What holds it shut meanwhile:** `infra/scripts/tests/test_rate_limit_ceiling.sh`
+(`infra.rate-limit-ceiling` in `.claude/ship-gate.json`) compares the Terraform ceiling, the
+configured default and the two numbers in `backend/docs/SECURITY.md`, and fails naming both sides.
+Condition 1 above cannot be met silently: raising the ceiling turns the gate red and the message
+points back here. See [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md) **D-9**.
 
 ## 9. Rollout & observability
 

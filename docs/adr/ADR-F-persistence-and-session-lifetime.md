@@ -77,6 +77,43 @@ outright rather than annotated, since the machinery they describe was deleted; w
 should be renamed away from "in-memory persistence"; and whether D-9's Redis-backed limiter is Epic
 1 work or is accepted as-is for the demo.
 
+## Amendment 2026-09-20 — D-9 settled: the instance ceiling belongs to the limiter (GGU-83)
+
+**Status:** Accepted (TL, 2026-09-20, on [GGU-83](https://somniosoftware.atlassian.net/browse/GGU-83)).
+This section supersedes whatever **D-9** said about the two in-process caches being *documented
+approximations*; it is the ruling, and the rest of D-9 is history.
+
+**D-9 (settled).** **`max-instances` is pinned to 1, and it is a correctness knob for the rate
+limiter — nothing else.** The fixed-window limiter (`api/middleware/rate_limit.py`) and the
+feature-flag TTL cache (`services/feature_flag_cache.py`) count in process memory, so across *N*
+instances the effective per-principal budget is *N* × the configured limit and a flag flip reaches
+another instance only when its TTL expires. Both were bounded by D-4's `max-instances = 1`, which no
+environment ever actually ran; dev's `1/2` made the per-principal limit **twice** what
+`backend/docs/SECURITY.md` documents — a SOC 2 CC6.6 control describing behaviour the system did not
+have. Option B of GGU-83 was taken: `infra/main.tf` and every `infra/environments/*.tfvars` derive
+or set `max_instances = 1`.
+
+**What this does not claim.** That the limiter is correct. It is not — it is a per-process counter,
+and the pin makes the *configuration* match its capability rather than the other way round. The real
+fix is the shared backing store, spec [`backend/0001`](../../specs/backend/0001-backend-foundation.md)
+**OD-2**, which stays open with a named re-opening condition.
+
+**What keeps this true.** Not this paragraph. `infra/scripts/tests/test_rate_limit_ceiling.sh` reads
+the ceiling out of the Terraform, the limit out of `core/config.py` and `env.example`, and both
+numbers out of `SECURITY.md`, and fails the gate naming every declaration that disagrees. That test
+is the deliverable of GGU-83; the Terraform line is one number it guards. It is registered in
+`.claude/ship-gate.json` as `infra.rate-limit-ceiling`, in `infra-ci.yaml` and in pre-commit.
+
+**D-8 is untouched and still must not be cited as a safety property.** `min-instances = 1` remains a
+latency purchase for the 2026-09-28 demo. The pin above is the *maximum*, and the demo loses nothing:
+scaling out was never what kept the first instance warm.
+
+**Why this is the eighth of its kind.** D-4 carried two properties in one sentence — `as_of`
+consistency *and* the boundedness of these caches. Spec `0020` removed the first and retired D-4 with
+it; the second went unexamined until a document change forced someone to re-read the decision it
+superseded. **A property written down and enforced by nothing is not a property.** The amendment
+process is what found it, which is an argument for amending over silently superseding.
+
 ## Consequences
 
 D-3 traded the option of persistent sessions for simplicity and bought it back through a single

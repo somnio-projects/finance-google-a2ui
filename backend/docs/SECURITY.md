@@ -19,7 +19,7 @@ or configuration and verified by tests; each row names where.
 | Security response headers, CSP, HSTS (prod) | `api/middleware/security_headers.py` | `tests/unit/api/test_middleware.py` | CC6.6 | A.8.26 |
 | CORS and Host allow-lists | `bootstrap._install_middleware` | `test_middleware.py` | CC6.6 | A.8.20 |
 | Request body size limit | `api/middleware/body_limit.py` | `test_middleware.py` | CC6.6 | A.8.6 |
-| Per-token rate limit (compensating control for no allow-list) | `api/middleware/rate_limit.py` | `test_middleware.py` | CC6.6 | A.8.6 |
+| Per-token rate limit (compensating control for no allow-list) — see *Declared limits* below | `api/middleware/rate_limit.py`, `infra/main.tf` (`max_instances`) | `test_middleware.py`, `infra/scripts/tests/test_rate_limit_ceiling.sh` | CC6.6 | A.8.6 |
 | Unhandled errors reported, masked to clients | `api/errors.py`, `infra/telemetry/*` | `test_error_handlers.py`, `test_telemetry.py` | CC7.2, CC7.4 | A.8.16 |
 | Telemetry without PII or request bodies | `infra/telemetry/sentry_reporter.py` (`send_default_pii=False`, `max_request_body_size="never"`) | `test_telemetry.py` | P4.1 | A.8.11 |
 | Parameterised SQL only | SQLAlchemy Core/ORM expressions | code review (`backend-reviewer`) | CC6.1 | A.8.28 |
@@ -47,6 +47,41 @@ names the residual risk, what bounds it, and who owns the decision.
 This is an honesty requirement, not a formality: a control mapping that
 overstates is worse than one that names its gap, because an auditor and an
 incident responder both plan against it. See `docs/compliance/README.md`.
+
+## Declared limits — rate limiting and feature flags
+
+Two controls hold state **in the process**, so what they promise depends on how
+many processes are running. The numbers are declared here, and
+`infra/scripts/tests/test_rate_limit_ceiling.sh` fails the gate when any of them
+disagrees with `infra/main.tf`, `app/core/config.py` or `backend/env.example`
+(GGU-83). Change one and the gate names the other.
+
+- **Documented per-principal limit:** 120 requests per minute.
+- **Instance ceiling the limit depends on:** 1.
+
+`api/middleware/rate_limit.py` is a fixed-window counter in process memory, so
+the effective budget is the configured limit **× the instance count**. Cloud Run
+is therefore pinned to a single instance (`max_instances = 1` in
+`infra/main.tf`, and in every `infra/environments/*.tfvars`), which makes the
+number above the number the service actually enforces. This is not a distributed
+limiter and must not be cited as one: the pin makes the configuration match the
+limiter's capability, and the shared backing store that would make the limit
+true at any instance count is spec `backend/0001` **OD-2**, still open. Raising
+the ceiling without it re-opens the defect — which is what the cross-declaration
+test exists to prevent. Per-IP counting shares the same bound.
+
+**Feature flags.** `services/feature_flag_cache.py` caches flag state for
+`FEATURE_FLAGS_CACHE_TTL_SECONDS` (15 by default). At one instance there is one
+cache, so a toggle through `PUT /v1/admin/feature-flags/{key}` takes effect
+within that TTL and there is **no cross-instance propagation window** — that
+window existed only while more than one instance ran, and it closes as a side
+effect of the pin above. It returns, bounded by the same TTL, if the ceiling is
+ever raised.
+
+The `FEATURE_FLAGS_FORCE_DISABLED` kill-switch was **never affected by any of
+this**. It is an environment variable read at startup on every instance and it
+wins over the database, so it disables a flag everywhere regardless of instance
+count, cache TTL or database state.
 
 ## Governance, tenancy and data (out of code)
 
