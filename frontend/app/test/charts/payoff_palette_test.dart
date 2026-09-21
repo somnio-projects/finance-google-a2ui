@@ -1,5 +1,6 @@
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/payoff_palette.dart';
+import 'package:finance_app/charts/payoff_tokens.dart';
 import 'package:finance_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

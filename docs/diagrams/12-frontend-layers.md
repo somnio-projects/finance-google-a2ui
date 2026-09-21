@@ -19,7 +19,7 @@ graph TD
     host["components/component_host.dart<br/>+ component_registry.dart"]
     comp["components/&lt;name&gt;/<br/>one directory per view id"]
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
-    charts["charts/<br/>CustomPainter · ChartPalette<br/><i>needs dart:ui, so it lives here</i>"]
+    charts["charts/<br/>CustomPainters · palettes<br/><i>needs dart:ui, so it lives here</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
@@ -45,6 +45,7 @@ graph TD
   page -->|"reads, to build the bloc"| repo
   view --> bloc
   view --> host
+  view -.->|"interactive only:<br/>builds the card to attach<br/>its edit callback (GGU-61)"| comp
   host --> comp
   bloc --> repo
   bloc -->|"one turn → AgentEvent stream"| agentrepo
@@ -83,6 +84,7 @@ graph TD
 - **`comp → geom` carries a raw number, and only that one.** A bar's position comes from the contract's raw `amount`, read through `ViewPayload.geometry` — the single path-scoped exemption to the numbers rule (ADR-L D-14). Every *figure on screen* is still a `*.display` string; the raw value never reaches a `Text`.
 - **The generated manifest is the seam.** Adding a component adds a directory and regenerates `component_manifest.g.dart`; no hand-written file in this diagram changes (ADR-L D-3, mirroring ADR-K D-15).
 - **The agent path rejoins the read path on purpose.** A `render-intent` names a registered view and carries no payload, so `ConversationBloc` fetches it through the *same* `ViewsRepository` and renders it through the *same* `ComponentHost` and registry as a `?view=` read. The two routes into `comp` are two callers of one seam, **not** two rendering paths — a second path is what ADR-K D-15 and ADR-L D-3 exist to prevent, and it is the defect class this repository has hit three times on the backend side.
+- **One view bypasses `ComponentHost`, and the dashed edge says so.** `ViewComponent.build(context, payload)` has no slot for a callback, so a surface that must send something back cannot go through the host. `OrderTicketView` therefore builds `OrderTicketCard` itself and attaches `onOptionChanged` (GGU-61, spec `frontend/0006` OD-4) — the same shape `AttributionWaterfallCard.onSegmentTap` already has, with a host that actually uses it. Two things keep this from becoming the second rendering path the bullet above warns about: the **binding** still comes from `OrderTicketComponent.read`, so the component remains the single owner of that payload's shape, and the view repeats the host's contract handling — a `PayloadContractException` is caught and *shown*, naming the path, never thrown into a red screen. It is a second **caller**, not a second binding. If a third such surface appears, the callback belongs on the seam instead, and that is an ADR-L amendment rather than a third copy.
 - **Two backend nodes, two protocols, one credential.** `/v1/**` is REST with RFC 9457 problems; `POST /` is JSON-RPC that answers SSE and reports some failures at **HTTP 200** (ADR-J D-3). They share one `http.Client` and one token provider, which is why `A2aClient` sits beside `FinanceApiClient` rather than inside it.
 - **The router names no view id.** It used to carry a hardcoded one, so a registered component could be unreachable with a green gate; `PortfolioViewsPage` now asks the registry (GGU-79).
 - **Nothing is deployed.** There is no pipeline shipping this bundle yet — `specs/client/0002-client-delivery.md` owns that — so no edge crosses into Google Cloud here. See [02-containers](02-containers.md) for where it will attach.

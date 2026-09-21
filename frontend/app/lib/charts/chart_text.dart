@@ -28,6 +28,49 @@ abstract final class ChartText {
   static TextStyle title(Color color) =>
       TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500);
 
+  /// A small uppercase caption above a figure.
+  ///
+  /// The allocation card's `subtag`, measured: 600 weight, 10 px, uppercase
+  /// with `letter-spacing:.08em`. The design sets it in Roboto Mono for the
+  /// same digit-alignment reason recorded above, and this app bundles no mono
+  /// face — `tabularFigures` buys the alignment without the download.
+  static TextStyle subtag(Color color) => TextStyle(
+    color: color,
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.8,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
+
+  /// The headline figure on a summary card.
+  ///
+  /// Measured from the allocation card: 400 weight, 30 px, `line-height:1.05`,
+  /// `letter-spacing:-.5px`.
+  static TextStyle headline(Color color) => TextStyle(
+    color: color,
+    fontSize: 30,
+    fontWeight: FontWeight.w400,
+    height: 1.05,
+    letterSpacing: -0.5,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
+
+  /// A legend row's category name. Measured: 500 weight, 12.5 px.
+  static TextStyle legendLabel(Color color) =>
+      TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w500);
+
+  /// A figure on a legend row, at the design's [size] for its column.
+  ///
+  /// The weight column is 11 px and the value column 12 px — two sizes, so
+  /// the caller passes one rather than this guessing from the string.
+  static TextStyle legendFigure(Color color, {required double size}) =>
+      TextStyle(
+        color: color,
+        fontSize: size,
+        fontWeight: FontWeight.w500,
+        fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+      );
+
   /// A chip beside the title, carrying an annotation.
   static TextStyle chip(Color color) => TextStyle(
     color: color,

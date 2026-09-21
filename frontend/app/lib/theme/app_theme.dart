@@ -1,4 +1,4 @@
-import 'package:finance_app/charts/chart_tokens.dart';
+import 'package:finance_app/charts/chart_extensions.dart';
 import 'package:finance_app/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 

@@ -1,6 +1,9 @@
+import 'package:finance_app/charts/allocation_palette.dart';
+import 'package:finance_app/charts/chart_extensions.dart';
 import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/payoff_palette.dart';
+import 'package:finance_app/charts/payoff_tokens.dart';
 import 'package:finance_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,10 +21,12 @@ void main() {
     test('carries every chart palette, in both brightnesses', () {
       expect(chartExtensions(Brightness.light), <ThemeExtension<Object?>>[
         ChartTokens.light,
+        ChartTokens.allocationLight,
         PayoffTokens.light,
       ]);
       expect(chartExtensions(Brightness.dark), <ThemeExtension<Object?>>[
         ChartTokens.dark,
+        ChartTokens.allocationDark,
         PayoffTokens.dark,
       ]);
     });
@@ -45,6 +50,7 @@ void main() {
           .map((e) => e.type)
           .toSet();
       expect(types, contains(ChartPalette));
+      expect(types, contains(AllocationPalette));
       expect(types, contains(PayoffPalette));
     });
   });

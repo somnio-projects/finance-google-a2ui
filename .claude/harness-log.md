@@ -2997,6 +2997,147 @@ under `app/lib/components/payoff_chart/`. No charting package (ADR-L D-13).
   being waved through. The waterfall goldens do not have this property
   because their bars are opaque — so the comparator's measured 0.69 % noise
   floor is an *opaque-subject* figure and does not transfer to a wash.
+## 2026-09-21 — GGU-65, the allocation summary draws
+
+**Spec:** `specs/frontend/0007-allocation-summary.md`. Completes
+`holdings.allocation.v1` / `AllocationSummary`: donut geometry and hit testing
+in `packages/finance_charts`, painter and categorical palette in
+`app/lib/charts/`, and the component split into model/header/legend/row/empty.
+
+What the next person should know:
+
+- **A design for this component exists now** — `.design-refs/Catalog_HoldingsSummary.dc.html`
+  and `.design-refs/Holdings.dc.html`, from Patricio's fourteen-screen export.
+  Nothing under `.design-refs/` is committed.
+- **`file://` renders of those pages are inert, and measuring one is worse than
+  not measuring.** The preview tool rewrites a local page to a `data:` URL, so
+  its relative `./support.js` never loads, nothing binds, and every value stays
+  `{{ … }}`. Inlining the script into a copy does not help — the tool re-serves
+  the original. **Serve the directory over HTTP instead**, which needs the
+  sandbox off for that one command (`socket.bind` is blocked inside it).
+  Measured both ways here: `mustache` 35 → 1 between the two.
+- **The design page and the frozen catalog disagree in six places**, including
+  the component's *name* (`HoldingsSummary` vs `AllocationSummary`) and a
+  per-row day-change the contract has no field for. Spec §3a lists them;
+  `catalog_contract_test.dart` now pins both halves so reconciling them has to
+  be a decision. The backend's `test_component_names.py` holds design's names
+  as a literal, so these two declarations are already meant to agree.
+- **`manifest-check` does not catch a deleted `register`.** Mutation-checked:
+  the generator lists *directories* under `app/lib/components/` and emits a
+  `register` call per directory without checking the function exists, so the
+  manifest stays byte-identical and the gate goes red at **`analyze`** instead.
+  The gate catches it either way; the prose in `frontend/CLAUDE.md` implies the
+  wrong step.
+- **`.abs()` is banned from `app/lib` with no carve-out, and that is load-bearing.**
+  The first draft of the donut's hit test used it, `binding_rules_compute_test.dart`
+  caught it, and the fix was to move the arithmetic into `finance_charts` where
+  it belongs anyway (ADR-L D-13) and write it without the mechanism at all. The
+  rule also greps *prose*: naming a banned mechanism in a doc comment trips it.
+- **Two test files that were not this ticket's were edited, both for real
+  defects.** `app_router_test.dart` built its `MaterialApp.router` with no
+  `theme:`, so it was testing an app unlike the real one; it went unnoticed
+  while every rendered component read `AppSpacing`, which falls back, and the
+  first component to read `ChartPalette` (which deliberately does not) turned
+  it red. `conversation_view_test.dart` had no test for a turn that answers
+  with no surface — GGU-65 AC-2 — only for its complement.
+- **The `frontend-reviewer` agent earned its keep on this one, twice.** It
+  found a real defect the whole suite was structurally unable to catch: the
+  donut's hit test used a monotonic surrogate for the angle and compared it
+  against arc boundaries in **true radians**, which is a category error —
+  monotonicity orders surrogate values against each other, it does not put a
+  surrogate value in the same interval as the true angle. Wrong slice for
+  **3.50 %** of directions on the catalog's own payload, worst error 4.075°,
+  against a smallest slice 8.5° wide. Every existing test used four equal
+  quarters or `[0.5, 0, 0.5]` — layouts whose boundaries all land on an axis,
+  which is the one family where the surrogate is exact. Reproduced
+  independently before fixing. `arctangent.dart` now writes the series out
+  (the `tick_steps.dart` bargain), and the new test holds reference taps
+  computed with `dart:math` 1.5° either side of every real boundary.
+  **The lesson is about the fixture, not the formula:** a test whose inputs
+  are all symmetric cannot see an asymmetric bug.
+- **`.fold<double>(` slipped past `binding_rules_compute_test.dart`**, whose
+  needle was the fixed string `.fold(`. Same near-miss shape as `double.parse`
+  vs `double.tryParse`. Both type-argument spellings are needled now, and the
+  fix is mutation-checked: planting `.fold<double>(` in `app/lib` turns it red.
+## 2026-09-21 — GGU-61: the order ticket, and the round trip that recomputes it
+
+**Spec:** [`specs/frontend/0006-order-ticket.md`](../specs/frontend/0006-order-ticket.md).
+`order.ticket.v1` (component `OrderTicket`) is the catalog's only interactive
+surface, and the only place the product's central claim is either demonstrated
+or quietly broken. An edit changes a **declared option** and re-requests the
+same view; the client computes no figure and reads no raw member.
+
+### What changed in the code
+
+- `app/lib/components/order_ticket/` — the binding, the card, the impact
+  panel, the controls, and `changedFigures`, which decides what to *mark* by
+  comparing display **strings** before and after. No subtraction, no sign: the
+  client still cannot tell which way a figure moved, and does not need to.
+- `app/lib/features/order_ticket/` — bloc, page and view. The bloc owns the
+  option map, debounces (300 ms, trailing, injected so a test drives it), and
+  guards against a superseded response landing after the one that replaced it
+  by comparing the in-flight options map **by identity**.
+- `ViewPayload.strings(path)` — the contract publishes `inputs[].choices` as an
+  array of strings, which `rows()` cannot read because it requires objects. The
+  reader simply had no accessor for it.
+- `/order-ticket` in the router table, and diagram 12 gained the edge that
+  goes with it.
+
+### What changed in the harness
+
+- `binding_rules_test.dart`'s literal-path regex now names `strings` alongside
+  `text`/`optionalText`/`rows`/`geometry`. **An accessor added to the reader
+  and forgotten in that regex is a hole in N-5 exactly the width of the new
+  method** — so the list is now kept in step with the class, and the regex was
+  mutation-checked on its own (a variable path goes red, a literal stays
+  quiet).
+- `frontend/SECURITY.md` gained a threat note: this is the first surface where
+  user-typed input *leaves* the client, and it leaves only as a declared
+  option's value, encoded by `Uri.replace`. There is no client-side validation
+  and that is deliberate (N-8) — a rule beside the server's is a second
+  declaration that drifts, and an editable bundle cannot enforce one anyway.
+
+### What the next person should know
+
+- **The design and the frozen contract are two different components sharing a
+  name, and this is not a detail.** `Catalog_OrderTicket.dc.html` draws a
+  *multi-leg equity* order — NVDA/AVGO/AMD, `legs[]`, `impact.estShares`,
+  `cashRemaining`, `constraints.maxCash` — with an `onSubmit()` and a "Review
+  order" button. `order.ticket.v1` is a *single-leg crypto* ticket whose only
+  figures are `quantity`, `entry_price` and `notional`, with `actions: []` and
+  a disclosure saying nothing is ever placed. The visual language and the three
+  states were adopted; the field inventory was not, because a client cannot
+  invent a payload field (N-3). OD-1 and OD-2 carry it, and GGU-19 owns the
+  resolution. **If the design is what ships, this needs an `order.ticket.v2`.**
+- **Zone 3's prompt fragment tells the client to recompute** — *"let the client
+  recompute impact on edit"* — and the mock does exactly that
+  (`'$' + l.price.toFixed(2)`). A mock computing its own numbers is
+  unremarkable; a **system-prompt fragment** saying so is a defect, because it
+  ships to the model and contradicts the one invariant this showcase exists to
+  demonstrate. OD-3. Raised, not followed.
+- **Rendering a `.dc.html` artboard over `file://` gives you an inert
+  snapshot.** The preview tool rewrites the page to a `data:` URL, so the
+  relative `./support.js` never resolves, the bundle never boots, and Zone 1
+  shows `{{ l.symbol }}` where the figures should be — while the *static*
+  prose in the page header reads perfectly, which is what makes it convincing.
+  Serve the directory over HTTP instead (the sandbox denies `socket.bind`, so
+  that one command needs the sandbox off). Every measured value in spec 0006
+  §6 AC-16 came from the HTTP render; the first set, taken from `file://`,
+  was discarded. **A pixel-perfect claim built on unbound placeholders is
+  indistinguishable from a correct one.**
+- **`ViewComponent.build` has no slot for a callback**, so an interactive
+  surface cannot go through `ComponentHost`. `OrderTicketView` builds its card
+  directly and attaches `onOptionChanged` — and therefore has to repeat what
+  the host does with a `PayloadContractException`. It did not, at first: a
+  contract violation was a red screen until a test caught it. If a third such
+  surface appears, the callback belongs on the seam, as an ADR-L amendment.
+- **A test harness that keys its fixture from the code under test proves
+  nothing.** The bloc suite keyed its envelope with `OrderTicketBloc.viewId`
+  and looked it up with the same constant, so a typo agreed with itself. The
+  envelopes are now keyed from the **catalog snapshot** while the bloc is given
+  the **component's** id — two declarations that must match. The constant is
+  gone: the page passes the component's `viewId`, so N-6's "a literal in one
+  place" holds again.
 ## 2026-09-21 — GGU-93, GGU-94: the evidence a PR carries gets a field for what was not run
 
 **Spec:** none. This is a harness change, recorded where the harness is

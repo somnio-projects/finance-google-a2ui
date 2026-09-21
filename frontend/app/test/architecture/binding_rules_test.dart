@@ -85,8 +85,11 @@ void main() {
       // is in this list from the day it existed: a reader added without its
       // entry here is a hole in the rule, which is how a rule like this
       // usually fails.
+      // Every accessor `ViewPayload` exposes is named here. An accessor added
+      // to the reader and forgotten here would be a hole in N-5 exactly the
+      // width of the new method, so the list is kept in step with the class.
       final readers = RegExp(
-        r"\.(text|optionalText|rows|geometry)\(\s*([^'\)])",
+        r"\.(text|optionalText|rows|strings|geometry)\(\s*([^'\)])",
       );
       final offenders = <String>[];
       sources.under('app/lib').forEach((path, text) {
