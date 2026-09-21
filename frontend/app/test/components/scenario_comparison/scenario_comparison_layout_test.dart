@@ -71,6 +71,19 @@ void main() {
       expect(ScenarioComparisonText.value(black).fontSize, 13.5);
     });
 
+    test('draws the Metric caption at 500, not as an eyebrow', () {
+      // Both artboards of both design exports: weight 500, normal tracking.
+      // Reusing `caption` (600 at 0.08em) here was a real fidelity miss.
+      final heading = ScenarioComparisonText.metricHeading(black);
+      expect(heading.fontSize, 10);
+      expect(heading.fontWeight, FontWeight.w500);
+      expect(heading.letterSpacing, isNull);
+      expect(
+        heading.fontWeight,
+        isNot(ScenarioComparisonText.caption(black).fontWeight),
+      );
+    });
+
     test('lines the digits up without bundling a mono face', () {
       // The design sets these in Roboto Mono; the reason is column
       // alignment, and `tabularFigures` buys that from the bundled font.

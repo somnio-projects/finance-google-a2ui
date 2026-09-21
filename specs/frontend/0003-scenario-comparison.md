@@ -85,6 +85,29 @@ legend draws `Short-term` / `Long-term` in the same two colours.
 `scenario_comparison_geometry_test.dart` asserts the laid-out tracks against
 the first two rows of that table to **0.1 px**.
 
+### Re-verified against the newer design export
+
+A fuller design project (fourteen screens, `.design-refs/`) landed after this
+card was built. `Catalog_ScenarioComparison.dc.html` was re-measured the same
+way, in both artboards, and **every value above is unchanged** — card surface,
+hairline, padding, radius and 571.367 px width; the row rule; the eyebrow; the
+metric name; the figure; both column-header lines; and the grid rules, which
+are byte-identical (`.cmp2 { 1.35fr 1fr 1fr }`, `.cmp3 { 1.2fr 1fr 1fr 1fr }`,
+`gap: 8px`).
+
+**One real miss it caught.** The `Metric` caption is weight **500 with normal
+tracking** in both exports and both artboards; this card was drawing it with
+the eyebrow style (600 at `0.08em`). Fixed —
+`ScenarioComparisonText.metricHeading` is now its own slot, asserted against
+`caption`'s weight so the two cannot silently converge again.
+
+**How it was rendered, because it matters.** Opened from `file://` inside the
+worktree the page renders its chrome but **does not boot its data binding** —
+the table shows `{{ h.label }}` / `{{ r.label }}` placeholders. Measured over
+`http://` the same file boots fully (547 nodes, no placeholders, real
+figures). Every number in this spec is from the booted render; nothing here
+was measured off a placeholder.
+
 **One finding worth keeping.** The design is CSS `box-sizing: border-box`, so
 its 1 px border sits *inside* the declared width. Flutter inverts that:
 `DecoratedBox` and `CustomPaint` paint over the child and reserve no space.

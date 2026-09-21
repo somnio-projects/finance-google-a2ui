@@ -41,7 +41,7 @@ class ScenarioComparisonHeaderRow extends StatelessWidget {
             alignment: Alignment.bottomLeft,
             child: Text(
               metricHeading,
-              style: ScenarioComparisonText.caption(tokens.caption),
+              style: ScenarioComparisonText.metricHeading(tokens.caption),
             ),
           ),
         ),

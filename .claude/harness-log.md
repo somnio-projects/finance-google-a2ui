@@ -92,6 +92,21 @@ which is the seam claim restated as a diff.
 - **Measure the rendered DOM, still.** Eight colours and eleven geometry values
   were read with `getComputedStyle` off the served page. The metric-name colour
   cross-confirms against the catalog index's own token legend.
+- **A `.dc.html` design page opened from `file://` renders its chrome but does
+  not boot its data binding** — the table shows `{{ h.label }}` / `{{ r.label }}`
+  where the figures belong. Over `http://` the same file boots fully (547
+  nodes, no placeholders). Both were observed on this page, minutes apart, so
+  it is the scheme and not the wait. **Check for `{{` before measuring
+  anything off one of these pages**; a pixel claim taken off a placeholder is
+  worse than no claim. Other pages in the set reportedly do boot under
+  `file://`, so test the page in front of you rather than assuming either way.
+- **The newer fourteen-screen design export changes nothing here — except one
+  thing.** Re-measured `.design-refs/Catalog_ScenarioComparison.dc.html` in
+  both artboards: every colour, padding, radius, width and both grid rules are
+  identical to the earlier export. The miss it caught is that the `Metric`
+  caption is weight **500 with normal tracking**, not the eyebrow's 600 at
+  `0.08em` — this card had been reusing `caption` for it. Now its own slot,
+  asserted against `caption`'s weight so they cannot silently converge.
 - **The design index still says `ComparisonCard`.** Its detail page and the
   backend both say `ScenarioComparison`; the schema block is authoritative and
   `catalog_contract_test.dart` is what would catch getting it wrong.

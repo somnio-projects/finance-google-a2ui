@@ -108,6 +108,15 @@ abstract final class ScenarioComparisonText {
     letterSpacing: 0.8,
   );
 
+  /// The `Metric` caption over the left-hand track.
+  ///
+  /// **Not [caption], though it looks like one.** Both artboards of both
+  /// design exports draw it at weight **500 with normal tracking**, while an
+  /// eyebrow is 600 at `0.08em`. Reusing [caption] here was a real fidelity
+  /// miss, caught by re-measuring against the newer design export.
+  static TextStyle metricHeading(Color color) =>
+      TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500);
+
   /// A column header's first line: the lot-selection method.
   static TextStyle columnTitle(Color color) =>
       TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w500);
