@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 
 /// How an editable option is offered, as `inputs[].control` declares it.
 ///
@@ -9,7 +10,7 @@ enum OrderTicketControl {
   /// One of a closed list; `inputs[].choices` is that list.
   choice,
 
-  /// Free text bounded by `inputs[].pattern`.
+  /// Free text bounded by `inputs[].pattern`, described by `hint`.
   text,
 }
 
@@ -28,6 +29,7 @@ class OrderTicketField extends Equatable {
     required this.value,
     required this.choices,
     required this.pattern,
+    required this.hint,
   });
 
   /// The declared option this control sets, e.g. `side`.
@@ -60,6 +62,10 @@ class OrderTicketField extends Equatable {
   /// that can run (N-5).
   final String? pattern;
 
+  /// The server's words for what this field accepts. [pattern] is the
+  /// machine's copy of the same fact and is never drawn.
+  final String? hint;
+
   @override
   List<Object?> get props => <Object?>[
     option,
@@ -68,34 +74,8 @@ class OrderTicketField extends Equatable {
     value,
     choices,
     pattern,
+    hint,
   ];
-}
-
-/// One figure the ticket shows, already formatted by the backend.
-///
-/// [display] is a `*.display` string and is the only thing that reaches a
-/// `Text`. There is no `double` on this class to be tempted into arithmetic
-/// with, which is N-2 made structural rather than remembered.
-class OrderTicketFigure extends Equatable {
-  /// Creates a figure.
-  const OrderTicketFigure({
-    required this.name,
-    required this.label,
-    required this.display,
-  });
-
-  /// A stable name for this slot, so a changed figure can be marked without
-  /// matching on its value.
-  final String name;
-
-  /// The caption beside it.
-  final String label;
-
-  /// The backend's own formatted string, rendered verbatim.
-  final String display;
-
-  @override
-  List<Object?> get props => <Object?>[name, label, display];
 }
 
 /// Everything `order.ticket.v1` puts on screen.

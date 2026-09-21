@@ -724,7 +724,7 @@
     {
       "actions": [],
       "component": "OrderTicket",
-      "digest": "6cbd19f8949e",
+      "digest": "bd097a489112",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -749,6 +749,7 @@
               "SOL"
             ],
             "control": "choice",
+            "hint": null,
             "label": "Asset",
             "option": "symbol",
             "pattern": null,
@@ -760,6 +761,7 @@
               "sell"
             ],
             "control": "choice",
+            "hint": null,
             "label": "Side",
             "option": "side",
             "pattern": null,
@@ -768,6 +770,7 @@
           {
             "choices": [],
             "control": "text",
+            "hint": "Up to 8 decimal places",
             "label": "Size",
             "option": "size",
             "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$",
@@ -779,6 +782,7 @@
               "usd"
             ],
             "control": "choice",
+            "hint": null,
             "label": "Size in",
             "option": "size_in",
             "pattern": null,
@@ -1006,6 +1010,14 @@
           "type": "string ≤64 chars"
         },
         {
+          "binding": "text",
+          "input": null,
+          "path": "inputs[].hint",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤64 chars"
+        },
+        {
           "binding": "constant",
           "input": null,
           "path": "effect",
@@ -1081,6 +1093,7 @@
             "examples": [
               "0.25"
             ],
+            "hint": "Up to 8 decimal places",
             "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$",
             "title": "Size",
             "type": "string"

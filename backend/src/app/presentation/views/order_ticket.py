@@ -32,7 +32,8 @@ from app.presentation.order_sizing import LABELS, OrderTicketOptions
 from app.presentation.registry import register
 from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
-from app.presentation.tickets import declared_inputs, price, quantity
+from app.presentation.ticket_displays import price, quantity
+from app.presentation.tickets import declared_inputs
 
 
 def render(portfolio: Portfolio, options: OrderTicketOptions) -> OrderTicketPayload:

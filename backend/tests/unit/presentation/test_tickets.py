@@ -13,13 +13,8 @@ import pytest
 from pydantic import Field, ValidationError
 
 from app.presentation.options import ProjectionOptions
-from app.presentation.tickets import (
-    MAX_CHOICES,
-    TicketInput,
-    declared_inputs,
-    price,
-    quantity,
-)
+from app.presentation.ticket_displays import price, quantity
+from app.presentation.tickets import MAX_CHOICES, TicketInput, declared_inputs
 
 LABELS = {"mode": "Mode", "code": "Code"}
 

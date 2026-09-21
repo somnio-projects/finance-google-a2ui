@@ -141,7 +141,7 @@ Three of the four states design needs are facts about the schema. One is not:
 |---|---|---|---|---|---|
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `04a53053167d` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `c4758d6ecbe3` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
-| [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `6cbd19f8949e` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `bd097a489112` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `cc0144f00eda` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `fe62a7725690` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
 | [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `d88ca1d6600e` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
@@ -447,7 +447,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.
 
-- **Frozen id:** `order.ticket.v1` · **digest:** `6cbd19f8949e`
+- **Frozen id:** `order.ticket.v1` · **digest:** `bd097a489112`
 - **Component:** `OrderTicket`
 - **Payload type:** `OrderTicketPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -494,6 +494,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `inputs[].value` | string ≤32 chars | required | `text` | — | — |
 | `inputs[].choices` | array ≤16 items | default `[]` | `container` | empty | — |
 | `inputs[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
+| `inputs[].hint` | string ≤64 chars | default `null` | `text` | null | — |
 | `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
 | `disclosure` | string ≤300 chars | required | `text` | — | — |
 
@@ -547,7 +548,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "LINK",
         "SOL"
       ],
-      "pattern": null
+      "pattern": null,
+      "hint": null
     },
     {
       "option": "side",
@@ -558,7 +560,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "buy",
         "sell"
       ],
-      "pattern": null
+      "pattern": null,
+      "hint": null
     },
     {
       "option": "size",
@@ -566,7 +569,8 @@ _This surface sends nothing back: tapping it starts no turn._
       "control": "text",
       "value": "1",
       "choices": [],
-      "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$"
+      "pattern": "^[0-9]{1,9}(\\.[0-9]{1,8})?$",
+      "hint": "Up to 8 decimal places"
     },
     {
       "option": "size_in",
@@ -577,7 +581,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "units",
         "usd"
       ],
-      "pattern": null
+      "pattern": null,
+      "hint": null
     }
   ],
   "effect": "recalculate",
