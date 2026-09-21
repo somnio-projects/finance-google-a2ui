@@ -14,4 +14,6 @@
 #            re-use of equipment". The Statement of Applicability quotes it
 #            verbatim, and a compliance document that paraphrases a control
 #            title no longer cites the standard. Never "fix" this one.
-ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use
+#   homestate  codespell reads the Bloc class `HomeState` (frontend/…/home)
+#            as the misspelling of "home state"; it is a type name.
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate

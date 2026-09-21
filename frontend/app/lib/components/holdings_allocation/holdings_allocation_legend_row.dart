@@ -88,7 +88,7 @@ class AllocationLegendRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // Both columns give way, so a narrow legend ellipsises a
+                  // Both columns give way, so a narrow legend trims a
                   // figure rather than overflowing the row.
                   Flexible(
                     child: Column(
