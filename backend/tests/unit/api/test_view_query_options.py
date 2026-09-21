@@ -73,7 +73,7 @@ def test_every_advertised_option_is_a_real_query_parameter(
     # projection requires at least two distinct entries, so one of them is a
     # legitimate 422 from the view rather than the gap this test is about.
     fragment = {
-        "symbol": "symbol=BTC",
+        "symbol": "symbol=NVDA",
         "quantity": "quantity=0.5",
         "lot_method": "lot_method=FIFO",
         "methods": "methods=FIFO&methods=LIFO",
@@ -89,6 +89,9 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "locale": "locale=en-US",
         "currency": "currency=USD",
         "fields": "fields=buckets",
+        "range": "range=1d",
+        "group_by": "group_by=asset_class",
+        "headline": "headline=false",
     }[option]
 
     response = client.get(

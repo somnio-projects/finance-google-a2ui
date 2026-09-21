@@ -81,7 +81,9 @@ void main() {
       // The option and the value both come from the contract, so a rename
       // on the backend moves this test with it.
       final field = readOrderTicket(orderTicketExample()).fields.first;
-      final other = field.choices.firstWhere((c) => c != field.value);
+      // The open menu is scrolled to the selection; its neighbour is visible.
+      final index = field.choices.indexOf(field.value);
+      final other = field.choices[(index + 1) % field.choices.length];
 
       await tester.tap(find.byType(DropdownButtonFormField<String>).first);
       await tester.pumpAndSettle();

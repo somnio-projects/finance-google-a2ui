@@ -1,5 +1,6 @@
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/router/app_router.dart';
 import 'package:finance_core/finance_core.dart';
@@ -16,7 +17,8 @@ void main() {
     test('exposes the portfolio path as a constant', () {
       // The path literal lives in one place, so a rename is one edit and a
       // typo is a compile error rather than a blank screen.
-      expect(AppRoutes.portfolio, equals('/'));
+      expect(AppRoutes.home, equals('/'));
+      expect(AppRoutes.portfolio, equals('/holdings'));
     });
 
     test('exposes the conversation path as a constant', () {
@@ -35,24 +37,38 @@ void main() {
           views: any(named: 'views'),
           options: any(named: 'options'),
         ),
-      ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
+      ).thenAnswer(
+        (_) async => Ok<RenderedViews>(renderedViews(extraViews: homeViews())),
+      );
     });
 
-    test('declares the portfolio route', () {
+    test('declares every tab and the order ticket', () {
       final router = buildRouter();
-      final paths = router.configuration.routes.whereType<GoRoute>().map(
-        (route) => route.path,
+      final paths = <String>{
+        for (final route in router.configuration.routes)
+          if (route is GoRoute) route.path,
+        for (final route in router.configuration.routes)
+          if (route is StatefulShellRoute)
+            for (final branch in route.branches)
+              for (final leaf in branch.routes.whereType<GoRoute>()) leaf.path,
+      };
+      expect(
+        paths,
+        containsAll(<String>[
+          AppRoutes.home,
+          AppRoutes.portfolio,
+          AppRoutes.activity,
+          AppRoutes.conversation,
+          AppRoutes.orderTicket,
+        ]),
       );
-      expect(paths, contains(AppRoutes.portfolio));
       router.dispose();
     });
 
-    testWidgets('places the portfolio surface at the root location', (
-      tester,
-    ) async {
+    testWidgets('places the home surface at the root location', (tester) async {
       await pumpRouter(tester, buildRouter(), repository: repository);
       await tester.pumpAndSettle();
-      expect(find.byType(PortfolioViewsPage), findsOneWidget);
+      expect(find.byType(HomePage), findsOneWidget);
     });
 
     testWidgets('honours an explicit initial location', (tester) async {
@@ -77,7 +93,7 @@ void main() {
       final registry = buildComponentRegistry();
       await pumpRouter(
         tester,
-        buildRouter(),
+        buildRouter(initialLocation: AppRoutes.portfolio),
         repository: repository,
         registry: registry,
       );
@@ -122,7 +138,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         router.routerDelegate.currentConfiguration.uri.toString(),
-        equals(AppRoutes.portfolio),
+        equals(AppRoutes.home),
       );
     });
   });

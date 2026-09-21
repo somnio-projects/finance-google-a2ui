@@ -42,14 +42,14 @@ void main() {
     ) async {
       await pumpCard(tester, component.read(ViewPayload.fromJson(example)));
       expect(find.text('Tax lots this sale consumes'), findsOneWidget);
-      expect(find.text('Sell 0.5 BTC under FIFO'), findsOneWidget);
-      expect(find.text(r'$18,060.00'), findsOneWidget);
-      expect(find.text(r'$26,985.00'), findsOneWidget);
-      expect(find.text(r'+$8,925.00'), findsOneWidget);
-      expect(find.text(r'$4,560.00'), findsOneWidget);
-      expect(find.text(r'+$580.00'), findsOneWidget);
+      expect(find.text('Sell 75 NVDA under FIFO'), findsOneWidget);
+      expect(find.text(r'$45,600.00'), findsOneWidget);
+      expect(find.text(r'$72,279.60'), findsOneWidget);
+      expect(find.text(r'+$26,679.60'), findsOneWidget);
+      expect(find.text(r'$14,400.00'), findsOneWidget);
+      expect(find.text(r'+$3,669.90'), findsOneWidget);
       expect(find.text('Realised P/L'), findsOneWidget);
-      expect(find.text(r'+$9,505.00'), findsOneWidget);
+      expect(find.text(r'+$30,349.50'), findsOneWidget);
       expect(find.text('2025-01-13'), findsOneWidget);
     });
 
@@ -58,12 +58,12 @@ void main() {
       // beside a display string, must not reach a `Text`.
       await pumpCard(tester, component.read(ViewPayload.fromJson(example)));
       for (final raw in <String>[
-        '0.42',
-        '0.08',
-        '18060.00',
-        '8925.000000',
-        '9505.000000',
-        '26985.000000',
+        '60.0000',
+        '15.0000',
+        '45600.00',
+        '26679.600000',
+        '30349.500000',
+        '72279.600000',
       ]) {
         expect(find.text(raw), findsNothing, reason: '$raw is a raw figure');
       }
@@ -109,7 +109,7 @@ void main() {
       expect(find.byType(TaxLotRowTile), findsNothing);
       expect(find.byType(TaxLotColumnHeaders), findsNothing);
       // The realised result is still the answer to the question asked.
-      expect(find.text(r'+$9,505.00'), findsOneWidget);
+      expect(find.text(r'+$30,349.50'), findsOneWidget);
     });
 
     testWidgets('renders in the dark theme', (tester) async {

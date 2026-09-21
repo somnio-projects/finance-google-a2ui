@@ -62,7 +62,7 @@ def test_the_document_prints_the_inventory_and_the_example_of_each_projection() 
 
 
 def test_a_read_only_projection_says_so_rather_than_leaving_the_cell_blank() -> None:
-    document = contract_document([REGISTRY.get("holdings.allocation.v1")])
+    document = contract_document([REGISTRY.get("attribution.waterfall.v1")])
 
     assert "**Editable fields:** read-only" in document
 

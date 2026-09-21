@@ -71,7 +71,7 @@ def test_the_snapshot_carries_every_field_path_of_the_payload() -> None:
 
 def test_a_field_that_drives_nothing_reads_null_rather_than_an_em_dash() -> None:
     """A client compares against null, never against a punctuation mark."""
-    read_only = entries()["holdings.allocation.v1"]["fields"]
+    read_only = entries()["attribution.waterfall.v1"]["fields"]
 
     assert all(field["input"] is None for field in read_only)
     assert not any(NONE in (field["input"], field["state"]) for field in read_only)

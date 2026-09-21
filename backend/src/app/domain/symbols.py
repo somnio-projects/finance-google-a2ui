@@ -11,7 +11,7 @@ it. Both live here so a second caller cannot invent a third spelling of the
 same rule (spec 0014 OD-13).
 """
 
-from typing import Annotated, Final
+from typing import Annotated, Final, Literal
 
 from pydantic import StringConstraints
 
@@ -44,10 +44,34 @@ def normalize_symbol(symbol: str) -> str:
     return symbol.strip().upper()
 
 
+#: Every ticker in ``market_data.REFERENCE_ROWS`` — what an order or a payoff
+#: may name. One declaration, shared by both options models: an unknown ticker
+#: is a 422 at the boundary, not a lookup miss deeper in.
+Symbol = Literal[
+    "AAPL",
+    "AGG",
+    "AMD",
+    "AVGO",
+    "BND",
+    "GLD",
+    "JNJ",
+    "MSFT",
+    "NVDA",
+    "PG",
+    "PYPL",
+    "TIP",
+    "TSLA",
+    "USD",
+    "VNQ",
+    "VOO",
+    "XOM",
+]
+
 __all__ = [
     "MAX_TICKER",
     "SYMBOL_PATTERN",
     "TICKER_PATTERN",
+    "Symbol",
     "Ticker",
     "normalize_symbol",
 ]

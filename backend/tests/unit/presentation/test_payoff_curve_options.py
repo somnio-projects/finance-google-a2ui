@@ -38,7 +38,7 @@ def test_the_option_domain_is_exactly_the_curated_market_reference() -> None:
 def test_the_defaults_describe_a_renderable_order() -> None:
     filled = PayoffCurveOptions()
 
-    assert (filled.symbol, filled.size, filled.size_in) == ("SOL", 500, "usd")
+    assert (filled.symbol, filled.size, filled.size_in) == ("VOO", 500, "usd")
     assert (filled.side, filled.range_pct, filled.steps) == ("buy", 30, 12)
 
 
@@ -46,7 +46,7 @@ def test_the_defaults_describe_a_renderable_order() -> None:
     ("supplied", "named"),
     [
         ({"symbol": "XXX"}, "symbol"),
-        ({"symbol": "sol"}, "symbol"),
+        ({"symbol": "voo"}, "symbol"),
         ({"size": 0}, "size"),
         ({"size": 1_000_000_001}, "size"),
         ({"size_in": "eur"}, "size_in"),
@@ -97,7 +97,7 @@ def test_the_line_is_bounded_by_the_step_limit(portfolio: Portfolio) -> None:
 
 
 def test_the_same_options_twice_give_the_same_payload(portfolio: Portfolio) -> None:
-    options = PayoffCurveOptions(symbol="DOGE", range_pct=5, steps=25, side="sell")
+    options = PayoffCurveOptions(symbol="XOM", range_pct=5, steps=25, side="sell")
 
     first = render(portfolio, options)
     second = render(portfolio, options)
@@ -110,7 +110,7 @@ def test_the_generated_prompt_teaches_every_bound_truthfully() -> None:
     text = prompt_fragment(REGISTRY.all())
 
     assert f"- {VIEW_ID} — {PROJECTION.summary}" in text
-    assert "symbol (one of 'ADA'" in text
+    assert "symbol (one of 'AAPL'" in text
     assert "size (integer 1..1000000000)" in text
     assert "size_in (one of 'units', 'usd')" in text
     assert "side (one of 'buy', 'sell')" in text

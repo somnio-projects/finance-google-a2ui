@@ -36,7 +36,7 @@ def test_two_views_are_rendered_in_one_request(views_client: TestClient) -> None
     assert body["views"][ALLOCATION]["view"] == ALLOCATION
     assert body["views"][WATERFALL]["view"] == WATERFALL
     assert body["portfolio_id"] == "current"
-    assert body["views"][ALLOCATION]["total"]["amount"]["display"] == "$65,038.60"
+    assert body["views"][ALLOCATION]["total"]["amount"]["display"] == "$482,915.20"
 
 
 def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> None:
@@ -45,7 +45,7 @@ def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> N
     )
     assert response.status_code == 200
     categories = response.json()["views"][ALLOCATION]["categories"]
-    assert [row["key"] for row in categories] == ["DOGE", "other"]
+    assert [row["key"] for row in categories] == ["TIP", "other"]
 
 
 def test_no_view_lets_the_selection_rule_choose(views_client: TestClient) -> None:

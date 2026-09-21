@@ -1,3 +1,4 @@
+import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend_row.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class HoldingsAllocationLegend extends StatelessWidget {
     required this.categories,
     this.onCategoryTap,
     this.selectedIndex,
+    this.swatches,
     super.key,
   });
 
@@ -38,6 +40,9 @@ class HoldingsAllocationLegend extends StatelessWidget {
   /// The row drawn as selected, if any.
   final int? selectedIndex;
 
+  /// The ramp the ring uses; the palette's default ramp when null.
+  final List<Color>? swatches;
+
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
@@ -49,6 +54,9 @@ class HoldingsAllocationLegend extends StatelessWidget {
           index: index,
           selected: index == selectedIndex,
           onTap: onCategoryTap,
+          color: (swatches ?? AllocationPalette.of(context).swatches).elementAt(
+            index % (swatches ?? AllocationPalette.of(context).swatches).length,
+          ),
         ),
     ],
   );

@@ -86,7 +86,7 @@ def _action_call(action: str = DRILL, **args: object) -> dict[str, object]:
                 "parts": [
                     {
                         "kind": "data",
-                        "data": {"action": action, "args": args or {"driver": "DOGE"}},
+                        "data": {"action": action, "args": args or {"driver": "XOM"}},
                     }
                 ],
                 "messageId": "m-1",

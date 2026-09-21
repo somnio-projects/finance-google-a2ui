@@ -30,8 +30,8 @@ void main() {
     test('binds every lot the backend sent, in arrival order', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.lots.map((lot) => lot.label).toList(), <String>[
-        'lot-btc-01',
-        'lot-btc-02',
+        'lot-nvda-01',
+        'lot-nvda-02',
       ]);
       expect(data.lots.map((lot) => lot.term).toList(), <TaxLotTerm>[
         TaxLotTerm.long,
@@ -42,12 +42,12 @@ void main() {
     test('binds every figure from a display string', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.title, 'Tax lots this sale consumes');
-      expect(data.subtitle, 'Sell 0.5 BTC under FIFO');
+      expect(data.subtitle, 'Sell 75 NVDA under FIFO');
       expect(data.realizedLabel, 'Realised P/L');
-      expect(data.realizedDisplay, r'+$9,505.00');
-      expect(data.lots.first.costBasisDisplay, r'$18,060.00');
-      expect(data.lots.first.proceedsDisplay, r'$26,985.00');
-      expect(data.lots.first.gainLossDisplay, r'+$8,925.00');
+      expect(data.realizedDisplay, r'+$30,349.50');
+      expect(data.lots.first.costBasisDisplay, r'$45,600.00');
+      expect(data.lots.first.proceedsDisplay, r'$72,279.60');
+      expect(data.lots.first.gainLossDisplay, r'+$26,679.60');
       expect(data.lots.first.acquiredOn, '2025-01-13');
     });
 
@@ -59,7 +59,7 @@ void main() {
       ]);
       expect(
         data.splits.map((split) => split.realizedDisplay).toList(),
-        <String>[r'+$580.00', r'+$8,925.00'],
+        <String>[r'+$3,669.90', r'+$26,679.60'],
       );
     });
 
@@ -111,9 +111,9 @@ void main() {
           lot.label,
         ],
       ];
-      expect(bound, isNot(contains('0.42')));
-      expect(bound, isNot(contains('18060.00')));
-      expect(bound, isNot(contains('8925.000000')));
+      expect(bound, isNot(contains('60.0000')));
+      expect(bound, isNot(contains('45600.00')));
+      expect(bound, isNot(contains('26679.600000')));
     });
 
     testWidgets('renders through the host the app really uses', (tester) async {

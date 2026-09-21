@@ -12,6 +12,13 @@ import 'order_ticket_harness.dart';
 /// Split from `order_ticket_inputs_test.dart` along the seam that was already
 /// there: that file covers *how a control is presented*, this one covers
 /// *what it will accept and send*. AC-6 and N-8 live here.
+/// The choice after the current value — on screen once the menu opens,
+/// where the first choice of a long list is not.
+String neighbourOf(OrderTicketField field) {
+  final index = field.choices.indexOf(field.value);
+  return field.choices[(index + 1) % field.choices.length];
+}
+
 void main() {
   group('the declared bound', () {
     const component = OrderTicketComponent();
@@ -42,11 +49,13 @@ void main() {
       final field = fields.firstWhere(
         (f) => f.control == OrderTicketControl.choice,
       );
-      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
-      await tester.pumpAndSettle();
-      for (final choice in field.choices) {
-        expect(find.text(choice), findsWidgets);
-      }
+      // The open menu scrolls to the selected item and builds lazily, so
+      // the declared list is read off the button rather than off the screen.
+      final button = tester.widget<DropdownButton<String>>(
+        find.byType(DropdownButton<String>).first,
+      );
+      expect(button.items!.map((item) => item.value), field.choices);
+      expect(button.value, field.value);
     });
 
     testWidgets('sends the option of the same name when a choice is picked', (
@@ -58,7 +67,7 @@ void main() {
       final field = fields.firstWhere(
         (f) => f.control == OrderTicketControl.choice,
       );
-      final other = field.choices.firstWhere((c) => c != field.value);
+      final other = neighbourOf(field);
       await tester.tap(find.byType(DropdownButtonFormField<String>).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(other).last);

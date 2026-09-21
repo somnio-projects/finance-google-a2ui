@@ -38,10 +38,10 @@ def test_the_drivers_offered_are_exactly_the_market_reference() -> None:
 
 def test_a_drill_composes_the_backend_sentence_around_the_chosen_driver() -> None:
     """AC-3 — the caller supplies a value, never the sentence."""
-    prompt = composed_prompt(DRILL, {"driver": "DOGE"})
+    prompt = composed_prompt(DRILL, {"driver": "XOM"})
 
     assert prompt == (
-        "Break down the contribution of DOGE in more detail for the same "
+        "Break down the contribution of XOM in more detail for the same "
         "window, and show the result."
     )
 

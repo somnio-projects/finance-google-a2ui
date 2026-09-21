@@ -56,7 +56,7 @@ void main() {
       expect(find.text('what moved?'), findsOneWidget);
       expect(find.text('Bitcoin is the largest holding.'), findsOneWidget);
       expect(find.byType(ComponentHost), findsOneWidget);
-      expect(find.text(r'$65,038.60'), findsOneWidget);
+      expect(find.text(r'$482,915.20'), findsOneWidget);
       // N-4: the raw member behind that display string never reaches a label.
       expect(find.textContaining('65038.6'), findsNothing);
     });

@@ -66,7 +66,7 @@ class ActionData(BaseModel):
             "Scalar arguments, validated against the action's own bounded "
             "model. No nested objects, no arrays."
         ),
-        examples=[{"driver": "DOGE"}],
+        examples=[{"driver": "XOM"}],
     )
 
 
@@ -93,7 +93,7 @@ class DataPart(BaseModel):
     kind: Literal["data"] = Field(description="Part discriminator.", examples=["data"])
     data: ActionData = Field(
         description="The registered action and its validated-elsewhere arguments.",
-        examples=[{"action": "drill.attribution.v1", "args": {"driver": "DOGE"}}],
+        examples=[{"action": "drill.attribution.v1", "args": {"driver": "XOM"}}],
     )
 
 

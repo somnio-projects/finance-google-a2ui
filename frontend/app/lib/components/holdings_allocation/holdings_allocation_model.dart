@@ -1,45 +1,41 @@
 import 'package:equatable/equatable.dart';
 
-/// One allocation category, with everything the card draws.
+/// One slice of the allocation, exactly as the payload's `categories[]` says.
 ///
-/// The two figures travel as the backend's own `*.display` strings and the
-/// share travels as a raw `double`. They are **disjoint on purpose**:
-/// [weight] is only ever an angle and [weightDisplay] is only ever text, so
-/// there is no expression anywhere in this component that turns one into the
-/// other. That is prohibition N-1/N-2 made structural rather than remembered
-/// — the same shape `AttributionStep` uses.
+/// Every string is a `*.display` the backend formatted; [weight] is the one
+/// raw member, read only to sweep an arc and size a bar (N-4).
 class AllocationCategory extends Equatable {
-  /// Creates a category.
+  /// Creates the slice.
   const AllocationCategory({
     required this.key,
     required this.label,
     required this.valueDisplay,
     required this.weightDisplay,
     required this.weight,
+    this.changeDisplay = '',
+    this.trend = 'flat',
   });
 
-  /// The payload's `key`, e.g. `BTC` — or `other` for the residual bucket the
-  /// backend adds and the client never computes.
+  /// Stable id (`NVDA`, `equities`, `other`).
   final String key;
 
-  /// The payload's `label`, e.g. `Bitcoin`.
+  /// Words the legend shows.
   final String label;
 
-  /// The payload's `value.display`, e.g. `$38,550.00`. Drawn verbatim.
+  /// `value.display`.
   final String valueDisplay;
 
-  /// The payload's `weight.display`, e.g. `59.27%`. Drawn verbatim.
-  ///
-  /// Never derived from [weight], and never used to derive it. The backend
-  /// rounds to the view's `precision` option; recomputing this string here
-  /// would silently disagree with the server at the second decimal.
+  /// `weight.display`.
   final String weightDisplay;
 
-  /// The payload's raw `weight.value`, **for arc geometry only**.
-  ///
-  /// Read through `ViewPayload.geometry`, the one number seam (ADR-L D-14).
-  /// It becomes a sweep in radians and reaches no `Text`.
+  /// `weight.value`, as geometry.
   final double weight;
+
+  /// `change.display` — the day change, signed by the backend.
+  final String changeDisplay;
+
+  /// `trend`: `up`, `down` or `flat`; picks the glyph and the tone.
+  final String trend;
 
   @override
   List<Object?> get props => <Object?>[
@@ -48,10 +44,43 @@ class AllocationCategory extends Equatable {
     valueDisplay,
     weightDisplay,
     weight,
+    changeDisplay,
+    trend,
   ];
 }
 
-/// Everything `holdings.allocation.v1` renders.
+/// The all-time gain block under the total (`total_gain`).
+class AllocationGain extends Equatable {
+  /// Creates the block.
+  const AllocationGain({
+    required this.amountDisplay,
+    required this.percentDisplay,
+    required this.trend,
+    required this.period,
+  });
+
+  /// `total_gain.amount.display`, e.g. `+$61,204`.
+  final String amountDisplay;
+
+  /// `total_gain.percent.display`, e.g. `+14.5%`.
+  final String percentDisplay;
+
+  /// `total_gain.trend`.
+  final String trend;
+
+  /// `total_gain.period`, e.g. `all-time`.
+  final String period;
+
+  @override
+  List<Object?> get props => <Object?>[
+    amountDisplay,
+    percentDisplay,
+    trend,
+    period,
+  ];
+}
+
+/// Everything `holdings.allocation.v1` puts on screen.
 class AllocationData extends Equatable {
   /// Creates the model.
   const AllocationData({
@@ -59,27 +88,45 @@ class AllocationData extends Equatable {
     required this.totalLabel,
     required this.totalDisplay,
     required this.categories,
+    this.groupBy = 'holding',
+    this.centerCount = '',
+    this.centerUnit = '',
+    this.totalGain,
+    this.headline = true,
   });
 
-  /// The payload's `title`, e.g. `Allocation by holding`.
+  /// `title`.
   final String title;
 
-  /// The payload's `total.label`, e.g. `Total market value`.
+  /// `total.label`.
   final String totalLabel;
 
-  /// The payload's `total.amount.display`, e.g. `$65,038.60`.
+  /// `total.amount.display`.
   final String totalDisplay;
 
-  /// The payload's `categories`, in the order the backend sent them (N-10).
+  /// `categories[]`, in the backend's order.
   final List<AllocationCategory> categories;
 
-  /// Whether the backend sent no categories at all — an empty portfolio.
-  ///
-  /// The catalog declares `categories` with `state: "empty"`, so this is a
-  /// state the contract has, not one the client invented.
+  /// `group_by` — which ramp the slices take.
+  final String groupBy;
+
+  /// `center.count`, printed in the donut's hole.
+  final String centerCount;
+
+  /// `center.unit`, printed above it (`Classes`, `Holdings`).
+  final String centerUnit;
+
+  /// The gain block, when the payload carries it.
+  final AllocationGain? totalGain;
+
+  /// Whether the card draws its own title and total — false when a shell
+  /// asked for `headline=false` and draws them itself.
+  final bool headline;
+
+  /// Whether there is anything to draw.
   bool get isEmpty => categories.isEmpty;
 
-  /// The raw shares the donut is swept from, in payload order.
+  /// The shares, for the ring and the bar.
   List<double> get weights => <double>[
     for (final category in categories) category.weight,
   ];
@@ -90,5 +137,10 @@ class AllocationData extends Equatable {
     totalLabel,
     totalDisplay,
     categories,
+    groupBy,
+    centerCount,
+    centerUnit,
+    totalGain,
+    headline,
   ];
 }

@@ -1,6 +1,6 @@
 import 'package:finance_app/app/finance_app.dart';
 import 'package:finance_app/bootstrap.dart';
-import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
+import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +26,9 @@ void main() {
           views: any(named: 'views'),
           options: any(named: 'options'),
         ),
-      ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
+      ).thenAnswer(
+        (_) async => Ok<RenderedViews>(renderedViews(extraViews: homeViews())),
+      );
     });
 
     Future<void> pumpTree(WidgetTester tester) => tester.pumpWidget(
@@ -40,7 +42,7 @@ void main() {
       await pumpTree(tester);
       await tester.pumpAndSettle();
 
-      final context = tester.element(find.byType(PortfolioViewsPage));
+      final context = tester.element(find.byType(HomePage));
       expect(Theme.of(context).useMaterial3, isTrue);
     });
 
@@ -50,7 +52,7 @@ void main() {
       await pumpTree(tester);
       await tester.pumpAndSettle();
 
-      final context = tester.element(find.byType(PortfolioViewsPage));
+      final context = tester.element(find.byType(HomePage));
       expect(RepositoryProvider.of<AgentRepository>(context), isNotNull);
     });
   });

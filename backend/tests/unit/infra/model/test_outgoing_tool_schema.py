@@ -75,7 +75,7 @@ def test_the_finder_would_catch_a_refused_keyword() -> None:
     root = {"additionalProperties": False}
     assert rejected_keys_in(root) == {"additionalProperties"}
     assert rejected_keys_in(
-        {"properties": {"symbols": {"items": {"examples": ["BTC"]}}}}
+        {"properties": {"symbols": {"items": {"examples": ["NVDA"]}}}}
     ) == {"examples"}
     assert rejected_keys_in([{"anyOf": [{"const": "SELL"}]}]) == {"const"}
     assert rejected_keys_in({"type": "string", "maxLength": 10}) == set()

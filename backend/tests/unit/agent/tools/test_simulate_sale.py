@@ -22,7 +22,7 @@ from tests.unit.agent.tools.sale_fixtures import (
     lots,
     tool,
 )
-from tests.unit.agent.tools.sale_payload import FIFO_HALF_BITCOIN
+from tests.unit.agent.tools.sale_payload import FIFO_SEVENTY_FIVE_NVDA
 
 __all__ = ["tool"]
 
@@ -65,9 +65,9 @@ async def test_the_published_example_is_the_answer_it_publishes(
     outcome = await tool.run(HALF_A_BITCOIN, tool_context)
 
     assert outcome.data["asOf"] == portfolio.as_of.isoformat()
-    assert outcome.data["summary"] == FIFO_HALF_BITCOIN["summary"]
-    assert outcome.data["remaining"] == FIFO_HALF_BITCOIN["remaining"]
-    assert outcome.data["lots"] == FIFO_HALF_BITCOIN["lots"]
+    assert outcome.data["summary"] == FIFO_SEVENTY_FIVE_NVDA["summary"]
+    assert outcome.data["remaining"] == FIFO_SEVENTY_FIVE_NVDA["remaining"]
+    assert outcome.data["lots"] == FIFO_SEVENTY_FIVE_NVDA["lots"]
 
 
 async def test_the_summary_is_the_domain_s_own_answer(
@@ -75,7 +75,7 @@ async def test_the_summary_is_the_domain_s_own_answer(
 ) -> None:
     """AC-2 — the payload reports the walk; it does not recompute it."""
     portfolio = await tool_context.portfolios.get(tool_context.subject)
-    expected = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.5"))
+    expected = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
 
     outcome = await tool.run(HALF_A_BITCOIN, tool_context)
 
@@ -128,16 +128,16 @@ async def test_the_lot_method_changes_which_lots_the_answer_names(
 ) -> None:
     """AC-3 at the tool's boundary — the argument reaches the walk.
 
-    ETH rather than BTC: its older lot is also its dearer one, so FIFO and
+    AAPL rather than NVDA: its older lot is also its dearer one, so FIFO and
     LIFO consume different lots and the difference is visible in one call.
     """
-    oldest_first = await tool.run({"symbol": "ETH", "quantity": "2.5"}, tool_context)
+    oldest_first = await tool.run({"symbol": "AAPL", "quantity": "150"}, tool_context)
     newest_first = await tool.run(
-        {"symbol": "ETH", "quantity": "2.5", "lot_method": "LIFO"}, tool_context
+        {"symbol": "AAPL", "quantity": "150", "lot_method": "LIFO"}, tool_context
     )
 
-    assert [row["lotId"] for row in lots(oldest_first.data["lots"])] == ["lot-eth-01"]
+    assert [row["lotId"] for row in lots(oldest_first.data["lots"])] == ["lot-aapl-01"]
     assert [row["lotId"] for row in lots(newest_first.data["lots"])] == [
-        "lot-eth-02",
-        "lot-eth-01",
+        "lot-aapl-02",
+        "lot-aapl-01",
     ]

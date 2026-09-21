@@ -139,18 +139,19 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `04a53053167d` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `c4758d6ecbe3` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
-| [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `bd097a489112` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `cc0144f00eda` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `fe62a7725690` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `d88ca1d6600e` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `3bb3ee56b3d7` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
+| [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `7066577b5390` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `a7389adf90d7` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `6f73ed9fad79` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `c960b55bd552` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `attribution.waterfall.v1`
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `04a53053167d`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `3bb3ee56b3d7`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -199,7 +200,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | `actions[].label` | string ≤64 chars | required | `text` | — | — |
 | `actions[].arg` | string ≤32 chars | required | `text` | — | — |
 | `actions[].control` | enum choice / text | required | `enum` | variant | — |
-| `actions[].choices` | array ≤16 items | default `[]` | `container` | empty | — |
+| `actions[].choices` | array ≤24 items | default `[]` | `container` | empty | — |
 | `actions[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
 
 ### When the agent picks this
@@ -220,96 +221,213 @@ _This surface sends nothing back: tapping it starts no turn._
   "start": {
     "label": "Cost basis",
     "amount": {
-      "amount": "56925.00",
-      "display": "$56,925.00"
+      "amount": "421711.15",
+      "display": "$421,711.15"
     }
   },
   "end": {
     "label": "Market value",
     "amount": {
-      "amount": "65038.600000000000",
-      "display": "$65,038.60"
+      "amount": "482915.200000",
+      "display": "$482,915.20"
     }
   },
   "buckets": [
     {
-      "label": "Bitcoin",
-      "key": "BTC",
+      "label": "NVIDIA Corp",
+      "key": "NVDA",
       "delta": {
-        "amount": "10230.000000",
-        "display": "$10,230.00"
+        "amount": "34019.400000",
+        "display": "$34,019.40"
       },
       "cumulative": {
-        "amount": "67155.000000",
-        "display": "$67,155.00"
+        "amount": "455730.550000",
+        "display": "$455,730.55"
       },
       "direction": "up"
     },
     {
-      "label": "Ethereum",
-      "key": "ETH",
+      "label": "Apple Inc.",
+      "key": "AAPL",
       "delta": {
-        "amount": "-2797.500000",
-        "display": "-$2,797.50"
+        "amount": "29334.000000",
+        "display": "$29,334.00"
       },
       "cumulative": {
-        "amount": "64357.500000",
-        "display": "$64,357.50"
-      },
-      "direction": "down"
-    },
-    {
-      "label": "Solana",
-      "key": "SOL",
-      "delta": {
-        "amount": "1496.000000",
-        "display": "$1,496.00"
-      },
-      "cumulative": {
-        "amount": "65853.500000",
-        "display": "$65,853.50"
+        "amount": "485064.550000",
+        "display": "$485,064.55"
       },
       "direction": "up"
     },
     {
-      "label": "Chainlink",
-      "key": "LINK",
+      "label": "Microsoft Corp",
+      "key": "MSFT",
       "delta": {
-        "amount": "-662.500000",
-        "display": "-$662.50"
+        "amount": "12958.000000",
+        "display": "$12,958.00"
       },
       "cumulative": {
-        "amount": "65191.000000",
-        "display": "$65,191.00"
+        "amount": "498022.550000",
+        "display": "$498,022.55"
+      },
+      "direction": "up"
+    },
+    {
+      "label": "Vanguard S&P 500 ETF",
+      "key": "VOO",
+      "delta": {
+        "amount": "10701.500000",
+        "display": "$10,701.50"
+      },
+      "cumulative": {
+        "amount": "508724.050000",
+        "display": "$508,724.05"
+      },
+      "direction": "up"
+    },
+    {
+      "label": "SPDR Gold Shares",
+      "key": "GLD",
+      "delta": {
+        "amount": "-10500.000000",
+        "display": "-$10,500.00"
+      },
+      "cumulative": {
+        "amount": "498224.050000",
+        "display": "$498,224.05"
       },
       "direction": "down"
     },
     {
-      "label": "Dogecoin",
-      "key": "DOGE",
+      "label": "PayPal Holdings",
+      "key": "PYPL",
       "delta": {
-        "amount": "-152.400000000000",
-        "display": "-$152.40"
+        "amount": "-5825.000000",
+        "display": "-$5,825.00"
       },
       "cumulative": {
-        "amount": "65038.600000000000",
-        "display": "$65,038.60"
+        "amount": "492399.050000",
+        "display": "$492,399.05"
       },
       "direction": "down"
+    },
+    {
+      "label": "iShares Core US Aggregate Bond",
+      "key": "AGG",
+      "delta": {
+        "amount": "-4200.000000",
+        "display": "-$4,200.00"
+      },
+      "cumulative": {
+        "amount": "488199.050000",
+        "display": "$488,199.05"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Vanguard Total Bond",
+      "key": "BND",
+      "delta": {
+        "amount": "-1674.000000",
+        "display": "-$1,674.00"
+      },
+      "cumulative": {
+        "amount": "486525.050000",
+        "display": "$486,525.05"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Vanguard Real Estate",
+      "key": "VNQ",
+      "delta": {
+        "amount": "-1455.450000",
+        "display": "-$1,455.45"
+      },
+      "cumulative": {
+        "amount": "485069.600000",
+        "display": "$485,069.60"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Exxon Mobil",
+      "key": "XOM",
+      "delta": {
+        "amount": "-1011.400000",
+        "display": "-$1,011.40"
+      },
+      "cumulative": {
+        "amount": "484058.200000",
+        "display": "$484,058.20"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Johnson & Johnson",
+      "key": "JNJ",
+      "delta": {
+        "amount": "-450.000000",
+        "display": "-$450.00"
+      },
+      "cumulative": {
+        "amount": "483608.200000",
+        "display": "$483,608.20"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "iShares TIPS Bond",
+      "key": "TIP",
+      "delta": {
+        "amount": "-393.000000",
+        "display": "-$393.00"
+      },
+      "cumulative": {
+        "amount": "483215.200000",
+        "display": "$483,215.20"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Procter & Gamble",
+      "key": "PG",
+      "delta": {
+        "amount": "-300.000000",
+        "display": "-$300.00"
+      },
+      "cumulative": {
+        "amount": "482915.200000",
+        "display": "$482,915.20"
+      },
+      "direction": "down"
+    },
+    {
+      "label": "Cash & sweep",
+      "key": "USD",
+      "delta": {
+        "amount": "0.000000",
+        "display": "$0.00"
+      },
+      "cumulative": {
+        "amount": "482915.200000",
+        "display": "$482,915.20"
+      },
+      "direction": "up"
     }
   ],
   "annotations": [
     {
-      "label": "Bitcoin",
-      "text": "$10,230.00"
+      "label": "NVIDIA Corp",
+      "text": "$34,019.40"
     },
     {
-      "label": "Ethereum",
-      "text": "-$2,797.50"
+      "label": "Apple Inc.",
+      "text": "$29,334.00"
     },
     {
       "label": "Net",
-      "text": "$8,113.60"
+      "text": "$61,204.05"
     }
   ],
   "actions": []
@@ -318,13 +436,13 @@ _This surface sends nothing back: tapping it starts no turn._
 
 ## `holdings.allocation.v1`
 
-> Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.
+> Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `c4758d6ecbe3`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `fa2cf78e5248`
 - **Component:** `HoldingsSummary`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
-- **Editable fields:** read-only
+- **Editable fields:** `group_by`
 
 ### Options
 
@@ -333,8 +451,11 @@ _This surface sends nothing back: tapping it starts no turn._
 | `top_n` | integer 1..20 | integer 1..20 | `5` | How many rows to render before the residual bucket. |
 | `include_other` | boolean | true or false | `true` | Aggregate everything beyond `top_n` into an `Other` row. |
 | `sort` | enum value_desc / value_asc / label | one of 'value_desc', 'value_asc', 'label' | `"value_desc"` | Row order: by value descending, ascending, or by label. |
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `group_by` | enum holding / asset_class / sector | one of 'holding', 'asset_class', 'sector' | `"holding"` | How the donut is sliced. `holding` is one slice per position; `asset_class` folds them into Equities, Bonds, Cash and Alternatives; `sector` folds the equities by sector. |
+| `headline` | boolean | true or false | `true` | Carry the total and all-time gain block. The Home card draws the donut under the shell's own hero, so it asks for `false`. |
 
 ### Field inventory
 
@@ -342,11 +463,16 @@ _This surface sends nothing back: tapping it starts no turn._
 |---|---|---|---|---|---|
 | `view` | const 'holdings.allocation.v1' | default `"holdings.allocation.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
+| `group_by` | enum holding / asset_class / sector | required | `enum` | variant | input · one of 'holding', 'asset_class', 'sector' |
 | `total` | object | required | `container` | — | — |
 | `total.label` | string ≤64 chars | required | `text` | — | — |
 | `total.amount` | object | required | `container` | — | — |
 | `total.amount.amount` | decimal | required | `raw` | — | — |
 | `total.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `total_gain` | object | default `null` | `text` | null | — |
+| `center` | object | required | `container` | — | — |
+| `center.count` | string ≤4 chars | required | `text` | — | — |
+| `center.unit` | string ≤16 chars | required | `text` | — | — |
 | `categories` | array | required | `container` | empty | — |
 | `categories[].label` | string ≤64 chars | required | `text` | — | — |
 | `categories[].key` | string ≤32 chars | required | `text` | — | — |
@@ -356,6 +482,10 @@ _This surface sends nothing back: tapping it starts no turn._
 | `categories[].weight` | object | required | `container` | — | — |
 | `categories[].weight.value` | decimal | required | `raw` | — | — |
 | `categories[].weight.display` | string ≤16 chars | required | `display` | — | — |
+| `categories[].change` | object | required | `container` | — | — |
+| `categories[].change.value` | decimal | required | `raw` | — | — |
+| `categories[].change.display` | string ≤16 chars | required | `display` | — | — |
+| `categories[].trend` | enum up / down / flat | required | `enum` | variant | — |
 
 ### When the agent picks this
 
@@ -371,73 +501,132 @@ _This surface sends nothing back: tapping it starts no turn._
 {
   "view": "holdings.allocation.v1",
   "title": "Allocation by holding",
+  "group_by": "holding",
   "total": {
     "label": "Total market value",
     "amount": {
-      "amount": "65038.600000000000",
-      "display": "$65,038.60"
+      "amount": "482915.200000",
+      "display": "$482,915.20"
     }
+  },
+  "total_gain": {
+    "amount": {
+      "amount": "61204.050000",
+      "display": "+$61,204"
+    },
+    "percent": {
+      "value": "0.1451326340316114477883736297",
+      "display": "+14.5%"
+    },
+    "trend": "up",
+    "period": "all-time"
+  },
+  "center": {
+    "count": "14",
+    "unit": "Holdings"
   },
   "categories": [
     {
-      "label": "Bitcoin",
-      "key": "BTC",
+      "label": "NVIDIA Corp",
+      "key": "NVDA",
       "value": {
-        "amount": "38550.000000",
-        "display": "$38,550.00"
+        "amount": "108419.400000",
+        "display": "$108,419.40"
       },
       "weight": {
-        "value": "0.5927249356535964796290203049",
-        "display": "59.27%"
-      }
+        "value": "0.2245102245694482178237504224",
+        "display": "22.45%"
+      },
+      "change": {
+        "value": "0.04200328691289680823458178358",
+        "display": "+4.2%"
+      },
+      "trend": "up"
     },
     {
-      "label": "Ethereum",
-      "key": "ETH",
+      "label": "Apple Inc.",
+      "key": "AAPL",
       "value": {
-        "amount": "15902.500000",
-        "display": "$15,902.50"
+        "amount": "69954.000000",
+        "display": "$69,954.00"
       },
       "weight": {
-        "value": "0.2445086456350536450661607107",
-        "display": "24.45%"
-      }
+        "value": "0.1448577307154548044874131110",
+        "display": "14.49%"
+      },
+      "change": {
+        "value": "0.01101283385362469649670482137",
+        "display": "+1.1%"
+      },
+      "trend": "up"
     },
     {
-      "label": "Solana",
-      "key": "SOL",
+      "label": "SPDR Gold Shares",
+      "key": "GLD",
       "value": {
-        "amount": "6096.000000",
-        "display": "$6,096.00"
+        "amount": "49500.000000",
+        "display": "$49,500.00"
       },
       "weight": {
-        "value": "0.09372895480530023708997426144",
-        "display": "9.37%"
-      }
+        "value": "0.1025024683422679592607563398",
+        "display": "10.25%"
+      },
+      "change": {
+        "value": "0.01382488479262672811059907834",
+        "display": "+1.4%"
+      },
+      "trend": "up"
     },
     {
-      "label": "Chainlink",
-      "key": "LINK",
+      "label": "Microsoft Corp",
+      "key": "MSFT",
       "value": {
-        "amount": "2962.500000",
-        "display": "$2,962.50"
+        "amount": "46530.000000",
+        "display": "$46,530.00"
       },
       "weight": {
-        "value": "0.04554987345976081895981770825",
-        "display": "4.55%"
-      }
+        "value": "0.09635232024173188170511095944",
+        "display": "9.64%"
+      },
+      "change": {
+        "value": "-0.0005198242049052502244695430273",
+        "display": "-0.1%"
+      },
+      "trend": "down"
     },
     {
-      "label": "Dogecoin",
-      "key": "DOGE",
+      "label": "Vanguard S&P 500 ETF",
+      "key": "VOO",
       "value": {
-        "amount": "1527.600000000000",
-        "display": "$1,527.60"
+        "amount": "44880.000000",
+        "display": "$44,880.00"
       },
       "weight": {
-        "value": "0.02348759044628881925502701473",
-        "display": "2.35%"
-      }
+        "value": "0.09293557129698961639641908145",
+        "display": "9.29%"
+      },
+      "change": {
+        "value": "-0.04864864864864864864864864865",
+        "display": "-4.9%"
+      },
+      "trend": "down"
+    },
+    {
+      "label": "Other",
+      "key": "other",
+      "value": {
+        "amount": "163631.800000",
+        "display": "$163,631.80"
+      },
+      "weight": {
+        "value": "0.3388416848341075203265500858",
+        "display": "33.88%"
+      },
+      "change": {
+        "value": "-0.001513426119213457764354390919",
+        "display": "-0.2%"
+      },
+      "trend": "down"
     }
   ]
 }
@@ -447,7 +636,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.
 
-- **Frozen id:** `order.ticket.v1` · **digest:** `bd097a489112`
+- **Frozen id:** `order.ticket.v1` · **digest:** `d0daddcb8960`
 - **Component:** `OrderTicket`
 - **Payload type:** `OrderTicketPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -460,7 +649,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
-| `symbol` | enum ADA / AVAX / BTC / DOGE / DOT / ETH / LINK / SOL | one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' | `"BTC"` | Asset the order is written for, from the market reference. |
+| `symbol` | enum AAPL / AGG / AMD / AVGO / BND / GLD / JNJ / MSFT / NVDA / PG / PYPL / TIP / TSLA / USD / VNQ / VOO / XOM | one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' | `"NVDA"` | Asset the order is written for, from the market reference. |
 | `side` | enum buy / sell | one of 'buy', 'sell' | `"buy"` | Which way the order goes; `sell` disposes of units held. |
 | `size` | string | string matching ^[0-9]{1,9}(\.[0-9]{1,8})?$ | `"1"` | How big the order is, as a decimal string (ADR-E D-5). |
 | `size_in` | enum units / usd | one of 'units', 'usd' | `"units"` | What `size` counts: units of the asset, or US dollars. |
@@ -471,7 +660,7 @@ _This surface sends nothing back: tapping it starts no turn._
 |---|---|---|---|---|---|
 | `view` | const 'order.ticket.v1' | default `"order.ticket.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
-| `symbol` | string ≤10 chars | required | `text` | — | input · one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' |
+| `symbol` | string ≤10 chars | required | `text` | — | input · one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' |
 | `name` | string ≤64 chars | required | `text` | — | — |
 | `side` | enum buy / sell | required | `enum` | variant | input · one of 'buy', 'sell' |
 | `size` | string ≤32 chars | required | `text` | — | input · string matching ^[0-9]{1,9}(\.[0-9]{1,8})?$ |
@@ -492,7 +681,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `inputs[].label` | string ≤64 chars | required | `text` | — | — |
 | `inputs[].control` | enum choice / text | required | `enum` | variant | — |
 | `inputs[].value` | string ≤32 chars | required | `text` | — | — |
-| `inputs[].choices` | array ≤16 items | default `[]` | `container` | empty | — |
+| `inputs[].choices` | array ≤24 items | default `[]` | `container` | empty | — |
 | `inputs[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
 | `inputs[].hint` | string ≤64 chars | default `null` | `text` | null | — |
 | `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
@@ -512,8 +701,8 @@ _This surface sends nothing back: tapping it starts no turn._
 {
   "view": "order.ticket.v1",
   "title": "Proposed order",
-  "symbol": "BTC",
-  "name": "Bitcoin",
+  "symbol": "NVDA",
+  "name": "NVIDIA Corp",
   "side": "buy",
   "size": "1",
   "size_in": "units",
@@ -522,14 +711,14 @@ _This surface sends nothing back: tapping it starts no turn._
     "display": "1"
   },
   "entry_price": {
-    "amount": "64250.00",
-    "display": "$64,250.00"
+    "amount": "1204.66",
+    "display": "$1,204.66"
   },
   "notional": {
     "label": "Order value",
     "amount": {
-      "amount": "64250.00",
-      "display": "$64,250.00"
+      "amount": "1204.66",
+      "display": "$1,204.66"
     }
   },
   "inputs": [
@@ -537,16 +726,25 @@ _This surface sends nothing back: tapping it starts no turn._
       "option": "symbol",
       "label": "Asset",
       "control": "choice",
-      "value": "BTC",
+      "value": "NVDA",
       "choices": [
-        "ADA",
-        "AVAX",
-        "BTC",
-        "DOGE",
-        "DOT",
-        "ETH",
-        "LINK",
-        "SOL"
+        "AAPL",
+        "AGG",
+        "AMD",
+        "AVGO",
+        "BND",
+        "GLD",
+        "JNJ",
+        "MSFT",
+        "NVDA",
+        "PG",
+        "PYPL",
+        "TIP",
+        "TSLA",
+        "USD",
+        "VNQ",
+        "VOO",
+        "XOM"
       ],
       "pattern": null,
       "hint": null
@@ -594,7 +792,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `cc0144f00eda`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `7066577b5390`
 - **Component:** `RiskPayoffChart`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -608,7 +806,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
-| `symbol` | enum ADA / AVAX / BTC / DOGE / DOT / ETH / LINK / SOL | one of 'ADA', 'AVAX', 'BTC', 'DOGE', 'DOT', 'ETH', 'LINK', 'SOL' | `"SOL"` | Asset the order is for. |
+| `symbol` | enum AAPL / AGG / AMD / AVGO / BND / GLD / JNJ / MSFT / NVDA / PG / PYPL / TIP / TSLA / USD / VNQ / VOO / XOM | one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' | `"VOO"` | Asset the order is for. |
 | `size` | integer 1..1000000000 | integer 1..1000000000 | `500` | How big the order is, counted in `size_in`. A whole number: a JSON float can no longer be made exact (ADR-E D-5). |
 | `size_in` | enum units / usd | one of 'units', 'usd' | `"usd"` | What `size` counts: units of the asset, or US dollars. |
 | `side` | enum buy / sell | one of 'buy', 'sell' | `"buy"` | `buy` plots the position, `sell` plots its mirror. |
@@ -665,21 +863,21 @@ _This surface sends nothing back: tapping it starts no turn._
 ```json
 {
   "view": "payoff.curve.v1",
-  "title": "Payoff across a price range: buy Solana",
+  "title": "Payoff across a price range: buy Vanguard S&P 500 ETF",
   "disclosure": "Illustrative linear spot payoff on the demo portfolio's simulated prices: profit or loss is (price - entry) x quantity, with no fees, no slippage and no financing. There is no strike, no expiry, no implied volatility and no time decay behind this line. A sell is the mirror of the position and leaves no position to value.",
   "markers": {
     "break_even": {
       "label": "Break-even",
       "at": {
-        "amount": "152.40",
-        "display": "$152.40"
+        "amount": "528.00",
+        "display": "$528.00"
       }
     },
     "current": {
       "label": "Current price",
       "at": {
-        "amount": "152.40",
-        "display": "$152.40"
+        "amount": "528.00",
+        "display": "$528.00"
       }
     }
   },
@@ -687,21 +885,21 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "label": "Entry price",
       "amount": {
-        "amount": "152.40",
-        "display": "$152.40"
+        "amount": "528.00",
+        "display": "$528.00"
       }
     },
     {
       "label": "Break-even price",
       "amount": {
-        "amount": "152.40",
-        "display": "$152.40"
+        "amount": "528.00",
+        "display": "$528.00"
       }
     },
     {
       "label": "Notional",
       "amount": {
-        "amount": "499.9999999999999999999999999",
+        "amount": "500.0000000000000000000000000",
         "display": "$500.00"
       }
     }
@@ -711,10 +909,10 @@ _This surface sends nothing back: tapping it starts no turn._
       "name": "Profit / loss",
       "points": [
         {
-          "label": "$106.68",
+          "label": "$369.60",
           "at": {
-            "amount": "106.680",
-            "display": "$106.68"
+            "amount": "369.600",
+            "display": "$369.60"
           },
           "value": {
             "amount": "-150.0000000000000000000000000",
@@ -722,10 +920,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$110.49",
+          "label": "$382.80",
           "at": {
-            "amount": "110.49000",
-            "display": "$110.49"
+            "amount": "382.80000",
+            "display": "$382.80"
           },
           "value": {
             "amount": "-137.5000000000000000000000000",
@@ -733,10 +931,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$114.30",
+          "label": "$396.00",
           "at": {
-            "amount": "114.3000",
-            "display": "$114.30"
+            "amount": "396.0000",
+            "display": "$396.00"
           },
           "value": {
             "amount": "-125.0000000000000000000000000",
@@ -744,10 +942,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$118.11",
+          "label": "$409.20",
           "at": {
-            "amount": "118.11000",
-            "display": "$118.11"
+            "amount": "409.20000",
+            "display": "$409.20"
           },
           "value": {
             "amount": "-112.5000000000000000000000000",
@@ -755,76 +953,76 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$121.92",
+          "label": "$422.40",
           "at": {
-            "amount": "121.920",
-            "display": "$121.92"
+            "amount": "422.400",
+            "display": "$422.40"
           },
           "value": {
-            "amount": "-99.99999999999999999999999999",
+            "amount": "-100.0000000000000000000000000",
             "display": "-$100.00"
           }
         },
         {
-          "label": "$125.73",
+          "label": "$435.60",
           "at": {
-            "amount": "125.73000",
-            "display": "$125.73"
+            "amount": "435.60000",
+            "display": "$435.60"
           },
           "value": {
-            "amount": "-87.49999999999999999999999999",
+            "amount": "-87.50000000000000000000000000",
             "display": "-$87.50"
           }
         },
         {
-          "label": "$129.54",
+          "label": "$448.80",
           "at": {
-            "amount": "129.5400",
-            "display": "$129.54"
+            "amount": "448.8000",
+            "display": "$448.80"
           },
           "value": {
-            "amount": "-74.99999999999999999999999999",
+            "amount": "-75.00000000000000000000000000",
             "display": "-$75.00"
           }
         },
         {
-          "label": "$133.35",
+          "label": "$462.00",
           "at": {
-            "amount": "133.35000",
-            "display": "$133.35"
+            "amount": "462.00000",
+            "display": "$462.00"
           },
           "value": {
-            "amount": "-62.49999999999999999999999999",
+            "amount": "-62.50000000000000000000000000",
             "display": "-$62.50"
           }
         },
         {
-          "label": "$137.16",
+          "label": "$475.20",
           "at": {
-            "amount": "137.160",
-            "display": "$137.16"
+            "amount": "475.200",
+            "display": "$475.20"
           },
           "value": {
-            "amount": "-49.99999999999999999999999999",
+            "amount": "-50.00000000000000000000000000",
             "display": "-$50.00"
           }
         },
         {
-          "label": "$140.97",
+          "label": "$488.40",
           "at": {
-            "amount": "140.97000",
-            "display": "$140.97"
+            "amount": "488.40000",
+            "display": "$488.40"
           },
           "value": {
-            "amount": "-37.49999999999999999999999999",
+            "amount": "-37.50000000000000000000000000",
             "display": "-$37.50"
           }
         },
         {
-          "label": "$144.78",
+          "label": "$501.60",
           "at": {
-            "amount": "144.7800",
-            "display": "$144.78"
+            "amount": "501.6000",
+            "display": "$501.60"
           },
           "value": {
             "amount": "-25.00000000000000000000000000",
@@ -832,10 +1030,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$148.59",
+          "label": "$514.80",
           "at": {
-            "amount": "148.59000",
-            "display": "$148.59"
+            "amount": "514.80000",
+            "display": "$514.80"
           },
           "value": {
             "amount": "-12.50000000000000000000000000",
@@ -843,21 +1041,21 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$152.40",
+          "label": "$528.00",
           "at": {
-            "amount": "152.400",
-            "display": "$152.40"
+            "amount": "528.000",
+            "display": "$528.00"
           },
           "value": {
-            "amount": "0E-30",
+            "amount": "0E-31",
             "display": "$0.00"
           }
         },
         {
-          "label": "$156.21",
+          "label": "$541.20",
           "at": {
-            "amount": "156.21000",
-            "display": "$156.21"
+            "amount": "541.20000",
+            "display": "$541.20"
           },
           "value": {
             "amount": "12.50000000000000000000000000",
@@ -865,10 +1063,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$160.02",
+          "label": "$554.40",
           "at": {
-            "amount": "160.0200",
-            "display": "$160.02"
+            "amount": "554.4000",
+            "display": "$554.40"
           },
           "value": {
             "amount": "25.00000000000000000000000000",
@@ -876,76 +1074,76 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$163.83",
+          "label": "$567.60",
           "at": {
-            "amount": "163.83000",
-            "display": "$163.83"
+            "amount": "567.60000",
+            "display": "$567.60"
           },
           "value": {
-            "amount": "37.49999999999999999999999999",
+            "amount": "37.50000000000000000000000000",
             "display": "$37.50"
           }
         },
         {
-          "label": "$167.64",
+          "label": "$580.80",
           "at": {
-            "amount": "167.640",
-            "display": "$167.64"
+            "amount": "580.800",
+            "display": "$580.80"
           },
           "value": {
-            "amount": "49.99999999999999999999999999",
+            "amount": "50.00000000000000000000000000",
             "display": "$50.00"
           }
         },
         {
-          "label": "$171.45",
+          "label": "$594.00",
           "at": {
-            "amount": "171.45000",
-            "display": "$171.45"
+            "amount": "594.00000",
+            "display": "$594.00"
           },
           "value": {
-            "amount": "62.49999999999999999999999999",
+            "amount": "62.50000000000000000000000000",
             "display": "$62.50"
           }
         },
         {
-          "label": "$175.26",
+          "label": "$607.20",
           "at": {
-            "amount": "175.2600",
-            "display": "$175.26"
+            "amount": "607.2000",
+            "display": "$607.20"
           },
           "value": {
-            "amount": "74.99999999999999999999999999",
+            "amount": "75.00000000000000000000000000",
             "display": "$75.00"
           }
         },
         {
-          "label": "$179.07",
+          "label": "$620.40",
           "at": {
-            "amount": "179.07000",
-            "display": "$179.07"
+            "amount": "620.40000",
+            "display": "$620.40"
           },
           "value": {
-            "amount": "87.49999999999999999999999999",
+            "amount": "87.50000000000000000000000000",
             "display": "$87.50"
           }
         },
         {
-          "label": "$182.88",
+          "label": "$633.60",
           "at": {
-            "amount": "182.880",
-            "display": "$182.88"
+            "amount": "633.600",
+            "display": "$633.60"
           },
           "value": {
-            "amount": "99.99999999999999999999999999",
+            "amount": "100.0000000000000000000000000",
             "display": "$100.00"
           }
         },
         {
-          "label": "$186.69",
+          "label": "$646.80",
           "at": {
-            "amount": "186.69000",
-            "display": "$186.69"
+            "amount": "646.80000",
+            "display": "$646.80"
           },
           "value": {
             "amount": "112.5000000000000000000000000",
@@ -953,10 +1151,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$190.50",
+          "label": "$660.00",
           "at": {
-            "amount": "190.5000",
-            "display": "$190.50"
+            "amount": "660.0000",
+            "display": "$660.00"
           },
           "value": {
             "amount": "125.0000000000000000000000000",
@@ -964,10 +1162,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$194.31",
+          "label": "$673.20",
           "at": {
-            "amount": "194.31000",
-            "display": "$194.31"
+            "amount": "673.20000",
+            "display": "$673.20"
           },
           "value": {
             "amount": "137.5000000000000000000000000",
@@ -975,10 +1173,10 @@ _This surface sends nothing back: tapping it starts no turn._
           }
         },
         {
-          "label": "$198.12",
+          "label": "$686.40",
           "at": {
-            "amount": "198.120",
-            "display": "$198.12"
+            "amount": "686.400",
+            "display": "$686.40"
           },
           "value": {
             "amount": "150.0000000000000000000000000",
@@ -991,19 +1189,389 @@ _This surface sends nothing back: tapping it starts no turn._
   "annotations": [
     {
       "label": "Entry",
-      "text": "$152.40"
+      "text": "$528.00"
     },
     {
       "label": "Break-even",
-      "text": "$152.40"
+      "text": "$528.00"
     },
     {
       "label": "Low",
-      "text": "at $106.68: -$150.00"
+      "text": "at $369.60: -$150.00"
     },
     {
       "label": "High",
-      "text": "at $198.12: $150.00"
+      "text": "at $686.40: $150.00"
+    }
+  ]
+}
+```
+
+## `portfolio.summary.v1`
+
+> The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers.
+
+- **Frozen id:** `portfolio.summary.v1` · **digest:** `a7389adf90d7`
+- **Component:** `PortfolioSummary`
+- **Payload type:** `PortfolioSummaryPayload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** read-only
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `range` | enum 1d / 1w / 1m / ytd / 1y / all | one of '1d', '1w', '1m', 'ytd', '1y', 'all' | `"1d"` | Period the headline change is measured over. `1d` compares to yesterday's close; the others to the portfolio's value that many days back, clamped to the depth of the generated history. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'portfolio.summary.v1' | default `"portfolio.summary.v1"` | `constant` | — | — |
+| `greeting` | string ≤24 chars | required | `text` | — | — |
+| `account` | object | required | `container` | — | — |
+| `account.name` | string ≤64 chars | required | `text` | — | — |
+| `account.initial` | string ≤2 chars | required | `text` | — | — |
+| `badge` | string ≤32 chars | required | `text` | — | — |
+| `total` | object | required | `container` | — | — |
+| `total.label` | string ≤64 chars | required | `text` | — | — |
+| `total.amount` | object | required | `container` | — | — |
+| `total.amount.amount` | decimal | required | `raw` | — | — |
+| `total.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `change` | object | required | `container` | — | — |
+| `change.amount` | object | required | `container` | — | — |
+| `change.amount.amount` | decimal | required | `raw` | — | — |
+| `change.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `change.percent` | object | required | `container` | — | — |
+| `change.percent.value` | decimal | required | `raw` | — | — |
+| `change.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `change.trend` | enum up / down / flat | required | `enum` | variant | — |
+| `change.period` | string ≤24 chars | required | `text` | — | — |
+| `spark` | array | required | `container` | empty | — |
+| `spark[].label` | string ≤16 chars | required | `text` | — | — |
+| `spark[].value` | object | required | `container` | — | — |
+| `spark[].value.amount` | decimal | required | `raw` | — | — |
+| `spark[].value.display` | string ≤32 chars | required | `display` | — | — |
+| `questions_title` | string ≤32 chars | required | `text` | — | — |
+| `questions` | array | required | `container` | empty | — |
+| `questions[].text` | string ≤80 chars | required | `text` | — | — |
+| `movers_title` | string ≤32 chars | required | `text` | — | — |
+| `movers` | array | required | `container` | empty | — |
+| `movers[].symbol` | string ≤10 chars | required | `text` | — | — |
+| `movers[].name` | string ≤64 chars | required | `text` | — | — |
+| `movers[].price` | object | required | `container` | — | — |
+| `movers[].price.amount` | decimal | required | `raw` | — | — |
+| `movers[].price.display` | string ≤32 chars | required | `display` | — | — |
+| `movers[].change` | object | required | `container` | — | — |
+| `movers[].change.value` | decimal | required | `raw` | — | — |
+| `movers[].change.display` | string ≤16 chars | required | `display` | — | — |
+| `movers[].trend` | enum up / down / flat | required | `enum` | variant | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "portfolio.summary.v1",
+  "greeting": "Good afternoon",
+  "account": {
+    "name": "Alex Chen",
+    "initial": "A"
+  },
+  "badge": "Simulated portfolio",
+  "total": {
+    "label": "Total portfolio value",
+    "amount": {
+      "amount": "482915.200000",
+      "display": "$482,915.20"
+    }
+  },
+  "change": {
+    "amount": {
+      "amount": "3240.180000",
+      "display": "+$3,240.18"
+    },
+    "percent": {
+      "value": "0.006754948381510465147841136276",
+      "display": "+0.68%"
+    },
+    "trend": "up",
+    "period": "today"
+  },
+  "spark": [
+    {
+      "label": "12/17/2025",
+      "value": {
+        "amount": "483925.090000",
+        "display": "$483,925.09"
+      }
+    },
+    {
+      "label": "12/18/2025",
+      "value": {
+        "amount": "490455.830000",
+        "display": "$490,455.83"
+      }
+    },
+    {
+      "label": "12/19/2025",
+      "value": {
+        "amount": "485749.880000",
+        "display": "$485,749.88"
+      }
+    },
+    {
+      "label": "12/20/2025",
+      "value": {
+        "amount": "496136.530000",
+        "display": "$496,136.53"
+      }
+    },
+    {
+      "label": "12/21/2025",
+      "value": {
+        "amount": "490383.210000",
+        "display": "$490,383.21"
+      }
+    },
+    {
+      "label": "12/22/2025",
+      "value": {
+        "amount": "500360.260000",
+        "display": "$500,360.26"
+      }
+    },
+    {
+      "label": "12/23/2025",
+      "value": {
+        "amount": "485722.890000",
+        "display": "$485,722.89"
+      }
+    },
+    {
+      "label": "12/24/2025",
+      "value": {
+        "amount": "492370.580000",
+        "display": "$492,370.58"
+      }
+    },
+    {
+      "label": "12/25/2025",
+      "value": {
+        "amount": "474144.690000",
+        "display": "$474,144.69"
+      }
+    },
+    {
+      "label": "12/26/2025",
+      "value": {
+        "amount": "503941.900000",
+        "display": "$503,941.90"
+      }
+    },
+    {
+      "label": "12/27/2025",
+      "value": {
+        "amount": "478867.440000",
+        "display": "$478,867.44"
+      }
+    },
+    {
+      "label": "12/28/2025",
+      "value": {
+        "amount": "472092.580000",
+        "display": "$472,092.58"
+      }
+    },
+    {
+      "label": "12/29/2025",
+      "value": {
+        "amount": "493866.790000",
+        "display": "$493,866.79"
+      }
+    },
+    {
+      "label": "12/30/2025",
+      "value": {
+        "amount": "504498.800000",
+        "display": "$504,498.80"
+      }
+    },
+    {
+      "label": "12/31/2025",
+      "value": {
+        "amount": "481439.960000",
+        "display": "$481,439.96"
+      }
+    },
+    {
+      "label": "01/01/2026",
+      "value": {
+        "amount": "476545.180000",
+        "display": "$476,545.18"
+      }
+    },
+    {
+      "label": "01/02/2026",
+      "value": {
+        "amount": "471818.000000",
+        "display": "$471,818.00"
+      }
+    },
+    {
+      "label": "01/03/2026",
+      "value": {
+        "amount": "484773.260000",
+        "display": "$484,773.26"
+      }
+    },
+    {
+      "label": "01/04/2026",
+      "value": {
+        "amount": "494319.140000",
+        "display": "$494,319.14"
+      }
+    },
+    {
+      "label": "01/05/2026",
+      "value": {
+        "amount": "481487.760000",
+        "display": "$481,487.76"
+      }
+    },
+    {
+      "label": "01/06/2026",
+      "value": {
+        "amount": "492346.140000",
+        "display": "$492,346.14"
+      }
+    },
+    {
+      "label": "01/07/2026",
+      "value": {
+        "amount": "478818.160000",
+        "display": "$478,818.16"
+      }
+    },
+    {
+      "label": "01/08/2026",
+      "value": {
+        "amount": "491936.720000",
+        "display": "$491,936.72"
+      }
+    },
+    {
+      "label": "01/09/2026",
+      "value": {
+        "amount": "484251.610000",
+        "display": "$484,251.61"
+      }
+    },
+    {
+      "label": "01/10/2026",
+      "value": {
+        "amount": "485292.060000",
+        "display": "$485,292.06"
+      }
+    },
+    {
+      "label": "01/11/2026",
+      "value": {
+        "amount": "478052.020000",
+        "display": "$478,052.02"
+      }
+    },
+    {
+      "label": "01/12/2026",
+      "value": {
+        "amount": "485748.270000",
+        "display": "$485,748.27"
+      }
+    },
+    {
+      "label": "01/13/2026",
+      "value": {
+        "amount": "477916.980000",
+        "display": "$477,916.98"
+      }
+    },
+    {
+      "label": "01/14/2026",
+      "value": {
+        "amount": "479675.020000",
+        "display": "$479,675.02"
+      }
+    },
+    {
+      "label": "01/15/2026",
+      "value": {
+        "amount": "482915.200000",
+        "display": "$482,915.20"
+      }
+    }
+  ],
+  "questions_title": "Suggested questions",
+  "questions": [
+    {
+      "text": "What moved my portfolio today?"
+    },
+    {
+      "text": "Tax impact of selling NVDA?"
+    },
+    {
+      "text": "Build a $10k order in tech"
+    }
+  ],
+  "movers_title": "Top movers today",
+  "movers": [
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corp",
+      "price": {
+        "amount": "1204.66",
+        "display": "$1,204.66"
+      },
+      "change": {
+        "value": "0.04200328691289680823458178358",
+        "display": "+4.2%"
+      },
+      "trend": "up"
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla, Inc.",
+      "price": {
+        "amount": "298.04",
+        "display": "$298.04"
+      },
+      "change": {
+        "value": "-0.02301186651806202058611420704",
+        "display": "-2.3%"
+      },
+      "trend": "down"
+    },
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "price": {
+        "amount": "233.18",
+        "display": "$233.18"
+      },
+      "change": {
+        "value": "0.01101283385362469649670482137",
+        "display": "+1.1%"
+      },
+      "trend": "up"
     }
   ]
 }
@@ -1013,7 +1581,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `fe62a7725690`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `6f73ed9fad79`
 - **Component:** `ScenarioComparison`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1091,16 +1659,16 @@ _This surface sends nothing back: tapping it starts no turn._
   "view": "scenario.comparison.v1",
   "title": "Same sale, different lot method",
   "subject": {
-    "label": "Bitcoin",
-    "symbol": "BTC",
-    "quantity_display": "0.18",
+    "label": "NVIDIA Corp",
+    "symbol": "NVDA",
+    "quantity_display": "30",
     "price": {
-      "amount": "64250.00",
-      "display": "$64,250.00"
+      "amount": "1204.66",
+      "display": "$1,204.66"
     },
     "proceeds": {
-      "amount": "11565.000000",
-      "display": "$11,565.00"
+      "amount": "36139.800000",
+      "display": "$36,139.80"
     }
   },
   "columns": [
@@ -1108,41 +1676,41 @@ _This surface sends nothing back: tapping it starts no turn._
       "method": "FIFO",
       "label": "FIFO \u2014 oldest lots first",
       "cost_basis": {
-        "amount": "7740.00",
-        "display": "$7,740.00"
+        "amount": "22800.00",
+        "display": "$22,800.00"
       },
       "realized_pl": {
-        "amount": "3825.000000",
-        "display": "+$3,825.00"
+        "amount": "13339.800000",
+        "display": "+$13,339.80"
       },
       "short_term_pl": {
         "amount": "0",
         "display": "$0.00"
       },
       "long_term_pl": {
-        "amount": "3825.000000",
-        "display": "+$3,825.00"
+        "amount": "13339.800000",
+        "display": "+$13,339.80"
       },
       "short_term_lots": 0,
       "long_term_lots": 1,
       "lots": [
-        "lot-btc-01"
+        "lot-nvda-01"
       ]
     },
     {
       "method": "LIFO",
       "label": "LIFO \u2014 newest lots first",
       "cost_basis": {
-        "amount": "10260.00",
-        "display": "$10,260.00"
+        "amount": "28800.00",
+        "display": "$28,800.00"
       },
       "realized_pl": {
-        "amount": "1305.000000",
-        "display": "+$1,305.00"
+        "amount": "7339.800000",
+        "display": "+$7,339.80"
       },
       "short_term_pl": {
-        "amount": "1305.000000",
-        "display": "+$1,305.00"
+        "amount": "7339.800000",
+        "display": "+$7,339.80"
       },
       "long_term_pl": {
         "amount": "0",
@@ -1151,23 +1719,23 @@ _This surface sends nothing back: tapping it starts no turn._
       "short_term_lots": 1,
       "long_term_lots": 0,
       "lots": [
-        "lot-btc-02"
+        "lot-nvda-02"
       ]
     },
     {
       "method": "HIFO",
       "label": "HIFO \u2014 dearest lots first",
       "cost_basis": {
-        "amount": "10260.00",
-        "display": "$10,260.00"
+        "amount": "28800.00",
+        "display": "$28,800.00"
       },
       "realized_pl": {
-        "amount": "1305.000000",
-        "display": "+$1,305.00"
+        "amount": "7339.800000",
+        "display": "+$7,339.80"
       },
       "short_term_pl": {
-        "amount": "1305.000000",
-        "display": "+$1,305.00"
+        "amount": "7339.800000",
+        "display": "+$7,339.80"
       },
       "long_term_pl": {
         "amount": "0",
@@ -1176,14 +1744,14 @@ _This surface sends nothing back: tapping it starts no turn._
       "short_term_lots": 1,
       "long_term_lots": 0,
       "lots": [
-        "lot-btc-02"
+        "lot-nvda-02"
       ]
     }
   ],
   "spread": {
     "amount": {
-      "amount": "2520.000000",
-      "display": "$2,520.00"
+      "amount": "6000.000000",
+      "display": "$6,000.00"
     },
     "differs": true,
     "highest": "FIFO",
@@ -1206,7 +1774,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `d88ca1d6600e`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `c960b55bd552`
 - **Component:** `TaxLotTable`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1220,8 +1788,8 @@ _This surface sends nothing back: tapping it starts no turn._
 | `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
-| `symbol` | string ≤10 chars | string matching ^[A-Za-z]{2,10}$ | `"BTC"` | Ticker being sold, in any case. |
-| `quantity` | string | string matching ^\d{1,12}(\.\d{1,8})?$ | `"0.5"` | Units to sell, written as a decimal string ('0.5'). A dollar-sized ask is resolved to units by the `simulate_sale` tool; copy the units it returned rather than dividing (spec 0015 OD-4). |
+| `symbol` | string ≤10 chars | string matching ^[A-Za-z]{2,10}$ | `"NVDA"` | Ticker being sold, in any case. |
+| `quantity` | string | string matching ^\d{1,12}(\.\d{1,8})?$ | `"75"` | Units to sell, written as a decimal string ('0.5'). A dollar-sized ask is resolved to units by the `simulate_sale` tool; copy the units it returned rather than dividing (spec 0015 OD-4). |
 | `lot_method` | enum FIFO / LIFO / HIFO | one of 'FIFO', 'LIFO', 'HIFO' | `"FIFO"` | Which lots the sale consumes first: FIFO the oldest, LIFO the newest, HIFO the dearest. |
 
 ### Field inventory
@@ -1287,26 +1855,26 @@ _This surface sends nothing back: tapping it starts no turn._
 {
   "view": "taxlots.table.v1",
   "title": "Tax lots this sale consumes",
-  "subtitle": "Sell 0.5 BTC under FIFO",
+  "subtitle": "Sell 75 NVDA under FIFO",
   "proceeds": {
     "label": "Proceeds",
     "amount": {
-      "amount": "32125.000000",
-      "display": "$32,125.00"
+      "amount": "90349.500000",
+      "display": "$90,349.50"
     }
   },
   "cost_basis": {
     "label": "Cost basis",
     "amount": {
-      "amount": "22620.00",
-      "display": "$22,620.00"
+      "amount": "60000.00",
+      "display": "$60,000.00"
     }
   },
   "realized": {
     "label": "Realised P/L",
     "amount": {
-      "amount": "9505.000000",
-      "display": "+$9,505.00"
+      "amount": "30349.500000",
+      "display": "+$30,349.50"
     }
   },
   "by_term": [
@@ -1315,8 +1883,8 @@ _This surface sends nothing back: tapping it starts no turn._
       "term": "short",
       "lots": 1,
       "realized": {
-        "amount": "580.000000",
-        "display": "+$580.00"
+        "amount": "3669.900000",
+        "display": "+$3,669.90"
       }
     },
     {
@@ -1324,52 +1892,52 @@ _This surface sends nothing back: tapping it starts no turn._
       "term": "long",
       "lots": 1,
       "realized": {
-        "amount": "8925.000000",
-        "display": "+$8,925.00"
+        "amount": "26679.600000",
+        "display": "+$26,679.60"
       }
     }
   ],
   "lots": [
     {
-      "label": "lot-btc-01",
+      "label": "lot-nvda-01",
       "acquired_on": "2025-01-13",
       "acquired_on_display": "01/13/2025",
       "term": "long",
-      "units": "0.4200",
-      "units_display": "0.42",
+      "units": "60.0000",
+      "units_display": "60",
       "cost_basis": {
-        "amount": "18060.00",
-        "display": "$18,060.00"
+        "amount": "45600.00",
+        "display": "$45,600.00"
       },
       "proceeds": {
-        "amount": "26985.000000",
-        "display": "$26,985.00"
+        "amount": "72279.600000",
+        "display": "$72,279.60"
       },
       "gain_loss": {
-        "amount": "8925.000000",
-        "display": "+$8,925.00"
+        "amount": "26679.600000",
+        "display": "+$26,679.60"
       },
       "trend": "up",
       "fully_sold": true
     },
     {
-      "label": "lot-btc-02",
+      "label": "lot-nvda-02",
       "acquired_on": "2025-01-17",
       "acquired_on_display": "01/17/2025",
       "term": "short",
-      "units": "0.0800",
-      "units_display": "0.08",
+      "units": "15.0000",
+      "units_display": "15",
       "cost_basis": {
-        "amount": "4560.00",
-        "display": "$4,560.00"
+        "amount": "14400.00",
+        "display": "$14,400.00"
       },
       "proceeds": {
-        "amount": "5140.000000",
-        "display": "$5,140.00"
+        "amount": "18069.900000",
+        "display": "$18,069.90"
       },
       "gain_loss": {
-        "amount": "580.000000",
-        "display": "+$580.00"
+        "amount": "3669.900000",
+        "display": "+$3,669.90"
       },
       "trend": "up",
       "fully_sold": false

@@ -25,7 +25,7 @@ from app.core.errors import ConfigurationError
 #: Controls a declaration may publish; a free-text action does not exist yet.
 Control = Literal["choice", "text"]
 #: Keeps a descriptor's own list bounded, as ``TicketInput`` does.
-MAX_CHOICES: Final[int] = 16
+MAX_CHOICES: Final[int] = 24
 
 
 class SurfaceActionRef(BaseModel):
@@ -55,7 +55,7 @@ class SurfaceActionRef(BaseModel):
         default=(),
         max_length=MAX_CHOICES,
         description="Every accepted value, for a `choice`; empty otherwise.",
-        examples=[["ADA", "BTC", "DOGE", "ETH"]],
+        examples=[["JNJ", "NVDA", "XOM", "AAPL"]],
     )
     pattern: str | None = Field(
         default=None,

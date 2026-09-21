@@ -17,6 +17,8 @@ class DonutChart extends StatelessWidget {
     this.onSliceTap,
     this.selectedIndex,
     this.diameter = designDiameter,
+    this.center,
+    this.swatches,
     super.key,
   });
 
@@ -47,11 +49,23 @@ class DonutChart extends StatelessWidget {
   /// The ring's diameter. Shrinks with the card on a narrow screen.
   final double diameter;
 
+  /// What to print in the hole — the design's `Classes / 4`.
+  final Widget? center;
+
+  /// The ramp to sweep with; the palette's default when null.
+  final List<Color>? swatches;
+
   @override
   Widget build(BuildContext context) => SizedBox(
     width: diameter,
     height: diameter,
-    child: LayoutBuilder(builder: _plot),
+    child: Stack(
+      alignment: Alignment.center,
+      children: <Widget>[
+        LayoutBuilder(builder: _plot),
+        if (center != null) IgnorePointer(child: center),
+      ],
+    ),
   );
 
   Widget _plot(BuildContext context, BoxConstraints constraints) {
@@ -70,6 +84,7 @@ class DonutChart extends StatelessWidget {
           layout: layout,
           palette: AllocationPalette.of(context),
           selectedIndex: selectedIndex,
+          swatches: swatches,
         ),
       ),
     );

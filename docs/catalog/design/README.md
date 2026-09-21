@@ -51,6 +51,7 @@ would read off a payload.
 | Holdings & allocation | `HoldingsSummary` | `HoldingsSummary` | `HoldingsSummary` | `AllocationSummary` | **`HoldingsSummary`** |
 | Order ticket | `OrderTicket` | `OrderTicket` | `OrderTicket` | `OrderTicket` | **`OrderTicket`** |
 | Risk / payoff | `RiskPayoffChart` | `RiskPayoffChart` | `RiskPayoffChart` | `PayoffChart` | **`RiskPayoffChart`** |
+| Home hero *(shell, `Home.dc.html`)* | *(none — a page, not a card)* | — | — | — | **`PortfolioSummary`** (ours; spec 0026) |
 
 The waterfall's own prompt fragment additionally calls the allocation
 component `HoldingsSummary`. A name used for a component on **another**

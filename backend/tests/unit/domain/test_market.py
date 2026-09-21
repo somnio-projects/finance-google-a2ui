@@ -13,11 +13,11 @@ from app.domain.symbols import normalize_symbol
 
 @pytest.mark.parametrize(
     "written",
-    ["BTC", "btc", "  btc  ", "Btc"],
+    ["NVDA", "nvda", "  nvda  ", "Nvda"],
     ids=["upper", "lower", "padded", "mixed"],
 )
 def test_market_asset_is_symbol_normalised(written: str) -> None:
-    assert market_asset(written).symbol == "BTC"
+    assert market_asset(written).symbol == "NVDA"
 
 
 def test_market_asset_of_an_unknown_symbol_raises_with_the_symbol() -> None:
@@ -26,10 +26,10 @@ def test_market_asset_of_an_unknown_symbol_raises_with_the_symbol() -> None:
 
 
 def test_price_of_is_an_exact_decimal_parsed_from_the_string() -> None:
-    price = price_of("DOGE")
+    price = price_of("XOM")
     assert isinstance(price, Decimal)
-    assert price == Decimal("0.1273")
-    assert str(price) == "0.1273"
+    assert price == Decimal("34.22")
+    assert str(price) == "34.22"
 
 
 def test_every_reference_entry_is_unique_and_priced() -> None:
@@ -40,7 +40,7 @@ def test_every_reference_entry_is_unique_and_priced() -> None:
 
 
 def test_normalize_symbol_is_idempotent() -> None:
-    assert normalize_symbol(normalize_symbol(" eth ")) == "ETH"
+    assert normalize_symbol(normalize_symbol(" aapl ")) == "AAPL"
 
 
 def test_every_reference_price_fits_the_display_precision() -> None:

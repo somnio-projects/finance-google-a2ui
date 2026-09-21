@@ -2,7 +2,7 @@
 
 Every number asserted here is a literal: the render is pure and the portfolio
 is seeded at a frozen ``as_of``, so a changed string is a changed contract, not
-a changed calendar. The seeded BTC position is the one that makes the card
+a changed calendar. The seeded NVDA position is the one that makes the card
 worth building — its two lots straddle the 1-year boundary *and* disagree on
 unit cost, so FIFO lands somewhere LIFO and HIFO do not.
 """
@@ -20,12 +20,30 @@ from app.presentation.views.scenario_comparison import (
     render,
 )
 
-#: The default scenario: 0.18 BTC, the position's smallest open lot.
+#: The default scenario: 30 NVDA, the size of the position's newer, dearer lot.
 EXPECTED: dict[LotMethod, tuple[str, str, str, str, str]] = {
     # method: (lot id, cost basis, realised, short-term, long-term)
-    LotMethod.FIFO: ("lot-btc-01", "$7,740.00", "+$3,825.00", "$0.00", "+$3,825.00"),
-    LotMethod.LIFO: ("lot-btc-02", "$10,260.00", "+$1,305.00", "+$1,305.00", "$0.00"),
-    LotMethod.HIFO: ("lot-btc-02", "$10,260.00", "+$1,305.00", "+$1,305.00", "$0.00"),
+    LotMethod.FIFO: (
+        "lot-nvda-01",
+        "$22,800.00",
+        "+$13,339.80",
+        "$0.00",
+        "+$13,339.80",
+    ),
+    LotMethod.LIFO: (
+        "lot-nvda-02",
+        "$28,800.00",
+        "+$7,339.80",
+        "+$7,339.80",
+        "$0.00",
+    ),
+    LotMethod.HIFO: (
+        "lot-nvda-02",
+        "$28,800.00",
+        "+$7,339.80",
+        "+$7,339.80",
+        "$0.00",
+    ),
 }
 
 
@@ -39,17 +57,17 @@ def test_the_defaults_resolve_to_the_largest_position_and_its_smallest_lot(
     card: ScenarioComparisonPayload,
 ) -> None:
     assert card.view == VIEW_ID
-    assert card.subject.symbol == "BTC"
-    assert card.subject.label == "Bitcoin"
-    assert card.subject.quantity_display == "0.18"
+    assert card.subject.symbol == "NVDA"
+    assert card.subject.label == "NVIDIA Corp"
+    assert card.subject.quantity_display == "30"
     assert [column.method for column in card.columns] == list(LotMethod)
 
 
 def test_every_column_is_costed_against_the_same_units_price_and_proceeds(
     portfolio: Portfolio, card: ScenarioComparisonPayload
 ) -> None:
-    assert card.subject.price.display == "$64,250.00"
-    assert card.subject.proceeds.display == "$11,565.00"
+    assert card.subject.price.display == "$1,204.66"
+    assert card.subject.proceeds.display == "$36,139.80"
     pair = render(
         portfolio,
         ScenarioComparisonOptions(methods=(LotMethod.HIFO, LotMethod.FIFO)),
@@ -89,7 +107,7 @@ def test_the_card_recommends_nothing(card: ScenarioComparisonPayload) -> None:
     assert not keys & {"recommended", "best", "rank", "score", "winner"}
     assert card.notes[-1].text.startswith("No method is recommended")
     assert card.spread.differs is True
-    assert card.spread.amount.display == "$2,520.00"
+    assert card.spread.amount.display == "$6,000.00"
     assert card.spread.highest is LotMethod.FIFO
     assert card.spread.lowest is LotMethod.LIFO
 
@@ -105,7 +123,7 @@ def test_columns_keep_the_requested_order_and_are_never_sorted_by_outcome(
 def test_a_sale_that_closes_the_position_reports_no_difference(
     portfolio: Portfolio,
 ) -> None:
-    card = render(portfolio, ScenarioComparisonOptions(quantity=Decimal("0.6")))
+    card = render(portfolio, ScenarioComparisonOptions(quantity=Decimal(90)))
     assert card.spread.differs is False
     assert card.spread.amount.display == "$0.00"
     assert card.spread.highest is None
@@ -114,7 +132,7 @@ def test_a_sale_that_closes_the_position_reports_no_difference(
 
 
 def test_the_unit_price_is_quoted_at_price_precision(portfolio: Portfolio) -> None:
-    card = render(portfolio, ScenarioComparisonOptions(symbol="doge"))
-    assert card.subject.symbol == "DOGE"
-    assert card.subject.price.display == "$0.1273"
-    assert card.subject.proceeds.display == "$1,527.60"
+    card = render(portfolio, ScenarioComparisonOptions(symbol="xom"))
+    assert card.subject.symbol == "XOM"
+    assert card.subject.price.display == "$34.22"
+    assert card.subject.proceeds.display == "$4,448.60"

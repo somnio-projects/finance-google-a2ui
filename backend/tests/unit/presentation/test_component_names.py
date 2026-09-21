@@ -11,7 +11,6 @@ consistent, so both gates stayed green.
 
 `.claude/rules/backend/testing.md`: **a property that spans two declarations
 gets a test comparing them.** This one spans four.
-
 ``DESIGN_CATALOG`` below is the design's half, transcribed **once**. It is a
 deliberate literal — the one thing in this suite that is not read from the
 registry — because the whole point is to compare the backend against something
@@ -29,10 +28,9 @@ from app.presentation.published import component_of
 from app.presentation.registry import REGISTRY
 from tests.unit.presentation.conftest import committed
 
-#: The design catalog's own naming. The evidence — which page declares which
-#: name, in which of its four places, and the Zone 3 text each one carries —
-#: is transcribed in `docs/catalog/design/README.md`, so this literal can be
-#: re-verified without the exported HTML that is not in the repository.
+#: The design catalog's own naming; the evidence per page is transcribed in
+#: `docs/catalog/design/README.md`, so this literal can be re-verified without
+#: the exported HTML that is not in the repository.
 #:
 #: **How a name was chosen when the design disagreed with itself**, recorded in
 #: spec 0023 §3: a component is named by its **own A2UI schema block** (Zone 2
@@ -42,9 +40,8 @@ from tests.unit.presentation.conftest import committed
 #: only declaration and therefore won — a **fallback**, not a tie-break, so it
 #: loses the day the page arrives. It did: the last three pages were exported
 #: on 2026-09-21 and two adopted names moved (GGU-101, GGU-103; spec 0024).
-#: A name used on *another* component's page is still never authoritative —
-#: `HoldingsSummary` was already visible on the waterfall page, and what
-#: renamed this component is its **own** Zone 2 block, not that.
+#: A name seen on *another* component's page is never authoritative — what
+#: renamed `HoldingsSummary` is its **own** Zone 2 block (spec 0024).
 DESIGN_CATALOG: Final[dict[str, str]] = {
     # Zone 2 + breadcrumb + fragment; badge and index card say `WaterfallChart`.
     "attribution.waterfall.v1": "AttributionWaterfall",
@@ -58,6 +55,9 @@ DESIGN_CATALOG: Final[dict[str, str]] = {
     "scenario.comparison.v1": "ScenarioComparison",
     # The one component every rendering already agreed on.
     "taxlots.table.v1": "TaxLotTable",
+    # The Home hero (`Home.dc.html`): a page in design, a projection here so
+    # nothing on that screen is computed on the client. Named by us (spec 0026).
+    "portfolio.summary.v1": "PortfolioSummary",
 }
 
 #: `- **Component:** \`X\`` in a component's own section of the contract.

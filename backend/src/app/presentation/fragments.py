@@ -32,7 +32,9 @@ class Labelled(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     label: str = Field(
-        max_length=64, description="Human label the widget shows.", examples=["Bitcoin"]
+        max_length=64,
+        description="Human label the widget shows.",
+        examples=["NVIDIA Corp"],
     )
 
 
@@ -48,7 +50,7 @@ class Category(Labelled):
     key: str = Field(
         max_length=32,
         description="Stable identifier of the slice (a ticker, or `other`).",
-        examples=["BTC"],
+        examples=["NVDA"],
     )
     value: MoneyDisplay = Field(description="What the slice is worth.")
     weight: PercentageDisplay = Field(description="The slice's share of the whole.")
@@ -65,7 +67,7 @@ class Bucket(Labelled):
             "`label` is prose and cannot be sent, so a segment without a key "
             "is a segment that cannot start a turn."
         ),
-        examples=["BTC"],
+        examples=["NVDA"],
     )
     delta: MoneyDisplay = Field(description="How much this step moved the total.")
     cumulative: MoneyDisplay = Field(description="The running total after the step.")
@@ -97,7 +99,7 @@ class Series(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(
-        max_length=64, description="Name of the series.", examples=["BTC"]
+        max_length=64, description="Name of the series.", examples=["NVDA"]
     )
     points: tuple[SeriesPoint, ...] = Field(
         description="The observations, oldest first."

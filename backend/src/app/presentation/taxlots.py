@@ -123,7 +123,7 @@ class TaxLotsTablePayload(ProjectionDto):
         max_length=200,
         description="The scenario in words, written here so the client states no "
         "figure of its own.",
-        examples=["Sell 0.5 BTC under FIFO"],
+        examples=["Sell 0.5 NVDA under FIFO"],
     )
     proceeds: Total = Field(
         description="What the sale raises; its `label` captions that column."

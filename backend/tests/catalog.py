@@ -24,6 +24,7 @@ SHIPPED_VIEWS: Final[tuple[str, ...]] = (
     "holdings.allocation.v1",
     "order.ticket.v1",
     "payoff.curve.v1",
+    "portfolio.summary.v1",
     "scenario.comparison.v1",
     "taxlots.table.v1",
 )

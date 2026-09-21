@@ -29,11 +29,11 @@ async def test_selling_more_than_is_held_answers_instead_of_failing(
     lots to draw, and a tax-lot table under "you hold fewer units than that"
     is the contradiction spec 0011 OD-1 named.
     """
-    outcome = await tool.run({"symbol": "BTC", "quantity": "1.5"}, tool_context)
+    outcome = await tool.run({"symbol": "NVDA", "quantity": "150"}, tool_context)
 
     assert outcome.data["error"] == "position-too-small"
-    assert outcome.data["requestedDisplay"] == "1.5"
-    assert outcome.data["heldDisplay"] == "0.6"
+    assert outcome.data["requestedDisplay"] == "150"
+    assert outcome.data["heldDisplay"] == "90"
     assert "summary" not in outcome.data
     assert outcome.render is None
 
@@ -41,8 +41,8 @@ async def test_selling_more_than_is_held_answers_instead_of_failing(
 @pytest.mark.parametrize(
     "arguments",
     [
-        {"symbol": "BTC"},
-        {"symbol": "BTC", "quantity": "0.5", "amount_usd": "10000"},
+        {"symbol": "NVDA"},
+        {"symbol": "NVDA", "quantity": "75", "amount_usd": "10000"},
     ],
     ids=["neither_size_given", "both_sizes_given"],
 )
@@ -59,14 +59,14 @@ async def test_a_sale_takes_exactly_one_size(
 @pytest.mark.parametrize(
     "arguments",
     [
-        {"symbol": "BTC", "quantity": "half"},
-        {"symbol": "BTC", "quantity": "-0.5"},
-        {"symbol": "BTC", "quantity": "1e5"},
-        {"symbol": "BTC", "quantity": "0.123456789"},
-        {"symbol": "B", "quantity": "0.5"},
-        {"symbol": "b$", "quantity": "0.5"},
-        {"symbol": "BTC", "quantity": "0.5", "lot_method": "AVERAGE"},
-        {"symbol": "BTC", "quantity": "0.5", "after_tax": True},
+        {"symbol": "NVDA", "quantity": "half"},
+        {"symbol": "NVDA", "quantity": "-0.5"},
+        {"symbol": "NVDA", "quantity": "1e5"},
+        {"symbol": "NVDA", "quantity": "0.123456789"},
+        {"symbol": "B", "quantity": "75"},
+        {"symbol": "b$", "quantity": "75"},
+        {"symbol": "NVDA", "quantity": "75", "lot_method": "AVERAGE"},
+        {"symbol": "NVDA", "quantity": "75", "after_tax": True},
     ],
     ids=[
         "a_word_instead_of_a_number",

@@ -126,7 +126,7 @@ async def test_the_second_access_writes_nothing(session: AsyncSession) -> None:
 async def test_the_seed_is_the_curated_demo_portfolio(session: AsyncSession) -> None:
     """What lands in the database is the portfolio the demo was designed around.
 
-    BTC carries the tax-lot story, ETH and LINK the attribution story, SOL the
+    NVDA carries the tax-lot story, AAPL and PYPL the attribution story, VOO the
     order story (spec 0003). A seed that quietly changed would take the three
     flows with it.
     """

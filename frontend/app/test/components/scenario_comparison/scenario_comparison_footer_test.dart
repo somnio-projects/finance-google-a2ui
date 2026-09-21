@@ -10,7 +10,7 @@ void main() {
     testWidgets('reports the spread and names both ends', (tester) async {
       await pumpScenarioCard(tester, scenarioData());
       expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
-      expect(find.text(r'$2,520.00'), findsOneWidget);
+      expect(find.text(r'$6,000.00'), findsOneWidget);
       expect(
         find.text(ScenarioComparisonFooter.highestCaption),
         findsOneWidget,
