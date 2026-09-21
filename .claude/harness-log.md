@@ -2772,3 +2772,101 @@ rename that GGU-53 found on the backend.
 - Three things the design asks for have no field in the contract: a signed,
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
+
+---
+
+## 2026-09-21 — GGU-63, the payoff curve (`specs/frontend/0005-payoff-chart.md`)
+
+Second chart on the GGU-55 primitives. `PayoffChart` binds `payoff.curve.v1`:
+a profit-and-loss line over a bounded price range, gain and loss shaded, with
+`totals`, `annotations` and `disclosure` rendered verbatim.
+
+**Code:** `packages/finance_charts` gains `PayoffPoint`, `PayoffLayout`,
+`payoffBounds` and `payoffGridLines` (pure Dart, asserted arithmetically);
+`app/lib/charts/` gains `PayoffChart`, `PayoffPainter`, `payoff_ticks.dart`
+and a second `ThemeExtension`, `PayoffPalette`. The component is four files
+under `app/lib/components/payoff_chart/`. No charting package (ADR-L D-13).
+
+**Harness:** nothing changed. No new rule, hook or command.
+
+### What the next person should know
+
+- **A `file://` render of a `.dc.html` design page is inert, and it looks
+  convincing.** The preview tool rewrites the page to a `data:` URL, so the
+  relative `./support.js` never resolves and the data binding never boots.
+  The descriptive prose and the legend row are *static HTML in the page
+  shell*, so a page showing `+$5,880` and `BE −14%` can still be one where
+  nothing bound — the tell is that the chart itself is empty. Serving the
+  directory over HTTP boots it properly, and that needs the sandbox off for
+  that one command (`socket.bind` is denied inside it).
+- **Better still, read the design's own source.** `Catalog_RiskPayoffChart.dc.html`
+  carries its scales as arithmetic in a `<script type="text/x-dc">` block
+  (`scaleX(x) = 44 + (x+30)/60*(486-44)`) and its strokes as literal SVG
+  attributes. Those are exact rather than sampled, and they are what
+  `packages/finance_charts/test/payoff_reference.dart` holds. The HTTP render
+  was then used to *confirm* them: break-even lands 26.5 % across the plot,
+  against the 26.67 % the scales predict.
+- **The payload cannot say where break-even is, and that blocks the design's
+  most distinctive feature.** `totals[]` is `{label, amount}` with no key or
+  discriminator, so the only routes to the marker are matching the string
+  `"Break-even price"` (N-5, and wrong in the `es-AR` and `de-DE` the view
+  offers) or computing the zero crossing — which the ticket's own AC-2
+  forbids. The design's Zone 2 schema has exactly the missing field:
+  `markers: { breakEven, current }`. Shipped shading half-planes at the
+  value-axis zero instead; OD-1 carries the ask.
+- **The value axis cannot be labelled either**, for the same reason one step
+  down: the payload carries a `*.display` per *point*, never per axis tick,
+  so the design's `$0 / +$5k / +$10k` gutter would have to be formatted in
+  the client. Gridlines are drawn unlabelled (OD-8).
+- **The ticket's AC-3 names a field this view does not have.** `positionValue`
+  lives in the agent *tool* row (`backend/src/app/agent/tools/payoff_rows.py`),
+  which the model reads — not in the projection the chart binds. The ticket
+  was written against spec `backend/0014`'s tool output rather than `0016`'s
+  projection (OD-2).
+- **Design and backend describe different products here.** The artboard is an
+  options payoff — NVDA with protective puts, a curve floored at −$2,400, x in
+  percent — while `payoff.curve.v1` is an explicitly linear *spot* payoff over
+  a crypto enum whose own disclosure says "no strike, no expiry, no implied
+  volatility". The layout takes arbitrary points, so a kinked curve would draw
+  correctly; the reference fixture deliberately keeps the design's kinked
+  shape for that reason (OD-3).
+- **Three palette roles did not fit `ChartPalette`.** It is 141 lines and each
+  field costs about eight, so three more would breach the 150-line gate on a
+  file three sibling components were editing the same week. They arrive as a
+  second `ThemeExtension`; the curve, the region tints and the marker halo
+  already match `barTotal`, `barGain`/`barLoss` and `surface` exactly, so
+  nothing is restated. The region tint *is* a token rather than an alpha at
+  the point of use, because the design's opacity differs between the themes
+  (.07 light, .10 dark) and a widget choosing between them would be branching
+  on brightness (OD-6).
+- **`app_theme.dart`'s `extensions:` list was becoming the chain ADR-L D-3
+  forbids, one chart at a time.** The component registry honours D-3 by
+  generation, so nobody looked at the theme: GGU-55 added `ChartTokens` to
+  that list, GGU-63 added `PayoffTokens`, and four catalog components are
+  still to come. `chart_tokens.dart` now owns `chartExtensions(brightness)`
+  and the theme spreads it. The list still exists one layer down — the point
+  is that it now sits beside the colours it is made of, so a new palette is
+  one edit rather than two. If the TL would rather carve theme tokens out of
+  D-3 entirely, **amend D-3**; the silent second instance was the defect, not
+  the extension (OD-9). Caught by `frontend-reviewer`, not by the gate.
+- **`ThemeExtension<dynamic>` compiles under `dart analyze` and fails under
+  the CFE.** `ThemeExtension<T extends ThemeExtension<T>>` is F-bounded, so
+  spreading a `List<ThemeExtension<dynamic>>` into `<ThemeExtension<dynamic>>[]`
+  analyses clean and then fails `flutter test` with *"Can't assign spread
+  elements of type ThemeExtension&lt;dynamic&gt; to collection elements of type
+  ThemeExtension&lt;ThemeExtension&lt;dynamic&gt;&gt;"*. `Object?` in place of
+  `dynamic` on both sides fixes it. Worth knowing because the analyzer being
+  green is normally the whole of `make analyze`.
+- **A golden over a mostly-transparent subject reports a huge diff for a
+  sub-perceptual change.** Deriving the region tints instead of transcribing
+  them moved **41 % (light) and 83 % (dark)** of golden pixels — far past the
+  1.5 % tolerance — because `diffPercent` counts any pixel that differs at
+  all, and the wash covers most of the plot. The chart paints no surface, so
+  those pixels are unpremultiplied at alpha 0.07–0.10, which amplifies a
+  sub-level rounding difference roughly tenfold: raw deltas reach 14/255.
+  Composited over `ChartTokens.surface`, which is what a reader actually
+  sees, the **max channel delta is 2/255**. Goldens were regenerated for an
+  intended change, and the measurement is in the PR rather than the number
+  being waved through. The waterfall goldens do not have this property
+  because their bars are opaque — so the comparator's measured 0.69 % noise
+  floor is an *opaque-subject* figure and does not transfer to a wash.
