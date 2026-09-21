@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | TL backend · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 |
+| **Owner** | TL backend · **Version** 1.1 — 2026-09-21 · **Next review** 2027-09-19 |
 | **Maps to** | SOC 2 CC7.1, CC8.1 · ISO/IEC 27001 A.8.8 |
 
 ## SLAs (clock starts when the finding is published to us — Dependabot PR, scan issue, advisory, report)
@@ -36,7 +36,14 @@ expiry, and re-check weekly (the scheduled scan is the reminder).
 
 ## Runtime and platform patching
 
-Container images are rebuilt on every merge and at least weekly (scheduled
-scan builds the image); Cloud Run/Cloud SQL runtime patching is Google's
+Container images are rebuilt and scanned **on every pull request** (the
+`image` job in `backend-ci.yaml`, which triggers on `pull_request` only) and
+at least weekly (`scheduled-scan.yaml`, Mondays 06:00 UTC). **Not on merge —
+nothing runs on a merge**, and a rebuilt image only reaches a running
+environment when somebody starts `backend-cd` by hand
+([CHANGE_MANAGEMENT.md](CHANGE_MANAGEMENT.md) §7). The practical consequence
+for this policy: meeting a patch SLA takes a pull request **and** a deploy
+somebody presses, so the clock does not stop at merge.
+Cloud Run/Cloud SQL runtime patching is Google's
 responsibility ([CLOUD_SERVICES.md](CLOUD_SERVICES.md)); developer
 workstations follow [DEVICE_POLICY.md](DEVICE_POLICY.md).

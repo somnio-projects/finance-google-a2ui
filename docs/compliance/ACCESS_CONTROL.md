@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | Security owner (TL backend) · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 |
+| **Owner** | Security owner (TL backend) · **Version** 1.1 — 2026-09-21 · **Next review** 2027-09-19 |
 | **Maps to** | SOC 2 CC6.1, CC6.2, CC6.3, CC6.6 · ISO/IEC 27001 A.5.15, A.5.17, A.5.18, A.8.2, A.8.5 |
 
 ## 1. Principles

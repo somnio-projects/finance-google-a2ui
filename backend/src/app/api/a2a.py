@@ -26,6 +26,7 @@ from app.api.deps import (
     get_surface_action_service,
     get_tool_context,
 )
+from app.api.feature_gate import require_feature
 from app.api.openapi import problem_responses
 from app.services.a2a_actions import prepared_prompt
 from app.services.a2a_dispatch import message_of, parse
@@ -43,6 +44,7 @@ ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
 
 @router.post(
     "/",
+    dependencies=[require_feature("agent.a2a", default=True)],
     operation_id="call_a2a_method",
     # The body is one envelope for many methods and the answer is either an
     # event stream or a JSON-RPC object, so FastAPI cannot derive a response
@@ -54,7 +56,8 @@ ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
         "`text/event-stream`. **This is JSON-RPC, not REST** — errors are "
         "JSON-RPC error objects with HTTP 200, unlike `/v1/**`, which answers "
         "RFC 9457 problem documents (ADR-J D-3). Requires a bearer token; the "
-        "agent card does not. Spec 0010 AC-2, AC-4."
+        "agent card does not. The `agent.a2a` flag switches this route off — "
+        "404 `feature-disabled` before the body runs. Spec 0010 AC-2, AC-4."
     ),
     responses={
         200: {
@@ -73,7 +76,7 @@ ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
                 "both carry the same surfaces."
             ),
         },
-        **problem_responses(401, 429, 500),
+        **problem_responses(401, 404, 429, 500),
     },
     openapi_extra={
         "requestBody": {

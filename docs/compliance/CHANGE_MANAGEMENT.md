@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | TL backend · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 |
+| **Owner** | TL backend · **Version** 2.0 — 2026-09-21 · **Next review** 2027-09-19 |
 | **Maps to** | SOC 2 CC8.1, CC7.1 · ISO/IEC 27001 A.8.25–A.8.29, A.8.31, A.8.32, A.8.9 |
 
 ## 1. Lifecycle (Spec-Driven Development)
@@ -83,7 +83,15 @@ migrations run at container start (`RUN_MIGRATIONS`), preceded by a backup.
 
 - `develop` is always green; `main` is always deployable. Releases are tags `vMAJOR.MINOR.PATCH` (SemVer) cut from `main` after a `develop → main` PR, with notes in `CHANGELOG.md` (Keep a Changelog).
 - The release PR bumps `backend/pyproject.toml` version. `GET /health` reports the **release identifier** `<version>+<short sha>`, injected as `APP_RELEASE` by the pipeline, so the running revision names the exact commit it was built from.
-- **Deployment is automated, gated and recorded** (`.github/workflows/backend-cd.yaml`, spec 0007, `specs/infra/0001-dev-environment.md`). A merge to `develop` releases **dev** with no human step; a merge to `main` releases production only after the `production` GitHub Environment's **required reviewer** approves — the separation-of-duties control for release, since the approver need not be the merger. In both cases the delivery run **calls the full ship gate as a job and the build and deploy jobs `needs:` it**, so nothing is published or released unless the gate passed on that exact commit; this is a dependency inside one run, not a notification that fires after CI and then has to remember to check whether it passed.
+- **Deployment is started by a human, then automated, gated and recorded** (`.github/workflows/backend-cd.yaml`, spec 0007, `specs/infra/0001-dev-environment.md`). **Merging deploys nothing.** `backend-cd` has **no `push:` trigger** — it is `workflow_dispatch` only: somebody presses *Run workflow* in the Actions tab and picks the branch, and the branch decides the target (`develop` → **dev**, `main` → **production**). Production additionally waits on the `production` GitHub Environment's **required reviewer** — the separation-of-duties control for release, since the approver need not be the person who started the run. In both cases the delivery run **calls the full ship gate as a job and the build and deploy jobs `needs:` it**, so nothing is published or released unless the gate passed on that exact commit; this is a dependency inside one run, not a notification that fires after CI and then has to remember to check whether it passed.
+- **The button only exists on the default branch.** GitHub reads `workflow_dispatch` from the default branch only, so the delivery workflow must be on `main` to be startable at all. Releasing `develop` into `main` is what makes the button appear.
+
+  > **Correction, 2026-09-21.** This bullet previously read "A merge to
+  > `develop` releases **dev** with no human step". That has not been true
+  > since the CD trigger became manual on 2026-09-20; this document was last
+  > edited at 11:16 and the change landed at 12:38. An auditor testing
+  > "deployment is authorised" against the old text would have looked for a
+  > merge-triggered control that does not exist. Raised as **NC-7**.
 - **The deploy record is the workflow run.** Its summary names the environment, the commit, the release identifier, the **image digest** and the Cloud Run revision, and the GitHub Environment keeps the deployment history. No separate spreadsheet: the record cannot drift from what actually ran.
 - **Nothing takes traffic unverified.** The revision is created with no traffic (its startup applies the migrations), `/readyz` is probed on that revision, traffic shifts only then, and `/health` must report the expected release.
 - **Rollback is automatic on a failed verification** — traffic returns to the previously serving revision and the run fails. A manual rollback is the same script with `ROLLBACK_TO=<revision>`, or re-running `backend-cd` with the `rollback_to` input (`infra/README.md`). Data rollbacks follow the DR plan.
