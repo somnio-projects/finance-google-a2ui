@@ -19,6 +19,7 @@ from typing import Any, Final
 
 from app.presentation.catalog_doc import digest, fields_of
 from app.presentation.inventory import InventoryField
+from app.presentation.published import component_of, guidance_of
 from app.presentation.registry import Projection
 from app.presentation.schema_facts import NONE
 
@@ -30,25 +31,6 @@ SNAPSHOT_PATH: Final[str] = "docs/catalog/view-catalog.snapshot.json"
 SNAPSHOT_VERSION: Final[int] = 1
 #: The command that regenerates both catalog artefacts.
 FIX_COMMAND: Final[str] = "cd backend && make catalog"
-
-
-def component_of(projection: Projection) -> str:
-    """Return the A2UI component the client registers this projection under.
-
-    The name is never transcribed into this module: the shipped example is
-    validated back into the payload DTO and handed to the projection's own
-    A2UI adapter, so the snapshot carries the component the backend actually
-    emits (``DonutChart``, ``WaterfallChart``) and the round trip proves the
-    example still deserialises.
-
-    Args:
-        projection: The registered projection to ask.
-
-    Returns:
-        The catalog component name, verbatim as the adapter emits it.
-    """
-    payload = projection.dto.model_validate(dict(projection.example))
-    return projection.surface(payload).component
 
 
 def _absent(cell: str) -> str | None:
@@ -101,6 +83,9 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         # artefact is diffed only against its own generator, so both were
         # internally consistent and disagreed with each other (GGU-92).
         "actions": list(example.get("actions", ())),
+        # `null` where design has not written a do/don't pair yet, rather than
+        # a sentence this backend invented for itself (`presentation.guidance`).
+        "guidance": guidance_of(projection),
         "example": example,
     }
 
@@ -130,7 +115,6 @@ __all__ = [
     "FIX_COMMAND",
     "SNAPSHOT_PATH",
     "SNAPSHOT_VERSION",
-    "component_of",
     "snapshot_document",
     "snapshot_entry",
 ]

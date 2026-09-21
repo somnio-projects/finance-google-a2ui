@@ -85,7 +85,18 @@ cannot change without the artefacts changing in the same commit. After touching
 a projection, run `cd backend && make catalog` and commit the result. The
 component name in the snapshot is read from the projection's own A2UI adapter
 and is what the client registers against, verbatim — rename it and the gate
-fails on both the snapshot and the suite. Two conventions the contract reads:
+fails on both the snapshot and the suite.
+
+**A drift check cannot tell you the generator is wrong.** Each artefact is
+re-rendered and diffed against *its own* generator, so both can be green while
+both disagree with design — which is exactly what GGU-53 found: four of six
+component names were wrong, and the Markdown contract did not print the
+component name at all. Re-rendering proves an artefact is *current*, never that
+it is *right*. Only a second, independent declaration can do that, which is why
+`test_component_names.py` holds design's six names as a literal and compares
+them against the adapter, the snapshot, the Markdown and `/v1/views`.
+
+Two conventions the contract reads:
 
 - **Pre-formatted** is derived from the ADR-E pair (a string beside a figure),
   not from the `display` name — keep shipping pairs and it classifies itself.
@@ -116,6 +127,8 @@ budget is a defect like a failing test.
 - [ ] `render()` pure and unit-tested, including every option branch and the empty/edge data cases.
 - [ ] A2UI adapter + its test.
 - [ ] `register(...)` called from the module; nothing else edited.
+- [ ] **The component name comes from the design catalog**, and the new view is added to `DESIGN_CATALOG` in `tests/unit/presentation/test_component_names.py`. That file is red until you do, on purpose (spec 0023, superseding 0019/0021's "never assert the list"): it is the only inventory in the suite not read from the registry, because it is design's half of the contract rather than a copy of ours. A component nobody has named is a component the client cannot register.
+- [ ] Guidance (`use_when` / `avoid_when`) **if design has written a page for it**, in `<view>_guidance.py`. If not, leave it unset — the contract prints that the page does not exist, and a sentence invented here would be indistinguishable from one a designer approved.
 - [ ] Appears in `/v1/views`, in OpenAPI with an example, and in the generated prompt fragments.
 - [ ] `cd backend && make catalog` run and **both** `docs/catalog/CONTRACT.md` and `docs/catalog/view-catalog.snapshot.json` committed — the gate fails on a stale artefact, twice.
 - [ ] Spec updated (`specs/backend/NNNN-*.md`) and the decision recorded if anything in ADR-K changed.

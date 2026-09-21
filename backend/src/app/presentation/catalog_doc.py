@@ -14,6 +14,7 @@ from json import dumps
 from typing import Final
 
 from app.presentation.catalog_actions import actions_table
+from app.presentation.catalog_guidance import guidance_note
 from app.presentation.catalog_preamble import PREAMBLE
 from app.presentation.catalog_tables import (
     INDEX_HEADER,
@@ -25,6 +26,7 @@ from app.presentation.catalog_tables import (
 )
 from app.presentation.contract import catalog_entry
 from app.presentation.inventory import InventoryField, inventory
+from app.presentation.published import component_of
 from app.presentation.registry import Projection
 
 #: Where the rendered document is checked in, relative to the repository root.
@@ -67,6 +69,11 @@ def _section(projection: Projection) -> str:
         f"> {projection.summary}\n\n"
         f"- **Frozen id:** `{projection.id}` · "
         f"**digest:** `{digest(projection)}`\n"
+        # The component was the one fact this document did not carry, while
+        # the snapshot and the A2UI surface both did — so design could not
+        # check the name it had drawn against the name the client would
+        # register (GGU-53, spec 0023 AC-2).
+        f"- **Component:** `{component_of(projection)}`\n"
         f"- **Payload type:** `{projection.dto.__name__}`\n"
         f"- **Served by:** "
         + " · ".join(f"`{name}`" for name in projection.endpoints)
@@ -80,6 +87,8 @@ def _section(projection: Projection) -> str:
             options_table(projection.options.model_json_schema()),
             "### Field inventory",
             inventory_table(fields),
+            "### When the agent picks this",
+            guidance_note(projection.guidance),
             "### Actions",
             actions_table(list(catalog_entry(projection)["actions"])),
             "### Example payload",
@@ -96,6 +105,7 @@ def _index(projections: Sequence[Projection]) -> str:
         rows.append(
             (
                 f"[`{projection.id}`](#{projection.id.replace('.', '')})",
+                f"`{component_of(projection)}`",
                 f"`{digest(projection)}`",
                 str(len(fields)),
                 inputs_note(fields),

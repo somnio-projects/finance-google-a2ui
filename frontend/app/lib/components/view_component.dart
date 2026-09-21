@@ -21,8 +21,8 @@ abstract class ViewComponent {
   String get viewId;
 
   /// The A2UI component type the backend's catalog names for [viewId], e.g.
-  /// `DonutChart`. Recorded so a reader can line this class up against the
-  /// catalog entry it implements.
+  /// `AllocationSummary`. Recorded so a reader can line this class up
+  /// against the catalog entry it implements.
   String get a2uiComponent;
 
   /// Builds the widget for [payload].

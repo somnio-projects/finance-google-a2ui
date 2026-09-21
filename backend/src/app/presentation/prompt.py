@@ -36,6 +36,23 @@ def _options_line(projection: Projection) -> str:
     return f"  options: {described or NO_OPTIONS}"
 
 
+def _guidance_lines(projection: Projection) -> list[str]:
+    """Return the do/don't pair for ``projection``, or nothing.
+
+    A projection whose design page has not been written contributes no lines
+    at all rather than an empty "use when:" — a blank instruction is worse
+    than a missing one, because the model reads it as a constraint it cannot
+    satisfy (``presentation.guidance``).
+    """
+    guidance = projection.guidance
+    if guidance is None:
+        return []
+    return [
+        f"  use when: {guidance.use_when}",
+        f"  do not use for: {guidance.avoid_when}",
+    ]
+
+
 def prompt_fragment(projections: Sequence[Projection]) -> str:
     """Render the registry as the catalog text the model is taught.
 
@@ -43,13 +60,15 @@ def prompt_fragment(projections: Sequence[Projection]) -> str:
         projections: Every registered projection.
 
     Returns:
-        One header line, then two lines per projection: id with its purpose,
-        and its declared options with their bounds.
+        The header, then per projection: id with its purpose, its declared
+        options with their bounds, and — where design has written one — the
+        do/don't pair that says when to reach for it (GGU-53, spec 0023).
     """
     lines = [PROMPT_HEADER]
     for projection in projections:
         lines.append(f"- {projection.id} — {projection.summary}")
         lines.append(_options_line(projection))
+        lines.extend(_guidance_lines(projection))
     return "\n".join(lines)
 
 

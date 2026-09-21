@@ -15,10 +15,10 @@ from app.presentation.catalog_doc import CONTRACT_PATH, contract_document, field
 from app.presentation.catalog_json import (
     SNAPSHOT_PATH,
     SNAPSHOT_VERSION,
-    component_of,
     snapshot_document,
     snapshot_entry,
 )
+from app.presentation.published import component_of
 from app.presentation.registry import REGISTRY
 from app.presentation.schema_facts import NONE
 from app.presentation.spec import ProjectionSpec
@@ -54,7 +54,7 @@ def test_every_registered_view_declares_a_client_component() -> None:
 
 def test_the_snapshot_names_the_component_the_backend_emits_verbatim() -> None:
     """The client registers against this string, so it is copied, not derived."""
-    assert entries()["holdings.allocation.v1"]["component"] == "DonutChart"
+    assert entries()["holdings.allocation.v1"]["component"] == "AllocationSummary"
 
 
 def test_the_snapshot_carries_every_field_path_of_the_payload() -> None:

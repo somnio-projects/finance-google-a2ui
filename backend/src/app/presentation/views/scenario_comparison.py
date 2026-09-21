@@ -23,6 +23,7 @@ from app.presentation import scenario_build as build
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Annotation, ProjectionDto
 from app.presentation.registry import register
+from app.presentation.scenario_guidance import GUIDANCE
 from app.presentation.scenario_options import ScenarioComparisonOptions, resolve
 from app.presentation.scenarios import (
     NOTES,
@@ -102,7 +103,7 @@ def render(
 def surface(payload: ScenarioComparisonPayload) -> Surface:
     """Map the payload onto the A2UI comparison card the genui client shows."""
     return Surface(
-        component="ComparisonCard",
+        component="ScenarioComparison",
         view=payload.view,
         title=payload.title,
         props={
@@ -129,6 +130,7 @@ PROJECTION: Final = register(
         render=render,
         surface=surface,
         fitness=fitness,
+        guidance=GUIDANCE,
     )
 )
 

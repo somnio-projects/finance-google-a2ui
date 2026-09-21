@@ -112,7 +112,7 @@ def render(portfolio: Portfolio, options: PayoffCurveOptions) -> PayoffCurvePayl
 def surface(payload: PayoffCurvePayload) -> Surface:
     """Map the payload onto the A2UI line chart the genui client instantiates."""
     return Surface(
-        component="LineChart",
+        component="PayoffChart",
         view=payload.view,
         title=payload.title,
         props={

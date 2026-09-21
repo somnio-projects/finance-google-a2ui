@@ -44,6 +44,7 @@ def test_fragments_compose_into_the_shapes_a_widget_binds() -> None:
         weight=percentage(Decimal("0.6")),
     )
     bucket = Bucket(
+        key="BTC",
         label="Bitcoin",
         delta=money(Decimal("10")),
         cumulative=money(Decimal("110")),
@@ -51,12 +52,25 @@ def test_fragments_compose_into_the_shapes_a_widget_binds() -> None:
     )
     series = Series(
         name="BTC",
-        points=(SeriesPoint(label="2026-01-15", value=money(Decimal("64250"))),),
+        points=(
+            SeriesPoint(
+                at=money(Decimal("64000")),
+                label="$64,000.00",
+                value=money(Decimal("64250")),
+            ),
+        ),
     )
     note = Annotation(label="Net", text="$10.00")
     assert (total.amount.display, category.weight.display) == ("$100.00", "60.00%")
     assert (bucket.direction, series.points[0].value.display) == ("up", "$64,250.00")
     assert note.text == "$10.00"
+    # The pair a painter needs: `at` places the point, `label` prints the tick.
+    assert (series.points[0].at.amount, series.points[0].at.display) == (
+        Decimal("64000"),
+        "$64,000.00",
+    )
+    # A segment's key is the value a tap sends back, never its prose label.
+    assert (bucket.key, bucket.label) == ("BTC", "Bitcoin")
 
 
 def test_fragments_are_frozen() -> None:
@@ -68,6 +82,7 @@ def test_fragments_are_frozen() -> None:
 def test_bucket_direction_is_bounded_to_up_or_down() -> None:
     with pytest.raises(ValidationError, match="direction"):
         Bucket(
+            key="BTC",
             label="Bitcoin",
             delta=money(Decimal("1")),
             cumulative=money(Decimal("1")),
@@ -77,7 +92,7 @@ def test_bucket_direction_is_bounded_to_up_or_down() -> None:
 
 def test_surface_carries_the_component_and_its_props() -> None:
     surface = Surface(
-        component="DonutChart",
+        component="AllocationSummary",
         view="holdings.allocation.v1",
         title="Allocation",
         props={"slices": []},

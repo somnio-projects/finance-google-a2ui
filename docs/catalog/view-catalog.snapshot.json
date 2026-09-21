@@ -5,8 +5,8 @@
   "views": [
     {
       "actions": [],
-      "component": "WaterfallChart",
-      "digest": "0edca33bd65b",
+      "component": "AttributionWaterfall",
+      "digest": "04a53053167d",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -38,6 +38,7 @@
               "display": "$10,230.00"
             },
             "direction": "up",
+            "key": "BTC",
             "label": "Bitcoin"
           },
           {
@@ -50,6 +51,7 @@
               "display": "-$2,797.50"
             },
             "direction": "down",
+            "key": "ETH",
             "label": "Ethereum"
           },
           {
@@ -62,6 +64,7 @@
               "display": "$1,496.00"
             },
             "direction": "up",
+            "key": "SOL",
             "label": "Solana"
           },
           {
@@ -74,6 +77,7 @@
               "display": "-$662.50"
             },
             "direction": "down",
+            "key": "LINK",
             "label": "Chainlink"
           },
           {
@@ -86,6 +90,7 @@
               "display": "-$152.40"
             },
             "direction": "down",
+            "key": "DOGE",
             "label": "Dogecoin"
           }
         ],
@@ -218,6 +223,14 @@
           "presence": "required",
           "state": null,
           "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -356,6 +369,10 @@
           "type": "string ≤64 chars"
         }
       ],
+      "guidance": {
+        "avoid_when": "a static breakdown of what is held now — `holdings.allocation.v1` answers that. Never write the figures yourself: render this view and copy the `display` strings it returns.",
+        "use_when": "the user asks WHY a value changed and the answer decomposes into signed contributions that sum to a net delta — what drove the portfolio's result, profit and loss by position. The steps arrive largest move first; do not reorder them."
+      },
       "options_schema": {
         "additionalProperties": false,
         "description": "Declared knobs of ``attribution.waterfall.v1``; nothing else is accepted.",
@@ -427,8 +444,8 @@
     },
     {
       "actions": [],
-      "component": "DonutChart",
-      "digest": "194e130cf9de",
+      "component": "AllocationSummary",
+      "digest": "7c827ee9a8b8",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -636,6 +653,7 @@
           "type": "string ≤16 chars"
         }
       ],
+      "guidance": null,
       "options_schema": {
         "additionalProperties": false,
         "description": "Declared knobs of ``holdings.allocation.v1``; nothing else is accepted.",
@@ -706,7 +724,7 @@
     {
       "actions": [],
       "component": "OrderTicket",
-      "digest": "80e81a6bf2f7",
+      "digest": "6cbd19f8949e",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1004,6 +1022,7 @@
           "type": "string ≤300 chars"
         }
       ],
+      "guidance": null,
       "options_schema": {
         "additionalProperties": false,
         "description": "Declared knobs of ``order.ticket.v1``; nothing else is accepted.",
@@ -1108,8 +1127,8 @@
     },
     {
       "actions": [],
-      "component": "LineChart",
-      "digest": "f52eb1ea3307",
+      "component": "PayoffChart",
+      "digest": "6a69670692d0",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1139,6 +1158,10 @@
             "name": "Profit / loss",
             "points": [
               {
+                "at": {
+                  "amount": "106.680",
+                  "display": "$106.68"
+                },
                 "label": "$106.68",
                 "value": {
                   "amount": "-150.0000000000000000000000000",
@@ -1146,6 +1169,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "110.49000",
+                  "display": "$110.49"
+                },
                 "label": "$110.49",
                 "value": {
                   "amount": "-137.5000000000000000000000000",
@@ -1153,6 +1180,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "114.3000",
+                  "display": "$114.30"
+                },
                 "label": "$114.30",
                 "value": {
                   "amount": "-125.0000000000000000000000000",
@@ -1160,6 +1191,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "118.11000",
+                  "display": "$118.11"
+                },
                 "label": "$118.11",
                 "value": {
                   "amount": "-112.5000000000000000000000000",
@@ -1167,6 +1202,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "121.920",
+                  "display": "$121.92"
+                },
                 "label": "$121.92",
                 "value": {
                   "amount": "-99.99999999999999999999999999",
@@ -1174,6 +1213,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "125.73000",
+                  "display": "$125.73"
+                },
                 "label": "$125.73",
                 "value": {
                   "amount": "-87.49999999999999999999999999",
@@ -1181,6 +1224,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "129.5400",
+                  "display": "$129.54"
+                },
                 "label": "$129.54",
                 "value": {
                   "amount": "-74.99999999999999999999999999",
@@ -1188,6 +1235,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "133.35000",
+                  "display": "$133.35"
+                },
                 "label": "$133.35",
                 "value": {
                   "amount": "-62.49999999999999999999999999",
@@ -1195,6 +1246,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "137.160",
+                  "display": "$137.16"
+                },
                 "label": "$137.16",
                 "value": {
                   "amount": "-49.99999999999999999999999999",
@@ -1202,6 +1257,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "140.97000",
+                  "display": "$140.97"
+                },
                 "label": "$140.97",
                 "value": {
                   "amount": "-37.49999999999999999999999999",
@@ -1209,6 +1268,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "144.7800",
+                  "display": "$144.78"
+                },
                 "label": "$144.78",
                 "value": {
                   "amount": "-25.00000000000000000000000000",
@@ -1216,6 +1279,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "148.59000",
+                  "display": "$148.59"
+                },
                 "label": "$148.59",
                 "value": {
                   "amount": "-12.50000000000000000000000000",
@@ -1223,6 +1290,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "152.400",
+                  "display": "$152.40"
+                },
                 "label": "$152.40",
                 "value": {
                   "amount": "0E-30",
@@ -1230,6 +1301,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "156.21000",
+                  "display": "$156.21"
+                },
                 "label": "$156.21",
                 "value": {
                   "amount": "12.50000000000000000000000000",
@@ -1237,6 +1312,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "160.0200",
+                  "display": "$160.02"
+                },
                 "label": "$160.02",
                 "value": {
                   "amount": "25.00000000000000000000000000",
@@ -1244,6 +1323,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "163.83000",
+                  "display": "$163.83"
+                },
                 "label": "$163.83",
                 "value": {
                   "amount": "37.49999999999999999999999999",
@@ -1251,6 +1334,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "167.640",
+                  "display": "$167.64"
+                },
                 "label": "$167.64",
                 "value": {
                   "amount": "49.99999999999999999999999999",
@@ -1258,6 +1345,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "171.45000",
+                  "display": "$171.45"
+                },
                 "label": "$171.45",
                 "value": {
                   "amount": "62.49999999999999999999999999",
@@ -1265,6 +1356,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "175.2600",
+                  "display": "$175.26"
+                },
                 "label": "$175.26",
                 "value": {
                   "amount": "74.99999999999999999999999999",
@@ -1272,6 +1367,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "179.07000",
+                  "display": "$179.07"
+                },
                 "label": "$179.07",
                 "value": {
                   "amount": "87.49999999999999999999999999",
@@ -1279,6 +1378,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "182.880",
+                  "display": "$182.88"
+                },
                 "label": "$182.88",
                 "value": {
                   "amount": "99.99999999999999999999999999",
@@ -1286,6 +1389,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "186.69000",
+                  "display": "$186.69"
+                },
                 "label": "$186.69",
                 "value": {
                   "amount": "112.5000000000000000000000000",
@@ -1293,6 +1400,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "190.5000",
+                  "display": "$190.50"
+                },
                 "label": "$190.50",
                 "value": {
                   "amount": "125.0000000000000000000000000",
@@ -1300,6 +1411,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "194.31000",
+                  "display": "$194.31"
+                },
                 "label": "$194.31",
                 "value": {
                   "amount": "137.5000000000000000000000000",
@@ -1307,6 +1422,10 @@
                 }
               },
               {
+                "at": {
+                  "amount": "198.120",
+                  "display": "$198.12"
+                },
                 "label": "$198.12",
                 "value": {
                   "amount": "150.0000000000000000000000000",
@@ -1442,6 +1561,30 @@
         {
           "binding": "container",
           "input": null,
+          "path": "series[].points[].at",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "series[].points[].at.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "series[].points[].at.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
           "path": "series[].points[].value",
           "presence": "required",
           "state": null,
@@ -1488,6 +1631,7 @@
           "type": "string ≤200 chars"
         }
       ],
+      "guidance": null,
       "options_schema": {
         "additionalProperties": false,
         "description": "Declared knobs of ``payoff.curve.v1``; nothing else is accepted.",
@@ -1637,8 +1781,8 @@
     },
     {
       "actions": [],
-      "component": "ComparisonCard",
-      "digest": "b2e006b3b306",
+      "component": "ScenarioComparison",
+      "digest": "fe62a7725690",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2078,6 +2222,10 @@
           "type": "string ≤200 chars"
         }
       ],
+      "guidance": {
+        "avoid_when": "a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.",
+        "use_when": "the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison."
+      },
       "options_schema": {
         "$defs": {
           "LotMethod": {
@@ -2201,7 +2349,7 @@
     {
       "actions": [],
       "component": "TaxLotTable",
-      "digest": "0790bed806a8",
+      "digest": "c9cc43ace0f0",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2713,6 +2861,10 @@
           "type": "string ≤200 chars"
         }
       ],
+      "guidance": {
+        "avoid_when": "comparing several lot-selection methods — `scenario.comparison.v1` puts those side by side. Never estimate a tax rate in prose: this view stops at the realised split, before any rate, fee or wash sale.",
+        "use_when": "the user asks about selling a position and the answer depends on WHICH lots go — the realised result always splits into its short-term and long-term halves, which is the point of the surface."
+      },
       "options_schema": {
         "additionalProperties": false,
         "description": "Declared knobs of ``taxlots.table.v1``; nothing else is accepted.",

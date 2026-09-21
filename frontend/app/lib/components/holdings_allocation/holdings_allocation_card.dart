@@ -32,10 +32,10 @@ class HoldingsAllocationRow {
 
 /// Renders `holdings.allocation.v1` as a total plus a legend of rows.
 ///
-/// The catalog names this view's A2UI component `DonutChart`. The arc itself
-/// needs the raw `weight.value` for geometry — a legitimate use of the raw
-/// member under N-4 — and lands with the charting ticket; a legend that shows
-/// every figure correctly is the honest skeleton until then.
+/// The catalog names this view's A2UI component `AllocationSummary`. The arc
+/// itself needs the raw `weight.value` for geometry — a legitimate use of
+/// the raw member under N-4 — and lands with the charting ticket; a legend
+/// that shows every figure correctly is the honest skeleton until then.
 class HoldingsAllocationCard extends StatelessWidget {
   /// Creates the card.
   const HoldingsAllocationCard({
