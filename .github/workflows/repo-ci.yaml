@@ -52,8 +52,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
 
-      - name: "Spell-check every tracked file outside backend/ (codespell)"
-        run: uv run --project backend codespell
+      - name: "Spell-check every tracked file, dot-directories included (codespell)"
+        run: bash scripts/check_spelling.sh
 
   report:
     name: "Report · repository gate summary"

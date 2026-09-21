@@ -143,5 +143,31 @@ or documentation vocabulary, so it flagged `bloc` on every Flutter file it
 touched. Both now read `.codespellrc`. **Two configurations for one check is
 the same drift as two command strings.**
 
+**And then `repo.spelling` itself over-claimed, which is the sharpest version
+of this rule so far.** The check shipped as a bare `codespell` run, and
+codespell's directory walk skips entries whose name begins with a dot — so
+`.claude/` and `.github/` were never opened. Naming them on the command line
+does not help; the same walk applies once it descends. Meanwhile the check's
+own configuration comment and this file both said the gap it closed included
+`.claude/`. The proof was sitting in the repository: a misspelling of `unparsable`
+in `.claude/harness-log.md`, and the gate green.
+
+Measured, with a typo planted in `.claude/rules/ci-conventions.md`:
+
+| Gate | exit | hits on the planted file |
+|---|---|---|
+| `bash scripts/check_spelling.sh` | 1 | **1** |
+| bare `codespell` | 65 | **0** |
+
+The old form was red — for unrelated findings in `uv.lock` and
+`backend/reports/` — while blind to the file the mutation targeted. **A red
+gate is not evidence that it is red for your reason.**
+
+The fix removes the walk from the question: `git ls-files` hands codespell an
+explicit list. The script also refuses to report success on an implausibly
+small file list, or on a list containing nothing under `.claude/` or
+`.github/` — the anti-vacuity idiom `infra/scripts/tests/` already uses,
+applied to the check that most needed it.
+
 A PR that changes one without its pair is incomplete. If a third runner ever
 appears, it goes in this table rather than in a comment.

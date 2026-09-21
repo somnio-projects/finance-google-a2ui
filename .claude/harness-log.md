@@ -161,7 +161,7 @@ start the run that rejects it.**
 **Next person should know**
 
 - **A cross-declaration test is only worth writing if an unreadable declaration is a FAILURE.**
-  Every value is parsed and an unparseable one fails loudly with what was looked for. A check that
+  Every value is parsed and an unparsable one fails loudly with what was looked for. A check that
   quietly matches nothing is worse than no check — the guard idiom from `test_rules_index.sh`.
 - **Resolving an open decision means naming what re-opens it.** OD-2 now lists three conditions, the
   first of which (`max_instances > 1`) is the one the gate enforces. "Resolved" without a re-opening
@@ -2418,3 +2418,19 @@ not reach a JSON consumer.
   it would have mapped a `DependencyUnavailableError` from an audited action's
   audit write onto `-32602` *and put its detail on the wire*. Narrowed to the
   three refusals that are genuinely the caller's fault.
+
+---
+
+- **A gate can be red for the wrong reason and blind to the right one.** The
+  repository-wide spelling check shipped as a bare `codespell`, whose directory
+  walk skips dot-entries — so `.claude/` and `.github/` were never scanned,
+  while the check's own comment and `ship-gate.json`'s note both said they
+  were. a misspelling of `unparsable` sat in this very file with the gate green. Planting a
+  typo in `.claude/` gave **exit 65 and zero hits on the planted file**: red,
+  from `uv.lock` and `backend/reports/`, and entirely blind to the mutation.
+  Anyone confirming the gate "works" by watching it go red would have been
+  satisfied. It now scans an explicit `git ls-files` list and asserts that
+  `.claude/` and `.github/` are in it. Found by the agent merging the session's
+  pull requests, in a gate I had written and mutation-checked the same day —
+  my mutation proved a typo in `specs/` was caught, and I generalised from one
+  directory to "the repository" without testing the generalisation.
