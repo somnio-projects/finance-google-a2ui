@@ -18,6 +18,17 @@ formatter:
   trailing_commas: preserve
 
 analyzer:
+  # Build output is not our source. Kept for the IDE, which otherwise offers
+  # completions and warnings from unpacked plugin code.
+  #
+  # This is NOT what keeps the gate clean. `flutter pub get` unpacks plugin
+  # sources under app/build/ (firebase_auth ships its own tests through Swift
+  # Package Manager), and each of those trees carries its own pubspec.yaml —
+  # a separate package root, which this exclude cannot reach. The gate passes
+  # `app/lib app/test e2e_test` explicitly instead; see
+  # .claude/rules/ci-conventions.md section 4.
+  exclude:
+    - "**/build/**"
   language:
     strict-casts: true
     strict-inference: true
