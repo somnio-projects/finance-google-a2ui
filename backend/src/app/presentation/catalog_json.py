@@ -81,9 +81,10 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
 
     Returns:
         Its component type, view id, digest, serving endpoints, DTO field
-        paths, options schema and rendered example — what a client test needs
-        to prove it binds the shape the backend serves.
+        paths, options schema, declared actions and rendered example — what a
+        client test needs to prove it binds the shape the backend serves.
     """
+    example = dict(projection.example)
     return {
         "view": projection.id,
         "component": component_of(projection),
@@ -93,7 +94,14 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         "endpoints": list(projection.endpoints),
         "fields": [_field(row) for row in fields_of(projection)],
         "options_schema": projection.options.model_json_schema(),
-        "example": dict(projection.example),
+        # Read off the rendered example, the same way `catalog_entry` does, so
+        # a projection publishes its actions by rendering them and still edits
+        # no shared file (ADR-K D-15). This key was missing while the Markdown
+        # and `GET /v1/views` both carried it, and nothing noticed: each
+        # artefact is diffed only against its own generator, so both were
+        # internally consistent and disagreed with each other (GGU-92).
+        "actions": list(example.get("actions", ())),
+        "example": example,
     }
 
 

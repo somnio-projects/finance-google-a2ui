@@ -4,6 +4,7 @@
   "version": 1,
   "views": [
     {
+      "actions": [],
       "component": "WaterfallChart",
       "digest": "0edca33bd65b",
       "endpoints": [
@@ -425,6 +426,7 @@
       "view": "attribution.waterfall.v1"
     },
     {
+      "actions": [],
       "component": "DonutChart",
       "digest": "194e130cf9de",
       "endpoints": [
@@ -702,6 +704,7 @@
       "view": "holdings.allocation.v1"
     },
     {
+      "actions": [],
       "component": "OrderTicket",
       "digest": "80e81a6bf2f7",
       "endpoints": [
@@ -1104,6 +1107,7 @@
       "view": "order.ticket.v1"
     },
     {
+      "actions": [],
       "component": "LineChart",
       "digest": "f52eb1ea3307",
       "endpoints": [
@@ -1632,6 +1636,7 @@
       "view": "payoff.curve.v1"
     },
     {
+      "actions": [],
       "component": "ComparisonCard",
       "digest": "b2e006b3b306",
       "endpoints": [
@@ -2194,6 +2199,7 @@
       "view": "scenario.comparison.v1"
     },
     {
+      "actions": [],
       "component": "TaxLotTable",
       "digest": "0790bed806a8",
       "endpoints": [
