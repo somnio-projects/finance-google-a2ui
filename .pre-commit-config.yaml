@@ -120,6 +120,16 @@ repos:
         files: ^(\.claude/ship-gate\.json|\.github/workflows/)
         pass_filenames: false
 
+      # Runs when the check, its suite, or the rule that defines the manual-run
+      # template moves. It proves the check REJECTS — a stale build, a foreign
+      # one, an unknown sha and a transcript with no identity at all (GGU-93).
+      - id: repo-manual-run
+        name: Prove the manual-run check rejects a stale or foreign build (test_check_manual_run.sh)
+        entry: bash scripts/tests/test_check_manual_run.sh
+        language: system
+        files: ^(scripts/check_manual_run\.sh|scripts/tests/test_check_manual_run\.sh|\.claude/rules/backend/sdd\.md)$
+        pass_filenames: false
+
       - id: backend-typecheck
         name: Type-check the backend in strict mode (basedpyright)
         entry: bash -c 'cd backend && uv run basedpyright'
@@ -218,6 +228,17 @@ repos:
       # copied from frontend/Makefile and .claude/ship-gate.json, not
       # paraphrased (.claude/rules/ci-conventions.md 5). The suites and the
       # coverage threshold run in CI and in the pre-push gate below.
+      # First, because every hook below it reads the tree through `dart`. A
+      # Dart below the SDK floor declared in frontend/pubspec.yaml formats
+      # tracked files differently and exits 65, which reads as a red branch and
+      # is a red toolchain (GGU-94). This one says which.
+      - id: frontend-toolchain
+        name: Prove the pinned Flutter SDK is on PATH (check_toolchain.sh)
+        entry: bash -c 'cd frontend && bash tool/check_toolchain.sh'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
       - id: frontend-format
         name: Verify Dart formatting is canonical (dart format)
         entry: bash -c 'cd frontend && dart format --output=none --set-exit-if-changed .'

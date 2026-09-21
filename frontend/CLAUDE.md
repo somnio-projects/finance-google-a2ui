@@ -13,6 +13,37 @@ layout are [ADR-L](../docs/adr/ADR-L-client-architecture.md) and the spec is
 
 ## Run
 
+### The SDK is pinned, and the pin is a file
+
+Flutter **3.47.5**, which vendors Dart **3.13.4**. The version lives in
+[`.flutter-version`](.flutter-version) and **nowhere else** — `tool/check_toolchain.sh`
+reads it on a laptop and every `Set up the pinned Flutter SDK` step in
+`.github/workflows/frontend-ci.yaml` reads it on a runner. It used to be a
+`FLUTTER_VERSION` env var in that workflow, where no local command could reach
+it, so the pin existed and the gate a developer actually ran was free to
+disagree with it (GGU-94).
+
+Installing it, from a clone with no Flutter:
+
+```bash
+git clone --depth 1 --branch "$(cat frontend/.flutter-version)" \
+  https://github.com/flutter/flutter.git "$HOME/flutter-$(cat frontend/.flutter-version)"
+export PATH="$HOME/flutter-$(cat frontend/.flutter-version)/bin:$PATH"   # put this in your shell profile
+cd frontend && bash tool/check_toolchain.sh
+```
+
+That `PATH` line matters more than it looks: `dart` must resolve to the SDK
+**Flutter vendors**, not to a Homebrew or system copy. `dart format` does not
+read the `sdk: ^3.13.0` constraint in `pubspec.yaml`, so a Homebrew `dart-sdk
+3.12.1` — below the declared floor — formats tracked files differently and
+exits 65, which reads as a red branch and is a red toolchain. Measured on
+`develop` at `c6dd5b2`: 3 files changed / exit 65 under 3.12.1, 0 changed /
+exit 0 under the pin.
+
+No fvm. A `.flutter-version` file is plain text that `cat` and the CI action
+both read; an `.fvmrc` would make fvm the supported install path, and this
+project does not use it.
+
 ```bash
 cd frontend && flutter pub get --enforce-lockfile      # once per clone
 cd frontend/app && flutter run -d chrome \
@@ -28,7 +59,7 @@ carries a credential for a deployed environment.
 ## Verify — a change is not done without this
 
 ```bash
-cd frontend && make gate    # format · analyze · budget · manifest · tests · coverage
+cd frontend && make gate    # toolchain · format · analyze · budget · manifest · tests · coverage
 cd frontend && make format  # apply formatting
 cd frontend && make manifest # regenerate the component manifest after adding one
 cd frontend/app && flutter test --update-goldens   # after an intended visual change

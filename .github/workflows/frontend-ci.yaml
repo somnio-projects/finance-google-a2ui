@@ -12,6 +12,14 @@
 # .claude/ship-gate.json and from `frontend/Makefile`, copied rather than
 # paraphrased (ci-conventions §5). The `build` job is deliberately beyond
 # the gate — slow, and a runner's job, exactly like backend-ci's `image`.
+#
+# The SDK version is NOT written here. It lives in `frontend/.flutter-version`,
+# which every job below reads, and which `frontend/tool/check_toolchain.sh`
+# reads on a laptop (GGU-94). It used to be a `FLUTTER_VERSION` env var in this
+# file, where no local command could reach it — so the pin existed and the gate
+# a developer actually ran was free to disagree with it. Pinned, not floating:
+# `stable` would silently change the toolchain under a committed lockfile, the
+# exact class of surprise `--enforce-lockfile` exists to prevent.
 name: frontend-ci
 
 on:
@@ -27,13 +35,6 @@ concurrency:
   group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Pinned, not floating. `stable` would silently change the toolchain under a
-  # committed lockfile — the exact class of surprise `--enforce-lockfile` below
-  # exists to prevent. 3.47.5 vendors Dart 3.13.4, the SDK floor in every
-  # pubspec.
-  FLUTTER_VERSION: "3.47.5"
-
 defaults:
   run:
     working-directory: frontend
@@ -47,12 +48,19 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.flutter-version)
+        id: pin
+        run: echo "version=$(cat .flutter-version)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
+
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        run: bash tool/check_toolchain.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile
@@ -77,12 +85,19 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.flutter-version)
+        id: pin
+        run: echo "version=$(cat .flutter-version)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
+
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        run: bash tool/check_toolchain.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile
@@ -114,10 +129,14 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
+      - name: Read the pinned SDK version (.flutter-version)
+        id: pin
+        run: echo "version=$(cat .flutter-version)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
 
