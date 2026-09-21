@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done, in two parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). `infra.shell-lint` is here because it was not, and the two halves drifted: CI ran shellcheck over the test scripts as well as the deploy script while this file listed neither, so a finding in a test script passed every local check and failed on a runner. The scope below is the workflow step verbatim. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes — exactly when it is least needed. `repo.spelling` is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. Flutter gate lands with GGU-1.",
+  "_note": "Definition of Done, in three parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md \u00a75). `infra.shell-lint` is here because it was not, and the two halves drifted: CI ran shellcheck over the test scripts as well as the deploy script while this file listed neither, so a finding in a test script passed every local check and failed on a runner. The scope below is the workflow step verbatim. The `frontend.*` commands are exactly the steps of `cd frontend && make gate` and of the `quality` and `tests` jobs in .github/workflows/frontend-ci.yaml (GGU-91, spec `frontend/0001`). That workflow also has a `build` job that compiles the release web bundle, which is deliberately NOT in the gate for the same reason backend-ci's `image` job is not in `py.*`: it is slow and belongs on a runner. `frontend.test` and `frontend.coverage` are make targets for the same reason `py.quality` is — the command is a loop over four packages, and a paraphrase of a loop is exactly the drift §5 warns about. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes \u2014 exactly when it is least needed. `repo.spelling` is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. The `_candidates` below belong to the older `client_flutter/` app and are untouched by GGU-91.",
   "required": [
     {
       "id": "py.lint",
@@ -76,6 +76,36 @@
       "id": "repo.spelling",
       "cwd": ".",
       "cmd": "uv run --project backend codespell"
+    },
+    {
+      "id": "frontend.format",
+      "cwd": "frontend",
+      "cmd": "dart format --output=none --set-exit-if-changed ."
+    },
+    {
+      "id": "frontend.analyze",
+      "cwd": "frontend",
+      "cmd": "dart analyze --fatal-infos --fatal-warnings"
+    },
+    {
+      "id": "frontend.budget",
+      "cwd": "frontend",
+      "cmd": "dart run tool/check_file_budget.dart"
+    },
+    {
+      "id": "frontend.manifest",
+      "cwd": "frontend",
+      "cmd": "dart run tool/generate_component_manifest.dart --check"
+    },
+    {
+      "id": "frontend.test",
+      "cwd": "frontend",
+      "cmd": "make test"
+    },
+    {
+      "id": "frontend.coverage",
+      "cwd": "frontend",
+      "cmd": "make coverage"
     }
   ],
   "_candidates": [

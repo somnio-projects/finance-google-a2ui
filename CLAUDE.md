@@ -6,6 +6,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 |---|---|---|
 | `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc — binds the backend's projections and transforms nothing | [`client_flutter/CLAUDE.md`](client_flutter/CLAUDE.md); project rules in `.claude/rules/client/`, generic ones in `.claude/rules/flutter/` |
+| `frontend/` | The A2UI client — Flutter 3.47.5 pub workspace (`app/` + three pure-Dart packages) · Bloc · go_router. Layering, the 150-line budget, the numbers rule and the component seam are all held by its gate (ADR-L) | [`frontend/CLAUDE.md`](frontend/CLAUDE.md) |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL, Secret Manager, Cloud Run, logging/alerts — one shape per `environment`, with HA/PITR/Cloud Armor derived **on outside `dev`** (`specs/infra/0001-dev-environment.md`). Validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
 | `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract, as Markdown for the designer and JSON for the client test — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
@@ -31,9 +32,10 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
 cd backend && make gate                # lint · types · budget · catalog contract · quality (smells) · tests 100 % · audit
 cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
+cd frontend && make gate               # format · analyze · budget · manifest · tests · 100 % line coverage
 ```
 
-`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`) and `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
+`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`, `frontend-ci.yaml`) and each `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
 
 ## How work flows (SDD)
 
@@ -45,6 +47,8 @@ cd client_flutter && dart format --output=none --set-exit-if-changed . && dart a
 - **Every endpoint is strictly RESTful and exhaustively documented in OpenAPI** (summary, description, operation_id, tags, response_model, every error response, examples, documented+bounded fields). See `.claude/rules/backend/api-design.md`.
 - **Delivery is started by a human and verified by the machine**: `backend-cd.yaml` has **no `push:` trigger** — merging deploys nothing. Someone presses *Run workflow* in the Actions tab and picks the branch, and the branch decides the target (`develop` → **dev**, `main` → production, still behind its required reviewer). The run then pushes the image by digest, deploys a Cloud Run revision with **no traffic**, probes `/readyz`, shifts traffic, checks `/health` reports the release, and **rolls back** otherwise. It calls the ship gate as a job and `needs:` it, so nothing is released without a green gate on that commit. The button only exists because the workflow is on `main` — GitHub reads `workflow_dispatch` from the default branch only. No service-account key: Workload Identity Federation only. The risky logic lives in `infra/scripts/deploy_cloud_run.sh` so it can be tested. See `specs/backend/0007-cd-pipeline.md`.
 - **Backend layering is enforced**: controllers only call services; services never import FastAPI/SQLAlchemy; repositories are the only SQLAlchemy users; `bootstrap.py` is the single composition root; files ≤150 lines. See `.claude/rules/backend/architecture.md`.
+- **`frontend/` layering is enforced the same way, by a test**: pure-Dart packages cannot import Flutter, blocs never touch the transport, `bootstrap.dart` is the single composition root, and `NumberFormat`/`dart:math`/`DateTime.now()` are absent from `lib/` — `app/test/architecture/layering_test.dart` fails on the mechanism. **Adding a component edits no existing file**; the wiring is a generated, gated manifest. See ADR-L and `.claude/rules/frontend/`.
+- **Two Flutter apps exist and share no code.** `client_flutter/` is the older one; `frontend/` is the A2UI client built to this repository's standard (GGU-91). They have separate gates, separate pipelines and separate specs — never edit one from the other's ticket.
 - **Security is a gate, not a review note**: bearer-token auth on every non-health route, RFC 9457 errors without internals, no secrets/tokens/PII in logs, audit events for identity actions, non-root read-only containers. SOC 2 / ISO 27001 mapping in `backend/docs/SECURITY.md`; rules in `.claude/rules/backend/security.md`.
 - **Auth is pluggable**: `AUTH_PROVIDER=jwt` (HS256, dev/service) or `oidc` (RS256 via JWKS — Firebase, Google, any SSO). New provider = one module in `backend/src/app/auth/providers/` + one registry entry.
 - **Numbers-from-tools (product invariant)**: the LLM never computes financial figures; deterministic backend tools return pre-formatted `*Display` strings the agent copies. Keep it when the agent lands here.
@@ -55,7 +59,8 @@ cd client_flutter && dart format --output=none --set-exit-if-changed . && dart a
 
 - `.env`, `.env.*`, keys, service accounts, `google-services.json`, `GoogleService-Info.plist` — denied by permissions. Templates: `backend/env.example`.
 - `backend/alembic/versions/*` once merged (add a new revision), `backend/uv.lock` by hand (use `uv add` / `uv lock`).
-- `.claude/skills/`, `.claude/rules/python/`, `.claude/rules/flutter/` — synced from `somnio-ai-tools` by the Somnio CLI (`harness.json` records the revision). Project rules live in `.claude/rules/backend/`.
+- `.claude/skills/`, `.claude/rules/python/`, `.claude/rules/flutter/` — synced from `somnio-ai-tools` by the Somnio CLI (`harness.json` records the revision). Project rules live in `.claude/rules/backend/` and `.claude/rules/frontend/`.
+- `frontend/pubspec.lock` by hand, and `frontend/app/lib/components/component_manifest.g.dart` (generated — run `cd frontend && make manifest`).
 - The coverage `fail_under`, ruff rule set and `typeCheckingMode` — team decisions, not fixes.
 
 <!-- somnio:harness:begin -->
@@ -85,6 +90,9 @@ matching path is touched.
 | .claude/rules/client/presentation.md | flutter | The client half of ADR-K — bind, never format/compute/derive/interpret/invent (client_flutter views, blocs, repositories). |
 | .claude/rules/client/testing.md | flutter | Coverage bar and who checks it, unit vs widget vs bloc, the verbatim-binding test, Dart mutation checks (client_flutter/*/test). |
 | .claude/rules/client/security.md | flutter | Token handling, what a --dart-define may carry, secrets, logging, TLS, the absent deep-link surface (client_flutter Dart, web shell, manifests). |
+| .claude/rules/frontend/architecture.md | flutter | `frontend/` layering, the composition root, the component seam, the 150-line budget. |
+| .claude/rules/frontend/contract-binding.md | flutter | The numbers rule and the fifteen prohibitions; view ids, options, ETags (frontend components, repository, transport). |
+| .claude/rules/frontend/testing.md | flutter | `frontend/` coverage contract, the pump_app harness, what a test must assert. |
 | .claude/rules/python/code-style.md | python | Ruff gate, naming, imports, Google docstrings. |
 | .claude/rules/python/data-validation.md | python | pydantic at boundaries, pydantic-settings, typed responses. |
 | .claude/rules/python/error-handling.md | python | EAFP, narrowest except, custom hierarchy, translate at boundaries. |
@@ -103,5 +111,5 @@ matching path is touched.
 
 ## Verification commands
 
-See `.claude/ship-gate.json` — `cd backend && make gate`.
+See `.claude/ship-gate.json` — `cd backend && make gate` and `cd frontend && make gate`.
 <!-- somnio:harness:end -->

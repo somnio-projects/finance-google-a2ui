@@ -79,8 +79,13 @@ workflow is scoped by `paths:` to the directory it proves:
 |---|---|---|
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file |
 | `client-ci` | pull requests | `client_flutter/**`, its own file |
+| `frontend-ci` | pull requests | `frontend/**`, its own file |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows |
 | `backend-cd` | **the button only** | — |
+
+`frontend-ci` and `client-ci` are two pipelines over two Flutter apps, which is
+the table working, not a duplication: they are separate deployables with
+separate gates, and a change to one must not pay for the other's build.
 
 A new stack gets its own `<area>-ci.yaml` with its own `paths:`. Adding jobs to
 an existing workflow so that "everything runs together" is the thing this table
@@ -103,6 +108,7 @@ with a runner and a workflow that must stay identical to it:
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
+| `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
 
 **`repo-ci.yaml` deliberately has no `paths:` filter**, which every other
 workflow here does have. A repository-wide check placed in a scoped workflow

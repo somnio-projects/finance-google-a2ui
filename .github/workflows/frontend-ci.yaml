@@ -1,0 +1,156 @@
+# Frontend ship gate.
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+# Cost contract: anything a laptop can prove runs in pre-commit, not here.
+# CI re-proves it on a clean machine and adds what a laptop cannot: a from-
+# scratch dependency resolution against the committed lock, and a release web
+# build.
+#
+# Every `run:` in the `quality` and `tests` jobs is the command string from
+# .claude/ship-gate.json and from `frontend/Makefile`, copied rather than
+# paraphrased (ci-conventions §5). The `build` job is deliberately beyond
+# the gate — slow, and a runner's job, exactly like backend-ci's `image`.
+name: frontend-ci
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned, not floating. `stable` would silently change the toolchain under a
+  # committed lockfile — the exact class of surprise `--enforce-lockfile` below
+  # exists to prevent. 3.47.5 vendors Dart 3.13.4, the SDK floor in every
+  # pubspec.
+  FLUTTER_VERSION: "3.47.5"
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  quality:
+    name: "Frontend · style, analysis, file budget, generated manifest"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v7
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Verify formatting is canonical (dart format)
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyse with infos and warnings fatal (dart analyze)
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      - name: Enforce the 150-line file budget (check_file_budget.dart)
+        run: dart run tool/check_file_budget.dart
+
+      - name: Verify the generated component manifest is current (generate_component_manifest.dart)
+        run: dart run tool/generate_component_manifest.dart --check
+
+  tests:
+    name: "Frontend · unit and widget tests at 100% line coverage per file"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v7
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Run every package and widget suite (make test)
+        run: make test
+
+      - name: Enforce the per-file coverage threshold (make coverage)
+        run: make coverage
+
+      - name: Publish the coverage reports (actions/upload-artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: |
+            frontend/app/coverage/lcov.info
+            frontend/packages/*/coverage/lcov.info
+          retention-days: 14
+
+  build:
+    name: "Frontend · the web bundle compiles"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only after the cheap jobs pass — a branch that fails analysis never pays
+    # for a release build.
+    needs: [quality, tests]
+    steps:
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v7
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
+        run: flutter pub get --enforce-lockfile
+
+      - name: Compile the release web bundle (flutter build web)
+        working-directory: frontend/app
+        run: flutter build web --release
+
+  report:
+    name: "Report · frontend ship-gate summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality, tests, build]
+    if: always()
+    steps:
+      - name: Write the gate result to the run summary (GITHUB_STEP_SUMMARY)
+        working-directory: .
+        run: |
+          {
+            echo "## Frontend ship gate"
+            echo ""
+            echo "| Gate | Proves | Result |"
+            echo "|---|---|---|"
+            echo "| Quality | dart format, analyzer with infos fatal, 150-line budget, generated component manifest | ${{ needs.quality.result }} |"
+            echo "| Tests | three pure-Dart suites + the widget suite, 100 % line coverage per file | ${{ needs.tests.result }} |"
+            echo "| Build | the release web bundle compiles | ${{ needs.build.result }} |"
+            echo ""
+            echo "Local equivalent: \`cd frontend && make gate\`; pre-commit runs the cheap steps before every commit."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run when any gate failed (bash)
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        working-directory: .
+        run: exit 1

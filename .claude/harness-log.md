@@ -2072,3 +2072,108 @@ listed gaps.
   that fails on correct code teaches people to bypass it — and a bypassed hook
   is how the `specs/` typo reached `develop` in the first place. The scope gap
   and the false positives were the same defect seen from two ends.
+
+---
+
+## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#TBD)
+
+---
+
+## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#58)
+
+**Spec:** `specs/frontend/0001-frontend-skeleton.md` · **ADR:** ADR-L (Proposed)
+
+**Code.** A new top-level `frontend/`: a pub workspace with one lockfile and
+four packages — `finance_core`, `finance_api_client`,
+`finance_views_repository` (all pure Dart) and `app` (Flutter). One composition
+root, `go_router`, Material 3 with a spacing `ThemeExtension`, sealed
+`Result`/`AppFailure`, and one vertical slice: `holdings.allocation.v1`
+fetched, decoded and rendered. 159 tests, 100 % line coverage on 26 files.
+
+**Harness.** All eight pieces, mirroring the backend's: `frontend/CLAUDE.md`;
+three project rules under `.claude/rules/frontend/` with `paths:` frontmatter;
+a `post-edit-dart.py` PostToolUse hook registered beside the Python one; a
+read-only `frontend-reviewer` agent; the ship-gate triple
+(`frontend.*` in `ship-gate.json` ≡ `frontend/Makefile gate` ≡
+`frontend-ci.yaml`, command strings copied); the spec; this entry; and the
+`docs/DEV_HARNESS.md` section. Plus diagram `12-frontend-layers.md`, the
+pre-commit hooks, and `ci-conventions.md` §5's table gaining a `frontend.*`
+row.
+
+**The point of the whole thing, in one sentence:** the backend half of this
+repository enforces its standards with tests and a gate while the client half
+enforced nothing, so every rule here is held by a script that was
+**mutation-checked** — a forbidden import, a `NumberFormat`, a 151-line file
+and an unregistered component directory each turned the suite red before being
+reverted.
+
+**Four defects the gate found in its own PR**, which is the argument for
+building it first:
+
+| Found by | What was wrong |
+|---|---|
+| a repository test | `ViewPayload` had no value equality, so two identical envelopes compared unequal — bloc state would have re-emitted on every fetch and `bloc_test` expectations would have been identity-based |
+| `check_file_budget.dart` | three test files over 150 lines; splitting them produced the two shared harnesses the suites now use |
+| `check_coverage.dart` | a `props` override on a sealed base that no subclass used (deleted), and a credential closure that could only be reached through a live request (extracted to `devTokenProvider`, now testable) |
+| `dart analyze --fatal-infos` | 21 findings in test files alone, none visible while only `lib/` was being analysed |
+| **CI's `build` job** | the app had **no `web/` scaffold at all** — it was assembled by hand rather than by `flutter create`, so a web-first client could not build for web. Every local check was green. |
+
+**Next person should know**
+
+- **`flutter pub get` silently re-resolves; `--enforce-lockfile` does not.** Every install and every CI job uses the strict flag. A build that resolved differently from the reviewed one is the whole failure mode.
+- **`dart fix --apply` is not safe to run blind on Dart 3.13.** It rewrote every constructor into the new `const new(…)` shorthand and injected a *circular self-import* into two barrel files to satisfy `comment_references`. Both changes were "valid" and both were worse. The two lints are now off in `frontend/analysis_options.yaml` with reasons (ADR-L D-10). Read a `dart fix` diff.
+- **Dart's lcov has no branch data.** "100 % branch coverage" is not expressible for Dart, so this half holds 100 % **line** coverage *per file* instead. That is why the two halves of this repository state their coverage contracts differently, and it is recorded rather than quietly rounded to 80 %.
+- **Reaching 100 % three times meant deleting or extracting code, not writing a contrived test.** That is the coverage gate doing design review.
+- **A widget test through a bare `MaterialApp` hides wiring bugs.** `pumpApp` uses the real theme and the real providers; the `AppSpacing` equality defect surfaced only because a test compared a `ThemeExtension` read back out of a real `ThemeData`.
+- **Dart has no runtime reflection on the web**, so an unimported library is tree-shaken and its registration never runs. "Adding a component edits no existing file" is therefore only true because the one file that imports them is **generated and diffed by the gate** — the same shape as the backend's frozen catalog.
+- **`go_router`'s configuration is empty until it is attached to a widget tree.** Asserting on `currentConfiguration` from a bare `buildRouter()` fails with `Bad state: No element`; route tests have to pump.
+- **A hand-assembled Flutter package has no platform scaffold, and nothing local tells you.** `make gate` was green, 159 tests passed, and `flutter build web` said *"This project is not configured for the web."* The gate's local half cannot prove a bundle compiles; that is why `frontend-ci.yaml` has a `build` job, and it earned its place on the first run. `flutter create . --platforms web` also drops in an `analysis_options.yaml`, a `README.md`, a `.gitignore` and a default `widget_test.dart` — the first of those would have silently shadowed the workspace analyzer configuration. Delete all four; keep `.metadata`.
+- **The review round found four things the gate asserted and did not hold.** Recorded because the shape repeats — a property written down, enforced by nothing — and it is the same shape as every defect in the entry above.
+
+  | Claimed | What was true |
+  |---|---|
+  | "errors shown to a user are the backend's safe text" | the transport passed `http.ClientException.message` straight through — package:http's own wording, and on `BrowserClient` it carries the target URL. A comment two lines from the render site asserted the opposite. The cited test only ever built a `ProblemFailure`, so it **could not** fail for the half that was wrong. |
+  | "no client-side interpretation of server strings, verified by the layering test" | that file had no such rule. The property was true by construction; the citation was a gap dressed as a control. |
+  | `*.iml` is gitignored | `.gitignore` has no inline comments — `#` only opens one at column 0 — so the pattern was the literal string `*.iml  # IntelliJ…` and matched nothing. `git check-ignore` exits 1 and says so. |
+  | "100 % line coverage per file" | really "100 % of the files the tests happened to load". lcov writes **no record** for a library nothing imports, so a new untested file passed silently. 30 files on disk, 26 records. |
+
+  The last is the one to carry forward: **a coverage gate that iterates the report can only ever see what the report contains.** `check_coverage.dart` now takes the file list from disk and fails on a missing record, deciding "no executable code" by parsing rather than by a hardcoded barrel list. An untested `lib/` file turns it red — mutation-checked.
+
+- **A filename rule cannot separate two classes that share a file.** The first attempt at "only a `*_page.dart` may read a repository" passed its own mutation check *green*, because `PortfolioViewsView` lived inside `portfolio_views_page.dart`. The fix was to split the file, which the page/view split wanted anyway. The mutation caught it; reading it twice had not.
+- **Needle lists have holes on the `try` prefix.** `double.parse` does **not** match `double.tryParse` as a substring, and `tryParse` is the form a developer reaches for first. Both spellings of `double`, `num` and `int` are now listed, plus `DateTime.timestamp()` beside `DateTime.now()`.
+- **The frontend gate cannot be run without a Flutter SDK, and this machine had none.** It was verified against a pinned 3.47.5 downloaded for the session. Anyone reproducing it needs that SDK, not merely Dart — `dart test` covers the three pure packages but not the widget suite.
+
+---
+
+## 2026-09-20 (merge) — GGU-91 merged with the manual run **waived**, not satisfied
+
+**Recorded because a waived gate and a passed gate are different things.**
+
+`.claude/rules/backend/sdd.md` requires every PR body to carry *"a manual run
+against the running stack with the real commands and their real responses
+pasted in. No manual run, no merge."* PR #58 does **not** carry one, and says so
+in its own body: `backend/.env` does not exist in a worktree and creating it is
+denied by this repository's own permissions (`Edit(**/.env)`), so
+`docker compose up` could not start the API. The author did not route around the
+deny — the correct call.
+
+**The TL waived the requirement for this PR and authorised the merge.** The
+blocker paragraph is left standing in the PR body on purpose: it is the record
+of what was not done. Nothing here says the manual run passed, because nobody
+ran it.
+
+**What that leaves open.** The frontend gate (`cd frontend && make gate`) and
+`frontend-ci.yaml` both ran green, so the code is proven against its tests and a
+real web build. What is *not* proven is the thing only a running stack shows:
+that the client actually reaches this backend — `BACKEND_BASE_URL`, CORS, the
+bearer token, and the shape of a real `?view=` response against a real
+projection. Spec `frontend/0001` still owns that.
+
+**Next person should know**
+
+- **The first task for whoever has a `.env` is to do the run this waiver skipped**,
+  and to append the result here. Until then, treat "the frontend binds the
+  backend" as asserted by tests, not observed.
+- **A permission deny is not a reason to lower a gate.** The gate stayed where it
+  was, the PR said plainly what it could not do, and a human took the decision.
+  That is the shape to copy the next time the sandbox blocks a verification.
