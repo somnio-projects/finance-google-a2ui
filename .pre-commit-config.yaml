@@ -81,10 +81,13 @@ repos:
       - id: actionlint
 
   # ---------------------------------------------------------------- shell
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
+  # The shellcheck-precommit hook used to sit here and lint the changed shell
+  # files. It is now `repo.shell-lint`, in the local block below, so that the
+  # hook, `repo-ci.yaml` and `ship-gate.json` all run one command string over
+  # one file list. Two configurations for one check is the same drift as two
+  # command strings (.claude/rules/ci-conventions.md §5) — and it had already
+  # produced one: the hook's default severity would have failed both container
+  # entry points, while the only shellcheck in CI never opened either.
 
   # ---------------------------------------------------------------- terraform
   - repo: https://github.com/antonbabenko/pre-commit-terraform
@@ -95,6 +98,28 @@ repos:
   # ------------------------------------------------- backend gate (local tools)
   - repo: local
     hooks:
+      # ----------------------------------------- repository-wide (local tools)
+      # Runs on any shell change anywhere, because its subject is "every script
+      # this repository ships", not one stack's. Command string copied from
+      # .claude/ship-gate.json (`repo.shell-lint`) and repo-ci.yaml, not
+      # paraphrased.
+      - id: repo-shell-lint
+        name: Lint every tracked shell script (shellcheck)
+        entry: bash scripts/check_shell.sh
+        language: system
+        files: \.sh$
+        pass_filenames: false
+
+      # Runs when either half of a §5 pair moves — the gate file or any
+      # workflow — because the property it guards spans the two, the same
+      # trigger shape as `infra-dev-environment` above.
+      - id: repo-gate-pairs
+        name: Prove every gate command appears verbatim in its workflow (check_gate_pairs.sh)
+        entry: bash scripts/check_gate_pairs.sh
+        language: system
+        files: ^(\.claude/ship-gate\.json|\.github/workflows/)
+        pass_filenames: false
+
       - id: backend-typecheck
         name: Type-check the backend in strict mode (basedpyright)
         entry: bash -c 'cd backend && uv run basedpyright'

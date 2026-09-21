@@ -48,6 +48,11 @@ mkdir -p "${runtime_dir}/www" \
 # envsubst is given the exact variable list: without it, it would also expand
 # nginx's own $uri, $host and $request_method into empty strings and the
 # resulting config would still be valid enough to start.
+# shellcheck disable=SC2016 # the single quotes are required, not a mistake:
+# envsubst takes the variable list as a literal `${NAME}` string and does the
+# substituting itself. Double quotes would let the shell expand the list first,
+# leaving envsubst an empty allow-list — which is the "expand everything" mode
+# the comment above exists to avoid.
 PORT="${PORT}" CONNECT_SRC="${connect_src}" \
     envsubst '${PORT} ${CONNECT_SRC}' \
     < /etc/nginx/nginx.conf.template \

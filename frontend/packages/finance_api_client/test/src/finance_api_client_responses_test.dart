@@ -81,13 +81,32 @@ void main() {
       final result = await harness.client.getJson('/v1/views');
       final failure = (result as Err<JsonResponse>).failure;
       expect(failure, isA<ContractFailure>());
-      expect(failure.message, contains('/v1/views'));
+      // The whole document is what is missing, so the payload path is the
+      // document root — not the request path, which used to be passed here and
+      // is rendered to the user through `message`.
+      expect((failure as ContractFailure).path, equals('<response>'));
     });
 
     test('reports an empty 200 body as a contract failure', () async {
       final harness = ClientHarness((_) async => http.Response('', 200));
       final result = await harness.client.getJson('/v1/views');
       expect((result as Err<JsonResponse>).failure, isA<ContractFailure>());
+    });
+
+    test('never lets the request path reach the rendered failure', () async {
+      // `AppFailure.message` is interpolated into a Text widget verbatim
+      // (portfolio_views_view.dart). A request path belongs to the transport,
+      // and a path segment is where an account or portfolio identifier will
+      // live the moment routing stops being the constant `current`. Same
+      // defect class as the `http.ClientException` leak, and this is the test
+      // that keeps it closed.
+      const path = '/v1/portfolios/acct-00713-ffd2/views';
+      final harness = ClientHarness((_) async => http.Response('', 200));
+      final result = await harness.client.getJson(path);
+      final failure = (result as Err<JsonResponse>).failure;
+      expect(failure.message, isNot(contains('acct-00713-ffd2')));
+      expect(failure.message, isNot(contains(path)));
+      expect(failure.message, isNot(contains('/v1/')));
     });
 
     test('turns a socket error into a $TransportFailure', () async {

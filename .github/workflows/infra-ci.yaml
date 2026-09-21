@@ -95,9 +95,12 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
 
-      - name: Lint the delivery shell scripts (shellcheck)
-        run: shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh
-
+      # Shell linting moved to `repo-ci.yaml`, which has no `paths:` filter and
+      # lints every tracked script rather than two globs under `infra/scripts/`.
+      # The two globs missed both container entry points, and both were red the
+      # first time a gate opened them. This job keeps the behavioural tests; the
+      # lint that used to sit here is `repo.shell-lint` and is a superset of it.
+      # See ci-conventions §5.
       - name: Prove the deploy verifies and rolls back (test_deploy_cloud_run.sh)
         run: bash infra/scripts/tests/test_deploy_cloud_run.sh
 

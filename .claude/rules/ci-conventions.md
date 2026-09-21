@@ -73,15 +73,29 @@ arrives through a pull request and is gated there. If protection is ever
 removed, the push triggers have to come back with it.
 
 **A change to one stack must not start the other stack's pipeline.** Every
-workflow is scoped by `paths:` to the directory it proves:
+*stack* workflow is scoped by `paths:` to the directory it proves. The
+repository-wide one is not, on purpose:
 
-| workflow | runs on | scope |
-|---|---|---|
-| `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file |
-| `client-ci` | pull requests | `client_flutter/**`, its own file |
-| `frontend-ci` | pull requests | `frontend/**`, its own file |
-| `infra-ci` | pull requests | `infra/**`, the delivery workflows |
-| `backend-cd` | **the button only** | — |
+| workflow | runs on | scope | exists? |
+|---|---|---|---|
+| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs | yes |
+| `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
+| `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
+| `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
+| `client-ci` | — | `client_flutter/**` | **no — not written yet** |
+| `backend-cd` | **the button only** | — | yes |
+
+**`client-ci` does not exist, and this table used to say it did.** It was
+listed here as though it were one of the scoped workflows, with no marker, from
+before `frontend-ci` was written. Nothing covered `client_flutter/**`, so its
+container, its nginx CSP template and `docker/entrypoint.sh` — which validates
+an origin and substitutes it into `connect-src` — were built, linted and
+scanned by nothing, while this file asserted a pipeline. `client_flutter/CLAUDE.md`
+lists `.github/workflows/client-ci.yaml` under "do not touch" and assigns it to
+GGU-1 (PR #30), so it is owned; it is simply not written. **A row in this table
+is a claim about the repository, and a claim gets a truth value.** Until GGU-1
+lands, the security half of that gap is covered by `repo-ci` (secrets, shell),
+and the image build and its CVE scan are genuinely uncovered.
 
 `frontend-ci` and `client-ci` are two pipelines over two Flutter apps, which is
 the table working, not a duplication: they are separate deployables with
@@ -91,6 +105,14 @@ A new stack gets its own `<area>-ci.yaml` with its own `paths:`. Adding jobs to
 an existing workflow so that "everything runs together" is the thing this table
 exists to prevent: a Dart formatting fix must never pay for a PostgreSQL
 container, and a Python change must never wait on a Flutter build.
+
+**But a check whose subject is "any file in this repository" is not a stack
+check and must not be scoped.** Secret scanning and shell linting were both
+per-stack and both were therefore false: gitleaks sat in `backend-ci` while
+the security policy claimed it ran on every pull request, and shellcheck sat in
+`infra-ci` over two globs while both container entry points went unlinted. The
+test is the check's subject, not its current location — if you cannot name a
+directory it does *not* apply to, it belongs in `repo-ci`.
 
 **The button lives on the default branch.** GitHub reads `workflow_dispatch`
 from the default branch only, so a delivery workflow that exists only on
@@ -109,6 +131,24 @@ with a runner and a workflow that must stay identical to it:
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
+
+**This table is now checked by a machine.** `repo.gate-pairs`
+(`scripts/check_gate_pairs.sh`) parses `ship-gate.json` and greps each `cmd`,
+as a fixed string, against every file in `.github/workflows/`. A gate entry
+with no verbatim workflow step fails the build and prints both strings. It
+runs in `repo-ci` and in pre-commit whenever `ship-gate.json` or any workflow
+moves.
+
+It exists because this rule is the one that keeps breaking. Every instance
+below was caught by a person comparing two files by eye, and the third was
+caught *after* the author believed they had mutation-checked it. Three
+instances of one defect class is where you stop asking reviewers to be careful
+and write the check. What it deliberately does **not** assert is the reverse
+direction — a workflow may legitimately run steps that are not gate checks
+(checkout, SDK setup, artifact upload) and whole jobs that are deliberately
+outside the gate (`backend-ci`'s `image`, `frontend-ci`'s `build`). It also
+cannot check the "Also in" column, because some gate checks are upstream
+pre-commit hooks (`gitleaks`, `codespell`) with no command string to compare.
 
 **`repo-ci.yaml` deliberately has no `paths:` filter**, which every other
 workflow here does have. A repository-wide check placed in a scoped workflow
@@ -168,6 +208,28 @@ explicit list. The script also refuses to report success on an implausibly
 small file list, or on a list containing nothing under `.claude/` or
 `.github/` — the anti-vacuity idiom `infra/scripts/tests/` already uses,
 applied to the check that most needed it.
+
+**And the fourth instance is the one that reframes the rule: both halves can
+be internally consistent and still prove the wrong thing.** `infra.shell-lint`
+and its workflow step matched byte for byte — §5 was satisfied — and the check
+was still wrong, because its *subject* was wrong. It named
+`infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh`, and the two
+scripts this repository ships in containers were outside it. Pointing
+shellcheck at them for the first time, on 2026-09-20, found a finding in each
+(SC2086 in `backend/docker/entrypoint.sh`, SC2016 in
+`client_flutter/docker/entrypoint.sh` — both deliberate constructs that now
+carry justified `disable` directives). The same was true of gitleaks in the
+other direction: it sat in `backend-ci`, matched its documentation, and could
+not see a client-only pull request.
+
+So §5 has two questions, not one:
+
+1. **Do the two halves run the same command?** — now machine-checked by
+   `repo.gate-pairs`.
+2. **Does that command cover what its name claims?** — not machine-checkable,
+   and the one that has cost the most. Ask it of the *subject*: if you cannot
+   name a directory the check does not apply to, it does not belong in a
+   `paths:`-scoped workflow. Both of these moved to `repo.*` for that reason.
 
 A PR that changes one without its pair is incomplete. If a third runner ever
 appears, it goes in this table rather than in a comment.

@@ -42,3 +42,44 @@ updates:
       day: "monday"
     commit-message:
       prefix: "build(deps)"
+
+  # Both Dart graphs — 209 third-party packages between them — had no
+  # dependency telemetry of any kind: not here, not in a gate, not in the
+  # weekly scan. The backend's zero-outdated-dependencies record is direct
+  # evidence that this mechanism works, and it was pointed at one of the three
+  # stacks this repository ships.
+  #
+  # `directory:` is the pub WORKSPACE root in each case, which is where the
+  # single `pubspec.lock` lives. The member packages (`app/`, `packages/*`,
+  # `e2e_test/`) resolve through it — a per-member entry would find a manifest
+  # with no lock beside it.
+  - package-ecosystem: "pub"
+    directory: "/frontend"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      frontend-dart:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # client_flutter pins genui, genui_a2a and a2ui_core exactly and on purpose
+  # (ADR-D D-4): they are alpha, and a bump is a contained decision somebody
+  # makes, not one a bot makes on a Monday. Dependabot honours an exact
+  # constraint, so those three stay put and this entry covers the rest of the
+  # graph — which is the part nothing was watching.
+  - package-ecosystem: "pub"
+    directory: "/client_flutter"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      client-dart:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
