@@ -67,6 +67,18 @@ None.
   is authenticated, so per `.claude/rules/backend/security.md` it is noted here
   and called out for sign-off (OD-1). It carries no subject data: what the
   service is, where to post, and what it can be asked for.
+- **`POST /` is gated by `require_feature("agent.a2a", default=True)`**
+  (amended 2026-09-21). The flag is the agent's kill-switch: flipping it makes
+  the route answer 404 `feature-disabled` before the body runs, within the
+  15 s cache TTL, which is the containment `INCIDENT_RESPONSE_PLAN.md` §4
+  prescribes and `AI_GOVERNANCE.md` §3 promises. The default is **on**, so the
+  gate changes no behaviour until someone throws it — this is a kill-switch,
+  not a dark launch. The 404 is an HTTP-level problem document rather than a
+  JSON-RPC error, which is consistent with ADR-J D-3: a failure *before* the
+  envelope is parsed has always been a problem document on this surface.
+  **The agent card is deliberately excluded from the gate** and stays 200 —
+  a client must be able to discover what the service is before it can hold a
+  token, so containment stops the turn, not discovery.
 - **`contextId` is never trusted.** It is echoed for correlation only. When
   sessions land it is resolved *against the authenticated subject* or treated
   as unknown (ADR-J D-4, ADR-A) — never as a key on its own.
@@ -97,6 +109,9 @@ None.
 5. **AC-5** — Both routes are documented in OpenAPI under their own tag, and
    the contract tests pass unchanged.
 6. **AC-6** — `make gate` green.
+7. **AC-7** (added 2026-09-21) — With `agent.a2a` disabled, `POST /` answers
+   **404 `feature-disabled`** with a valid token, and
+   `/.well-known/agent-card.json` still answers **200**.
 
 ## 7. Test plan
 
@@ -109,8 +124,15 @@ None.
 | AC-5 | the existing OpenAPI contract tests, with `PUBLIC` extended and justified |
 | — | `test_no_error_body_carries_internal_text`; the adapter's failure path, which must report **inside** the stream |
 
+| AC-7 | `test_the_turn_is_404_while_the_agent_flag_is_off`; `test_the_agent_card_is_not_gated_by_the_agent_flag` |
+
 Mutation checks: **no new** auth or masking logic — the route reuses
-`PrincipalDep` and the existing problem handler.
+`PrincipalDep` and the existing problem handler. AC-7's gate **was**
+mutation-checked (2026-09-21): deleting the `dependencies=[...]` line turns
+`test_the_turn_is_404_while_the_agent_flag_is_off` red — it gets 200 and a
+live event stream — and restoring it turns the suite green again. That check
+matters more than usual here, because the defect being fixed was precisely a
+containment control everybody believed existed.
 
 ## 8. Open decisions
 
