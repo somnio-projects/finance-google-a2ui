@@ -96,11 +96,12 @@ repos:
         files: ^backend/.*\.py$
         pass_filenames: false
 
-      # docs/catalog/CONTRACT.md is generated from the projection registry, so a
-      # projection that moves and a document that did not is caught here, on the
-      # laptop, rather than after the design work is done (GGU-41).
+      # docs/catalog/CONTRACT.md and docs/catalog/view-catalog.snapshot.json are
+      # both generated from the projection registry, in one pass, so a projection
+      # that moves and an artefact that did not is caught here, on the laptop,
+      # rather than after the design work is done (GGU-41, GGU-53).
       - id: backend-catalog-contract
-        name: Verify the frozen catalog contract is current (generate_catalog_contract.py)
+        name: Verify the generated catalog artefacts are current (generate_catalog_contract.py)
         entry: bash -c 'cd backend && uv run python scripts/generate_catalog_contract.py --check'
         language: system
         files: ^(backend/src/app/presentation/|backend/scripts/generate_catalog_contract\.py|docs/catalog/)

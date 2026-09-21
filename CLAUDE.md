@@ -8,7 +8,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc | Flutter rules in `.claude/rules/flutter/` |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL, Secret Manager, Cloud Run, logging/alerts — one shape per `environment`, with HA/PITR/Cloud Armor derived **on outside `dev`** (`specs/infra/0001-dev-environment.md`). Validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
-| `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
+| `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract, as Markdown for the designer and JSON for the client test — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
 
 GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 

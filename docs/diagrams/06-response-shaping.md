@@ -26,7 +26,7 @@ flowchart TB
     cat["GET /v1/views catalog"]
     oa["OpenAPI oneOf + one example per view"]
     pf["Generated prompt fragments (GGU-14)"]
-    doc["docs/catalog/CONTRACT.md<br/>regenerated, diffed in the gate"]
+    doc["docs/catalog/CONTRACT.md · view-catalog.snapshot.json<br/>one render pass, both diffed in the gate"]
 
     cl --> reg
     batch --> reg
@@ -48,6 +48,9 @@ flowchart TB
     %% Registering once publishes to five consumers; adding a chart touches
     %% only its own module (ADR-K D-14, D-15) — views/ is auto-discovered,
     %% so not even an import line is edited.
+    %% The frozen contract is published twice from ONE registry read: Markdown
+    %% for the designer (GGU-41) and JSON for the Flutter catalog test
+    %% (GGU-53). A third rendering is one entry in catalog_artifacts.ARTIFACTS.
     %% The batch is a RESOURCE, not an RPC call: POST creates it, 201 returns
     %% it inline, and EVERY entry carries its own status, so one bad view
     %% never sinks the others (ADR-K D-18).
@@ -67,6 +70,7 @@ flowchart TB
 | Serving endpoints, named once | `presentation/endpoints.py` |
 | OpenAPI union, examples, catalog entry | `presentation/contract.py` |
 | Prompt fragments | `presentation/prompt.py` |
+| The two generated contract artefacts | `presentation/catalog_artifacts.py` (list + drift) · `catalog_doc.py` (Markdown) · `catalog_json.py` (JSON) |
 | ETag · `If-None-Match` · 304 | `api/caching.py` (a dependency, reused per route) |
 | The three callers | `api/v1/portfolio_views.py` · `api/v1/view_renders.py` · `services/render_intent_service.py` |
 | Per-entry batch outcome | `services/view_render_service.py`, `schemas/view_renders.py` |

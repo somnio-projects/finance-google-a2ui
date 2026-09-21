@@ -18,6 +18,14 @@ that goes stale — which is the exact failure this contract exists to prevent.
 Nothing needs copying out of here by hand either: the page the UI Kit binds to
 is this file, cited by its projection ids and digests.
 
+**For a machine, read the twin.** Markdown is for people, and a client test
+cannot parse a table, so the same promise is rendered as JSON in
+[`view-catalog.snapshot.json`](view-catalog.snapshot.json) — per view the
+component type, the view id, the digest, the field paths, the options schema
+and the rendered example (GGU-53, spec [`specs/backend/0021-machine-readable-catalog.md`](../../specs/backend/0021-machine-readable-catalog.md)). Both files come
+out of one render pass over the registry and are gated by the same command, so
+they cannot disagree with each other or with the code.
+
 ## What "frozen" means
 
 Frozen does **not** mean a human promised not to change a field. It means

@@ -77,7 +77,7 @@ jobs:
       - name: Enforce the 150-line file budget (check_file_budget.py)
         run: uv run python scripts/check_file_budget.py
 
-      - name: Verify the frozen catalog contract is current (generate_catalog_contract.py)
+      - name: Verify the generated catalog artefacts are current (generate_catalog_contract.py)
         run: uv run python scripts/generate_catalog_contract.py --check
 
       - name: Detect code smells (xenon, vulture, interrogate, deptry, pylint, codespell)
@@ -216,7 +216,7 @@ jobs:
             echo ""
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
-            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
+            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract and its JSON snapshot, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
             echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
             echo "| Security | gitleaks (full history), Semgrep, pip-audit | ${{ needs.security.result }} |"
             echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"
