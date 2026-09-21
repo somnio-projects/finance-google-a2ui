@@ -60,6 +60,66 @@ was the one string no gate watched. That is the drift GGU-53 describes
 
 ---
 
+## 2026-09-20 — GGU-82 the client harness · spec client/0001
+
+**Branch:** `docs/GGU-82_client_harness`, PR #46. Documentation and rules only;
+no executable code changed.
+
+**What changed in the harness.** The client got what the backend already had:
+`client_flutter/CLAUDE.md`, four project rules in `.claude/rules/client/`
+(architecture · presentation · testing · security), `specs/client/0001-client-foundation.md`
+and `docs/diagrams/11-client-architecture.md`. The four rules are registered in
+the root `CLAUDE.md` table; the diagram is registered in both
+`docs/diagrams/README.md` and the "when a diagram must change" table in
+`.claude/rules/diagrams.md`.
+
+**Why a separate rule layer rather than editing `.claude/rules/flutter/`.**
+Those seven files are synced from `somnio-ai-tools` and are overwritten by the
+Somnio CLI. They are also written against a different repository — a `mobile/`
+root, a `packages/app_ui` design system, an ARB i18n setup — none of which
+exist here. `client/architecture.md` opens with a table of the four places the
+generic rules name something this repo does not have, and states that the
+project layer wins.
+
+**The Dart budget is 220 lines, and the number was measured.** Copying the
+backend's 150 across would have been the easy answer and the wrong one: this
+workspace's analyzer config puts one widget argument per line, and every file
+carries a 14-line Apache header. Of the twelve `.dart` files under `app/lib`,
+the median is 65 and the second-largest 128; exactly one exceeds 220 —
+`features/landing/view/landing_page.dart` at 247 — and it hosts the genui
+surface, owns the connector lifecycle and renders the error banner. 220 is the
+line where "does one thing" fits and "does three" does not.
+
+**Things that are true and unflattering, written down rather than smoothed
+over.** The client's gate is young, so the temptation was to describe it as
+though it were the backend's. Instead:
+
+- `flutter test --coverage` runs and uploads `lcov.info`; **no coverage threshold is asserted anywhere.** The ≥80 %/file bar is a review rule until someone adds the assertion (spec OD-2).
+- **Nothing enforces ADR-K on the client.** The rule says so and names the two things that partly carry it: the per-ban greps, and a verbatim-binding widget test that asserts `find.text(fake.marketValueDisplay)` rather than a literal — the literal form passes whether the widget bound or formatted. OD-3 proposes the grep gate.
+- `app/pubspec.yaml` declares only `flutter_test`. **`bloc_test`, `mocktail` and `checks` are not dependencies**, though all three generic rules assume them.
+- **There is no deep-link surface at all** (ADR-I keeps `Navigator`), so the security rule records the absence as the control rather than inventing a validation policy for a path that does not exist.
+
+Each rule carries a table separating what a command enforces (with the
+`ship-gate.json` id and the command string) from what is *review only*. The
+standard the ticket set was: do not write a rule that nothing enforces and
+state it as though something does.
+
+**Deferred to GGU-1 on purpose.** Timur's PRs #26 (scaffold) and #30 (gate) own
+`.claude/ship-gate.json`, `.github/workflows/client-ci.yaml`,
+`.pre-commit-config.yaml`, `client_flutter/tool/check_*.sh`,
+`client_flutter/README.md` and everything under `client_flutter/app/{lib,test,android,ios}`
+plus `app/pubspec.yaml`. Nothing here touches any of them; rules that depend on
+one of those checks cite it by id with "lands with GGU-1", the way
+`ship-gate.json` already says "Flutter gate lands with GGU-1".
+
+**What the next person needs to know.**
+
+- **`/harness-init` will delete the four new rule rows.** They sit inside the block that command regenerates. Teach it about `.claude/rules/client/` or the rows vanish silently and the rules stop loading. This is the single most likely way this PR quietly undoes itself.
+- **Check what `origin/develop` actually resolves to before branching.** This branch was first cut from a stale `origin/develop` (`bf2d0c2`) while the real tip was `c1f758d`, because `.git/config` could not be locked in the worktree and the fetch never updated the remote-tracking ref. The first PR push showed **407 changed files** and would have reverted other people's merged work, including the GGU-1 files this ticket exists to stay away from. `git diff --name-only <base> HEAD` before opening a PR — the file count is the tell.
+- The backend gate is green on every step a docs change can break (`catalog-check` and `codespell` included; codespell scans `docs/`, so it covers the new diagram). The 52 integration errors are the Docker daemon being unavailable locally, not this branch.
+
+---
+
 ## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
 
 **Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
