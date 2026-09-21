@@ -13,10 +13,13 @@ import 'package:finance_app/components/holdings_allocation/holdings_allocation_c
     as holdings_allocation;
 import 'package:finance_app/components/order_ticket/order_ticket_component.dart'
     as order_ticket;
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_component.dart'
+    as scenario_comparison;
 
 /// Registers every catalog component this build ships.
 void registerCatalogComponents(ComponentRegistry registry) {
   attribution_waterfall.register(registry);
   holdings_allocation.register(registry);
   order_ticket.register(registry);
+  scenario_comparison.register(registry);
 }

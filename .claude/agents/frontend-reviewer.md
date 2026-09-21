@@ -17,9 +17,13 @@ either.
    `specs/frontend/`. The binding contract is
    `specs/client/0003-client-backend-contract.md`.
 2. **Gate**: run `cd frontend && make gate` and quote the last lines. Red gate =
-   FLAGGED, no exceptions. Confirm `flutter pub get --enforce-lockfile`
-   succeeds — plain `pub get` re-resolving silently is the failure this flag
-   exists to catch.
+   FLAGGED, no exceptions. Its first step is `bash tool/check_toolchain.sh`
+   (GGU-94) — if that is what failed, the finding is the **toolchain**, not the
+   branch, and the report says so instead of reporting a formatting diff.
+   Quote the Flutter and Dart versions it printed; a gate run under an
+   unstated toolchain proves nothing. Confirm `flutter pub get
+   --enforce-lockfile` succeeds — plain `pub get` re-resolving silently is the
+   failure this flag exists to catch.
 3. **Layering pass** (`.claude/rules/frontend/architecture.md`): Flutter
    imported under `packages/`; a bloc importing the api client or `http`; a
    component importing a feature or a repository; an `http.Client`,
@@ -54,11 +58,22 @@ either.
    PR cites a spec with numbered ACs; the spec matches what shipped;
    `.claude/harness-log.md` has an entry; the diagram in `docs/diagrams/` moved
    with the structure; ADR-L amended if a ruling changed.
-9. **Pair pass** (`.claude/rules/ci-conventions.md` §5): `frontend.*` in
-   `.claude/ship-gate.json`, the steps in `frontend-ci.yaml` and
-   `frontend/Makefile` must carry the **same command strings**, copied not
-   paraphrased. A change to one without the others is incomplete.
-10. **Delivery pass**: branch `type/GGU-n_short_description` cut from
+9. **Manual-run pass** (`.claude/rules/backend/sdd.md`, "The manual run"): do
+   not read the transcript for plausibility — run the check.
+   `gh pr view <n> --json body -q .body > /tmp/body.md` then
+   `bash scripts/check_manual_run.sh /tmp/body.md`. A non-zero exit is a
+   **blocker**, quoted verbatim. Also check the `Verification` block names what
+   was **not** run, with its reason and consequence — for this app that
+   includes whether the gate ran under the pinned SDK.
+10. **Pair pass** (`.claude/rules/ci-conventions.md` §5): `frontend.*` in
+    `.claude/ship-gate.json`, the steps in `frontend-ci.yaml` and
+    `frontend/Makefile` must carry the **same command strings**, copied not
+    paraphrased. A change to one without the others is incomplete. The SDK
+    version is part of this pair: it lives only in `frontend/.fvmrc`. You do
+    not have to check that by eye — `scripts/check_gate_pairs.sh` fails on a
+    `FLUTTER_VERSION` in any workflow and on a second tracked pin file. Run it
+    and quote it.
+11. **Delivery pass**: branch `type/GGU-n_short_description` cut from
     `develop`, PR into `develop`, Conventional Commit title, English, no AI
     attribution in commits or the PR body.
 

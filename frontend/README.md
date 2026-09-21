@@ -52,9 +52,13 @@ that no figure is ever formatted or computed on the client.
 
 ## Toolchain
 
-Flutter **3.47.5** / Dart **3.13.4**, pinned in `.fvmrc` and in the CI
-workflow. One `pubspec.lock` for the whole workspace, enforced on every
-install.
+Flutter **3.47.5** / Dart **3.13.4**, pinned in [`.fvmrc`](.fvmrc) and **only**
+there. `tool/check_toolchain.sh` reads it as the first step of `make gate`, and
+`frontend-ci.yaml` reads it to install the SDK; the workflow no longer carries a
+`FLUTTER_VERSION` of its own, and `scripts/check_gate_pairs.sh` fails if one
+reappears or if a second pin file is added (GGU-94). Using fvm is optional —
+nothing shells out to it. One `pubspec.lock` for the whole workspace, enforced
+on every install.
 
 ## Where the decisions live
 
