@@ -12,7 +12,11 @@ import 'dart:io';
 const int maxLines = 150;
 
 /// Where sources live when no root is given on the command line.
-const List<String> defaultRoots = <String>['app', 'packages', 'tool'];
+///
+/// `test/` is the workspace root's own suite — the one that covers `tool/`.
+/// It was missing here while `tool/` was present, so the scripts the gate is
+/// made of were budgeted and their tests were not.
+const List<String> defaultRoots = <String>['app', 'packages', 'test', 'tool'];
 
 /// Directories that never count: build output and resolved dependencies.
 const List<String> skippedSegments = <String>[

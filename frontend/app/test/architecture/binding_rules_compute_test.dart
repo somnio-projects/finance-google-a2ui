@@ -51,9 +51,16 @@ const List<String> computationMechanisms = <String>[
 ///    renders, and this file renders nothing.
 ///  * `result_test.dart` exercises `Result.fold(onOk:, onErr:)`, the sealed
 ///    union's combinator. It is not a numeric fold.
+///  * `band_scale.dart` rounds a **pixel** down to a band index, to answer
+///    "which step did this tap land on". `finance_charts` never sees a
+///    payload — it is handed coordinates and hands back rectangles — so N-2's
+///    premise, that none of these has a legitimate use *on a payload figure*,
+///    simply does not reach it. The figures a reader sees are `*.display`
+///    strings that never enter this package (ADR-L D-13).
 const Set<String> computationAllowed = <String>{
   'packages/finance_views_repository/lib/src/views_repository.dart',
   'packages/finance_core/test/src/result_test.dart',
+  'packages/finance_charts/lib/src/band_scale.dart',
 };
 
 void main() {

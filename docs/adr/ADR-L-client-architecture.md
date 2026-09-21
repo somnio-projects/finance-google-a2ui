@@ -1,7 +1,7 @@
 # ADR-L — The `frontend/` client architecture
 
-- **Status:** **Proposed** — awaiting TL ratification
-- **Gates:** GGU-91 and every later `frontend/` ticket
+- **Status:** **Proposed** — awaiting TL ratification. Amended by GGU-55 (D-13, D-14, D-15).
+- **Gates:** GGU-91 and every later `frontend/` ticket; the charting rulings gate GGU-55/57/59/61/63/65
 - **Scope:** `frontend/` only. `client_flutter/` is a separate app and keeps its own decisions, including [ADR-I](ADR-I-client-routing.md).
 - **Related:** [ADR-K](ADR-K-response-shaping.md) (the payloads this client binds), [ADR-E](ADR-E-money-representation.md) (money), [ADR-I](ADR-I-client-routing.md) (amended for this app by D-5), [ADR-B](ADR-B-auth-credential-contract.md) (the credential this client will carry), `specs/frontend/0001-frontend-skeleton.md`, `specs/client/0003-client-backend-contract.md`
 
@@ -43,6 +43,21 @@ cannot import Flutter, and that is not a rule anybody enforces.
 - **D-11 — 100 % line coverage per file, not per project.** Dart's lcov carries **no branch data**, so the backend's 100 % *branch* contract cannot be reproduced literally; this is the strongest honest equivalent, and it is strictly above the `≥ 80 %` floor in `.claude/rules/flutter/testing.md`. Exemptions live in `tool/check_coverage.dart` with a reason each, and are today: generated code, and `lib/main.dart` (three lines whose only statement is `runApp(bootstrap())`; executing it in a test starts the real app and opens a socket).
 - **D-12 — The SDK is pinned, and the lockfile is enforced.** `pubspec.yaml` floors at Dart `^3.13.0`, `frontend-ci.yaml` pins Flutter `3.47.5`, and every install is `flutter pub get --enforce-lockfile`. Plain `pub get` silently re-resolves; the strict flag fails instead of quietly changing the dependency graph.
 
+- **D-13 — Charts are a small package of primitives over `CustomPainter`, not a charting library.** `fl_chart` and `graphic` were both proposed and both are rejected. Three reasons, in order of weight:
+  - **A chart library formats numbers.** `fl_chart`, `graphic` and Syncfusion all generate their own axis and tooltip labels by formatting the values they are given. That is prohibition N-1 (ADR-E, ADR-K D-5) broken silently, inside a dependency, on the one product invariant this showcase exists to demonstrate: *the LLM never computes a financial figure, and neither does the client*. A library that ships its own `NumberFormat` cannot be made to obey a rule the repository enforces by grepping for `NumberFormat`.
+  - **The design is bespoke and measured.** GGU-42 specifies bar widths that cap, connectors that leave a bar at its running total, value labels that disappear when their band narrows, and a two-interval nice-ed axis. Pixel-perfection against a design is exactly where an opinionated chart library stops helping and starts being worked around.
+  - **The agent supplies declared props, not a config DSL.** A component renders from a payload the backend shaped (ADR-K). A library with its own configuration language inserts a second translation between what the agent declared and what is drawn — a place for the two to disagree that no test can see.
+  What is actually worth having from d3 is not its renderer but its arithmetic: `scaleLinear`, `scaleBand`, tick selection, and layout functions. `packages/finance_charts` ports that, in ~350 lines of pure Dart, and `app/lib/charts/` holds the painter.
+  - *The split is forced, and it is a gift.* `packages/` may not import `dart:ui` (D-1), so the painter cannot live there. What is left in the package is *(steps, size) → rectangles and points* — a pure function, run under `dart test` in a second, whose output is asserted **arithmetically**: seven bar tops and seven heights compared against the designer's rendered DOM to 0.1 px. A golden tells you something moved; the geometry tells you what. Both are kept, and the GGU-55 mutation check changes one scale's target interval count and watches three geometry tests — fourteen assertions, seven bar tops and seven heights — **and** all three goldens go red together.
+  - *Accepted cost:* legends, zoom, animation and accessibility affordances a mature library ships are ours to write. The bet is that six bespoke components need less of that than they need to match a design and never format a number. Revisit if a chart needs real interaction beyond a tap.
+- **D-14 — One path-scoped exemption to the numbers rule: `rawDecimal`, for geometry.** D-9 says `double.parse` is absent from `lib/`, and until GGU-55 that was costless because nothing drew a chart. It is not costless now. The contract keeps a raw `amount` beside every `*Display` string **precisely so a chart can be drawn from it** (spec `client/0003` N-4: "`amount`, `value` and `units` exist for chart geometry"), and the value-to-pixel mapping cannot move to the server, which does not know the width the client will be laid out in. `packages/finance_views_repository/lib/src/raw_decimal.dart` is therefore allowed `double.tryParse` and is the **only** file that is — the same shape as `jsonDecode` in the transport, and allow-listed by name in `binding_rules_test.dart`. `ViewPayload.geometry(path)` is its one caller.
+  - *What keeps it narrow:* the allowance is per **file**, the file is five lines, and it is **not exported from the package barrel** — `ViewPayload.geometry(path)` is its only caller, so nothing above the repository layer can reach it. `binding_rules_test.dart::the geometry seam is the only exemption` asserts the allow set has exactly one member and that it still names a file that exists; the rule itself was mutation-checked by moving `double.tryParse` into `view_payload.dart` and watching it fail. The result is a position on a canvas: it never reaches a `Text`, is never re-formatted, and never becomes a figure a human reads.
+  - *This supersedes the sentence in `.claude/rules/frontend/contract-binding.md` that said `ViewPayload` exposes no numeric accessor and one must not be added back.* That sentence was right about a `json` getter, which would have exposed the whole payload with nothing stopping arithmetic on it; it was too broad about a named, single-purpose reader. The rule file now carries both halves.
+- **D-15 — Goldens compare with a small tolerance, because a raster is not portable.** Flutter's default comparator demands a byte-identical PNG, and the same widget anti-aliases a rounded corner differently on a laptop and on the Linux runner `frontend-ci` uses. A byte-exact golden generated on macOS is a check that fails on CI for a reason that is not a defect — and the fix everyone reaches for is to stop running it. `app/test/flutter_test_config.dart` installs a comparator allowing **1.5 %** of pixels to differ — 2.2× the *measured* cross-platform noise floor of 0.69 %, and 3.3× below the smallest defect worth catching.
+  - *Both ends of that are measurements, which is the difference between setting a threshold and fitting one.* The first guess was 0.5 %, CI rejected it at 0.69 %, and the response was to measure both ends rather than nudge the number until the run went green. The threshold goes **down** as the noise is understood better, never up to absorb a failure.
+  - *The margin.* A defect worth catching moves 5–7 % of the image (the value scale's domain wrong: 6.9 %; one bar in the wrong mark: 5.0 %). The **first attempt goldened the whole card and had to be redone**: glyph edges are where nearly all cross-platform difference lives, and whole-card goldens drifted 0.54–0.70 % between macOS and the Linux runner against a smallest-defect signal of 1.26 % — a signal-to-noise ratio under two, which is not a gate anybody should trust. Widening the tolerance to fit that would have been threshold-fitting; goldening the **chart** instead removed the noise at its source. The card's text is asserted by `find.text`, which is a better check for text than a raster, and its chrome by its constants.
+  - *The stated limit:* a bar's corner radius changing 4 px → 3 px moves 0.08 %, below what a cross-platform raster resolves. That constant is asserted directly rather than left to a golden. The exact geometry is proved arithmetically in `finance_charts`, which is what makes a tolerance here safe rather than a loosened threshold.
+
 ## Consequences
 
 **Positive.** The layering, the composition root, the numbers rule and the
@@ -56,12 +71,16 @@ arrive shortly. The payload reader trades compile-time field checking for not
 duplicating a generated contract — D-4 names the mitigation and the follow-up
 that closes it.
 
-**Known limit — the contract is bound to fixtures until PR #45 merges.** The
-component tests bind a copy of the catalog's rendered example, checked in under
-`test/`. That copy is a fixture, not a source of truth, and it can drift from
-the backend exactly the way D-4 argues against. It is deliberate and temporary:
-`docs/catalog/view-catalog.snapshot.json` does not exist on `develop` yet.
-Spec `frontend/0001` OD-1 carries the owner and the default.
+**Closed — the contract is no longer bound to a fixture.** `frontend/0001`
+OD-1 recorded that component tests bound a *copy* of a rendered example while
+`docs/catalog/view-catalog.snapshot.json` did not exist on `develop`. It does
+now (GGU-53), and `app/test/helpers/catalog_snapshot.dart` reads it:
+`attribution_waterfall_component_test.dart` binds the generated example
+directly, and `app/test/architecture/catalog_contract_test.dart` asserts that
+every registered component's view id and A2UI component name are ones the
+backend actually publishes. A rename on the backend — four of six happened in
+one commit during GGU-53 — is now a red client suite rather than a placeholder
+on screen.
 
 **Neglected alternatives.**
 - *One Flutter package with layer folders*: less ceremony, but the layer boundary becomes a convention a reviewer must remember, which is the failure mode this repository's backend half exists to avoid.

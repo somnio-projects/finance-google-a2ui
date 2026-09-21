@@ -18,6 +18,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   equatable: ^3.0.0
   finance_api_client: ^0.1.0
+  # The geometry half of every chart: scales and layouts, pure Dart.
+  finance_charts: ^0.1.0
   finance_core: ^0.1.0
   finance_views_repository: ^0.1.0
   flutter:

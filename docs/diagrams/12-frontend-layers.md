@@ -19,6 +19,7 @@ graph TD
     host["components/component_host.dart<br/>+ component_registry.dart"]
     comp["components/&lt;name&gt;/<br/>one directory per view id"]
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
+    charts["charts/<br/>CustomPainter · ChartPalette<br/><i>needs dart:ui, so it lives here</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
@@ -27,6 +28,7 @@ graph TD
     api["finance_api_client<br/><b>the only HTTP speaker</b>"]
     a2a["A2aClient + decodeEventStream<br/>JSON-RPC · SSE · three answer shapes"]
     core["finance_core<br/>Result · AppFailure · ProblemDetails"]
+    geom["finance_charts<br/>scales · nice ticks · layouts<br/><i>(data, size) → paths</i>"]
   end
 
   backend[["backend<br/>GET /v1/portfolios/{id}/views"]]
@@ -54,6 +56,9 @@ graph TD
   api --> core
   a2a --> core
   comp --> repo
+  comp --> charts
+  charts --> geom
+  comp --> geom
 
   %% Everything below this line is checked by layering_test.dart, not by review.
   %% FORBIDDEN, each with its own test:
@@ -64,6 +69,8 @@ graph TD
   %%   anything but boot constructing http.Client / FinanceApiClient /
   %%     ViewsRepository / A2aClient / AgentRepository
   %%   NumberFormat · intl · dart:math · toStringAsFixed · double.parse · DateTime.now()
+  %%     — one exemption, by path: finance_views_repository/lib/src/raw_decimal.dart
+  %%   finance_charts -> dart:ui  (which is why the painter is in app/, not here)
 ```
 
 ## Reading it
@@ -72,6 +79,8 @@ graph TD
 - **`page → repo`** is real and deliberate: a page builds its bloc, so it reads the repository the bloc takes. That is the page/view split from `.claude/rules/flutter/architecture.md`, and `layering_test.dart::only a page resolves a repository from the widget tree` allows it in `*_page.dart` **and nowhere else**. The `_View` below it reads bloc state only.
 - **`comp → repo`** looks like the same shortcut and is not: a component imports `ViewPayload` — a *type* — and never a repository instance.
 - **`boot -.-> repo`** is dashed because it is construction, not a call. `bootstrap.dart` is the only file allowed to draw it; `layering_test.dart` fails if any other does.
+- **A chart is split across the boundary, on purpose.** `finance_charts` is the geometry — scales, readable tick steps, *(steps, size) → rectangles* — and it is pure Dart, so it runs under `dart test` and its output is asserted arithmetically. The `CustomPainter` that turns those rectangles into pixels needs `dart:ui`, which `packages/` may not have, so it sits in `app/lib/charts/` (ADR-L D-13). The split is not a compromise: it is what makes "the chart is in the right place" a claim a test can check.
+- **`comp → geom` carries a raw number, and only that one.** A bar's position comes from the contract's raw `amount`, read through `ViewPayload.geometry` — the single path-scoped exemption to the numbers rule (ADR-L D-14). Every *figure on screen* is still a `*.display` string; the raw value never reaches a `Text`.
 - **The generated manifest is the seam.** Adding a component adds a directory and regenerates `component_manifest.g.dart`; no hand-written file in this diagram changes (ADR-L D-3, mirroring ADR-K D-15).
 - **The agent path rejoins the read path on purpose.** A `render-intent` names a registered view and carries no payload, so `ConversationBloc` fetches it through the *same* `ViewsRepository` and renders it through the *same* `ComponentHost` and registry as a `?view=` read. The two routes into `comp` are two callers of one seam, **not** two rendering paths — a second path is what ADR-K D-15 and ADR-L D-3 exist to prevent, and it is the defect class this repository has hit three times on the backend side.
 - **Two backend nodes, two protocols, one credential.** `/v1/**` is REST with RFC 9457 problems; `POST /` is JSON-RPC that answers SSE and reports some failures at **HTTP 200** (ADR-J D-3). They share one `http.Client` and one token provider, which is why `A2aClient` sits beside `FinanceApiClient` rather than inside it.

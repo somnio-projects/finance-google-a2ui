@@ -22,6 +22,12 @@
 # The lcov reports are gate input, never committed.
 frontend/app/coverage/
 frontend/packages/*/coverage/
+# Golden *failure* output. `matchesGoldenFile` writes a failures/ directory
+# beside the suite when a comparison fails — four PNGs per golden, including a
+# byte-copy of the committed master. It is the debris of a red run, not an
+# artefact: committing it leaves a permanent record of a failure that no gate
+# will ever refresh. The goldens themselves are committed and gated.
+**/test/**/failures/
 
 # Logs
 *.log
