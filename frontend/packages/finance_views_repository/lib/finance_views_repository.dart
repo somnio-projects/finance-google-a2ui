@@ -9,5 +9,7 @@ library;
 
 export 'src/payload_contract_exception.dart';
 export 'src/rendered_views.dart';
+export 'src/view_chunks.dart';
 export 'src/view_payload.dart';
+export 'src/views_batch.dart';
 export 'src/views_repository.dart';

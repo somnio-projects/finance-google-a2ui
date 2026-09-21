@@ -32,7 +32,9 @@ class PortfolioViewsBloc
         failure: () => null,
       ),
     );
-    final result = await _viewsRepository.fetchPortfolioViews(
+    // Batched: a build with more registered components than the endpoint's
+    // `MAX_VIEWS` still asks for all of them, across several requests.
+    final result = await _viewsRepository.fetchAllPortfolioViews(
       portfolioId: event.portfolioId,
       views: event.views,
       options: event.options,

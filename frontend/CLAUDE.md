@@ -91,6 +91,27 @@ Dependencies point one way: `view → bloc → repository → api client → cor
 `if/elif` (ADR-L D-3, mirroring ADR-K D-15). If adding one makes you edit
 something, the seam is wrong; fix the seam.
 
+> **This claim was false in two places until GGU-79, and both are now closed.**
+> The registration half was always sound — nothing forces an edit to register a
+> component. What did not hold was everything *after* registration:
+>
+> 1. **The component could not reach a screen.** `app/lib/router/app_router.dart`
+>    carried a hardcoded `views: ['holdings.allocation.v1']`, and no test
+>    compared the router with the registry — so a component could be added,
+>    registered, 100 %-covered and **invisible, with a green gate**. The route
+>    no longer names any view: `PortfolioViewsPage` asks the registry, so the
+>    two cannot disagree. Asserted by
+>    `app_router_test.dart::every registered component is reachable from the route`.
+> 2. **The fifth component broke the screen.** The read endpoint takes at most
+>    `ViewsRepository.maxViewsPerRequest` (4) ids, so a fifth registration made
+>    one request exceed the cap and fail the whole surface. The repository now
+>    splits the request (`fetchAllPortfolioViews`) and merges the envelopes —
+>    every id is still requested, in order, so N-10 is untouched.
+>
+> The lesson worth keeping: *"adding one edits no existing file"* is a claim
+> about the **whole path to the screen**, not about the registry alone. When
+> you extend the seam, walk it end to end before repeating the sentence.
+
 ## Conventions the code does not show
 
 - **Failure is a value.** Boundaries return `Result<T>`; `AppFailure` is sealed, so a `switch` is exhaustive and a new failure kind is a compile error in every incomplete handler. Nothing throws across a layer.

@@ -1,3 +1,4 @@
+import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/router/app_router.dart';
@@ -45,13 +46,17 @@ void main() {
       router.dispose();
     });
 
-    Future<void> pumpRouter(WidgetTester tester, GoRouter router) {
+    Future<void> pumpRouter(
+      WidgetTester tester,
+      GoRouter router, {
+      ComponentRegistry? registry,
+    }) {
       return tester.pumpWidget(
         MultiRepositoryProvider(
           providers: <RepositoryProvider<dynamic>>[
             RepositoryProvider<ViewsRepository>.value(value: repository),
             RepositoryProvider<ComponentRegistry>.value(
-              value: ComponentRegistry(),
+              value: registry ?? ComponentRegistry(),
             ),
           ],
           child: MaterialApp.router(routerConfig: router),
@@ -74,6 +79,33 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(PortfolioViewsPage), findsOneWidget);
+    });
+
+    testWidgets('every registered component is reachable from the route', (
+      tester,
+    ) async {
+      // The defect this closes: `app_router.dart` carried a hardcoded view id
+      // and **nothing compared it with the registry**, so a component could be
+      // added, registered, 100 %-covered and still never appear on screen with
+      // a completely green gate. This asserts against the real registry the
+      // app ships, so adding the seventh component extends the assertion for
+      // free rather than needing a second edit here.
+      final registry = buildComponentRegistry();
+      await pumpRouter(tester, buildRouter(), registry: registry);
+      await tester.pumpAndSettle();
+
+      final captured = verify(
+        () => repository.fetchPortfolioViews(
+          portfolioId: any(named: 'portfolioId'),
+          views: captureAny(named: 'views'),
+          options: any(named: 'options'),
+        ),
+      ).captured;
+      final requested = <String>{
+        for (final batch in captured) ...batch as List<String>,
+      };
+      expect(requested, equals(registry.viewIds.toSet()));
+      expect(requested, isNotEmpty);
     });
 
     testWidgets('lets every route through while there is no sign-in', (

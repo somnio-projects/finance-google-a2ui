@@ -33,6 +33,13 @@ const double threshold = 100;
 ///    in a test starts the real app, which builds a real `http.Client` and
 ///    opens a socket to the configured backend; everything worth asserting
 ///    lives in `bootstrap.dart`, which is at 100 %.
+///
+/// **Always call this on a [coverageKey], never on a raw `SF:` path.**
+/// `flutter test` writes package-relative records (`lib/main.dart`), which do
+/// not end with `/lib/main.dart`, so the exemption silently missed them while
+/// the failure message printed the normalised name — a path that *looks*
+/// exempt. The disk side happened to pass `app/lib/main.dart` and worked,
+/// which is why the records side stayed dead and unnoticed.
 bool isExempt(String path) =>
     path.endsWith('.g.dart') ||
     path.endsWith('.freezed.dart') ||
@@ -87,6 +94,18 @@ void main(List<String> args) {
   }
 
   final sources = libSources();
+  if (sources.isEmpty) {
+    // The disk walk is the half that catches a file no test ever loaded. An
+    // empty walk cannot catch anything, so reporting "ok — 0 files accounted
+    // for" would be this gate reproducing the exact lcov blindness it was
+    // written to fix. `workspace_sources.dart` throws in the same situation;
+    // this script used to exit 0.
+    stderr.writeln(
+      'no lib/ sources found under app/ or packages/ — the disk cross-check '
+      'would pass vacuously. Run this from the frontend/ directory.',
+    );
+    exit(2);
+  }
   final covered = records.keys.map(coverageKey).toSet();
   final failures = <String>[
     ...sources.entries
@@ -97,7 +116,11 @@ void main(List<String> args) {
               hasExecutableCode(entry.value),
         )
         .map((entry) => '${entry.key}: no coverage record — no test loads it'),
-    ...records.entries.where((entry) => !isExempt(entry.key)).map(_shortfall),
+    // Normalised before the exemption is tested: the raw `SF:` path is the
+    // one spelling `isExempt` cannot read (see its doc comment).
+    ...records.entries
+        .where((entry) => !isExempt(coverageKey(entry.key)))
+        .map(_shortfall),
   ]..removeWhere((failure) => failure.isEmpty);
 
   if (failures.isEmpty) {

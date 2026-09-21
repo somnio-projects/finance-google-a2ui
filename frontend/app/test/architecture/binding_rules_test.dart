@@ -43,11 +43,17 @@ const List<String> clockMechanisms = <String>[
 ];
 
 /// Ways a server-supplied string could become code or a field path (N-5).
+///
+/// Both spellings of the decoder are listed. `dart:convert` exports the `json`
+/// constant as well as the top-level function, so `json.decode(` is the same
+/// mechanism written differently — needling only `jsonDecode(` was the same
+/// near-miss shape as listing `double.parse` without `double.tryParse`.
 const List<String> interpreterMechanisms = <String>[
   "import 'dart:mirrors'",
   'Function.apply(',
   'noSuchMethod(',
   'jsonDecode(',
+  'json.decode(',
 ];
 
 void main() {

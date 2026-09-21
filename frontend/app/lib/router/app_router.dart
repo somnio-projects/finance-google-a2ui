@@ -31,12 +31,14 @@ GoRouter buildRouter({String? initialLocation}) {
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.portfolio,
-        builder: (context, state) => const PortfolioViewsPage(
-          // The one view this build renders. The list is a *request*, not a
-          // catalog: ids come from `GET /v1/views` and the client invents
-          // none (N-6).
-          views: <String>['holdings.allocation.v1'],
-        ),
+        // **No view ids here.** This route used to carry a hardcoded list, so
+        // a component could be written, registered, covered and still be
+        // invisible on screen with a green gate — nothing compared the router
+        // against the registry. The page now asks the registry itself, which
+        // makes the two impossible to disagree rather than merely tested for
+        // agreement (`app_router_test.dart::every registered component is
+        // reachable from the portfolio route`).
+        builder: (context, state) => const PortfolioViewsPage(),
       ),
     ],
   );
