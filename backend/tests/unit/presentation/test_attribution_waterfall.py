@@ -103,7 +103,7 @@ def test_render_rejects_an_unknown_section(portfolio: Portfolio) -> None:
 
 def test_surface_maps_the_payload_onto_the_waterfall(portfolio: Portfolio) -> None:
     rendered = surface(render(portfolio, AttributionWaterfallOptions()))
-    assert rendered.component == "WaterfallChart"
+    assert rendered.component == "AttributionWaterfall"
     assert rendered.view == VIEW_ID
     assert rendered.props["start"]["label"] == "Cost basis"
     assert len(rendered.props["steps"]) == 5

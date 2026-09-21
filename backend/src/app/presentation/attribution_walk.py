@@ -41,6 +41,10 @@ def buckets(
     next(running)  # the opening balance is the chart's start, not a step
     return tuple(
         Bucket(
+            # The ticker, not the name: this is the value a tap sends back as
+            # the drill action's argument, and that argument accepts symbols.
+            # `test_waterfall_events.py` compares the two declarations.
+            key=row.symbol,
             label=row.name,
             delta=options.money(row.unrealized_pl),
             cumulative=options.money(total),

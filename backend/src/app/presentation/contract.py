@@ -17,6 +17,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, create_model
 
+from app.presentation.published import component_of, guidance_of
 from app.presentation.registry import Projection
 
 
@@ -86,10 +87,9 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         projection: The registered projection to describe.
 
     Returns:
-        Its id, purpose, serving endpoints, options schema and a rendered
-        example. The route builds its DTOs from this and its OpenAPI example
-        from the same call, so the documented catalog cannot drift from the
-        served one.
+        Its id, purpose, endpoints, options schema, actions, component,
+        guidance and a rendered example — built in one call, so the documented
+        catalog cannot drift from the served one.
     """
     example = dict(projection.example)
     return {
@@ -97,11 +97,13 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         "summary": projection.summary,
         "endpoints": list(projection.endpoints),
         "options_schema": projection.options.model_json_schema(),
-        # Read off the rendered example rather than from a new Protocol
-        # member: a projection that declares actions publishes them to the
-        # catalog by rendering them, so adding one still edits no shared file
-        # (ADR-K D-15, spec 0022 AC-11).
+        # All three are read off the projection rather than from a new
+        # Protocol member, so adding a chart still edits no shared file
+        # (ADR-K D-15, spec 0022 AC-11) and this catalog names the component
+        # the A2UI surface really emits (GGU-53, spec 0023).
         "actions": list(example.get("actions", ())),
+        "component": component_of(projection),
+        "guidance": guidance_of(projection),
         "example": example,
     }
 

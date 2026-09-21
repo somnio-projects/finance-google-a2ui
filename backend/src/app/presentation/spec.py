@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from app.domain.portfolio import Portfolio
 from app.presentation.fragments import ProjectionDto
+from app.presentation.guidance import Guidance
 from app.presentation.sample import sample_portfolio
 from app.presentation.surfaces import Surface
 
@@ -36,6 +37,10 @@ class ProjectionSpec:
     render: Callable[[Portfolio, Any], ProjectionDto]
     surface: Callable[[Any], Surface]
     fitness: Callable[[Portfolio], int]
+    #: The do/don't pair the model is taught, when design has written one.
+    #: Defaulted so a view whose design page was never exported registers
+    #: without inventing guidance for itself (``presentation.guidance``).
+    guidance: Guidance | None = None
 
     @property
     def example(self) -> Mapping[str, Any]:

@@ -25,6 +25,7 @@ from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
 from app.presentation.taxlot_scenario import TaxLotsTableOptions
 from app.presentation.taxlots import VIEW_ID, TaxLotsTablePayload
+from app.presentation.taxlots_guidance import GUIDANCE
 
 TITLE: Final[str] = "Tax lots this sale consumes"
 SUMMARY: Final[str] = (
@@ -114,6 +115,7 @@ PROJECTION: Final = register(
         render=render,
         surface=surface,
         fitness=fitness,
+        guidance=GUIDANCE,
     )
 )
 

@@ -49,7 +49,7 @@ def test_the_surface_binds_the_payload_without_computing_anything(
     card: ScenarioComparisonPayload,
 ) -> None:
     rendered = surface(card)
-    assert rendered.component == "ComparisonCard"
+    assert rendered.component == "ScenarioComparison"
     assert rendered.view == VIEW_ID
     assert rendered.props["subject"]["symbol"] == "BTC"
     assert len(rendered.props["columns"]) == len(card.columns)

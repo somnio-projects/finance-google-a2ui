@@ -20,6 +20,7 @@ from app.presentation.fragments import Annotation, Bucket, ProjectionDto, Total
 from app.presentation.registry import register
 from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
+from app.presentation.waterfall_guidance import GUIDANCE
 
 VIEW_ID: Final[str] = "attribution.waterfall.v1"
 TITLE: Final[str] = "Unrealised P/L attribution"
@@ -34,10 +35,10 @@ SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
 #: one — never a second copy written down beside it.
 DRILL_REF: Final[SurfaceActionRef] = declared_action(DRILL)
 
-#: What this surface actually publishes. Empty while the capability ships
-#: off: a declaration reaches the catalogue design and the client bind to,
-#: and advertising an affordance that answers -32601 is worse than
-#: advertising none (``app.actions.capability``).
+#: What this surface actually publishes. Empty while the capability ships off:
+#: a declaration reaches the catalogue design and the client bind to, and
+#: advertising an affordance that answers -32601 is worse than advertising
+#: none (``app.actions.capability``).
 DECLARED_ACTIONS: Final[tuple[SurfaceActionRef, ...]] = (
     (DRILL_REF,) if SHIPPED_ENABLED else ()
 )
@@ -105,12 +106,13 @@ def render(
 def surface(payload: AttributionWaterfallPayload) -> Surface:
     """Map the payload onto the A2UI waterfall the genui client instantiates."""
     return Surface(
-        component="WaterfallChart",
+        component="AttributionWaterfall",
         view=payload.view,
         title=payload.title,
         props={
             "start": payload.start.model_dump(mode="json"),
             "end": payload.end.model_dump(mode="json"),
+            # Each step carries the `key` a tap sends as the drill argument.
             "steps": [step.model_dump(mode="json") for step in payload.buckets],
             "notes": [note.text for note in payload.annotations],
             "actions": [ref.model_dump(mode="json") for ref in payload.actions],
@@ -133,6 +135,7 @@ PROJECTION: Final = register(
         render=render,
         surface=surface,
         fitness=fitness,
+        guidance=GUIDANCE,
     )
 )
 

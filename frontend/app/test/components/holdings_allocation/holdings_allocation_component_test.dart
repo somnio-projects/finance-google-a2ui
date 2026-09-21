@@ -13,7 +13,7 @@ void main() {
 
     test('declares the frozen view id and its A2UI component type', () {
       expect(component.viewId, equals('holdings.allocation.v1'));
-      expect(component.a2uiComponent, equals('DonutChart'));
+      expect(component.a2uiComponent, equals('AllocationSummary'));
     });
 
     testWidgets('binds every display string verbatim', (tester) async {

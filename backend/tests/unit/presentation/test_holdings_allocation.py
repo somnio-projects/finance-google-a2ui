@@ -98,7 +98,7 @@ def test_render_honours_precision(portfolio: Portfolio) -> None:
 def test_surface_maps_the_payload_onto_the_donut(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsAllocationOptions(top_n=1))
     rendered = surface(payload)
-    assert rendered.component == "DonutChart"
+    assert rendered.component == "AllocationSummary"
     assert rendered.view == VIEW_ID
     assert rendered.props["center"]["amount"]["display"] == "$65,038.60"
     assert rendered.props["slices"][0]["label"] == "Bitcoin"
