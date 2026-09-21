@@ -38,6 +38,25 @@ class ViewDescriptor(BaseModel):
         description="JSON schema of the options this projection declares.",
         examples=[{"properties": {"precision": {"type": "integer"}}}],
     )
+    actions: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Actions a surface rendered from this projection may send back "
+            "(spec 0022 §3.4): a registered id, the single argument it takes "
+            "and that argument's bound. Empty when the projection offers none."
+        ),
+        examples=[
+            [
+                {
+                    "action": "drill.attribution.v1",
+                    "label": "Break this down",
+                    "arg": "driver",
+                    "control": "choice",
+                    "choices": ["ADA", "BTC", "DOGE", "ETH"],
+                }
+            ]
+        ],
+    )
     example: dict[str, Any] = Field(
         description="A payload this projection really renders, for the client.",
         examples=[{"view": "holdings.allocation.v1"}],

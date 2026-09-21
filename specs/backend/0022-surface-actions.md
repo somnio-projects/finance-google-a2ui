@@ -1,7 +1,7 @@
 # 0022 — Surface actions: what a generated surface is allowed to send back
 
 - **Area:** backend
-- **Status:** Draft
+- **Status:** Implemented
 - **Ticket:** [GGU-78](https://somniosoftware.atlassian.net/browse/GGU-78) (backend half of [GGU-15](https://somniosoftware.atlassian.net/browse/GGU-15); consumed by GGU-31 drill-down and GGU-32 chips) · **Related specs / ADRs:** 0005 (presentation layer), 0006 (agent host), 0010 (A2A surface), 0018 (order ticket), [ADR-K](../../docs/adr/ADR-K-response-shaping.md), [ADR-J](../../docs/adr/ADR-J-rest-api-and-a2a-surface.md), [ADR-D](../../docs/adr/ADR-D-a2ui-streaming-transport.md) · rules `.claude/rules/backend/presentation.md`, `.claude/rules/backend/api-design.md`
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-20
 
@@ -348,10 +348,18 @@ Maps to `backend/docs/SECURITY.md` §input validation and §audit.
     `surface_action.invoke` event for the authenticated subject; the two shipped
     actions write none. No log line or metric tag carries an argument value or
     the composed prompt.
-11. **AC-11** — `attribution.waterfall.v1` publishes its action in its payload,
-    in its A2UI props, in `GET /v1/views` and in `docs/catalog/CONTRACT.md`;
-    `make catalog` is run and the regenerated contract is committed (a stale
-    contract fails the gate).
+11. **AC-11** — a projection that declares an action publishes it in its
+    payload, in its A2UI props, in `GET /v1/views` and in
+    `docs/catalog/CONTRACT.md` from **one** derivation; `make catalog` is run
+    and the regenerated contract is committed (a stale contract fails the
+    gate). **Amended by the implementing PR:** the *declaration* is gated on
+    the same constant as execution (`app.actions.capability.SHIPPED_ENABLED`),
+    so while `surface.actions` ships **off** `attribution.waterfall.v1`
+    declares nothing and the catalogue advertises nothing. The pipeline is
+    proven by a projection registered in the test suite that does declare one
+    — asserting it over a registry where nothing declares an action would
+    execute nothing. Flipping the constant is what GGU-31 does, and the
+    declaration then appears in all four places at once.
 12. **AC-12** — Every projection that declares **no** action produces no
     actionable prop, and `order.ticket.v1` in particular still carries no submit,
     no endpoint and no callback (0018 AC-8 re-asserted against this change).
@@ -387,18 +395,61 @@ because this spec adds an inbound path:
    → `test_declared_action_bounds.py` must fail (published ≠ enforced).
 3. Add an argument value to a telemetry tag → AC-10 must fail.
 
+## 7b. What the implementation changed about this spec (GGU-78)
+
+Three divergences from §2, all naming or placement, none behavioural:
+
+- **`app/actions/actions/` became `app/actions/defined/`.** §2 lists the two
+  action modules as `actions/drill_attribution.py` under `app/actions/`, which
+  spells `app.actions.actions`. The subpackage keeps its role — one module per
+  action, auto-discovered, no import list — under a name that reads.
+- **`SurfaceActionSpec` lives in `actions/spec.py`**, beside the `SurfaceAction`
+  Protocol in `contracts.py`, mirroring `presentation/spec.py` and
+  `presentation/registry.py` rather than putting both in one module.
+- **`UnknownActionError` lives in `actions/errors.py`**, mirroring
+  `presentation/errors.py`; `registry.py` re-exports it, so the import path
+  §2 names still works.
+
+**The declaration is gated, not annotated.** §2 and AC-11 asked for the
+waterfall to declare its action, and §9 asked for the flag to ship off. Those
+are consistent for *execution* and contradictory for the *contract*: a
+declaration reaches `docs/catalog/CONTRACT.md` and `GET /v1/views`, which
+GGU-53/GGU-55 hand to the client as a machine-readable artefact, so a shipped
+declaration would advertise an affordance that answers `-32601`. A footnote
+cannot reach a machine-readable document, so both now read one constant,
+`app.actions.capability.SHIPPED_ENABLED`. The skew is one-directional on
+purpose: enabling the flag at runtime without flipping the constant means the
+capability works and nothing advertises it, which is safe; the reverse is the
+defect. A static artefact cannot track a dynamic flag, so it claims less.
+
+One bound the spec did not state, added because the implementation needed it:
+an argument **name** is capped at 32 characters. A rejection may mention the
+argument, the JSON-RPC error field is 256 characters, and an unbounded key is
+an unbounded message — the exact failure `a2a_dispatch`'s docstring records.
+For the same reason `validated_args` names only arguments the action
+**declares** and replaces anything else with the constant `<undeclared>`: the
+name of an undeclared key came from the caller, so it is never echoed.
+
+**`SurfaceActionRef` publishes exactly one argument**, as §3.4 shows. An action
+declaring zero or two raises `ConfigurationError` at import rather than being
+advertised incompletely; both shipped actions take one. The day one needs two,
+this descriptor grows a list and §3.4 grows with it.
+
 ## 8. Open decisions
 
-| # | Question | Owner | Default if unresolved |
+Resolved by the implementing PR (GGU-78) unless marked otherwise. Each
+row keeps its reasoning and gains what was actually built.
+
+| # | Question | Owner | Resolution |
 |---|---|---|---|
-| **OD-1** | **May the agent author a chip's prompt text, or only select a registered suggestion id?** This is the product decision in this spec. | TL | **Only select.** A model-authored prompt re-entering the turn as a user message is the model inventing a payload (D-12), the label and the prompt can drift, and a tap stops being reproducible. **Cost, stated honestly:** GGU-32's "agent-generated dynamic follow-ups" stretch becomes impossible without amending this. If the TL wants dynamic chips, the amendment is bounded — a `suggestion.free.v1` action whose single argument is a `max_length`-bounded string that is passed to the turn **as user text and nothing else** — and it should be decided now rather than discovered in GGU-32. |
-| **OD-2** | A2A turn vs. a REST `POST /v1/surface-actions`. | TL | **A2A turn** (§3.2). Reconsider only if an action ever needs to answer synchronously with something that is not a stream of surfaces — and that action would be `mutating`, which OD-4/AC-9 forbid outright. |
-| **OD-3** | Should the backend verify an action came from a surface it actually rendered? | TL | **No — validation is by declaration, not by provenance.** A registered action with valid arguments is valid whoever sends it, exactly as `?view=` is. Provenance checking needs a server-side store of rendered surfaces per turn — the "ticket session" 0018 OD-1 rejected — and buys nothing while no action mutates. **Revisit the day one does**, together with OD-4 and OD-5. |
-| **OD-4** | Audit every action, or only the ones that declare it? | TL | **Only declared** (§5). Alternative considered: audit all, on the argument that UI-expressed intent is inherently audit-worthy. Rejected for now because `/v1/me/audit-events` is a demonstration surface for identity events and taps would bury them; retention would carry traffic, not decisions. Reverse this if compliance review wants a complete interaction trail — one line, `audited=True` as the default. |
-| **OD-5** | Idempotency for a retried action. | TL | **None, deliberately.** Nothing in scope mutates, so a replay costs a duplicate turn and nothing else. **The rule that must survive this decision:** the first mutating action needs an idempotency key *and* an ADR amendment, and AC-9 makes that physically unavoidable rather than a thing a reviewer must remember. Do not add `Idempotency-Key` to `POST /` speculatively — it is a REST header on a JSON-RPC surface, and A2A's own `messageId` is the natural carrier if one is ever needed. |
-| **OD-6** | **ADR-J D-6 requires a recorded decision to extend the JSON-RPC surface.** Approving this spec means adding **ADR-J D-7** — *"the A2A surface accepts one non-text part kind, `data`, carrying a registered action id and bounded scalar arguments; it accepts no other extension."* | TL | **Add D-7 to ADR-J in the implementing PR**, drafted from §3.2. Without it the implementation contradicts an accepted ADR, and the `backend-reviewer` agent should block on that. If the TL prefers, this becomes a short ADR-L instead — the content is the same and the choice is presentational. |
-| **OD-7** | Is a drill *really* not an option? `attribution.waterfall.v1` could take a bounded `focus` option and re-render zoomed, costing nothing. | TL | **It is an action** — but only because GGU-31's ACs demand agent recomposition, narration, a back path and a leaf case, which is a turn. **If the TL scopes GGU-31 down to "the same chart, focused", the correct answer is a `focus` option and this whole spec is unnecessary for it** (GGU-32 would then also need nothing, since a chip can be plain `text`). That is a legitimate outcome and cheaper; it is written here so the decision is made on purpose rather than by momentum. |
-| **OD-8** | Where does `app/actions/` sit in the layering? | TL — **decided, flagged for review** | A framework-free package, peer of `presentation/`. `presentation` → `actions` is pure-to-pure (a projection imports the declaration to publish it); `services` → `actions` is dispatch. Putting the registry inside `presentation/` would make a pure render package own turn dispatch; putting it inside `agent/` would make `presentation` depend on `agent`. Needs `03-backend-layers.md` updated and the architecture rule's dependency direction checked in the implementing PR. |
+| **OD-1** | **May the agent author a chip's prompt text, or only select a registered suggestion id?** This is the product decision in this spec. | TL | **Only select.** A model-authored prompt re-entering the turn as a user message is the model inventing a payload (D-12), the label and the prompt can drift, and a tap stops being reproducible. **Cost, stated honestly:** GGU-32's "agent-generated dynamic follow-ups" stretch becomes impossible without amending this. If the TL wants dynamic chips, the amendment is bounded — a `suggestion.free.v1` action whose single argument is a `max_length`-bounded string that is passed to the turn **as user text and nothing else** — and it should be decided now rather than discovered in GGU-32. **Resolved — only select, as defaulted.** `ask.suggested.v1` takes a `suggestion` key from a `Literal`, and the prompt is `app/actions/suggestions.py`'s registered text, byte for byte; the arguments model has no other field, so prompt text cannot reach the turn through this path at all. The cost is paid, not dodged: GGU-32's dynamic follow-ups need the bounded amendment written above. |
+| **OD-2** | A2A turn vs. a REST `POST /v1/surface-actions`. | TL | **A2A turn** (§3.2). Reconsider only if an action ever needs to answer synchronously with something that is not a stream of surfaces — and that action would be `mutating`, which OD-4/AC-9 forbid outright. **Resolved — A2A turn.** Implemented as `kind: "data"` on `POST /`, no new REST resource, recorded as **ADR-J D-7** (see OD-6). |
+| **OD-3** | Should the backend verify an action came from a surface it actually rendered? | TL | **No — validation is by declaration, not by provenance.** A registered action with valid arguments is valid whoever sends it, exactly as `?view=` is. Provenance checking needs a server-side store of rendered surfaces per turn — the "ticket session" 0018 OD-1 rejected — and buys nothing while no action mutates. **Revisit the day one does**, together with OD-4 and OD-5. **Resolved — no provenance check.** A registered action with valid arguments is valid whoever sends it, exactly as `?view=` is. Nothing is persisted; there is no surface store and no migration. |
+| **OD-4** | Audit every action, or only the ones that declare it? | TL | **Only declared** (§5). Alternative considered: audit all, on the argument that UI-expressed intent is inherently audit-worthy. Rejected for now because `/v1/me/audit-events` is a demonstration surface for identity events and taps would bury them; retention would carry traffic, not decisions. Reverse this if compliance review wants a complete interaction trail — one line, `audited=True` as the default. **Resolved — only declared.** `SurfaceActionSpec.audited` exists and the dispatcher honours it; **both shipped actions leave it `False`**, so a tap writes nothing. The seam is tested by registering an audited throwaway action, so the first action that decides something inherits a working trail rather than an untested flag. |
+| **OD-5** | Idempotency for a retried action. | TL | **None, deliberately.** Nothing in scope mutates, so a replay costs a duplicate turn and nothing else. **The rule that must survive this decision:** the first mutating action needs an idempotency key *and* an ADR amendment, and AC-9 makes that physically unavoidable rather than a thing a reviewer must remember. Do not add `Idempotency-Key` to `POST /` speculatively — it is a REST header on a JSON-RPC surface, and A2A's own `messageId` is the natural carrier if one is ever needed. **Resolved — none, deliberately.** Nothing in scope mutates; `register(...)` refuses `mutating=True` (AC-9), so the first mutating action cannot be added without amending this spec. No `Idempotency-Key` was added to `POST /`. |
+| **OD-6** | **ADR-J D-6 requires a recorded decision to extend the JSON-RPC surface.** Approving this spec means adding **ADR-J D-7** — *"the A2A surface accepts one non-text part kind, `data`, carrying a registered action id and bounded scalar arguments; it accepts no other extension."* | TL | **Add D-7 to ADR-J in the implementing PR**, drafted from §3.2. Without it the implementation contradicts an accepted ADR, and the `backend-reviewer` agent should block on that. If the TL prefers, this becomes a short ADR-L instead — the content is the same and the choice is presentational. **Resolved — ADR-J D-7 added in this PR**, worded from §3.2 and deliberately narrow: it licenses *this one* part kind, not a general extension mechanism. A second kind needs its own ruling. |
+| **OD-7** | Is a drill *really* not an option? `attribution.waterfall.v1` could take a bounded `focus` option and re-render zoomed, costing nothing. | TL | **It is an action** — but only because GGU-31's ACs demand agent recomposition, narration, a back path and a leaf case, which is a turn. **If the TL scopes GGU-31 down to "the same chart, focused", the correct answer is a `focus` option and this whole spec is unnecessary for it** (GGU-32 would then also need nothing, since a chip can be plain `text`). That is a legitimate outcome and cheaper; it is written here so the decision is made on purpose rather than by momentum. **Resolved — it stays an action**, on the reasoning as written. Recorded here so the cheaper `focus` option remains a live choice if GGU-31 is ever scoped down; nothing in the implementation blocks it. |
+| **OD-8** | Where does `app/actions/` sit in the layering? | TL — **decided, flagged for review** | A framework-free package, peer of `presentation/`. `presentation` → `actions` is pure-to-pure (a projection imports the declaration to publish it); `services` → `actions` is dispatch. Putting the registry inside `presentation/` would make a pure render package own turn dispatch; putting it inside `agent/` would make `presentation` depend on `agent`. Needs `03-backend-layers.md` updated and the architecture rule's dependency direction checked in the implementing PR. **Resolved — framework-free peer of `presentation/`,** as defaulted. `03-backend-layers.md` is updated, and `tests/unit/actions/test_package_boundaries.py` asserts the direction over the parsed source: `presentation → actions` is allowed, `actions → presentation` is forbidden, so the two cannot become circular. |
 
 ## 9. Rollout & observability
 

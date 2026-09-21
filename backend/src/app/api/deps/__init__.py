@@ -10,6 +10,7 @@ from app.api.deps.agent import (
     get_a2a_service,
     get_agent_card,
     get_agent_service,
+    get_surface_action_service,
     get_tool_context,
 )
 from app.api.deps.common import (
@@ -57,6 +58,7 @@ __all__ = [
     "get_request_id",
     "get_session",
     "get_session_service",
+    "get_surface_action_service",
     "get_tool_context",
     "get_view_render_service",
     "get_view_service",

@@ -2294,3 +2294,127 @@ exists, on the failure path only).
   repo's own rule that test data is unique per test. CI always starts clean, so
   it is permanently green there. **Not fixed here — it is not this ticket's
   code.** Flagged for a ticket of its own.
+
+---
+
+## 2026-09-20 (cont.) — GGU-78: surface actions, and a catalog that was under-reporting
+
+**Spec:** `specs/backend/0022-surface-actions.md` (Draft → Implemented; the file
+arrives from PR #44, which is spec-only — expect a whole-file conflict there).
+**ADR:** ADR-J gains **D-7**, the decision D-6 requires before the JSON-RPC
+surface may be extended.
+
+**What changed in code**
+
+- `app/actions/` — a framework-free peer of `presentation/`: contract, spec,
+  registry, resolver, the `SurfaceActionRef` a payload publishes, the curated
+  suggestion table, and one module per action under `defined/`. Adding an
+  action edits no shared file, the way adding a chart does not.
+- The A2A envelope accepts one `data` part carrying `{action, args}` — bounded
+  to eight scalar arguments, no nesting, no arrays — resolved **before** the
+  stream opens, so a refusal is a JSON-RPC error rather than a stream that
+  fails on its first event. Flag `surface.actions`, dark-launched **off**.
+- `attribution.waterfall.v1` declares `drill.attribution.v1`; the declaration
+  reaches the payload, the A2UI props, `GET /v1/views` and `CONTRACT.md` from
+  one derivation.
+- `order.ticket.v1` now names `size` and `size_in` as payload fields.
+
+**The defect worth remembering**
+
+`order.ticket.v1` offered four editable controls and the generated contract
+reported **two**. Nothing was wrong with either declaration on its own:
+`inputs[]` published all four, and the document's rule — *an editable field is
+a payload field named exactly as the option that sets it* (spec 0019 OD-3) —
+was applied correctly. They simply disagreed, because `symbol` and `side`
+happened to share a name with a payload field and `size`/`size_in` did not.
+**Nothing compared the two declarations**, so the document quietly advertised
+half of what the component accepts, and a client binding to it could not know
+`size` was editable.
+
+The rename is not the deliverable; `test_declared_interactivity.py` is. It
+walks the **registry**, so the next component to get this wrong fails the gate
+instead of shipping, and the failure names the projection and both sides of
+the disagreement rather than printing a bare set mismatch.
+
+**Next person should know**
+
+- **A third declaration of one fact is a third place to drift.** This package
+  now has two derived ones — `TicketInput` from the options schema,
+  `SurfaceActionRef` from the arguments schema — and both are derived
+  precisely so they cannot be retyped. Keep deriving.
+- **A derived figure is never an input.** `quantity` was the obvious thing to
+  rename to `size`, and it would have been wrong: under `size_in="usd"` it is
+  the size *divided by the entry price*, so the contract would have advertised
+  as editable a value the options model refuses.
+- **An error message is an output with a bound.** Argument names are capped at
+  32 characters and a rejection names only arguments the action *declares*,
+  replacing anything else with `<undeclared>` — because that name came from
+  the caller and lands in a 256-character JSON-RPC field. `a2a_dispatch`
+  already learned this the expensive way (a 500 from an over-long `repr`).
+- **A test that only passes on an empty table is worth less than no test.**
+  The first draft of `tests/integration/test_a2a_actions_flow.py` asserted the
+  flag was off *before* any test turned it on: green on a virgin database,
+  red on the second run of the same file. Every test there now sets the state
+  it needs and puts it back, and "off by default" is asserted in the unit
+  suite, where it is a property of the call rather than of a stored row.
+- **`docs/diagrams/05-agent-turn.md` was a corrupted double-paste** — two
+  merged versions, duplicate `participant` lines, an undeclared `DB`. It would
+  not have rendered. Repaired while adding the action path to it; worth a look
+  at whether other diagrams carry the same scar.
+- **Pre-existing and not fixed here:** `test_list_recent_and_list_for_subject_
+  order_newest_first` is order-dependent — three audit rows written in one
+  transaction share a timestamp, so "newest first" is a tie the database
+  breaks arbitrarily. Filed as its own task; the ordering guarantee belongs in
+  the repository, not in the test.
+
+### Review round on #57 — two findings that were both right
+
+**A vacuous test that claimed the opposite.** `test_declared_interactivity.py`
+was written to walk the registry, and the PR body said its third case "covers
+the projections with no `inputs[]` too". The reviewer enumerated the registry
+and found that for **four of six** projections all three cases executed *zero*
+assertions: case 1 subtracted from an empty set, case 2 skipped, and case 3
+looped over an empty list. Worse, the vacuous set contained
+`attribution.waterfall.v1` — the projection the PR changes.
+
+The fix was to stop asserting over a *derived set* and start asserting the
+**rendered claim**: `read-only` is itself a claim that can be wrong, so
+checking it gives a read-only projection a real assertion. Proven by mutating
+`inputs_note` to never return `READ_ONLY`, which now turns exactly those four
+projections red. A vacuity guard (`test_the_registry_still_produces_both_kinds_of_case`)
+pins that at least one projection of each kind exists, so the file cannot
+quietly go empty again.
+
+The lesson is narrower than "write better tests": **a parametrised test over a
+registry reports as N passing cases whether or not its body ran.** Green
+parametrised output is not evidence of coverage; count the assertions.
+
+**A contract that shipped on while the capability shipped off.** The waterfall
+declared `drill.attribution.v1` unconditionally while `surface.actions` ships
+off, so `CONTRACT.md`, `/v1/views`, the payload and the A2UI props all
+advertised an affordance that answers `-32601`. "Dark-launched" was true of
+execution and false of the contract.
+
+Both now read one constant, `app.actions.capability.SHIPPED_ENABLED`. The
+skew is one-directional on purpose: enabling the flag at runtime without
+flipping the constant means the capability works and nothing advertises it,
+which is safe; advertising more than the service will do is the defect. A
+footnote was the alternative and was rejected — #45/#48 ship that catalogue to
+the client as a **machine-readable** artefact, and a footnote in Markdown does
+not reach a JSON consumer.
+
+**Next person should know**
+
+- **Gating a declaration cascades into the tests that prove the declaration.**
+  Three tests went vacuous the moment nothing declared an action, and had to
+  be re-pointed at a projection registered inside the suite. If you flip
+  `SHIPPED_ENABLED`, expect the reverse cascade and check the probes still
+  earn their place.
+- **`vulture` will not find an unused module-level constant.** `NO_ACTIONS`
+  was defined identically in two modules, and coverage stayed at 100 % because
+  the assignment *executes*. `min_confidence = 80`; an unused module-level
+  assignment scores 60.
+- **`except AppError` at a protocol boundary is too wide.** In `a2a_actions`
+  it would have mapped a `DependencyUnavailableError` from an audited action's
+  audit write onto `-32602` *and put its detail on the wire*. Narrowed to the
+  three refusals that are genuinely the caller's fault.

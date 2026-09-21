@@ -5,16 +5,16 @@ One module holds everything this chart is: id, options model, DTO, pure
 shape as every other view, so the next one is a copy (ADR-K D-15).
 """
 
-from collections.abc import Sequence
-from decimal import Decimal
-from itertools import accumulate
 from typing import Final, Literal
 
 from pydantic import Field
 
-from app.domain.holdings import Holding
+from app.actions.capability import SHIPPED_ENABLED
+from app.actions.declared import SurfaceActionRef, declared_action
+from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.domain.portfolio import Portfolio
 from app.presentation import options as opt
+from app.presentation.attribution_walk import buckets, notes
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Annotation, Bucket, ProjectionDto, Total
 from app.presentation.registry import register
@@ -28,7 +28,19 @@ SUMMARY: Final[str] = (
     "bucket per holding, biggest move first."
 )
 SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
-ANNOTATED: Final[int] = 2
+
+#: The one action this surface offers (GGU-31, spec 0022 §3.4). Derived from
+#: the action's own arguments schema, so the published bound *is* the enforced
+#: one — never a second copy written down beside it.
+DRILL_REF: Final[SurfaceActionRef] = declared_action(DRILL)
+
+#: What this surface actually publishes. Empty while the capability ships
+#: off: a declaration reaches the catalogue design and the client bind to,
+#: and advertising an affordance that answers -32601 is worse than
+#: advertising none (``app.actions.capability``).
+DECLARED_ACTIONS: Final[tuple[SurfaceActionRef, ...]] = (
+    (DRILL_REF,) if SHIPPED_ENABLED else ()
+)
 
 
 class AttributionWaterfallOptions(opt.DisplayOptions, opt.FieldSelection):
@@ -52,34 +64,13 @@ class AttributionWaterfallPayload(ProjectionDto):
     annotations: tuple[Annotation, ...] = Field(
         default=(), description="Sentences shown beside the chart, written here."
     )
-
-
-def _buckets(
-    rows: Sequence[Holding], *, start: Decimal, options: AttributionWaterfallOptions
-) -> tuple[Bucket, ...]:
-    """Walk each holding's unrealised P/L, carrying the running total."""
-    running = accumulate((row.unrealized_pl for row in rows), initial=start)
-    next(running)  # the opening balance is the chart's start, not a step
-    return tuple(
-        Bucket(
-            label=row.name,
-            delta=options.money(row.unrealized_pl),
-            cumulative=options.money(total),
-            direction="up" if row.unrealized_pl >= 0 else "down",
-        )
-        for row, total in zip(rows, running, strict=True)
+    actions: tuple[SurfaceActionRef, ...] = Field(
+        default=(),
+        description=(
+            "What tapping this surface may send back: a registered action id "
+            "and the bounded argument it takes. Nothing else is accepted."
+        ),
     )
-
-
-def _notes(
-    rows: Sequence[Holding], net: Decimal, options: AttributionWaterfallOptions
-) -> tuple[Annotation, ...]:
-    """Name the biggest movers and the net move, in words the widget shows."""
-    movers = (
-        Annotation(label=row.name, text=options.money(row.unrealized_pl).display)
-        for row in rows[:ANNOTATED]
-    )
-    return (*movers, Annotation(label="Net", text=options.money(net).display))
 
 
 def render(
@@ -98,15 +89,16 @@ def render(
     rows = sorted(portfolio.holdings(), key=lambda h: (-abs(h.unrealized_pl), h.symbol))
     cost = portfolio.total_cost_basis()
     value = portfolio.total_market_value()
-    walk = _buckets(rows, start=cost, options=options) if "buckets" in sections else ()
+    walk = buckets(rows, start=cost, options=options) if "buckets" in sections else ()
     net = portfolio.total_unrealized_pl()
-    notes = _notes(rows, net, options) if "annotations" in sections else ()
+    said = notes(rows, net, options) if "annotations" in sections else ()
     return AttributionWaterfallPayload(
         title=TITLE,
         start=Total(label="Cost basis", amount=options.money(cost)),
         end=Total(label="Market value", amount=options.money(value)),
         buckets=walk,
-        annotations=notes,
+        annotations=said,
+        actions=DECLARED_ACTIONS,
     )
 
 
@@ -121,6 +113,7 @@ def surface(payload: AttributionWaterfallPayload) -> Surface:
             "end": payload.end.model_dump(mode="json"),
             "steps": [step.model_dump(mode="json") for step in payload.buckets],
             "notes": [note.text for note in payload.annotations],
+            "actions": [ref.model_dump(mode="json") for ref in payload.actions],
         },
     )
 
@@ -143,4 +136,12 @@ PROJECTION: Final = register(
     )
 )
 
-__all__ = ["ANNOTATED", "PROJECTION", "SECTIONS", "VIEW_ID", "render", "surface"]
+__all__ = [
+    "DECLARED_ACTIONS",
+    "DRILL_REF",
+    "PROJECTION",
+    "SECTIONS",
+    "VIEW_ID",
+    "render",
+    "surface",
+]

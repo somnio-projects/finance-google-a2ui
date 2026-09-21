@@ -13,10 +13,10 @@ from app.presentation.catalog_doc import (
     CONTRACT_PATH,
     DIGEST_LENGTH,
     contract_document,
-    contract_drift,
     digest,
     fields_of,
 )
+from app.presentation.catalog_drift import contract_drift
 from app.presentation.registry import REGISTRY
 from app.presentation.spec import ProjectionSpec
 from tests.unit.presentation.conftest import committed

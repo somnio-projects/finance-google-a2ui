@@ -19,7 +19,11 @@ from tests.boundaries import (
 
 PACKAGE = Path(app.presentation.__file__).parent
 NO_FRAMEWORKS = (*FORBIDDEN_PREFIXES, "sqlalchemy", "fastapi", "starlette")
-ALLOWED_OUTSIDE = ("app.core.", "app.domain.")
+# ``app.actions`` joined this list with GGU-78 (spec 0022 OD-8): a projection
+# imports the action *declaration* it publishes, which is pure-to-pure. The
+# reverse is forbidden — ``app.actions`` imports core and domain only, and its
+# own boundary test says so — so the two packages cannot become circular.
+ALLOWED_OUTSIDE = ("app.actions.", "app.core.", "app.domain.")
 
 
 def _modules() -> list[Path]:

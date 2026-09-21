@@ -9,11 +9,11 @@ reads no file, and the script under ``backend/scripts/`` touches the disk.
 """
 
 from collections.abc import Sequence
-from difflib import unified_diff
 from hashlib import sha256
 from json import dumps
 from typing import Final
 
+from app.presentation.catalog_actions import actions_table
 from app.presentation.catalog_preamble import PREAMBLE
 from app.presentation.catalog_tables import (
     INDEX_HEADER,
@@ -80,6 +80,8 @@ def _section(projection: Projection) -> str:
             options_table(projection.options.model_json_schema()),
             "### Field inventory",
             inventory_table(fields),
+            "### Actions",
+            actions_table(list(catalog_entry(projection)["actions"])),
             "### Example payload",
             "```json\n" + dumps(dict(projection.example), indent=2) + "\n```",
         )
@@ -117,34 +119,10 @@ def contract_document(projections: Sequence[Projection]) -> str:
     return "\n\n".join(parts) + "\n"
 
 
-def contract_drift(
-    *, checked_in: str, generated: str, path: str = CONTRACT_PATH
-) -> str:
-    """Return a unified diff of the two, empty when the file is current.
-
-    Args:
-        checked_in: What the checked-in artefact holds today.
-        generated: What the registry says it should hold.
-        path: The artefact compared, named in the diff header.
-
-    Returns:
-        A diff a developer can read, or ``""`` when nothing drifted.
-    """
-    return "".join(
-        unified_diff(
-            checked_in.splitlines(keepends=True),
-            generated.splitlines(keepends=True),
-            fromfile=path,
-            tofile="generated from the registry",
-        )
-    )
-
-
 __all__ = [
     "CONTRACT_PATH",
     "DIGEST_LENGTH",
     "contract_document",
-    "contract_drift",
     "digest",
     "fields_of",
 ]

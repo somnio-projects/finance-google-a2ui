@@ -5,12 +5,13 @@
   "views": [
     {
       "component": "WaterfallChart",
-      "digest": "e866358af26d",
+      "digest": "0edca33bd65b",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
       ],
       "example": {
+        "actions": [],
         "annotations": [
           {
             "label": "Bitcoin",
@@ -296,6 +297,62 @@
           "presence": "required",
           "state": null,
           "type": "string ≤200 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "actions",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].action",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].arg",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "actions[].control",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum choice / text"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "actions[].choices",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array ≤16 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].pattern",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤64 chars"
         }
       ],
       "options_schema": {
@@ -369,7 +426,7 @@
     },
     {
       "component": "DonutChart",
-      "digest": "63d89e469006",
+      "digest": "194e130cf9de",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -646,7 +703,7 @@
     },
     {
       "component": "OrderTicket",
-      "digest": "0a2904b9b52d",
+      "digest": "80e81a6bf2f7",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -720,6 +777,8 @@
           "units": "1"
         },
         "side": "buy",
+        "size": "1",
+        "size_in": "units",
         "symbol": "BTC",
         "title": "Proposed order",
         "view": "order.ticket.v1"
@@ -764,6 +823,22 @@
           "presence": "required",
           "state": "variant",
           "type": "enum buy / sell"
+        },
+        {
+          "binding": "text",
+          "input": "input · string matching ^[0-9]{1,9}(\\.[0-9]{1,8})?$",
+          "path": "size",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "input · one of 'units', 'usd'",
+          "path": "size_in",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum units / usd"
         },
         {
           "binding": "container",
@@ -1030,7 +1105,7 @@
     },
     {
       "component": "LineChart",
-      "digest": "205668c78931",
+      "digest": "f52eb1ea3307",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1558,7 +1633,7 @@
     },
     {
       "component": "ComparisonCard",
-      "digest": "d996313186c4",
+      "digest": "b2e006b3b306",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2120,7 +2195,7 @@
     },
     {
       "component": "TaxLotTable",
-      "digest": "dfc041e6746d",
+      "digest": "0790bed806a8",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
