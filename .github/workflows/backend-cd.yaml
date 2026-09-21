@@ -172,7 +172,7 @@ jobs:
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Allow Docker to push to Artifact Registry (gcloud auth configure-docker)
         run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
@@ -222,7 +222,7 @@ jobs:
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Deploy without traffic, verify readiness, then shift (deploy_cloud_run.sh)
         env:
