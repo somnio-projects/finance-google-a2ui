@@ -7,6 +7,133 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0004-scenario-comparison.md`
+
+**Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.
+Serves GGU-18 and design GGU-42.
+
+**What changed.** The third catalog component: `scenario.comparison.v1`, the
+same sale costed under FIFO / LIFO / HIFO side by side. Twelve files under
+`app/lib/components/scenario_comparison/`, nine test files, two goldens, and
+the regenerated manifest. **No hand-written file was edited** — the seam held
+end to end for the first component added since GGU-79 closed it, so this is
+also the first independent confirmation that it works.
+
+**The design asked for a winner and the card does not name one.** Its schema
+declares `scenarios[].recommended` and `metrics[].betterWhen`; its artboards
+badge one column `★ Recommended` and tint the better cell of each row green
+with a tick. Spec `backend/0017` OD-4 rules both out and the backend emits
+neither, so rendering them would be the client inventing a claim. The reason
+is not process: marking one disposal strategy "recommended" is tax advice, and
+whether FIFO's `+$3,825.00` (all long-term) beats LIFO's `+$1,305.00` (all
+short-term) depends on a marginal rate and a jurisdiction nothing here knows.
+The card renders `spread` — the arithmetic difference and which method sits at
+each end, which is data the columns already show — with the backend's own
+`Not advice` note verbatim beneath it. `specs/frontend/0004` OD-3 carries the
+full argument so nobody has to rediscover it.
+
+**A finding worth keeping: Flutter's border is not CSS's border.** The design
+is `box-sizing: border-box`, so its 1 px hairline sits *inside* the declared
+width. `DecoratedBox` and `CustomPaint` paint over the child and reserve no
+space, so the same padding left the content box 2 px too wide and every grid
+track wrong — 209.30 / 155.03 against the designer's 208.48 / 154.44. Every
+bordered element now pads by `ScenarioComparisonLayout.hairline` as well. The
+geometry test found it; **no golden of this card could have**, which is the
+next point.
+
+**The golden is narrow because the card is all text.** ADR-L D-15's measured
+noise floor is 0.69 % and it lives in glyph edges; a card with no bars and no
+connectors is nothing but glyph edges, and the defect most worth catching here
+— a token one step off, `#F0EDF5` against `#F0EEF5` — moves well under 1 %. So
+the colours are asserted **directly**, against the rendered `BoxDecoration`,
+which catches a one-step error exactly; the goldens capture only the column
+header's painted hairline, with no text in frame. First cut used the design's
+track width and a radius mutation moved 1.66 % against a 1.5 % tolerance — a
+margin of 1.1×, not a gate worth trusting. Cropping the frame to 56×30 raised
+it to **5.00 %**, 3.3× the tolerance. **The tolerance was not touched**; it
+goes down as noise is understood, never up to absorb a failure.
+
+**Harness.** No rule, hook, command or diagram changed. Diagram 12 is
+layer-level and a third component adds no layer, package or import rule —
+which is the seam claim restated as a diff.
+
+### What the next person should know
+
+- **`frontend/CLAUDE.md`'s "only file naming a `Color`" sentence is false, and
+  GGU-57 is fixing it — independently.** It and `chart_tokens.dart` both say
+  `chart_tokens.dart` is *the only file in `app/lib/` naming a `Color`*;
+  `scenario_comparison_tokens.dart` names eight. The alternative was adding
+  four fields to `ChartPalette` **and** `ChartTokens` — two shared
+  hand-written files edited in order to add a component, which ADR-L D-3
+  exists to prevent — and three of the four are not chart roles anyway (a
+  table's row rule, a header hairline, a caption). No test enforced the claim,
+  so nothing went red.
+
+  **Two components hit this from two directions in the same week and reached
+  the same answer without coordinating**: GGU-57's tax-lot table has its own
+  token file for the same reason, and its PR (#71) replaces the count with a
+  rule in `frontend/CLAUDE.md`. Whichever merges first fixes it; the second
+  conflicts on that line and should take the rule form. `specs/frontend/0004`
+  OD-8 keeps the reasoning and asks for the rule to get a **test**, since
+  replacing one unenforced sentence with another only resets the clock.
+- **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
+  The card reads the two ends instead — and **the review caught that the first
+  cut of that rule was wrong.** It required *both* ends, while the contract
+  makes `spread.highest` and `spread.lowest` `default null` **independently**
+  and ties neither to `differs`: a payload naming one end would have had the
+  card drop a name the backend sent *and* claim the methods coincide. The rule
+  is now `||`, lives once on the model as `namesAnyEnd`, and the `||` → `&&`
+  mutation turns two tests red — it turned none before. If a second component
+  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own; that is a
+  **deferral, not a prohibition** — ADR-L D-3's subject is dispatch, and
+  `geometry` set the precedent that widening `ViewPayload` is an amendment
+  (OD-2, reworded after review).
+- **Four contract fields are bound by nothing**: `short_term_lots`,
+  `long_term_lots` and `lots` per column. The counts are raw integers with no
+  `*Display` companion, so printing one is the client turning a number into
+  text; `lots` is internal ids. OD-6, not an oversight.
+- **Two more things the design asks for have no field**: row labels (its
+  `metrics[].label` — ours are client copy, OD-1) and a colour for a gain or a
+  loss (`scenario.comparison.v1` carries no `direction` enum the way the
+  waterfall's buckets do, and reading the sign out of `"+$3,825.00"` is exactly
+  what the rule forbids — OD-7).
+- **Measure the rendered DOM, still.** Eight colours and eleven geometry values
+  were read with `getComputedStyle` off the served page. The metric-name colour
+  cross-confirms against the catalog index's own token legend.
+- **A `.dc.html` design page opened from `file://` renders its chrome but does
+  not boot its data binding** — the table shows `{{ h.label }}` / `{{ r.label }}`
+  where the figures belong. Over `http://` the same file boots fully (547
+  nodes, no placeholders). Both were observed on this page, minutes apart, so
+  it is the scheme and not the wait. **Check for `{{` before measuring
+  anything off one of these pages**; a pixel claim taken off a placeholder is
+  worse than no claim. Other pages in the set reportedly do boot under
+  `file://`, so test the page in front of you rather than assuming either way.
+- **The newer fourteen-screen design export changes nothing here — except one
+  thing.** Re-measured `.design-refs/Catalog_ScenarioComparison.dc.html` in
+  both artboards: every colour, padding, radius, width and both grid rules are
+  identical to the earlier export. The miss it caught is that the `Metric`
+  caption is weight **500 with normal tracking**, not the eyebrow's 600 at
+  `0.08em` — this card had been reusing `caption` for it. Now its own slot,
+  asserted against `caption`'s weight so they cannot silently converge.
+- **The design index still says `ComparisonCard`.** Its detail page and the
+  backend both say `ScenarioComparison`; the schema block is authoritative and
+  `catalog_contract_test.dart` is what would catch getting it wrong.
+- **Spec numbering has no gate, and it has now collided twice.** This spec was
+  written as `0003` and renamed to **`0004`** because GGU-57 (#71) was landing
+  `0003-taxlot-table.md` with an `assets/0003-taxlot-table/` directory beside
+  it — renaming this one was the cheaper move. That is the *second* instance:
+  `develop` already carries two files numbered `0002`
+  (`0002-a2ui-agent-path.md` and `0002-chart-primitives-and-waterfall.md`).
+  `.claude/rules/backend/sdd.md` says `NNNN` is "the next free number", but
+  nothing computes it and nothing checks it, so two branches cut in the same
+  week reliably pick the same one. Left as-is here — the `0002` pair is
+  pre-existing and not this ticket's to move — but it wants either a gate
+  (a check that no two specs in a directory share a prefix, the same
+  anti-collision shape `manifest-check` already has) or a convention that does
+  not depend on branch timing.
+
+---
+
 ## 2026-09-20 — GGU-53 the catalog contract as JSON · spec `specs/backend/0021-machine-readable-catalog.md`
 
 **Branch:** `feat/GGU-53_catalog_json`. Server half of GGU-53 only; the Flutter
