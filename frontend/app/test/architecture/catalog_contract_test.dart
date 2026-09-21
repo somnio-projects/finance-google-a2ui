@@ -51,7 +51,7 @@ void main() {
       }
     });
 
-    test('the snapshot still names the component this ticket bound', () {
+    test('the snapshot names the components the design pages name', () {
       // A literal, on purpose. Every other assertion here reads both halves
       // from the same source and so cannot notice both changing together;
       // this is the client's own declaration of what design named, the
@@ -60,28 +60,37 @@ void main() {
         snapshot.viewIdFor('AttributionWaterfall'),
         'attribution.waterfall.v1',
       );
-      expect(snapshot.viewIdFor('AllocationSummary'), 'holdings.allocation.v1');
+      expect(snapshot.viewIdFor('HoldingsSummary'), 'holdings.allocation.v1');
+      expect(snapshot.viewIdFor('RiskPayoffChart'), 'payoff.curve.v1');
+      expect(
+        snapshot.viewIdFor('ScenarioComparison'),
+        'scenario.comparison.v1',
+      );
+      expect(snapshot.viewIdFor('OrderTicket'), 'order.ticket.v1');
+      expect(snapshot.viewIdFor('TaxLotTable'), 'taxlots.table.v1');
     });
 
-    test('the design page and the frozen catalog disagree on this name', () {
-      // **Deliberate, and the reason it is pinned here.** The catalog names
-      // this component `AllocationSummary`; design's own page for it
-      // (`.design-refs/Catalog_HoldingsSummary.dc.html`, Zone 2) calls it
-      // `HoldingsSummary` and gives it raw-number props. The backend's
-      // `test_component_names.py` holds design's six names as a literal, so
-      // the two declarations are already meant to be compared — and they no
-      // longer agree.
+    test('the names design superseded are gone, not merely unused', () {
+      // This replaces the pinned disagreement. The catalog used to name these
+      // components `AllocationSummary` and `PayoffChart`, taken from the
+      // gallery **cards** while their detail pages were not yet exported;
+      // each page's own Zone 2 block calls them `HoldingsSummary` and
+      // `RiskPayoffChart`, and spec 0024 §2 ruled that the detail page wins
+      // because spec 0023 §3 had already said so.
       //
-      // The client binds the **frozen catalog**, which is what the backend
-      // actually serves; a client that registered the design page's name
-      // would show a placeholder with a green gate, which is exactly the
-      // defect GGU-53 was written for. This test fails the day somebody
-      // reconciles them, which is the point: the reconciliation should be a
-      // decision, not a silent rename. `specs/frontend/0007` OD-1 carries it.
-      expect(
-        () => snapshot.entryFor('HoldingsSummary'),
-        throwsA(isA<StateError>()),
-      );
+      // The predecessor of this test asserted the disagreement and said the
+      // reconciliation "should be a decision, not a silent rename". It was
+      // one. What is worth keeping is the other half: a superseded name must
+      // not linger in the snapshot, because a client registering it would
+      // draw a placeholder behind a green gate — the defect GGU-53 exists
+      // for.
+      for (final gone in <String>['AllocationSummary', 'PayoffChart']) {
+        expect(
+          () => snapshot.entryFor(gone),
+          throwsA(isA<StateError>()),
+          reason: r'$gone was superseded by the component detail page',
+        );
+      }
     });
   });
 }

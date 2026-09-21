@@ -24,7 +24,7 @@ class PayoffChartComponent extends ViewComponent {
   String get viewId => 'payoff.curve.v1';
 
   @override
-  String get a2uiComponent => 'PayoffChart';
+  String get a2uiComponent => 'RiskPayoffChart';
 
   @override
   Widget build(BuildContext context, ViewPayload payload) =>
