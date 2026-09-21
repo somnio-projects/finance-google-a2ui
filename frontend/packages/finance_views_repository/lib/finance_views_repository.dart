@@ -7,6 +7,9 @@
 /// backend and travels through untouched (ADR-K D-5).
 library;
 
+export 'src/agent_event.dart';
+export 'src/agent_event_parser.dart';
+export 'src/agent_repository.dart';
 export 'src/payload_contract_exception.dart';
 export 'src/rendered_views.dart';
 export 'src/view_chunks.dart';
