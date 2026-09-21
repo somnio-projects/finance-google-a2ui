@@ -31,10 +31,10 @@ void main() {
         const <double>[1, 1, 1],
       ]) {
         final layout = DonutLayout.of(weights: weights, width: 80, height: 80);
-        final total = layout.arcs.fold<double>(
-          0,
-          (sum, arc) => sum + arc.sweepAngle,
-        );
+        var total = 0.0;
+        for (final arc in layout.arcs) {
+          total += arc.sweepAngle;
+        }
         expect(total, closeTo(tau, 1e-12));
       }
     });

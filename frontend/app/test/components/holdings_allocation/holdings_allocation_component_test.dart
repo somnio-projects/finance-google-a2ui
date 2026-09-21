@@ -80,10 +80,12 @@ void main() {
       );
     });
 
-    test('renders the backend residual bucket as an ordinary row', () {
-      // AC-3: `top_n` and `include_other` are the server's options. The client
-      // contains no fold, no filter and no threshold — an `other` row is just
-      // a row whose key happens to be `other`.
+    test('reads a single-holding payload', () {
+      // Named for what it does. AC-3 — that the backend's residual bucket
+      // renders as an ordinary row — is proved by
+      // `holdings_allocation_card_test.dart::renders one legend row per
+      // category, residual included`, whose fixture has an `other` row; this
+      // one only trims the example to its first category, which is BTC.
       final data = component.read(
         ViewPayload.fromJson(withOneCategory(example)),
       );

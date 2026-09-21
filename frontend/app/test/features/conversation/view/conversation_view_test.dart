@@ -2,6 +2,7 @@ import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -94,7 +95,13 @@ void main() {
       await ask(tester, 'what do I hold?');
 
       expect(find.text('You hold five assets.'), findsOneWidget);
+      // No placeholder and no empty card…
       expect(find.byType(ComponentHost), findsNothing);
+      // …and no failure surface. `takeException` alone would not catch this:
+      // the failure path in this same suite renders its code and detail as
+      // ordinary `Text`, so a rendered error is invisible to it.
+      expect(find.text('dependency-unavailable'), findsNothing);
+      expect(find.byIcon(Icons.error_outline), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

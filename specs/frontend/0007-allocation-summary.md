@@ -132,6 +132,7 @@ binds the catalog; each row below is a question for design and backend.
 ```
 packages/finance_charts/lib/src/donut_layout.dart      DonutArc, DonutLayout.of(...)
 packages/finance_charts/lib/src/donut_hit_test.dart    arcIndexAt / angleAt
+packages/finance_charts/lib/src/arctangent.dart        arctangent / arctangent2
 app/lib/charts/donut_painter.dart                      the CustomPainter
 app/lib/charts/donut_chart.dart                        the widget + the gesture
 app/lib/charts/allocation_palette.dart                 the categorical ThemeExtension
@@ -155,14 +156,39 @@ broken the budget anyway.
 
 **Hit testing lives in the package, not the widget**, which is a ruling this
 spec makes rather than inherits: it is a pure function of an offset and a
-layout (ADR-L D-13), and keeping it there is what let it be written without
-`.abs()` — banned from `app/lib` with **no carve-out**, deliberately.
+layout (ADR-L D-13), and keeping it out of `app/lib` is what lets it do
+arithmetic the app is forbidden.
+
+**And the angle is a real arctangent, written out, after a first attempt got
+this wrong.** That attempt avoided trigonometry with a monotonic surrogate —
+the quadrant plus the ratio of the two legs — arguing that "a hit test needs
+an ordering, not an angle". The argument does not hold: monotonicity orders
+two surrogate values against each other, but the arc boundaries it is compared
+against are true radians, and a surrogate value need not land in the same
+interval as the true angle. Measured on the catalog's own example payload,
+it selected the wrong slice for **1259 of 36000 directions (3.50 %)**, worst
+error **4.075°**, against a smallest slice 8.5° wide. Every test that existed
+used layouts whose boundaries lay on an axis — exactly where the surrogate is
+exact — so none could have gone red. `arctangent.dart` replaces it with a
+series accurate to 1.65e-10 rad, written out for the reason `tick_steps.dart`
+writes out three square roots rather than importing them. A named `dart:math`
+carve-out was the alternative and was rejected: the allow-list in
+`binding_rules_test.dart` is asserted to have exactly one member and that claim
+is repeated in ADR-L D-14, two rule files and `SECURITY.md`.
 
 ## 5. Security notes
 
 Nothing changes. No new transport, no new stored value, no new string
 interpreted. `geometry` is already the audited seam and this adds a second
-caller of it, not a second seam. Nothing under `.design-refs/` is committed.
+caller of it, not a second seam.
+
+**`.design-refs/` is not committed by this branch**, and that is currently a
+fact about the diff rather than a mechanism: the working copies were deleted
+before staging, and `git check-ignore` does not match the path. The `.gitignore`
+entry is landing in a separate harness change. Until it does, `git add -A` in a
+worktree that still holds the exports would commit them — an assertion with no
+check behind it is the pattern `.claude/rules/ci-conventions.md` §5 keeps
+finding, and it is named here rather than left implied.
 
 ## 6. Acceptance criteria
 
@@ -174,7 +200,7 @@ Numbered to the ticket's own ACs where they correspond.
 4. **AC-4** (ticket 2, payload half) — a payload with `categories: []` renders the caption, the total and a stated empty message. No donut, nothing thrown, and the card does not collapse.
 5. **AC-5** (ticket 2, turn half) — a turn that produces answer text and **no** render intent shows the text alone, with no placeholder, no error and no empty card, and a test says so in those words.
 6. **AC-6** (ticket 4) — the component suite binds the example read from `docs/catalog/view-catalog.snapshot.json` via `exampleFor('AllocationSummary')`, not a checked-in copy.
-7. **AC-7** — the arc geometry is asserted arithmetically: sweeps reproduce the design's **rendered** `conic-gradient` stops to 0.01°, start at twelve o'clock, sum to a full turn under rescaling, and a single 100 % holding is one full arc.
+7. **AC-7** — the arc geometry is asserted arithmetically: sweeps reproduce the design's **rendered** `conic-gradient` stops to 0.01°, start at twelve o'clock, sum to a full turn under rescaling, and a single 100 % holding is one full arc. **A tap resolves to the slice the true angle would choose**, checked 1.5° either side of every boundary of the catalog's own payload against values computed independently with `dart:math`, and the arctangent itself is pinned to 1e-9 rad against angles whose tangent is exact plus three arctangent identities.
 8. **AC-8** — the card lays the ring beside the legend at desktop width and above it at phone width, at the design's two diameters, and a test pumps each. Goldens of the ring in light, dark and selected, at the 1.5 % tolerance `flutter_test_config.dart` already sets — unchanged by this spec.
 9. **AC-9** — `cd frontend && make gate` green: format, analyze, budget, manifest-check, the five suites, and 100 % line coverage per file.
 
@@ -184,16 +210,18 @@ Numbered to the ticket's own ACs where they correspond.
 |---|---|
 | AC-1 | `holdings_allocation_component_test.dart::binds every display string verbatim`, `::never puts a raw figure on screen`, `::reads the raw weight only as geometry, never as text` |
 | AC-2 | `allocation_palette_test.dart::carries the design's measured ramp, in order`, `::wraps the ramp rather than running out`; `holdings_allocation_legend_test.dart::colours every category when the ramp runs out` |
-| AC-3 | `holdings_allocation_component_test.dart::renders the backend residual bucket as an ordinary row`, `::keeps the rows in the order the backend sent them` |
+| AC-3 | `holdings_allocation_card_test.dart::renders one legend row per category, residual included` (its fixture's second row is `key: 'other'`); `holdings_allocation_component_test.dart::keeps the rows in the order the backend sent them` |
 | AC-4 | `holdings_allocation_card_test.dart::states the empty portfolio instead of drawing a ring` |
 | AC-5 | `conversation_view_test.dart::shows an answer with no surface as text alone` |
 | AC-6 | `holdings_allocation_component_test.dart` reads `CatalogSnapshot.load().exampleFor('AllocationSummary')` |
-| AC-7 | `packages/finance_charts/test/src/donut_layout_design_test.dart`, `donut_layout_test.dart`, `donut_hit_test_test.dart` (`dart test`) |
+| AC-7 | `packages/finance_charts/test/src/donut_layout_design_test.dart`, `donut_layout_test.dart`, `donut_hit_test_test.dart::resolves a tap near a boundary of the catalog's own payload`, `arctangent_test.dart` (`dart test`) |
 | AC-8 | `holdings_allocation_card_test.dart::lays the ring beside the legend at desktop width`, `::stacks the ring above the legend at phone width`; `holdings_allocation_golden_test.dart` |
 | AC-9 | `make gate` |
 
-**Mutation checks: two, with pasted output in the PR.** The component's
-`register(...)` removed, and one bound figure switched to another payload path.
+**Mutation checks: three, with pasted output in the PR.** The component's
+`register(...)` removed; one bound figure switched to another payload path; and
+a `.fold<double>(` planted in `app/lib` to prove the widened computation needle
+now catches what the bare `.fold(` string missed.
 The first is the more interesting result and is written up in the PR: it turns
 the gate red at **`analyze`**, not at `manifest-check`, because the generator
 lists *directories* under `app/lib/components/` and emits a `register` call per

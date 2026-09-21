@@ -57,3 +57,46 @@ const double designSecondaryOuterDiameter = 112;
 
 /// See [designSecondaryOuterDiameter].
 const double designSecondaryHoleDiameter = 68;
+
+/// The catalog example's five shares, as the backend sends them (fractions).
+///
+/// From `docs/catalog/view-catalog.snapshot.json`, `holdings.allocation.v1`.
+/// Unlike the design's tidy percentages, **none of its boundaries lands on an
+/// axis or a diagonal** — which is exactly why the hit test is exercised
+/// against this payload and not only against four equal quarters.
+const List<double> catalogExampleWeights = <double>[
+  0.5927249356535964,
+  0.2445086456350536,
+  0.0937289548053002,
+  0.0455498734597608,
+  0.0234875904462888,
+];
+
+/// `(dx, dy, expected slice)`, 1.5° either side of each boundary of
+/// [catalogExampleWeights] at the design's 75 px radius.
+///
+/// A record rather than a `List<double>`, so the slice index stays an `int`:
+/// reading it out of a list of doubles needed a narrowing conversion at the
+/// call site, which `binding_rules_compute_test.dart` bans — correctly, and it
+/// caught that too. (It greps source text, so the mechanism is described here
+/// rather than spelled, which is the second time this change learned that.)
+///
+/// Computed **independently** of the code under test, with `dart:math`'s own
+/// `atan2` in a scratch script, for the reason [designClassStops] exists: a
+/// reference value the implementation cannot have produced is the only kind
+/// that can contradict it. 1.5° sits well inside the 4.075° error of the
+/// approximation this replaced, so these values fail on that implementation
+/// and pass on the current one.
+const List<(double dx, double dy, int slice)> referenceTaps =
+    <(double, double, int)>[
+      (-39.611732, 63.686032, 0),
+      (-42.890515, 61.525634, 1),
+      (-65.014588, -37.391221, 1),
+      (-62.968582, -40.742578, 2),
+      (-33.293092, -67.205432, 2),
+      (-29.730204, -68.855755, 3),
+      (-12.966286, -73.870667, 3),
+      (-9.082424, -74.448033, 4),
+      (-1.963271, -74.974299, 4),
+      (1.963271, -74.974299, 0),
+    ];

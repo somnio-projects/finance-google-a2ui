@@ -27,9 +27,17 @@ import 'workspace_sources.dart';
 /// `cumulative`, `spread`, `by_term` and `markers` are all supplied by the
 /// backend, and `sort`, `top_n`, `methods` and `lot_method` are *options* the
 /// server owns. So none of these has a legitimate use on a payload.
+/// **Both the bare and the type-argument spelling of `fold` and `reduce` are
+/// listed.** `.fold<double>(` does not contain `.fold(` as a substring, and
+/// GGU-65 wrote the workspace's first one — in a package test, harmlessly, but
+/// the rule stayed silent and so taught us nothing. This is the same near-miss
+/// as `double.parse` vs `double.tryParse` (`contract-binding.md` §1): a needle
+/// that matches only the spelling you thought of is a rule with a hole in it.
 const List<String> computationMechanisms = <String>[
   '.fold(',
+  '.fold<',
   '.reduce(',
+  '.reduce<',
   '.sort(',
   '.round()',
   '.floor()',

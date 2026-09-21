@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/donut_painter.dart';
@@ -60,12 +62,21 @@ void main() {
       }
     });
 
-    test('draws nothing when the ring has no thickness', () {
+    testWidgets('draws nothing when the ring has no thickness', (tester) async {
+      // A ring with arcs but no room: `isEmpty` is false, so this is the only
+      // input that reaches the `thickness <= 0` guard in `paint`. The previous
+      // version of this test asserted `layout.thickness` and never called
+      // `paint` at all — it satisfied line coverage and proved nothing.
       final flat = DonutPainter(
         layout: DonutLayout.of(weights: const <double>[1], width: 0, height: 0),
         palette: ChartTokens.allocationLight,
       );
+      expect(flat.layout.isEmpty, isFalse);
       expect(flat.layout.thickness, isZero);
+      final recorder = PictureRecorder();
+      flat.paint(Canvas(recorder), Size.zero);
+      // Nothing was drawn: an empty recording has no draw operations.
+      expect(recorder.endRecording().approximateBytesUsed, lessThan(200));
     });
   });
 

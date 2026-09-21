@@ -2816,3 +2816,22 @@ What the next person should know:
   first component to read `ChartPalette` (which deliberately does not) turned
   it red. `conversation_view_test.dart` had no test for a turn that answers
   with no surface — GGU-65 AC-2 — only for its complement.
+- **The `frontend-reviewer` agent earned its keep on this one, twice.** It
+  found a real defect the whole suite was structurally unable to catch: the
+  donut's hit test used a monotonic surrogate for the angle and compared it
+  against arc boundaries in **true radians**, which is a category error —
+  monotonicity orders surrogate values against each other, it does not put a
+  surrogate value in the same interval as the true angle. Wrong slice for
+  **3.50 %** of directions on the catalog's own payload, worst error 4.075°,
+  against a smallest slice 8.5° wide. Every existing test used four equal
+  quarters or `[0.5, 0, 0.5]` — layouts whose boundaries all land on an axis,
+  which is the one family where the surrogate is exact. Reproduced
+  independently before fixing. `arctangent.dart` now writes the series out
+  (the `tick_steps.dart` bargain), and the new test holds reference taps
+  computed with `dart:math` 1.5° either side of every real boundary.
+  **The lesson is about the fixture, not the formula:** a test whose inputs
+  are all symmetric cannot see an asymmetric bug.
+- **`.fold<double>(` slipped past `binding_rules_compute_test.dart`**, whose
+  needle was the fixed string `.fold(`. Same near-miss shape as `double.parse`
+  vs `double.tryParse`. Both type-argument spellings are needled now, and the
+  fix is mutation-checked: planting `.fold<double>(` in `app/lib` turns it red.
