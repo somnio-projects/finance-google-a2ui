@@ -2772,3 +2772,66 @@ rename that GGU-53 found on the backend.
 - Three things the design asks for have no field in the contract: a signed,
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
+
+## 2026-09-21 — GGU-57, the tax-lot table
+
+**Spec:** [`specs/frontend/0003-taxlot-table.md`](../specs/frontend/0003-taxlot-table.md)
+· serves GGU-17 and GGU-42 (the design).
+
+The third catalog component, and the first whose **design and backend contract
+disagree substantially**. GGU-42's page declares an A2UI schema
+(`lots[].shares`, `selectedLotIds`, `realizedSummary`, `onLotToggle(id)`) that
+`taxlots.table.v1` does not serve. Nine gaps are recorded as OD-1…OD-9 in the
+spec; none was closed by inventing a field on the client.
+
+### Code
+
+`app/lib/components/taxlots_table/` — thirteen files, none over budget. The
+component binds by dotted path, maps `term` and `trend` through declared
+enums, and calls `ViewPayload.geometry` **not at all**: a table has no canvas,
+so ADR-L D-14's exemption is unused here.
+
+### Harness
+
+Nothing in `.claude/` changed. Two things worth carrying forward:
+
+- **The gate has a latent defect and this branch worked around it rather than
+  editing it** (spec OD-9). `tool/coverage_sources.dart::hasExecutableCode`
+  calls any non-comment, non-import line executable, so a file of only
+  `static const` declarations is required to have an lcov record that lcov
+  will never write. It was written for `export` barrels. Three files here
+  would have tripped it; each was given the behaviour its call sites already
+  wanted instead — `TaxLotType`'s roles became functions of their colour,
+  `TaxLotMetrics` grew `BorderRadius` getters, and `TaxLotTerm` gained
+  `colorsIn(palette)`. All three read better than what they replaced, which is
+  why it is a workaround and not a compromise. **The next const-only file will
+  hit it again**; it wants a ticket.
+- **A component can add a `ThemeExtension`-shaped thing without editing
+  `AppTheme`.** `TaxLotPalette` is a plain class whose `of(context)` reads the
+  brightness the theme already carries. Registering an extension would have
+  meant editing a shared file to add a component, which ADR-L D-3 forbids.
+
+### What the next person should know
+
+- **No golden, on purpose, and it is the same reasoning that produced the
+  waterfall's.** `frontend/0002` measured whole-card goldens at 0.54–0.70 %
+  cross-platform drift against a 1.26 % smallest defect, and answered by
+  goldening the chart — the part with no text. A tax-lot card is text end to
+  end and has no such region, so the decoration is asserted off the widget
+  tree instead: the row's fill, hairline, rail colour and radius from its
+  `BoxDecoration`, the cell colours from their `TextStyle`. A failure names
+  the defect rather than saying something moved.
+- **The footer is a `Wrap`, not a `Row`, and that is a real bug it fixed.** A
+  split pill carries a server string whose length this app does not choose
+  (`+$8,925.00 Long-term`), and the first version overflowed by 148 px. A
+  `RenderFlex` overflow is a test failure, so the suite caught it.
+- **Two column captions deliberately do not match the artboard** (OD-7): these
+  are lots the sale *consumes*, so the figure is realised, not *Unrealized*,
+  and the backend's own label for the money column is `Proceeds`, not *Market
+  value*. Matching the design there would have meant mislabelling the data.
+- **The measured values were read from the rendered DOM again**, as GGU-55's
+  lesson says. The index's shared token legend is where short-term amber
+  (`#F0A52E` / `#FFBF5C`) and long-term teal (`#0F9D8F` / `#3FC8B8`) come
+  from, not this page. `taxlot_tokens_test.dart::agrees with the chart palette
+  on every shared role` pins the five roles both palettes carry, so the two
+  files cannot drift while staying separate.

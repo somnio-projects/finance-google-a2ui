@@ -96,9 +96,18 @@ arithmetically**. `app/lib/charts/` holds the `CustomPainter` and the
 
 No charting library, deliberately: `fl_chart` and `graphic` both format their
 own axis labels, which breaks the one product invariant this showcase exists
-to demonstrate. The reasoning is ADR-L D-13; the measured design values are in
-`app/lib/charts/chart_tokens.dart`, which is the only file in `app/lib/`
-naming a `Color`.
+to demonstrate. The reasoning is ADR-L D-13; the chart's measured design values
+are in `app/lib/charts/chart_tokens.dart`.
+
+**Colour literals live in a `*_tokens.dart` and nowhere else.** `AppTheme`
+names the seed; each design-bound surface names its own measured palette —
+`charts/chart_tokens.dart`, `components/taxlots_table/taxlot_tokens.dart` —
+and every other file reads it through a palette object. A component's palette
+stays in the component's directory on purpose: registering a `ThemeExtension`
+would mean editing `AppTheme` to add one, which ADR-L D-3 forbids. Where two
+palettes share a semantic role, a test pins them to each other
+(`taxlot_tokens_test.dart::agrees with the chart palette on every shared
+role`) so they cannot drift while staying separate.
 
 Responsive through `LayoutBuilder` alone — the painter takes the `Size` and
 the scales recompute. There is no breakpoint to keep in step with a design.
