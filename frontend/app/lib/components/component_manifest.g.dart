@@ -13,10 +13,13 @@ import 'package:finance_app/components/holdings_allocation/holdings_allocation_c
     as holdings_allocation;
 import 'package:finance_app/components/payoff_chart/payoff_chart_component.dart'
     as payoff_chart;
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_component.dart'
+    as scenario_comparison;
 
 /// Registers every catalog component this build ships.
 void registerCatalogComponents(ComponentRegistry registry) {
   attribution_waterfall.register(registry);
   holdings_allocation.register(registry);
   payoff_chart.register(registry);
+  scenario_comparison.register(registry);
 }
