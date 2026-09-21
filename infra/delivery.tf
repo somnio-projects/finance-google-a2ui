@@ -106,6 +106,27 @@ resource "google_cloud_run_v2_service_iam_member" "deployer_developer" {
   member   = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+# Execute the migration job, and nothing else in the project.
+#
+# `deploy_cloud_run.sh` runs `gcloud run jobs execute` **between** creating the
+# no-traffic revision and shifting traffic to it, so the schema moves under a
+# revision nobody is served yet. The grant above is scoped to the *service*, so
+# the deployer could create that revision and then could not run the job:
+#
+#   PERMISSION_DENIED: Permission 'run.jobs.get' denied on resource
+#   'namespaces/finance-a2ui/jobs/finance-a2ui-dev-migrate'
+#
+# The pipeline behaved correctly — it reported "migrations failed; the schema
+# was not moved" and rolled traffic back — but no deploy could ever have
+# succeeded. `run.developer` rather than `run.invoker` because the script polls
+# the execution, which needs `run.jobs.get` as well as `run.jobs.run`.
+resource "google_cloud_run_v2_job_iam_member" "deployer_runs_migrations" {
+  name     = google_cloud_run_v2_job.migrate.name
+  location = var.region
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 # Deploy a revision that RUNS AS the backend identity, without being able to
 # act as any other service account in the project.
 resource "google_service_account_iam_member" "deployer_acts_as_backend" {
