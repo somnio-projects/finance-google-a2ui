@@ -1,63 +1,53 @@
-"""The shape of Gemini's ``generateContent`` request and response.
+"""The shape of Gemini's ``generateContent`` request (spec 0006 §3.4).
 
-It delegates one thing: a tool's ``parameters`` belong to ``tool_schema.py``.
+It delegates two things: a tool's ``parameters`` belong to ``tool_schema.py``,
+and the roles this file may emit are the measured set in ``wire_roles.py``.
+Reading the provider's answer is ``reply.py``'s job.
 
 Mapping lives apart from transport for the same reason ``jwks.py`` lives apart
 from ``oidc_provider.py``: the shape of a provider's JSON and the handling of
-its failures are different problems, and each is easier to test alone. The
-response is parsed into pydantic models before anything reads it, so a body
-that is merely *JSON* but not a Gemini reply fails here, loudly and early.
+its failures are different problems, and each is easier to test alone.
+
+**A tool result travels under role ``"user"``** (GGU-90). Gemini has no tool
+role: the ``functionResponse`` *part* is what marks it as a tool result, and
+the only role the API accepts for it is ``"user"``. Sending ``"function"``,
+which is what this file did until GGU-90, is a 400 on every turn that calls a
+tool — see ``wire_roles.py`` for the provider's own list.
 """
 
 from collections.abc import Mapping, Sequence
-from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
-
-from app.core.model import MessageRole, ModelMessage, ModelReply, ToolCall, ToolSpec
+from app.core.model import MessageRole, ModelMessage, ToolSpec
 from app.infra.model.tool_schema import to_gemini_schema
 
-_ROLES: Mapping[MessageRole, str] = {
+#: How our roles cross the wire. Public because it is a *checked* artefact:
+#: ``tests/unit/infra/model/test_wire_roles.py`` compares every value here
+#: against the set the provider itself printed (``wire_roles.py``).
+ROLES: Mapping[MessageRole, str] = {
     MessageRole.USER: "user",
     MessageRole.ASSISTANT: "model",
-    MessageRole.TOOL: "function",
+    # Not "function": the API refuses it outright, and a functionResponse
+    # part is already what distinguishes a tool result from a question.
+    MessageRole.TOOL: "user",
 }
 
 
-class _FunctionCall(BaseModel):
-    """A ``functionCall`` part of a Gemini candidate."""
+def _call_part(
+    name: str, args: Mapping[str, object], state: Mapping[str, object]
+) -> dict[str, object]:
+    """Render one tool call, carrying back whatever the provider attached.
 
-    model_config = ConfigDict(populate_by_name=True)
+    Args:
+        name: The tool the model asked for.
+        args: The arguments it supplied.
+        state: Opaque provider state from the reply that produced this call —
+            Gemini 3's ``thoughtSignature`` (GGU-88).
 
-    name: str = Field(min_length=1)
-    args: dict[str, Any] = Field(default_factory=dict)
-
-
-class _Part(BaseModel):
-    """One part of a candidate's content: prose, a call, or both."""
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    text: str | None = None
-    function_call: _FunctionCall | None = Field(default=None, alias="functionCall")
-
-
-class _Content(BaseModel):
-    """The content block of a candidate."""
-
-    parts: list[_Part] = Field(default_factory=list)
-
-
-class _Candidate(BaseModel):
-    """One candidate answer."""
-
-    content: _Content = Field(default_factory=_Content)
-
-
-class GeminiResponse(BaseModel):
-    """The subset of ``generateContent``'s response this adapter reads."""
-
-    candidates: list[_Candidate] = Field(default_factory=list)
+    Returns:
+        The ``functionCall`` part. The state is splatted in **first** so a
+        provider key can never displace the call itself.
+    """
+    return {**state, "functionCall": {"name": name, "args": dict(args)}}
 
 
 def _message_parts(message: ModelMessage) -> list[dict[str, object]]:
@@ -69,7 +59,7 @@ def _message_parts(message: ModelMessage) -> list[dict[str, object]]:
     if message.text:
         parts.append({"text": message.text})
     parts.extend(
-        {"functionCall": {"name": call.name, "args": dict(call.arguments)}}
+        _call_part(call.name, call.arguments, call.provider_state)
         for call in message.tool_calls
     )
     return parts
@@ -91,7 +81,7 @@ def to_request(
         crosses through ``to_gemini_schema`` — GGU-81.
     """
     contents = [
-        {"role": _ROLES[message.role], "parts": parts}
+        {"role": ROLES[message.role], "parts": parts}
         for message in messages
         if (parts := _message_parts(message))
     ]
@@ -115,36 +105,4 @@ def to_request(
     return body
 
 
-def from_response(payload: object) -> ModelReply:
-    """Parse a ``generateContent`` response into a ``ModelReply``.
-
-    Args:
-        payload: The decoded JSON body.
-
-    Returns:
-        The assistant's text and the tool calls it asked for.
-
-    Raises:
-        ValueError: When the body is not a Gemini reply, or carries no
-            candidate. ``pydantic.ValidationError`` is a ``ValueError``, so one
-            ``except`` in the client covers both.
-    """
-    parsed = GeminiResponse.model_validate(payload)
-    if not parsed.candidates:
-        msg = "response carried no candidate"
-        raise ValueError(msg)
-    parts = parsed.candidates[0].content.parts
-    text = "".join(part.text for part in parts if part.text)
-    calls = tuple(
-        ToolCall(
-            call_id=f"{index}-{part.function_call.name}",
-            name=part.function_call.name,
-            arguments=part.function_call.args,
-        )
-        for index, part in enumerate(parts)
-        if part.function_call is not None
-    )
-    return ModelReply(text=text, tool_calls=calls)
-
-
-__all__ = ["GeminiResponse", "from_response", "to_request"]
+__all__ = ["ROLES", "to_request"]

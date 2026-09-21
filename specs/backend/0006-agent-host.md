@@ -199,9 +199,12 @@ New modules:
 |---|---|
 | `core/model.py` | `MessageRole`, `ToolSpec`, `ToolCall`, `ModelMessage`, `ModelReply` |
 | `core/display.py` | `money_display`, `signed_money_display`, `quantity_display`, `percent_display` — the single `Decimal` → string boundary (ADR-E D-2) |
-| `infra/model/payload.py` | Gemini wire mapping: `to_request`, `from_response` |
+| `infra/model/payload.py` | Gemini **request** mapping: `to_request`, `ROLES` |
+| `infra/model/reply.py` | Gemini **response** mapping: `from_response`, the `thoughtSignature` round trip (GGU-88) |
+| `infra/model/wire_roles.py` | the roles `contents[].role` accepts and refuses, measured against the API (GGU-90) |
 | `infra/model/tool_schema.py` | `to_gemini_schema` — the tool JSON Schema translation (GGU-81) |
 | `infra/model/tool_schema_keys.py` | the keywords `parameters` accepts and refuses, measured against the API (GGU-81) |
+| `infra/model/provider_errors.py` | `is_retryable` + `log_provider_failure` — retry triage and the server-side warning (GGU-90 AC-4) |
 | `infra/model/gemini_client.py` | `GeminiModelClient` — key, timeout, retries, translation |
 | `infra/model/null_client.py` | `NullModelClient`, `RecordedCall` |
 | `infra/model/factory.py` | `build_model_client(settings)` |
@@ -295,7 +298,13 @@ imports no FastAPI and no SQLAlchemy.
 13. **AC-13** — Exactly one metric (`agent.turn`, tagged `model` and
     `outcome`) and exactly one log line (`agent.turn`) are emitted per turn,
     on both the success and the failure path, and neither carries prompt text,
-    tool arguments, tool results or the subject.
+    tool arguments, tool results or the subject. **Amended by GGU-90 AC-4:**
+    the adapter additionally emits one `warning` per *failed* provider attempt
+    (`model_provider_rejected` / `model_provider_unreachable`) carrying the
+    status and the provider's own bounded diagnostic. It is not a per-turn
+    line — a successful turn still logs exactly one — and it carries no
+    conversation content: a `generateContent` rejection describes the shape of
+    *our* request, not the user's question.
 14. **AC-14** — `app/agent/` imports nothing from `api`, `services`,
     `repositories`, `models`, `schemas`, `infra`, `auth` or `bootstrap`, and
     `services/agent_service.py` imports neither FastAPI nor SQLAlchemy nor any
@@ -343,6 +352,7 @@ error masking. Removing the `except` that translates provider failures in
 | OD-5 | Where does `Decimal` → display formatting live, given `app/presentation/` is being created in parallel? | TL | **`app/core/display.py`** — ADR-E D-2 demands *one* formatting module; `core` is the only place both `app/agent` and `app/presentation` may import. The presentation layer reuses it rather than adding a second. |
 | OD-6 | Do tool arguments and results belong in telemetry when a demo answer is wrong? | TL | **No** — §5. Reproduction comes from the fixed `as_of`; a conversation log is a PII surface the showcase does not need. |
 | OD-7 | The Gemini wire mapping has never met the real API. | TL — **resolved by GGU-81** | It was wrong, exactly as predicted, and in the half nobody stubs: `parameters` is an OpenAPI 3 `Schema` proto, not JSON Schema, and proto3 JSON refuses an unknown field — so `additionalProperties` and `examples`, both required of us elsewhere, made every turn a 400 reported as `model provider unavailable`. The accepted subset was **measured** against `generateContent`, one keyword per POST, and is recorded in `infra/model/tool_schema_keys.py`; `tests/unit/infra/model/test_outgoing_tool_schema.py` walks the real registry and fails offline if a refused keyword ever reaches the wire again. |
+| OD-13 | The wire mapping's *other* half had never met the real API either. | TL — **resolved by GGU-90 + GGU-88** | Fixing the schema (OD-7) exposed two more defects stacked behind it on the same code path, both in the direction nobody stubs. `MessageRole.TOOL` mapped to role `"function"`, which Gemini refuses outright — it has no tool role, and a `functionResponse` *part* travels under `"user"`. And Gemini 3 attaches a `thoughtSignature` to every `functionCall` and refuses the next request without it, which `from_response` discarded. Either one alone is a 400 on the **second** model call, so neither could be fixed alone. The accepted roles are **measured** in `infra/model/wire_roles.py`, quoted from the provider's own refusal, and the signature round-trips as `ToolCall.provider_state` — an opaque bag the adapter fills and empties, so the core contract still names no provider. `test_wire_roles.py` walks `MessageRole` and compares against the measured set rather than against our own constant, which is precisely how this shipped. |
 | OD-8 | A turn has no wall-clock deadline. | TL — **deferred to GGU-3** | The ceilings multiply: 4 iterations × 3 attempts × 20 s ≈ 240 s worst case. `AGENT_MAX_TOOL_ITERATIONS` bounds cost, not latency. Once a route exists that worst case ties up a worker, so the deadline belongs with the transport that owns the request, not with the loop. |
 | OD-9 | Retries have no backoff and ignore `Retry-After`. | TL — **deferred** | Three immediate re-POSTs on a 429 turn a soft rate limit into a hard one. Bounded, so not a storm; worth fixing when the p95 budget in ADR-K is measured rather than asserted. |
 | OD-10 | The adapter opens a new `httpx.AsyncClient` per call. | TL — **deferred** | A TLS handshake per model call, up to four per turn. Cheap to fix by building it once in the factory; it only shows up against the latency budget, which needs a route first. |

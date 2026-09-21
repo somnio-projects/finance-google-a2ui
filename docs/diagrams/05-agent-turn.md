@@ -88,4 +88,16 @@ sequenceDiagram
     %% Gemini's `parameters` field parses (GGU-81) — $refs resolved, refused
     %% keywords dropped. The tools' own declarations are untouched, so the
     %% OpenAPI document and the argument-bounds gate still read the full ones.
+    %% "tool results fed back" is the edge that was broken until GGU-90/GGU-88,
+    %% and it carries two provider facts the reader would otherwise get wrong:
+    %%   1. a functionResponse part travels under role "user", NOT "function" —
+    %%      Gemini has no tool role at all (infra/model/wire_roles.py);
+    %%   2. the assistant turn re-sent above it must echo, verbatim, the
+    %%      thoughtSignature Gemini attached to each functionCall, carried as
+    %%      ToolCall.provider_state (infra/model/reply.py). Dropping either is
+    %%      a 400 on the SECOND call — after the tool has run and its surface
+    %%      has already been streamed, so the client sees a render-intent and
+    %%      then a failure. The loop and the event order are unchanged.
+    %% A provider rejection is masked outward as dependency-unavailable AND
+    %% logged inward at warning with the provider's own text (GGU-90 AC-4).
 ```
