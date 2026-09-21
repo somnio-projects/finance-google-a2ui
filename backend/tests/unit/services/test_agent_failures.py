@@ -17,6 +17,7 @@ from tests.unit.services.agent_doubles import (
     TEST_PROMPT,
     FailingModel,
     call,
+    make_resolver,
     make_service,
     tool_results,
 )
@@ -67,6 +68,7 @@ async def test_run_turn_reports_and_reraises_a_model_failure(
         model=FailingModel(failure),
         tools=ToolRegistry(),
         reporter=reporter,
+        renders=make_resolver(reporter),
         clock=FixedClock(FROZEN_NOW),
         max_iterations=4,
         system_prompt=TEST_PROMPT,
@@ -97,6 +99,7 @@ async def test_run_turn_reports_and_counts_an_untyped_failure(
         model=FailingModel(failure),
         tools=ToolRegistry(),
         reporter=reporter,
+        renders=make_resolver(reporter),
         clock=FixedClock(FROZEN_NOW),
         max_iterations=4,
         system_prompt=TEST_PROMPT,

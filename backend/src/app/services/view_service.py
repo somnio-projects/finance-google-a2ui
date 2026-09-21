@@ -108,6 +108,24 @@ class ViewService:
         projection = self._registry.get(view)
         return projection.render(portfolio, validated_options(projection, options))
 
+    def validate(self, *, view: str, options: Mapping[str, Any]) -> None:
+        """Judge a view id and its options without rendering anything.
+
+        The agent turn asks this before a surface leaves it: the portfolio is
+        irrelevant to whether a projection exists and whether its options are
+        in range, and a turn must not pay for a read to find that out.
+
+        Args:
+            view: The projection id the caller picked.
+            options: What the caller wants to fill in it.
+
+        Raises:
+            UnknownViewError: When ``view`` is not registered.
+            ValidationFailedError: When an option is undeclared or out of range.
+        """
+        projection = self._registry.get(view)
+        validated_options(projection, options)
+
     def surface(self, view: str, payload: ProjectionDto) -> Surface:
         """Map ``payload`` onto its A2UI surface through the view's adapter."""
         return self._registry.get(view).surface(payload)
