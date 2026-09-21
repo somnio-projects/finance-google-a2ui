@@ -61,6 +61,11 @@
       "id": "infra.dev-environment",
       "cwd": ".",
       "cmd": "bash infra/scripts/tests/test_dev_environment.sh"
+    },
+    {
+      "id": "infra.rules-index",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_rules_index.sh"
     }
   ],
   "_candidates": [
