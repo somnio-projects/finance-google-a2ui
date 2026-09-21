@@ -7,6 +7,90 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0003-scenario-comparison.md`
+
+**Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.
+Serves GGU-18 and design GGU-42.
+
+**What changed.** The third catalog component: `scenario.comparison.v1`, the
+same sale costed under FIFO / LIFO / HIFO side by side. Twelve files under
+`app/lib/components/scenario_comparison/`, seven test files, two goldens, and
+the regenerated manifest. **No hand-written file was edited** — the seam held
+end to end for the first component added since GGU-79 closed it, so this is
+also the first independent confirmation that it works.
+
+**The design asked for a winner and the card does not name one.** Its schema
+declares `scenarios[].recommended` and `metrics[].betterWhen`; its artboards
+badge one column `★ Recommended` and tint the better cell of each row green
+with a tick. Spec `backend/0017` OD-4 rules both out and the backend emits
+neither, so rendering them would be the client inventing a claim. The reason
+is not process: marking one disposal strategy "recommended" is tax advice, and
+whether FIFO's `+$3,825.00` (all long-term) beats LIFO's `+$1,305.00` (all
+short-term) depends on a marginal rate and a jurisdiction nothing here knows.
+The card renders `spread` — the arithmetic difference and which method sits at
+each end, which is data the columns already show — with the backend's own
+`Not advice` note verbatim beneath it. `specs/frontend/0003` OD-3 carries the
+full argument so nobody has to rediscover it.
+
+**A finding worth keeping: Flutter's border is not CSS's border.** The design
+is `box-sizing: border-box`, so its 1 px hairline sits *inside* the declared
+width. `DecoratedBox` and `CustomPaint` paint over the child and reserve no
+space, so the same padding left the content box 2 px too wide and every grid
+track wrong — 209.30 / 155.03 against the designer's 208.48 / 154.44. Every
+bordered element now pads by `ScenarioComparisonLayout.hairline` as well. The
+geometry test found it; **no golden of this card could have**, which is the
+next point.
+
+**The golden is narrow because the card is all text.** ADR-L D-15's measured
+noise floor is 0.69 % and it lives in glyph edges; a card with no bars and no
+connectors is nothing but glyph edges, and the defect most worth catching here
+— a token one step off, `#F0EDF5` against `#F0EEF5` — moves well under 1 %. So
+the colours are asserted **directly**, against the rendered `BoxDecoration`,
+which catches a one-step error exactly; the goldens capture only the column
+header's painted hairline, with no text in frame. First cut used the design's
+track width and a radius mutation moved 1.66 % against a 1.5 % tolerance — a
+margin of 1.1×, not a gate worth trusting. Cropping the frame to 56×30 raised
+it to **5.00 %**, 3.3× the tolerance. **The tolerance was not touched**; it
+goes down as noise is understood, never up to absorb a failure.
+
+**Harness.** No rule, hook, command or diagram changed. Diagram 12 is
+layer-level and a third component adds no layer, package or import rule —
+which is the seam claim restated as a diff.
+
+### What the next person should know
+
+- **`frontend/CLAUDE.md` now carries a false sentence, deliberately left
+  alone.** It and `chart_tokens.dart` both say `chart_tokens.dart` is *the
+  only file in `app/lib/` naming a `Color`*. `scenario_comparison_tokens.dart`
+  names eight. The alternative was adding four fields to `ChartPalette` **and**
+  `ChartTokens` — two shared hand-written files edited to add a component,
+  which ADR-L D-3 exists to prevent — and three of the four are not chart
+  roles anyway (a table's row rule, a header hairline, a caption). No test
+  enforced the claim, so nothing went red. `specs/frontend/0003` OD-8 proposes
+  the rule become *one token file per component family*; it needs a TL call.
+- **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
+  The card branches on whether `spread.highest`/`lowest` are present, which the
+  contract ties to the same condition, and a test checks the derived value
+  against the payload's own flag in both states (OD-2). If a second component
+  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own.
+- **Four contract fields are bound by nothing**: `short_term_lots`,
+  `long_term_lots` and `lots` per column. The counts are raw integers with no
+  `*Display` companion, so printing one is the client turning a number into
+  text; `lots` is internal ids. OD-6, not an oversight.
+- **Two more things the design asks for have no field**: row labels (its
+  `metrics[].label` — ours are client copy, OD-1) and a colour for a gain or a
+  loss (`scenario.comparison.v1` carries no `direction` enum the way the
+  waterfall's buckets do, and reading the sign out of `"+$3,825.00"` is exactly
+  what the rule forbids — OD-7).
+- **Measure the rendered DOM, still.** Eight colours and eleven geometry values
+  were read with `getComputedStyle` off the served page. The metric-name colour
+  cross-confirms against the catalog index's own token legend.
+- **The design index still says `ComparisonCard`.** Its detail page and the
+  backend both say `ScenarioComparison`; the schema block is authoritative and
+  `catalog_contract_test.dart` is what would catch getting it wrong.
+
+---
+
 ## 2026-09-20 — GGU-53 the catalog contract as JSON · spec `specs/backend/0021-machine-readable-catalog.md`
 
 **Branch:** `feat/GGU-53_catalog_json`. Server half of GGU-53 only; the Flutter
