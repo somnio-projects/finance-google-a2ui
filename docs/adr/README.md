@@ -25,7 +25,7 @@ review and the ship gate cite them by number.
 | ADR | Title | Status | Gates |
 |---|---|---|---|
 | [ADR-A](ADR-A-session-identity.md) | Session identity, ownership and isolation | Accepted | GGU-46, GGU-5 |
-| [ADR-B](ADR-B-auth-credential-contract.md) | Auth credential contract | Accepted | GGU-2, GGU-46 |
+| [ADR-B](ADR-B-auth-credential-contract.md) | Auth credential contract | Accepted · **D-4 superseded by D-11/D-12 (Proposed, 2026-09-20)** | GGU-2, GGU-46, GGU-87 |
 | [ADR-C](ADR-C-backend-module-layout.md) | Backend module layout | Accepted | GGU-45 |
 | [ADR-D](ADR-D-a2ui-streaming-transport.md) | A2UI streaming transport | Proposed | GGU-3, GGU-4 |
 | [ADR-E](ADR-E-money-representation.md) | Money representation and rounding | Accepted | GGU-5 |
