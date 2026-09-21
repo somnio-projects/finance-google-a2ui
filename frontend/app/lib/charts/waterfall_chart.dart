@@ -54,6 +54,11 @@ class WaterfallChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
     return Column(
+      // Shrink-wrapped: a chart is as tall as its plot, its rule and its
+      // labels, and nothing more. Left greedy it would fill whatever it was
+      // given, which is invisible inside the card (its own column is already
+      // `min`) and wrong everywhere else.
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         SizedBox(

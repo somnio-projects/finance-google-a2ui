@@ -14,15 +14,27 @@ import 'package:flutter_test/flutter_test.dart';
 /// that is not a defect — which is worse than no check, because the fix
 /// everybody reaches for is to stop running it.
 ///
-/// The tolerance is deliberately tight. It absorbs anti-aliasing; it does not
-/// absorb a bar in the wrong place, a colour from the wrong palette or a
-/// missing label, all of which move far more than
-/// [_TolerantComparator.maxDifferentPixelFraction] of the image. The geometry
-/// itself is proved exactly, and separately, in `finance_charts`.
+/// **The threshold was measured, not guessed, and the margin is stated.**
+/// Against the chart goldens in this suite:
+///
+/// | change | pixels differing |
+/// |---|---|
+/// | macOS golden vs the Linux runner, same tree (card goldens) | 0.54–0.70 % |
+/// | the value scale's domain wrong | 6.9–7.3 % |
+/// | one bar drawn in the wrong mark | 5.0 % |
+/// | a bar's corner radius 4 px → 3 px | 0.08–0.11 % |
+///
+/// So a defect worth catching moves ten to a hundred times the tolerance.
+/// The last row is the honest limit: a sub-pixel radius change is **below**
+/// what a cross-platform raster can resolve, so it is asserted as a constant
+/// (`WaterfallPainter.barRadius`) rather than left to a golden. The exact
+/// geometry is likewise proved arithmetically in `finance_charts` — that is
+/// what makes a tolerance here safe rather than a loosened threshold.
 ///
 /// Note that text in a golden renders in Flutter's test font, which is a
 /// block per glyph — these prove bars, connectors, colours and layout, not
-/// typography.
+/// typography. The goldens deliberately capture the **chart**, not the card,
+/// because glyph edges are where nearly all the cross-platform noise lives.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   if (goldenFileComparator is LocalFileComparator) {
     final base = (goldenFileComparator as LocalFileComparator).basedir;
@@ -34,8 +46,8 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 class _TolerantComparator extends LocalFileComparator {
   _TolerantComparator(super.testFile);
 
-  /// One pixel in two hundred may differ. Measured against the three
-  /// goldens in this suite, cross-platform anti-aliasing moves far less.
+  /// One pixel in two hundred may differ — see the table above for why that
+  /// sits an order of magnitude below any defect worth catching.
   static const double maxDifferentPixelFraction = 0.005;
 
   @override

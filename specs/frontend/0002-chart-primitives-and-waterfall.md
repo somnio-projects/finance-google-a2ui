@@ -122,7 +122,7 @@ path still cannot be chosen at runtime.
 | AC-2 | `…/band_scale_test.dart::widens a bar with its band until the cap` |
 | AC-3 | `…/tick_steps_test.dart::recovers the reference waterfall axis from the design`, `…/linear_scale_test.dart::defaults to the interval count the reference design uses` |
 | AC-4 | `…/waterfall_layout_test.dart::runs one connector between each pair of neighbours` |
-| AC-5 | `app/test/charts/chart_palette_test.dart`, plus the light and dark goldens |
+| AC-5 | `app/test/charts/chart_palette_test.dart`, plus the light and dark goldens. The goldens capture the **chart**, not the card: whole-card goldens drifted 0.54–0.70 % across platforms against a 1.26 % smallest-defect signal, and goldening the chart instead moves the signal to 5–7 % (ADR-L D-15) |
 | AC-6 | `…/attribution_waterfall_card_test.dart::never shows a raw decimal`, `…/waterfall_chart_test.dart::never puts a raw figure on screen` |
 | AC-7 | `…/attribution_waterfall_component_test.dart::takes each bar direction from the backend enum, not a sign` and `::raises a direction the contract does not declare` |
 | AC-8 | `…/attribution_waterfall_card_test.dart::reveals the tapped bucket and reports its key`, `::a total is not drillable` |

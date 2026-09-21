@@ -37,6 +37,17 @@ void main() {
       ),
     );
 
+    test('keeps the card chrome the design was measured at', () {
+      // Constants, asserted as constants. A raster golden would prove these
+      // too, and far less precisely — 16 px is exact, "looks the same" is
+      // not. See the golden suite for why the chrome is not in a golden.
+      expect(AttributionWaterfallCard.radius, 16);
+      expect(
+        AttributionWaterfallCard.padding,
+        const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      );
+    });
+
     testWidgets('shows the title and every annotation verbatim', (
       tester,
     ) async {
