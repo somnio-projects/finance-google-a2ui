@@ -1,4 +1,6 @@
-"""The only place that knows Gemini's ``generateContent`` wire format.
+"""The shape of Gemini's ``generateContent`` request and response.
+
+It delegates one thing: a tool's ``parameters`` belong to ``tool_schema.py``.
 
 Mapping lives apart from transport for the same reason ``jwks.py`` lives apart
 from ``oidc_provider.py``: the shape of a provider's JSON and the handling of
@@ -13,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.model import MessageRole, ModelMessage, ModelReply, ToolCall, ToolSpec
+from app.infra.model.tool_schema import to_gemini_schema
 
 _ROLES: Mapping[MessageRole, str] = {
     MessageRole.USER: "user",
@@ -83,8 +86,9 @@ def to_request(
         tools: The tools the model may call.
 
     Returns:
-        A JSON-serialisable body. Messages that render to no part are dropped:
-        Gemini rejects an empty ``parts`` array.
+        A JSON-serialisable body. Messages that render to no part are dropped
+        (Gemini rejects an empty ``parts`` array), and each tool's schema
+        crosses through ``to_gemini_schema`` — GGU-81.
     """
     contents = [
         {"role": _ROLES[message.role], "parts": parts}
@@ -102,7 +106,7 @@ def to_request(
                     {
                         "name": tool.name,
                         "description": tool.description,
-                        "parameters": dict(tool.parameters),
+                        "parameters": to_gemini_schema(tool.parameters),
                     }
                     for tool in tools
                 ]

@@ -83,4 +83,9 @@ sequenceDiagram
     %% tool with something useful to say about a refusal returns its own
     %% {"error": ...} payload instead of raising (spec 0013 OD-3).
     %% The model picks a view; it never invents a shape or a number.
+    %% The "tool schemas" on the call to M are not the schemas the tools
+    %% publish: infra/model/tool_schema.py translates them into the subset
+    %% Gemini's `parameters` field parses (GGU-81) — $refs resolved, refused
+    %% keywords dropped. The tools' own declarations are untouched, so the
+    %% OpenAPI document and the argument-bounds gate still read the full ones.
 ```
