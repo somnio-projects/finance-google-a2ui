@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_card.dart';
+import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_model.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_core/finance_core.dart';
@@ -100,6 +101,7 @@ class OrderTicketComponent extends ViewComponent {
           value: input.text('value'),
           choices: input.strings('choices'),
           pattern: input.optionalText('pattern'),
+          hint: input.optionalText('hint'),
         ),
     ];
   }

@@ -1,3 +1,4 @@
+import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -21,6 +22,7 @@ void main() {
     value: 'buy',
     choices: <String>['buy', 'sell'],
     pattern: null,
+    hint: null,
   );
 
   group(OrderTicketFigure, () {
@@ -65,6 +67,7 @@ void main() {
             value: 'buy',
             choices: <String>['buy', 'sell'],
             pattern: null,
+            hint: null,
           ),
         ),
       );
@@ -82,6 +85,7 @@ void main() {
               value: 'sell',
               choices: <String>['buy', 'sell'],
               pattern: null,
+              hint: null,
             ),
           ),
         ),

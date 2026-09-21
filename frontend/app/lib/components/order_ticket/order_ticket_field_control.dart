@@ -124,10 +124,14 @@ class _TextControl extends StatelessWidget {
         enabled: enabled,
         decoration: InputDecoration(
           labelText: field.label,
-          // The declared shape, shown so the reader knows what is accepted.
-          // It is displayed, never compiled — N-5 bans interpreting a
-          // server-supplied string, and a pattern is exactly such a string.
-          helperText: field.pattern,
+          // `hint` is the server's sentence for the reader; `pattern` is the
+          // machine's copy of the same fact and is deliberately NOT drawn.
+          // This used to render `pattern`, which put
+          // `^[0-9]{1,9}(\.[0-9]{1,8})?$` under a form field — accurate, and
+          // not what a person reads. The client cannot translate the one into
+          // the other either: N-5 bans interpreting a server-supplied string,
+          // so the sentence is written where the bound is (spec 0026).
+          helperText: field.hint,
           helperMaxLines: 2,
           border: const OutlineInputBorder(),
           isDense: true,

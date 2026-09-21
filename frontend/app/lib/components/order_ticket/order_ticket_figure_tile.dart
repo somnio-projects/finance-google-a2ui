@@ -1,5 +1,5 @@
 import 'package:finance_app/charts/chart_palette.dart';
-import 'package:finance_app/components/order_ticket/order_ticket_model.dart';
+import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 import 'package:flutter/material.dart';
 
 /// One caption-and-figure pair; a changed figure takes the accent.

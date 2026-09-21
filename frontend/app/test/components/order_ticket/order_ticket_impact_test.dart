@@ -1,5 +1,6 @@
 import 'package:finance_app/components/order_ticket/order_ticket_changes.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_component.dart';
+import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_figure_tile.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_impact.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_model.dart';

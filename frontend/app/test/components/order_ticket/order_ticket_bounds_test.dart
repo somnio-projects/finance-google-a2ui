@@ -66,17 +66,27 @@ void main() {
       expect(sent, equals(<(String, String)>[(field.option, other)]));
     });
 
-    testWidgets('declares the server pattern and invents no bound', (
+    testWidgets('shows the server hint and never the raw pattern', (
       tester,
     ) async {
-      // AC-6 / N-8. The pattern is shown as the accepted shape; it is never
-      // compiled or used to block input, because the 422 is the authority.
+      // AC-6 / N-8. This used to assert the opposite — that `pattern` was on
+      // screen — and it passed while the app drew
+      // `^[0-9]{1,9}(\.[0-9]{1,8})?$` under a form field. Accurate, and not
+      // what a person reads.
+      //
+      // Both facts still travel: `hint` is the server's sentence for the
+      // reader and `pattern` is the machine's copy. The client renders the
+      // first and never the second, and it cannot derive one from the other
+      // — N-5 bans interpreting a server-supplied string, which is exactly
+      // why the sentence is written where the bound is (spec 0026).
       await pump(tester);
       final field = fields.firstWhere(
         (f) => f.control == OrderTicketControl.text,
       );
       expect(field.pattern, isNotNull);
-      expect(find.text(field.pattern!), findsOneWidget);
+      expect(field.hint, isNotNull);
+      expect(find.text(field.hint!), findsOneWidget);
+      expect(find.text(field.pattern!), findsNothing);
     });
 
     testWidgets('sends an out-of-bounds value rather than clamping it', (

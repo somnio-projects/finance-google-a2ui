@@ -27,7 +27,8 @@ from pydantic import Field
 from app.domain.payoff import Side
 from app.presentation.fragments import MoneyDisplay, ProjectionDto, Total
 from app.presentation.order_sizing import SIZE_PATTERN, SizeUnit
-from app.presentation.tickets import QuantityDisplay, TicketInput
+from app.presentation.ticket_displays import QuantityDisplay
+from app.presentation.tickets import TicketInput
 
 VIEW_ID: Final[str] = "order.ticket.v1"
 TITLE: Final[str] = "Proposed order"

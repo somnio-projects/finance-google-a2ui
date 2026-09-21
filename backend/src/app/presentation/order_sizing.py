@@ -61,6 +61,10 @@ class OrderTicketOptions(DisplayOptions):
         pattern=SIZE_PATTERN,
         description="How big the order is, as a decimal string (ADR-E D-5).",
         examples=["0.25"],
+        # The reader's half of `pattern`, carried in the same schema so the two
+        # cannot drift. `presentation.tickets` publishes it as `hint`; the
+        # regex stays for the machine and is never drawn (spec 0026).
+        json_schema_extra={"hint": "Up to 8 decimal places"},
     )
     size_in: SizeUnit = Field(
         default="units",
