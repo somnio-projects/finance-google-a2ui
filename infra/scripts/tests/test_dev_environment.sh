@@ -135,8 +135,16 @@ CI="${ROOT}/.github/workflows/backend-ci.yaml"
 assert "the ship gate is called as a job of the delivery run" \
   'uses: \./\.github/workflows/backend-ci\.yaml' "${CD}"
 assert "the ship gate accepts being called" '^  workflow_call:' "${CI}"
-assert "the image build waits for the gate" '^    needs: \[ci, settings\]$' "${CD}"
-assert "the deploy waits for the gate" '^    needs: \[ci, settings, publish\]$' "${CD}"
+# The repository-wide gate is called too. Secret scanning moved out of
+# backend-ci into repo-ci so that a client-only pull request is scanned; without
+# this edge that move would have taken gitleaks off the path to production,
+# which is the reverse of the finding it closed.
+assert "the repository-wide gate is called as a job of the delivery run" \
+  'uses: \./\.github/workflows/repo-ci\.yaml' "${CD}"
+assert "the repository-wide gate accepts being called" \
+  '^  workflow_call:' "${ROOT}/.github/workflows/repo-ci.yaml"
+assert "the image build waits for both gates" '^    needs: \[ci, repo, settings\]$' "${CD}"
+assert "the deploy waits for both gates" '^    needs: \[ci, repo, settings, publish\]$' "${CD}"
 assert "a non-main ref releases dev" '^            environment=dev$' "${CD}"
 refute "staging is no longer a deploy target" '^            environment=staging$' "${CD}"
 assert "main still releases production" '^            environment=production$' "${CD}"

@@ -130,21 +130,19 @@ jobs:
           path: backend/coverage.xml
           retention-days: 14
 
+  # Secret scanning used to be the first step of this job. It moved to
+  # `repo-ci.yaml`, which carries no `paths:` filter, because this workflow's
+  # filter is `backend/**` and the control the corpus documents is "every
+  # commit / PR" — a promise a scoped workflow cannot keep for a client-only
+  # pull request. `backend-cd` calls `repo-ci` as a job and `needs:` it, so the
+  # delivery path kept the gate it had. See ci-conventions §5.
   security:
-    name: "Security · secrets, SAST, dependency CVEs"
+    name: "Security · SAST and dependency CVEs"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Check out the full history (actions/checkout)
+      - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Scan every commit for secrets (gitleaks)
-        working-directory: .
-        run: |
-          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
-            git --config=/repo/.gitleaks.toml --redact --no-banner --exit-code 1
 
       - name: Scan the source for vulnerable patterns (semgrep)
         working-directory: .
@@ -218,7 +216,7 @@ jobs:
             echo "|---|---|---|"
             echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract and its JSON snapshot, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
             echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
-            echo "| Security | gitleaks (full history), Semgrep, pip-audit | ${{ needs.security.result }} |"
+            echo "| Security | Semgrep, pip-audit — secret scanning is repo-ci's, on every pull request | ${{ needs.security.result }} |"
             echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"
             echo ""
             echo "Local equivalent: \`cd backend && make gate\`; pre-commit runs the same checks before every commit."

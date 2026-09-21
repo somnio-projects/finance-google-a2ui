@@ -2434,3 +2434,78 @@ not reach a JSON consumer.
   pull requests, in a gate I had written and mutation-checked the same day —
   my mutation proved a typo in `specs/` was caught, and I generalised from one
   directory to "the repository" without testing the generalisation.
+
+---
+
+## 2026-09-21 — the gates cover the pull requests this repository actually opens
+
+Remediation of the 2026-09-20 Security Audit (87/100, down from 98). No spec:
+this is CI topology and documentation correction, not a feature. Branch
+`ci/security_gates_cover_every_pr`.
+
+**The finding, in one sentence.** Root `SECURITY.md` claimed "gitleaks,
+pip-audit, Trivy and Semgrep on every PR (`backend-ci.yaml`)" and
+`VULNERABILITY_MANAGEMENT.md` marked Secrets and SAST "Blocking: yes / every
+PR", while `backend-ci.yaml` is `paths:`-scoped to `backend/**`. A
+frontend-only or client-only pull request started none of it — which by
+2026-09-20 was most of them.
+
+**What moved, and the rule it produced.** `repo.secrets` (gitleaks) moved out
+of `backend-ci` and `repo.shell-lint` (shellcheck) out of `infra-ci`, both into
+`repo-ci.yaml`, which carries no `paths:` filter. `backend-cd` now calls
+`repo-ci` as a second gate job so the move did not quietly take secret scanning
+off the path to production — `test_dev_environment.sh` asserts that edge and
+was mutation-checked against its removal.
+
+The general rule is now in `ci-conventions.md` §4b/§5: **a check whose subject
+is "any file in this repository" cannot be correct in a `paths:`-scoped
+workflow.** The test is the check's subject, not where it currently lives: if
+you cannot name a directory it does *not* apply to, it belongs in `repo-ci`.
+
+**§5 has two questions, and only the first was ever asked.** `infra.shell-lint`
+and its workflow step matched byte for byte — §5 satisfied — and the check was
+still wrong, because its *subject* was two globs under `infra/scripts/`. Both
+container entry points were outside it, and pointing shellcheck at them for the
+first time found a finding in each (SC2086 in `backend/docker/entrypoint.sh`,
+SC2016 in `client_flutter/docker/entrypoint.sh` — both deliberate constructs
+that now carry justified `disable` directives rather than a lowered severity).
+So: (1) do both halves run the same command — now machine-checked; (2) does
+that command cover what its name claims — still human, and the expensive one.
+
+**The first question is no longer a human's job.** `repo.gate-pairs`
+(`scripts/check_gate_pairs.sh`) parses `ship-gate.json` and greps each `cmd` as
+a fixed string against every workflow file. Every one of the 23 entries already
+satisfied it, so it shipped green and would have caught all three historical
+drifts. It is deliberately one-directional and cannot check the "Also in"
+column — `gitleaks` and `codespell` are upstream pre-commit hooks with no
+command string to compare.
+
+**A rule may not describe a workflow nobody wrote.** §4b's table listed
+`client-ci` among the scoped workflows with no marker, and it has never
+existed. The table now carries an `exists?` column and says so. It was **not**
+written here: `client_flutter/CLAUDE.md` lists
+`.github/workflows/client-ci.yaml` under "do not touch" and assigns it to
+GGU-1 (PR #30). The security half of that gap is now covered by `repo-ci`
+anyway; the image build and its CVE scan are genuinely uncovered and are
+recorded as gaps with that owner.
+
+**What the next person should know.**
+
+- Two new repository-wide scripts, `scripts/check_shell.sh` and
+  `scripts/check_gate_pairs.sh`. Both discover their subject rather than
+  enumerating it, and both refuse to report success on an implausible file
+  list — the anti-vacuity idiom `check_spelling.sh` established.
+- `check_shell.sh` avoids `case` inside command substitution because **bash
+  3.2, which macOS still ships as `/bin/bash`, cannot parse one there** while
+  the ubuntu-latest bash 5 in CI parses it happily. The first draft ran green
+  on a runner and died on a laptop. Worth remembering for any new script here.
+- Do not "fix" the two `shellcheck disable` directives in the entry points.
+  `SC2016` is required because `envsubst` takes its variable list as a literal
+  `${NAME}` string; `SC2086` is required because `UVICORN_EXTRA_ARGS` must word
+  split. Both carry the reason at their own line.
+- Dependabot now watches both pub workspaces. That is **update** telemetry, not
+  a CVE gate; `osv-scanner` is still a declared gap because its only
+  distribution channel is `ghcr.io`, which this project's registry policy
+  refuses, so it could not be run even once before shipping. A gate nobody has
+  seen go red is not a gate — that is the whole lesson of 2026-09-20, applied
+  to the thing it was tempting to skip.

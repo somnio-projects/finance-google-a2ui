@@ -45,7 +45,7 @@ class FinanceApiClient {
     final headers = await _headers(ifNoneMatch);
     try {
       final response = await _httpClient.get(uri, headers: headers);
-      return _decode(response, path);
+      return _decode(response);
     } on http.ClientException {
       // Deliberately NOT `error.message`. That string is package:http's
       // own, and on BrowserClient it carries the target URL — neither is
@@ -78,7 +78,7 @@ class FinanceApiClient {
     return headers;
   }
 
-  Result<JsonResponse> _decode(http.Response response, String path) {
+  Result<JsonResponse> _decode(http.Response response) {
     final etag = response.headers['etag'];
     if (response.statusCode == 304) {
       return Ok<JsonResponse>(
@@ -88,8 +88,17 @@ class FinanceApiClient {
     final body = _parseBody(response);
     if (response.statusCode >= 400) return _failure(response, body);
     if (body == null) {
-      return Err<JsonResponse>(
-        ContractFailure(path, 'a JSON body on a ${response.statusCode}'),
+      // `<response>` and NOT the request path. `ContractFailure.path` is a
+      // dotted path into the payload and its `message` is interpolated and
+      // rendered to the user, so an HTTP path put here is shown verbatim on
+      // screen. It is the same defect class as the `http.ClientException`
+      // leak: a value that belongs to the transport escaping into user-facing
+      // text. Inert while the only id is the constant `current`, and no longer
+      // reachable at all once routing grows an account or portfolio id.
+      // Nothing is lost — this client logs nothing anywhere (SECURITY.md G-7),
+      // so the path had no second reader to keep it for.
+      return const Err<JsonResponse>(
+        ContractFailure('<response>', 'a JSON body'),
       );
     }
     return Ok<JsonResponse>(

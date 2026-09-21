@@ -26,4 +26,11 @@ Only `main` and the latest tagged release receive security fixes. The project is
 - Control matrix (SOC 2 TSC ↔ ISO/IEC 27001 Annex A): [`backend/docs/SECURITY.md`](backend/docs/SECURITY.md)
 - Compliance corpus (policies, ISMS artifacts, runbooks): [`docs/compliance/README.md`](docs/compliance/README.md)
 - Incident response and breach notification: [`docs/compliance/INCIDENT_RESPONSE_PLAN.md`](docs/compliance/INCIDENT_RESPONSE_PLAN.md), [`docs/compliance/BREACH_NOTIFICATION_SLA.md`](docs/compliance/BREACH_NOTIFICATION_SLA.md)
-- Automated scanning: gitleaks, pip-audit, Trivy and Semgrep on every PR (`.github/workflows/backend-ci.yaml`) and weekly on `main` (`.github/workflows/scheduled-scan.yaml`); Dependabot weekly.
+- Automated scanning, by what each one actually covers:
+  - **Every pull request, whatever it touches** — gitleaks over the full history, shellcheck over every tracked script (`.github/workflows/repo-ci.yaml`, no `paths:` filter).
+  - **Pull requests touching `backend/**`** — Semgrep, pip-audit and a Trivy image scan (`.github/workflows/backend-ci.yaml`).
+  - **Pull requests touching `infra/**`** — `trivy config` over the Terraform (`.github/workflows/infra-ci.yaml`).
+  - **Weekly on `main`** — pip-audit, SBOM, Trivy, gitleaks (`.github/workflows/scheduled-scan.yaml`); Dependabot weekly for uv, GitHub Actions, Docker and both pub workspaces.
+  - **Not covered today:** no SAST over Dart, no CVE scan of either Flutter dependency graph beyond Dependabot's updates, and no image build or CVE scan for `client_flutter/` — that gate is GGU-1's (`docs/compliance/VULNERABILITY_MANAGEMENT.md` §1 carries the rows and their owners).
+
+  This list replaces a single line that read "gitleaks, pip-audit, Trivy and Semgrep on every PR (`backend-ci.yaml`)". That workflow is `paths:`-scoped to `backend/**`, so the claim was false for every frontend-only or client-only pull request — which by 2026-09-20 was most of them. Secret scanning now genuinely does run on every pull request; the rest is listed by its real scope rather than rounded up.
