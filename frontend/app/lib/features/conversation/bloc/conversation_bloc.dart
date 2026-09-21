@@ -71,7 +71,9 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
         // The running status is already set; nothing is shown for the open.
         emit(state.copyWith(status: () => ConversationStatus.running));
       case AgentSurfaceReady():
-        await _fetchSurface(event, emit);
+        // MUTATION B: drop the render intent instead of resolving it. The
+        // agent path's own tests must go red.
+        break;
       case AgentAnswered():
         _append(emit, AgentSaid(event.text));
       case AgentTurnEnded():

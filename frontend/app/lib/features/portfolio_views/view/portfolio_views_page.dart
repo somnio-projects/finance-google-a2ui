@@ -25,7 +25,10 @@ class PortfolioViewsPage extends StatelessWidget {
     // they are still catalog ids the client never invents (N-6) — and a
     // component that registers is now reachable by construction instead of
     // after somebody remembers to edit a second list.
-    final views = context.read<ComponentRegistry>().viewIds.toList();
+    // MUTATION A: the defect this PR fixed — a hardcoded list that does not
+    // agree with the registry. `app_router_test.dart::every registered
+    // component is reachable from the route` must go red.
+    final views = <String>['not.registered.v1'];
     return BlocProvider<PortfolioViewsBloc>(
       create: (context) =>
           PortfolioViewsBloc(viewsRepository: context.read<ViewsRepository>())
