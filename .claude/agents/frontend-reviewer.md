@@ -69,8 +69,10 @@ either.
     `.claude/ship-gate.json`, the steps in `frontend-ci.yaml` and
     `frontend/Makefile` must carry the **same command strings**, copied not
     paraphrased. A change to one without the others is incomplete. The SDK
-    version is part of this pair: it lives only in `frontend/.flutter-version`,
-    and a `FLUTTER_VERSION` reappearing in a workflow is a blocker.
+    version is part of this pair: it lives only in `frontend/.fvmrc`. You do
+    not have to check that by eye — `scripts/check_gate_pairs.sh` fails on a
+    `FLUTTER_VERSION` in any workflow and on a second tracked pin file. Run it
+    and quote it.
 11. **Delivery pass**: branch `type/GGU-n_short_description` cut from
     `develop`, PR into `develop`, Conventional Commit title, English, no AI
     attribution in commits or the PR body.

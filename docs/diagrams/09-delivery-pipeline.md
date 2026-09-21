@@ -71,7 +71,7 @@ reader should not take this as the whole set of pipelines.
 because every check after it is read through `dart` and `flutter`. A Dart below
 the SDK floor declared in `frontend/pubspec.yaml` used to announce itself as a
 formatting diff, which reads as a red branch and is a red toolchain (GGU-94).
-The version it enforces lives only in `frontend/.flutter-version`.
+The version it enforces lives only in `frontend/.fvmrc`.
 
 **Why the deploy is a script, not inline YAML.** `infra/scripts/deploy_cloud_run.sh`
 holds the deploy-verify-rollback sequence so it can be run against a stub

@@ -139,10 +139,63 @@ jobs:
       - name: "Prove the manual-run check rejects a stale or foreign build (test_check_manual_run.sh)"
         run: bash scripts/tests/test_check_manual_run.sh
 
+  # The job above proves the check works. THIS one points it at the real thing.
+  # Without it, enforcement on an actual pull request would rest entirely on a
+  # reviewer agent remembering to run a command — which is the defect GGU-93
+  # describes, reproduced one level up (ci-conventions §5).
+  #
+  # Not in `ship-gate.json`, deliberately: a laptop has no PR body, so there is
+  # no local command for `repo.gate-pairs` to pair this with. It is a
+  # workflow-only job, like backend-ci's `image` and frontend-ci's `build`.
+  manual-run-body:
+    name: "Repository · this pull request's manual run names this branch's head"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      # Full history, and the check is pointed at `head.sha` rather than HEAD:
+      # a pull-request checkout's HEAD is the ephemeral merge commit, which is
+      # not what the manual run was served by.
+      - name: "Check out the full history (actions/checkout)"
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: "Check the manual run against the branch head (check_manual_run.sh)"
+        env:
+          # Through the environment, never interpolated into the script: a PR
+          # body is untrusted text and `${{ }}` would paste it into the shell.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          set +e
+          out=$(bash scripts/check_manual_run.sh "$RUNNER_TEMP/pr-body.md" "$HEAD_SHA" 2>&1)
+          status=$?
+          set -e
+          printf '%s\n' "$out"
+          {
+            echo "### Manual run"
+            echo ""
+            echo '```'
+            printf '%s\n' "$out"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -eq 3 ]; then
+            # No build identity at all. `.claude/rules/backend/sdd.md` lets a PR
+            # declare that a manual run was not possible, with the reason and
+            # the consequence — a judgement for a reviewer, not for a grep. So
+            # this is reported and not failed, and the reviewer agents still
+            # check the `Verification` block.
+            echo "::warning::This pull request's body names no build identity. If a manual run was not possible, the Verification block must say so, with the reason and the consequence."
+            exit 0
+          fi
+          exit "$status"
+
   report:
     name: "Report · repository gate summary"
     runs-on: ubuntu-latest
-    needs: [spelling, secrets, shell, gate-pairs, manual-run]
+    needs: [spelling, secrets, shell, gate-pairs, manual-run, manual-run-body]
     if: always()
     timeout-minutes: 5
     steps:
@@ -158,6 +211,7 @@ jobs:
             echo "| Shell | every tracked shell script passes shellcheck, entry points included | ${{ needs.shell.result }} |"
             echo "| Gate pairs | every ship-gate command appears verbatim in the workflow that runs it | ${{ needs.gate-pairs.result }} |"
             echo "| Manual run | the manual-run check rejects a build that is stale, foreign, unknown or unnamed | ${{ needs.manual-run.result }} |"
+            echo "| Manual run · this PR | the pasted manual run names this branch's head | ${{ needs.manual-run-body.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Fail the run when any gate failed (bash)"

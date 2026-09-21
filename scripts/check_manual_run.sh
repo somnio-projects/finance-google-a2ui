@@ -41,19 +41,24 @@
 # it does not prove the build contains the change under review, which is the
 # property the evidence is claiming.
 #
-# So the verdicts are three, not two:
+# So the question is not "is every identity in this body the head" but "is ANY
+# of them":
 #
-#   sha == head        PASS   — the build that answered is the code being reviewed
-#   sha is an ancestor FAIL   — it ran, and it did not exercise this branch
-#   anything else      FAIL   — the build is not in this branch at all
+#   some identity == head   PASS   — the build that answered is the code under
+#                                    review. Every other identity is printed as
+#                                    context and none of them can fail the run.
+#   none == head            FAIL   — each one diagnosed: an ancestor (it ran,
+#                                    and it did not exercise this branch), a
+#                                    commit from elsewhere, or one nobody has.
+#   no identity at all      EXIT 3 — a different finding; see below.
 #
-# A run against a long-lived deployed environment is legitimately behind. That
-# is not an exception to this check: paste it as context AND paste a run
-# against the branch, because only the second is evidence about the diff.
+# A run against a long-lived deployed environment is legitimately behind, and
+# `sdd.md` says to paste it "as well, never instead". The first version of this
+# script looped over every identity and failed the body for the context one, so
+# it punished exactly what the rule requires. Caught in review; the suite now
+# has a case for it.
 
 set -Eeuo pipefail
-
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 FIX="bash scripts/check_manual_run.sh <pr-body-file>"
 
@@ -62,8 +67,17 @@ if [ "$#" -lt 1 ]; then
   exit 2
 fi
 
+# Resolve the body BEFORE the cd, or a relative path given from the repository
+# root — the obvious way to call this — resolves against scripts/ and fails
+# with a confusing "not a readable file".
 body="$1"
+case "$body" in
+  /*) ;;
+  *) body="${PWD}/${body}" ;;
+esac
 head_ref="${2:-HEAD}"
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 if [ ! -f "$body" ]; then
   echo "repo.manual-run: ${body} is not a readable file" >&2
@@ -82,9 +96,15 @@ template() {
 
       $ git rev-parse --short HEAD
       c6dd5b2
-      $ APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build -d
+      $ APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build -d
       $ curl -s localhost:8000/health
-      {"status":"ok","version":"0.1.0+c6dd5b2"}
+      {"status":"ok","version":"local+c6dd5b2"}
+
+  The `local+` prefix is not decoration: `core/release.py` reports APP_RELEASE
+  VERBATIM, so a bare sha produces `"version":"c6dd5b2"` with no `+` and this
+  check reads no identity at all. Deployed revisions carry `<version>+<sha>`,
+  composed by infra/scripts/deploy_cloud_run.sh; only the part after the `+`
+  is read here.
 
   Then the commands the change is actually about. The identity is not decoration:
   it is the only thing in the transcript that says which build answered.
@@ -92,22 +112,41 @@ template() {
 EOF
 }
 
-# The identity is `<version>+<short sha>`, so the sha is what follows a `+`.
-# Anchored on the `+` rather than on bare hex, because a PR body is full of
-# hex-shaped things — ETags, digests, tokens — and a check that matches the
+# Scoped to the `"version"` field of a /health payload, NOT to any `+<hex>` in
+# the body. A PR body is full of hex-shaped things — ETags, image digests,
+# semver build metadata like `v1.2.3+abc1234` — and the first form of this check
+# rejected a perfectly good body because it found one. A check that matches the
 # wrong token is worse than one that matches nothing (the lesson `repo.spelling`
 # left in .claude/rules/ci-conventions.md §5).
-shas=$(grep -oE '\+[0-9a-f]{7,40}' "$body" | cut -c2- | sort -u || true)
+shas=$(
+  grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]*\+[0-9a-f]{7,40}"' "$body" \
+    | grep -oE '\+[0-9a-f]{7,40}"$' \
+    | tr -d '+"' \
+    | sort -u || true
+)
 
+# Exit 3, distinct from 1: "this body names no build" is a different finding
+# from "this body names the wrong build", and a caller needs to tell them apart.
+# `sdd.md` allows a PR to declare a manual run was NOT possible, with the reason
+# and the consequence — that is a judgement for a reviewer, not for a grep — so
+# repo-ci treats 3 as a note and 1 as a failure.
 if [ -z "$shas" ]; then
   echo "repo.manual-run: the manual run names no build identity" >&2
   echo "  searched: ${body}" >&2
-  echo "  expected: a <version>+<short sha> from GET /health, e.g. 0.1.0+c6dd5b2" >&2
+  echo "  expected: \"version\":\"<version>+<short sha>\" from GET /health," >&2
+  echo "            e.g. {\"status\":\"ok\",\"version\":\"local+c6dd5b2\"}" >&2
   template
-  exit 1
+  exit 3
 fi
 
-failed=0
+# One identity must BE the head. The others are context, which is what the rule
+# asks for in so many words: a run against a long-lived deployed environment is
+# legitimately behind, and `sdd.md` says to paste it "as well, never instead".
+# The first version of this loop failed such a body, so the check contradicted
+# the rule it enforces — it insisted on exactly what the rule forbids omitting
+# and then punished including it.
+context=()
+head_found=0
 checked=0
 
 while IFS= read -r sha; do
@@ -115,35 +154,22 @@ while IFS= read -r sha; do
   checked=$(( checked + 1 ))
 
   if ! full=$(git rev-parse --verify --quiet "${sha}^{commit}"); then
-    echo "repo.manual-run: the manual run names ${sha}, which is not a commit in this repository" >&2
-    echo "  head: ${head_sha}" >&2
-    failed=$(( failed + 1 ))
+    context+=("${sha} — not a commit in this repository")
     continue
   fi
 
   if [ "$full" = "$head_sha" ]; then
-    echo "repo.manual-run: ${sha} is the head of ${head_ref} — the run exercised this branch"
+    head_found=1
     continue
   fi
 
   if ! git merge-base --is-ancestor "$full" "$head_sha"; then
-    echo "repo.manual-run: the manual run was served by ${sha}, which is NOT in this branch" >&2
-    echo "  build: ${full}" >&2
-    echo "  head:  ${head_sha} (${head_ref})" >&2
-    echo "  A transcript from another branch is not evidence about this one." >&2
-    failed=$(( failed + 1 ))
+    context+=("${sha} — not in this branch at all (${full})")
     continue
   fi
 
   behind=$(git rev-list --count "${full}..${head_sha}")
-  echo "repo.manual-run: the manual run was served by ${sha}, ${behind} commit(s) behind the head" >&2
-  echo "  build: ${full}" >&2
-  echo "  head:  ${head_sha} (${head_ref})" >&2
-  echo "  It is an ancestor, so it is this line of history — but it does not" >&2
-  echo "  contain the change under review, so it says nothing about the diff." >&2
-  echo "  Rebuild at the head and re-run. A deployed environment that is behind" >&2
-  echo "  is context, not evidence: paste it as well, never instead." >&2
-  failed=$(( failed + 1 ))
+  context+=("${sha} — an ancestor, ${behind} commit(s) behind the head")
 done <<<"$shas"
 
 # A check that silently examines nothing is the failure mode this repository
@@ -155,9 +181,23 @@ if [ "$checked" -eq 0 ]; then
   exit 1
 fi
 
-if [ "$failed" -gt 0 ]; then
-  echo "repo.manual-run: ${failed} of ${checked} build identit(ies) do not name this branch's head" >&2
-  exit 1
+if [ "$head_found" -eq 1 ]; then
+  echo "repo.manual-run: a manual run names ${head_sha}, the head of ${head_ref} — it exercised this branch"
+  for line in ${context[@]+"${context[@]}"}; do
+    echo "  also mentioned (context, not evidence): ${line}"
+  done
+  echo "repo.manual-run: ${checked} build identit(ies) checked against ${head_ref}"
+  exit 0
 fi
 
-echo "repo.manual-run: ${checked} build identit(ies) checked against ${head_ref}"
+echo "repo.manual-run: no manual run in this body was served by the head of ${head_ref}" >&2
+echo "  head: ${head_sha} (${head_ref})" >&2
+for line in ${context[@]+"${context[@]}"}; do
+  echo "  found: ${line}" >&2
+done
+echo "  An ancestor is this line of history but does not contain the change" >&2
+echo "  under review, so it says nothing about the diff. A commit from another" >&2
+echo "  branch says nothing about this one. Rebuild at the head and re-run." >&2
+echo "  A deployed environment that is behind is context, not evidence: paste" >&2
+echo "  it as well, never instead." >&2
+exit 1

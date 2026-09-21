@@ -16,19 +16,27 @@ layout are [ADR-L](../docs/adr/ADR-L-client-architecture.md) and the spec is
 ### The SDK is pinned, and the pin is a file
 
 Flutter **3.47.5**, which vendors Dart **3.13.4**. The version lives in
-[`.flutter-version`](.flutter-version) and **nowhere else** — `tool/check_toolchain.sh`
-reads it on a laptop and every `Set up the pinned Flutter SDK` step in
-`.github/workflows/frontend-ci.yaml` reads it on a runner. It used to be a
-`FLUTTER_VERSION` env var in that workflow, where no local command could reach
-it, so the pin existed and the gate a developer actually ran was free to
-disagree with it (GGU-94).
+[`.fvmrc`](.fvmrc) and **nowhere else** — `tool/check_toolchain.sh` reads it on
+a laptop and every `Set up the pinned Flutter SDK` step in
+`.github/workflows/frontend-ci.yaml` reads it on a runner. It used to *also* be
+a `FLUTTER_VERSION` env var in that workflow, where no local command could
+reach it, so the pin existed and the gate a developer actually ran was free to
+disagree with it (GGU-94). `scripts/check_gate_pairs.sh` now fails if
+`FLUTTER_VERSION` reappears in a workflow, or if a second tracked file starts
+naming a Flutter version.
 
-Installing it, from a clone with no Flutter:
+Installing it, from a clone with no Flutter. With fvm, if you already use it:
 
 ```bash
-git clone --depth 1 --branch "$(cat frontend/.flutter-version)" \
-  https://github.com/flutter/flutter.git "$HOME/flutter-$(cat frontend/.flutter-version)"
-export PATH="$HOME/flutter-$(cat frontend/.flutter-version)/bin:$PATH"   # put this in your shell profile
+cd frontend && fvm install && fvm use "$(jq -r .flutter .fvmrc)"
+```
+
+Without it — nothing in this gate shells out to fvm:
+
+```bash
+v="$(jq -r .flutter frontend/.fvmrc)"
+git clone --depth 1 --branch "$v" https://github.com/flutter/flutter.git "$HOME/flutter-$v"
+export PATH="$HOME/flutter-$v/bin:$PATH"   # put this in your shell profile
 cd frontend && bash tool/check_toolchain.sh
 ```
 
@@ -40,9 +48,13 @@ exits 65, which reads as a red branch and is a red toolchain. Measured on
 `develop` at `c6dd5b2`: 3 files changed / exit 65 under 3.12.1, 0 changed /
 exit 0 under the pin.
 
-No fvm. A `.flutter-version` file is plain text that `cat` and the CI action
-both read; an `.fvmrc` would make fvm the supported install path, and this
-project does not use it.
+**`.fvmrc` and not a new `.flutter-version`**, because `.fvmrc` was already
+tracked and already cited as the pin by `README.md` and `docs/DEV_HARNESS.md`.
+The first attempt at this fix added a second pin file beside it — two
+machine-readable pins free to drift, which is the defect GGU-94 exists to
+remove, recreated one file over. It took two reviewers to see it, which is why
+`check_gate_pairs.sh` now asserts the single home rather than a sentence here
+doing so. Nothing requires fvm; the file is read as plain JSON.
 
 ```bash
 cd frontend && flutter pub get --enforce-lockfile      # once per clone
@@ -59,7 +71,7 @@ carries a credential for a deployed environment.
 ## Verify — a change is not done without this
 
 ```bash
-cd frontend && make gate    # toolchain · format · analyze · budget · manifest · tests · coverage
+cd frontend && make gate    # toolchain · toolchain-test · format · analyze · budget · manifest · tests · coverage
 cd frontend && make format  # apply formatting
 cd frontend && make manifest # regenerate the component manifest after adding one
 cd frontend/app && flutter test --update-goldens   # after an intended visual change

@@ -16,11 +16,17 @@
 # 0 changed / exit 0 under the pinned 3.47.5. `develop` was fine; the toolchain
 # was not, and the gate had no way to say so.
 #
-# The required version has ONE home, `frontend/.flutter-version`, read here and
-# by every `Set up the pinned Flutter SDK` step in
-# .github/workflows/frontend-ci.yaml. It used to live only in that workflow, as
-# `FLUTTER_VERSION`, where no local command could reach it — the SDK half of
-# "change one, change its pair" (.claude/rules/ci-conventions.md §5).
+# The required version has ONE home, `frontend/.fvmrc`, read here and by every
+# `Set up the pinned Flutter SDK` step in .github/workflows/frontend-ci.yaml.
+# It used to ALSO live in that workflow, as `FLUTTER_VERSION`, where no local
+# command could reach it — the SDK half of "change one, change its pair"
+# (.claude/rules/ci-conventions.md §5).
+#
+# `.fvmrc` rather than a new `.flutter-version`, because `.fvmrc` was already
+# tracked and already cited as THE pin by frontend/README.md and
+# docs/DEV_HARNESS.md. A second machine-readable pin file would have recreated
+# the exact defect this check exists to remove, one file over. Using fvm is
+# optional — nothing here shells out to it; the file is read as plain JSON.
 #
 # Why bash and not Dart: this check's whole job is to run BEFORE any conclusion
 # drawn from `dart` or `flutter` can be trusted, and a Dart script would have to
@@ -37,7 +43,7 @@ set -Eeuo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-PIN_FILE=".flutter-version"
+PIN_FILE=".fvmrc"
 # The command that fixes a red run, copied verbatim into .claude/ship-gate.json
 # (`frontend.toolchain`), frontend/Makefile and frontend-ci.yaml — never
 # paraphrased (.claude/rules/ci-conventions.md §5).
@@ -48,19 +54,28 @@ if [ ! -f "$PIN_FILE" ]; then
   exit 1
 fi
 
-# First non-blank, non-comment line, trimmed. A pin file is one token; anything
-# else is a mistake worth failing on rather than silently taking the first word.
-required=$(grep -v '^[[:space:]]*#' "$PIN_FILE" | tr -d '[:space:]' | head -n 1)
+# `{"flutter": "3.47.5"}` — the one key fvm defines. Read with sed, not jq:
+# this check runs before anything in the workspace is trusted, and it must work
+# on a laptop that has installed nothing yet.
+required=$(
+  sed -n 's/.*"flutter"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$PIN_FILE" \
+    | head -n 1
+)
 
 if [ -z "$required" ]; then
-  echo "frontend.toolchain: ${PIN_FILE} is empty — it must name one Flutter version" >&2
+  echo "frontend.toolchain: ${PIN_FILE} names no Flutter version" >&2
+  echo "  expected a \"flutter\": \"<version>\" key, e.g. {\"flutter\": \"3.47.5\"}" >&2
   exit 1
 fi
 
 install_hint() {
   cat >&2 <<EOF
 
-  Install the pinned SDK (no fvm required):
+  Install the pinned SDK. With fvm, if you already use it:
+
+      fvm install ${required} && fvm use ${required}
+
+  Without it — nothing in this gate requires fvm:
 
       git clone --depth 1 --branch ${required} https://github.com/flutter/flutter.git "\$HOME/flutter-${required}"
       export PATH="\$HOME/flutter-${required}/bin:\$PATH"

@@ -2840,11 +2840,11 @@ instance already cost a retracted bug report and a closed PR.
 Homebrew's `dart-sdk 3.12.1` ran the gate happily and reported three tracked
 files as unformatted — 3 changed / exit 65 under 3.12.1, 0 changed / exit 0
 under the pin, on the same commit. The version now lives in
-`frontend/.flutter-version`, read by `frontend/tool/check_toolchain.sh` and by
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
 every SDK-setup step in the workflow, and `frontend.toolchain` is the **first**
 entry of the frontend gate.
 
-`.flutter-version` over `.fvmrc`: plain text that `cat` and the CI action both
+`.fvmrc` over `.fvmrc`: plain text that `cat` and the CI action both
 read, with no implied claim that fvm is the supported install path.
 
 ### What the next person should know
@@ -2871,3 +2871,53 @@ read, with no implied claim that fvm is the supported install path.
   fix and it is a different ticket: this one is about evidence being
   **checkable**, not about the mistake being impossible. A process that only
   works when nobody is behind is the thing being replaced.
+
+### The review round, which found the same defect inside the fix
+
+Both reviewer agents flagged the same blocker, and they were right: **the first
+version of this change added a second pin file.** `frontend/.fvmrc` was already
+tracked, already contained `{"flutter": "3.47.5"}`, and was already cited as the
+pin by `frontend/README.md` and `docs/DEV_HARNESS.md`. The branch added
+`frontend/.flutter-version` beside it and then asserted, in nine places, that
+the version lived in one home and nowhere else. Two machine-readable pins free
+to drift is precisely the defect GGU-94 exists to remove, recreated one file
+over, by the change that removes it.
+
+`.fvmrc` is now the single home and `.flutter-version` is gone. The lesson is
+not "look harder": it is that the claim was **prose**, so nothing could check
+it. `scripts/check_gate_pairs.sh` now also asserts that no workflow sets
+`FLUTTER_VERSION` and that no second tracked pin file exists — §5's third
+question, machine-checked like the first.
+
+Four more findings worth recording, because each was a case of the new
+mechanism failing its own standard:
+
+- **The documented bring-up produced a value the checker rejected.**
+  `core/release.py::resolve_release` returns `APP_RELEASE` **verbatim** — the
+  `<version>+<sha>` shape is composed by `infra/scripts/deploy_cloud_run.sh`,
+  not by the app. So `APP_RELEASE="$(git rev-parse --short HEAD)"` gave
+  `"version":"5b942f1"`, with no `+`, and the check read no identity at all. A
+  developer following `CLAUDE.md` verbatim would have failed the check they
+  were told to pass. The documented command is now `local+$(…)`, and the suite
+  has a case pinning the bare-sha failure so the docs cannot drift back.
+- **The check contradicted the rule it enforces.** `sdd.md` says a deployed run
+  that is behind is pasted "as well, never instead"; the script looped over
+  every identity and failed the body for the context one. It now asks whether
+  **any** identity is the head, and prints the rest as context.
+- **The identity parse matched any `+<hex>` in the body**, so a line like
+  `v1.2.3+abc1234` sank a good pull request. It is scoped to the `"version"`
+  field of a `/health` payload.
+- **Nothing ran the check against a real PR body.** `repo-ci` now does, on
+  every pull request, pointed at `github.event.pull_request.head.sha` — a PR
+  checkout's `HEAD` is the ephemeral merge commit, which is not what the manual
+  run was served by. A body with **no** identity exits 3 and is reported rather
+  than failed: `sdd.md` explicitly allows a declared, reasoned "not run", and
+  no grep can tell that from an omission. That one judgement stays with the
+  reviewer; everything a machine can decide is decided by one.
+
+And the preflight got the suite it should have shipped with
+(`frontend/tool/tests/test_check_toolchain.sh`, `frontend.toolchain-test`). It
+stubs `flutter` and `dart` on `PATH`, so it runs in a second on a machine with
+no Flutter at all — which matters because it is the **first** step of the
+frontend gate, so a false failure blocks everything behind it, and because on a
+runner it can never be seen rejecting: CI always installs the pin.

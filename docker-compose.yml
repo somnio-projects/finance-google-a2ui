@@ -45,18 +45,22 @@ services:
     environment:                      # topology only — overrides the same keys in .env
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/finance
       PUBLIC_BASE_URL: http://localhost:8000
-      # `/health` reports this verbatim, and it is the ONLY thing that says
-      # which build answered a manual run (GGU-93). It used to be the literal
-      # `local`, so the local stack could not name its own commit — and a
-      # manual run from a tree six commits behind `develop` was pasted into a
-      # pull request and read exactly like a correct one. Bring the stack up as
+      # `/health` reports this VERBATIM — `core/release.py` composes nothing —
+      # and it is the only thing that says which build answered a manual run
+      # (GGU-93). It used to be the literal `local`, so the local stack could
+      # not name its own commit, and a manual run from a tree six commits
+      # behind `develop` was pasted into a pull request and read exactly like a
+      # correct one. Bring the stack up as
       #
-      #     APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build
+      #     APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build
       #
-      # and `/health` answers `0.1.0+<sha>`. Forgetting leaves `local`, which
-      # `scripts/check_manual_run.sh` rejects for naming no build — a visible
-      # failure rather than a plausible one. Deployed environments get
-      # `<version>+<short sha>` from backend-cd (spec backend/0007 AC-5).
+      # and `/health` answers `local+<sha>`. The `local+` prefix is required:
+      # a bare sha has no `+`, and `scripts/check_manual_run.sh` reads the part
+      # after the `+`, so it would see no identity at all. Forgetting the
+      # variable leaves `local`, which that check also rejects — a visible
+      # failure rather than a plausible one. Deployed revisions get
+      # `<version>+<short sha>`, composed by infra/scripts/deploy_cloud_run.sh
+      # (spec backend/0007 AC-5).
       APP_RELEASE: ${APP_RELEASE:-local}
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
       UVICORN_EXTRA_ARGS: --reload --reload-dir /app/src

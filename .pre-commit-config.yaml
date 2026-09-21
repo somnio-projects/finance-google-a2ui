@@ -239,6 +239,15 @@ repos:
         files: ^frontend/
         pass_filenames: false
 
+      # Needs no SDK at all — it stubs one — so it runs when the preflight, its
+      # suite or the pin moves, on any machine.
+      - id: frontend-toolchain-test
+        name: Prove the preflight rejects a wrong or missing SDK (test_check_toolchain.sh)
+        entry: bash -c 'cd frontend && bash tool/tests/test_check_toolchain.sh'
+        language: system
+        files: ^frontend/(tool/check_toolchain\.sh|tool/tests/test_check_toolchain\.sh|\.fvmrc)$
+        pass_filenames: false
+
       - id: frontend-format
         name: Verify Dart formatting is canonical (dart format)
         entry: bash -c 'cd frontend && dart format --output=none --set-exit-if-changed .'

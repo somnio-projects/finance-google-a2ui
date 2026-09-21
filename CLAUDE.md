@@ -19,20 +19,23 @@ GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 
 ```bash
 cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
-APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build   # Postgres + backend on http://localhost:8000 (docs at /docs)
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build   # Postgres + backend on http://localhost:8000 (docs at /docs)
 docker compose --profile client up --build   # …plus the web client on http://localhost:3000
 cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
 
 **Always bring the stack up with `APP_RELEASE`.** `GET /health` reports it
-verbatim, and it is the only thing that says *which build answered* — the field
-a manual run needs and did not have when a transcript from a tree six commits
-behind `develop` was pasted into a pull request and read exactly like a correct
-one (GGU-93). Without it `/health` says `local`, and
-`scripts/check_manual_run.sh` rejects the PR for naming no build.
+**verbatim** — `core/release.py` composes nothing — and it is the only thing
+that says *which build answered*: the field a manual run needs and did not have
+when a transcript from a tree six commits behind `develop` was pasted into a
+pull request and read exactly like a correct one (GGU-93). The `local+` prefix
+is required, not decoration: a bare sha gives `"version":"a1b2c3d"` with no `+`,
+which `scripts/check_manual_run.sh` reads as no identity at all. Omit
+`APP_RELEASE` entirely and `/health` says `local`, and the check rejects the PR
+for naming no build. `repo-ci` runs that check on every pull request.
 
 Working on `frontend/` needs the pinned SDK on `PATH` — Flutter **3.47.5**,
-which vendors Dart **3.13.4**. The version lives in `frontend/.flutter-version`
+which vendors Dart **3.13.4**. The version lives in `frontend/.fvmrc`
 and nowhere else; `cd frontend && make gate` proves it before doing anything
 else. Installing it: `frontend/CLAUDE.md` § *Run*.
 

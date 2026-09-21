@@ -74,9 +74,10 @@ infra/.terraform.tfstate.lock.info
 # Machine state that keeps arriving inside the repository, in a PUBLIC repo.
 #
 # `.claude/launch.json` is one editor's run configuration. Commit 5f6e09c
-# shipped one naming `/private/tmp/claude-501/pato/standalone` — a path on one
-# laptop — to GitHub. It is untracked machine state and has no business being
-# committable (GGU-93 AC-5).
+# committed one naming `/private/tmp/claude-501/pato/standalone` — a path on one
+# laptop — and pushed it to a branch on a public remote. It never reached
+# `develop` (the squash in 4189eef dropped it), which is luck rather than a
+# control. It is untracked machine state and has no business being committable.
 #
 # `.design-refs/` is the design bundles. They only render from inside the
 # project folder, so every agent doing pixel-work ends up with fourteen HTML

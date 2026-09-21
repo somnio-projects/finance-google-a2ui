@@ -247,7 +247,7 @@ gate happily and reported three tracked files as unformatted:
 
 `develop` was correctly formatted the whole time. Again: **a red gate is not
 evidence that it is red for your reason.** The pin now lives in one file,
-`frontend/.flutter-version`, read by `frontend/tool/check_toolchain.sh` and by
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
 every SDK-setup step in the workflow, and `frontend.toolchain` is the first
 entry of the frontend gate so the failure names the toolchain instead of
 impersonating a branch problem.
