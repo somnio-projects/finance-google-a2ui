@@ -134,7 +134,7 @@ widened: this card reads no raw member at all.
 
 ## 7. Test plan
 
-Eight files under `app/test/components/scenario_comparison/`, split by concern
+Nine files under `app/test/components/scenario_comparison/`, split by concern
 to stay inside the 150-line budget, plus `scenario_comparison_harness.dart`,
 which reads the backend's generated snapshot rather than copying it.
 

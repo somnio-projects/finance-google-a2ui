@@ -14,7 +14,7 @@ Serves GGU-18 and design GGU-42.
 
 **What changed.** The third catalog component: `scenario.comparison.v1`, the
 same sale costed under FIFO / LIFO / HIFO side by side. Twelve files under
-`app/lib/components/scenario_comparison/`, seven test files, two goldens, and
+`app/lib/components/scenario_comparison/`, nine test files, two goldens, and
 the regenerated manifest. **No hand-written file was edited** — the seam held
 end to end for the first component added since GGU-79 closed it, so this is
 also the first independent confirmation that it works.
