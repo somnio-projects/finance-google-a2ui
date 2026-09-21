@@ -13,16 +13,24 @@
 #   2. assert that revision's Ready condition is True — explicitly, because a
 #      deploy that "succeeded" without a ready revision must not take traffic
 #   3. only then shift 100 % of traffic to it
-#   4. verify PUBLIC_URL/healthz reports exactly the release we deployed
+#   4. verify PUBLIC_URL/health reports exactly the release we deployed
 #   5. on any failure, put traffic back on the revision that was serving before
 #
-# Why the post-shift check uses PUBLIC_URL and not the *.run.app hostname: the
-# service's ingress is INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER (infra/run.tf),
-# so the run.app URLs are unreachable from a GitHub-hosted runner. The load
-# balancer domain is the only address that resolves for a caller outside the
-# VPC, and /healthz is unauthenticated by contract. For the same reason the
-# pre-shift check is the revision's Ready condition rather than an HTTP probe:
-# a revision with no traffic has no address the runner can reach.
+# Why the post-shift check uses PUBLIC_URL rather than a hostname this script
+# works out for itself: what is reachable differs per environment, and the
+# script must not have to know which one it is in. In staging and production
+# the service's ingress is INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER
+# (infra/run.tf), so the *.run.app URLs are unreachable from a GitHub-hosted
+# runner and the load balancer domain is the only address that resolves. In
+# dev there is no load balancer, ingress is open, and PUBLIC_URL is the
+# service's own run.app URL — which is exactly why dev's ingress is open
+# (specs/infra/0001-dev-environment.md AC-6). Either way the caller passes one
+# address, /health is unauthenticated by contract, and the verify-then-roll-
+# back sequence below is identical.
+#
+# The pre-shift check stays the revision's Ready condition rather than an HTTP
+# probe in every environment: a revision with no traffic has no address of its
+# own to probe.
 #
 # Usage:
 #   deploy_cloud_run.sh
@@ -148,6 +156,28 @@ main() {
     return 0
   fi
 
+migrate() {
+  # Runs the schema forward before anything serves the new image.
+  #
+  # Order matters and is the whole point: the job runs on the image being
+  # released, and it runs **before** the traffic shift. A migration after the
+  # shift would mean requests hitting a schema the code does not expect; a
+  # migration at container start would mean two booting instances racing
+  # through it, which Alembic's version table does not guard.
+  #
+  # A failure here is a hard stop with traffic untouched — the previous
+  # revision keeps serving the schema it was written for.
+  local job="$1"
+  echo "running migrations with the released image"
+  if ! gcloud run jobs execute "${job}" \
+    --region="${REGION}" --project="${PROJECT}" \
+    --update-env-vars="APP_RELEASE=${RELEASE}" \
+    --wait 2>&1; then
+    return 1
+  fi
+  return 0
+}
+
   require_env IMAGE RELEASE PUBLIC_URL
 
   echo "deploying ${IMAGE} to ${SERVICE} without traffic"
@@ -175,17 +205,23 @@ main() {
       "revision ${revision} did not become Ready (startup probe on /readyz)"
   fi
 
+  # Schema first, then traffic. See `migrate` above for why this order is the
+  # one that cannot serve a half-applied schema.
+  if ! migrate "${SERVICE%-api}-migrate"; then
+    rollback "${previous}" "${revision}" "migrations failed; the schema was not moved"
+  fi
+
   echo "shifting traffic to ${revision}"
   shift_traffic "${revision}"
 
-  if ! health="$(probe "${PUBLIC_URL}/healthz")"; then
-    rollback "${previous}" "${revision}" "healthz did not answer 200 after the traffic shift"
+  if ! health="$(probe "${PUBLIC_URL}/health")"; then
+    rollback "${previous}" "${revision}" "health did not answer 200 after the traffic shift"
   fi
 
   reported="$(printf '%s' "${health}" | json_field version || true)"
   if [[ "${reported}" != "${RELEASE}" ]]; then
     rollback "${previous}" "${revision}" \
-      "healthz reports release '${reported}', expected '${RELEASE}'"
+      "health reports release '${reported}', expected '${RELEASE}'"
   fi
 
   echo "deployed ${revision} (${RELEASE})"
@@ -197,7 +233,7 @@ main() {
     "| Revision | \`${revision}\` |" \
     "| Release | \`${RELEASE}\` |" \
     "| Readiness | Ready before the traffic shift |" \
-    "| Verified at | ${PUBLIC_URL}/healthz |"
+    "| Verified at | ${PUBLIC_URL}/health |"
 }
 
 main "$@"

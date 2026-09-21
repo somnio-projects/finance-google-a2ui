@@ -8,7 +8,7 @@ flowchart TB
         mw["middleware<br/>request id · security headers · trusted host<br/>CORS · body limit · rate limit"]
         ctl["api/v1/*.py<br/>controllers: resolve Depends, call ONE service"]
         deps["api/deps.py<br/>the only place services are constructed"]
-        oapi["api/openapi.py<br/>shared problem responses · tags"]
+        oapi["api/openapi.py · api/caching.py<br/>shared problem responses · tags<br/>ETag · If-None-Match · 304"]
     end
     subgraph app["Application"]
         svc["services/*.py<br/>use cases, authorization, audit"]
@@ -16,7 +16,9 @@ flowchart TB
     end
     subgraph core["Domain and contracts"]
         dom["domain/*<br/>portfolio, lots, prices (pure, Decimal)"]
-        cor["core/<br/>Settings · AppError · Protocols · Principal"]
+        agt["agent/*<br/>Tool Protocol · registry · prompt · tools"]
+        act["actions/*<br/>what a surface may send back:<br/>registry · bounded args · prompt() (pure)"]
+        cor["core/<br/>Settings · AppError · Protocols · Principal · display"]
     end
     subgraph infra["Infrastructure"]
         repo["repositories/*.py<br/>the only SQLAlchemy users"]
@@ -31,12 +33,26 @@ flowchart TB
     deps --> svc
     svc --> pres
     svc --> dom
+    svc --> agt --> dom
+    svc --> act
+    pres --> act
     svc --> repo --> mdl
     svc --> cor
+    agt --> cor
+    act --> cor
+    act --> dom
     adp --> cor
     auth --> cor
     boot -.->|"wires everything, imported by nobody"| deps
 
     %% Forbidden and checked in review: services importing FastAPI/SQLAlchemy,
     %% controllers importing repositories, presenters doing I/O.
+    %% agent/ is an inner layer beside domain/: core + domain only, nothing
+    %% outward — asserted over the parsed source by the boundary tests.
+    %% actions/ is a peer of presentation/, not a layer above it (spec 0022
+    %% OD-8). Two edges reach it and they mean different things:
+    %%   pres --> act  a projection imports the DECLARATION it publishes (pure)
+    %%   svc  --> act  a service DISPATCHES a validated action into a turn
+    %% The reverse (act --> pres) is forbidden and would be circular; the
+    %% actions boundary test asserts it over the parsed source.
 ```

@@ -1,0 +1,29 @@
+# Workspace root for the A2UI finance client.
+#
+# This package ships no code. It exists so that `frontend/` resolves as ONE pub
+# workspace with ONE `pubspec.lock`, which is the lock `--enforce-lockfile`
+# holds. Four independently resolved locks would each drift on their own, and
+# `flutter pub get` silently re-resolves while `--enforce-lockfile` does not.
+name: finance_frontend_workspace
+description: Pub workspace root for the finance A2UI Flutter client. Ships no code.
+publish_to: none
+version: 0.1.0
+
+environment:
+  # The Dart SDK vendored by Flutter 3.47.5 is 3.13.4 — see frontend/CLAUDE.md
+  # for how the floor was verified rather than guessed.
+  sdk: ^3.13.0
+
+workspace:
+  - app
+  - packages/finance_core
+  - packages/finance_api_client
+  - packages/finance_views_repository
+  - packages/finance_charts
+
+# The workspace root ships no library code, but `tool/` lives here and the
+# gate is made of it. `frontend/test/tool/` is that suite; it needs `test` and
+# the shared analyzer rules like any other package.
+dev_dependencies:
+  test: ^1.27.0
+  very_good_analysis: ^11.0.0

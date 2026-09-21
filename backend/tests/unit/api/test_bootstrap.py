@@ -25,7 +25,7 @@ def test_create_app_from_settings_serves_and_disposes_engine_on_shutdown(
     app = create_app(settings)
     dispose = mocker.patch.object(AsyncEngine, "dispose", autospec=True)
     with TestClient(app) as client:
-        assert client.get("/healthz").json()["version"] == __version__
+        assert client.get("/health").json()["version"] == __version__
         assert app.title == settings.app_name
     dispose.assert_awaited_once()
 

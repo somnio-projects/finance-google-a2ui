@@ -20,7 +20,10 @@ MAX_TITLE_LENGTH: Final[int] = 200
 class SessionCreate(BaseModel):
     """Body of `POST /v1/sessions` — everything about it is optional."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={"examples": [{"title": "Retirement portfolio review"}]},
+    )
 
     title: str | None = Field(
         default=None,
@@ -37,7 +40,20 @@ class SessionCreate(BaseModel):
 class SessionResponse(BaseModel):
     """One conversation session owned by the caller."""
 
-    model_config = ConfigDict(frozen=True, from_attributes=True)
+    model_config = ConfigDict(
+        frozen=True,
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": "9e10c0de-2f4b-4c7a-9a1a-1f0d2f5b7c31",
+                    "title": "Retirement portfolio review",
+                    "created_at": "2026-09-19T12:43:39.042545Z",
+                    "updated_at": "2026-09-19T12:47:02.118904Z",
+                }
+            ]
+        },
+    )
 
     id: uuid.UUID = Field(
         description="Server-assigned identifier, used in every session sub-path.",
@@ -61,6 +77,25 @@ class SessionResponse(BaseModel):
 
 class SessionPage(Page[SessionResponse]):
     """A page of the caller's sessions, newest first."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "items": [
+                        {
+                            "id": "9e10c0de-2f4b-4c7a-9a1a-1f0d2f5b7c31",
+                            "title": "Retirement portfolio review",
+                            "created_at": "2026-09-19T12:43:39.042545Z",
+                            "updated_at": "2026-09-19T12:47:02.118904Z",
+                        }
+                    ],
+                    "next_cursor": None,
+                }
+            ]
+        },
+    )
 
 
 __all__ = ["MAX_TITLE_LENGTH", "SessionCreate", "SessionPage", "SessionResponse"]

@@ -14,7 +14,7 @@ flowchart TB
     end
     subgraph google["Google"]
         idp["Firebase Auth / Google Identity<br/>OIDC ID tokens"]
-        gemini["Gemini API<br/>(planned — GGU-47)"]
+        gemini["Gemini API<br/>adapter shipped (GGU-47)<br/>reached once a route exists (GGU-3)"]
     end
     sentry["Sentry<br/>errors, no PII"]
 

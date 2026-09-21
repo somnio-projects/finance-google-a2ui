@@ -18,6 +18,8 @@ no tooling, and can never drift silently from the code that a screenshot would.
 | [08-infrastructure.md](08-infrastructure.md) | The production topology on Google Cloud | `infra/`, ADR-F |
 | [09-delivery-pipeline.md](09-delivery-pipeline.md) | Where each check runs and what reaches production | `.claude/rules/ci-conventions.md` |
 | [10-branching.md](10-branching.md) | How work flows from a ticket to production | `docs/compliance/CHANGE_MANAGEMENT.md` |
+| [11-client-architecture.md](11-client-architecture.md) | What the Flutter client is made of and what each layer may reach | `.claude/rules/client/architecture.md`, ADR-I, ADR-K |
+| [12-frontend-layers.md](12-frontend-layers.md) | What may import what in the `frontend/` client | ADR-L, `frontend/app/test/architecture/layering_test.dart` |
 
 ## Rules
 

@@ -21,9 +21,12 @@ In the **same PR** as the code, whenever the change adds or alters:
 | Terraform: network, runtime, secrets, observability | `08-infrastructure.md` |
 | A check moving between pre-commit, CI or CD | `09-delivery-pipeline.md` |
 | The branch model or the ticket lifecycle | `10-branching.md` |
+| A client layer, a feature slice or what a layer may import | `11-client-architecture.md` |
+| A layer, package or import rule in `frontend/` | `12-frontend-layers.md` |
 
 A PR that changes structure and leaves its diagram stale is **incomplete** —
-the `backend-reviewer` agent flags it and review blocks on it.
+the `backend-reviewer` agent flags it for `backend/`, the `frontend-reviewer`
+agent for `frontend/`, and review blocks on it.
 
 ## How to write one
 

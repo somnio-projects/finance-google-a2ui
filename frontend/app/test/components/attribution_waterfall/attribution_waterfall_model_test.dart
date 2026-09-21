@@ -1,0 +1,120 @@
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
+import 'package:finance_charts/finance_charts.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  const step = AttributionStep(
+    step: WaterfallStep(key: 'BTC', kind: WaterfallStepKind.gain, level: 67155),
+    label: 'Bitcoin',
+    valueDisplay: r'$10,230.00',
+    cumulativeDisplay: r'$67,155.00',
+  );
+
+  group(AttributionStep, () {
+    test('exposes the key a drill-down action takes', () {
+      expect(step.key, 'BTC');
+    });
+
+    test('is equal to a step carrying the same geometry and figures', () {
+      expect(
+        step,
+        equals(
+          const AttributionStep(
+            step: WaterfallStep(
+              key: 'BTC',
+              kind: WaterfallStepKind.gain,
+              level: 67155,
+            ),
+            label: 'Bitcoin',
+            valueDisplay: r'$10,230.00',
+            cumulativeDisplay: r'$67,155.00',
+          ),
+        ),
+      );
+    });
+
+    test('differs when a display string differs', () {
+      // The figures are part of what the step *is*: two steps at the same
+      // level showing different text are not the same step.
+      expect(
+        step,
+        isNot(
+          equals(
+            const AttributionStep(
+              step: WaterfallStep(
+                key: 'BTC',
+                kind: WaterfallStepKind.gain,
+                level: 67155,
+              ),
+              label: 'Bitcoin',
+              valueDisplay: r'$10,230.01',
+              cumulativeDisplay: r'$67,155.00',
+            ),
+          ),
+        ),
+      );
+    });
+  });
+
+  group(AttributionAnnotation, () {
+    test('is equal to an annotation with the same label and text', () {
+      expect(
+        const AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
+        equals(const AttributionAnnotation(label: 'Net', text: r'$8,113.60')),
+      );
+      expect(
+        const AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
+        isNot(
+          equals(const AttributionAnnotation(label: 'Net', text: r'$8.00')),
+        ),
+      );
+    });
+  });
+
+  group(AttributionWaterfallData, () {
+    const data = AttributionWaterfallData(
+      title: 'Unrealised P/L attribution',
+      steps: <AttributionStep>[step],
+      annotations: <AttributionAnnotation>[
+        AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
+      ],
+    );
+
+    test('projects the three lists the chart is built from', () {
+      expect(data.waterfallSteps, <WaterfallStep>[step.step]);
+      expect(data.valueDisplays, <String>[r'$10,230.00']);
+      expect(data.axisLabels, <String>['Bitcoin']);
+    });
+
+    test('is equal to a model over the same steps and notes', () {
+      expect(
+        data,
+        equals(
+          const AttributionWaterfallData(
+            title: 'Unrealised P/L attribution',
+            steps: <AttributionStep>[step],
+            annotations: <AttributionAnnotation>[
+              AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
+            ],
+          ),
+        ),
+      );
+    });
+
+    test('differs when an annotation is dropped', () {
+      // N-9 as an equality: losing a note is a change, not a detail.
+      expect(
+        data,
+        isNot(
+          equals(
+            const AttributionWaterfallData(
+              title: 'Unrealised P/L attribution',
+              steps: <AttributionStep>[step],
+              annotations: <AttributionAnnotation>[],
+            ),
+          ),
+        ),
+      );
+    });
+  });
+}

@@ -57,10 +57,23 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
+        # Reads .codespellrc at the repository root — the same word list
+        # `repo.spelling` uses. It used to read backend/pyproject.toml, whose
+        # word list knows nothing about the Flutter or docs vocabulary, so this
+        # hook flagged `bloc` on every Flutter file it touched. Two configs for
+        # one check is the drift .claude/rules/ci-conventions.md §5 is about.
+        #
+        # pre-commit hands the hook an explicit list of changed files, so the
+        # directory walk that made `repo.spelling` blind to `.claude/` never
+        # applies here — this half was always correct about its scope.
         additional_dependencies: [tomli]
-        args: [--toml, backend/pyproject.toml]
-        exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|backend/reports/)
-
+        exclude: |
+          (?x)^(
+            \.claude/skills/|
+            \.agents/|
+            \.claude/rules/(python|flutter)/|
+            .*\.lock
+          )
   # ---------------------------------------------------------------- yaml & actions
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.7
@@ -68,10 +81,13 @@ repos:
       - id: actionlint
 
   # ---------------------------------------------------------------- shell
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
+  # The shellcheck-precommit hook used to sit here and lint the changed shell
+  # files. It is now `repo.shell-lint`, in the local block below, so that the
+  # hook, `repo-ci.yaml` and `ship-gate.json` all run one command string over
+  # one file list. Two configurations for one check is the same drift as two
+  # command strings (.claude/rules/ci-conventions.md §5) — and it had already
+  # produced one: the hook's default severity would have failed both container
+  # entry points, while the only shellcheck in CI never opened either.
 
   # ---------------------------------------------------------------- terraform
   - repo: https://github.com/antonbabenko/pre-commit-terraform
@@ -82,6 +98,38 @@ repos:
   # ------------------------------------------------- backend gate (local tools)
   - repo: local
     hooks:
+      # ----------------------------------------- repository-wide (local tools)
+      # Runs on any shell change anywhere, because its subject is "every script
+      # this repository ships", not one stack's. Command string copied from
+      # .claude/ship-gate.json (`repo.shell-lint`) and repo-ci.yaml, not
+      # paraphrased.
+      - id: repo-shell-lint
+        name: Lint every tracked shell script (shellcheck)
+        entry: bash scripts/check_shell.sh
+        language: system
+        files: \.sh$
+        pass_filenames: false
+
+      # Runs when either half of a §5 pair moves — the gate file or any
+      # workflow — because the property it guards spans the two, the same
+      # trigger shape as `infra-dev-environment` above.
+      - id: repo-gate-pairs
+        name: Prove every gate command appears verbatim in its workflow (check_gate_pairs.sh)
+        entry: bash scripts/check_gate_pairs.sh
+        language: system
+        files: ^(\.claude/ship-gate\.json|\.github/workflows/)
+        pass_filenames: false
+
+      # Runs when the check, its suite, or the rule that defines the manual-run
+      # template moves. It proves the check REJECTS — a stale build, a foreign
+      # one, an unknown sha and a transcript with no identity at all (GGU-93).
+      - id: repo-manual-run
+        name: Prove the manual-run check rejects a stale or foreign build (test_check_manual_run.sh)
+        entry: bash scripts/tests/test_check_manual_run.sh
+        language: system
+        files: ^(scripts/check_manual_run\.sh|scripts/tests/test_check_manual_run\.sh|\.claude/rules/backend/sdd\.md)$
+        pass_filenames: false
+
       - id: backend-typecheck
         name: Type-check the backend in strict mode (basedpyright)
         entry: bash -c 'cd backend && uv run basedpyright'
@@ -94,6 +142,17 @@ repos:
         entry: bash -c 'cd backend && uv run python scripts/check_file_budget.py'
         language: system
         files: ^backend/.*\.py$
+        pass_filenames: false
+
+      # docs/catalog/CONTRACT.md and docs/catalog/view-catalog.snapshot.json are
+      # both generated from the projection registry, in one pass, so a projection
+      # that moves and an artefact that did not is caught here, on the laptop,
+      # rather than after the design work is done (GGU-41, GGU-53).
+      - id: backend-catalog-contract
+        name: Verify the generated catalog artefacts are current (generate_catalog_contract.py)
+        entry: bash -c 'cd backend && uv run python scripts/generate_catalog_contract.py --check'
+        language: system
+        files: ^(backend/src/app/presentation/|backend/scripts/generate_catalog_contract\.py|docs/catalog/)
         pass_filenames: false
 
       - id: backend-quality
@@ -119,6 +178,35 @@ repos:
         files: ^infra/
         pass_filenames: false
 
+      # Reads the Terraform AND both backend workflows, so it must run when
+      # either side moves — the property it guards spans the two.
+      - id: infra-dev-environment
+        name: Prove dev stays cheap and releases behind a green gate (test_dev_environment.sh)
+        entry: bash infra/scripts/tests/test_dev_environment.sh
+        language: system
+        files: ^(infra/|\.github/workflows/backend-c[di]\.yaml$)
+        pass_filenames: false
+
+      # The rules index in CLAUDE.md sits inside the block /harness-init
+      # regenerates, so a row can disappear without anyone editing it by hand —
+      # and a rule with no row silently stops loading (GGU-86). Runs when either
+      # side of the comparison moves: the table, or the rules directory.
+      - id: harness-rules-index
+        name: Prove every rule file is listed and every row exists (test_rules_index.sh)
+        entry: bash infra/scripts/tests/test_rules_index.sh
+        language: system
+        files: ^(\.claude/rules/|CLAUDE\.md$)
+      # The rate limiter counts per process, so the documented per-principal
+      # limit is only true at one instance (GGU-83). The instance count lives in
+      # Terraform and the limit in Markdown and Python, and nothing else reads
+      # all three — so this runs when any of them moves.
+      - id: infra-rate-limit-ceiling
+        name: Prove the documented rate limit matches the instance count (test_rate_limit_ceiling.sh)
+        entry: bash infra/scripts/tests/test_rate_limit_ceiling.sh
+        language: system
+        files: ^(infra/|backend/docs/SECURITY\.md$|backend/src/app/core/config\.py$|backend/env\.example$|docs/diagrams/08-infrastructure\.md$)
+        pass_filenames: false
+
       # Fast enough for every commit; the DB-backed suite runs on push.
       - id: backend-unit-tests
         name: Run the unit suite (pytest -m unit)
@@ -134,6 +222,65 @@ repos:
         files: ^backend/
         pass_filenames: false
         stages: [pre-push]
+
+      # ------------------------------------------------ frontend gate (local tools)
+      # The cheap half of `cd frontend && make gate`. Command strings are
+      # copied from frontend/Makefile and .claude/ship-gate.json, not
+      # paraphrased (.claude/rules/ci-conventions.md 5). The suites and the
+      # coverage threshold run in CI and in the pre-push gate below.
+      # First, because every hook below it reads the tree through `dart`. A
+      # Dart below the SDK floor declared in frontend/pubspec.yaml formats
+      # tracked files differently and exits 65, which reads as a red branch and
+      # is a red toolchain (GGU-94). This one says which.
+      - id: frontend-toolchain
+        name: Prove the pinned Flutter SDK is on PATH (check_toolchain.sh)
+        entry: bash -c 'cd frontend && bash tool/check_toolchain.sh'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      # Needs no SDK at all — it stubs one — so it runs when the preflight, its
+      # suite or the pin moves, on any machine.
+      - id: frontend-toolchain-test
+        name: Prove the preflight rejects a wrong or missing SDK (test_check_toolchain.sh)
+        entry: bash -c 'cd frontend && bash tool/tests/test_check_toolchain.sh'
+        language: system
+        files: ^frontend/(tool/check_toolchain\.sh|tool/tests/test_check_toolchain\.sh|\.fvmrc)$
+        pass_filenames: false
+
+      - id: frontend-format
+        name: Verify Dart formatting is canonical (dart format)
+        entry: bash -c 'cd frontend && dart format --output=none --set-exit-if-changed .'
+        language: system
+        files: ^frontend/.*\.dart$
+        pass_filenames: false
+
+      - id: frontend-analyze
+        name: Analyse with infos and warnings fatal (dart analyze)
+        entry: bash -c 'cd frontend && dart analyze --fatal-infos --fatal-warnings'
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      - id: frontend-budget
+        name: Enforce the 150-line file budget (check_file_budget.dart)
+        entry: bash -c 'cd frontend && dart run tool/check_file_budget.dart'
+        language: system
+        files: ^frontend/.*\.dart$
+        pass_filenames: false
+
+      - id: frontend-manifest
+        name: Verify the generated component manifest is current (generate_component_manifest.dart)
+        entry: bash -c 'cd frontend && dart run tool/generate_component_manifest.dart --check'
+        language: system
+        files: ^frontend/app/lib/components/
+        pass_filenames: false
+
+      - id: frontend-full-gate
+        name: Run the full frontend ship gate before pushing (make gate)
+        entry: bash -c 'cd frontend && make gate'
+        language: system
+        files: ^frontend/
 
       # ------------------------------------------- client gate (local tools)
       # These need the Flutter SDK pinned in client_flutter/.fvmrc on PATH and

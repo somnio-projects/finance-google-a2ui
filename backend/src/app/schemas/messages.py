@@ -25,7 +25,17 @@ MAX_CONTENT_LENGTH: Final[int] = 8_000
 class MessageCreate(BaseModel):
     """Body of `POST /v1/sessions/{session_id}/messages`."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "role": "user",
+                    "content": ("How did my technology holdings perform last quarter?"),
+                }
+            ]
+        },
+    )
 
     role: MessageRole = Field(
         description=(
@@ -45,7 +55,22 @@ class MessageCreate(BaseModel):
 class MessageResponse(BaseModel):
     """One stored turn of a conversation."""
 
-    model_config = ConfigDict(frozen=True, from_attributes=True)
+    model_config = ConfigDict(
+        frozen=True,
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": "3f1b8a2c-5d6e-4f70-8a91-2b3c4d5e6f70",
+                    "session_id": "9e10c0de-2f4b-4c7a-9a1a-1f0d2f5b7c31",
+                    "role": "assistant",
+                    "content": "Your technology sleeve returned 4.2 % over "
+                    "the quarter.",
+                    "created_at": "2026-09-19T12:47:02.118904Z",
+                }
+            ]
+        },
+    )
 
     id: uuid.UUID = Field(
         description="Server-assigned identifier of the message.",
@@ -71,6 +96,27 @@ class MessageResponse(BaseModel):
 
 class MessagePage(Page[MessageResponse]):
     """A page of a conversation, oldest first — the newest turn comes last."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "items": [
+                        {
+                            "id": "3f1b8a2c-5d6e-4f70-8a91-2b3c4d5e6f70",
+                            "session_id": "9e10c0de-2f4b-4c7a-9a1a-1f0d2f5b7c31",
+                            "role": "user",
+                            "content": "How did my technology holdings perform "
+                            "last quarter?",
+                            "created_at": "2026-09-19T12:45:11.008210Z",
+                        }
+                    ],
+                    "next_cursor": None,
+                }
+            ]
+        },
+    )
 
 
 __all__ = [

@@ -9,6 +9,7 @@ a route can answer and returns the documented entries.
 from http import HTTPStatus
 from typing import Any, Final
 
+from app.core.errors import PROBLEM_TYPE_BASE
 from app.schemas.problem import ProblemDetails
 
 #: One sentence per status, written for the client developer reading `/docs`.
@@ -37,6 +38,24 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         "description": (
             "Who the bearer token belongs to and what that subject did. "
             "Every read is written to the audit trail."
+        ),
+    },
+    {
+        "name": "views",
+        "description": (
+            "Named, versioned projections of the portfolio (ADR-K): the "
+            "catalog of what can be rendered, and the rendering itself. The "
+            "backend shapes every payload; the client binds it unchanged."
+        ),
+    },
+    {
+        "name": "a2a",
+        "description": (
+            "The A2A protocol surface: JSON-RPC posted to the service root, "
+            "plus the public agent card. **Not RESTful, on purpose** — it "
+            "implements Google's protocol (ADR-J D-2/D-3). Errors here are "
+            "JSON-RPC error objects, not RFC 9457 problem documents, so a "
+            "client parses two shapes depending on the surface it is on."
         ),
     },
     {
@@ -85,7 +104,7 @@ def problem_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
             "content": {
                 "application/problem+json": {
                     "example": {
-                        "type": f"https://errors.finance-a2ui/{_code(status)}",
+                        "type": f"{PROBLEM_TYPE_BASE}{_code(status)}",
                         "title": HTTPStatus(status).phrase,
                         "status": status,
                         "detail": PROBLEM_DESCRIPTIONS[status],

@@ -10,11 +10,11 @@ variable "region" {
 }
 
 variable "environment" {
-  description = "staging | production — becomes ENVIRONMENT for the backend."
+  description = "dev | staging | production — becomes ENVIRONMENT for the backend. `dev` is the throwaway proof-of-concept shape (specs/infra/0001-dev-environment.md): everything that costs money while idle is derived off from this one value."
   type        = string
   validation {
-    condition     = contains(["staging", "production"], var.environment)
-    error_message = "environment must be staging or production."
+    condition     = contains(["dev", "staging", "production"], var.environment)
+    error_message = "environment must be dev, staging or production."
   }
 }
 
@@ -25,7 +25,7 @@ variable "github_repository" {
 }
 
 variable "backend_release" {
-  description = "Release identifier reported by GET /healthz (APP_RELEASE). The pipeline passes <version>+<git-sha>; Terraform alone deploys the packaged default."
+  description = "Release identifier reported by GET /health (APP_RELEASE). The pipeline passes <version>+<git-sha>; Terraform alone deploys the packaged default."
   type        = string
   default     = ""
 }
@@ -36,8 +36,16 @@ variable "backend_image" {
 }
 
 variable "domain" {
-  description = "Public hostname served by the HTTPS load balancer (managed certificate)."
+  description = "Public hostname served by the HTTPS load balancer (managed certificate). Required for staging and production; must be empty for dev, which has no load balancer and is reached on Cloud Run's own run.app URL."
   type        = string
+  default     = ""
+  validation {
+    # Both directions on purpose: a staging/production apply without a domain
+    # would fail late, at certificate creation, and a dev apply *with* one
+    # would silently ignore it — there is nothing in dev to certify.
+    condition     = var.environment == "dev" ? var.domain == "" : var.domain != ""
+    error_message = "domain is required for staging and production (the managed certificate needs it) and must be empty for dev (no load balancer exists to serve it)."
+  }
 }
 
 variable "auth_issuer" {
@@ -66,27 +74,27 @@ variable "alert_email" {
 }
 
 variable "db_tier" {
-  description = "Cloud SQL machine tier."
+  description = "Cloud SQL machine tier. Leave null to take the tier derived from the environment: the smallest shared-core tier in dev, `db-custom-1-3840` elsewhere (main.tf)."
   type        = string
-  default     = "db-custom-1-3840"
+  default     = null
 }
 
 variable "min_instances" {
-  description = "Cloud Run minimum instances (>= 1 in production: BCP RTO)."
+  description = "Cloud Run minimum instances. Leave null to derive: 1 outside dev (BCP RTO), 0 in dev so an idle proof of concept bills nothing."
   type        = number
-  default     = 1
+  default     = null
 }
 
 variable "max_instances" {
-  description = "Cloud Run maximum instances."
+  description = "Cloud Run maximum instances. Leave null to derive: 4 outside dev, 2 in dev."
   type        = number
-  default     = 4
+  default     = null
 }
 
 variable "log_retention_days" {
-  description = "Cloud Logging retention for the _Default bucket (CLOUD_SERVICES.md §4)."
+  description = "Cloud Logging retention for the _Default bucket (CLOUD_SERVICES.md §4). Leave null to derive: 90 days outside dev, 30 in dev (the free tier)."
   type        = number
-  default     = 90
+  default     = null
 }
 
 variable "secret_rotation_days" {

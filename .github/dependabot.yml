@@ -1,9 +1,20 @@
 # Automated dependency updates (SOC 2 CC8.1 / ISO 27001 A.8.8 — vulnerability management).
 # Security releases open PRs that still have to pass the backend ship gate.
+#
+# `target-branch: develop` on every ecosystem, because without it Dependabot
+# opens against the repository's default branch — `main`. Five such PRs sat
+# open for weeks doing exactly that: based on a `main` thirty commits stale,
+# proposing edits to workflows that no longer looked anything like that. They
+# were unmergeable by construction, and nothing said so.
+#
+# `develop` is the integration branch and the only branch a PR may target
+# (root CLAUDE.md); `main` receives it through a release PR. A bot is not an
+# exception to that.
 version: 2
 updates:
   - package-ecosystem: "uv"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -17,6 +28,7 @@ updates:
       prefix: "chore(deps)"
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -24,8 +36,50 @@ updates:
       prefix: "ci(deps)"
   - package-ecosystem: "docker"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
     commit-message:
       prefix: "build(deps)"
+
+  # Both Dart graphs — 209 third-party packages between them — had no
+  # dependency telemetry of any kind: not here, not in a gate, not in the
+  # weekly scan. The backend's zero-outdated-dependencies record is direct
+  # evidence that this mechanism works, and it was pointed at one of the three
+  # stacks this repository ships.
+  #
+  # `directory:` is the pub WORKSPACE root in each case, which is where the
+  # single `pubspec.lock` lives. The member packages (`app/`, `packages/*`,
+  # `e2e_test/`) resolve through it — a per-member entry would find a manifest
+  # with no lock beside it.
+  - package-ecosystem: "pub"
+    directory: "/frontend"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      frontend-dart:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # client_flutter pins genui, genui_a2a and a2ui_core exactly and on purpose
+  # (ADR-D D-4): they are alpha, and a bump is a contained decision somebody
+  # makes, not one a bot makes on a Monday. Dependabot honours an exact
+  # constraint, so those three stay put and this entry covers the rest of the
+  # graph — which is the part nothing was watching.
+  - package-ecosystem: "pub"
+    directory: "/client_flutter"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      client-dart:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"

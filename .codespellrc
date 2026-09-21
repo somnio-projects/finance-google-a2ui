@@ -1,0 +1,17 @@
+# Word-list exceptions for `repo.spelling`. The file list is decided by
+# scripts/check_spelling.sh, not here — see that script's header for why a
+# bare `codespell .` could not scan `.claude/` and `.github/` at all.
+#
+[codespell]
+# `skip` intentionally absent: the scan is an explicit file list, so there is
+# no directory walk left to prune.
+# Each of these is a deliberate exception, not a silenced nuisance:
+#   bloc     the state-management library the Flutter rules mandate
+#   blocs    its plural, which appears in prose about the client
+#   pres     the Mermaid node id for `presentation/*` in the layers diagram;
+#            renaming it would break the diagram, not fix a typo
+#   re-use   ISO 27001 Annex A control A.7.14 is titled "Secure disposal or
+#            re-use of equipment". The Statement of Applicability quotes it
+#            verbatim, and a compliance document that paraphrases a control
+#            title no longer cites the standard. Never "fix" this one.
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use

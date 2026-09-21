@@ -60,3 +60,13 @@ def make_holding(
         unrealized_pl=Decimal(market_value) - Decimal(cost_basis),
         weight=Decimal(weight),
     )
+
+
+def make_portfolio(*lots: TaxLot) -> Portfolio:
+    """Wrap hand-made lots in a portfolio at the frozen ``as_of``.
+
+    Positions and ledger are empty on purpose: a sale reads lots and a price,
+    and a test that also handed it an aggregate could pass while the walk
+    ignored the lots entirely (spec 0013).
+    """
+    return Portfolio(as_of=FROZEN_NOW, positions=(), lots=lots, ledger=())

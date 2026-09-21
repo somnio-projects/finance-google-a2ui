@@ -6,19 +6,17 @@ exception text — it is reported to telemetry and answered generically.
 """
 
 from http import HTTPStatus
-from typing import Final
 
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.core.errors import AppError
+from app.core.errors import PROBLEM_TYPE_BASE, AppError
 from app.core.logging import get_logger
 from app.core.protocols import ErrorReporter
 from app.schemas.problem import ProblemDetails
 
-PROBLEM_TYPE_BASE: Final[str] = "https://errors.finance-a2ui/"
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 

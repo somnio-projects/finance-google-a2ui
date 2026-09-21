@@ -9,7 +9,7 @@ or configuration and verified by tests; each row names where.
 | Control | Implementation | Verified by | SOC 2 TSC | ISO 27001 Annex A |
 |---|---|---|---|---|
 | Authenticate every request except health/docs | `api/deps.py::get_current_principal`, `services/auth_service.py` | `tests/unit/api/test_identity_auth.py`, `tests/integration/test_identity_flow.py` | CC6.1, CC6.3 | A.5.15, A.8.5 |
-| Verify token signature, issuer, audience, expiry; require `sub` | `auth/providers/jwt_provider.py`, `oidc_provider.py` | `tests/unit/auth/*` | CC6.1 | A.8.5 |
+| Verify token signature, issuer, audience, expiry; require `sub` — **and nothing else; no revocation check** (ADR-B D-11) | `auth/providers/jwt_provider.py`, `oidc_provider.py` | `tests/unit/auth/*` | CC6.1 | A.8.5 |
 | Distinguishable auth error codes, no library text | `core/errors.py`, `api/errors.py` | `test_jwt_provider.py`, `test_identity_auth.py` | CC7.4 | A.8.9 |
 | Secrets only from environment, typed `SecretStr`, fail-fast | `core/config.py` | `tests/unit/core/test_config.py` | CC6.1, CC6.7 | A.5.33, A.8.24 |
 | No secrets in repo/image; `.env` denied to tooling | `.claude/settings.json`, `.dockerignore`, gitleaks in CI | CI `secrets` job | CC6.7, CC8.1 | A.8.24 |
@@ -19,7 +19,7 @@ or configuration and verified by tests; each row names where.
 | Security response headers, CSP, HSTS (prod) | `api/middleware/security_headers.py` | `tests/unit/api/test_middleware.py` | CC6.6 | A.8.26 |
 | CORS and Host allow-lists | `bootstrap._install_middleware` | `test_middleware.py` | CC6.6 | A.8.20 |
 | Request body size limit | `api/middleware/body_limit.py` | `test_middleware.py` | CC6.6 | A.8.6 |
-| Per-token rate limit (compensating control for no allow-list) | `api/middleware/rate_limit.py` | `test_middleware.py` | CC6.6 | A.8.6 |
+| Per-token rate limit (compensating control for no allow-list) — see *Declared limits* below | `api/middleware/rate_limit.py`, `infra/main.tf` (`max_instances`) | `test_middleware.py`, `infra/scripts/tests/test_rate_limit_ceiling.sh` | CC6.6 | A.8.6 |
 | Unhandled errors reported, masked to clients | `api/errors.py`, `infra/telemetry/*` | `test_error_handlers.py`, `test_telemetry.py` | CC7.2, CC7.4 | A.8.16 |
 | Telemetry without PII or request bodies | `infra/telemetry/sentry_reporter.py` (`send_default_pii=False`, `max_request_body_size="never"`) | `test_telemetry.py` | P4.1 | A.8.11 |
 | Parameterised SQL only | SQLAlchemy Core/ORM expressions | code review (`backend-reviewer`) | CC6.1 | A.8.28 |
@@ -35,6 +35,54 @@ or configuration and verified by tests; each row names where.
 | SAST, secret and image scanning on every PR; weekly independent scan with SBOM | `.github/workflows/backend-ci.yaml` (`sast`, `secrets`, `image`), `.github/workflows/scheduled-scan.yaml` | CI | CC7.1, CC8.1 | A.8.8, A.8.29, A.5.21 |
 | Review ownership and change control | `.github/CODEOWNERS`, `.github/pull_request_template.md`; `main` ruleset exported to `docs/compliance/evidence/` (enforcement pending — enabled by the repo admin before merge) | GitHub ruleset export | CC8.1 | A.8.32 |
 
+## Known gaps
+
+A control that is not implemented belongs here, never as a row above. Each gap
+names the residual risk, what bounds it, and who owns the decision.
+
+| Gap | Residual risk | What bounds it today | Owner | Decision |
+|---|---|---|---|---|
+| **No token revocation check.** Revoking a session at the IdP does not reach this service; a revoked-but-unexpired token is accepted. Neither verifier consults a valid-since watermark (`auth/claims.py` does not read `auth_time`), and `firebase-admin` — whose `verify_id_token(check_revoked=True)` ADR-B D-4 once required — is not a dependency. | Revocation latency = the token's remaining lifetime: **≤ 1 h + 30 s** for user ID tokens, **≤ 10 min + 30 s** for service tokens (`AUTH_LEEWAY_SECONDS`). | Provisioned-only accounts with one enabled provider (ADR-B D-5/D-5a); per-token rate limit; audit trail. For HS256 service tokens only, rotating `AUTH_JWT_SECRET` is an immediate break-glass — there is no OIDC equivalent. | TL backend | **Accepted, not deferred** — ADR-B D-12 (Proposed, GGU-87). Implementing it would put a Firebase-specific branch or a per-request network call into a deliberately provider-agnostic verifier. Revisit if the exposure window or the account set grows. |
+
+This is an honesty requirement, not a formality: a control mapping that
+overstates is worse than one that names its gap, because an auditor and an
+incident responder both plan against it. See `docs/compliance/README.md`.
+
+## Declared limits — rate limiting and feature flags
+
+Two controls hold state **in the process**, so what they promise depends on how
+many processes are running. The numbers are declared here, and
+`infra/scripts/tests/test_rate_limit_ceiling.sh` fails the gate when any of them
+disagrees with `infra/main.tf`, `app/core/config.py` or `backend/env.example`
+(GGU-83). Change one and the gate names the other.
+
+- **Documented per-principal limit:** 120 requests per minute.
+- **Instance ceiling the limit depends on:** 1.
+
+`api/middleware/rate_limit.py` is a fixed-window counter in process memory, so
+the effective budget is the configured limit **× the instance count**. Cloud Run
+is therefore pinned to a single instance (`max_instances = 1` in
+`infra/main.tf`, and in every `infra/environments/*.tfvars`), which makes the
+number above the number the service actually enforces. This is not a distributed
+limiter and must not be cited as one: the pin makes the configuration match the
+limiter's capability, and the shared backing store that would make the limit
+true at any instance count is spec `backend/0001` **OD-2**, still open. Raising
+the ceiling without it re-opens the defect — which is what the cross-declaration
+test exists to prevent. Per-IP counting shares the same bound.
+
+**Feature flags.** `services/feature_flag_cache.py` caches flag state for
+`FEATURE_FLAGS_CACHE_TTL_SECONDS` (15 by default). At one instance there is one
+cache, so a toggle through `PUT /v1/admin/feature-flags/{key}` takes effect
+within that TTL and there is **no cross-instance propagation window** — that
+window existed only while more than one instance ran, and it closes as a side
+effect of the pin above. It returns, bounded by the same TTL, if the ceiling is
+ever raised.
+
+The `FEATURE_FLAGS_FORCE_DISABLED` kill-switch was **never affected by any of
+this**. It is an environment variable read at startup on every instance and it
+wins over the database, so it disables a flag everywhere regardless of instance
+count, cache TTL or database state.
+
 ## Governance, tenancy and data (out of code)
 
 - **Single-tenant by design**; user isolation by `principal.subject` — `docs/compliance/DATA_RESIDENCY_AND_TENANCY.md`.
@@ -46,8 +94,8 @@ or configuration and verified by tests; each row names where.
 ## Threat notes
 
 - **Cross-user session access** (ADR-A): sessions in later specs must be keyed by `principal.subject`, never by a client-supplied id alone.
-- **Compromised provisioned account**: bounded by the per-token rate limit and the audit trail; revoke at the identity provider (`check_revoked` semantics belong to the provider adapter).
-- **Model key exfiltration**: the key never reaches the client; it is read only inside the adapter that talks to Gemini (future spec) and is `SecretStr`.
+- **Compromised provisioned account**: bounded by the per-token rate limit and the audit trail. Revoke at the identity provider — and note the latency: this service performs **no** revocation check, so a revoked-but-unexpired token is still accepted until `exp` (≤ 1 h; ADR-B D-12 and the gap row above). The earlier wording here — "`check_revoked` semantics belong to the provider adapter" — implied an adapter-level control that does not exist in any adapter; it is corrected by GGU-87.
+- **Model key exfiltration**: the key never reaches the client; it is `SecretStr` and `get_secret_value()` is called in exactly one place, `app/infra/model/gemini_client.py` (spec 0006 AC-2), where it becomes an `x-goog-api-key` header — never a query string. A boundary test asserts both facts over the parsed source.
 - **Mid-stream token expiry** (ADR-B D-8): validate once at request open; streaming endpoints inherit this.
 
 ## Operating procedures (out of code)

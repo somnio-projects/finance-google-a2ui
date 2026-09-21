@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | Security owner (TL backend) · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 |
+| **Owner** | Security owner (TL backend) · **Version** 1.1 — 2026-09-21 · **Next review** 2027-09-19 |
 | **Maps to** | SOC 2 CC7.5, A1.2, A1.3 · ISO/IEC 27001 A.5.30, A.8.13, A.8.14 |
 
 Targets: **RPO 24 h (1 h with Cloud SQL PITR) · RTO 4 h** — from
@@ -23,7 +23,7 @@ Targets: **RPO 24 h (1 h with Cloud SQL PITR) · RTO 4 h** — from
 ### S2 — Backend instance / host lost
 
 1. Rebuild from source: `docker compose up --build -d backend` (or deploy the last known-good image tag to Cloud Run).
-2. Entry point runs migrations idempotently; verify `/healthz`, `/readyz`.
+2. Entry point runs migrations idempotently; verify `/health`, `/readyz`.
 3. No data step needed — the service is stateless.
 
 ### S3 — Region unavailable (production)
@@ -59,12 +59,25 @@ quarterly access review ([ACCESS_CONTROL.md](ACCESS_CONTROL.md)).
 
 The production column is implemented in [`infra/`](../../infra/README.md) (Terraform, validated, apply pending GGU-29).
 
-| Layer | Demo (compose) | Production target (`infra/`, GGU-29) |
-|---|---|---|
-| Database | single container, daily dump | Cloud SQL HA (regional standby), automated backups + PITR |
-| Backend | single container, health-checked | Cloud Run ≥ 1 min instance, multi-zone, `/readyz` uptime check |
-| Secrets | `.env` per solution (never committed) | Secret Manager, versioned, 90-day rotation |
-| Logs | container stdout (JSON) | Cloud Logging, 90-day retention |
+| Layer | Demo (compose) | Dev (`infra/`, `environment = "dev"`) | Production target (`infra/`, GGU-29) |
+|---|---|---|---|
+| Database | single container, daily dump | Cloud SQL **zonal**, daily backups, **no PITR** | Cloud SQL HA (regional standby), automated backups + PITR |
+| Backend | single container, health-checked | Cloud Run **scale-to-zero**, no uptime check | Cloud Run **exactly one instance** (`min = max = 1`), **single-zone, no failover**, `/readyz` uptime check |
+| Secrets | `.env` per solution (never committed) | Secret Manager, versioned, 90-day rotation | Secret Manager, versioned, 90-day rotation |
+| Logs | container stdout (JSON) | Cloud Logging, **30-day** retention | Cloud Logging, 90-day retention |
+
+**The backend row is not a redundancy claim.** Production runs one Cloud Run
+instance by design (GGU-83, `infra/environments/production.tfvars:11`), so the
+compute tier has no standby and no failover: recovery from a compute failure
+is Cloud Run rescheduling that one instance, on an unmeasured timeline. Only
+the **database** row describes genuine redundancy. See
+[BUSINESS_CONTINUITY_PLAN.md](BUSINESS_CONTINUITY_PLAN.md) §5a (gap G-BCP-1)
+and R-17 in [RISK_ASSESSMENT.md](RISK_ASSESSMENT.md).
+
+**Dev has no disaster-recovery commitment.** Losing it is not an incident: the
+recovery procedure is `terraform apply` followed by a re-seed, and the data is
+synthetic. It is listed here so nobody reads the production column and assumes
+it describes every deployed environment.
 
 ## 5. Drills
 

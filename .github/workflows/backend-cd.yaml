@@ -4,9 +4,35 @@
 #   job name  = "<Area> · <what it proves>"
 #   step name = "<Verb> <object> (<tool>)"
 #
-# What reaches each environment:
-#   develop -> staging,    no human step
-#   main    -> production, behind the `production` Environment's required reviewer
+# Delivery is MANUAL. There is no `push:` trigger: merging to `develop` builds
+# and deploys nothing. Someone presses "Run workflow" in the Actions tab and
+# picks the branch, and the branch decides the environment —
+#
+#   run from `develop` -> dev
+#   run from `main`    -> production, behind the `production` Environment's
+#                         required reviewer, exactly as before
+#
+# Why: a POC does not merge and deploy in the same motion, and paying for a
+# build plus a deploy on every merge is the largest avoidable line in the CI
+# bill. PR checks are untouched — `backend-ci` still runs on every pull request
+# that touches `backend/**`, which is where a regression should be caught.
+#
+# The button only appears once this file exists on the repository's DEFAULT
+# branch. GitHub reads `workflow_dispatch` from the default branch only, so a
+# workflow that lives solely on `develop` is invisible in the UI and
+# `gh workflow run` answers "not found on the default branch". Releasing
+# `develop` into `main` is what makes the button real.
+#
+# Nothing is built or deployed until the full gate has passed ON THIS COMMIT.
+# `backend-ci.yaml` is called as the `ci` job below, `repo-ci.yaml` as the
+# `repo` job (it owns secret scanning for every stack), and `publish` and
+# `deploy` declare `needs: [ci, repo]`, so a red quality, test, security,
+# secrets, shell or image job leaves them skipped and the run red. This is a
+# real dependency inside one
+# run, not a `workflow_run` trigger that fires on completion and then has to
+# remember to inspect `conclusion` — the ordering is enforced by Actions
+# itself, and `infra/scripts/tests/test_dev_environment.sh` fails the build if
+# the `needs` edge is ever removed.
 #
 # Credentials: Workload Identity Federation only. There is no service-account
 # key in this repository's secrets, and `infra/scripts/tests/test_wif_conditions.sh`
@@ -19,12 +45,7 @@
 name: backend-cd
 
 on:
-  push:
-    branches: [develop, main]
-    paths:
-      - "backend/**"
-      - "infra/**"
-      - ".github/workflows/backend-cd.yaml"
+  # Manual only, on purpose — see the header. Nothing here reacts to a push.
   workflow_dispatch:
     inputs:
       rollback_to:
@@ -43,6 +64,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The gate, on this commit, before anything is built or deployed. Calling the
+  # workflow (rather than duplicating its jobs) keeps one definition of the gate
+  # — `.claude/ship-gate.json` stays the single Definition of Done.
+  ci:
+    name: "Gate · the full backend ship gate on the commit being released"
+    uses: ./.github/workflows/backend-ci.yaml
+    permissions:
+      contents: read
+
+  # The repository-wide half of the gate, called for the same reason `ci` is.
+  # Secret scanning used to sit inside `backend-ci` and therefore inside `ci`;
+  # it moved to `repo-ci` so that a client-only pull request is also scanned.
+  # Without this job the move would have quietly taken gitleaks off the path to
+  # production, which is the opposite of the finding it was closing.
+  repo:
+    name: "Gate · the repository-wide checks on the commit being released"
+    uses: ./.github/workflows/repo-ci.yaml
+    permissions:
+      contents: read
+
   settings:
     name: "Target · resolve the environment this ref releases to"
     runs-on: ubuntu-latest
@@ -57,42 +98,52 @@ jobs:
       repository: ${{ steps.resolve.outputs.repository }}
       service: ${{ steps.resolve.outputs.service }}
     steps:
+      # `develop` releases dev, `main` releases production. There is no staging
+      # environment: the proof of concept replaced it
+      # (specs/infra/0001-dev-environment.md). Each environment has its own
+      # Workload Identity pool, deployer identity and public URL, so every
+      # variable below is suffixed with the environment — and when one is
+      # missing the error names it exactly as a human must create it, because
+      # "GCP_PROJECT_ID is not set" sends people looking for a variable that
+      # does not exist under that name.
       - name: Resolve the per-environment variables for this ref (bash)
         id: resolve
         env:
           IS_PRODUCTION: ${{ github.ref_name == 'main' }}
-          PROJECT_STAGING: ${{ vars.GCP_PROJECT_ID_STAGING }}
+          PROJECT_DEV: ${{ vars.GCP_PROJECT_ID_DEV }}
           PROJECT_PRODUCTION: ${{ vars.GCP_PROJECT_ID_PRODUCTION }}
-          PROVIDER_STAGING: ${{ vars.GCP_WIF_PROVIDER_STAGING }}
+          PROVIDER_DEV: ${{ vars.GCP_WIF_PROVIDER_DEV }}
           PROVIDER_PRODUCTION: ${{ vars.GCP_WIF_PROVIDER_PRODUCTION }}
-          DEPLOYER_STAGING: ${{ vars.GCP_DEPLOYER_SA_STAGING }}
+          DEPLOYER_DEV: ${{ vars.GCP_DEPLOYER_SA_DEV }}
           DEPLOYER_PRODUCTION: ${{ vars.GCP_DEPLOYER_SA_PRODUCTION }}
-          PUBLIC_URL_STAGING: ${{ vars.PUBLIC_URL_STAGING }}
+          PUBLIC_URL_DEV: ${{ vars.PUBLIC_URL_DEV }}
           PUBLIC_URL_PRODUCTION: ${{ vars.PUBLIC_URL_PRODUCTION }}
           REGION: ${{ vars.GCP_REGION }}
         run: |
           set -euo pipefail
           if [ "${IS_PRODUCTION}" = "true" ]; then
             environment=production
+            suffix=PRODUCTION
             project="${PROJECT_PRODUCTION}"
             provider="${PROVIDER_PRODUCTION}"
             deployer="${DEPLOYER_PRODUCTION}"
             public_url="${PUBLIC_URL_PRODUCTION}"
           else
-            environment=staging
-            project="${PROJECT_STAGING}"
-            provider="${PROVIDER_STAGING}"
-            deployer="${DEPLOYER_STAGING}"
-            public_url="${PUBLIC_URL_STAGING}"
+            environment=dev
+            suffix=DEV
+            project="${PROJECT_DEV}"
+            provider="${PROVIDER_DEV}"
+            deployer="${DEPLOYER_DEV}"
+            public_url="${PUBLIC_URL_DEV}"
           fi
           missing=""
-          [ -n "${project}" ]    || missing="${missing} GCP_PROJECT_ID"
-          [ -n "${provider}" ]   || missing="${missing} GCP_WIF_PROVIDER"
-          [ -n "${deployer}" ]   || missing="${missing} GCP_DEPLOYER_SA"
-          [ -n "${public_url}" ] || missing="${missing} PUBLIC_URL"
+          [ -n "${project}" ]    || missing="${missing} GCP_PROJECT_ID_${suffix}"
+          [ -n "${provider}" ]   || missing="${missing} GCP_WIF_PROVIDER_${suffix}"
+          [ -n "${deployer}" ]   || missing="${missing} GCP_DEPLOYER_SA_${suffix}"
+          [ -n "${public_url}" ] || missing="${missing} PUBLIC_URL_${suffix}"
           [ -n "${REGION}" ]     || missing="${missing} GCP_REGION"
           if [ -n "${missing}" ]; then
-            echo "::error::repository variables not set for ${environment}:${missing} (see infra/README.md)"
+            echo "::error::repository variables not set for ${environment}:${missing} — create them under Settings → Secrets and variables → Actions → Variables, from the Terraform outputs listed in infra/README.md"
             exit 1
           fi
           {
@@ -109,7 +160,7 @@ jobs:
     name: "Image · build and push it to Artifact Registry by digest"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [settings]
+    needs: [ci, repo, settings]
     permissions:
       contents: read
       id-token: write # mint the federated token; nothing else is granted
@@ -118,7 +169,7 @@ jobs:
       release: ${{ steps.release.outputs.release }}
     steps:
       - name: Check out the commit being released (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Derive the release identifier from the version and the commit (bash)
         id: release
@@ -140,11 +191,11 @@ jobs:
         run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
 
       - name: Set up BuildKit (docker/setup-buildx-action)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and push the runtime image (docker/build-push-action)
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: true
@@ -165,7 +216,7 @@ jobs:
     name: "Deploy · release the digest and verify it before traffic"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [settings, publish]
+    needs: [ci, repo, settings, publish]
     permissions:
       contents: write # create the release tag after a production deploy
       id-token: write
@@ -175,7 +226,7 @@ jobs:
       name: ${{ needs.settings.outputs.environment }}
     steps:
       - name: Check out the deploy scripts (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
         uses: google-github-actions/auth@v2
@@ -220,7 +271,7 @@ jobs:
     name: "Report · what was released and where"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [settings, publish, deploy]
+    needs: [ci, repo, settings, publish, deploy]
     if: always()
     steps:
       - name: Write the release record to the run summary (GITHUB_STEP_SUMMARY)
@@ -231,6 +282,7 @@ jobs:
             echo "| Field | Value |"
             echo "|---|---|"
             echo "| Environment | ${{ needs.settings.outputs.environment }} |"
+            echo "| Ship gate | ${{ needs.ci.result }} |"
             echo "| Commit | \`${GITHUB_SHA}\` |"
             echo "| Release | \`${{ needs.publish.outputs.release }}\` |"
             echo "| Image | \`${{ needs.publish.outputs.image }}\` |"
@@ -247,5 +299,5 @@ jobs:
         # reported as green.
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
         run: |
-          echo "::error::delivery did not complete — publish=${{ needs.publish.result }} deploy=${{ needs.deploy.result }}"
+          echo "::error::delivery did not complete — gate=${{ needs.ci.result }} publish=${{ needs.publish.result }} deploy=${{ needs.deploy.result }}"
           exit 1

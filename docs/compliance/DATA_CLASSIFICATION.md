@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | Security owner (TL backend) · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 or when a new data element is stored |
+| **Owner** | Security owner (TL backend) · **Version** 2.0 — 2026-09-21 · **Next review** 2027-09-19 or when a new data element is stored |
 | **Maps to** | SOC 2 C1.1, C1.2, P-series · ISO/IEC 27001 A.5.12, A.5.13, A.8.10, A.8.11 |
 
 ## 1. Classes
@@ -22,13 +22,31 @@
 | `audit_events` | `provider`, `action`, `target` (flag key / resource id), `request_id`, `created_at` | Internal | no | `action` is `<domain>.<verb>`; `target` never carries PII |
 | `audit_events` | `token_fingerprint` | Confidential | no (16-hex SHA-256 prefix) | the token itself is **never** stored |
 | `feature_flags` | `key`, `enabled`, `description`, `updated_by` (subject) | Internal (`updated_by` Confidential) | pseudonymous | — |
+| `sessions` | `subject` (IdP `sub`) | Confidential | pseudonymous identifier | ownership key; every `SessionRepository` query filters on it |
+| `sessions` | `provider`, `title`, `created_at`, `updated_at` | Confidential | `title` is user-supplied free text | `title` bounded at 200 chars; never logged |
+| `messages` | `session_id`, `role`, `created_at` | Internal | no | `role` constrained to `user`/`assistant`/`system` by a CHECK constraint |
+| `messages` | `content` | **Confidential** | **free text — may contain anything the user types, and is what reaches the model** | bounded by the request body limit; never logged; never sent to Sentry (`max_request_body_size="never"`). Sent to Google Gemini as the turn's prompt — see [AI_DATA_HANDLING.md](AI_DATA_HANDLING.md) |
+| `portfolios` | `subject` (IdP `sub`), `as_of` | Confidential | pseudonymous identifier | ownership key, unique per subject (`uq_portfolios_subject`) |
+| `portfolio_lots` | `portfolio_id`, `lot_id`, `symbol`, `acquired_on`, `quantity`, `cost_basis` | **Confidential** | financial holdings, indirectly identifying | no subject column — reachable only through the portfolio; cascades with it |
+| `portfolio_transactions` | `portfolio_id`, `transaction_id`, `occurred_on`, `kind`, `symbol`, `quantity`, `price`, `amount` | **Confidential** | financial transaction history, indirectly identifying | as above; cascades with the portfolio |
 | Token claims (in memory only) | `email` | Confidential / PII | yes | read for the `Principal`, returned to the caller on `/v1/me`, never persisted or logged |
 | Logs (structlog) | `request_id`, level, event, error code | Internal | no | `redact_sensitive` drops `authorization`, `token`, `password`, `secret`, `cookie`, `api_key` |
 | Sentry | exception type, stack, `request_id`, tags | Internal | no | `send_default_pii=False`, request bodies never sent |
 
-Portfolio/finance data (future specs) will be classified **Confidential** by
-default and added here with its minimisation before the spec is approved
-(spec template §5 "Security notes").
+All seven tables the system stores are listed above. The inventory is
+enumerated from `backend/src/app/models/`; a table that is not here is either
+new or an omission, and the same check applies to `DATA_RETENTION.md` §3.
+
+> **Correction, 2026-09-21.** This section previously ended "Portfolio/finance
+> data (future specs) will be classified **Confidential** … before the spec is
+> approved". That data is **not future**: `models/portfolio.py:38,48,63` define
+> three tables that shipped with spec `backend/0020`, and the conversation
+> tables shipped with `backend/0004` before them. Five of the seven tables were
+> missing from this inventory. Raised as **NC-6** together with the erasure
+> defect it caused — an inventory that does not list a table is why the erasure
+> procedure did not delete from it. §3 below claims the `backend-reviewer`
+> checks that a new column appears here; on this change it did not fire, which
+> is **NC-7**.
 
 ## 3. Labelling
 

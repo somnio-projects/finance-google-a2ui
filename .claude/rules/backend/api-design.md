@@ -17,7 +17,7 @@ Every HTTP surface in `backend/` follows these. They are checked by the
 | Versioning | `/v1` prefix on every business route; breaking a contract means `/v2`, not mutating `/v1` |
 | No RPC escape hatches | a computation is a resource (`POST /v1/portfolios/{id}/attribution-runs`) or a sub-resource read (`GET /v1/portfolios/{id}/attribution?window=7d`) |
 
-Health and infrastructure routes (`/healthz`, `/readyz`) are the only
+Health and infrastructure routes (`/health`, `/readyz`) are the only
 non-versioned, non-resource routes and are documented as such.
 
 ## 2. OpenAPI: everything is documented

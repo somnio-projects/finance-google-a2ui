@@ -12,9 +12,15 @@ specs/
 ├── README.md          this file
 ├── TEMPLATE.md        copy me
 ├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
+├── infra/             NNNN-<topic>.md   — Google Cloud infrastructure (infra/) and the delivery pipeline
 ├── repo/              NNNN-<topic>.md   — repository-level work: licensing, docs, hygiene
-└── client/            NNNN-<feature>.md — Flutter client (client_flutter/), when it adopts SDD
+├── client/            NNNN-<feature>.md — the client_flutter/ app and the backend contract both apps bind
+└── frontend/          NNNN-<feature>.md — the A2UI client (frontend/)
 ```
+
+One area per solution folder, so `frontend/`'s specs are found where its code
+is. `client/` keeps the specs that are not one app's — chiefly
+`0003-client-backend-contract.md`, which both Flutter apps bind.
 
 Numbers are per area, zero-padded, never reused. The filename is stable once
 merged; a replaced spec is marked `Superseded by NNNN` and kept.
@@ -37,8 +43,37 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 
 ## Index
 
+One row per file, ordered by area then number — so a missing spec and a
+duplicated one are both visible at a glance.
+
 | Spec | Status | Ticket |
 |---|---|---|
 | [backend/0001-backend-foundation.md](backend/0001-backend-foundation.md) | Implemented | GGU-3 / GGU-45 / GGU-46 (re-baselined) |
 | [backend/0002-feature-flags.md](backend/0002-feature-flags.md) | Implemented | — (TL request 2026-09-18) |
+| [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |
+| [backend/0004-session-identity.md](backend/0004-session-identity.md) | Draft | GGU-46 |
+| [backend/0005-presentation-layer.md](backend/0005-presentation-layer.md) | Implemented | GGU-49 |
+| [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |
+| [backend/0007-cd-pipeline.md](backend/0007-cd-pipeline.md) | Approved | GGU-48 |
+| [backend/0008-attribution-tool.md](backend/0008-attribution-tool.md) | Implemented | GGU-36 |
+| [backend/0009-prompt-fragments.md](backend/0009-prompt-fragments.md) | Implemented | GGU-14 |
+| [backend/0010-a2a-surface.md](backend/0010-a2a-surface.md) | Implemented | GGU-3 |
+| [backend/0011-holdings-tool.md](backend/0011-holdings-tool.md) | Implemented | GGU-39 |
+| [backend/0012-delivery-followups.md](backend/0012-delivery-followups.md) | Implemented | — (ADR-K D-18/D-19/D-20 follow-ups) |
+| [backend/0013-simulate-sale-tool.md](backend/0013-simulate-sale-tool.md) | Implemented | GGU-37 |
+| [backend/0014-payoff-tool.md](backend/0014-payoff-tool.md) | Implemented | GGU-38 (re-baselined) |
+| [backend/0015-tax-lot-table-projection.md](backend/0015-tax-lot-table-projection.md) | Implemented | GGU-41 |
+| [backend/0016-payoff-curve-projection.md](backend/0016-payoff-curve-projection.md) | Implemented | GGU-41 |
+| [backend/0017-scenario-comparison-projection.md](backend/0017-scenario-comparison-projection.md) | Implemented | GGU-41 |
+| [backend/0018-order-ticket-projection.md](backend/0018-order-ticket-projection.md) | Draft | GGU-41 |
+| [backend/0019-frozen-catalog-contract.md](backend/0019-frozen-catalog-contract.md) | Implemented | GGU-41 (re-baselined) |
+| [backend/0020-portfolio-persistence.md](backend/0020-portfolio-persistence.md) | Approved | GGU-29 follow-up |
+| [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Implemented | GGU-78 |
+| [backend/0023-catalog-serves-the-client.md](backend/0023-catalog-serves-the-client.md) | Implemented | GGU-53 |
+| [backend/0024-contract-serves-the-designs.md](backend/0024-contract-serves-the-designs.md) | Implemented | GGU-99 (closes GGU-101/103/104 in part) |
+| [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
+| [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
+| [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |
+| [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |
+| [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |

@@ -1,14 +1,22 @@
-"""The only access path to a subject's portfolio (ADR-F D-3, spec 0003 AC-8).
+"""How a subject's portfolio is reached (spec 0003 §6, revised by spec 0020).
 
-Nothing outside this module reaches a stored ``Portfolio``: callers go through
-``PortfolioProvider.get`` and ``.save``. That single choke point is what keeps
-the in-memory decision reversible — GGU-46 puts a session-backed
-implementation behind the same Protocol instead of rewriting every tool.
+The Protocol is **async**. It was synchronous while the only implementation
+held a dict, and a database read is not synchronous. Every caller was already
+`async` — `Tool.run`, `ViewService` — so this costs four `await`s and buys the
+portfolio a life beyond one process.
 
-``get`` **seeds on first access** rather than raising: a demo session must
-never open on an error, and seeding there is what fixes ``as_of`` for that
-subject from then on. The instant comes from the injected ``Clock``, so this
-package still never reads a wall clock of its own.
+`InMemoryPortfolioProvider` is no longer the production path; it is the test
+double, so unit tests do not need PostgreSQL. The persistent implementation is
+`services.portfolio_service.PersistentPortfolioProvider`, which lives there
+because the domain may not import a repository.
+
+**Why this changed.** Dev ran `min_instances = 1, max_instances = 2` so the
+demo does not pay a cold start. Two processes meant two caches, each seeded
+from its own clock: one subject, two portfolios, two `as_of`. The figures
+agreed; the moment they were taken did not, and the `ETag` derives from it
+(ADR-K D-20). Spec 0020 has the full account. The ceiling is 1 again since
+GGU-83 — for the rate limiter, not for this — and the portfolio no longer
+depends on it either way.
 """
 
 from typing import Protocol
@@ -24,21 +32,24 @@ _logger = get_logger(__name__)
 class PortfolioProvider(Protocol):
     """Read and replace the portfolio belonging to one subject."""
 
-    def get(self, subject: str) -> Portfolio:
+    async def get(self, subject: str) -> Portfolio:
         """Return the subject's portfolio, seeding one on first access."""
         ...
 
-    def save(self, subject: str, portfolio: Portfolio) -> None:
+    async def save(self, subject: str, portfolio: Portfolio) -> None:
         """Replace the subject's portfolio with ``portfolio``."""
         ...
 
 
 class InMemoryPortfolioProvider:
-    """Hold one portfolio per subject in process memory (ADR-F D-1).
+    """Hold one portfolio per subject in process memory — **tests only**.
 
     Subjects never share a ``Portfolio`` object, so a mutation saved for one is
-    invisible to every other — the correctness half of session isolation, with
-    uid binding owned by GGU-46.
+    invisible to every other.
+
+    Do not wire this into `bootstrap`. It is exactly the implementation spec
+    0020 replaced: it cannot survive a restart and two of it disagree about
+    `as_of`.
     """
 
     def __init__(self, *, clock: Clock) -> None:
@@ -46,7 +57,7 @@ class InMemoryPortfolioProvider:
         self._clock = clock
         self._portfolios: dict[str, Portfolio] = {}
 
-    def get(self, subject: str) -> Portfolio:
+    async def get(self, subject: str) -> Portfolio:
         """Return ``subject``'s portfolio, seeding it on first access.
 
         Args:
@@ -68,12 +79,12 @@ class InMemoryPortfolioProvider:
             )
         return portfolio
 
-    def save(self, subject: str, portfolio: Portfolio) -> None:
-        """Store ``portfolio`` as ``subject``'s current portfolio.
+    async def save(self, subject: str, portfolio: Portfolio) -> None:
+        """Replace ``subject``'s portfolio.
 
         Args:
             subject: The authenticated principal's subject.
-            portfolio: The portfolio to remember from now on.
+            portfolio: The portfolio to store.
         """
         self._portfolios[subject] = portfolio
 

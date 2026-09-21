@@ -28,7 +28,7 @@ domain (GGU-5), Flutter client wiring (GGU-2), Cloud Run deploy (GGU-29).
 
 | Method & path | Auth | Response | Errors |
 |---|---|---|---|
-| `GET /healthz` | none | `HealthResponse{status:"ok", version}` | — |
+| `GET /health` | none | `HealthResponse{status:"ok", version}` | — |
 | `GET /readyz` | none | `ReadinessResponse{status, dependencies[]}` | `503` when degraded |
 | `GET /v1/me` | Bearer | `MeResponse{subject, provider, email, scopes[]}` | `auth/missing-token`, `auth/invalid-token`, `auth/expired-token` → 401 |
 | `GET /v1/me/audit-events?limit=1..100` | Bearer | `list[AuditEventResponse]` | `malformed-request → 422`, auth codes |
@@ -59,7 +59,7 @@ read-only container. Full mapping: `backend/docs/SECURITY.md`.
 ## 6. Acceptance criteria
 
 1. **AC-1** `make gate` is green from a clean clone: ruff, format, basedpyright strict, file budget (≤150 lines), pytest with 100 % branch coverage.
-2. **AC-2** `/healthz` and `/readyz` are unauthenticated; `/readyz` returns 503 with `status: degraded` when PostgreSQL is unreachable and 200 `ready` otherwise.
+2. **AC-2** `/health` and `/readyz` are unauthenticated; `/readyz` returns 503 with `status: degraded` when PostgreSQL is unreachable and 200 `ready` otherwise.
 3. **AC-3** `/v1/me` without a token → 401 `auth/missing-token`; garbage/wrong-secret/wrong-audience/wrong-issuer → 401 `auth/invalid-token`; expired → 401 `auth/expired-token`; none of the bodies contain library text or stack traces.
 4. **AC-4** A valid token → 200 with subject/provider/email/scopes and one `audit_events` row whose `request_id` equals the response `X-Request-ID`; the token never appears in responses or logs.
 5. **AC-5** OIDC provider verifies RS256 tokens against a JWKS document, caches keys for the TTL and rejects unknown `kid`/issuer.
@@ -80,7 +80,7 @@ read-only container. Full mapping: `backend/docs/SECURITY.md`.
 | AC-5 | `auth/test_oidc_provider.py`, `auth/test_jwks.py`, `auth/test_registry.py` | — |
 | AC-6, AC-7 | `api/test_middleware.py` | — |
 | AC-8 | `api/test_error_handlers.py`, `infra/test_telemetry.py` | — |
-| AC-9 | — | manual: `docker compose up --build`, `curl /healthz` (recorded in PR) |
+| AC-9 | — | manual: `docker compose up --build`, `curl /health` (recorded in PR) |
 | AC-10 | `core/test_config.py` | — |
 
 Mutation checks: auth middleware and rate limiter — yes (performed before PR).
@@ -90,10 +90,42 @@ Mutation checks: auth middleware and rate limiter — yes (performed before PR).
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
 | OD-1 | Where does the A2UI/A2A agent live — mounted inside this FastAPI app or a sibling service? | Lautaro + Mario | Mount the A2A Starlette app under this FastAPI app behind the same auth middleware (one deployable) |
-| OD-2 | Rate-limit backend for multi-instance deploys | Lautaro | In-memory (single instance, ADR-F D-4); Redis adapter when `max-instances > 1` |
+| OD-2 | Rate-limit backend for multi-instance deploys | Lautaro | **Resolved 2026-09-20 (GGU-83) — see below.** In-memory, with `max_instances` pinned to 1 so the documented limit is the enforced one. Re-opens on the condition named below, not on a date. |
 | OD-3 | Firebase JWKS URL / issuer values for `finance-a2ui` | Pato / Lautaro | `oidc` provider with Google's securetoken JWKS; issuer `https://securetoken.google.com/finance-a2ui`, audience `finance-a2ui` |
 | OD-4 | `TrustedHostMiddleware` 400 is plain text, not problem+json | Lautaro | Accept for Epic 0; replace with a custom Host check returning problem+json when the client needs to parse it |
 | OD-5 | `FORWARDED_ALLOW_IPS` defaults to `*` (Cloud Run's LB is the only ingress) | Lautaro | Keep `*` on Cloud Run; set the proxy CIDR anywhere clients can reach uvicorn directly |
+
+### OD-2 resolved — 2026-09-20 (GGU-83)
+
+OD-2 was written as *"Redis adapter when `max-instances > 1`"*. That condition became **true** when
+dev was scaled to `1/2` for the cold-start budget, and nothing noticed: the scaling change was made
+on cost grounds and the constraint it violated lived in another document. The per-principal limit was
+silently twice what `backend/docs/SECURITY.md` documents. **A condition nobody evaluates is not a
+condition** — which is why the resolution below is enforced by a test rather than by a sentence.
+
+**Resolution (TL, Option B):** keep the in-memory limiter and pin the instance count instead.
+`infra/main.tf` derives `max_instances = 1` and every `infra/environments/*.tfvars` sets 1, which
+makes the documented limit the enforced one. This does not make the limiter correct; it makes the
+configuration match what the limiter can do.
+
+**The condition under which OD-2 re-opens** — any one of these, not a date:
+
+1. Any environment needs `max_instances > 1` (load, availability, or a rollout strategy that runs
+   two revisions at once). The pin is the only thing holding the limit, so raising it re-opens this.
+2. The limiter has to survive a revision restart, or the limit must be shared with any other
+   process — a second service, a worker, or a job.
+3. The per-principal limit becomes a hard commitment to a third party rather than the compensating
+   control [ADR-G](../../docs/adr/ADR-G-secret-handling.md) D-7 describes.
+
+When it re-opens, the fix is the one this OD always named: a shared backing store (Memorystore was
+Option A, costed on GGU-83) behind `FixedWindowLimiter`, which is a small class precisely so the swap
+stays contained. The feature-flag cache takes the same treatment or keeps its TTL window, documented.
+
+**What holds it shut meanwhile:** `infra/scripts/tests/test_rate_limit_ceiling.sh`
+(`infra.rate-limit-ceiling` in `.claude/ship-gate.json`) compares the Terraform ceiling, the
+configured default and the two numbers in `backend/docs/SECURITY.md`, and fails naming both sides.
+Condition 1 above cannot be met silently: raising the ceiling turns the gate red and the message
+points back here. See [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md) **D-9**.
 
 ## 9. Rollout & observability
 

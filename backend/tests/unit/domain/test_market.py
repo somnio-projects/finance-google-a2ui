@@ -4,6 +4,8 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.display import PRICE_PRECISION
+from app.core.locales import quantize
 from app.domain.errors import SymbolNotFoundError
 from app.domain.market import MARKET_REFERENCE, market_asset, price_of
 from app.domain.symbols import normalize_symbol
@@ -39,3 +41,15 @@ def test_every_reference_entry_is_unique_and_priced() -> None:
 
 def test_normalize_symbol_is_idempotent() -> None:
     assert normalize_symbol(normalize_symbol(" eth ")) == "ETH"
+
+
+def test_every_reference_price_fits_the_display_precision() -> None:
+    """Spec 0013 OD-4 — ``price_display`` promises the price ties out exactly.
+
+    It carries ``PRICE_PRECISION`` places, so a reference quoting finer than
+    that would silently break the multiplication a reader does between the
+    price and the quantity beside it. Adding such an asset fails here, where
+    the fix is to widen the constant, rather than in a demo.
+    """
+    for asset in MARKET_REFERENCE:
+        assert asset.price == quantize(asset.price, precision=PRICE_PRECISION)

@@ -22,7 +22,7 @@ from app.core.protocols import Clock
 from app.helpers.tokens import extract_bearer, fingerprint
 
 WINDOW_SECONDS = 60
-EXEMPT_PATHS: frozenset[str] = frozenset({"/healthz", "/readyz"})
+EXEMPT_PATHS: frozenset[str] = frozenset({"/health", "/readyz"})
 
 
 class FixedWindowLimiter:

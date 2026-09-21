@@ -16,8 +16,9 @@ Docs at http://localhost:8000/docs (disabled when `ENVIRONMENT=production`).
 ## Verify — a change is not done without this
 
 ```bash
-cd backend && make gate            # lint · typecheck · budget · quality · test 100 % · audit
+cd backend && make gate            # lint · typecheck · budget · catalog-check · quality · test 100 % · audit
 cd backend && make quality         # code smells: complexity, dead code, docstrings, deps, duplication, typos
+cd backend && make catalog         # regenerate both docs/catalog/ artefacts after touching a projection
 ```
 
 - `make gate` == CI == `.claude/ship-gate.json`. Red gate = not done. Never lower `fail_under`, never add `# pragma: no cover` without a one-line reason.
@@ -34,8 +35,10 @@ repositories/*.py    one per aggregate, subclass BaseRepository; the only code t
 models/*.py          SQLAlchemy entities, TimestampMixin + Base; one table per file
 schemas/*.py         pydantic DTOs (frozen); never return ORM objects from a controller
 auth/providers/*.py  TokenVerifier implementations; add a provider = new module + registry entry
-infra/**             adapters (db engine/session, telemetry); instantiated only in bootstrap.py
-core/                Settings, AppError hierarchy, Protocols, logging — framework-free
+agent/               agent host inner layer: Tool Protocol, registry, prompt; agent/tools/*.py
+domain/              the portfolio aggregate (pure, Decimal); imports core only
+infra/**             adapters (db engine/session, telemetry, model client); instantiated only in bootstrap.py
+core/                Settings, AppError hierarchy, Protocols, logging, display — framework-free
 bootstrap.py         the single composition root
 ```
 
@@ -47,7 +50,8 @@ Rules that are checked, not suggested:
 - **Config**: only through `Settings` (pydantic-settings, frozen). Required values have no default. Never `os.environ` in application code.
 - **Auth**: controllers get the caller via `PrincipalDep`; the token is never read anywhere else, never logged, never stored (use `token_fingerprint`).
 - **Persistence**: one `AsyncSession` per request (`get_session`), commit/rollback owned by `session_scope`. Schema changes ship with an Alembic migration in the same PR.
-- **Telemetry**: report through the injected `ErrorReporter`; never `if sentry_configured:` at call sites (the null reporter handles absence).
+- **Telemetry**: report through the injected `ErrorReporter`; never `if sentry_configured:` at call sites (the null reporter handles absence). Same shape for the model: an unset `GEMINI_API_KEY` yields `NullModelClient`, so no call site branches on configuration.
+- **Agent tools**: one module per tool under `app/agent/tools/`, ending in `register(MyTool())`; `load_tools()` discovers it. Adding a tool edits **no** shared file. Tools return pre-formatted `*Display` strings from `app/core/display.py` — the LLM never computes a figure. See `specs/backend/0006-agent-host.md`.
 - **Feature flags**: gate a route with `dependencies=[require_feature("<domain>.<capability>")]` (`api/feature_gate.py`); dark-launch with `default=False`. Toggle via `PUT /v1/admin/feature-flags/{key}` (scope `admin`) or the `FEATURE_FLAGS_FORCE_DISABLED` env kill-switch. See `docs/FEATURE_FLAGS.md`.
 - **REST + OpenAPI**: resource paths, correct verbs/status codes, and *every* operation carrying `summary`, `description`, `operation_id`, `tags`, `response_model`, the full `responses` map (problem+json per status) and examples; every DTO field documented and bounded. Shared response blocks come from `api/openapi.py` — never copy-pasted. See `.claude/rules/backend/api-design.md`.
 - **Docstrings** on every public module/class/function (Google style, imperative). Type hints everywhere, `X | None`, built-in generics.
@@ -69,7 +73,7 @@ Rules that are checked, not suggested:
 
 ## Security posture (SOC 2 / ISO 27001 — see docs/SECURITY.md)
 
-Bearer-token auth on everything except `/healthz`, `/readyz`, `/openapi.json`, `/docs`; admin routes additionally require scope `admin`; feature-flag gates answer 404 before auth; strict security headers; CORS and `TrustedHost` allow-lists from settings; body-size limit; per-token rate limit; audit trail (`audit_events`) for identity actions; non-root read-only container; no secrets in code, images or logs; problem responses never carry stack traces.
+Bearer-token auth on everything except `/health`, `/readyz`, `/openapi.json`, `/docs`; admin routes additionally require scope `admin`; feature-flag gates answer 404 before auth; strict security headers; CORS and `TrustedHost` allow-lists from settings; body-size limit; per-token rate limit; audit trail (`audit_events`) for identity actions; non-root read-only container; no secrets in code, images or logs; problem responses never carry stack traces.
 
 ## Do not touch
 
