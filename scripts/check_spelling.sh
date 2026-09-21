@@ -54,8 +54,18 @@ fi
 
 # The dot-directories are the whole reason this script exists, so assert they
 # are actually in the list rather than trusting that they are.
+#
+# A here-string, NOT `printf ... | grep -q`. That pipeline failed on the runner
+# with "printf: write error: Broken pipe", and `pipefail` turned the broken
+# pipe into a failed test — so the script reported "nothing under .claude/
+# reached codespell" about a list that began with `.claude/`. `grep -q` exits
+# at the first match, and `.claude/` sorts first, so it closed the pipe while
+# printf still had a thousand paths to write. The larger the repository, the
+# more reliably this check failed, and it failed CLOSED, which is why it read
+# as a real finding: `develop` was red for it before this branch existed.
+# A here-string has no reader to close the pipe early.
 for required in ".claude/" ".github/"; do
-  if ! printf '%s\n' "$files" | grep -q "^${required}"; then
+  if ! grep -q "^${required}" <<<"$files"; then
     echo "repo.spelling: nothing under ${required} reached codespell" >&2
     echo "  that is the gap this check was written to close — see the header" >&2
     exit 1

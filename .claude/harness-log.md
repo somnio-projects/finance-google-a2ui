@@ -2509,3 +2509,26 @@ recorded as gaps with that owner.
   refuses, so it could not be run even once before shipping. A gate nobody has
   seen go red is not a gate — that is the whole lesson of 2026-09-20, applied
   to the thing it was tempting to skip.
+
+**Postscript, found by this branch's own CI run: `repo.spelling` was red on
+`develop`, flakily, for a reason that had nothing to do with spelling.** Its
+anti-vacuity assertion is `printf '%s\n' "$files" | grep -q "^.claude/"`.
+`grep -q` exits at the first match, `.claude/` sorts first, and `pipefail`
+turns the resulting `printf: write error: Broken pipe` into a failed test — so
+the script reported *"nothing under .claude/ reached codespell"* about a list
+whose **first line** was `.claude/.proven-config-version`. Measured on the real
+821-path, 35 KB list on one CPU under load: the pipe form wrongly failed
+**18 of 200 runs**, the here-string form **0 of 200**. Under 64 KB it is a
+scheduling race, which is why it looked intermittent; past 64 KB printf must
+block and it fails every time.
+
+Two lessons, both of which this repository has now paid for twice:
+
+- **An anti-vacuity check is code, and can be wrong in its own right.** This
+  one failed *closed*, which is the safe direction and is exactly why it read
+  as a genuine finding rather than a bug. "The gate is red" was true; "the gate
+  is red about spelling" was not.
+- **The idiom spreads.** `check_shell.sh` was written in this same PR and had
+  copied the pipeline verbatim; it is latent there only because twelve paths
+  fit in a single write. Both are here-strings now. If you add a third
+  `check_*.sh`, do not reach for `printf ... | grep -q`.

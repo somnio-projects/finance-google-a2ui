@@ -72,7 +72,13 @@ fi
 for required in "client_flutter/docker/entrypoint.sh" "backend/docker/entrypoint.sh"; do
   # The tree is allowed to lose a file; it is not allowed to skip one.
   [ -f "$required" ] || continue
-  if ! printf '%s\n' "$files" | grep -qx "$required"; then
+  # A here-string, not `printf ... | grep -qx`. `grep -q` exits at the first
+  # match and `pipefail` then reports the SIGPIPE'd printf as a failed test —
+  # so the assertion fails on a list that does contain the file. It is latent
+  # at this scale (twelve scripts fit in one write) and certain at
+  # check_spelling.sh's (a thousand paths), where it was turning `develop` red.
+  # Same idiom, same bug; fixed in both rather than only where it bit.
+  if ! grep -qx "$required" <<<"$files"; then
     echo "repo.shell-lint: ${required} is tracked but never reached shellcheck" >&2
     echo "  that is the gap this check was written to close — see the header" >&2
     exit 1
