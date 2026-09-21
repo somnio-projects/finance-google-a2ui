@@ -19,8 +19,14 @@ class Surface(BaseModel):
 
     component: str = Field(
         max_length=64,
-        description="Catalog component the client instantiates.",
-        examples=["DonutChart"],
+        description=(
+            "Catalog component the client instantiates. It is the one string "
+            "the Flutter client registers against, so it is named by the "
+            "design catalog's own A2UI schema block and nowhere else "
+            "(GGU-53); `test_component_names.py` compares the four places it "
+            "is written down."
+        ),
+        examples=["AllocationSummary"],
     )
     view: str = Field(
         max_length=64,

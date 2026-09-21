@@ -10,9 +10,40 @@ registry. It can still drift from the *render endpoint*, and did:
 `test_view_query_options.py` is what compares those two now.
 """
 
-from typing import Any
+from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field
+
+#: Bound on each guidance sentence. Mirrors `presentation.guidance.MAX_SENTENCE`
+#: — `schemas/` may not import `presentation`, so the two are compared by a
+#: test rather than shared through an import that would break the layering.
+GUIDANCE_SENTENCE_MAX: Final[int] = 400
+
+
+class GuidanceDescriptor(BaseModel):
+    """The do/don't pair the catalog publishes for one view (spec 0023 §4).
+
+    A **second declaration** of `presentation.guidance.Guidance`, on purpose:
+    `schemas/` may not import `presentation` (`architecture.md`), and a
+    `dict[str, Any]` here would generate `Map<String, dynamic>` in a client
+    for a shape that is closed and already modelled. Two declarations of one
+    fact get a test comparing them, which is
+    `test_guidance.py::test_the_published_descriptor_matches_the_declared_pair`
+    — the same rule this whole ticket is about.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    use_when: str = Field(
+        max_length=GUIDANCE_SENTENCE_MAX,
+        description="The question this view answers, in the model's words.",
+        examples=["the user asks why a value changed"],
+    )
+    avoid_when: str = Field(
+        max_length=GUIDANCE_SENTENCE_MAX,
+        description="The question it does not answer, naming the view that does.",
+        examples=["a breakdown of what is held now — `holdings.allocation.v1`"],
+    )
 
 
 class ViewDescriptor(BaseModel):
@@ -29,6 +60,25 @@ class ViewDescriptor(BaseModel):
         max_length=300,
         description="What the projection shows, in one line.",
         examples=["Allocation by holding: market value and weight per symbol."],
+    )
+    component: str = Field(
+        max_length=64,
+        description=(
+            "The A2UI component a surface rendered from this projection "
+            "instantiates — the string the client registers its widget under. "
+            "Read from the projection's own adapter, so this catalog and the "
+            "rendered surface can never name it differently (GGU-53)."
+        ),
+        examples=["AllocationSummary"],
+    )
+    guidance: GuidanceDescriptor | None = Field(
+        default=None,
+        description=(
+            "When to pick this view and when to pick another, as the design "
+            "catalog words it. Null for a projection whose design page has "
+            "not been written — the catalog states what design decided, never "
+            "a sentence invented here."
+        ),
     )
     endpoints: list[str] = Field(
         description="The endpoints that serve this projection.",
@@ -63,4 +113,4 @@ class ViewDescriptor(BaseModel):
     )
 
 
-__all__ = ["ViewDescriptor"]
+__all__ = ["GUIDANCE_SENTENCE_MAX", "GuidanceDescriptor", "ViewDescriptor"]

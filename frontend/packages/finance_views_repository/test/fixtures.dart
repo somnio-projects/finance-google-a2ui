@@ -6,8 +6,8 @@
 /// Spec `frontend/0001` OD-1 carries the follow-up that replaces it with a
 /// read of the snapshot once PR #45 is on `develop`.
 ///
-/// Verified against snapshot digest `63d89e469006`
-/// (16 declared fields, component `DonutChart`).
+/// Verified against snapshot digest `7c827ee9a8b8`
+/// (16 declared fields, component `AllocationSummary`).
 const Map<String, dynamic> holdingsAllocationExample = <String, dynamic>{
   'categories': <Map<String, dynamic>>[
     <String, dynamic>{

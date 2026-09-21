@@ -137,20 +137,21 @@ Three of the four states design needs are facts about the schema. One is not:
 
 ## Components
 
-| Frozen id | Digest | Fields | Inputs | Purpose |
-|---|---|---|---|---|
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `0edca33bd65b` | 31 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `194e130cf9de` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
-| [`order.ticket.v1`](#orderticketv1) | `80e81a6bf2f7` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `f52eb1ea3307` | 18 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `b2e006b3b306` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `0790bed806a8` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| Frozen id | Component | Digest | Fields | Inputs | Purpose |
+|---|---|---|---|---|---|
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `04a53053167d` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `AllocationSummary` | `7c827ee9a8b8` | 16 | read-only | Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n. |
+| [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `6cbd19f8949e` | 27 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `PayoffChart` | `6a69670692d0` | 21 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `fe62a7725690` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `c9cc43ace0f0` | 49 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `attribution.waterfall.v1`
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `0edca33bd65b`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `04a53053167d`
+- **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -182,6 +183,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | `end.amount.display` | string ≤32 chars | required | `display` | — | — |
 | `buckets` | array | default `[]` | `container` | empty | — |
 | `buckets[].label` | string ≤64 chars | required | `text` | — | — |
+| `buckets[].key` | string ≤32 chars | required | `text` | — | — |
 | `buckets[].delta` | object | required | `container` | — | — |
 | `buckets[].delta.amount` | decimal | required | `raw` | — | — |
 | `buckets[].delta.display` | string ≤32 chars | required | `display` | — | — |
@@ -199,6 +201,11 @@ Three of the four states design needs are facts about the schema. One is not:
 | `actions[].control` | enum choice / text | required | `enum` | variant | — |
 | `actions[].choices` | array ≤16 items | default `[]` | `container` | empty | — |
 | `actions[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
+
+### When the agent picks this
+
+- **Use it when** the user asks WHY a value changed and the answer decomposes into signed contributions that sum to a net delta — what drove the portfolio's result, profit and loss by position. The steps arrive largest move first; do not reorder them.
+- **Do not use it for** a static breakdown of what is held now — `holdings.allocation.v1` answers that. Never write the figures yourself: render this view and copy the `display` strings it returns.
 
 ### Actions
 
@@ -227,6 +234,7 @@ _This surface sends nothing back: tapping it starts no turn._
   "buckets": [
     {
       "label": "Bitcoin",
+      "key": "BTC",
       "delta": {
         "amount": "10230.000000",
         "display": "$10,230.00"
@@ -239,6 +247,7 @@ _This surface sends nothing back: tapping it starts no turn._
     },
     {
       "label": "Ethereum",
+      "key": "ETH",
       "delta": {
         "amount": "-2797.500000",
         "display": "-$2,797.50"
@@ -251,6 +260,7 @@ _This surface sends nothing back: tapping it starts no turn._
     },
     {
       "label": "Solana",
+      "key": "SOL",
       "delta": {
         "amount": "1496.000000",
         "display": "$1,496.00"
@@ -263,6 +273,7 @@ _This surface sends nothing back: tapping it starts no turn._
     },
     {
       "label": "Chainlink",
+      "key": "LINK",
       "delta": {
         "amount": "-662.500000",
         "display": "-$662.50"
@@ -275,6 +286,7 @@ _This surface sends nothing back: tapping it starts no turn._
     },
     {
       "label": "Dogecoin",
+      "key": "DOGE",
       "delta": {
         "amount": "-152.400000000000",
         "display": "-$152.40"
@@ -308,7 +320,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Allocation by holding: market value and portfolio weight per symbol, with a residual Other bucket for everything beyond top_n.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `194e130cf9de`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `7c827ee9a8b8`
+- **Component:** `AllocationSummary`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -343,6 +356,10 @@ _This surface sends nothing back: tapping it starts no turn._
 | `categories[].weight` | object | required | `container` | — | — |
 | `categories[].weight.value` | decimal | required | `raw` | — | — |
 | `categories[].weight.display` | string ≤16 chars | required | `display` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
 
 ### Actions
 
@@ -430,7 +447,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.
 
-- **Frozen id:** `order.ticket.v1` · **digest:** `80e81a6bf2f7`
+- **Frozen id:** `order.ticket.v1` · **digest:** `6cbd19f8949e`
+- **Component:** `OrderTicket`
 - **Payload type:** `OrderTicketPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** `symbol`, `side`, `size`, `size_in`
@@ -478,6 +496,10 @@ _This surface sends nothing back: tapping it starts no turn._
 | `inputs[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
 | `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
 | `disclosure` | string ≤300 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
 
 ### Actions
 
@@ -567,7 +589,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `f52eb1ea3307`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `6a69670692d0`
+- **Component:** `PayoffChart`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -603,12 +626,19 @@ _This surface sends nothing back: tapping it starts no turn._
 | `series[].name` | string ≤64 chars | required | `text` | — | — |
 | `series[].points` | array | required | `container` | empty | — |
 | `series[].points[].label` | string ≤64 chars | required | `text` | — | — |
+| `series[].points[].at` | object | required | `container` | — | — |
+| `series[].points[].at.amount` | decimal | required | `raw` | — | — |
+| `series[].points[].at.display` | string ≤32 chars | required | `display` | — | — |
 | `series[].points[].value` | object | required | `container` | — | — |
 | `series[].points[].value.amount` | decimal | required | `raw` | — | — |
 | `series[].points[].value.display` | string ≤32 chars | required | `display` | — | — |
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
 
 ### Actions
 
@@ -650,6 +680,10 @@ _This surface sends nothing back: tapping it starts no turn._
       "points": [
         {
           "label": "$106.68",
+          "at": {
+            "amount": "106.680",
+            "display": "$106.68"
+          },
           "value": {
             "amount": "-150.0000000000000000000000000",
             "display": "-$150.00"
@@ -657,6 +691,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$110.49",
+          "at": {
+            "amount": "110.49000",
+            "display": "$110.49"
+          },
           "value": {
             "amount": "-137.5000000000000000000000000",
             "display": "-$137.50"
@@ -664,6 +702,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$114.30",
+          "at": {
+            "amount": "114.3000",
+            "display": "$114.30"
+          },
           "value": {
             "amount": "-125.0000000000000000000000000",
             "display": "-$125.00"
@@ -671,6 +713,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$118.11",
+          "at": {
+            "amount": "118.11000",
+            "display": "$118.11"
+          },
           "value": {
             "amount": "-112.5000000000000000000000000",
             "display": "-$112.50"
@@ -678,6 +724,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$121.92",
+          "at": {
+            "amount": "121.920",
+            "display": "$121.92"
+          },
           "value": {
             "amount": "-99.99999999999999999999999999",
             "display": "-$100.00"
@@ -685,6 +735,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$125.73",
+          "at": {
+            "amount": "125.73000",
+            "display": "$125.73"
+          },
           "value": {
             "amount": "-87.49999999999999999999999999",
             "display": "-$87.50"
@@ -692,6 +746,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$129.54",
+          "at": {
+            "amount": "129.5400",
+            "display": "$129.54"
+          },
           "value": {
             "amount": "-74.99999999999999999999999999",
             "display": "-$75.00"
@@ -699,6 +757,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$133.35",
+          "at": {
+            "amount": "133.35000",
+            "display": "$133.35"
+          },
           "value": {
             "amount": "-62.49999999999999999999999999",
             "display": "-$62.50"
@@ -706,6 +768,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$137.16",
+          "at": {
+            "amount": "137.160",
+            "display": "$137.16"
+          },
           "value": {
             "amount": "-49.99999999999999999999999999",
             "display": "-$50.00"
@@ -713,6 +779,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$140.97",
+          "at": {
+            "amount": "140.97000",
+            "display": "$140.97"
+          },
           "value": {
             "amount": "-37.49999999999999999999999999",
             "display": "-$37.50"
@@ -720,6 +790,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$144.78",
+          "at": {
+            "amount": "144.7800",
+            "display": "$144.78"
+          },
           "value": {
             "amount": "-25.00000000000000000000000000",
             "display": "-$25.00"
@@ -727,6 +801,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$148.59",
+          "at": {
+            "amount": "148.59000",
+            "display": "$148.59"
+          },
           "value": {
             "amount": "-12.50000000000000000000000000",
             "display": "-$12.50"
@@ -734,6 +812,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$152.40",
+          "at": {
+            "amount": "152.400",
+            "display": "$152.40"
+          },
           "value": {
             "amount": "0E-30",
             "display": "$0.00"
@@ -741,6 +823,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$156.21",
+          "at": {
+            "amount": "156.21000",
+            "display": "$156.21"
+          },
           "value": {
             "amount": "12.50000000000000000000000000",
             "display": "$12.50"
@@ -748,6 +834,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$160.02",
+          "at": {
+            "amount": "160.0200",
+            "display": "$160.02"
+          },
           "value": {
             "amount": "25.00000000000000000000000000",
             "display": "$25.00"
@@ -755,6 +845,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$163.83",
+          "at": {
+            "amount": "163.83000",
+            "display": "$163.83"
+          },
           "value": {
             "amount": "37.49999999999999999999999999",
             "display": "$37.50"
@@ -762,6 +856,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$167.64",
+          "at": {
+            "amount": "167.640",
+            "display": "$167.64"
+          },
           "value": {
             "amount": "49.99999999999999999999999999",
             "display": "$50.00"
@@ -769,6 +867,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$171.45",
+          "at": {
+            "amount": "171.45000",
+            "display": "$171.45"
+          },
           "value": {
             "amount": "62.49999999999999999999999999",
             "display": "$62.50"
@@ -776,6 +878,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$175.26",
+          "at": {
+            "amount": "175.2600",
+            "display": "$175.26"
+          },
           "value": {
             "amount": "74.99999999999999999999999999",
             "display": "$75.00"
@@ -783,6 +889,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$179.07",
+          "at": {
+            "amount": "179.07000",
+            "display": "$179.07"
+          },
           "value": {
             "amount": "87.49999999999999999999999999",
             "display": "$87.50"
@@ -790,6 +900,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$182.88",
+          "at": {
+            "amount": "182.880",
+            "display": "$182.88"
+          },
           "value": {
             "amount": "99.99999999999999999999999999",
             "display": "$100.00"
@@ -797,6 +911,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$186.69",
+          "at": {
+            "amount": "186.69000",
+            "display": "$186.69"
+          },
           "value": {
             "amount": "112.5000000000000000000000000",
             "display": "$112.50"
@@ -804,6 +922,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$190.50",
+          "at": {
+            "amount": "190.5000",
+            "display": "$190.50"
+          },
           "value": {
             "amount": "125.0000000000000000000000000",
             "display": "$125.00"
@@ -811,6 +933,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$194.31",
+          "at": {
+            "amount": "194.31000",
+            "display": "$194.31"
+          },
           "value": {
             "amount": "137.5000000000000000000000000",
             "display": "$137.50"
@@ -818,6 +944,10 @@ _This surface sends nothing back: tapping it starts no turn._
         },
         {
           "label": "$198.12",
+          "at": {
+            "amount": "198.120",
+            "display": "$198.12"
+          },
           "value": {
             "amount": "150.0000000000000000000000000",
             "display": "$150.00"
@@ -851,7 +981,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `b2e006b3b306`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `fe62a7725690`
+- **Component:** `ScenarioComparison`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** `subject.symbol`
@@ -911,6 +1042,11 @@ _This surface sends nothing back: tapping it starts no turn._
 | `notes` | array | default `[]` | `container` | empty | — |
 | `notes[].label` | string ≤64 chars | required | `text` | — | — |
 | `notes[].text` | string ≤200 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+- **Use it when** the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison.
+- **Do not use it for** a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.
 
 ### Actions
 
@@ -1038,7 +1174,8 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `0790bed806a8`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `c9cc43ace0f0`
+- **Component:** `TaxLotTable`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
 - **Editable fields:** read-only
@@ -1108,6 +1245,11 @@ _This surface sends nothing back: tapping it starts no turn._
 | `remaining` | array | default `[]` | `container` | empty | — |
 | `remaining[].label` | string ≤64 chars | required | `text` | — | — |
 | `remaining[].text` | string ≤200 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+- **Use it when** the user asks about selling a position and the answer depends on WHICH lots go — the realised result always splits into its short-term and long-term halves, which is the point of the surface.
+- **Do not use it for** comparing several lot-selection methods — `scenario.comparison.v1` puts those side by side. Never estimate a tax rate in prose: this view stops at the realised split, before any rate, fee or wash sale.
 
 ### Actions
 

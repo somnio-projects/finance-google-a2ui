@@ -91,15 +91,21 @@ def totals(curve: PayoffCurve, shape: Shape) -> tuple[Total, ...]:
 
 
 def line(curve: PayoffCurve, shape: Shape) -> Series:
-    """Return the profit-and-loss line, one labelled point per grid price."""
+    """Return the profit-and-loss line, one point per grid price.
+
+    Each point carries its price twice over: ``at`` is the ADR-E pair a
+    painter reads the x coordinate from, ``label`` the tick it prints. Before
+    GGU-53 only the label shipped, so the curve could be labelled but not
+    plotted — the client had to parse the formatted price back into a number.
+    """
+    at = [price(point.price, shape) for point in curve.points]
     return Series(
         name=SERIES_NAME,
         points=tuple(
             SeriesPoint(
-                label=price(point.price, shape).display,
-                value=amount(point.profit_loss, shape),
+                at=where, label=where.display, value=amount(point.profit_loss, shape)
             )
-            for point in curve.points
+            for point, where in zip(curve.points, at, strict=True)
         ),
     )
 

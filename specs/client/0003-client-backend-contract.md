@@ -307,12 +307,19 @@ digest changes, something frozen moved. Today:
 
 | Frozen id | Digest | Component | Inputs |
 |---|---|---|---|
-| `attribution.waterfall.v1` | `e866358af26d` | `WaterfallChart` | read-only |
-| `holdings.allocation.v1` | `63d89e469006` | `DonutChart` | read-only |
-| `order.ticket.v1` | `0a2904b9b52d` | `OrderTicket` | `symbol`, `side` |
-| `payoff.curve.v1` | `205668c78931` | `LineChart` | read-only |
-| `scenario.comparison.v1` | `d996313186c4` | `ComparisonCard` | `subject.symbol` |
-| `taxlots.table.v1` | `dfc041e6746d` | `TaxLotTable` | read-only |
+| `attribution.waterfall.v1` | `04a53053167d` | `AttributionWaterfall` | read-only |
+| `holdings.allocation.v1` | `7c827ee9a8b8` | `AllocationSummary` | read-only |
+| `order.ticket.v1` | `6cbd19f8949e` | `OrderTicket` | `symbol`, `side` |
+| `payoff.curve.v1` | `6a69670692d0` | `PayoffChart` | read-only |
+| `scenario.comparison.v1` | `fe62a7725690` | `ScenarioComparison` | `subject.symbol` |
+| `taxlots.table.v1` | `c9cc43ace0f0` | `TaxLotTable` | read-only |
+
+> **Every digest above moved on 2026-09-21** (GGU-53, spec `backend/0023`).
+> Four components were renamed to the names the design catalog gives them, the
+> catalog entry each digest is taken over now carries the component name and
+> the model guidance, and two payloads gained the raw values a painter needs
+> (`Bucket.key`, `SeriesPoint.at`). A moved digest is the mechanism working:
+> something frozen changed, and it says so.
 
 > Verified on 2026-09-20: for all six components, the `example` and `summary`
 > served live by `GET /v1/views` are **byte-identical** to the ones frozen in
@@ -485,11 +492,11 @@ already formatted**; the client binds them.
 
 | Projection id | A2UI `component` | `props` keys | Declared options | Editable |
 |---|---|---|---|---|
-| `attribution.waterfall.v1` | `WaterfallChart` | `start`, `end`, `steps`, `notes` | `fields`, `locale`, `precision`, `currency` | — |
-| `holdings.allocation.v1` | `DonutChart` | `center`, `slices` | `top_n`, `include_other`, `sort`, `precision`, `currency` | — |
+| `attribution.waterfall.v1` | `AttributionWaterfall` | `start`, `end`, `steps`, `notes` | `fields`, `locale`, `precision`, `currency` | — |
+| `holdings.allocation.v1` | `AllocationSummary` | `center`, `slices` | `top_n`, `include_other`, `sort`, `precision`, `currency` | — |
 | `order.ticket.v1` | `OrderTicket` | `symbol`, `name`, `side`, `quantity`, `entryPrice`, `notional`, `inputs`, `effect`, `disclosure` | `locale`, `precision`, `currency`, `symbol`, `side`, `size`, `size_in` | **`symbol`, `side`** |
-| `payoff.curve.v1` | `LineChart` | `lines`, `markers`, `totals`, `disclosure` | `fields`, `locale`, `precision`, `currency`, `symbol`, `size`, `size_in`, `side`, `range_pct`, `steps` | — |
-| `scenario.comparison.v1` | `ComparisonCard` | `subject`, `columns`, `spread`, `notes` | `locale`, `precision`, `currency`, `symbol`, `quantity`, `methods` | **`subject.symbol`** |
+| `payoff.curve.v1` | `PayoffChart` | `lines`, `markers`, `totals`, `disclosure` | `fields`, `locale`, `precision`, `currency`, `symbol`, `size`, `size_in`, `side`, `range_pct`, `steps` | — |
+| `scenario.comparison.v1` | `ScenarioComparison` | `subject`, `columns`, `spread`, `notes` | `locale`, `precision`, `currency`, `symbol`, `quantity`, `methods` | **`subject.symbol`** |
 | `taxlots.table.v1` | `TaxLotTable` | `rows`, `totals`, `byTerm`, `remaining`, `subtitle` | `fields`, `locale`, `precision`, `currency`, `symbol`, `quantity`, `lot_method` | — |
 
 Note the `props` keys are **camelCase** while the payload fields are
@@ -518,7 +525,7 @@ own controls** — see §7.3. That array is the honest way to build the form:
 labels, control kinds, current values, choices and patterns all come from the
 server.
 
-### 7.2 `holdings.allocation.v1` → `DonutChart`
+### 7.2 `holdings.allocation.v1` → `AllocationSummary`
 
 Payload captured in §6.1. Options: `top_n` (1–20, default 5), `include_other`
 (default true), `sort` (`value_desc` | `value_asc` | `label`), `precision`
@@ -576,7 +583,7 @@ The size input is a **decimal string**, not a number
 through a float reintroduces exactly the drift the ADR exists to prevent. Send
 `"0.25"`, never `0.25`.
 
-### 7.4 `scenario.comparison.v1` → `ComparisonCard`
+### 7.4 `scenario.comparison.v1` → `ScenarioComparison`
 
 Captured (abridged to two of three columns; the third, `HIFO`, has the same
 shape):
@@ -630,7 +637,7 @@ colour from the number — use `realized_pl.display` for the text, and if a
 colour is needed, derive it from the sign of the **raw** value, never by
 parsing the string.
 
-### 7.5 `attribution.waterfall.v1` → `WaterfallChart`
+### 7.5 `attribution.waterfall.v1` → `AttributionWaterfall`
 
 Captured (abridged to two of five buckets):
 
@@ -662,7 +669,7 @@ first; `sort` is not an option here, so do not reorder them.
 
 Options: `fields`, `locale`, `precision`, `currency`. Read-only.
 
-### 7.6 `payoff.curve.v1` → `LineChart` and `taxlots.table.v1` → `TaxLotTable`
+### 7.6 `payoff.curve.v1` → `PayoffChart` and `taxlots.table.v1` → `TaxLotTable`
 
 Both follow the same discipline and are the two largest payloads (18 and 49
 fields). Rather than reprint them, the client binds:
@@ -912,7 +919,7 @@ or a `fold` over a payload list to put something on screen, it is wrong.
 3. **AC-3** — No outbound request to this backend carries a Firebase **refresh** token (ADR-B D-1). A test asserts this explicitly.
 4. **AC-4** — On `auth/expired-token` the client force-refreshes and retries **exactly once**; on `auth/invalid-token` or a second `auth/expired-token` it signs out; on `403` it surfaces the error without refreshing or retrying. Tests cover all four branches, keyed on the problem document's `type`, never its `detail`.
 5. **AC-5** — The client discovers views from `GET /v1/views` at runtime. No view id is hardcoded outside a test fixture, and an unknown id in a `renderIntent` degrades gracefully rather than crashing (§5.1).
-6. **AC-6** — Each of the six components binds its real payload: `WaterfallChart`, `DonutChart`, `OrderTicket`, `LineChart`, `ComparisonCard`, `TaxLotTable`. A golden test per component renders the `example` from `GET /v1/views` — the same payload frozen in `docs/catalog/CONTRACT.md`.
+6. **AC-6** — Each of the six components binds its real payload: `AttributionWaterfall`, `AllocationSummary`, `OrderTicket`, `PayoffChart`, `ScenarioComparison`, `TaxLotTable`. A golden test per component renders the `example` from `GET /v1/views` — the same payload frozen in `docs/catalog/CONTRACT.md`.
 7. **AC-7** — Every figure on screen comes from a `*Display` string or a server-written text field. A test asserts that no widget binds a `raw` numeric member to a text widget (N-1, N-4).
 8. **AC-8** — The client performs no financial arithmetic. A lint or review check keeps `dart:math`, `NumberFormat` and arithmetic operators out of payload-binding code paths (N-2, N-3).
 9. **AC-9** — `order.ticket.v1` builds its form from `inputs[]`: labels, control kinds, choices and patterns all come from the payload, and a fifth input renders with no client change (§7.3).

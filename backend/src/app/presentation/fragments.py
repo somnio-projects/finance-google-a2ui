@@ -57,6 +57,16 @@ class Category(Labelled):
 class Bucket(Labelled):
     """One step of a waterfall: a signed move and the running total after it."""
 
+    key: str = Field(
+        max_length=32,
+        description=(
+            "Stable identifier of the step, and the value a tap sends back. "
+            "A surface action's argument accepts exactly these (GGU-53): the "
+            "`label` is prose and cannot be sent, so a segment without a key "
+            "is a segment that cannot start a turn."
+        ),
+        examples=["BTC"],
+    )
     delta: MoneyDisplay = Field(description="How much this step moved the total.")
     cumulative: MoneyDisplay = Field(description="The running total after the step.")
     direction: Literal["up", "down"] = Field(
@@ -66,8 +76,18 @@ class Bucket(Labelled):
 
 
 class SeriesPoint(Labelled):
-    """One observation of a series, already labelled for its axis."""
+    """One observation of a series: where it sits, and what it is worth there.
 
+    ``at`` is the **x** coordinate as an ADR-E pair, and it is what makes the
+    series drawable. ``label`` is the axis tick a widget prints; a client
+    given only that would have to parse ``"$142.50"`` back into a number to
+    place the point, which is the client-side arithmetic ADR-K D-5 exists to
+    remove (GGU-53).
+    """
+
+    at: MoneyDisplay = Field(
+        description="Where the point sits on the x axis — exact, and formatted."
+    )
     value: MoneyDisplay = Field(description="The observed figure at this point.")
 
 

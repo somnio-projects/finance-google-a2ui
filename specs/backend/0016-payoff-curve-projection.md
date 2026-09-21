@@ -96,7 +96,16 @@ rejected, never clamped.
 
 Every figure is a `*Display` string; the exact `Decimal` rides beside it for
 plotting and never instead of it (ADR-K D-5). The A2UI surface is a
-`LineChart` binding `lines`, `totals`, `markers` and `disclosure`.
+`PayoffChart` binding `lines`, `totals`, `markers` and `disclosure`.
+
+> **Amended 2026-09-21 by spec [0023](0023-catalog-serves-the-client.md)
+> (GGU-53).** The component was `LineChart` until the design catalog was
+> exported and the names were reconciled against it (0023 §3) — a contract
+> should name the question a surface answers, not the shape it is drawn as.
+> And the claim above was **not true of the x axis**: each `SeriesPoint`
+> carried its price only as a formatted `label`, so the curve could be
+> labelled but not plotted. `SeriesPoint.at` is the pair it was missing
+> (0023 §5).
 
 Prices are printed to the resolution **this curve** needs, once for the whole
 payload — see OD-4.

@@ -2604,3 +2604,82 @@ mechanically checked**, because they cannot be needled without matching prose.
 - The numbers rule matches **text, not intent**: a comment in
   `conversation_bloc.dart` that merely *named* `DateTime.now(` tripped it. That
   is the rule working, and the comment now says so.
+## 2026-09-21 — GGU-53: the catalog serves what the client must draw
+
+Spec: `specs/backend/0023-catalog-serves-the-client.md`. Tickets: GGU-53, and
+it touches the promises of GGU-42 (numbers-from-tools), GGU-78 (surface
+actions) and GGU-92 (actions in the snapshot).
+
+Design exported four pages of the component catalog. Comparing them against
+what this backend serves turned up four disagreements — **three of them
+defects here, one a defect in the design**:
+
+1. **Four of six component names were wrong**, not the two the ticket flagged.
+   The waterfall and the scenario card disagreed with their own design pages
+   too, and nobody noticed because the backend's spelling matched *one* of the
+   three names each design page uses. The rule adopted (spec 0023 §3): a
+   component is named by its **own A2UI schema block**; a gallery badge is
+   decoration, and a mention on another component's page is never
+   authoritative.
+2. **The payoff curve could not be plotted.** Its y coordinate was an ADR-E
+   pair; its x coordinate was a formatted string and nothing else. A client
+   would have had to parse `"$142.50"` back into a number — the exact
+   client-side arithmetic ADR-K D-5 forbids. `SeriesPoint.at` is the fix.
+3. **The waterfall's declared action was unusable.** `drill.attribution.v1`
+   accepts a symbol; `Bucket` carried only a prose label (*"Bitcoin"*) and no
+   key. The affordance was published, the bound was enforced, and the two had
+   no value in common. `Bucket.key` closes it.
+4. **The design's schemas type every figure as a bare `number`.** Not
+   conceded: ADR-K D-5 already allows the raw figure *beside* the string, so
+   the backend ships both.
+
+### What the next person should know
+
+- **`docs/catalog/CONTRACT.md` did not carry the component name at all.** The
+  snapshot did, the A2UI surface did, the Markdown did not — so the one
+  artefact design actually reads could not be used to check the one string the
+  client registers against. It now prints it in the section *and* the index
+  table, which is what made a four-way comparison possible.
+- **0021 OD-3 is reversed, deliberately, and says so at its own line.** It
+  decided against asserting the six component names because an inventory
+  transcribed from the registry is a copy of the registry. That is right, and
+  it assumed there was nothing outside the backend to compare against. The
+  design catalog is that outside thing, so `test_component_names.py` holds the
+  list as *the other party to the contract*. The failure OD-3 feared — "it
+  breaks when a seventh projection registers" — is now the point: a new
+  component must be named by design before it ships.
+- **Guidance is `None` for three of six views, on purpose.** Their design
+  pages were not exported, so the contract prints *"not guidance this backend
+  may invent"* and the prompt omits the lines. Do not fill them in from
+  imagination; fill them in from a page.
+- **Every digest moved**, because the entry a digest is taken over now carries
+  the component and the guidance. `specs/client/0003` §5 and the two Flutter
+  fixture headers were updated with it. A moved digest is the mechanism
+  working.
+- **Guidance prose lives in `<view>_guidance.py`, not in the view.** Three view
+  modules are at the 150-line budget, and a designer editing what the model is
+  taught should not have to read a projection to find the sentence.
+- **`docs/catalog/design/README.md` is the evidence, and it is why the one
+  hand-written inventory is allowed.** The exported pages are ~900 KB of
+  JS-bundled HTML each and are deliberately *not* committed — that is the
+  binary artefact `.claude/rules/diagrams.md` refuses. What they *declare* is:
+  each page's four name slots, its Zone 3 text verbatim, and every point where
+  design and this backend disagree. A path in `/tmp` would have made
+  `DESIGN_CATALOG` unverifiable the next morning.
+
+### Harness
+
+`.claude/rules/backend/presentation.md` gained two things and no hook or
+command changed. §4 now says plainly that **a drift check cannot tell you the
+generator is wrong** — it proves an artefact is current, never that it is
+right — and §6's checklist tells the next chart author to take the component
+name from design, add it to `DESIGN_CATALOG`, and leave guidance unset when no
+design page exists.
+
+**The gate was blind here in the way this log keeps recording.** Both catalog
+artefacts were re-rendered and diffed, and both were internally consistent with
+a generator that agreed with neither the design nor, in the Markdown's case,
+itself — it simply did not publish the fact. A drift check compares an artefact
+to its own generator; it cannot tell you the generator is wrong. Only a second,
+independent declaration can, which is why the design catalog's six names are
+checked in as a literal and asserted to cover every registered view.

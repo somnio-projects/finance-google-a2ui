@@ -138,7 +138,7 @@ def test_the_surface_binds_the_line_the_markers_and_the_disclosure(
 
     drawn = surface(payload)
 
-    assert drawn.component == "LineChart"
+    assert drawn.component == "PayoffChart"
     assert drawn.view == VIEW_ID
     assert drawn.props["lines"][0]["points"][1]["label"] == ENTRY_SOL
     assert [mark["label"] for mark in drawn.props["markers"]][:2] == [

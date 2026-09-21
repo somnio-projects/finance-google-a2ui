@@ -44,10 +44,13 @@ SUCCESS: Final[dict[int | str, dict[str, Any]]] = {
     description=(
         "Returns the catalog of registered projections — id, one-line purpose, "
         "the endpoints that serve it, the JSON schema of the options it "
-        "declares and an example payload it really renders. This is how a "
+        "declares, the A2UI `component` a rendered surface instantiates, the "
+        "`actions` that surface may send back, the `guidance` that says when "
+        "to pick this view (null where design has not written one) and an "
+        "example payload it really renders. This is how a "
         "client discovers what it can ask for without guessing (ADR-K D-8). "
         "The catalog describes shapes, never portfolio data, but a bearer "
-        "token is still required. Spec 0005 AC-8."
+        "token is still required. Spec 0005 AC-8, 0022 AC-11, 0023 AC-4."
     ),
     responses={
         **SUCCESS,
