@@ -13,7 +13,7 @@ void main() {
 
     test('serves the frozen view id and A2UI name', () {
       expect(component.viewId, 'payoff.curve.v1');
-      expect(component.a2uiComponent, 'PayoffChart');
+      expect(component.a2uiComponent, 'RiskPayoffChart');
     });
 
     testWidgets('builds the card straight from a payload', (tester) async {

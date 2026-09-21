@@ -27,7 +27,7 @@ class HoldingsAllocationComponent extends ViewComponent {
   String get viewId => 'holdings.allocation.v1';
 
   @override
-  String get a2uiComponent => 'AllocationSummary';
+  String get a2uiComponent => 'HoldingsSummary';
 
   @override
   Widget build(BuildContext context, ViewPayload payload) =>

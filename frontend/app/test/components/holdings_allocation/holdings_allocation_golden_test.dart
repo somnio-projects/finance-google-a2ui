@@ -23,13 +23,13 @@ import '../../helpers/pump_app.dart';
 /// by `find.text` in `holdings_allocation_card_test.dart`, which is a better
 /// check for text than a raster, and its chrome by its constants.
 void main() {
-  group('AllocationSummary goldens', () {
+  group('HoldingsSummary goldens', () {
     late AllocationData data;
 
     setUp(() {
       data = const HoldingsAllocationComponent().read(
         ViewPayload.fromJson(
-          CatalogSnapshot.load().exampleFor('AllocationSummary'),
+          CatalogSnapshot.load().exampleFor('HoldingsSummary'),
         ),
       );
     });

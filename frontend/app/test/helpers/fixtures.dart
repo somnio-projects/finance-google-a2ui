@@ -9,7 +9,7 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 /// read of the snapshot once PR #45 is on `develop`.
 ///
 /// Verified against snapshot digest `7c827ee9a8b8`
-/// (16 declared fields, component `AllocationSummary`).
+/// (16 declared fields, component `HoldingsSummary`).
 const Map<String, dynamic> holdingsAllocationExample = <String, dynamic>{
   'categories': <Map<String, dynamic>>[
     <String, dynamic>{

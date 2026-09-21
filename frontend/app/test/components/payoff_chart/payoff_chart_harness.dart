@@ -9,7 +9,7 @@ import '../../helpers/catalog_snapshot.dart';
 /// Read from `docs/catalog/view-catalog.snapshot.json`, never copied: a copy
 /// of a generated artefact is the thing that goes stale (ADR-L D-4).
 Map<String, dynamic> payoffExample() =>
-    CatalogSnapshot.load().exampleFor('PayoffChart');
+    CatalogSnapshot.load().exampleFor('RiskPayoffChart');
 
 /// The example bound through the component under test.
 PayoffChartData payoffData() =>

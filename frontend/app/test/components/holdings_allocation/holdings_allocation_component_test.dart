@@ -17,12 +17,12 @@ void main() {
       // AC-6: the example is **read** from the backend's generated snapshot,
       // not copied. A rename, a dropped field or a changed example turns this
       // suite red rather than drifting quietly (rule `frontend/testing.md` §5).
-      example = CatalogSnapshot.load().exampleFor('AllocationSummary');
+      example = CatalogSnapshot.load().exampleFor('HoldingsSummary');
     });
 
     test('declares the frozen view id and its A2UI component type', () {
       expect(component.viewId, equals('holdings.allocation.v1'));
-      expect(component.a2uiComponent, equals('AllocationSummary'));
+      expect(component.a2uiComponent, equals('HoldingsSummary'));
     });
 
     testWidgets('binds every display string verbatim', (tester) async {
