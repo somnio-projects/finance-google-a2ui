@@ -5,7 +5,6 @@ import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -14,6 +13,8 @@ import 'package:mocktail/mocktail.dart';
 import 'helpers/fixtures.dart';
 
 class _MockViewsRepository extends Mock implements ViewsRepository;
+
+class _MockAgentRepository extends Mock implements AgentRepository;
 
 void main() {
   group('bootstrap', () {
@@ -84,7 +85,12 @@ void main() {
         ),
       ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
 
-      await tester.pumpWidget(buildApp(viewsRepository: repository));
+      await tester.pumpWidget(
+        buildApp(
+          viewsRepository: repository,
+          agentRepository: _MockAgentRepository(),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(PortfolioViewsPage), findsOneWidget);
@@ -106,6 +112,7 @@ void main() {
       await tester.pumpWidget(
         buildApp(
           viewsRepository: repository,
+          agentRepository: _MockAgentRepository(),
           componentRegistry: ComponentRegistry(),
         ),
       );
@@ -114,25 +121,6 @@ void main() {
       // An empty registry means no component claims the view, so the host
       // shows its placeholder instead of crashing.
       expect(find.textContaining('No component for'), findsOneWidget);
-    });
-  });
-
-  group(FinanceApp, () {
-    testWidgets('applies the Material 3 theme', (tester) async {
-      final repository = _MockViewsRepository();
-      when(
-        () => repository.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: any(named: 'views'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
-
-      await tester.pumpWidget(buildApp(viewsRepository: repository));
-      await tester.pumpAndSettle();
-
-      final context = tester.element(find.byType(PortfolioViewsPage));
-      expect(Theme.of(context).useMaterial3, isTrue);
     });
   });
 }

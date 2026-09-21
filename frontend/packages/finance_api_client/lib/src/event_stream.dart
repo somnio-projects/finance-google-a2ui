@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Decoding `text/event-stream` bytes into one JSON object per event.
 ///
 /// This is the **only** file in the agent path allowed to call `jsonDecode`,
@@ -9,6 +7,8 @@ import 'dart:convert';
 /// (`binding_rules_test.dart::nothing interprets a server-supplied string`
 /// carries both allowances).
 library;
+
+import 'dart:convert';
 
 /// Decodes [body] into one decoded object per server-sent event.
 ///

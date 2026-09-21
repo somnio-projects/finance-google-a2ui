@@ -1,3 +1,4 @@
+import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +9,9 @@ import 'package:go_router/go_router.dart';
 abstract final class AppRoutes {
   /// The portfolio surface — the app's home.
   static const String portfolio = '/';
+
+  /// The conversation surface, where the agent answers in interfaces.
+  static const String conversation = '/ask';
 }
 
 /// Builds the app's router.
@@ -39,6 +43,10 @@ GoRouter buildRouter({String? initialLocation}) {
         // agreement (`app_router_test.dart::every registered component is
         // reachable from the portfolio route`).
         builder: (context, state) => const PortfolioViewsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.conversation,
+        builder: (context, state) => const ConversationPage(),
       ),
     ],
   );

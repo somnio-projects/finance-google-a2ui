@@ -17,6 +17,7 @@ extension PumpApp on WidgetTester {
   Future<void> pumpApp(
     Widget widget, {
     ViewsRepository? viewsRepository,
+    AgentRepository? agentRepository,
     ComponentRegistry? componentRegistry,
   }) {
     return pumpWidget(
@@ -24,6 +25,8 @@ extension PumpApp on WidgetTester {
         providers: <RepositoryProvider<dynamic>>[
           if (viewsRepository != null)
             RepositoryProvider<ViewsRepository>.value(value: viewsRepository),
+          if (agentRepository != null)
+            RepositoryProvider<AgentRepository>.value(value: agentRepository),
           RepositoryProvider<ComponentRegistry>.value(
             value: componentRegistry ?? ComponentRegistry(),
           ),

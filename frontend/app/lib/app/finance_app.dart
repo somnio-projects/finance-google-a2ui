@@ -15,6 +15,7 @@ class FinanceApp extends StatelessWidget {
   const FinanceApp({
     required this.router,
     required this.viewsRepository,
+    required this.agentRepository,
     required this.componentRegistry,
     super.key,
   });
@@ -25,6 +26,9 @@ class FinanceApp extends StatelessWidget {
   /// The repository blocs below this point resolve with `context.read`.
   final ViewsRepository viewsRepository;
 
+  /// The agent-turn repository the conversation page's bloc resolves.
+  final AgentRepository agentRepository;
+
   /// The component registry `ComponentHost` resolves with `context.read`.
   final ComponentRegistry componentRegistry;
 
@@ -33,6 +37,7 @@ class FinanceApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: <RepositoryProvider<dynamic>>[
         RepositoryProvider<ViewsRepository>.value(value: viewsRepository),
+        RepositoryProvider<AgentRepository>.value(value: agentRepository),
         RepositoryProvider<ComponentRegistry>.value(value: componentRegistry),
       ],
       child: MaterialApp.router(
