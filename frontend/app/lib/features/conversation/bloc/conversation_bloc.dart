@@ -57,6 +57,12 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     await for (final agentEvent in turn) {
       await _apply(agentEvent, emit);
     }
+    if (state.status == ConversationStatus.running) {
+      // The stream ended without a terminal status — a turn that stopped
+      // mid-flight. Showing what arrived beats leaving the surface spinning
+      // forever, and the events that did land are still on screen.
+      emit(state.copyWith(status: () => ConversationStatus.idle));
+    }
   }
 
   Future<void> _apply(AgentEvent event, Emitter<ConversationState> emit) async {
