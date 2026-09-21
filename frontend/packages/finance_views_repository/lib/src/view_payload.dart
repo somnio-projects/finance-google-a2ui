@@ -83,6 +83,33 @@ class ViewPayload extends Equatable {
     return rawDecimal(path, value);
   }
 
+  /// Reads the repeated **string** at [path], e.g. `inputs[].choices`.
+  ///
+  /// The contract publishes a closed list of accepted values as an array of
+  /// strings, which [rows] cannot read — it requires objects. This is that
+  /// accessor, and it is deliberately narrow: it returns the strings the
+  /// backend wrote, in the order it wrote them (N-10), and nothing here
+  /// interprets one. A declared bound is data to offer, never a rule to
+  /// compile (N-5, N-8).
+  ///
+  /// Throws [PayloadContractException] when the path is absent or holds
+  /// anything but strings, for the same reason [text] does (N-3).
+  List<String> strings(String path) {
+    final value = _at(path);
+    if (value is! List) {
+      throw PayloadContractException(ContractFailure(path, 'an array'));
+    }
+    return <String>[
+      for (final item in value)
+        if (item is String)
+          item
+        else
+          throw PayloadContractException(
+            ContractFailure(path, 'an array of strings'),
+          ),
+    ];
+  }
+
   /// Reads the repeated object at [path] as a list of nested payloads.
   ///
   /// The rows keep [view] so a nested reader reports the same component in its
