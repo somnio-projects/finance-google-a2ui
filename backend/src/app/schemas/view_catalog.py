@@ -69,7 +69,7 @@ class ViewDescriptor(BaseModel):
             "Read from the projection's own adapter, so this catalog and the "
             "rendered surface can never name it differently (GGU-53)."
         ),
-        examples=["AllocationSummary"],
+        examples=["HoldingsSummary"],
     )
     guidance: GuidanceDescriptor | None = Field(
         default=None,

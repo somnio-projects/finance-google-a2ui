@@ -26,7 +26,7 @@ class Surface(BaseModel):
             "(GGU-53); `test_component_names.py` compares the four places it "
             "is written down."
         ),
-        examples=["AllocationSummary"],
+        examples=["HoldingsSummary"],
     )
     view: str = Field(
         max_length=64,

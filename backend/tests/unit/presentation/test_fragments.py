@@ -92,7 +92,7 @@ def test_bucket_direction_is_bounded_to_up_or_down() -> None:
 
 def test_surface_carries_the_component_and_its_props() -> None:
     surface = Surface(
-        component="AllocationSummary",
+        component="HoldingsSummary",
         view="holdings.allocation.v1",
         title="Allocation",
         props={"slices": []},

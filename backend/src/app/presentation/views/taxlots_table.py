@@ -34,8 +34,9 @@ SUMMARY: Final[str] = (
     "short-term vs long-term. Nothing is traded."
 )
 #: The split is not among them: a table of disposals with no tax story is the
-#: failure this component exists to prevent (spec 0015 OD-6).
-SECTIONS: Final[tuple[str, ...]] = ("lots", "remaining")
+#: failure this component exists to prevent (spec 0015 OD-6). ``remaining``
+#: left the payload with the notes it selected (spec 0024 §7).
+SECTIONS: Final[tuple[str, ...]] = ("lots",)
 NEVER_SELECTED: Final[int] = 0
 
 
@@ -66,7 +67,6 @@ def render(portfolio: Portfolio, options: TaxLotsTableOptions) -> TaxLotsTablePa
     return TaxLotsTablePayload(
         title=TITLE,
         subtitle=build.subtitle(result, options, method=options.lot_method),
-        price=build.price_total(result.price, options),
         proceeds=Total(label="Proceeds", amount=options.money(result.proceeds)),
         cost_basis=Total(label="Cost basis", amount=options.money(result.cost_basis)),
         realized=Total(
@@ -76,15 +76,12 @@ def render(portfolio: Portfolio, options: TaxLotsTableOptions) -> TaxLotsTablePa
         lots=tuple(build.lot_row(row, options) for row in result.consumed)
         if "lots" in sections
         else (),
-        remaining=build.remaining_notes(result, options)
-        if "remaining" in sections
-        else (),
     )
 
 
 def surface(payload: TaxLotsTablePayload) -> Surface:
     """Map the payload onto the A2UI table the genui client instantiates."""
-    totals = (payload.price, payload.proceeds, payload.cost_basis, payload.realized)
+    totals = (payload.proceeds, payload.cost_basis, payload.realized)
     return Surface(
         component="TaxLotTable",
         view=payload.view,
@@ -94,7 +91,6 @@ def surface(payload: TaxLotsTablePayload) -> Surface:
             "totals": [total.model_dump(mode="json") for total in totals],
             "byTerm": [half.model_dump(mode="json") for half in payload.by_term],
             "rows": [row.model_dump(mode="json") for row in payload.lots],
-            "remaining": [note.model_dump(mode="json") for note in payload.remaining],
         },
     )
 

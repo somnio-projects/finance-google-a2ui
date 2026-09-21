@@ -259,3 +259,14 @@ assertions alone.
   the lots a sale *consumes*, which is the same information arrived at from
   the other end; a selection round-trip would be a new declared option and a
   new action, i.e. its own ticket.
+
+> **Amended 2026-09-21 by spec [0024](0024-contract-serves-the-designs.md)
+> (GGU-99..GGU-104).** The three detail pages this spec records as *not
+> exported* were exported later the same day. §3's rule held and did its job:
+> the gallery-card fallback is a fallback, not a tie-break, so
+> `AllocationSummary` → **`HoldingsSummary`** and `PayoffChart` →
+> **`RiskPayoffChart`** once each component's own Zone 2 block existed.
+> `OrderTicket` was already right. §4's guidance rule also held, and 0024 §5
+> sharpens it: a Zone 3 fragment is prompt text, so it is audited against the
+> numbers-from-tools invariant **before** it is transcribed — the `OrderTicket`
+> page's, as written, instructs the reader to recompute figures.

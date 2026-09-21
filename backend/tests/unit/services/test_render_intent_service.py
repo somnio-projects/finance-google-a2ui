@@ -65,7 +65,7 @@ async def test_a_rejected_intent_falls_back_and_is_reported(
     assert result.view == ALLOCATION
     assert result.rejection is not None
     assert re.search(reason, result.rejection), result.rejection
-    assert result.surface.component == "AllocationSummary"
+    assert result.surface.component == "HoldingsSummary"
     assert reporter.metrics == [(REJECTED_METRIC, {"view": intent.view})]
 
 

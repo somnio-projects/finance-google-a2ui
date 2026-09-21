@@ -32,7 +32,6 @@ def test_render_walks_the_lots_the_sale_consumes(portfolio: Portfolio) -> None:
     payload = render(portfolio, TaxLotsTableOptions())
     assert payload.view == VIEW_ID
     assert payload.subtitle == "Sell 0.5 BTC under FIFO"
-    assert payload.price.amount.display == "$64,250.00"
     assert payload.proceeds.amount.display == "$32,125.00"
     assert payload.cost_basis.amount.display == "$22,620.00"
     assert payload.realized.amount.display == "+$9,505.00"
@@ -68,24 +67,29 @@ def test_render_honours_the_lot_method(
 
 
 @pytest.mark.parametrize(
-    ("sections", "has_lots", "has_remaining"),
-    [(["lots"], True, False), (["remaining"], False, True)],
-    ids=["lots-only", "remaining-only"],
+    ("sections", "has_lots"),
+    [(["lots"], True), ([], False)],
+    ids=["lots-selected", "nothing-selected"],
 )
 def test_render_trims_unselected_sections(
-    portfolio: Portfolio, sections: list[str], has_lots: bool, has_remaining: bool
+    portfolio: Portfolio, sections: list[str], has_lots: bool
 ) -> None:
-    """`fields` trims the table and the remainder — never the split (AC-6)."""
+    """`fields` trims the table — never the split or the totals (AC-6)."""
     payload = render(portfolio, TaxLotsTableOptions(fields=tuple(sections)))
     assert bool(payload.lots) is has_lots
-    assert bool(payload.remaining) is has_remaining
     assert len(payload.by_term) == len(LotTerm)
     assert payload.realized.amount.display == "+$9,505.00"
 
 
-def test_render_rejects_an_unknown_section(portfolio: Portfolio) -> None:
-    with pytest.raises(ValidationFailedError, match="by_term"):
-        render(portfolio, TaxLotsTableOptions(fields=("by_term",)))
+@pytest.mark.parametrize(
+    "section",
+    ["by_term", "remaining"],
+    ids=["never-offered", "withdrawn-by-0024"],
+)
+def test_render_rejects_an_unknown_section(portfolio: Portfolio, section: str) -> None:
+    """`remaining` is now as unknown as a section that never existed (§7)."""
+    with pytest.raises(ValidationFailedError, match=section):
+        render(portfolio, TaxLotsTableOptions(fields=(section,)))
 
 
 @pytest.mark.parametrize(

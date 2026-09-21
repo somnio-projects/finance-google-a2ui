@@ -134,4 +134,4 @@ async def test_surface_goes_through_the_view_own_adapter(
 ) -> None:
     portfolio = await service.portfolio(principal)
     payload = service.render_one(portfolio, view=ALLOCATION, options={})
-    assert service.surface(ALLOCATION, payload).component == "AllocationSummary"
+    assert service.surface(ALLOCATION, payload).component == "HoldingsSummary"
