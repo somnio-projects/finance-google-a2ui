@@ -17,6 +17,7 @@ from app.actions.declared import SurfaceActionRef, declared_action
 from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.actions.registry import ACTIONS
 from app.domain.portfolio import Portfolio
+from app.presentation.catalog_json import snapshot_entry
 from app.presentation.contract import catalog_entry
 from app.presentation.fragments import ProjectionDto
 from app.presentation.options import PrecisionOptions
@@ -75,17 +76,43 @@ def declaring_projection() -> Iterator[Projection]:
     REGISTRY.remove(PROBE_VIEW)
 
 
-def test_a_declared_action_reaches_the_payload_the_props_and_the_catalog(
+def test_a_declared_action_reaches_every_rendering(
     declaring_projection: Projection,
 ) -> None:
-    """AC-11 — one derivation, three renderings, compared instead of trusted."""
+    """AC-11 — one derivation, four renderings, compared instead of trusted.
+
+    The title used to say four and the body asserted three. The missing one
+    was `snapshot_entry`, which builds `docs/catalog/view-catalog.snapshot.json`
+    — the artefact the Flutter client binds against, so the one rendering that
+    could not describe a component's actions was the one the client reads
+    (GGU-92). Nothing caught it because each artefact is diffed only against
+    its own generator: both were internally consistent and disagreed.
+    """
     projection = declaring_projection
     payload = _render_probe(sample_portfolio(), PrecisionOptions())
-    props = projection.surface(payload).props
-    entry = catalog_entry(projection)
 
     in_payload = [ref.model_dump(mode="json") for ref in payload.actions]
     assert in_payload, "the probe must declare something for this to mean anything"
-    assert props["actions"] == in_payload
-    assert list(entry["actions"]) == in_payload
+
+    #: Every rendering the one registration publishes to, named so a failure
+    #: says which of them stopped agreeing rather than only that they differ.
+    #: `.get` rather than `[...]`, so a rendering that drops the key entirely
+    #: fails with the message below naming it, not with a bare ``KeyError``
+    #: three frames deep. Dropping the key is the defect that actually
+    #: happened (GGU-92), so it is the case worth diagnosing well.
+    renderings = {
+        "A2UI props": projection.surface(payload).props.get("actions"),
+        "GET /v1/views": catalog_entry(projection).get("actions"),
+        "view-catalog.snapshot.json": snapshot_entry(projection).get("actions"),
+    }
+    for name, rendered in renderings.items():
+        assert rendered is not None, (
+            f"{name} has no `actions` key at all, so it cannot describe what "
+            f"this component declares — the renderings have drifted apart"
+        )
+        assert list(rendered) == in_payload, (
+            f"{name} does not carry the action the payload declares; "
+            f"the renderings have drifted apart"
+        )
+
     assert ACTIONS.get(str(in_payload[0]["action"])) is DRILL
