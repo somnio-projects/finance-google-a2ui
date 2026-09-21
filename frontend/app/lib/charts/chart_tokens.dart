@@ -1,3 +1,4 @@
+import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -48,4 +49,55 @@ abstract final class ChartTokens {
   /// The palette for [brightness].
   static ChartPalette forBrightness(Brightness brightness) =>
       brightness == Brightness.dark ? dark : light;
+
+  /// The allocation ramp and legend colours, light, as the catalog page's
+  /// `L1 · Light · 1024` artboard renders them.
+  ///
+  /// The six hues are the design's `palSecL`, read from the page's own
+  /// `renderVals()` and confirmed against the rendered `conic-gradient`. Its
+  /// four-category state (`palClsL`) is the first four of these, so one ramp
+  /// serves both. The first hue is `#4f5dff`, which is also
+  /// [ChartPalette.barTotal] — the two charts share an accent on purpose.
+  ///
+  /// **The `Holdings` screen disagrees**, drawing the same component with
+  /// `#0f9d8f, #9aa0aa, #f0a52e` in slots 2–4. The component page is the
+  /// contract, so these are its values; `specs/frontend/0007` OD-2 carries the
+  /// divergence for design to settle.
+  static const AllocationPalette allocationLight = AllocationPalette(
+    swatches: <Color>[
+      Color(0xFF4F5DFF),
+      Color(0xFF0C9D8F),
+      Color(0xFFD99000),
+      Color(0xFF9A5CFF),
+      Color(0xFFE0607A),
+      Color(0xFF7A8090),
+    ],
+    legendWeight: Color(0xFF8A8D96),
+    legendValue: Color(0xFF44464E),
+    legendDivider: Color(0xFFF2EFF7),
+  );
+
+  /// The allocation ramp and legend colours, dark (`D1 · Dark · 1024`).
+  ///
+  /// The geometry is identical between the two artboards; only the palette
+  /// changes. Note `legendWeight` is `#8A8D96` in **both** themes — the design
+  /// does not lighten it for dark, which is why it is written twice here
+  /// rather than derived.
+  static const AllocationPalette allocationDark = AllocationPalette(
+    swatches: <Color>[
+      Color(0xFF7A83FF),
+      Color(0xFF2DD4BF),
+      Color(0xFFF5B942),
+      Color(0xFFC08CFF),
+      Color(0xFFFF8FA3),
+      Color(0xFFA4A6B0),
+    ],
+    legendWeight: Color(0xFF8A8D96),
+    legendValue: Color(0xFFC9CBD4),
+    legendDivider: Color(0xFF23242C),
+  );
+
+  /// The allocation palette for [brightness].
+  static AllocationPalette allocationFor(Brightness brightness) =>
+      brightness == Brightness.dark ? allocationDark : allocationLight;
 }

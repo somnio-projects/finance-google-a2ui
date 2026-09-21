@@ -19,7 +19,7 @@ graph TD
     host["components/component_host.dart<br/>+ component_registry.dart"]
     comp["components/&lt;name&gt;/<br/>one directory per view id"]
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
-    charts["charts/<br/>CustomPainter · ChartPalette<br/><i>needs dart:ui, so it lives here</i>"]
+    charts["charts/<br/>CustomPainters · palettes<br/><i>needs dart:ui, so it lives here</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]

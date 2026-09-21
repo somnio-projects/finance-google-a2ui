@@ -2772,3 +2772,47 @@ rename that GGU-53 found on the backend.
 - Three things the design asks for have no field in the contract: a signed,
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
+
+## 2026-09-21 — GGU-65, the allocation summary draws
+
+**Spec:** `specs/frontend/0007-allocation-summary.md`. Completes
+`holdings.allocation.v1` / `AllocationSummary`: donut geometry and hit testing
+in `packages/finance_charts`, painter and categorical palette in
+`app/lib/charts/`, and the component split into model/header/legend/row/empty.
+
+What the next person should know:
+
+- **A design for this component exists now** — `.design-refs/Catalog_HoldingsSummary.dc.html`
+  and `.design-refs/Holdings.dc.html`, from Patricio's fourteen-screen export.
+  Nothing under `.design-refs/` is committed.
+- **`file://` renders of those pages are inert, and measuring one is worse than
+  not measuring.** The preview tool rewrites a local page to a `data:` URL, so
+  its relative `./support.js` never loads, nothing binds, and every value stays
+  `{{ … }}`. Inlining the script into a copy does not help — the tool re-serves
+  the original. **Serve the directory over HTTP instead**, which needs the
+  sandbox off for that one command (`socket.bind` is blocked inside it).
+  Measured both ways here: `mustache` 35 → 1 between the two.
+- **The design page and the frozen catalog disagree in six places**, including
+  the component's *name* (`HoldingsSummary` vs `AllocationSummary`) and a
+  per-row day-change the contract has no field for. Spec §3a lists them;
+  `catalog_contract_test.dart` now pins both halves so reconciling them has to
+  be a decision. The backend's `test_component_names.py` holds design's names
+  as a literal, so these two declarations are already meant to agree.
+- **`manifest-check` does not catch a deleted `register`.** Mutation-checked:
+  the generator lists *directories* under `app/lib/components/` and emits a
+  `register` call per directory without checking the function exists, so the
+  manifest stays byte-identical and the gate goes red at **`analyze`** instead.
+  The gate catches it either way; the prose in `frontend/CLAUDE.md` implies the
+  wrong step.
+- **`.abs()` is banned from `app/lib` with no carve-out, and that is load-bearing.**
+  The first draft of the donut's hit test used it, `binding_rules_compute_test.dart`
+  caught it, and the fix was to move the arithmetic into `finance_charts` where
+  it belongs anyway (ADR-L D-13) and write it without the mechanism at all. The
+  rule also greps *prose*: naming a banned mechanism in a doc comment trips it.
+- **Two test files that were not this ticket's were edited, both for real
+  defects.** `app_router_test.dart` built its `MaterialApp.router` with no
+  `theme:`, so it was testing an app unlike the real one; it went unnoticed
+  while every rendered component read `AppSpacing`, which falls back, and the
+  first component to read `ChartPalette` (which deliberately does not) turned
+  it red. `conversation_view_test.dart` had no test for a turn that answers
+  with no surface — GGU-65 AC-2 — only for its complement.
