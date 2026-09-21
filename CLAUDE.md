@@ -46,7 +46,10 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 ```bash
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
 cd backend && make gate                # lint · types · budget · catalog contract · quality (smells) · tests 100 % · audit
-cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
+cd client_flutter && flutter pub get   # once per clone; SDK version pinned in .fvmrc
+# Source dirs explicitly: `dart format` has no exclude flag and app/build/ holds
+# plugin sources unpacked by `flutter pub get`, which a bare `.` would sweep in.
+(cd client_flutter && dart format --output=none --set-exit-if-changed app/lib app/test e2e_test && dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test && bash tool/check_tokens.sh && bash tool/check_config.sh && cd app && flutter test)
 cd frontend && make gate               # toolchain · format · analyze · budget · manifest · tests · 100 % line coverage
 ```
 
@@ -55,7 +58,7 @@ was not*, with the reason and the consequence — the field whose absence made a
 incomplete verification indistinguishable from a complete one (GGU-93, GGU-94).
 The template is in `.claude/rules/backend/sdd.md`, § *The manual run*.
 
-`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`, `frontend-ci.yaml`) and each `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
+`.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`, `frontend-ci.yaml`, `client-ci.yaml`) and each `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
 
 ## How work flows (SDD)
 

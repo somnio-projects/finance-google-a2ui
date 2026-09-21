@@ -14,26 +14,26 @@
 
 // ignore_for_file: avoid_print
 
+import 'package:finance_a2ui_client/src/features/landing/bloc/landing_bloc.dart';
+import 'package:finance_a2ui_client/src/features/landing/bloc/landing_event.dart';
+import 'package:finance_a2ui_client/src/features/landing/bloc/landing_state.dart';
+import 'package:finance_a2ui_client/src/features/landing/repository/landing_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:restaurant_finder_client/src/features/landing/bloc/landing_bloc.dart';
-import 'package:restaurant_finder_client/src/features/landing/bloc/landing_event.dart';
-import 'package:restaurant_finder_client/src/features/landing/bloc/landing_state.dart';
-import 'package:restaurant_finder_client/src/features/landing/repository/landing_repository.dart';
 
-import 'test_infra/restaurant_finder.dart';
+import 'test_infra/crypto_agent.dart';
 
 void main() {
   setUp(() async {
-    final restaurantFinderClient = TestRestaurantFinderClient();
-    addTearDown(restaurantFinderClient.dispose);
-    await restaurantFinderClient.startAndVerify();
+    final cryptoAgentClient = TestCryptoAgentClient();
+    addTearDown(cryptoAgentClient.dispose);
+    await cryptoAgentClient.startAndVerify();
   });
 
   test(
-    'LandingBloc can find restaurants and book a reservation.',
+    'LandingBloc can list crypto markets and place an order.',
     () async {
       final repository = LandingRepository(
-        serverUrl: TestRestaurantFinderClient().baseUrl,
+        serverUrl: Uri.parse(TestCryptoAgentClient().baseUrl),
       );
       addTearDown(repository.dispose);
       final bloc = LandingBloc(landingRepository: repository);
@@ -51,9 +51,9 @@ void main() {
         return done;
       }
 
-      // 1. Ask the agent to find restaurants.
+      // 1. Ask the agent for market data.
       LandingState state = await send(
-        'Find me 3 italian restaurants in New York.',
+        'Show me the top 3 cryptocurrencies by market cap.',
       );
 
       expect(state.status, LandingStatus.success);
@@ -63,14 +63,14 @@ void main() {
         isNotEmpty,
         reason:
             'Agent should respond with at least one surface listing the '
-            'restaurants.',
+            'coins.',
       );
 
-      // 2. Ask the agent to book a table at one of them. This simulates the
-      // user tapping "Book Now" — both paths funnel into the same send.
+      // 2. Ask the agent to place an order for one of them. This simulates
+      // the user tapping "Place Order" — both paths funnel into the same send.
       state = await send(
-        'Book a table at the first restaurant on Wednesday, April 29 2026 '
-        'at 7:47 PM, for 2 people, dietary requirement: vegan.',
+        'Buy 0.5 of the first coin on the list at the current market '
+        'price.',
       );
 
       expect(state.status, LandingStatus.success);
@@ -78,7 +78,7 @@ void main() {
       expect(
         state.surfaceIds,
         isNotEmpty,
-        reason: 'Agent should respond with a booking confirmation surface.',
+        reason: 'Agent should respond with an order confirmation surface.',
       );
     },
     timeout: const Timeout(Duration(minutes: 10)),

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done, in three parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). `infra.shell-lint` used to be here, and is now `repo.shell-lint`: the infra form named two globs under `infra/scripts/` and so proved nothing about the shell this repository ships anywhere else — both container entry points were outside it and both were red the first time a gate opened them (SC2086 in backend/docker/entrypoint.sh, SC2016 in client_flutter/docker/entrypoint.sh). `repo.secrets` moved from backend-ci for the same reason in the other direction: that workflow is `paths:`-scoped to `backend/**`, while root SECURITY.md and docs/compliance/VULNERABILITY_MANAGEMENT.md both claimed secret scanning on every pull request, which was false for a frontend-only or client-only one. A check whose subject is any file in this repository cannot be correct in a scoped workflow. The `frontend.*` commands are exactly the steps of `cd frontend && make gate` and of the `quality` and `tests` jobs in .github/workflows/frontend-ci.yaml (GGU-91, spec `frontend/0001`). That workflow also has a `build` job that compiles the release web bundle, which is deliberately NOT in the gate for the same reason backend-ci's `image` job is not in `py.*`: it is slow and belongs on a runner. `frontend.test` and `frontend.coverage` are make targets for the same reason `py.quality` is — the command is a loop over four packages, and a paraphrase of a loop is exactly the drift §5 warns about. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes — exactly when it is least needed. `repo.spelling` runs through a script because the bare `codespell` form did not scan what it claimed: the tool's directory walk skips dot-entries, so `.claude/` and `.github/` were never opened while this note said they were. It is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. `frontend.toolchain` is first in that list on purpose (GGU-94): every check after it is read through `dart` and `flutter`, and a machine carrying a Dart below the declared SDK floor used to announce itself as three unformatted files and exit 65 — a red gate that looked like a red branch. The pinned version now lives in `frontend/.fvmrc`, read by that script and by every SDK-setup step in frontend-ci.yaml, instead of in a `FLUTTER_VERSION` env var no local command could reach. `repo.manual-run` is the suite over `scripts/check_manual_run.sh` (GGU-93), which reads a PR body and proves the manual run names the build that served it and that the build is this branch's head; the check itself needs a PR body, so what the gate runs is its test — the thing that proves it rejects. The `_candidates` below belong to the older `client_flutter/` app and are untouched by GGU-91.",
+  "_note": "Definition of Done, in three parts. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). `infra.shell-lint` used to be here, and is now `repo.shell-lint`: the infra form named two globs under `infra/scripts/` and so proved nothing about the shell this repository ships anywhere else — both container entry points were outside it and both were red the first time a gate opened them (SC2086 in backend/docker/entrypoint.sh, SC2016 in client_flutter/docker/entrypoint.sh). `repo.secrets` moved from backend-ci for the same reason in the other direction: that workflow is `paths:`-scoped to `backend/**`, while root SECURITY.md and docs/compliance/VULNERABILITY_MANAGEMENT.md both claimed secret scanning on every pull request, which was false for a frontend-only or client-only one. A check whose subject is any file in this repository cannot be correct in a scoped workflow. The `frontend.*` commands are exactly the steps of `cd frontend && make gate` and of the `quality` and `tests` jobs in .github/workflows/frontend-ci.yaml (GGU-91, spec `frontend/0001`). That workflow also has a `build` job that compiles the release web bundle, which is deliberately NOT in the gate for the same reason backend-ci's `image` job is not in `py.*`: it is slow and belongs on a runner. `frontend.test` and `frontend.coverage` are make targets for the same reason `py.quality` is — the command is a loop over four packages, and a paraphrase of a loop is exactly the drift §5 warns about. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes — exactly when it is least needed. `repo.spelling` runs through a script because the bare `codespell` form did not scan what it claimed: the tool's directory walk skips dot-entries, so `.claude/` and `.github/` were never opened while this note said they were. It is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. `frontend.toolchain` is first in that list on purpose (GGU-94): every check after it is read through `dart` and `flutter`, and a machine carrying a Dart below the declared SDK floor used to announce itself as three unformatted files and exit 65 — a red gate that looked like a red branch. The pinned version now lives in `frontend/.fvmrc`, read by that script and by every SDK-setup step in frontend-ci.yaml, instead of in a `FLUTTER_VERSION` env var no local command could reach. `repo.manual-run` is the suite over `scripts/check_manual_run.sh` (GGU-93), which reads a PR body and proves the manual run names the build that served it and that the build is this branch's head; the check itself needs a PR body, so what the gate runs is its test — the thing that proves it rejects. The `dart.*` / `client.*` / `flutter.*` commands are exactly the jobs of .github/workflows/client-ci.yaml and the matching pre-commit hooks; `client.tokens` and `client.config` are the two grep gates client_flutter/README.md documents. They were `_candidates` until GGU-1 wrote that workflow (PR #26/#30); a candidate with a pipeline behind it is just a gate, so they are required now.",
   "required": [
     {
       "id": "py.lint",
@@ -131,18 +131,26 @@
       "id": "frontend.coverage",
       "cwd": "frontend",
       "cmd": "make coverage"
-    }
-  ],
-  "_candidates": [
+    },
     {
       "id": "dart.format",
       "cwd": "client_flutter",
-      "cmd": "dart format --output=none --set-exit-if-changed ."
+      "cmd": "dart format --output=none --set-exit-if-changed app/lib app/test e2e_test"
     },
     {
       "id": "dart.analyze",
       "cwd": "client_flutter",
-      "cmd": "dart analyze --fatal-infos --fatal-warnings"
+      "cmd": "dart analyze --fatal-infos --fatal-warnings app/lib app/test e2e_test"
+    },
+    {
+      "id": "client.tokens",
+      "cwd": "client_flutter",
+      "cmd": "bash tool/check_tokens.sh"
+    },
+    {
+      "id": "client.config",
+      "cwd": "client_flutter",
+      "cmd": "bash tool/check_config.sh"
     },
     {
       "id": "flutter.test",
@@ -153,6 +161,18 @@
       "id": "flutter.web",
       "cwd": "client_flutter/app",
       "cmd": "flutter build web --release"
+    }
+  ],
+  "_candidates": [
+    {
+      "id": "infra.delivery-script",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_deploy_cloud_run.sh"
+    },
+    {
+      "id": "infra.credential-model",
+      "cwd": ".",
+      "cmd": "bash infra/scripts/tests/test_wif_conditions.sh"
     }
   ]
 }

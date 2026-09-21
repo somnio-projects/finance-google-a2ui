@@ -40,13 +40,34 @@ clean checkout.
 
 ## 4. Quality gates the project keeps
 
-`make gate` == pre-push == CI, in this order: `lint` (ruff check + format),
-`typecheck` (basedpyright strict), `budget` (150 lines), `quality`
+**Backend.** `make gate` == pre-push == CI, in this order: `lint` (ruff check +
+format), `typecheck` (basedpyright strict), `budget` (150 lines), `quality`
 (xenon complexity · vulture dead code · interrogate 100 % docstrings · deptry
 dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
+<<<<<<< HEAD
+**Client.** `dart format --set-exit-if-changed` and `dart analyze
+--fatal-infos --fatal-warnings`, both **over `app/lib app/test e2e_test`,
+never a bare `.`**. `flutter pub get` unpacks plugin sources under
+`app/build/` — firebase_auth ships its own tests through Swift Package
+Manager — and those trees carry **their own `pubspec.yaml`**, which makes each
+of them a separate package root. That is why `analysis_options.yaml`'s
+`exclude: ["**/build/**"]` does **not** cover them (it only reaches inside our
+own package, and it is kept for the IDE) and why `dart format` cannot be
+fixed at all from config: it has no exclude flag. Passing the source
+directories is the only thing that holds for both, so both commands carry the
+same list and it is one decision. Symptom when this regresses: hundreds of
+foreign lints and reformatted files nobody wrote. Then the two grep gates
+(`tool/check_tokens.sh` — no colour literals outside `theme/`;
+`tool/check_config.sh` — no endpoint URLs outside `config/`), `flutter test
+--coverage`, and `flutter build web --release`. The grep gates guard
+architecture rather than style, which is why they are gates and not review
+notes. The Flutter SDK is pinned in `client_flutter/.fvmrc`; CI reads the same
+version, and bumping one without the other makes local and CI disagree
+silently.
+=======
 `catalog-check` sits between `budget` and `quality`: it re-renders **every**
 generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
 `backend/0019`) and `docs/catalog/view-catalog.snapshot.json` (GGU-53, spec
@@ -82,20 +103,22 @@ repository-wide one is not, on purpose:
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
-| `client-ci` | — | `client_flutter/**` | **no — not written yet** |
+| `client-ci` | pull requests | `client_flutter/**`, its own file | yes |
 | `backend-cd` | **the button only** | — | yes |
 
-**`client-ci` does not exist, and this table used to say it did.** It was
-listed here as though it were one of the scoped workflows, with no marker, from
-before `frontend-ci` was written. Nothing covered `client_flutter/**`, so its
-container, its nginx CSP template and `docker/entrypoint.sh` — which validates
-an origin and substitutes it into `connect-src` — were built, linted and
-scanned by nothing, while this file asserted a pipeline. `client_flutter/CLAUDE.md`
-lists `.github/workflows/client-ci.yaml` under "do not touch" and assigns it to
-GGU-1 (PR #30), so it is owned; it is simply not written. **A row in this table
-is a claim about the repository, and a claim gets a truth value.** Until GGU-1
-lands, the security half of that gap is covered by `repo-ci` (secrets, shell),
-and the image build and its CVE scan are genuinely uncovered.
+**`client-ci` now exists, and the history is worth keeping.** This table once
+listed it as though it were one of the scoped workflows, with no marker, from
+before `frontend-ci` was written — while nothing covered `client_flutter/**`.
+Its container, its nginx CSP template and `docker/entrypoint.sh` — which
+validates an origin and substitutes it into `connect-src` — were built, linted
+and scanned by nothing, while this file asserted a pipeline. That was corrected
+to say **no**, and GGU-1 (PR #26/#30) has since written it, so the row says
+**yes** again — this time because the file is there.
+
+**A row in this table is a claim about the repository, and a claim gets a truth
+value.** The rule that survives is not "client-ci exists"; it is that the row
+had to be walked back once, and the way to keep it honest is to change it in
+the same pull request that changes the workflow directory.
 
 `frontend-ci` and `client-ci` are two pipelines over two Flutter apps, which is
 the table working, not a duplication: they are separate deployables with
@@ -119,15 +142,20 @@ from the default branch only, so a delivery workflow that exists only on
 `develop` is invisible in the Actions tab and `gh workflow run` answers *"not
 found on the default branch"*. Releasing `develop` into `main` is what makes
 the button appear.
+>>>>>>> origin/develop
 
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done and has two halves, each
+`.claude/ship-gate.json` is the Definition of Done and has three parts, each
 with a runner and a workflow that must stay identical to it:
 
-| Half | Runner | Workflow | Also in |
+| Part | Runner | Workflow | Also in |
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
+<<<<<<< HEAD
+| `dart.*` · `client.*` · `flutter.*` | the entries themselves, from `client_flutter/` and `client_flutter/app/` — there is no client Makefile | `client-ci.yaml` | pre-commit (format, analyze, grep gates, tests) + pre-push (the web build) |
+| `infra.*` | `bash infra/scripts/tests/*.sh` from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
+=======
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
@@ -268,6 +296,7 @@ PR body and compares the `<version>+<sha>` on `/health` with the branch head;
 what the gate runs is its **suite**, because the check needs a PR body and the
 gate has none. A check that has never been shown to reject is the same defect
 one level up, so the suite asserts the four rejections and only one pass.
+>>>>>>> origin/develop
 
-A PR that changes one without its pair is incomplete. If a third runner ever
+A PR that changes one without its pair is incomplete. If a fourth runner ever
 appears, it goes in this table rather than in a comment.

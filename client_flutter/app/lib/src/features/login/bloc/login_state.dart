@@ -13,7 +13,8 @@ final class LoginState {
   }
 
   @override
-  bool operator ==(Object other) => other is LoginState && other.status == status;
+  bool operator ==(Object other) =>
+      other is LoginState && other.status == status;
 
   @override
   int get hashCode => status.hashCode;

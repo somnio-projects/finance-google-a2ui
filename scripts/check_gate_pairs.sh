@@ -94,19 +94,29 @@ echo "repo.gate-pairs: ${checked} gate command(s) found verbatim in ${workflow_d
 # beside the `.fvmrc` that was already tracked — the same defect, one file over,
 # and it took two reviewers to see it. That is exactly the point at which this
 # repository stops asking reviewers to be careful and writes the check.
-pin_file="frontend/.fvmrc"
+# Two Flutter apps now ship from this repository, each with its own SDK, so
+# "one pin" means one per app — not one per repository. `frontend/` is on
+# 3.47.5 and `client_flutter/` on 3.47.3, and that is a fact about two
+# deployables, not a drift. What is still forbidden is a SECOND home for the
+# same app's pin, in either direction (GGU-1 added `client-ci.yaml` carrying
+# `FLUTTER_VERSION: "3.47.3"` beside an already-tracked `client_flutter/.fvmrc`,
+# with a comment reading "Bump both together or the two disagree silently" —
+# the GGU-94 defect, rebuilt in the second app).
+pin_apps="frontend client_flutter"
 pin_failed=0
 
-if [ ! -f "$pin_file" ]; then
-  echo "repo.gate-pairs: ${pin_file} is missing — the frontend SDK pin has no home" >&2
-  exit 1
-fi
+for app in $pin_apps; do
+  if [ ! -f "${app}/.fvmrc" ]; then
+    echo "repo.gate-pairs: ${app}/.fvmrc is missing — that app's SDK pin has no home" >&2
+    exit 1
+  fi
+done
 
 # 1. No workflow may carry its own Flutter version.
 for wf in "${workflow_dir}"/*.yaml; do
   if grep -Eq 'FLUTTER_VERSION[[:space:]]*:' "$wf"; then
     echo "repo.gate-pairs: $(basename "$wf") sets FLUTTER_VERSION" >&2
-    echo "  the pin lives in ${pin_file}; read it in a step instead:" >&2
+    echo "  the pin lives in that app's .fvmrc; read it in a step instead:" >&2
     # shellcheck disable=SC2016 # deliberate: this prints a YAML step for the
     # reader to copy, so `$(jq …)` and `$GITHUB_OUTPUT` must survive verbatim.
     echo '    run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"' >&2
@@ -114,22 +124,26 @@ for wf in "${workflow_dir}"/*.yaml; do
   fi
 done
 
-# 2. No second tracked file may name a Flutter version for `frontend/`.
-#    `frontend/pubspec.yaml` and `frontend/app/pubspec.yaml` mention 3.47.5 in
-#    prose beside their Dart floor, which is documentation rather than a pin, so
-#    only machine-readable pin files are searched.
-while IFS= read -r candidate; do
-  [ -n "$candidate" ] || continue
-  [ "$candidate" = "$pin_file" ] && continue
-  echo "repo.gate-pairs: ${candidate} is a second machine-readable Flutter pin" >&2
-  echo "  ${pin_file} is the one home; a pin file that disagrees with it is" >&2
-  echo "  the defect GGU-94 removed, recreated one file over." >&2
-  pin_failed=$(( pin_failed + 1 ))
-done < <(git ls-files -- 'frontend/.fvmrc' 'frontend/.flutter-version' 'frontend/.fvm/*' 'frontend/.tool-versions')
+# 2. No second tracked file may name a Flutter version for the same app.
+#    Each app's `pubspec.yaml` mentions its version in prose beside the Dart
+#    floor, which is documentation rather than a pin, so only machine-readable
+#    pin files are searched.
+for app in $pin_apps; do
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
+    [ "$candidate" = "${app}/.fvmrc" ] && continue
+    echo "repo.gate-pairs: ${candidate} is a second machine-readable Flutter pin" >&2
+    echo "  ${app}/.fvmrc is that app's one home; a pin file that disagrees with" >&2
+    echo "  it is the defect GGU-94 removed, recreated one file over." >&2
+    pin_failed=$(( pin_failed + 1 ))
+  done < <(git ls-files -- "${app}/.fvmrc" "${app}/.flutter-version" "${app}/.fvm/*" "${app}/.tool-versions")
+done
 
 if [ "$pin_failed" -gt 0 ]; then
-  echo "repo.gate-pairs: the frontend SDK pin has ${pin_failed} home(s) too many" >&2
+  echo "repo.gate-pairs: a Flutter SDK pin has ${pin_failed} home(s) too many" >&2
   exit 1
 fi
 
-echo "repo.gate-pairs: the frontend SDK pin lives only in ${pin_file}"
+for app in $pin_apps; do
+  echo "repo.gate-pairs: ${app} pins Flutter $(jq -r .flutter "${app}/.fvmrc") in ${app}/.fvmrc, and nowhere else"
+done

@@ -3,14 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../config/app_config.dart';
 import '../../landing/view/landing_page.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({required this.onToggleTheme, this.loginBloc, super.key});
+  const LoginPage({
+    required this.config,
+    required this.onToggleTheme,
+    this.loginBloc,
+    super.key,
+  });
 
+  final AppConfig config;
   final VoidCallback onToggleTheme;
 
   /// Optional [LoginBloc] for testing.
@@ -20,14 +27,19 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => loginBloc ?? LoginBloc(),
-      child: LoginView(onToggleTheme: onToggleTheme),
+      child: LoginView(config: config, onToggleTheme: onToggleTheme),
     );
   }
 }
 
 class LoginView extends StatefulWidget {
-  const LoginView({required this.onToggleTheme, super.key});
+  const LoginView({
+    required this.config,
+    required this.onToggleTheme,
+    super.key,
+  });
 
+  final AppConfig config;
   final VoidCallback onToggleTheme;
 
   @override
@@ -54,7 +66,10 @@ class _LoginViewState extends State<LoginView> {
           unawaited(
             Navigator.of(context).pushReplacement(
               MaterialPageRoute<void>(
-                builder: (_) => LandingPage(onToggleTheme: widget.onToggleTheme),
+                builder: (_) => LandingPage(
+                  config: widget.config,
+                  onToggleTheme: widget.onToggleTheme,
+                ),
               ),
             ),
           );
@@ -71,9 +86,8 @@ class _LoginViewState extends State<LoginView> {
                     Text(
                       'Welcome',
                       textAlign: TextAlign.center,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 32),
                     TextField(
