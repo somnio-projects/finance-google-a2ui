@@ -1,18 +1,10 @@
-# Repository-wide spelling, for everything `backend/pyproject.toml`'s
-# [tool.codespell] does not reach.
+# Word-list exceptions for `repo.spelling`. The file list is decided by
+# scripts/check_spelling.sh, not here — see that script's header for why a
+# bare `codespell .` could not scan `.claude/` and `.github/` at all.
 #
-# `cd backend && make gate` runs codespell over `src tests docs scripts`,
-# all of them inside `backend/`. The pre-commit hook runs it over the whole
-# repository. Both were individually sensible and nobody compared them, so a
-# typo in `specs/`, root `docs/`, `.claude/` or any root Markdown passed the
-# gate and was caught only at commit time — and only if the author had not
-# bypassed the hook. This file exists so the two halves agree, and so
-# `make gate`'s verdict means something for the documentation-only changes
-# that make up a large share of this repository's pull requests.
-#
-# Same class of defect as `infra.shell-lint`; see .claude/rules/ci-conventions.md §5.
 [codespell]
-skip = ./.git,./.claude/worktrees,./backend/.venv,./backend/uv.lock,./backend/reports,./backend/htmlcov,./client_flutter/pubspec.lock,./client_flutter/app/ios,./client_flutter/app/macos,./frontend/pubspec.lock
+# `skip` intentionally absent: the scan is an explicit file list, so there is
+# no directory walk left to prune.
 # Each of these is a deliberate exception, not a silenced nuisance:
 #   bloc     the state-management library the Flutter rules mandate
 #   blocs    its plural, which appears in prose about the client

@@ -57,14 +57,23 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
-        additional_dependencies: [tomli]
-        # Reads .codespellrc at the repository root — the same configuration
+        # Reads .codespellrc at the repository root — the same word list
         # `repo.spelling` uses. It used to read backend/pyproject.toml, whose
         # word list knows nothing about the Flutter or docs vocabulary, so this
         # hook flagged `bloc` on every Flutter file it touched. Two configs for
         # one check is the drift .claude/rules/ci-conventions.md §5 is about.
-        exclude: ^(backend/uv\.lock|client_flutter/pubspec\.lock|frontend/pubspec\.lock|backend/reports/)
-
+        #
+        # pre-commit hands the hook an explicit list of changed files, so the
+        # directory walk that made `repo.spelling` blind to `.claude/` never
+        # applies here — this half was always correct about its scope.
+        additional_dependencies: [tomli]
+        exclude: |
+          (?x)^(
+            \.claude/skills/|
+            \.agents/|
+            \.claude/rules/(python|flutter)/|
+            .*\.lock
+          )
   # ---------------------------------------------------------------- yaml & actions
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.7
