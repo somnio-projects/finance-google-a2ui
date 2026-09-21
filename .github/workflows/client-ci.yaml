@@ -27,10 +27,6 @@ concurrency:
   group: client-ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Pinned to client_flutter/.fvmrc so CI and every laptop compile the same
-  # SDK. Bump both together or the two disagree silently.
-  FLUTTER_VERSION: "3.47.3"
 
 defaults:
   run:
@@ -45,10 +41,14 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v4
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
 
@@ -81,10 +81,14 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v4
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
 
@@ -114,10 +118,14 @@ jobs:
       - name: Check out the branch (actions/checkout)
         uses: actions/checkout@v4
 
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
       - name: Set up the pinned Flutter SDK (subosito/flutter-action)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version: ${{ steps.pin.outputs.version }}
           channel: stable
           cache: true
 
