@@ -2772,3 +2772,152 @@ rename that GGU-53 found on the backend.
 - Three things the design asks for have no field in the contract: a signed,
   coloured net pill, the tooltip's price-and-share line, and which annotation
   is the net. They are OD-2 and OD-3, not omissions.
+
+## 2026-09-21 — GGU-93, GGU-94: the evidence a PR carries gets a field for what was not run
+
+**Spec:** none. This is a harness change, recorded where the harness is
+recorded: the rule in `.claude/rules/backend/sdd.md`, the CI rule in
+`.claude/rules/ci-conventions.md` §5, and this entry. A
+`specs/backend/NNNN-*.md` would have been the wrong home — nothing here is a
+backend feature, no endpoint or DTO moves, and the decisions belong to the
+process rather than to the product. `sdd.md`'s own decision table says so: *"a
+rule the agent must follow every time"* goes to `.claude/rules/**`, *"what
+changed in an iteration and why"* goes here.
+
+**Test decision:** one new suite, `scripts/tests/test_check_manual_run.sh`,
+registered as `repo.manual-run`. It asserts four rejections and one acceptance,
+because the defect being fixed is *evidence that cannot be distinguished from
+real evidence* — and a check nobody has seen reject reproduces it exactly.
+
+### One defect, seen twice
+
+GGU-93 is the runtime half: a manual run that does not say which build answered.
+GGU-94 is the toolchain half: a gate that cannot run, announcing itself as a
+formatting diff. Both are the same sentence — **the evidence format has no
+field for what was not run**, so an incomplete verification and a complete one
+produce identical-looking PR bodies. Both tickets' AC-5 anticipated being done
+once; they were.
+
+### What already existed, and was not read
+
+`GET /health` has reported `<version>+<short sha>` since spec `backend/0007`
+AC-5 — `APP_RELEASE` → `Settings.app_release` → `core/release.py` →
+`HealthService`. **Nothing needed building.** Two things were wrong around it:
+
+1. `docker-compose.yml` hard-coded `APP_RELEASE: local`, so the local stack —
+   the one a manual run actually uses — could not name its own commit. It now
+   reads `${APP_RELEASE:-local}`, and the documented way up is
+   `APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build`.
+2. Nobody read it. The deployed dev service was answering `0.1.0+9a94346`,
+   **26 commits behind `develop`**, while the Flutter client was being built
+   against it — no GGU-53 catalog snapshot, no GGU-78 surface actions, no
+   GGU-90 agent-turn fixes. The identity was on `/health` the whole time.
+
+### The correction worth keeping: ancestry is too weak
+
+GGU-93 AC-3 asked that the reviewer check the manual run's sha is *an ancestor
+of the PR's head*. Implemented literally, that would have **passed the pull
+request that produced the ticket**: PR #69's branch was cut from the stale
+commit, so the stale commit was a perfectly good ancestor. Ancestry proves the
+build is from this line of history; only identity with the head proves it
+contains the change under review. `scripts/check_manual_run.sh` therefore has
+three verdicts — head (pass), ancestor (fail, *"it ran and it did not exercise
+this branch"*), anything else (fail).
+
+### And the reviewer instruction is a script, not a sentence
+
+`.claude/agents/*-reviewer.md` do not ask the agent to compare shas by eye.
+They run one command and quote it. An LLM reviewer *can* run `git merge-base
+--is-ancestor`; what it cannot be relied on to do is remember to. The same
+reasoning that produced `repo.gate-pairs` — three instances of a reviewer being
+asked to be careful — applies here at the first instance, because the first
+instance already cost a retracted bug report and a closed PR.
+
+### GGU-94: the pin had no local reader
+
+`FLUTTER_VERSION: "3.47.5"` lived only in `frontend-ci.yaml`. The floor
+`sdk: ^3.13.0` in `frontend/pubspec.yaml` is not consulted by `dart format`, so
+Homebrew's `dart-sdk 3.12.1` ran the gate happily and reported three tracked
+files as unformatted — 3 changed / exit 65 under 3.12.1, 0 changed / exit 0
+under the pin, on the same commit. The version now lives in
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
+every SDK-setup step in the workflow, and `frontend.toolchain` is the **first**
+entry of the frontend gate.
+
+`.fvmrc` over `.fvmrc`: plain text that `cat` and the CI action both
+read, with no implied claim that fvm is the supported install path.
+
+### What the next person should know
+
+- **`flutter --version` crashes in an agent sandbox** and `dart --version` from
+  the same `bin/` does not. The cause is the tool's telemetry writer failing to
+  delete `~/.dart-tool/dart-flutter-telemetry.log`, inside flutter's own error
+  handler — a secondary crash that hides whatever the first failure was. The
+  preflight uses `flutter --version --machine --suppress-analytics`, which also
+  returns `dartSdkVersion` and `flutterRoot` as JSON. A preflight that crashes
+  is worse than no preflight.
+- **macOS `mktemp -d` with no template ignores `TMPDIR`** and uses the confstr
+  directory, which is outside the agent sandbox's write set. Same command, two
+  behaviours, red only on a laptop. Always pass a template.
+- **`repo.manual-run` needs history.** Its fixtures are `HEAD` and `HEAD~2`, so
+  its `repo-ci` job checks out with `fetch-depth: 0` and the suite says so
+  rather than failing obscurely on a shallow clone.
+- **Agent worktrees keep leaking machine state into a public repository.**
+  `.gitignore` now covers `.claude/launch.json` (commit `5f6e09c` shipped one
+  naming a path on one laptop) and `.design-refs/` (the design bundles only
+  render from inside the project folder).
+- **Making agent worktrees track `develop` automatically is still not done**,
+  deliberately — GGU-93 puts it out of scope. It is the better *preventive*
+  fix and it is a different ticket: this one is about evidence being
+  **checkable**, not about the mistake being impossible. A process that only
+  works when nobody is behind is the thing being replaced.
+
+### The review round, which found the same defect inside the fix
+
+Both reviewer agents flagged the same blocker, and they were right: **the first
+version of this change added a second pin file.** `frontend/.fvmrc` was already
+tracked, already contained `{"flutter": "3.47.5"}`, and was already cited as the
+pin by `frontend/README.md` and `docs/DEV_HARNESS.md`. The branch added
+`frontend/.flutter-version` beside it and then asserted, in nine places, that
+the version lived in one home and nowhere else. Two machine-readable pins free
+to drift is precisely the defect GGU-94 exists to remove, recreated one file
+over, by the change that removes it.
+
+`.fvmrc` is now the single home and `.flutter-version` is gone. The lesson is
+not "look harder": it is that the claim was **prose**, so nothing could check
+it. `scripts/check_gate_pairs.sh` now also asserts that no workflow sets
+`FLUTTER_VERSION` and that no second tracked pin file exists — §5's third
+question, machine-checked like the first.
+
+Four more findings worth recording, because each was a case of the new
+mechanism failing its own standard:
+
+- **The documented bring-up produced a value the checker rejected.**
+  `core/release.py::resolve_release` returns `APP_RELEASE` **verbatim** — the
+  `<version>+<sha>` shape is composed by `infra/scripts/deploy_cloud_run.sh`,
+  not by the app. So `APP_RELEASE="$(git rev-parse --short HEAD)"` gave
+  `"version":"5b942f1"`, with no `+`, and the check read no identity at all. A
+  developer following `CLAUDE.md` verbatim would have failed the check they
+  were told to pass. The documented command is now `local+$(…)`, and the suite
+  has a case pinning the bare-sha failure so the docs cannot drift back.
+- **The check contradicted the rule it enforces.** `sdd.md` says a deployed run
+  that is behind is pasted "as well, never instead"; the script looped over
+  every identity and failed the body for the context one. It now asks whether
+  **any** identity is the head, and prints the rest as context.
+- **The identity parse matched any `+<hex>` in the body**, so a line like
+  `v1.2.3+abc1234` sank a good pull request. It is scoped to the `"version"`
+  field of a `/health` payload.
+- **Nothing ran the check against a real PR body.** `repo-ci` now does, on
+  every pull request, pointed at `github.event.pull_request.head.sha` — a PR
+  checkout's `HEAD` is the ephemeral merge commit, which is not what the manual
+  run was served by. A body with **no** identity exits 3 and is reported rather
+  than failed: `sdd.md` explicitly allows a declared, reasoned "not run", and
+  no grep can tell that from an omission. That one judgement stays with the
+  reviewer; everything a machine can decide is decided by one.
+
+And the preflight got the suite it should have shipped with
+(`frontend/tool/tests/test_check_toolchain.sh`, `frontend.toolchain-test`). It
+stubs `flutter` and `dart` on `PATH`, so it runs in a second on a machine with
+no Flutter at all — which matters because it is the **first** step of the
+frontend gate, so a false failure blocks everything behind it, and because on a
+runner it can never be seen rejecting: CI always installs the pin.

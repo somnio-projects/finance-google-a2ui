@@ -19,10 +19,25 @@ GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 
 ```bash
 cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
-docker compose up --build              # Postgres + backend on http://localhost:8000 (docs at /docs)
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build   # Postgres + backend on http://localhost:8000 (docs at /docs)
 docker compose --profile client up --build   # …plus the web client on http://localhost:3000
 cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
+
+**Always bring the stack up with `APP_RELEASE`.** `GET /health` reports it
+**verbatim** — `core/release.py` composes nothing — and it is the only thing
+that says *which build answered*: the field a manual run needs and did not have
+when a transcript from a tree six commits behind `develop` was pasted into a
+pull request and read exactly like a correct one (GGU-93). The `local+` prefix
+is required, not decoration: a bare sha gives `"version":"a1b2c3d"` with no `+`,
+which `scripts/check_manual_run.sh` reads as no identity at all. Omit
+`APP_RELEASE` entirely and `/health` says `local`, and the check rejects the PR
+for naming no build. `repo-ci` runs that check on every pull request.
+
+Working on `frontend/` needs the pinned SDK on `PATH` — Flutter **3.47.5**,
+which vendors Dart **3.13.4**. The version lives in `frontend/.fvmrc`
+and nowhere else; `cd frontend && make gate` proves it before doing anything
+else. Installing it: `frontend/CLAUDE.md` § *Run*.
 
 Compose carries only the topology (hostnames, ports, origins); credentials and tunables come from each solution's `.env` through `env_file`. The client is in the stack behind a `client` profile, so a backend-only `docker compose up` never pays for a Flutter build; it is hardened like the backend's container and gets `BACKEND_BASE_URL` at **run** time, not build time (`client_flutter/Dockerfile`, `specs/client/0002-client-delivery.md`).
 
@@ -32,8 +47,13 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
 cd backend && make gate                # lint · types · budget · catalog contract · quality (smells) · tests 100 % · audit
 cd client_flutter && dart format --output=none --set-exit-if-changed . && dart analyze && (cd app && flutter test)
-cd frontend && make gate               # format · analyze · budget · manifest · tests · 100 % line coverage
+cd frontend && make gate               # toolchain · format · analyze · budget · manifest · tests · 100 % line coverage
 ```
+
+Every PR carries a **`Verification` block** that names what was run *and what
+was not*, with the reason and the consequence — the field whose absence made an
+incomplete verification indistinguishable from a complete one (GGU-93, GGU-94).
+The template is in `.claude/rules/backend/sdd.md`, § *The manual run*.
 
 `.claude/ship-gate.json` is the Definition of Done and matches CI (`.github/workflows/backend-ci.yaml`, `frontend-ci.yaml`) and each `make gate` verbatim. Red gate = not done; thresholds are never lowered in a feature PR.
 

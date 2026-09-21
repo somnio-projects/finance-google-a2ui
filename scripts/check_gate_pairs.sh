@@ -78,3 +78,58 @@ if [ "$failed" -gt 0 ]; then
 fi
 
 echo "repo.gate-pairs: ${checked} gate command(s) found verbatim in ${workflow_dir}/"
+
+# ---------------------------------------------------------------------------
+# §5's third question: under what version does the command run?
+# ---------------------------------------------------------------------------
+# Matching command strings is not enough. GGU-94 found `frontend.format`
+# byte-identical on both sides and still untrustworthy, because the *toolchain*
+# was unstated: `frontend-ci.yaml` pinned `FLUTTER_VERSION: "3.47.5"` where no
+# local command could read it, and `dart format` does not consult the SDK
+# constraint in pubspec.yaml. A version pinned where only CI can read it is not
+# a pin; it is a claim CI happens to satisfy.
+#
+# The fix moved the pin to `frontend/.fvmrc`. This asserts the fix stays fixed,
+# because the first attempt at it added a SECOND pin file (`.flutter-version`)
+# beside the `.fvmrc` that was already tracked — the same defect, one file over,
+# and it took two reviewers to see it. That is exactly the point at which this
+# repository stops asking reviewers to be careful and writes the check.
+pin_file="frontend/.fvmrc"
+pin_failed=0
+
+if [ ! -f "$pin_file" ]; then
+  echo "repo.gate-pairs: ${pin_file} is missing — the frontend SDK pin has no home" >&2
+  exit 1
+fi
+
+# 1. No workflow may carry its own Flutter version.
+for wf in "${workflow_dir}"/*.yaml; do
+  if grep -Eq 'FLUTTER_VERSION[[:space:]]*:' "$wf"; then
+    echo "repo.gate-pairs: $(basename "$wf") sets FLUTTER_VERSION" >&2
+    echo "  the pin lives in ${pin_file}; read it in a step instead:" >&2
+    # shellcheck disable=SC2016 # deliberate: this prints a YAML step for the
+    # reader to copy, so `$(jq …)` and `$GITHUB_OUTPUT` must survive verbatim.
+    echo '    run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"' >&2
+    pin_failed=$(( pin_failed + 1 ))
+  fi
+done
+
+# 2. No second tracked file may name a Flutter version for `frontend/`.
+#    `frontend/pubspec.yaml` and `frontend/app/pubspec.yaml` mention 3.47.5 in
+#    prose beside their Dart floor, which is documentation rather than a pin, so
+#    only machine-readable pin files are searched.
+while IFS= read -r candidate; do
+  [ -n "$candidate" ] || continue
+  [ "$candidate" = "$pin_file" ] && continue
+  echo "repo.gate-pairs: ${candidate} is a second machine-readable Flutter pin" >&2
+  echo "  ${pin_file} is the one home; a pin file that disagrees with it is" >&2
+  echo "  the defect GGU-94 removed, recreated one file over." >&2
+  pin_failed=$(( pin_failed + 1 ))
+done < <(git ls-files -- 'frontend/.fvmrc' 'frontend/.flutter-version' 'frontend/.fvm/*' 'frontend/.tool-versions')
+
+if [ "$pin_failed" -gt 0 ]; then
+  echo "repo.gate-pairs: the frontend SDK pin has ${pin_failed} home(s) too many" >&2
+  exit 1
+fi
+
+echo "repo.gate-pairs: the frontend SDK pin lives only in ${pin_file}"

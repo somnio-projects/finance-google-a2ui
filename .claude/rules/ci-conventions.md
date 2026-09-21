@@ -78,7 +78,7 @@ repository-wide one is not, on purpose:
 
 | workflow | runs on | scope | exists? |
 |---|---|---|---|
-| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs | yes |
+| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, manual-run check | yes |
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
@@ -230,6 +230,44 @@ So §5 has two questions, not one:
    and the one that has cost the most. Ask it of the *subject*: if you cannot
    name a directory the check does not apply to, it does not belong in a
    `paths:`-scoped workflow. Both of these moved to `repo.*` for that reason.
+
+**The fifth instance is not a command at all — it is the toolchain the command
+runs under (GGU-94).** Both halves of `frontend.format` matched byte for byte,
+`repo.gate-pairs` was green, and the check still could not be trusted, because
+the *interpreter* was unstated. `frontend-ci.yaml` pinned `FLUTTER_VERSION:
+"3.47.5"` in an env var no local command could read, and `frontend/pubspec.yaml`
+declared `sdk: ^3.13.0` which `dart format` does not consult. A laptop carrying
+Homebrew's `dart-sdk 3.12.1` — *below* the declared floor — therefore ran the
+gate happily and reported three tracked files as unformatted:
+
+| toolchain | `dart format --output=none --set-exit-if-changed .` |
+|---|---|
+| `dart-sdk 3.12.1` | 3 changed, **exit 65** |
+| the pinned 3.47.5 / 3.13.4 | 0 changed, **exit 0** |
+
+`develop` was correctly formatted the whole time. Again: **a red gate is not
+evidence that it is red for your reason.** The pin now lives in one file,
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
+every SDK-setup step in the workflow, and `frontend.toolchain` is the first
+entry of the frontend gate so the failure names the toolchain instead of
+impersonating a branch problem.
+
+So §5 has a third question:
+
+3. **Under what does that command run?** A version pinned where only CI can
+   read it is not a pin; it is a claim CI happens to satisfy. If a check
+   depends on a tool version, the version is a file in the repository and both
+   halves read it.
+
+**And `repo.manual-run` is the same rule applied to evidence rather than to
+code (GGU-93).** `sdd.md` required "a manual run with the real commands and
+their real responses pasted in", and a transcript satisfying it word for word
+was produced from a container built six commits behind `develop`. The rule had
+no field for *which build answered*. `scripts/check_manual_run.sh` now reads a
+PR body and compares the `<version>+<sha>` on `/health` with the branch head;
+what the gate runs is its **suite**, because the check needs a PR body and the
+gate has none. A check that has never been shown to reject is the same defect
+one level up, so the suite asserts the four rejections and only one pass.
 
 A PR that changes one without its pair is incomplete. If a third runner ever
 appears, it goes in this table rather than in a comment.
