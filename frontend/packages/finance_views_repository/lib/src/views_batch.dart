@@ -37,7 +37,7 @@ extension BatchedViewReads on ViewsRepository {
     if (chunks.length <= 1) {
       // One chunk, or none: delegate unchanged so the single-request path
       // keeps its cache entry, its `ETag` and its empty-list failure.
-      return fetchPortfolioViews(
+      return await fetchPortfolioViews(
         portfolioId: portfolioId,
         views: views,
         options: options,
