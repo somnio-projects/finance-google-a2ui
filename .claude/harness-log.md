@@ -2533,6 +2533,77 @@ Two lessons, both of which this repository has now paid for twice:
   fit in a single write. Both are here-strings now. If you add a third
   `check_*.sh`, do not reach for `printf ... | grep -q`.
 
+## 2026-09-21 — GGU-79: the client speaks A2UI, and the seam under it holds
+
+**Spec:** `specs/frontend/0002-a2ui-agent-path.md` · **PR:** #65 ·
+**Diagrams:** `12-frontend-layers.md`
+
+`frontend/` had no agent path at all. It now speaks A2A — `message/stream`,
+SSE, the four event kinds — and turns each `render-intent` into a surface as
+it lands. **No dependency was added**, and the reason is the finding worth
+keeping:
+
+- **`genui` / `genui_a2a` / `a2ui_core` are the wrong tool for this backend.**
+  They render A2UI component trees. This service sends none: `a2a_events.py`
+  emits `{"kind":"render-intent","renderIntent":{"view","options"}}`, and spec
+  `client/0003` §8.3 says the intent "names a registered view; it never
+  carries a payload. The client fetches the payload itself." The brief for
+  this ticket asked for those three packages by name; the wire says they would
+  render nothing. Recorded as spec `frontend/0002` OD-1 for TL sign-off.
+- **`X-A2A-Extensions` is sent, and the folklore about it is wrong for this
+  stack.** Nothing under `backend/src/app/api/` or `services/` reads it. The
+  "omit it and A2UI silently degrades" warning describes genui's connector
+  against the upstream sample, not this backend (OD-3).
+
+**The seam under it had two holes, and `frontend/CLAUDE.md` claimed it did
+not.** "Adding a component edits no existing file" was true of *registration*
+and false of everything after it: `app_router.dart` hardcoded a view id with
+no test comparing it to the registry, so a component could be registered,
+100 %-covered and **invisible with a green gate**; and the fifth component
+would have pushed one request past the endpoint's four-id cap. The route now
+names no view — the page asks the registry, so the two cannot disagree — and
+the repository splits an over-cap request. The claim in `CLAUDE.md` now says
+which two things used to break it.
+
+**Two bugs in the gate that guards coverage**, both reproduced before and
+after by executing the script against scratch trees:
+
+- an empty source walk printed `coverage ok — 0 lib file(s) accounted for` and
+  exited **0** — the disk cross-check reproducing the lcov blindness it was
+  written to fix;
+- `isExempt` ran against the raw `SF:` path, so the `lib/main.dart` exemption
+  never fired on a `flutter test` record, while the message printed the
+  **normalised** name, which looks exempt. Latent, not breaking: no test loads
+  `main.dart`, so no record exists and the disk side happened to work.
+
+**`SECURITY.md` claimed more than it checked.** All twelve number needles are
+*formatting* mechanisms; N-2 ("never compute") and N-10 ("never reorder") were
+enforced by nothing. `binding_rules_compute_test.dart` adds nine aggregation
+and rounding needles with two written carve-outs, `json.decode(` joins
+`jsonDecode(`, and the claim is narrowed — **bare `+ - * /` are named as not
+mechanically checked**, because they cannot be needled without matching prose.
+
+### What the next person should know
+
+- **There is no Flutter toolchain on the authoring machine** — and the
+  standalone Dart is 3.12.1 against a `^3.13.0` floor, so `frontend/` does not
+  even resolve. `make gate` was never run here. `frontend-ci` ran the whole
+  gate on every commit of this branch and is the only evidence in the PR body.
+  It caught three real defects a local run would have caught in seconds: a
+  `library;` directive after an import, an `async_return_with_no_await`, and
+  five files the 3.13 formatter disagreed with.
+- **The 3.12 formatter is not the 3.13 formatter.** On `binding_rules_test.dart`
+  and `result_test.dart` they disagree today (3.13 chains on a multi-line
+  receiver; 3.12 splits the argument list). Do not run `dart format .` with an
+  older SDK — it will rewrite files CI considers correct. Formatting one file
+  at a time and reading the diff is safe when it is a plain collapse.
+- **`tool/` still has no tests** and is still excluded from the coverage
+  contract it enforces. Adding `package:test` to the workspace root changes
+  `pubspec.lock`, which could not be regenerated here. Spec `frontend/0002`
+  OD-5 carries it.
+- The numbers rule matches **text, not intent**: a comment in
+  `conversation_bloc.dart` that merely *named* `DateTime.now(` tripped it. That
+  is the rule working, and the comment now says so.
 ## 2026-09-21 — GGU-53: the catalog serves what the client must draw
 
 Spec: `specs/backend/0023-catalog-serves-the-client.md`. Tickets: GGU-53, and

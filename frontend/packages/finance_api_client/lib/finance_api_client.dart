@@ -5,6 +5,8 @@
 /// JSON and a `Result`; nothing above it ever sees an `http.Response`.
 library;
 
+export 'src/a2a_client.dart';
 export 'src/auth_token_provider.dart';
+export 'src/event_stream.dart';
 export 'src/finance_api_client.dart';
 export 'src/json_response.dart';

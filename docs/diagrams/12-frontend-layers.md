@@ -23,15 +23,19 @@ graph TD
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
     repo["finance_views_repository<br/>envelope · ViewPayload · ETag cache"]
+    agentrepo["AgentRepository<br/>AgentEvent union · reads to end of stream"]
     api["finance_api_client<br/><b>the only HTTP speaker</b>"]
+    a2a["A2aClient + decodeEventStream<br/>JSON-RPC · SSE · three answer shapes"]
     core["finance_core<br/>Result · AppFailure · ProblemDetails"]
   end
 
   backend[["backend<br/>GET /v1/portfolios/{id}/views"]]
+  agent[["backend<br/>POST / — message/stream (SSE)"]]
 
   main --> boot
   boot --> router
-  boot -.->|"constructs everything:<br/>http.Client, FinanceApiClient,<br/>ViewsRepository, registry"| repo
+  boot -.->|"constructs everything:<br/>http.Client, FinanceApiClient,<br/>ViewsRepository, A2aClient,<br/>AgentRepository, registry"| repo
+  boot -.-> agentrepo
   boot --> manifest
   manifest -->|"register()"| host
   router --> page
@@ -41,10 +45,14 @@ graph TD
   view --> host
   host --> comp
   bloc --> repo
+  bloc -->|"one turn → AgentEvent stream"| agentrepo
+  agentrepo --> a2a
+  a2a -->|"Bearer · X-A2A-Extensions<br/>Accept: text/event-stream"| agent
   repo --> api
   api -->|"Bearer · repeated ?view= · If-None-Match"| backend
   repo --> core
   api --> core
+  a2a --> core
   comp --> repo
 
   %% Everything below this line is checked by layering_test.dart, not by review.
@@ -53,7 +61,8 @@ graph TD
   %%   view  -> repo     (only a *_page.dart may; the _View may not)
   %%   comp  -> features (a component that needs a bloc is a feature)
   %%   pure/ -> flutter  (also a compile error — that is the point of the workspace)
-  %%   anything but boot constructing http.Client / FinanceApiClient / ViewsRepository
+  %%   anything but boot constructing http.Client / FinanceApiClient /
+  %%     ViewsRepository / A2aClient / AgentRepository
   %%   NumberFormat · intl · dart:math · toStringAsFixed · double.parse · DateTime.now()
 ```
 
@@ -64,4 +73,7 @@ graph TD
 - **`comp → repo`** looks like the same shortcut and is not: a component imports `ViewPayload` — a *type* — and never a repository instance.
 - **`boot -.-> repo`** is dashed because it is construction, not a call. `bootstrap.dart` is the only file allowed to draw it; `layering_test.dart` fails if any other does.
 - **The generated manifest is the seam.** Adding a component adds a directory and regenerates `component_manifest.g.dart`; no hand-written file in this diagram changes (ADR-L D-3, mirroring ADR-K D-15).
+- **The agent path rejoins the read path on purpose.** A `render-intent` names a registered view and carries no payload, so `ConversationBloc` fetches it through the *same* `ViewsRepository` and renders it through the *same* `ComponentHost` and registry as a `?view=` read. The two routes into `comp` are two callers of one seam, **not** two rendering paths — a second path is what ADR-K D-15 and ADR-L D-3 exist to prevent, and it is the defect class this repository has hit three times on the backend side.
+- **Two backend nodes, two protocols, one credential.** `/v1/**` is REST with RFC 9457 problems; `POST /` is JSON-RPC that answers SSE and reports some failures at **HTTP 200** (ADR-J D-3). They share one `http.Client` and one token provider, which is why `A2aClient` sits beside `FinanceApiClient` rather than inside it.
+- **The router names no view id.** It used to carry a hardcoded one, so a registered component could be unreachable with a green gate; `PortfolioViewsPage` now asks the registry (GGU-79).
 - **Nothing is deployed.** There is no pipeline shipping this bundle yet — `specs/client/0002-client-delivery.md` owns that — so no edge crosses into Google Cloud here. See [02-containers](02-containers.md) for where it will attach.

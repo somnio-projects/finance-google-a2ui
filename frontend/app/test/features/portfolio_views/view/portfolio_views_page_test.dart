@@ -1,3 +1,5 @@
+import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_component.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_view.dart';
 import 'package:finance_core/finance_core.dart';
@@ -11,7 +13,7 @@ class _MockViewsRepository extends Mock implements ViewsRepository;
 
 void main() {
   group(PortfolioViewsPage, () {
-    testWidgets('builds a bloc and asks for the views it was given', (
+    testWidgets('builds a bloc and asks for what the registry registered', (
       tester,
     ) async {
       final repository = _MockViewsRepository();
@@ -22,20 +24,30 @@ void main() {
           options: any(named: 'options'),
         ),
       ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
+      // The page takes no view ids any more: it asks the registry, so a
+      // registered component cannot be left unreachable by a second list.
+      final registry = ComponentRegistry()
+        ..register(const HoldingsAllocationComponent());
 
       await tester.pumpApp(
-        const PortfolioViewsPage(views: <String>['holdings.allocation.v1']),
+        const PortfolioViewsPage(),
         viewsRepository: repository,
+        componentRegistry: registry,
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(PortfolioViewsView), findsOneWidget);
-      verify(
+      // Captured rather than matched by value: the list is built at runtime,
+      // and mocktail compares a non-matcher argument with `==`, which for a
+      // `List` is identity.
+      final captured = verify(
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
-          views: const <String>['holdings.allocation.v1'],
+          views: captureAny(named: 'views'),
+          options: any(named: 'options'),
         ),
-      ).called(1);
+      ).captured;
+      expect(captured.single, equals(<String>['holdings.allocation.v1']));
     });
   });
 }

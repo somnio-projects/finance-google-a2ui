@@ -21,14 +21,26 @@ import 'package:http/http.dart' as http;
 Widget bootstrap({AppConfig? config, http.Client? httpClient}) {
   final resolved = config ?? AppConfig.fromEnvironment();
   final client = httpClient ?? http.Client();
+  // Local development only. Real sign-in replaces this provider and
+  // nothing else — see AppConfig.devBearerToken and SECURITY.md G-1.
+  final tokenProvider = devTokenProvider(resolved);
   final apiClient = FinanceApiClient(
     baseUrl: resolved.backendBaseUrl,
     httpClient: client,
-    // Local development only. Real sign-in replaces this provider and
-    // nothing else — see AppConfig.devBearerToken and SECURITY.md G-1.
-    tokenProvider: devTokenProvider(resolved),
+    tokenProvider: tokenProvider,
   );
-  return buildApp(viewsRepository: ViewsRepository(apiClient: apiClient));
+  // The agent surface is JSON-RPC at the service root, not under /v1, so it
+  // gets its own client over the *same* connection pool and the *same*
+  // credential source — one token provider, two surfaces.
+  final a2aClient = A2aClient(
+    baseUrl: resolved.backendBaseUrl,
+    httpClient: client,
+    tokenProvider: tokenProvider,
+  );
+  return buildApp(
+    viewsRepository: ViewsRepository(apiClient: apiClient),
+    agentRepository: AgentRepository(a2aClient: a2aClient),
+  );
 }
 
 /// The credential source this build uses.
@@ -45,12 +57,14 @@ AuthTokenProvider devTokenProvider(AppConfig config) =>
 /// going anywhere near an `http.Client`.
 Widget buildApp({
   required ViewsRepository viewsRepository,
+  required AgentRepository agentRepository,
   ComponentRegistry? componentRegistry,
   String? initialLocation,
 }) {
   return FinanceApp(
     router: buildRouter(initialLocation: initialLocation),
     viewsRepository: viewsRepository,
+    agentRepository: agentRepository,
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
   );
 }

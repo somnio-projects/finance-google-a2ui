@@ -101,7 +101,16 @@ void main() {
       expect(
         sources.offenders(
           'app/lib',
-          <String>['http.Client(', 'FinanceApiClient(', 'ViewsRepository('],
+          // The agent path's two constructors are here for the same reason
+          // the read path's are: the rule is about the dependency graph, not
+          // about a fixed list of three names, so it grows with the graph.
+          <String>[
+            'http.Client(',
+            'FinanceApiClient(',
+            'ViewsRepository(',
+            'A2aClient(',
+            'AgentRepository(',
+          ],
           allow: <String>{'app/lib/bootstrap.dart'},
         ),
         isEmpty,

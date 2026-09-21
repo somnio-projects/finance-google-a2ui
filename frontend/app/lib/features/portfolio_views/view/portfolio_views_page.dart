@@ -1,3 +1,4 @@
+import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/features/portfolio_views/bloc/portfolio_views_bloc.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_view.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -15,13 +16,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// tree`).
 class PortfolioViewsPage extends StatelessWidget {
   /// Creates the page.
-  const PortfolioViewsPage({required this.views, super.key});
-
-  /// The view ids to request, sourced from the backend's catalog (N-6).
-  final List<String> views;
+  const PortfolioViewsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // **The requested ids come from the registry, not from a literal here or
+    // in the router.** Every id is one a component declared for itself, so
+    // they are still catalog ids the client never invents (N-6) — and a
+    // component that registers is now reachable by construction instead of
+    // after somebody remembers to edit a second list.
+    final views = context.read<ComponentRegistry>().viewIds.toList();
     return BlocProvider<PortfolioViewsBloc>(
       create: (context) =>
           PortfolioViewsBloc(viewsRepository: context.read<ViewsRepository>())
