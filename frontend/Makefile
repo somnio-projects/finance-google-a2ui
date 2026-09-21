@@ -6,15 +6,16 @@
 # is slow and belongs on a runner — the same split as backend-ci's `image`
 # job.) When you change one, change its pair: `.claude/rules/ci-conventions.md`
 # §5 exists because a paraphrase drifted until a finding reached `develop`.
-PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository
+PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository packages/finance_charts
 PACKAGE_CONFIG := $(CURDIR)/.dart_tool/package_config.json
 LCOV := app/coverage/lcov.info \
 	packages/finance_core/coverage/lcov.info \
 	packages/finance_api_client/coverage/lcov.info \
-	packages/finance_views_repository/coverage/lcov.info
+	packages/finance_views_repository/coverage/lcov.info \
+	packages/finance_charts/coverage/lcov.info
 
 .PHONY: install format format-check analyze budget manifest manifest-check \
-	test test-packages test-app coverage gate clean
+	test test-tool test-packages test-app coverage gate clean
 
 # --enforce-lockfile from day one. Plain `pub get` silently re-resolves, so a
 # build can differ from the one that was reviewed; the strict flag fails
@@ -44,7 +45,13 @@ manifest:
 manifest-check:
 	dart run tool/generate_component_manifest.dart --check
 
-test: test-packages test-app
+test: test-tool test-packages test-app
+
+# The gate's own scripts. They are not under lib/, so the coverage contract
+# does not reach them — which is exactly why they need a suite of their own:
+# `check_coverage.dart` used to pass on a walk that found no files at all.
+test-tool:
+	dart test test
 
 test-packages:
 	@for package in $(PACKAGES); do \

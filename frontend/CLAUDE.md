@@ -1,7 +1,7 @@
 # CLAUDE.md — frontend
 
 Flutter 3.47.5 · Dart 3.13.4 · Bloc · go_router · Material 3. A **pub
-workspace**: one lockfile, one analyzer configuration, four packages. This is
+workspace**: one lockfile, one analyzer configuration, five packages. This is
 the A2UI client — it binds backend-shaped payloads to catalog components and
 transforms nothing. Read the root `CLAUDE.md` first; the decisions behind this
 layout are [ADR-L](../docs/adr/ADR-L-client-architecture.md) and the spec is
@@ -31,6 +31,7 @@ carries a credential for a deployed environment.
 cd frontend && make gate    # format · analyze · budget · manifest · tests · coverage
 cd frontend && make format  # apply formatting
 cd frontend && make manifest # regenerate the component manifest after adding one
+cd frontend/app && flutter test --update-goldens   # after an intended visual change
 ```
 
 `make gate` == the `quality` and `tests` jobs of
@@ -58,15 +59,18 @@ frontend/
 ├── packages/                     pure Dart — cannot import Flutter, by compilation
 │   ├── finance_core/             Result, AppFailure, ProblemDetails. Depends on nothing.
 │   ├── finance_api_client/       DATA layer: the only code that speaks HTTP.
-│   └── finance_views_repository/ REPOSITORY layer: envelope, ViewPayload, ETag cache.
+│   ├── finance_views_repository/ REPOSITORY layer: envelope, ViewPayload, ETag cache.
+│   └── finance_charts/           CHART GEOMETRY: scales, nice ticks, (steps, size) → rects.
 ├── app/lib/                      Flutter
 │   ├── bootstrap.dart            THE composition root — the only file that constructs anything
 │   ├── main.dart                 runApp(bootstrap())
 │   ├── app/                      AppConfig (the only reader of --dart-define), FinanceApp
 │   ├── router/                   go_router table + the single auth-gate redirect
 │   ├── theme/                    Material 3 themes + the AppSpacing ThemeExtension
+│   ├── charts/                   the CustomPainter + ChartPalette — the half that needs dart:ui
 │   ├── components/               one directory per catalog view + the generated manifest
 │   └── features/<name>/bloc|view business logic and screens
+├── test/tool/                    the suite over the gate's own scripts (`make test-tool`)
 └── tool/                         the gate's own scripts
 ```
 
@@ -76,10 +80,28 @@ Dependencies point one way: `view → bloc → repository → api client → cor
 
 - **150 lines per file** (`tool/check_file_budget.dart`), sources *and* tests. Over budget → split by responsibility, never "part 1 / part 2".
 - **Layering** (`app/test/architecture/layering_test.dart`, the counterpart of the backend's `test_package_boundaries.py`): no Flutter under `packages/`; blocs never import the api client or `http`; components never import a feature; **only `bootstrap.dart` constructs** an `http.Client`, a `FinanceApiClient` or a `ViewsRepository`; **only a `*_page.dart` reads a repository from the tree** (the page/view split — a page builds its bloc, a `_View` reads state).
-- **The numbers rule, as a test** (`app/test/architecture/binding_rules_test.dart`). Twelve number mechanisms — including **both** `double.parse` and `double.tryParse`, and the same for `num` and `int` — plus three clock reads and four interpreter mechanisms are absent from `lib/`, and the test fails on any of them. Payload paths must be string literals, never variables. Every figure on screen is a `*Display` string the backend formatted. If you need one the payload does not carry, **the payload is missing a field — raise it** (spec `client/0003` N-3).
+- **The numbers rule, as a test** (`app/test/architecture/binding_rules_test.dart`). Twelve number mechanisms — including **both** `double.parse` and `double.tryParse`, and the same for `num` and `int` — plus three clock reads and four interpreter mechanisms are absent from `lib/`, and the test fails on any of them. **One file is allow-listed**, by path: `finance_views_repository/lib/src/raw_decimal.dart`, which turns the contract's raw `amount` into a canvas coordinate for a chart and nothing else (ADR-L D-14). It is not exported from the package barrel, so `ViewPayload.geometry` is its only caller, and `::the geometry seam is the only exemption` asserts the allow set has exactly one member. Payload paths must be string literals, never variables. Every figure on screen is a `*Display` string the backend formatted. If you need one the payload does not carry, **the payload is missing a field — raise it** (spec `client/0003` N-3).
 - **Documentation on every public symbol** — `public_member_api_docs` from `very_good_analysis`, made fatal by `dart analyze --fatal-infos`. This is the analyzer doing what `interrogate` does for the backend.
 - **100 % line coverage per file, and no `lib/` file without a record** (`tool/check_coverage.dart`). Dart's lcov carries no branch data, so the backend's 100 % *branch* contract cannot be reproduced literally; per-file 100 % line is the honest equivalent and is strictly above the `≥80 %` floor in `.claude/rules/flutter/testing.md`. The script also cross-checks the records against the files on disk, because lcov writes **nothing** for a library no test imports — without that, the rule would have meant "100 % of the files the tests happened to load" and a new untested file would have passed silently. Exemptions are listed in that script with a reason each.
 - **The component manifest is generated and gated.** `app/lib/components/component_manifest.g.dart` is re-rendered by the gate and diffed, exactly like the backend's frozen catalog.
+
+## Drawing a chart
+
+`packages/finance_charts` is the geometry — `LinearScale`, `BandScale`,
+readable tick steps, `WaterfallLayout.of(steps, width, height)` — and it is
+pure Dart, so it runs under `dart test` and its output is **asserted
+arithmetically**. `app/lib/charts/` holds the `CustomPainter` and the
+`ChartPalette` theme extension, because a painter needs `dart:ui` and
+`packages/` may not have it.
+
+No charting library, deliberately: `fl_chart` and `graphic` both format their
+own axis labels, which breaks the one product invariant this showcase exists
+to demonstrate. The reasoning is ADR-L D-13; the measured design values are in
+`app/lib/charts/chart_tokens.dart`, which is the only file in `app/lib/`
+naming a `Color`.
+
+Responsive through `LayoutBuilder` alone — the painter takes the `Size` and
+the scales recompute. There is no breakpoint to keep in step with a design.
 
 ## Adding a component — the whole procedure
 

@@ -20,67 +20,11 @@
 // Usage: dart run tool/check_coverage.dart <file.info> [more.info ...]
 import 'dart:io';
 
+import 'coverage_sources.dart';
 import 'lcov.dart';
 
 /// The minimum line coverage every counted file must reach.
 const double threshold = 100;
-
-/// Files exempt from the threshold and from the must-have-a-record rule.
-///
-///  * generated code (`*.g.dart`, `*.freezed.dart`) is the build's output,
-///    not hand-written logic — the rule's own exemption;
-///  * `lib/main.dart` is `runApp(bootstrap())` and nothing else. Executing it
-///    in a test starts the real app, which builds a real `http.Client` and
-///    opens a socket to the configured backend; everything worth asserting
-///    lives in `bootstrap.dart`, which is at 100 %.
-///
-/// **Always call this on a [coverageKey], never on a raw `SF:` path.**
-/// `flutter test` writes package-relative records (`lib/main.dart`), which do
-/// not end with `/lib/main.dart`, so the exemption silently missed them while
-/// the failure message printed the normalised name — a path that *looks*
-/// exempt. The disk side happened to pass `app/lib/main.dart` and worked,
-/// which is why the records side stayed dead and unnoticed.
-bool isExempt(String path) =>
-    path.endsWith('.g.dart') ||
-    path.endsWith('.freezed.dart') ||
-    path.endsWith('/lib/main.dart');
-
-/// Whether [file] contains anything that could be executed.
-///
-/// A barrel of `export` directives has no executable line, so lcov correctly
-/// writes no record for it. Deciding that by parsing — rather than listing the
-/// barrels — keeps the rule working when someone adds a fifth package, while
-/// still failing on a real file nobody tested.
-bool hasExecutableCode(File file) {
-  for (final raw in file.readAsLinesSync()) {
-    final line = raw.trim();
-    if (line.isEmpty || line.startsWith('//')) continue;
-    if (line.startsWith('import ') || line.startsWith('export ')) continue;
-    if (line == 'library;' || line.startsWith('library ')) continue;
-    if (line.startsWith('part ')) continue;
-    return true;
-  }
-  return false;
-}
-
-/// Every `lib/` source in the workspace, keyed by its path from `frontend/`.
-Map<String, File> libSources() {
-  final roots = <Directory>[Directory('app/lib')];
-  final packages = Directory('packages');
-  if (packages.existsSync()) {
-    for (final entry in packages.listSync().whereType<Directory>()) {
-      roots.add(Directory('${entry.path}/lib'));
-    }
-  }
-  final sources = <String, File>{};
-  for (final root in roots) {
-    if (!root.existsSync()) continue;
-    for (final file in root.listSync(recursive: true).whereType<File>()) {
-      if (file.path.endsWith('.dart')) sources[file.path] = file;
-    }
-  }
-  return sources;
-}
 
 void main(List<String> args) {
   if (args.isEmpty) {

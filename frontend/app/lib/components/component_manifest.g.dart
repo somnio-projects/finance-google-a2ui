@@ -7,10 +7,13 @@
 // and the directories disagree.
 
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart'
+    as attribution_waterfall;
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_component.dart'
     as holdings_allocation;
 
 /// Registers every catalog component this build ships.
 void registerCatalogComponents(ComponentRegistry registry) {
+  attribution_waterfall.register(registry);
   holdings_allocation.register(registry);
 }

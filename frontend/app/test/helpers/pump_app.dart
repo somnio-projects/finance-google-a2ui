@@ -14,11 +14,15 @@ export 'fixtures.dart';
 /// missing `ThemeExtension` or an unprovided repository.
 extension PumpApp on WidgetTester {
   /// Pumps [widget] with optional dependencies injected above it.
+  /// [brightness] picks which of the two real themes wraps the subject. A
+  /// chart's palette differs between them, so a golden or a colour assertion
+  /// that can only reach one of the two is only half a check.
   Future<void> pumpApp(
     Widget widget, {
     ViewsRepository? viewsRepository,
     AgentRepository? agentRepository,
     ComponentRegistry? componentRegistry,
+    Brightness brightness = Brightness.light,
   }) {
     return pumpWidget(
       MultiRepositoryProvider(
@@ -31,7 +35,10 @@ extension PumpApp on WidgetTester {
             value: componentRegistry ?? ComponentRegistry(),
           ),
         ],
-        child: MaterialApp(theme: AppTheme.light, home: widget),
+        child: MaterialApp(
+          theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
+          home: widget,
+        ),
       ),
     );
   }

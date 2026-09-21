@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/src/payload_contract_exception.dart';
+import 'package:finance_views_repository/src/raw_decimal.dart';
 
 /// One rendered projection, read by dotted path.
 ///
@@ -11,10 +12,11 @@ import 'package:finance_views_repository/src/payload_contract_exception.dart';
 /// A reader that fails loudly on a missing path enforces the same contract
 /// without duplicating it.
 ///
-/// Every accessor returns a **string the backend already formatted**. There is
-/// deliberately no `double` or `num` accessor here: adding one would be the
-/// first step of prohibition N-1, and its absence is what makes the rule cheap
-/// to keep.
+/// Every text accessor returns a **string the backend already formatted**.
+/// There is deliberately no general-purpose `double` or `num` accessor: one
+/// would be the first step of prohibition N-1, and its absence is what makes
+/// the rule cheap to keep. [geometry] is the single, named exception, and its
+/// doc comment says what it may and may not be used for (ADR-L D-14).
 class ViewPayload extends Equatable {
   /// Wraps the decoded JSON object of a single view.
   const ViewPayload(this.view, this._json);
@@ -59,6 +61,26 @@ class ViewPayload extends Equatable {
   String? optionalText(String path) {
     final value = _at(path);
     return value is String ? value : null;
+  }
+
+  /// Reads the raw decimal at [path] as a `double`, **for chart geometry**.
+  ///
+  /// The contract keeps a raw `amount` beside every `*.display` string so a
+  /// chart can be drawn from it, and a responsive chart cannot get its
+  /// value-to-pixel mapping from the server, which does not know the width it
+  /// will be laid out in. This is that seam and the only one: the result is a
+  /// position on a canvas. It never reaches a `Text`, is never re-formatted
+  /// and never becomes a figure a human reads — those all arrive already
+  /// formatted (N-1, N-2, N-4). See [rawDecimal] and ADR-L D-14.
+  ///
+  /// Throws [PayloadContractException] when the path is absent or does not
+  /// hold a decimal string, for the same reason [text] does (N-3).
+  double geometry(String path) {
+    final value = _at(path);
+    if (value is! String) {
+      throw PayloadContractException(ContractFailure(path, 'a decimal string'));
+    }
+    return rawDecimal(path, value);
   }
 
   /// Reads the repeated object at [path] as a list of nested payloads.

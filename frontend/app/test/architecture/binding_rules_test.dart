@@ -12,49 +12,8 @@
 // Mutation-checked: adding `NumberFormat` to a component makes this file fail.
 import 'package:flutter_test/flutter_test.dart';
 
+import 'binding_mechanisms.dart';
 import 'workspace_sources.dart';
-
-/// Everything that turns a number into text, or text into a number.
-///
-/// `double.parse` does **not** match `double.tryParse` as a substring, and the
-/// `try*` forms are the ones a developer reaches for first — so both spellings
-/// of all four are listed. A figure arrives pre-formatted (N-1); a figure is
-/// never recomputed (N-2).
-const List<String> numberMechanisms = <String>[
-  'NumberFormat',
-  'package:intl/',
-  "import 'dart:math'",
-  'toStringAsFixed',
-  'toStringAsPrecision',
-  'toStringAsExponential',
-  'double.parse',
-  'double.tryParse',
-  'num.parse',
-  'num.tryParse',
-  'int.parse',
-  'int.tryParse',
-];
-
-/// Every way of asking the device what time it is (N-13).
-const List<String> clockMechanisms = <String>[
-  'DateTime.now(',
-  'DateTime.timestamp(',
-  'Stopwatch(',
-];
-
-/// Ways a server-supplied string could become code or a field path (N-5).
-///
-/// Both spellings of the decoder are listed. `dart:convert` exports the `json`
-/// constant as well as the top-level function, so `json.decode(` is the same
-/// mechanism written differently — needling only `jsonDecode(` was the same
-/// near-miss shape as listing `double.parse` without `double.tryParse`.
-const List<String> interpreterMechanisms = <String>[
-  "import 'dart:mirrors'",
-  'Function.apply(',
-  'noSuchMethod(',
-  'jsonDecode(',
-  'json.decode(',
-];
 
 void main() {
   group('binding rules', () {
@@ -66,7 +25,29 @@ void main() {
 
     test('nothing formats or computes a number', () {
       expect(sources.offenders('app/lib', numberMechanisms), isEmpty);
-      expect(sources.offenders('packages', numberMechanisms), isEmpty);
+      // `rawDecimal` is the one seam that turns the contract's raw `amount`
+      // into a position on a canvas, and it is allowed here for exactly the
+      // reason `jsonDecode` is allowed in the transport below: the mechanism
+      // is legitimate in one named file and nowhere else. A responsive chart
+      // cannot get its value-to-pixel mapping from a server that does not
+      // know the width it will be laid out in (ADR-L D-14). The allowance is
+      // per file, so the file is five lines long on purpose.
+      expect(
+        sources.offenders('packages', numberMechanisms, allow: numberAllowed),
+        isEmpty,
+      );
+    });
+
+    test('the geometry seam is the only exemption', () {
+      // The claim ADR-L D-14, both rule files and SECURITY.md all make, as an
+      // assertion rather than prose. The allowance is what makes a chart
+      // possible and it is also the one hole in the rule, so its *size* is
+      // the thing worth pinning: a second entry here is a second hole.
+      expect(numberAllowed, hasLength(1));
+      expect(numberAllowed.single, geometrySeam);
+      // And it still names a file that exists — an allowance that outlives
+      // the file it excused is a hole nobody can see.
+      expect(sources.under('packages').keys, contains(geometrySeam));
     });
 
     test('nothing reads the device clock', () {
@@ -100,8 +81,13 @@ void main() {
     test('payload paths are literals, never variables', () {
       // `ViewPayload.text(someVariable)` would be a field path chosen at
       // runtime — the client-side half of the free-form DSL ADR-K D-3
-      // rejects. Every reader argument must open with a quote.
-      final readers = RegExp(r"\.(text|optionalText|rows)\(\s*([^'\)])");
+      // rejects. Every reader argument must open with a quote. `geometry`
+      // is in this list from the day it existed: a reader added without its
+      // entry here is a hole in the rule, which is how a rule like this
+      // usually fails.
+      final readers = RegExp(
+        r"\.(text|optionalText|rows|geometry)\(\s*([^'\)])",
+      );
       final offenders = <String>[];
       sources.under('app/lib').forEach((path, text) {
         if (readers.hasMatch(text)) offenders.add(path);

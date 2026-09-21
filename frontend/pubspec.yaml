@@ -19,3 +19,11 @@ workspace:
   - packages/finance_core
   - packages/finance_api_client
   - packages/finance_views_repository
+  - packages/finance_charts
+
+# The workspace root ships no library code, but `tool/` lives here and the
+# gate is made of it. `frontend/test/tool/` is that suite; it needs `test` and
+# the shared analyzer rules like any other package.
+dev_dependencies:
+  test: ^1.27.0
+  very_good_analysis: ^11.0.0

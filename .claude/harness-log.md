@@ -2683,3 +2683,92 @@ itself — it simply did not publish the fact. A drift check compares an artefac
 to its own generator; it cannot tell you the generator is wrong. Only a second,
 independent declaration can, which is why the design catalog's six names are
 checked in as a literal and asserted to cover every registered view.
+
+## 2026-09-21 — GGU-55: chart primitives and the attribution waterfall
+
+**Spec:** `specs/frontend/0002-chart-primitives-and-waterfall.md` ·
+**ADR:** ADR-L D-13, D-14, D-15 · **Design:** GGU-42
+
+### Code
+
+A fifth workspace package, `packages/finance_charts`: `LinearScale`,
+`BandScale`, readable tick steps, and `WaterfallLayout.of(steps, width,
+height)`. Pure Dart, so it runs under `dart test` and its output is asserted
+**arithmetically** rather than looked at. `app/lib/charts/` holds the
+`CustomPainter`, the `ChartPalette` theme extension and the measured
+`ChartTokens`; `app/lib/components/attribution_waterfall/` binds
+`attribution.waterfall.v1`.
+
+**No charting library, and the reason is not taste.** `fl_chart` and `graphic`
+were both proposed. Both generate their own axis and tooltip labels by
+formatting the values they are handed — prohibition N-1 broken silently,
+inside a dependency, on the one product invariant this showcase exists to
+demonstrate. A library that ships its own `NumberFormat` cannot be made to
+obey a rule this repository enforces by grepping for `NumberFormat`. What is
+worth having from d3 is its arithmetic, not its renderer, and that is ~350
+lines.
+
+### Harness
+
+Three things changed and each was a gate that was weaker than it read.
+
+- **`ViewPayload` gained exactly one numeric accessor, and the rule that said
+  it never would is now wrong.** `contract-binding.md` said *"exposes no
+  numeric accessor … do not add it back"*. That sentence was right about a
+  `json` getter and too broad about a named reader: the contract keeps a raw
+  `amount` beside every `*Display` string **so a chart can be drawn from it**
+  (N-4 says so in the same file), and the value-to-pixel mapping cannot live
+  on a server that does not know the width the client will be laid out in.
+  `raw_decimal.dart` is allow-listed **by path**, the same shape as
+  `jsonDecode` in the transport, and a second test asserts the exemption set
+  has exactly one member. Mutation-checked: moving `double.tryParse` into
+  `view_payload.dart` turns it red.
+- **`check_coverage.dart` reported success on an empty walk.** Run where
+  `app/` and `packages/` do not exist it printed `coverage ok — 0 lib file(s)
+  accounted for` and exited **0**. Every assertion in it is universally
+  quantified over the files it found, so the empty set satisfied all of them:
+  the gate was green precisely when it was checking nothing. This is the same
+  defect `repo.spelling` had, and it now takes the same fix — a check that
+  cannot report success on an implausibly small input. `frontend/tool/` had no
+  tests at all; `frontend/test/tool/` now covers it and `make test-tool` runs
+  it — including a suite that **spawns the script** and asserts its exit code,
+  because asserting that the walk returned an empty map proves the
+  precondition and not the failure. `check_file_budget.dart` was not scanning
+  `test/` either, so the suite over the gate's scripts would itself have been
+  exempt from the budget.
+
+  **GGU-69 found and fixed the same defect independently**, on `develop`,
+  while this branch was open — two people tripping over one vacuous gate in a
+  week is the strongest argument yet for the anti-vacuity idiom. The merge
+  keeps develop's wording for the guard and adds the tests it did not have.
+- **Goldens compare with a tolerance (ADR-L D-15).** A raster is not portable:
+  the same widget anti-aliases differently on a laptop and on the Linux
+  runner, so a byte-exact golden generated locally is a check that fails on CI
+  for a reason that is not a defect — and the fix everyone reaches for is to
+  stop running it. 0.5 % of pixels may differ. That is safe only because the
+  geometry is proved exactly and separately; the mutation check changes one
+  scale's interval count and watches fourteen geometry assertions **and** all
+  three goldens go red together.
+
+`frontend/0001` OD-1 is **closed**: `docs/catalog/view-catalog.snapshot.json`
+is on `develop` (GGU-53), so component tests read it instead of a checked-in
+copy, and `catalog_contract_test.dart` asserts every registered component's
+view id and A2UI name are ones the backend publishes — the client half of the
+rename that GGU-53 found on the backend.
+
+### What the next person should know
+
+- **The measured palette is not the one that was circulating.** Two of five
+  values passed around informally were wrong: the dark surface is `#15161C`,
+  not `#14151A`, and the dark neutral bar is `#6F7280`, not `#4B4D57`. Read
+  the rendered DOM, do not trust a list.
+- **The router no longer hard-codes a view id, and that is not this branch's
+  doing.** GGU-69 landed on `develop` while this was open and fixed it the
+  better way: the route carries no ids, `PortfolioViewsPage` reads them from
+  the registry, and a registered component is reachable *by construction*.
+  This branch merged that and kept its own half — `catalog_contract_test.dart`,
+  which checks the registry against the backend's published catalog. Two
+  halves of one defect, found from two directions in the same week.
+- Three things the design asks for have no field in the contract: a signed,
+  coloured net pill, the tooltip's price-and-share line, and which annotation
+  is the net. They are OD-2 and OD-3, not omissions.

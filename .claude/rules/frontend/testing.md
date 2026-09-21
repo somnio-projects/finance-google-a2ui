@@ -69,10 +69,49 @@ test file passes 150 lines.
 - **For a failure path:** the failure kind *and* its `code`. Asserting only "it failed" passes when the wrong thing failed.
 - **For a structural rule:** mutate it. A layering or budget rule added without watching it turn red is a rule nobody has tested; the four in this app were each mutation-checked and the evidence is in the GGU-91 PR body.
 
-## 5. Fixtures are labelled, not trusted
+## 5. A component test reads the generated catalog, it does not copy it
 
-Until `docs/catalog/view-catalog.snapshot.json` lands on `develop` (PR #45),
-component tests bind a **checked-in copy** of the catalog's rendered example.
-Every such copy carries a doc comment saying it is a fixture and naming the
-open decision that replaces it (spec `frontend/0001` OD-1). Do not add a new
-one silently — a copy of a generated contract is the thing that goes stale.
+`docs/catalog/view-catalog.snapshot.json` is on `develop` (GGU-53), so spec
+`frontend/0001` OD-1 is **closed**: `app/test/helpers/catalog_snapshot.dart`
+reads it, and a component test binds `exampleFor('<A2UIComponent>')` rather
+than a checked-in copy. `app/test/architecture/catalog_contract_test.dart`
+additionally asserts that every registered component's view id and A2UI name
+are ones the backend publishes — the client half of the defect GGU-53 found,
+where four of six component names changed in one commit and a client holding
+the old one registers happily, covers to 100 % and shows a placeholder.
+
+A remaining checked-in copy (`app/test/helpers/fixtures.dart`) is labelled as
+a fixture. Do not add another silently — a copy of a generated artefact is
+the thing that goes stale.
+
+## 6. Goldens prove the raster; the geometry is proved separately
+
+A chart carries two kinds of claim and they need two kinds of check.
+
+- **Geometry is arithmetic** and lives in `packages/finance_charts`, asserted
+  against numbers measured from the design. A failure names the bar.
+- **A golden** catches what arithmetic cannot: a colour from the wrong
+  palette, a missing label, a layout that reflowed. A failure says only that
+  something moved.
+
+Keep both. The GGU-55 mutation check changes one scale's target interval
+count and watches fourteen geometry assertions **and** three goldens go red
+together; either alone would have been a weaker claim.
+
+Goldens compare through the tolerant comparator in
+`app/test/flutter_test_config.dart` (ADR-L D-15) — a raster is not portable
+across platforms, and a byte-exact golden generated on a laptop is a check
+that fails on the Linux runner for a reason that is not a defect. Text in a
+golden renders in Flutter's test font, so they prove bars, connectors,
+colours and layout, **not** typography.
+
+## 7. The gate's own scripts have a suite
+
+`frontend/test/tool/` covers `tool/`, and `make test-tool` runs it. It exists
+because `check_coverage.dart` used to print `coverage ok — 0 lib file(s)
+accounted for` and exit **0** when its directory walk found nothing: every
+assertion in it is universally quantified over the files it found, so an
+empty set satisfied all of them. A check that cannot report success on an
+implausibly small input is the same idiom `repo.spelling` uses
+(`.claude/rules/ci-conventions.md` §5), and it belongs on anything that walks
+a tree.

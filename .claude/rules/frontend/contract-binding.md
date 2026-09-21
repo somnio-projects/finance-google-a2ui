@@ -32,10 +32,27 @@ developer reaches for first — listing only one would have been a rule with
 a hole in it. Clock reads (`DateTime.now(`, `DateTime.timestamp(`,
 `Stopwatch(`) fail the same way.
 
-`ViewPayload` deliberately exposes **no numeric accessor, and no raw map**:
-a `json` getter would have let `payload.json['total']['amount']` reach a
-`Decimal` with nothing stopping arithmetic on it. It was removed for that
-reason — do not add it back.
+`ViewPayload` deliberately exposes **no raw map**: a `json` getter would have
+let `payload.json['total']['amount']` reach a `Decimal` with nothing stopping
+arithmetic on it. It was removed for that reason — do not add it back.
+
+It exposes exactly **one** numeric accessor, `geometry(path)`, and that is a
+GGU-55 amendment to a rule that used to say "none" (ADR-L D-14). The contract
+keeps a raw `amount` beside every `*Display` string *so that a chart can be
+drawn from it* — N-4 below says so — and the value-to-pixel mapping cannot
+live on a server that does not know the width the client will be laid out in.
+`geometry` is implemented in `packages/finance_views_repository/lib/src/raw_decimal.dart`,
+which is the only file allow-listed for a number mechanism, by path, in the
+same way `jsonDecode` is allow-listed in the transport. It is **not exported
+from the package barrel**, so `ViewPayload.geometry` is its only caller. Two
+tests hold it: one allows that path, and `::the geometry seam is the only
+exemption` asserts the allow set has exactly one member and still names a
+file that exists.
+
+**What `geometry` is for:** a position on a canvas. It never reaches a `Text`,
+is never re-formatted, and never becomes a figure a human reads. If you are
+reaching for it to *show* something, you want a `*.display` string, and if the
+payload has none, N-3 applies — raise it.
 
 - **N-1** Never format a number. No currency symbol, no thousands separator, no percent sign, no `+`/`−` prefix. Every figure already arrives as a `*Display` string.
 - **N-2** Never compute a figure. No sums, differences, percentages, running totals, break-evens, weights or spreads. `cumulative`, `spread`, `by_term` and `markers` are all supplied.
@@ -54,7 +71,7 @@ one, and do not choose a colour by parsing the string — use the supplied
 - **N-7** Only options a view's `options_schema` declares. Anything else is a 422 for the *whole* request — the read endpoint applies one flat option set to every requested view, so an option only one of them declares fails all of them.
 - **N-8** Do not re-validate a server bound. Use the `pattern`, `choices` and ranges the server sent; do not add a stricter client rule beside them.
 - **N-10** Do not reorder, filter or re-rank rows. `sort`, `top_n`, `methods` and `lot_method` are **options**, not client behaviour. Rows render in the order they arrived.
-- At most `ViewsRepository.maxViewsPerRequest` (4) ids per read; the repository rejects more before spending a round trip.
+- At most `ViewsRepository.maxViewsPerRequest` (4) ids per read; the repository rejects more before spending a round trip. **The catalog has six components**, so a screen wanting all of them exceeds one request: `views_batch.dart` chunks the ids and the caller issues one request per chunk (GGU-69). Do not raise the constant to dodge that — it mirrors the server's `MAX_VIEWS`.
 
 ## 3. Rendering
 
@@ -79,4 +96,6 @@ one, and do not choose a colour by parsing the string — use the supplied
 - [ ] Disclosures and notes rendered verbatim.
 - [ ] A test asserting the display strings appear **and** that the raw values do not.
 - [ ] A test for the missing-field path (the component raises, the host shows it).
+- [ ] Field paths taken from `docs/catalog/view-catalog.snapshot.json` — and, for a component test, **read from it** through `app/test/helpers/catalog_snapshot.dart` rather than copied.
+- [ ] A raw member is read only through `geometry`, and only for a coordinate.
 - [ ] The PR body states which of N-1…N-15 the change was checked against (spec `client/0003` AC-18).
