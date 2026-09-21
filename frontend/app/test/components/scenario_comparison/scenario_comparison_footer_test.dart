@@ -47,6 +47,31 @@ void main() {
       expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
     });
 
+    testWidgets('shows the one end the backend named, and no tie line', (
+      tester,
+    ) async {
+      // `spread.highest` and `spread.lowest` are `default null`
+      // independently, so this payload is permitted. Under a rule requiring
+      // both ends the card would silently drop `FIFO` **and** claim the
+      // methods coincide — two wrong statements from one missing field.
+      final payload = ViewPayload.fromJson(withOneSpreadEnd(scenarioExample()));
+      await pumpScenarioCard(
+        tester,
+        const ScenarioComparisonComponent().read(payload),
+      );
+      final footer = find.byType(ScenarioComparisonFooter);
+      expect(
+        find.descendant(of: footer, matching: find.text('FIFO')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ScenarioComparisonFooter.highestCaption),
+        findsOneWidget,
+      );
+      expect(find.text(ScenarioComparisonFooter.lowestCaption), findsNothing);
+      expect(find.text(ScenarioComparisonFooter.noDifference), findsNothing);
+    });
+
     testWidgets('renders every note verbatim and drops none', (tester) async {
       // N-9. The second note is the sentence that makes the card's silence
       // on "which method" legible rather than merely absent.

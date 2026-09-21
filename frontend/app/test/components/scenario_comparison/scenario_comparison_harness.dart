@@ -77,6 +77,18 @@ Map<String, dynamic> withoutSpreadEnds(Map<String, dynamic> example) {
   return <String, dynamic>{...example, 'spread': spread};
 }
 
+/// The example with `spread` naming only its **highest** end.
+///
+/// Permitted by the contract and not hypothetical: `spread.highest` and
+/// `spread.lowest` are each `default null`, **independently**, and neither is
+/// tied to `spread.differs`. A card that required both ends would have left
+/// this payload undefined on screen.
+Map<String, dynamic> withOneSpreadEnd(Map<String, dynamic> example) {
+  final spread = Map<String, dynamic>.from(example['spread']! as Map);
+  spread['lowest'] = null;
+  return <String, dynamic>{...example, 'spread': spread};
+}
+
 /// The example with [path] removed from its root, for the N-3 path.
 Map<String, dynamic> without(Map<String, dynamic> example, String path) =>
     Map<String, dynamic>.from(example)..remove(path);

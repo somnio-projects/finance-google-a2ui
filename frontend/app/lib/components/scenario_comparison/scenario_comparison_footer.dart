@@ -73,10 +73,15 @@ class ScenarioComparisonFooter extends StatelessWidget {
                   caption: spreadCaption,
                   value: spread.amountDisplay,
                 ),
-                if (highest != null && lowest != null) ...<Widget>[
+                // Each end that is present, independently: the contract
+                // makes the two `default null` separately, so requiring
+                // both would leave a permitted payload undefined on screen.
+                // The predicate lives once, on the model.
+                if (highest != null)
                   ScenarioFact(caption: highestCaption, value: highest),
+                if (lowest != null)
                   ScenarioFact(caption: lowestCaption, value: lowest),
-                ] else
+                if (!spread.namesAnyEnd)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(

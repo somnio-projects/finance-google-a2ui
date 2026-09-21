@@ -134,9 +134,9 @@ widened: this card reads no raw member at all.
 
 ## 7. Test plan
 
-Seven files under `app/test/components/scenario_comparison/`, split by concern
-to stay inside the 150-line budget, plus a shared `_harness.dart` that reads
-the backend's generated snapshot rather than copying it.
+Eight files under `app/test/components/scenario_comparison/`, split by concern
+to stay inside the 150-line budget, plus `scenario_comparison_harness.dart`,
+which reads the backend's generated snapshot rather than copying it.
 
 | AC | Test |
 |---|---|
@@ -146,7 +146,7 @@ the backend's generated snapshot rather than copying it.
 | AC-4 | `_card_test.dart::puts every display string on screen verbatim` **and** `::never puts a raw figure on screen` |
 | AC-5 | `_component_test.dart::keeps the columns in the order the backend sent them` |
 | AC-6 | `_card_test.dart::names no winner anywhere on the card` |
-| AC-7 | `_footer_test.dart::reports the spread and names both ends`, `::names neither end when the methods coincide` |
+| AC-7 | `_footer_test.dart::reports the spread and names both ends`, `::names neither end when the methods coincide`, `::shows the one end the backend named, and no tie line`; `_component_test.dart::names any end the backend named, not only both of them` |
 | AC-8 | `_footer_test.dart::renders every note verbatim and drops none`, `::shows no note when the backend attached none` |
 | AC-9 | `_component_test.dart::raises the missing field instead of reconstructing it` |
 | AC-10 | `_geometry_test.dart` (four tests, 0.1 px), `_tokens_test.dart`, `_layout_test.dart`, and two goldens |
@@ -159,6 +159,7 @@ been red:
 | `metricFlex(2)` 135 → 120 | 2 red: the two-scenario track reads 194.01 against the design's 208.48 |
 | `headerCellRadius` 10 → 6 | 3 red: both goldens (5.00 % of pixels) and the constant |
 | the hairline inset removed | found in development: content box 535.367 against 533.367 |
+| `namesAnyEnd` `\|\|` → `&&` | **2 red**: the one-end payload loses a name the backend sent *and* gains a tie line. Added after review — the first cut of this rule was `&&` and no test could tell the two apart |
 
 ## 8. Open decisions
 
@@ -176,21 +177,37 @@ localise with the rest of the payload. **Default:** keep the client copy.
 **Raise with backend** whether the projection should carry row labels the way
 it carries `columns[].label`. *Owner: Lautaro.*
 
-**OD-2 — `spread.differs` is not read; the two ends' presence is.**
+**OD-2 — `spread.differs` is not read; the two ends' presence is. This is a
+deferral, not a prohibition.**
 `ViewPayload` exposes `text`, `optionalText`, `rows` and `geometry` — and no
-boolean accessor. Reading the contract's `differs` flag would mean adding one,
-which edits a shared file in `finance_views_repository`, and *adding a
-component edits no existing file* (ADR-L D-3). The card therefore branches on
-whether `spread.highest` / `spread.lowest` are present, which spec
-`backend/0017` AC-6 ties to the same condition.
+boolean accessor. Reading the contract's `differs` flag means adding one.
 
-The coupling is real and is asserted rather than assumed:
-`_component_test.dart::agrees with the payload flag it deliberately does not
-read` checks the derived value against the payload's own `differs`, in both
-states. **Default:** keep the derivation. **Follow-up:** if a second component
-wants a boolean, add `ViewPayload.flag(path)` in a PR of its own that can
-update every caller — the same shape `backend/0017` OD-7 uses for promoting a
-fragment. *Owner: Lautaro.*
+**That is allowed, and an earlier draft of this spec wrongly said ADR-L D-3
+forbade it.** D-3's subject is *dispatch* — "no enum, no union, no `if/elif`,
+no shared list" — and `ViewPayload.flag(path)` is none of those: it is an
+additive accessor beside `optionalText` that does not grow by one entry per
+component. The repository's own precedent points the same way, because
+`geometry` was added to `ViewPayload` by GGU-55 and argued as an **ADR-L D-14
+amendment** rather than rejected as a seam break. What is true is narrower: a
+new reader on a shared type deserves a PR that can weigh it for every caller
+and amend ADR-L, not a line added in passing by a feature.
+
+So the card reads the ends, and **the rule is `||`, not `&&`**: each end that
+is present is shown, and the "methods coincide" line appears only when neither
+is. `spread.highest` and `spread.lowest` are `default null`
+**independently** and neither is tied to `differs`, so a payload naming one
+end is permitted — under `&&` the card would have dropped a name the backend
+sent *and* claimed the methods coincide, two wrong statements from one missing
+field. `ScenarioSpread.namesAnyEnd` is that predicate, spelled once and used
+by the footer.
+
+Three tests hold it: the published example is checked against the flag it
+actually carries, `::names any end the backend named, not only both of them`
+is the one that distinguishes `||` from `&&`, and the footer asserts the
+rendering of the asymmetric case.
+
+**Default:** keep the derivation. **Follow-up:** add `ViewPayload.flag(path)`
+when a second component wants a boolean. *Owner: Lautaro.*
 
 **OD-3 — There is no recommended column, and the design asked for one.**
 
@@ -294,7 +311,24 @@ invalidated.
 
 **It is recorded here rather than fixed quietly, because fixing it means
 editing `frontend/CLAUDE.md`, and the ticket's instruction was to report a
-shared-file edit rather than make one.** **Default (proposed):** the rule
-becomes *one token file per component family, named after it*, and
-`frontend/CLAUDE.md` is updated in the review round or a follow-up. *Owner:
-Lautaro + TL.*
+shared-file edit rather than make one.** It is also the move
+`.claude/rules/ci-conventions.md` §4b already models, where the `client-ci`
+row stayed in the table marked **no — not written yet** rather than being
+deleted: *a row in that table is a claim about the repository, and a claim
+gets a truth value.*
+
+**But a false sentence in `frontend/CLAUDE.md` is a different risk class from
+one in a spec**, because that file is loaded first by everyone working in
+`frontend/`, and `app/lib/charts/chart_tokens.dart` still asserts the claim
+unqualified — so the two files now disagree with each other as well.
+
+**Default (proposed):** the rule becomes *one token file per component family,
+named after it*; `frontend/CLAUDE.md` and `chart_tokens.dart` are corrected
+together, **and the new rule gets a test** — a grep for `Color(0x` under
+`app/lib/` against an expected file set, ten lines, because the claim rotted
+in the first place precisely by being enforced by nothing.
+
+**This needs a ticket, not an owner line.** An owner does not bound the window
+during which the instruction file is wrong. **Blocked on:** a GGU ticket cut
+by the TL; it is deliberately not opened from this branch. *Owner: TL, then
+Lautaro.*

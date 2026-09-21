@@ -69,10 +69,17 @@ which is the seam claim restated as a diff.
   enforced the claim, so nothing went red. `specs/frontend/0003` OD-8 proposes
   the rule become *one token file per component family*; it needs a TL call.
 - **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
-  The card branches on whether `spread.highest`/`lowest` are present, which the
-  contract ties to the same condition, and a test checks the derived value
-  against the payload's own flag in both states (OD-2). If a second component
-  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own.
+  The card reads the two ends instead — and **the review caught that the first
+  cut of that rule was wrong.** It required *both* ends, while the contract
+  makes `spread.highest` and `spread.lowest` `default null` **independently**
+  and ties neither to `differs`: a payload naming one end would have had the
+  card drop a name the backend sent *and* claim the methods coincide. The rule
+  is now `||`, lives once on the model as `namesAnyEnd`, and the `||` → `&&`
+  mutation turns two tests red — it turned none before. If a second component
+  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own; that is a
+  **deferral, not a prohibition** — ADR-L D-3's subject is dispatch, and
+  `geometry` set the precedent that widening `ViewPayload` is an amendment
+  (OD-2, reworded after review).
 - **Four contract fields are bound by nothing**: `short_term_lots`,
   `long_term_lots` and `lots` per column. The counts are raw integers with no
   `*Display` companion, so printing one is the client turning a number into

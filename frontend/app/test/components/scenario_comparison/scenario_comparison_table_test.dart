@@ -57,9 +57,11 @@ void main() {
     testWidgets('renders no row at all when there are no scenarios', (
       tester,
     ) async {
-      // The contract declares `columns` may be empty. The card then has
-      // nothing to compare and says so by showing no figures, rather than
-      // throwing on a list it could not index.
+      // Unreachable through the contract — `methods` declares
+      // `minItems: 2` — so this is a *defined* answer rather than a
+      // declared one, the same honest framing `metricFlex(4)` gets. The
+      // card shows no figures rather than throwing on a list it could not
+      // index.
       final payload = ViewPayload.fromJson(
         withColumnCount(scenarioExample(), 0),
       );

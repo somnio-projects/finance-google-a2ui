@@ -58,16 +58,26 @@ class ScenarioSpread {
   /// The payload's `spread.lowest`, or `null` when the methods coincide.
   final String? lowest;
 
-  /// Whether the scenarios produced different results.
+  /// Whether the backend named **either** end.
   ///
-  /// Read from the **presence of the two ends**, not from the payload's
-  /// `spread.differs`, because `ViewPayload` exposes no boolean accessor and
-  /// adding one would edit a shared file (`specs/frontend/0003` OD-2). The
-  /// contract ties the two together: spec `backend/0017` AC-6 says that when
-  /// nothing differs the card "names neither" end, and
-  /// `scenario_comparison_component_test.dart` asserts the published example
-  /// still agrees with `differs`.
-  bool get differs => highest != null && lowest != null;
+  /// This is the footer's one predicate, and the card has exactly one rule:
+  /// each end that is present is shown, and the "methods coincide" line
+  /// appears only when neither is. That rule is *total*, which is why it is
+  /// spelled `||` and not `&&`.
+  ///
+  /// **The asymmetric case is reachable.** The contract declares
+  /// `spread.highest` and `spread.lowest` as `default null`
+  /// **independently**, and ties neither to `spread.differs`; a payload
+  /// naming one end and not the other is therefore permitted, and a rule
+  /// requiring both would have left it undefined on screen.
+  ///
+  /// It is read from the ends rather than from the payload's `differs`
+  /// because `ViewPayload` exposes no boolean accessor. Adding
+  /// `ViewPayload.flag(path)` is a **deferral, not a prohibition**
+  /// (`specs/frontend/0003` OD-2): it is an additive accessor beside
+  /// `optionalText`, the shape `geometry` already set, and it belongs in a
+  /// PR that can weigh it for every caller.
+  bool get namesAnyEnd => highest != null || lowest != null;
 }
 
 /// A compliance note the backend attached to the view.

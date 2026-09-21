@@ -67,28 +67,7 @@ void main() {
       expect(data.metrics[3].valueDisplays.first, r'+$3,825.00');
     });
 
-    test('binds the spread the backend measured, and names the ends', () {
-      final data = component.read(ViewPayload.fromJson(example));
-      expect(data.spread.amountDisplay, r'$2,520.00');
-      expect(data.spread.highest, 'FIFO');
-      expect(data.spread.lowest, 'LIFO');
-      expect(data.spread.differs, isTrue);
-    });
-
-    test('agrees with the payload flag it deliberately does not read', () {
-      // `ScenarioSpread.differs` is derived from the presence of the two
-      // ends because `ViewPayload` has no boolean accessor and adding one
-      // would edit a shared file (`specs/frontend/0003` OD-2). That is only
-      // sound while the contract keeps the two in step, so the published
-      // example is checked against the flag it carries, both ways.
-      final differs = component.read(ViewPayload.fromJson(example));
-      expect(differs.spread.differs, (example['spread']! as Map)['differs']);
-      final flat = withoutSpreadEnds(example);
-      final same = component.read(ViewPayload.fromJson(flat));
-      expect(same.spread.differs, (flat['spread']! as Map)['differs']);
-      expect(same.spread.highest, isNull);
-      expect(same.spread.lowest, isNull);
-    });
+    // `spread` has a suite of its own: `scenario_comparison_spread_test.dart`.
 
     test('keeps every note the backend attached', () {
       // N-9: a compliance note is never dropped. One of these is the
