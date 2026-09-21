@@ -6,14 +6,14 @@ Cheap checks locally, expensive ones once, and nothing released without the gate
 flowchart LR
     subgraph dev["Developer machine — free"]
         edit["edit"]
-        pc["pre-commit<br/>hygiene · gitleaks · ruff · codespell<br/>actionlint · shell lint (all tracked) · gate pairs<br/>terraform fmt · basedpyright · 150-line budget<br/>quality suite · unit tests · delivery script tests"]
+        pc["pre-commit<br/>hygiene · gitleaks · ruff · codespell<br/>actionlint · shell lint (all tracked) · gate pairs<br/>manual-run check · frontend toolchain preflight<br/>terraform fmt · basedpyright · 150-line budget<br/>quality suite · unit tests · delivery script tests"]
         pp["pre-push<br/>make gate (full, with PostgreSQL)"]
     end
     subgraph ci["GitHub Actions — paid, only what a laptop cannot prove"]
         %% repo-ci carries NO paths: filter. Everything else here is scoped to
         %% one stack, which is why secret and shell scanning cannot live there:
         %% a client-only pull request would start none of it.
-        r["Repository · spelling · secrets (full history) · shell lint · gate pairs<br/>every PR, no paths: filter"]
+        r["Repository · spelling · secrets (full history) · shell lint · gate pairs<br/>manual-run check (GGU-93)<br/>every PR, no paths: filter"]
         q["Quality · style, types, complexity, duplication"]
         t["Tests · pytest 100% branch on PostgreSQL 16 service container"]
         s["Security · Semgrep · pip-audit<br/>backend/** only"]
@@ -59,6 +59,19 @@ flowchart LR
     %% Traffic never lands on an unverified revision — that ordering is the
     %% whole point of deploying with --no-traffic first.
 ```
+
+**What this diagram does not draw.** `q`, `t`, `s` and `img` are `backend-ci`.
+`frontend-ci` runs beside them on a `frontend/**` pull request — quality, tests
+and a release web build — and is not drawn here; `client-ci` does not exist at
+all (`.claude/rules/ci-conventions.md` §4b). Said rather than left implied: a
+reader should not take this as the whole set of pipelines.
+
+**Why the frontend gate opens with a toolchain preflight.** `frontend.toolchain`
+(`frontend/tool/check_toolchain.sh`) runs first, locally and on the runner,
+because every check after it is read through `dart` and `flutter`. A Dart below
+the SDK floor declared in `frontend/pubspec.yaml` used to announce itself as a
+formatting diff, which reads as a red branch and is a red toolchain (GGU-94).
+The version it enforces lives only in `frontend/.fvmrc`.
 
 **Why the deploy is a script, not inline YAML.** `infra/scripts/deploy_cloud_run.sh`
 holds the deploy-verify-rollback sequence so it can be run against a stub
