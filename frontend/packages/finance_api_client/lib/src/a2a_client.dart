@@ -59,7 +59,7 @@ class A2aClient {
       ..body = jsonEncode(_envelope(text, messageId, contextId, requestId));
     try {
       final response = await _httpClient.send(request);
-      return _interpret(response);
+      return await _interpret(response);
     } on http.ClientException {
       // Never `error.message`: on BrowserClient it carries the target URL,
       // which is not ours to show a user (N-14).
@@ -126,7 +126,7 @@ class A2aClient {
       'message': <String, dynamic>{
         'role': 'user',
         'messageId': messageId,
-        if (contextId != null) 'contextId': contextId,
+        'contextId': ?contextId,
         'parts': <Map<String, dynamic>>[
           <String, dynamic>{'kind': 'text', 'text': text},
         ],

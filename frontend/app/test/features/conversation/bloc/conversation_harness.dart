@@ -6,10 +6,10 @@ import 'package:mocktail/mocktail.dart';
 import '../../../helpers/fixtures.dart';
 
 /// Stand-ins for the two repositories the bloc composes.
-class MockAgentRepository extends Mock implements AgentRepository {}
+class MockAgentRepository extends Mock implements AgentRepository;
 
 /// Stand-in for the read path a render intent resolves through.
-class MockViewsRepository extends Mock implements ViewsRepository {}
+class MockViewsRepository extends Mock implements ViewsRepository;
 
 /// The view id the checked-in example payload carries.
 const String exampleView = 'holdings.allocation.v1';

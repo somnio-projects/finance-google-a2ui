@@ -9,9 +9,9 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
 
-class _MockAgentRepository extends Mock implements AgentRepository {}
+class _MockAgentRepository extends Mock implements AgentRepository;
 
-class _MockViewsRepository extends Mock implements ViewsRepository {}
+class _MockViewsRepository extends Mock implements ViewsRepository;
 
 void main() {
   group(ConversationPage, () {

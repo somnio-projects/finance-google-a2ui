@@ -63,13 +63,17 @@ http.StreamedResponse jsonBody(String body, {int status = 200}) =>
     );
 
 /// The captured happy-path transcript from spec `client/0003` §8.3.
+///
+/// Each continuation begins after a `,` or `:` and the break carries a space,
+/// which is insignificant everywhere JSON allows it — the frames stay byte-
+/// equivalent to the captured ones, and the lines stay inside the budget.
 const String capturedTurn =
-    'data: {"kind":"status-update","status":{"state":"working"},'
+    'data: {"kind":"status-update","status":{"state":"working"}, '
     '"final":false}\n\n'
-    'data: {"kind":"render-intent","index":0,"renderIntent":'
+    'data: {"kind":"render-intent","index":0,"renderIntent": '
     '{"view":"holdings.allocation.v1","options":{"top_n":5}}}\n\n'
-    'data: {"kind":"message","role":"agent","parts":[{"kind":"text",'
-    '"text":"NVDA is the biggest contributor."}],"renderIntents":'
+    'data: {"kind":"message","role":"agent","parts":[{"kind":"text", '
+    '"text":"NVDA is the biggest contributor."}],"renderIntents": '
     '[{"view":"holdings.allocation.v1","options":{"top_n":5}}]}\n\n'
-    'data: {"kind":"status-update","status":{"state":"input_required"},'
+    'data: {"kind":"status-update","status":{"state":"input_required"}, '
     '"final":true}\n\n';

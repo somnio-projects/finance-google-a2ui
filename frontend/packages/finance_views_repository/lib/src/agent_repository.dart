@@ -7,7 +7,7 @@ import 'package:finance_views_repository/src/agent_event_parser.dart';
 ///
 /// The repository layer's half of the A2UI path: it owns the protocol's
 /// shape, so the bloc above it never sees a JSON map, a status code or an SSE
-/// frame — the same boundary [ViewsRepository] keeps for reads.
+/// frame — the same boundary `ViewsRepository` keeps for reads.
 ///
 /// **Every failure is an event, not a thrown exception**, because a turn can
 /// fail after it has already produced surfaces and a partly-consumed stream

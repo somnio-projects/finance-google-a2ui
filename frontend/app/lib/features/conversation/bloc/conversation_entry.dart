@@ -4,12 +4,15 @@ part of 'conversation_bloc.dart';
 ///
 /// `sealed`, so the view's `switch` is exhaustive and a new entry kind is a
 /// compile error rather than a blank space on screen.
+///
+/// Note there is deliberately **no `props` here**. Every subclass overrides
+/// it, so a base implementation would be a line no test can reach — the same
+/// dead-code coverage gap `.claude/rules/frontend/testing.md` records from the
+/// first build of this app. `Equatable` declares it abstract; leaving it that
+/// way is what keeps the file at 100 %.
 sealed class ConversationEntry extends Equatable {
   /// Allows subclasses to declare `const` constructors.
   const ConversationEntry();
-
-  @override
-  List<Object?> get props => <Object?>[];
 }
 
 /// What the user asked.

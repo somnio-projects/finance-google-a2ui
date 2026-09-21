@@ -20,7 +20,7 @@ enum AgentTurnState {
 /// One thing that happened during an agent turn.
 ///
 /// `sealed`, so a `switch` over it is exhaustive and a new event kind is a
-/// compile error in every incomplete handler — the same contract [AppFailure]
+/// compile error in every incomplete handler — the same contract `AppFailure`
 /// keeps (ADR-L D-8).
 sealed class AgentEvent extends Equatable {
   /// Allows subclasses to declare `const` constructors.

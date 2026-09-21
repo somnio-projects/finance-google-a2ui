@@ -25,7 +25,8 @@ void main() {
         'data: {"kind":"status-update","status":{"state":"working"}}\n\n'
         'data: {"kind":"render-intent","index":0}\n\n'
         'data: {"kind":"message","role":"agent"}\n\n'
-        'data: {"kind":"status-update","status":{"state":"input_required"}}\n\n',
+        'data: {"kind":"status-update", '
+        '"status":{"state":"input_required"}}\n\n',
       );
       expect(events, hasLength(4));
       expect(events.first['kind'], equals('status-update'));

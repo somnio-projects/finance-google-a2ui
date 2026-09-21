@@ -38,9 +38,9 @@ void main() {
       final events = await run(
         repositoryReplaying(
           'data: {"kind":"status-update","status":{"state":"working"}}\n\n'
-          'data: {"kind":"render-intent","index":0,"renderIntent":'
+          'data: {"kind":"render-intent","index":0,"renderIntent": '
           '{"view":"holdings.allocation.v1","options":{"top_n":5}}}\n\n'
-          'data: {"kind":"message","parts":[{"kind":"text","text":"up"}],'
+          'data: {"kind":"message","parts":[{"kind":"text","text":"up"}], '
           '"renderIntents":[{"view":"holdings.allocation.v1"}]}\n\n'
           'data: {"kind":"status-update","status":{"state":"input_required"}}'
           '\n\n',
@@ -71,7 +71,7 @@ void main() {
       // first-pixel-early behaviour to speak of.
       final events = await run(
         repositoryReplaying(
-          'data: {"kind":"render-intent","index":0,"renderIntent":'
+          'data: {"kind":"render-intent","index":0,"renderIntent": '
           '{"view":"payoff.curve.v1"}}\n\n'
           'data: {"kind":"message","parts":[]}\n\n',
         ),
@@ -86,7 +86,7 @@ void main() {
       final events = await run(
         repositoryReplaying(
           'data: {"kind":"status-update","status":{"state":"failed"}}\n\n'
-          'data: {"kind":"error","code":"dependency-unavailable",'
+          'data: {"kind":"error","code":"dependency-unavailable", '
           '"message":"model provider unavailable"}\n\n',
         ),
       );

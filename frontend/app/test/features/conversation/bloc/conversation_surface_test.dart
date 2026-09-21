@@ -47,6 +47,9 @@ void main() {
       );
       final surface = entries.last as AgentSurface;
       expect(surface.payload.view, equals(exampleView));
+      // Compared, not just cast: an entry's equality is what a rebuilt state
+      // is diffed by, and it is the only thing that exercises its `props`.
+      expect(surface, equals(AgentSurface(surface.payload)));
     });
 
     test('degrades one surface without losing the turn', () async {
