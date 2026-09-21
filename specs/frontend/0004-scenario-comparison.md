@@ -1,4 +1,4 @@
-# 0003 — The scenario comparison card
+# 0004 — The scenario comparison card
 
 - **Area:** frontend
 - **Status:** Draft
@@ -345,13 +345,21 @@ one in a spec**, because that file is loaded first by everyone working in
 `frontend/`, and `app/lib/charts/chart_tokens.dart` still asserts the claim
 unqualified — so the two files now disagree with each other as well.
 
-**Default (proposed):** the rule becomes *one token file per component family,
-named after it*; `frontend/CLAUDE.md` and `chart_tokens.dart` are corrected
-together, **and the new rule gets a test** — a grep for `Color(0x` under
-`app/lib/` against an expected file set, ten lines, because the claim rotted
-in the first place precisely by being enforced by nothing.
+**Resolved, and not by this branch — which is the point.** GGU-57's PR (#71)
+adds the tax-lot table, whose own token file falsified the same sentence for
+the same reason, and **it edits `frontend/CLAUDE.md` to replace the count with
+a rule**. Two components reached the identical conclusion independently, from
+two directions, without coordinating — that is the seam working rather than a
+coincidence, and it is stronger evidence than either branch could have
+produced alone.
 
-**This needs a ticket, not an owner line.** An owner does not bound the window
-during which the instruction file is wrong. **Blocked on:** a GGU ticket cut
-by the TL; it is deliberately not opened from this branch. *Owner: TL, then
-Lautaro.*
+So no ticket is needed. **Whichever of #70 and #71 merges first fixes the
+sentence; the second conflicts on that one line and should take the rule
+form.** The resolution is #71's; this spec records the reasoning and the
+second data point, not a deferral.
+
+Still worth doing when someone next touches it: **give the rule a test** — a
+grep for `Color(0x` under `app/lib/` against an expected file set, ten lines.
+The claim rotted precisely by being enforced by nothing, and replacing one
+unenforced sentence with another only resets the clock. *Owner: whoever merges
+second.*

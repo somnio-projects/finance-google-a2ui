@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// Every value below was read out of the designer's
 /// `Catalog - Scenario Comparison` page with `getComputedStyle` on the
 /// rendered DOM, in both the `L1 · Light · 1024` and `D1 · Dark · 1024`
-/// artboards. `specs/frontend/0003` carries the full table and how it was
+/// artboards. `specs/frontend/0004` carries the full table and how it was
 /// obtained; `scenario_comparison_tokens_test.dart` pins all eight values so
 /// a future edit has to disagree with a test rather than with a memory.
 ///
@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 /// and `ChartPalette` has no field for them. Adding four would edit
 /// `chart_palette.dart` and `chart_tokens.dart`, and *adding a component
 /// edits no existing file* (ADR-L D-3). So the card brings its own, and the
-/// stale sentence is raised in `specs/frontend/0003` OD-6 rather than fixed
+/// stale sentence is raised in `specs/frontend/0004` OD-6 rather than fixed
 /// quietly here.
 ///
 /// The card's surface, hairline and primary text are **not** duplicated: they

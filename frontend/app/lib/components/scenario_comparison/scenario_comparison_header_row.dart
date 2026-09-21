@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 /// such field and spec `backend/0017` OD-4 says it never will: choosing a
 /// lot-selection method for someone is tax advice, and which column is
 /// preferable depends on a marginal rate, carried-forward losses and a
-/// jurisdiction the backend does not know. `specs/frontend/0003` OD-3
+/// jurisdiction the backend does not know. `specs/frontend/0004` OD-3
 /// records the divergence and its reasoning in full.
 class ScenarioComparisonHeaderRow extends StatelessWidget {
   /// Creates the header row.

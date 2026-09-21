@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 /// **No cell is emphasised.** The design tints the better cell of each row
 /// green and marks it with a tick, driven by `metrics[].betterWhen`. The
 /// contract ships no such field — see [ScenarioComparisonHeaderRow] and
-/// `specs/frontend/0003` OD-3 for why it never will.
+/// `specs/frontend/0004` OD-3 for why it never will.
 class ScenarioComparisonTable extends StatelessWidget {
   /// Creates the table.
   const ScenarioComparisonTable({

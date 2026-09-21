@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 /// `metrics[].label`; `scenario.comparison.v1` has no such list — it carries
 /// four fixed, named members per column instead. So the four row names are
 /// written here, beside the four paths they title, and
-/// `specs/frontend/0003` OD-1 records the divergence.
+/// `specs/frontend/0004` OD-1 records the divergence.
 @immutable
 class ScenarioMetricRow {
   /// Creates a metric row.
@@ -74,7 +74,7 @@ class ScenarioSpread {
   /// It is read from the ends rather than from the payload's `differs`
   /// because `ViewPayload` exposes no boolean accessor. Adding
   /// `ViewPayload.flag(path)` is a **deferral, not a prohibition**
-  /// (`specs/frontend/0003` OD-2): it is an additive accessor beside
+  /// (`specs/frontend/0004` OD-2): it is an additive accessor beside
   /// `optionalText`, the shape `geometry` already set, and it belongs in a
   /// PR that can weigh it for every caller.
   bool get namesAnyEnd => highest != null || lowest != null;

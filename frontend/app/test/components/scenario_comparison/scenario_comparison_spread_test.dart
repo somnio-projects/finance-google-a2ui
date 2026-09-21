@@ -31,7 +31,7 @@ void main() {
 
     test('agrees with the payload flag it deliberately does not read', () {
       // `namesAnyEnd` stands in for `spread.differs`, which `ViewPayload`
-      // cannot read (`specs/frontend/0003` OD-2). Sound only while the
+      // cannot read (`specs/frontend/0004` OD-2). Sound only while the
       // contract keeps them in step, so the **published** example is checked
       // against the flag it actually carries.
       final data = component.read(ViewPayload.fromJson(example));

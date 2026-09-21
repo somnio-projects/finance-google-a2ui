@@ -87,7 +87,7 @@ void main() {
     test('lines the digits up without bundling a mono face', () {
       // The design sets these in Roboto Mono; the reason is column
       // alignment, and `tabularFigures` buys that from the bundled font.
-      // Recorded as an open decision with design (`specs/frontend/0003`
+      // Recorded as an open decision with design (`specs/frontend/0004`
       // OD-5), the same way `ChartText` records it.
       expect(
         ScenarioComparisonText.value(black).fontFeatures,

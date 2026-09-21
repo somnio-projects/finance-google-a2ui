@@ -27,7 +27,7 @@ import 'package:flutter/material.dart';
 /// carries no `direction` enum — unlike `attribution.waterfall.v1`, whose
 /// buckets do — and the only other way to choose a colour would be to look
 /// at the sign inside `"+$3,825.00"`, which is the client reading a figure
-/// out of a formatted string (N-1). `specs/frontend/0003` OD-7 raises the
+/// out of a formatted string (N-1). `specs/frontend/0004` OD-7 raises the
 /// missing field.
 class ScenarioComparisonCard extends StatelessWidget {
   /// Creates the card.
@@ -91,7 +91,7 @@ class ScenarioComparisonCard extends StatelessWidget {
 /// are chrome around the component rather than fields of it. The contract
 /// makes `title` **required**, so dropping it is not an option, and it is
 /// drawn in the type `AttributionWaterfallCard` already uses for a card
-/// caption so the two cards read as one set (`specs/frontend/0003` OD-4).
+/// caption so the two cards read as one set (`specs/frontend/0004` OD-4).
 class _TitleRow extends StatelessWidget {
   const _TitleRow({
     required this.title,

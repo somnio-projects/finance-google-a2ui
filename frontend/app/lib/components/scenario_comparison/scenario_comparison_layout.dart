@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Every number is read from the designer's rendered DOM, not chosen: the
 /// card's chrome, the grid's track ratios and gap, and the padding of each
-/// kind of cell. `specs/frontend/0003` §3 carries the table.
+/// kind of cell. `specs/frontend/0004` §3 carries the table.
 abstract final class ScenarioComparisonLayout {
   /// Every hairline on this card: the card's own, a column header's, a row
   /// rule.
@@ -62,7 +62,7 @@ abstract final class ScenarioComparisonLayout {
   ///
   /// Nothing fills that shape in this build: in the design it is the
   /// rounding of the green "best on that row" chip, which is the
-  /// recommendation affordance the card omits (`specs/frontend/0003` OD-3).
+  /// recommendation affordance the card omits (`specs/frontend/0004` OD-3).
   /// It is kept because the cell's padding is measured *with* it, and a
   /// later state — a tap highlight — will want the same silhouette.
   static const double valueCellRadius = 8;
@@ -92,7 +92,7 @@ abstract final class ScenarioComparisonLayout {
 /// design sets the eyebrow and every figure in Roboto Mono; this app bundles
 /// no font asset. A designer reaches for a mono face here to line digits up
 /// in a column, and `tabularFigures` buys exactly that from the bundled font
-/// without a 60 kB download. `specs/frontend/0003` OD-5 keeps it open with
+/// without a 60 kB download. `specs/frontend/0004` OD-5 keeps it open with
 /// design.
 abstract final class ScenarioComparisonText {
   /// An eyebrow: a subject caption, or a column's secondary line.

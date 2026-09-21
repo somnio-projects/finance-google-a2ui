@@ -60,7 +60,7 @@ class ScenarioFact extends StatelessWidget {
 ///    columns"* in the same slot — so it is a caption about the artboard,
 ///    not a component surface with a field behind each word.
 ///
-/// `specs/frontend/0003` OD-4 records it.
+/// `specs/frontend/0004` OD-4 records it.
 class ScenarioComparisonSubject extends StatelessWidget {
   /// Creates the subject strip.
   const ScenarioComparisonSubject({required this.subject, super.key});
@@ -69,7 +69,7 @@ class ScenarioComparisonSubject extends StatelessWidget {
   final ScenarioSubject subject;
 
   /// The captions, which are field names rather than payload text — the
-  /// contract carries no label for any of the four (`specs/frontend/0003`
+  /// contract carries no label for any of the four (`specs/frontend/0004`
   /// OD-1).
   static const String symbolCaption = 'Symbol';
 

@@ -7,7 +7,7 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
-## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0003-scenario-comparison.md`
+## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0004-scenario-comparison.md`
 
 **Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.
 Serves GGU-18 and design GGU-42.
@@ -29,7 +29,7 @@ whether FIFO's `+$3,825.00` (all long-term) beats LIFO's `+$1,305.00` (all
 short-term) depends on a marginal rate and a jurisdiction nothing here knows.
 The card renders `spread` — the arithmetic difference and which method sits at
 each end, which is data the columns already show — with the backend's own
-`Not advice` note verbatim beneath it. `specs/frontend/0003` OD-3 carries the
+`Not advice` note verbatim beneath it. `specs/frontend/0004` OD-3 carries the
 full argument so nobody has to rediscover it.
 
 **A finding worth keeping: Flutter's border is not CSS's border.** The design
@@ -59,15 +59,23 @@ which is the seam claim restated as a diff.
 
 ### What the next person should know
 
-- **`frontend/CLAUDE.md` now carries a false sentence, deliberately left
-  alone.** It and `chart_tokens.dart` both say `chart_tokens.dart` is *the
-  only file in `app/lib/` naming a `Color`*. `scenario_comparison_tokens.dart`
-  names eight. The alternative was adding four fields to `ChartPalette` **and**
-  `ChartTokens` — two shared hand-written files edited to add a component,
-  which ADR-L D-3 exists to prevent — and three of the four are not chart
-  roles anyway (a table's row rule, a header hairline, a caption). No test
-  enforced the claim, so nothing went red. `specs/frontend/0003` OD-8 proposes
-  the rule become *one token file per component family*; it needs a TL call.
+- **`frontend/CLAUDE.md`'s "only file naming a `Color`" sentence is false, and
+  GGU-57 is fixing it — independently.** It and `chart_tokens.dart` both say
+  `chart_tokens.dart` is *the only file in `app/lib/` naming a `Color`*;
+  `scenario_comparison_tokens.dart` names eight. The alternative was adding
+  four fields to `ChartPalette` **and** `ChartTokens` — two shared
+  hand-written files edited in order to add a component, which ADR-L D-3
+  exists to prevent — and three of the four are not chart roles anyway (a
+  table's row rule, a header hairline, a caption). No test enforced the claim,
+  so nothing went red.
+
+  **Two components hit this from two directions in the same week and reached
+  the same answer without coordinating**: GGU-57's tax-lot table has its own
+  token file for the same reason, and its PR (#71) replaces the count with a
+  rule in `frontend/CLAUDE.md`. Whichever merges first fixes it; the second
+  conflicts on that line and should take the rule form. `specs/frontend/0004`
+  OD-8 keeps the reasoning and asks for the rule to get a **test**, since
+  replacing one unenforced sentence with another only resets the clock.
 - **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
   The card reads the two ends instead — and **the review caught that the first
   cut of that rule was wrong.** It required *both* ends, while the contract
@@ -110,6 +118,19 @@ which is the seam claim restated as a diff.
 - **The design index still says `ComparisonCard`.** Its detail page and the
   backend both say `ScenarioComparison`; the schema block is authoritative and
   `catalog_contract_test.dart` is what would catch getting it wrong.
+- **Spec numbering has no gate, and it has now collided twice.** This spec was
+  written as `0003` and renamed to **`0004`** because GGU-57 (#71) was landing
+  `0003-taxlot-table.md` with an `assets/0003-taxlot-table/` directory beside
+  it — renaming this one was the cheaper move. That is the *second* instance:
+  `develop` already carries two files numbered `0002`
+  (`0002-a2ui-agent-path.md` and `0002-chart-primitives-and-waterfall.md`).
+  `.claude/rules/backend/sdd.md` says `NNNN` is "the next free number", but
+  nothing computes it and nothing checks it, so two branches cut in the same
+  week reliably pick the same one. Left as-is here — the `0002` pair is
+  pre-existing and not this ticket's to move — but it wants either a gate
+  (a check that no two specs in a directory share a prefix, the same
+  anti-collision shape `manifest-check` already has) or a convention that does
+  not depend on branch timing.
 
 ---
 

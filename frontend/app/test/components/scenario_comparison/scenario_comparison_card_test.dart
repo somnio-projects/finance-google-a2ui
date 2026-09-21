@@ -107,7 +107,7 @@ void main() {
     });
 
     testWidgets('names no winner anywhere on the card', (tester) async {
-      // spec `backend/0017` OD-4 / `specs/frontend/0003` OD-3. The design
+      // spec `backend/0017` OD-4 / `specs/frontend/0004` OD-3. The design
       // ships a `★ Recommended` badge and a green "best on that row" cell;
       // the contract ships neither field, and the card invents neither.
       await pumpScenarioCard(tester, scenarioData());

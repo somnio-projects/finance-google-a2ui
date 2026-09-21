@@ -25,7 +25,7 @@ import 'package:flutter/widgets.dart';
 /// **The card names no winner.** The design ships `recommended` and
 /// `metrics[].betterWhen`; the contract ships neither, deliberately — spec
 /// `backend/0017` OD-4 is that picking a lot-selection method for someone is
-/// tax advice. `specs/frontend/0003` OD-3 records the divergence.
+/// tax advice. `specs/frontend/0004` OD-3 records the divergence.
 class ScenarioComparisonComponent extends ViewComponent {
   /// Creates the component.
   const ScenarioComparisonComponent();
@@ -87,7 +87,7 @@ class ScenarioComparisonComponent extends ViewComponent {
   /// fails on a reader whose argument does not open with a quote (N-5).
   ///
   /// The row names are client copy, because the contract has no metric list
-  /// to take them from — `specs/frontend/0003` OD-1. The order is the order
+  /// to take them from — `specs/frontend/0004` OD-1. The order is the order
   /// a reader works down: what the sale cost, what it realised, then how
   /// that result splits by holding period.
   List<ScenarioMetricRow> _metrics(List<ViewPayload> columns) =>
