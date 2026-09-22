@@ -179,13 +179,13 @@ jobs:
           echo "release=${version}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ needs.settings.outputs.provider }}
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Allow Docker to push to Artifact Registry (gcloud auth configure-docker)
         run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
@@ -229,13 +229,13 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ needs.settings.outputs.provider }}
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Deploy without traffic, verify readiness, then shift (deploy_cloud_run.sh)
         env:
