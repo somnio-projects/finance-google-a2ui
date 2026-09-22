@@ -1,5 +1,6 @@
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/holdings/bloc/holdings_bloc.dart';
+import 'package:finance_app/features/holdings/bloc/holdings_options.dart';
 import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/holdings/view/position_tile.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
@@ -99,7 +100,7 @@ void main() {
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[HoldingsBloc.allocationView],
-          options: HoldingsBloc.allocationOptions('sector'),
+          options: allocationOptionsFor('sector'),
         ),
       ).called(1);
     });
@@ -123,10 +124,12 @@ void main() {
       expect(find.text('offline'), findsOneWidget);
     });
 
-    // The first paint is `HoldingsFirstRun`; that is AC-1 and it lives in
-    // holdings_loading_test.dart with the rest of 0018.
-    testWidgets('the quiet icons say they are not wired yet', (tester) async {
-      // In a Scaffold, because the icon answers with a SnackBar.
+    // The first paint is `HoldingsFirstRun`; that is 0020 AC-1 and it lives
+    // in holdings_loading_test.dart. (That comment arrived saying "0018",
+    // written before the loading spec was renumbered to 0020 — 0018 is the
+    // search and filter this test is now about, so the number is corrected
+    // here rather than left pointing at the wrong spec.)
+    testWidgets('the app-bar icons are wired, not a snackbar', (tester) async {
       await tester.pumpApp(
         const Scaffold(body: HoldingsPage()),
         viewsRepository: repository,
@@ -134,12 +137,11 @@ void main() {
         surfaceSize: const Size(390, 2400),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Search'));
-      await tester.pump();
-      expect(
-        find.text('Search is not part of this preview yet.'),
-        findsOneWidget,
-      );
+      await tester.tap(find.byTooltip('Search Holdings'));
+      await tester.pumpAndSettle();
+      // The stub that said the icon did nothing is gone (spec 0018 AC-1).
+      expect(find.textContaining('not part of this preview'), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
     });
   });
 }

@@ -97,6 +97,8 @@ duplicated one are both visible at a glance.
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
 | [backend/0038-the-openapi-document-is-complete.md](backend/0038-the-openapi-document-is-complete.md) | Implemented | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
+| [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |
+| [frontend/0018-the-tabs-search-and-filter-for-real.md](frontend/0018-the-tabs-search-and-filter-for-real.md) | Draft | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |

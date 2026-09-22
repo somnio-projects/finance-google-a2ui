@@ -10,11 +10,13 @@ each row down; this module is the projection itself.
 from typing import Final
 
 from app.domain.portfolio import Portfolio
+from app.presentation import positions_filter
 from app.presentation import positions_rows as rows
 from app.presentation.displays import money
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Total
 from app.presentation.positions_payload import (
+    CLASS_FILTERS,
     SUMMARY,
     TOTAL_LABEL,
     VIEW_ID,
@@ -34,6 +36,11 @@ def render(
 ) -> HoldingsPositionsPayload:
     """Map the portfolio's holdings onto the Holdings tab payload."""
     holdings = portfolio.holdings()
+    # The header is the whole portfolio's and the list is what the filters
+    # kept — deliberately two different sets (spec 0035 OD-4).
+    shown = positions_filter.kept(
+        holdings, asset_class=options.asset_class, needle=options.needle
+    )
     return HoldingsPositionsPayload(
         total=Total(
             label=TOTAL_LABEL,
@@ -44,9 +51,12 @@ def render(
             ),
         ),
         gain=rows.total_gain(holdings, locale=options.locale),
+        asset_class=options.asset_class,
+        query=options.query,
+        filters=CLASS_FILTERS,
         positions=tuple(
             rows.position_of(holding, options)
-            for holding in rows.ordered(holdings, options.sort)
+            for holding in rows.ordered(shown, options.sort)
         ),
     )
 
@@ -61,6 +71,10 @@ def surface(payload: HoldingsPositionsPayload) -> Surface:
             "total": payload.total.model_dump(mode="json"),
             "gain": payload.gain.model_dump(mode="json"),
             "askLabel": payload.ask_label,
+            "assetClass": payload.asset_class,
+            "query": payload.query,
+            "empty": payload.empty,
+            "filters": [row.model_dump(mode="json") for row in payload.filters],
             "positions": [row.model_dump(mode="json") for row in payload.positions],
         },
     )

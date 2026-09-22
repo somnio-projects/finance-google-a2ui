@@ -87,7 +87,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SkeletonRows), findsNothing);
       expect(find.byType(ActivitySections), findsOneWidget);
-      expect(find.text('Dividend — VOO'), findsOneWidget);
+      // `findsWidgets`, not `findsOneWidget`: the seed pays VOO quarterly
+      // since spec backend/0035, so the timeline carries four of these.
+      // What this assertion is about is that the rows came BACK.
+      expect(find.text('Dividend — VOO'), findsWidgets);
     });
   });
 }

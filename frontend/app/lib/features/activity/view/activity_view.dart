@@ -3,6 +3,7 @@ import 'package:finance_app/features/activity/view/activity_chips.dart';
 import 'package:finance_app/features/activity/view/activity_first_run.dart';
 import 'package:finance_app/features/activity/view/activity_sections.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
+import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/skeleton/skeleton_rows.dart';
 import 'package:finance_app/skeleton/skeleton_switcher.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
@@ -40,7 +41,15 @@ class ActivityView extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
-              TabAppBar(title: timeline.text('title')),
+              TabAppBar(
+                title: timeline.text('title'),
+                // Search only: the `kind` chips below already are this
+                // tab's filter (spec frontend/0018 OD-2).
+                search: TabSearch(
+                  query: state.query,
+                  onChanged: (query) => bloc.add(ActivityQueryChanged(query)),
+                ),
+              ),
               ColoredBox(
                 color: tokens.header,
                 child: Padding(

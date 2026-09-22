@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:finance_app/features/holdings/bloc/holdings_bloc.dart';
+import 'package:finance_app/features/holdings/bloc/holdings_options.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,7 +51,7 @@ void main() {
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[HoldingsBloc.allocationView],
-          options: HoldingsBloc.allocationOptions('asset_class'),
+          options: allocationOptionsFor('asset_class'),
         ),
       ).called(1),
     );
@@ -90,7 +91,7 @@ void main() {
           () => repository.fetchPortfolioViews(
             portfolioId: 'current',
             views: <String>[HoldingsBloc.allocationView],
-            options: HoldingsBloc.allocationOptions('sector'),
+            options: allocationOptionsFor('sector'),
           ),
         ).called(1);
         verifyNever(

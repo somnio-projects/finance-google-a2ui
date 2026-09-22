@@ -102,7 +102,7 @@ class ViewService:
         if portfolio_id != CURRENT_PORTFOLIO:
             msg = f"portfolio {portfolio_id!r} does not exist"
             raise NotFoundError(msg)
-        portfolio = await self._provider.get(principal.subject)
+        portfolio = await self._provider.get(principal.owner_key)
         # The owner lives in the users registry, not the provider; set here,
         # every projection reads it like `as_of` (spec 0030 OD-3).
         owner = await self.owner(principal)

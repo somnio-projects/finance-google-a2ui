@@ -4,6 +4,8 @@ from collections.abc import Sequence
 from decimal import Decimal
 from typing import Final
 
+from pydantic import Field
+
 from app.core.display import quantity_display
 from app.core.signed_display import signed_money_display, signed_percentage_display
 from app.domain.day_change import change_ratio, previous_value, trend_of
@@ -14,11 +16,14 @@ from app.domain.taxonomy import AssetClass
 from app.presentation.displays import MoneyDisplay, PercentageDisplay, money, percentage
 from app.presentation.options import DisplayOptions, SortOptions
 from app.presentation.positions_payload import (
+    ALL_CLASSES,
     ASK_LABEL,
     CASH_DETAIL,
     GAIN_PERIOD,
+    AssetFilter,
     Position,
 )
+from app.presentation.search import SearchOptions
 from app.presentation.summary_payload import Change, Question
 
 #: The design prints the day move and the weight to one decimal, the
@@ -27,8 +32,14 @@ ONE_DECIMAL: Final[int] = 1
 WHOLE_DOLLARS: Final[int] = 0
 
 
-class HoldingsPositionsOptions(DisplayOptions, SortOptions):
-    """What may be asked of the list: the display knobs and the row order."""
+class HoldingsPositionsOptions(DisplayOptions, SortOptions, SearchOptions):
+    """The display knobs, the row order, and the two filters (spec 0035)."""
+
+    asset_class: AssetFilter = Field(
+        default=ALL_CLASSES,
+        description="Keep only this asset class; `all` keeps every row.",
+        examples=["bonds"],
+    )
 
 
 def is_cash(holding: Holding) -> bool:

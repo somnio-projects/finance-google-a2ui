@@ -1,7 +1,7 @@
 """What a tool is, what it is given, and what one turn produces (spec 0006 §3.2).
 
 A tool is a small async callable over the domain. It receives a
-``ToolContext`` — the subject and the portfolio provider, and nothing else —
+``ToolContext`` — the owner key (``Principal.owner_key``) and the provider —
 so a tool cannot open a session, reach a repository or read ``Settings`` even
 by accident. It returns a ``ToolOutcome``: the JSON payload the model reads,
 plus an optional render intent.
@@ -32,7 +32,7 @@ VIEW_ID_SHAPE = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.v[0-9]+$"
 class ToolContext:
     """Everything a tool is allowed to reach while it runs."""
 
-    subject: str
+    owner: str
     portfolios: PortfolioProvider
 
 

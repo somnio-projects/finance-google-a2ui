@@ -37,3 +37,33 @@ final class HoldingsListChanged extends HoldingsEvent {
   @override
   List<Object?> get props => <Object?>[list];
 }
+
+/// A chip in the filter sheet was picked.
+final class HoldingsAssetClassChanged extends HoldingsEvent {
+  /// Creates the event.
+  const HoldingsAssetClassChanged(this.assetClass);
+
+  /// The declared `asset_class` value; `all` is no filter.
+  final String assetClass;
+
+  @override
+  List<Object?> get props => <Object?>[assetClass];
+}
+
+/// The search box was edited — or closed, which sends an empty string.
+final class HoldingsQueryChanged extends HoldingsEvent {
+  /// Creates the event.
+  const HoldingsQueryChanged(this.query);
+
+  /// The declared `query` option's value; empty means no search.
+  final String query;
+
+  @override
+  List<Object?> get props => <Object?>[query];
+}
+
+/// The debounce elapsed: fetch the list with whatever is now in state.
+final class HoldingsReloaded extends HoldingsEvent {
+  /// Creates the event.
+  const HoldingsReloaded();
+}

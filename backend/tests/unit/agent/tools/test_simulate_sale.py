@@ -60,7 +60,7 @@ async def test_the_published_example_is_the_answer_it_publishes(
     summary figures swapped: this is the only test that would notice
     ``shortTermPlDisplay`` carrying the long-term gain.
     """
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
 
     outcome = await tool.run(HALF_A_BITCOIN, tool_context)
 
@@ -74,7 +74,7 @@ async def test_the_summary_is_the_domain_s_own_answer(
     tool: SimulateSaleTool, tool_context: ToolContext
 ) -> None:
     """AC-2 — the payload reports the walk; it does not recompute it."""
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     expected = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
 
     outcome = await tool.run(HALF_A_BITCOIN, tool_context)

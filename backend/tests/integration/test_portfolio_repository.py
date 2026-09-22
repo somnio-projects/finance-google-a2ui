@@ -35,12 +35,12 @@ def _provider(session: AsyncSession, clock: FixedClock) -> PersistentPortfolioPr
 async def test_a_seeded_portfolio_is_read_back_whole(session: AsyncSession) -> None:
     """AC-1 — what a restart would read is what the first access wrote."""
     clock = FixedClock(FROZEN_NOW)
-    written = await _provider(session, clock).get("subject-restart")
+    written = await _provider(session, clock).get("restart@example.test")
     await session.commit()
 
     # A second provider over the same database is what a second instance is.
     read = await _provider(session, FixedClock(FROZEN_NOW + timedelta(days=9))).get(
-        "subject-restart"
+        "restart@example.test"
     )
 
     assert read.as_of == written.as_of
@@ -55,14 +55,14 @@ async def test_two_providers_agree_on_as_of(session: AsyncSession) -> None:
     """AC-2 — the multi-instance divergence, asserted where it lived.
 
     Before this spec each process seeded from its own clock, so the same
-    subject had two `as_of`. The second provider's clock is deliberately far
+    owner had two `as_of`. The second provider's clock is deliberately far
     from the first's; the answer must still come from the row.
     """
-    first = await _provider(session, FixedClock(FROZEN_NOW)).get("subject-two")
+    first = await _provider(session, FixedClock(FROZEN_NOW)).get("two@example.test")
     await session.commit()
 
     later = FixedClock(FROZEN_NOW + timedelta(days=365))
-    second = await _provider(session, later).get("subject-two")
+    second = await _provider(session, later).get("two@example.test")
 
     assert second.as_of == first.as_of
     assert second.as_of != later.now()
@@ -73,10 +73,10 @@ async def test_positions_are_rebuilt_from_the_lots_not_stored(
 ) -> None:
     """AC-3 — the derivation survives the round trip and still agrees."""
     clock = FixedClock(FROZEN_NOW)
-    written = await _provider(session, clock).get("subject-derive")
+    written = await _provider(session, clock).get("derive@example.test")
     await session.commit()
 
-    read = await _provider(session, clock).get("subject-derive")
+    read = await _provider(session, clock).get("derive@example.test")
 
     read.validate()  # positions still agree with the lots they came from
     assert {holding.symbol for holding in read.positions} == {
@@ -93,10 +93,10 @@ async def test_money_and_quantity_round_trip_exactly(session: AsyncSession) -> N
     the comparison is exact.
     """
     clock = FixedClock(FROZEN_NOW)
-    written = await _provider(session, clock).get("subject-exact")
+    written = await _provider(session, clock).get("exact@example.test")
     await session.commit()
 
-    read = await _provider(session, clock).get("subject-exact")
+    read = await _provider(session, clock).get("exact@example.test")
 
     by_id = {lot.lot_id: lot for lot in written.lots}
     for lot in read.lots:
@@ -112,11 +112,11 @@ async def test_the_second_access_writes_nothing(session: AsyncSession) -> None:
     repository = PortfolioRepository(session)
     provider = PersistentPortfolioProvider(repository=repository, clock=clock)
 
-    await provider.get("subject-once")
+    await provider.get("once@example.test")
     await session.commit()
-    before = await repository.find(subject="subject-once")
-    await provider.get("subject-once")
-    after = await repository.find(subject="subject-once")
+    before = await repository.find(owner="once@example.test")
+    await provider.get("once@example.test")
+    after = await repository.find(owner="once@example.test")
 
     assert before is not None
     assert after is not None
@@ -131,7 +131,7 @@ async def test_the_seed_is_the_curated_demo_portfolio(session: AsyncSession) -> 
     flows with it.
     """
     clock = FixedClock(FROZEN_NOW)
-    stored = await _provider(session, clock).get("subject-curated")
+    stored = await _provider(session, clock).get("curated@example.test")
     await session.commit()
 
     expected = seed_portfolio(as_of=FROZEN_NOW)

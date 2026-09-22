@@ -35,6 +35,12 @@ variable "backend_image" {
   type        = string
 }
 
+variable "seed_portfolio_owners" {
+  description = "Demo audience for the `seed-portfolios` Cloud Run job (spec backend/0035): the e-mail addresses that are given the curated portfolio when a human runs it. An argument list rather than an environment variable so `gcloud run jobs execute --args=a@x,b@y` overrides it for a one-off, which is how it is normally used. EMPTY BY DEFAULT and deliberately so: spec 0035 OD-2 refuses to put a named person's address into an open-source repository, and an argument-less run fails loudly (the job's parser requires at least one address) rather than seeding somebody nobody chose. Nothing runs this job automatically."
+  type        = list(string)
+  default     = []
+}
+
 variable "domain" {
   description = "Public hostname served by the HTTPS load balancer (managed certificate). Required for staging and production; must be empty for dev, which has no load balancer and is reached on Cloud Run's own run.app URL."
   type        = string

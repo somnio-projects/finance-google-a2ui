@@ -33,7 +33,7 @@ def test_get_tool_context_scopes_the_context_to_the_caller(
 
     context = get_tool_context(portfolio, principal)
 
-    assert context.subject == principal.subject
+    assert context.owner == principal.owner_key
     assert context.portfolios is portfolio
 
 

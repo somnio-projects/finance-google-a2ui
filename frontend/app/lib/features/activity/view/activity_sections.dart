@@ -1,4 +1,5 @@
 import 'package:finance_app/features/activity/view/activity_entry_tile.dart';
+import 'package:finance_app/features/shell/view/tab_app_bar.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,11 @@ import 'package:flutter/material.dart';
 /// Extracted from the view because this is exactly what the `kind` option
 /// governs, and therefore exactly what a filter change replaces with a
 /// skeleton while the answer is on the way (spec frontend/0020 OD-3).
+///
+/// The same reasoning puts the **empty** case here rather than in the view:
+/// `kind` and `query` govern whether there are any rows at all, so the
+/// sentence that stands in for them is swapped with them. It is the
+/// payload's own `empty`, never one composed on the device (0018 OD-6).
 class ActivitySections extends StatelessWidget {
   /// Creates the sections for [payload].
   const ActivitySections({required this.payload, super.key});
@@ -19,6 +25,9 @@ class ActivitySections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activity = ActivityTokens.of(context);
+    if (payload.rows('groups').isEmpty) {
+      return TabEmpty(message: payload.text('empty'));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,

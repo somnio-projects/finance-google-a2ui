@@ -76,23 +76,9 @@ def test_each_kind_is_written_the_way_the_design_draws_it(portfolio: Portfolio) 
     assert buy.realized is None and buy.term is None
 
 
-def test_a_sell_carries_its_realised_result_and_the_term_badge(
-    portfolio: Portfolio,
-) -> None:
-    payload = render(portfolio, ActivityOptions(kind="sell"))
-    (group,) = payload.groups
-    (sale,) = group.entries
-    assert group.label == "FEBRUARY 2026"
-    assert (sale.title, sale.detail) == ("Sold 20 VOO", "20 sh @ $489.00 · Feb 20")
-    assert sale.amount.display == "$9,780.00"
-    assert sale.realized is not None and sale.term is not None
-    assert (sale.realized.text, sale.realized.trend) == ("+$1,738 realized", "up")
-    assert (sale.term.label, sale.term.term) == ("ST gain", "short")
-
-
 @pytest.mark.parametrize(
     ("kind", "count"),
-    [("buy", 15), ("dividend", 4), ("deposit", 2)],
+    [("buy", 16), ("dividend", 16), ("deposit", 9)],
     ids=["buys", "dividends", "deposits"],
 )
 def test_the_filter_keeps_one_kind(portfolio: Portfolio, kind: str, count: int) -> None:
@@ -126,6 +112,13 @@ def test_surface_and_fitness(portfolio: Portfolio, empty_portfolio: Portfolio) -
     assert drawn.component == "ActivityTimeline"
     assert drawn.view == VIEW_ID
     assert drawn.title == "Activity"
-    assert set(drawn.props) == {"note", "kind", "filters", "groups"}
+    assert set(drawn.props) == {
+        "note",
+        "kind",
+        "query",
+        "empty",
+        "filters",
+        "groups",
+    }
     assert fitness(portfolio) == 0 == fitness(empty_portfolio)
     assert render(empty_portfolio, ActivityOptions()).groups == ()

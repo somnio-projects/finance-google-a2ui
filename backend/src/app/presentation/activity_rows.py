@@ -15,6 +15,7 @@ from app.domain.transactions import Transaction
 from app.presentation.activity_entries import entry_of
 from app.presentation.activity_payload import ActivityEntry, ActivityGroup, Kind
 from app.presentation.options import DisplayOptions
+from app.presentation.search import SearchOptions, matches
 
 TODAY: Final[str] = "TODAY"
 THIS_WEEK: Final[str] = "THIS WEEK"
@@ -22,13 +23,25 @@ WEEK_DAYS: Final[int] = 7
 WHOLE_DOLLARS: Final[int] = 0
 
 
-class ActivityOptions(DisplayOptions):
-    """The display knobs, which kinds to show, and how many rows at most."""
+class ActivityOptions(DisplayOptions, SearchOptions):
+    """The display knobs, which kinds to show, what to search, how many."""
 
     kind: Kind = Field(
         default="all", description="Which rows to show.", examples=["dividend"]
     )
     limit: int = Field(default=100, ge=1, le=200, description="Newest rows kept.")
+
+
+def kept(row: Transaction, *, options: ActivityOptions, needle: str) -> bool:
+    """Whether the chip and the search between them keep ``row``.
+
+    The two compose with **and**: `Sells` plus `voo` is the VOO sale, not
+    every sell and every VOO row. The needle is matched against the domain's
+    own fields — the symbol and the memo — never against the caption this
+    module is about to write (spec 0035 OD-6).
+    """
+    of_kind = options.kind == "all" or row.kind.value == options.kind
+    return of_kind and matches(needle, row.symbol, row.memo)
 
 
 def section_label(day: date, *, as_of: date, locale: str) -> str:
@@ -44,10 +57,9 @@ def section_label(day: date, *, as_of: date, locale: str) -> str:
 def groups_for(
     ledger: Sequence[Transaction], *, as_of: date, options: ActivityOptions
 ) -> tuple[ActivityGroup, ...]:
-    """Section the newest ``limit`` rows of the requested kind, newest first."""
-    rows = [
-        row for row in ledger if options.kind == "all" or row.kind.value == options.kind
-    ]
+    """Section the newest ``limit`` rows the options keep, newest first."""
+    needle = options.needle
+    rows = [row for row in ledger if kept(row, options=options, needle=needle)]
     rows = rows[: options.limit]
     sections: dict[str, list[ActivityEntry]] = {}
     for row in rows:
@@ -67,5 +79,6 @@ __all__ = [
     "WEEK_DAYS",
     "ActivityOptions",
     "groups_for",
+    "kept",
     "section_label",
 ]

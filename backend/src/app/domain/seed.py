@@ -16,12 +16,8 @@ from decimal import Decimal
 from app.domain.derivation import holdings_from
 from app.domain.lots import TaxLot
 from app.domain.portfolio import Portfolio
-from app.domain.seed_data import (
-    SEEDED_LOTS,
-    SEEDED_TRANSACTIONS,
-    LotRow,
-    TransactionRow,
-)
+from app.domain.seed_data import SEEDED_LOTS, LotRow
+from app.domain.seed_ledger import SEEDED_TRANSACTIONS, TransactionRow
 from app.domain.transactions import Transaction, TransactionType
 
 

@@ -50,7 +50,7 @@ class FakeTool:
 @pytest.fixture
 def tool_context() -> ToolContext:
     return ToolContext(
-        subject=f"user-{uuid.uuid4()}",
+        owner=f"user-{uuid.uuid4()}@example.test",
         portfolios=InMemoryPortfolioProvider(clock=FixedClock(FROZEN_NOW)),
     )
 

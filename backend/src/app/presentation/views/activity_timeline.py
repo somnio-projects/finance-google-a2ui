@@ -23,6 +23,7 @@ def render(portfolio: Portfolio, options: ActivityOptions) -> ActivityTimelinePa
     """Map the ledger onto the timeline; ``as_of`` decides what *today* is."""
     return ActivityTimelinePayload(
         kind=options.kind,
+        query=options.query,
         groups=groups_for(
             portfolio.transactions(), as_of=portfolio.as_of.date(), options=options
         ),
@@ -38,6 +39,8 @@ def surface(payload: ActivityTimelinePayload) -> Surface:
         props={
             "note": payload.note,
             "kind": payload.kind,
+            "query": payload.query,
+            "empty": payload.empty,
             "filters": [row.model_dump(mode="json") for row in payload.filters],
             "groups": [row.model_dump(mode="json") for row in payload.groups],
         },

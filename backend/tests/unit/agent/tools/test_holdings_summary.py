@@ -44,7 +44,7 @@ async def test_the_totals_agree_with_the_domain(
     Asserted on a trimmed call on purpose: the block describes the
     **portfolio**, not the rows returned.
     """
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     profit = portfolio.total_unrealized_pl()
     ratio = return_on_cost(profit, portfolio.total_cost_basis())
     assert ratio is not None

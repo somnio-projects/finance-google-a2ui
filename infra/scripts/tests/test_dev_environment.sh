@@ -282,6 +282,23 @@ assert "the deploy runs migrations" 'if ! migrate ' "${SCRIPT}"
 assert "a failed migration rolls back" \
   'migrations failed; the schema was not moved' "${SCRIPT}"
 
+# The seed job (spec backend/0035). Two claims, and the second is the one
+# worth a check: it exists, and **nothing runs it for you**. A deploy that
+# quietly reseeded somebody's portfolio would be a data-loss surprise, so
+# the absence from `deploy_cloud_run.sh` is asserted rather than assumed.
+assert "a portfolio seed job exists" \
+  '^resource "google_cloud_run_v2_job" "seed_portfolios"' "${RUNTF}"
+assert "it runs the seed module, not the app" \
+  'command = \["python", "-m", "app.jobs.seed_portfolios"\]' "${RUNTF}"
+assert "its audience is an overridable argument list" \
+  '^        args    = var.seed_portfolio_owners$' "${RUNTF}"
+if grep -q "seed_portfolios\|seed-portfolios" "${SCRIPT}"; then
+  echo "  FAIL  the deploy must not run the seed job — it is a human's command"
+  FAILED=$((FAILED + 1))
+else
+  check "the deploy never seeds on its own" ok
+fi
+
 # The ordering assertion, and the only one that really matters: migrations
 # must come BEFORE the traffic shift. A line-number comparison is crude, but
 # it is exactly the property — after the shift, requests meet a schema the

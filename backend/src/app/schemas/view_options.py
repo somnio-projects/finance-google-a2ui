@@ -27,14 +27,12 @@ it does not hold. `legs` copies the domain's pattern for the same reason, and
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from app.schemas.view_options_tabs import TabOptions
 
 #: Lot-selection strategies (`domain/lot_selection.py`).
 LotMethod = Literal["FIFO", "LIFO", "HIFO"]
-#: Periods the Home hero is measured over; groupings of the allocation donut.
-Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
-GroupBy = Literal["holding", "asset_class", "sector"]
-ActivityKind = Literal["all", "buy", "sell", "dividend", "deposit"]
 #: Which way an order goes, and what its `size` counts.
 Side = Literal["buy", "sell"]
 SizeIn = Literal["units", "usd"]
@@ -46,8 +44,13 @@ TICKER_PATTERN = r"^[A-Z]{2,10}$"
 LEGS_PATTERN = r"^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$"
 
 
-class ProjectionOptions(BaseModel):
-    """Options a projection may be asked for, as query parameters."""
+class ProjectionOptions(TabOptions):
+    """Options a projection may be asked for, as query parameters.
+
+    The chart knobs are declared here; the screen knobs come from
+    `TabOptions` (`view_options_tabs.py`), which is where the 150-line
+    budget put the seam.
+    """
 
     symbol: Annotated[str, Field(pattern=TICKER_PATTERN)] | None = Field(
         default=None,
@@ -106,45 +109,16 @@ class ProjectionOptions(BaseModel):
         description="Price steps per side; the line is twice this plus one point.",
         examples=[12],
     )
-    range: Range | None = Field(
-        default=None,
-        description="Period the Home hero's change is measured over.",
-        examples=["1d"],
-    )
-    group_by: GroupBy | None = Field(
-        default=None,
-        description="How the allocation donut is sliced.",
-        examples=["asset_class"],
-    )
-    headline: bool | None = Field(
-        default=None,
-        description="Whether the allocation card carries its total and gain block.",
-        examples=[False],
-    )
     legs: Annotated[str, Field(pattern=LEGS_PATTERN)] | None = Field(
         default=None, description="`order.ticket.v2`: `TICKER:SHARES` pairs."
-    )
-    kind: ActivityKind | None = Field(
-        default=None,
-        description="`activity.timeline.v1`: rows to show.",
-        examples=["dividend"],
-    )
-    limit: int | None = Field(
-        default=None,
-        ge=1,
-        le=200,
-        description="`activity.timeline.v1`: newest rows kept.",
     )
 
 
 __all__ = [
     "DECIMAL_PATTERN",
     "TICKER_PATTERN",
-    "ActivityKind",
-    "GroupBy",
     "LotMethod",
     "ProjectionOptions",
-    "Range",
     "Side",
     "SizeIn",
 ]

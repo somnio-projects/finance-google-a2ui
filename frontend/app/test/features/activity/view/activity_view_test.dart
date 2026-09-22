@@ -22,11 +22,14 @@ void main() {
       stubView(repository, ActivityBloc.timelineView, 'ActivityTimeline');
     });
 
+    // Tall on purpose: the ledger is 48 rows since 0035 and a `ListView`
+    // builds only what fits, so a short surface makes "not drawn" and
+    // "below the fold" the same result.
     Future<void> pump(WidgetTester tester) async {
       await tester.pumpApp(
         const ActivityPage(),
         viewsRepository: repository,
-        surfaceSize: const Size(390, 2400),
+        surfaceSize: const Size(390, 6000),
       );
       await tester.pumpAndSettle();
     }
@@ -44,15 +47,15 @@ void main() {
         );
         expect(find.text('TODAY'), findsOneWidget);
         expect(find.text('THIS WEEK'), findsOneWidget);
-        expect(find.text('Dividend — VOO'), findsOneWidget);
+        // `findsWidgets` below: the seed repeats these rows (0035).
+        expect(find.text('Dividend — VOO'), findsWidgets);
         expect(find.text(r'$1.62/sh · 85 sh · qualified'), findsOneWidget);
         expect(find.text(r'+$137.70'), findsOneWidget);
-        expect(find.text('Deposit — Bank transfer'), findsOneWidget);
+        expect(find.text('Deposit — Bank transfer'), findsWidgets);
         expect(find.text('Sold 20 VOO'), findsOneWidget);
-        expect(find.text('ST gain'), findsOneWidget);
         expect(find.text(r'+$1,738 realized'), findsOneWidget);
-        expect(find.text('Bought 250 PYPL'), findsOneWidget);
-        expect(find.text(r'-$22,150.00'), findsOneWidget);
+        expect(find.text('Bought 300 PYPL'), findsOneWidget);
+        expect(find.text(r'-$26,580.00'), findsOneWidget);
         expect(find.text('Buy'), findsWidgets);
         expect(find.byType(ActivityEntryTile), findsWidgets);
       },

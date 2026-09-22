@@ -39,7 +39,7 @@ erDiagram
     }
     PORTFOLIOS {
         uuid id PK
-        string subject UK "one per subject — uq_portfolios_subject"
+        string owner_email UK "one per owner — uq_portfolios_owner_email; Principal.owner_key"
         datetime as_of "the seed instant, fixed here not per process"
         datetime created_at
         datetime updated_at
@@ -91,15 +91,24 @@ erDiagram
 | `0005_portfolios` *(spec [`backend/0020`](../../specs/backend/0020-portfolio-persistence.md))* | the portfolio, its open tax lots and its transaction ledger |
 | `0006_users` *(spec [`backend/0027`](../../specs/backend/0027-user-provisioning.md))* | the provisioning registry — who was invited; no credential, ever |
 | `0007_transaction_memo` *(spec [`backend/0028`](../../specs/backend/0028-holdings-and-activity.md))* | `memo` on the ledger, for the words the Activity tab prints beside a row |
+| `0008_portfolio_owner_email` *(spec [`backend/0035`](../../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md))* | `subject` → `owner_email`; the ownership key becomes the **verified e-mail**, and existing rows are deleted because an opaque `sub` maps to no address |
 
 **No holdings table, on purpose.** `Portfolio.positions` is derived from the
 lots and `Portfolio.validate` proves the derivation on every load; persisting
 it would let a holdings row and its lots drift apart with nothing to catch it
 (spec `0020` §3).
 
+**No foreign key from `PORTFOLIOS` to `USERS`, on purpose** (spec `0035`
+OD-3). Ownership is a value — an e-mail — not a reference: a verified token
+whose address is not in the registry never reaches a projection (the access
+gate stops it first), and letting the *database* enforce that would couple
+seeding to provisioning order and turn a first read into a 500.
+
 The portfolio used to be in process memory, seeded per session — the original
 [ADR-F](../adr/ADR-F-persistence-and-session-lifetime.md) D-1/D-2. It moved
 here because Cloud Run runs more than one instance: two caches meant one
-subject with two `as_of`, and `uq_portfolios_subject` is what makes two
-instances seeding a new subject converge on one row. ADR-F D-7 carries the
-current ruling.
+caller with two `as_of`, and the unique constraint on the ownership key is
+what makes two instances seeding a new one converge on a single row. That
+constraint was `uq_portfolios_subject` until migration `0008` re-keyed the
+table; it is `uq_portfolios_owner_email` now, and the property it buys is
+unchanged. ADR-F D-7 carries the current ruling.

@@ -4106,6 +4106,120 @@ What the run taught:
   already produced surfaces", and an error raised *on* the stream — that
   exact case — escaped as an exception and froze the composer. When a comment
   states a guarantee, the test to write is the one that matches its wording.
+## 2026-09-22 — The portfolio gets an owner, and the tabs really filter
+
+**Specs:** [`backend/0035`](../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md)
+· [`frontend/0018`](../specs/frontend/0018-the-tabs-search-and-filter-for-real.md).
+Branch `feat/per_user_seed_and_real_filters`, cut from `develop` at `cb6abb0`.
+
+**What the ticket said, and what was actually true.** The TL reported two
+things against the deployed dev app: *"the filters and search are stubs"* and
+*"the portfolio data is global, not owned by anybody."* Both turned out to be
+half right, and in each case the wrong half was the interesting one.
+
+- The Activity chips were **never** stubs. `activity.timeline.v1` has declared
+  a bounded `kind` option since spec 0028, `ActivityBloc` sends it, and
+  `groups_for` filters server-side. What made them look broken is that the
+  seeded ledger held 22 rows of which **one** was a sell and **two** were
+  deposits. `Sells` returned a single line — a control indistinguishable from
+  a dead one. The fix was the seed, not the chip.
+- The portfolio was **not** shared: `PersistentPortfolioProvider` already gave
+  every subject their own row. What was true is worse and less visible — the
+  key was the identity provider's opaque `sub`, so a row named nobody and the
+  same person arriving through Firebase's Google button and its e-mail button
+  owned **two** portfolios. Spec 0027 OD-1 had already decided the join key
+  between an identity and this service is the verified e-mail; the portfolio
+  never got the memo. Migration `0008` gives it one.
+
+**What is genuinely new.** A `query` option on both tabs' projections and an
+`asset_class` option on Holdings — matched over **domain** fields (symbol,
+memo, name) rather than the captions this layer just wrote, so a result cannot
+change because a label was reworded and the same query answers the same in
+every locale (0035 OD-6). Both echo back in the payload, which is how the
+contract declares them editable. An empty result is a **200 with a
+server-written sentence**, never a 404 and never a sentence the device
+composed.
+
+**Three things worth carrying forward.**
+
+1. **A badge that was wrong and could not be seen.** `TERM_BADGES` printed
+   `ST gain` / `LT gain` unconditionally. That was invisible while the seed
+   held exactly one sale and that sale was a gain. The moment the ledger grew
+   losses it became a visible lie, so the badge now names the term *and* the
+   sign. The general shape: **a seed with one of something tests nothing about
+   that something.** Four badges now occur in the seed and four are asserted.
+2. **A whitespace-only `email` claim was going to become a portfolio key of
+   three spaces.** Found by writing the parametrised test before believing the
+   one-liner (`email.lower() if email else subject`). `owner_key` strips as
+   well as folds.
+3. **The reconciliation between the ledger and the lots is now checked, not
+   commented.** Every sell is paid for by raising its buy's quantity at the
+   same unit price, so *buys − sells = the open lot* to the unit and to the
+   cent. `test_seed_ledger.py` walks that from the data rather than restating
+   it, and it is mutation checked: PYPL 50 → 51 (with a consistent `amount`,
+   so the cheaper assertion could not catch it) turns both reconciliation
+   tests red, and restoring it turns them green.
+
+**Seeding became a command, because the TL asked for one.** Mid-flight
+requirement: *"deploya y re-seedea por usuario … dejame el seed abierto por si
+quiero seedear manualmente a otro usuario"*, then *"u otros"* — plural. So
+`python -m app.jobs.seed_portfolios <email> [<email> …] [--reset]`, plus a
+`seed-portfolios` Cloud Run job shaped like `purge_audit`. Two decisions are
+recorded rather than left to be discovered:
+
+- **Re-running is safe because an existing owner is skipped**, not upserted.
+  `--reset` is the opposite instruction said out loud. A demo that silently
+  rewinds the portfolio somebody is standing in front of is worse than one
+  that does nothing.
+- **Nothing runs it for you.** `deploy_cloud_run.sh` executes `migrate` and
+  not this, and no Scheduler points at it. `test_dev_environment.sh` asserts
+  *both* directions — that the job exists, and that the deploy script never
+  mentions it. Deciding who gets a portfolio is not a thing a deploy should do
+  on its own.
+
+**Harness changes.** No rule file changed. Two diagrams did: `07-data-model`
+(the migration and the deliberate absence of a FK to `users`) and
+`08-infrastructure` (three Cloud Run jobs, three triggers, and why the third
+is a person). `06-response-shaping` gained the filter box and the note that
+`binding_rules_compute_test.dart` needles `.sort`/`.fold`/`.reduce` but **not**
+`.where` — so "the client must not filter a list it already holds" is the
+reviewer's check, not the machine's. That gap is real and now written where
+somebody will read it before reaching for `rows.where(...)`.
+
+**What the next person should know.** The agent still cannot answer *"what did
+I earn in dividends this year?"* — no tool reads `Portfolio.transactions()`.
+This spec quadruples the dividend rows the Activity tab shows, which makes the
+gap **more** visible, so it is recorded as 0035 OD-11 rather than fixed in
+passing: a dividend-income tool needs its own `*Display` figures, its own
+prompt fragment and a period rule the domain does not have yet.
+
+### Addendum — what the review caught, and the two worth generalising
+
+`backend-reviewer` came back with four blocking findings. Two were local
+slips; two are worth carrying:
+
+- **`ignore_changes` on an image is correct only where something else owns
+  that image.** The seed job copied `migrate`'s `lifecycle` block because it
+  was "shaped like" it, and the premise did not hold: `deploy_cloud_run.sh`
+  updates the migration's image and updates nothing on the seed job — which
+  the same PR's `test_dev_environment.sh` asserts. Frozen, it would have
+  seeded an old ledger into a migrated database months later, which is
+  exactly the defect #98 had just fixed one job over. Recorded as 0035 OD-12.
+- **A bound with no test is a sentence, and §5 was leaning on it.** Both
+  `QUERY_PATTERN` and `MAX_QUERY` could be deleted with the suite green,
+  while the spec's security section cited them as the argument. So could a
+  `Literal` set: a comment claimed the endpoint's `AssetClassFilter` and the
+  projection's `AssetFilter` were compared, and the test it named compares
+  option **names**, never members — add `crypto` to one side and the catalog
+  advertises a value the route 422s, all green. Both now have tests, and both
+  were mutation-checked in the directions that matter.
+
+And the operational one, which cost nothing and proved itself: **`/health`
+caught a stale build during this very PR.** Port `8011` turned out to hold
+another agent's backend, which answered `local+f5a7da2` when the branch head
+was `b69f81a`. The GGU-93 check found a real wrong-build reading on its first
+outing after being written for exactly that.
+
 
 ## 2026-09-22 — Three defects a reader found in one sitting
 

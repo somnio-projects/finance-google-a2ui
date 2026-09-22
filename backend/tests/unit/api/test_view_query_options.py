@@ -95,6 +95,8 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "kind": "kind=dividend",
         "limit": "limit=50",
         "legs": "legs=NVDA:1",
+        "asset_class": "asset_class=bonds",
+        "query": "query=nvda",
     }[option]
 
     response = client.get(

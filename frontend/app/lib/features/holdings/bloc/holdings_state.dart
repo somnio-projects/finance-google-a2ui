@@ -30,6 +30,8 @@ class HoldingsState extends Equatable {
   const HoldingsState({
     this.status = HoldingsStatus.initial,
     this.groupBy = 'asset_class',
+    this.assetClass = everyAssetClass,
+    this.query = '',
     this.list = HoldingsList.positions,
     this.allocationLoading = false,
     this.positions,
@@ -43,6 +45,12 @@ class HoldingsState extends Equatable {
   /// The card's grouping — a declared option value.
   final String groupBy;
 
+  /// The class filter in force — a declared option value.
+  final String assetClass;
+
+  /// The search in force — the declared `query` option; empty means none.
+  final String query;
+
   /// Whether a new [groupBy]'s card is on the way.
   ///
   /// Distinct from [status], which is the whole tab: a regrouping reloads the
@@ -50,6 +58,10 @@ class HoldingsState extends Equatable {
   /// view has to be able to grey exactly the half the option governs
   /// (spec frontend/0020 OD-3). Until it lands, [allocation] still holds the
   /// *previous* grouping's figures, which is why they must not be shown.
+  ///
+  /// [assetClass] and [query] are the mirror image — they govern the list and
+  /// not the card — so they set [status] to `loading` and leave this alone
+  /// (spec frontend/0018 OD-3).
   final bool allocationLoading;
 
   /// Which list is shown.
@@ -68,6 +80,8 @@ class HoldingsState extends Equatable {
   HoldingsState copyWith({
     HoldingsStatus? status,
     String? groupBy,
+    String? assetClass,
+    String? query,
     HoldingsList? list,
     bool? allocationLoading,
     ViewPayload? Function()? positions,
@@ -76,6 +90,8 @@ class HoldingsState extends Equatable {
   }) => HoldingsState(
     status: status ?? this.status,
     groupBy: groupBy ?? this.groupBy,
+    assetClass: assetClass ?? this.assetClass,
+    query: query ?? this.query,
     list: list ?? this.list,
     allocationLoading: allocationLoading ?? this.allocationLoading,
     positions: positions == null ? this.positions : positions(),
@@ -87,6 +103,8 @@ class HoldingsState extends Equatable {
   List<Object?> get props => <Object?>[
     status,
     groupBy,
+    assetClass,
+    query,
     list,
     allocationLoading,
     positions,

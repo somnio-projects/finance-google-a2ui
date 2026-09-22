@@ -59,7 +59,7 @@ class HoldingsSummaryTool:
                 can recover from.
         """
         options = HoldingsSummaryArguments.model_validate(dict(arguments))
-        portfolio = await context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.owner)
         every = portfolio.holdings()
         shown = options.select(every)
         data: Mapping[str, object] = {

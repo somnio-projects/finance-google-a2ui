@@ -1,4 +1,4 @@
-"""How a subject's portfolio is reached (spec 0003 §6, revised by spec 0020).
+"""How an owner's portfolio is reached (spec 0003 §6, revised by 0020/0035).
 
 The Protocol is **async**. It was synchronous while the only implementation
 held a dict, and a database read is not synchronous. Every caller was already
@@ -30,21 +30,25 @@ _logger = get_logger(__name__)
 
 
 class PortfolioProvider(Protocol):
-    """Read and replace the portfolio belonging to one subject."""
+    """Read and replace the portfolio belonging to one owner.
 
-    async def get(self, subject: str) -> Portfolio:
-        """Return the subject's portfolio, seeding one on first access."""
+    ``owner`` is the ownership key, not the token's ``sub``: see
+    ``Principal.owner_key`` and spec 0035 OD-1.
+    """
+
+    async def get(self, owner: str) -> Portfolio:
+        """Return the owner's portfolio, seeding one on first access."""
         ...
 
-    async def save(self, subject: str, portfolio: Portfolio) -> None:
-        """Replace the subject's portfolio with ``portfolio``."""
+    async def save(self, owner: str, portfolio: Portfolio) -> None:
+        """Replace the owner's portfolio with ``portfolio``."""
         ...
 
 
 class InMemoryPortfolioProvider:
-    """Hold one portfolio per subject in process memory — **tests only**.
+    """Hold one portfolio per owner in process memory — **tests only**.
 
-    Subjects never share a ``Portfolio`` object, so a mutation saved for one is
+    Owners never share a ``Portfolio`` object, so a mutation saved for one is
     invisible to every other.
 
     Do not wire this into `bootstrap`. It is exactly the implementation spec
@@ -57,21 +61,22 @@ class InMemoryPortfolioProvider:
         self._clock = clock
         self._portfolios: dict[str, Portfolio] = {}
 
-    async def get(self, subject: str) -> Portfolio:
-        """Return ``subject``'s portfolio, seeding it on first access.
+    async def get(self, owner: str) -> Portfolio:
+        """Return ``owner``'s portfolio, seeding it on first access.
 
         Args:
-            subject: The authenticated principal's subject.
+            owner: The authenticated caller's ownership key.
 
         Returns:
             The portfolio, with ``as_of`` fixed at the moment it was seeded.
         """
-        portfolio = self._portfolios.get(subject)
+        portfolio = self._portfolios.get(owner)
         if portfolio is None:
             portfolio = seed_portfolio(as_of=self._clock.now())
-            self._portfolios[subject] = portfolio
-            # The subject is deliberately absent from the event: as_of and the
-            # symbol set are what a reported wrong number is reproduced from.
+            self._portfolios[owner] = portfolio
+            # The owner is deliberately absent from the event: it is an
+            # e-mail (spec 0035 §5), and as_of plus the symbol set are what a
+            # reported wrong number is reproduced from.
             _logger.info(
                 "portfolio.seeded",
                 as_of=portfolio.as_of.isoformat(),
@@ -79,14 +84,14 @@ class InMemoryPortfolioProvider:
             )
         return portfolio
 
-    async def save(self, subject: str, portfolio: Portfolio) -> None:
-        """Replace ``subject``'s portfolio.
+    async def save(self, owner: str, portfolio: Portfolio) -> None:
+        """Replace ``owner``'s portfolio.
 
         Args:
-            subject: The authenticated principal's subject.
+            owner: The authenticated caller's ownership key.
             portfolio: The portfolio to store.
         """
-        self._portfolios[subject] = portfolio
+        self._portfolios[owner] = portfolio
 
 
 __all__ = ["InMemoryPortfolioProvider", "PortfolioProvider"]

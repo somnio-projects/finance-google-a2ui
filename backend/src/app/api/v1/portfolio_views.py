@@ -105,7 +105,9 @@ async def read_portfolio_views(
     )
     etag = strong_etag(
         "portfolio-views",
-        principal.subject,
+        # The owner key, not the subject: two tokens for one verified e-mail
+        # now read one portfolio, so they must revalidate as one (spec 0035).
+        principal.owner_key,
         # Who the shell greets is in the body, so it is in the tag (spec 0030):
         # without it a browser that signed in after a name change would
         # revalidate its cached greeting and be told 304.

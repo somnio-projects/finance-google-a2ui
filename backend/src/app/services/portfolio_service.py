@@ -23,27 +23,27 @@ _logger = get_logger(__name__)
 
 
 class PersistentPortfolioProvider:
-    """Read one subject's portfolio from the database, seeding it once."""
+    """Read one owner's portfolio from the database, seeding it once."""
 
     def __init__(self, *, repository: PortfolioRepository, clock: Clock) -> None:
         """Bind the provider to the request's repository and the clock."""
         self._repository = repository
         self._clock = clock
 
-    async def get(self, subject: str) -> Portfolio:
-        """Return ``subject``'s portfolio, seeding and storing it on a miss.
+    async def get(self, owner: str) -> Portfolio:
+        """Return ``owner``'s portfolio, seeding and storing it on a miss.
 
         Seeding on a miss rather than raising is spec 0003 OD-7: a demo
         session must never open on an error.
 
         The race is decided by the database, not by this code. Two instances
-        seeding the same new subject both write; `uq_portfolios_subject` lets
-        exactly one win, and the loser re-reads what the winner stored. It
-        cannot invent a second portfolio — the property the in-memory
+        seeding the same new owner both write; `uq_portfolios_owner_email`
+        lets exactly one win, and the loser re-reads what the winner stored.
+        It cannot invent a second portfolio — the property the in-memory
         implementation could not offer.
 
         Args:
-            subject: The authenticated principal's subject.
+            owner: The caller's ownership key (``Principal.owner_key``).
 
         Returns:
             The stored portfolio, with the ``as_of`` it was first seeded with.
@@ -52,16 +52,17 @@ class PersistentPortfolioProvider:
             DependencyUnavailableError: If the portfolio is neither found nor
                 creatable — a lost race whose winner then vanished.
         """
-        stored = await self._repository.find(subject=subject)
+        stored = await self._repository.find(owner=owner)
         if stored is not None:
             return stored
         portfolio = seed_portfolio(as_of=self._clock.now())
         try:
-            await self._repository.replace(subject=subject, portfolio=portfolio)
+            await self._repository.replace(owner=owner, portfolio=portfolio)
         except IntegrityError:
-            return await self._reread(subject)
-        # The subject is deliberately absent from the event: as_of and the
-        # symbol set are what a reported wrong number is reproduced from.
+            return await self._reread(owner)
+        # The owner is deliberately absent from the event: it is an e-mail
+        # (spec 0035 §5), and as_of plus the symbol set are what a reported
+        # wrong number is reproduced from.
         _logger.info(
             "portfolio.seeded",
             as_of=portfolio.as_of.isoformat(),
@@ -74,20 +75,20 @@ class PersistentPortfolioProvider:
         # answer after it. ADR-K D-20 requires a given request to be
         # byte-identical for the life of the session, and the integration
         # flow test caught this the moment persistence landed.
-        return await self._reread(subject)
+        return await self._reread(owner)
 
-    async def save(self, subject: str, portfolio: Portfolio) -> None:
-        """Replace ``subject``'s stored portfolio.
+    async def save(self, owner: str, portfolio: Portfolio) -> None:
+        """Replace ``owner``'s stored portfolio.
 
         Args:
-            subject: The authenticated principal's subject.
+            owner: The caller's ownership key (``Principal.owner_key``).
             portfolio: The portfolio to store.
         """
-        await self._repository.replace(subject=subject, portfolio=portfolio)
+        await self._repository.replace(owner=owner, portfolio=portfolio)
 
-    async def _reread(self, subject: str) -> Portfolio:
+    async def _reread(self, owner: str) -> Portfolio:
         """Return what the writer that won the race stored."""
-        winner = await self._repository.find(subject=subject)
+        winner = await self._repository.find(owner=owner)
         if winner is None:
             msg = "portfolio could not be created or read"
             raise DependencyUnavailableError(msg)

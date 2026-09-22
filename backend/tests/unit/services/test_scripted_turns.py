@@ -63,7 +63,7 @@ async def test_every_scripted_prompt_draws_its_surfaces_and_copies_its_figures(
     key: str, tool_context: ToolContext
 ) -> None:
     script = DEMO_SCRIPTS[key]
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     held = {holding.symbol for holding in portfolio.holdings()}
 
     result, model, reporter = await run(key, tool_context)

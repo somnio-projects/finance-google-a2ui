@@ -1,15 +1,35 @@
+import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// The tabs' app bar as the design draws it: the title at 22/500 with two
-/// quiet icons on the right (search, filter). The icons are affordances the
-/// design shows and this build does not yet wire; they say so when tapped.
-class TabAppBar extends StatelessWidget {
+/// The tabs' app bar as the design draws it: the title at 22/500 with the
+/// quiet trailing icons the tab actually has.
+///
+/// It used to hard-code two icons that raised *"… is not part of this
+/// preview yet."* (spec frontend/0009 OD-7, superseded by 0018). The
+/// controls are now parameters, which is what lets the Activity bar carry
+/// search alone — its `kind` chips already are its filter, and a second
+/// control setting the same option would be two sources of truth for one
+/// piece of state (0018 OD-2).
+class TabAppBar extends StatefulWidget {
   /// Creates the bar.
-  const TabAppBar({required this.title, super.key});
+  const TabAppBar({required this.title, this.search, this.onFilter, super.key});
 
   /// The tab's title — the payload's, verbatim.
   final String title;
+
+  /// The search this tab offers, or null when it offers none.
+  final TabSearch? search;
+
+  /// What the filter icon opens, or null when the tab has no filter icon.
+  final VoidCallback? onFilter;
+
+  @override
+  State<TabAppBar> createState() => _TabAppBarState();
+}
+
+class _TabAppBarState extends State<TabAppBar> {
+  bool _searching = false;
 
   @override
   Widget build(BuildContext context) {
@@ -18,43 +38,55 @@ class TabAppBar extends StatelessWidget {
       color: tokens.header,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 6, 12, 4),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  color: tokens.text,
-                ),
-              ),
-            ),
-            const _QuietIcon(icon: Icons.search_rounded, label: 'Search'),
-            const _QuietIcon(icon: Icons.tune_rounded, label: 'Filter'),
-          ],
-        ),
+        child: Row(children: _children(tokens)),
       ),
     );
   }
-}
 
-class _QuietIcon extends StatelessWidget {
-  const _QuietIcon({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = HomeTokens.of(context);
-    return IconButton(
-      tooltip: label,
-      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label is not part of this preview yet.')),
+  List<Widget> _children(HomeTokens tokens) {
+    final search = widget.search;
+    if (_searching && search != null) {
+      return <Widget>[
+        Expanded(
+          child: TabSearchField(
+            hint: widget.title,
+            search: search,
+            onClose: () => _close(search),
+          ),
+        ),
+      ];
+    }
+    return <Widget>[
+      Expanded(
+        child: Text(
+          widget.title,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w500,
+            color: tokens.text,
+          ),
+        ),
       ),
-      icon: Icon(icon, size: 22, color: tokens.segmentText),
-    );
+      if (search != null)
+        TabBarIcon(
+          icon: Icons.search_rounded,
+          label: 'Search ${widget.title}',
+          onPressed: () => setState(() => _searching = true),
+        ),
+      if (widget.onFilter case final onFilter?)
+        TabBarIcon(
+          icon: Icons.tune_rounded,
+          label: 'Filter ${widget.title}',
+          onPressed: onFilter,
+        ),
+    ];
+  }
+
+  /// Closing clears the query: a hidden filter that is still applied is the
+  /// oldest defect in this kind of control (spec frontend/0018 OD-5).
+  void _close(TabSearch search) {
+    setState(() => _searching = false);
+    search.onChanged('');
   }
 }
 
@@ -73,4 +105,30 @@ class TabFailure extends StatelessWidget {
       child: Text(message, textAlign: TextAlign.center),
     ),
   );
+}
+
+/// What a tab shows instead of its list when a filter kept nothing.
+///
+/// The sentence is the **payload's** (`empty`), never one composed here:
+/// "No results for …" is a server-written string under N-9, which is why
+/// the field exists (spec frontend/0018 OD-6).
+class TabEmpty extends StatelessWidget {
+  /// Creates the state.
+  const TabEmpty({required this.message, super.key});
+
+  /// The payload's `empty`, verbatim.
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = HomeTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13.5, color: tokens.segmentText),
+      ),
+    );
+  }
 }

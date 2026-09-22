@@ -86,6 +86,15 @@ def test_surface_and_fitness(portfolio: Portfolio, empty_portfolio: Portfolio) -
     drawn = surface(render(portfolio, HoldingsPositionsOptions()))
     assert drawn.component == "PositionList"
     assert drawn.view == VIEW_ID
-    assert set(drawn.props) == {"total", "gain", "askLabel", "positions"}
+    assert set(drawn.props) == {
+        "total",
+        "gain",
+        "askLabel",
+        "assetClass",
+        "query",
+        "empty",
+        "filters",
+        "positions",
+    }
     assert fitness(portfolio) == 0 == fitness(empty_portfolio)
     assert render(empty_portfolio, HoldingsPositionsOptions()).positions == ()
