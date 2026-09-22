@@ -3535,3 +3535,11 @@ What the run taught:
   Emphasising `+$3,240 (+0.68%)` inside prose means finding a figure in text
   and re-styling it — N-1 to N-4 in one move (0011 OD-1). The answer renders
   as written; the backend can send an emphasised part if design insists.
+- **`curl` never preflights.** The Assistant said *the agent could not be
+  reached* in every browser while the same `POST /` answered 200 from the
+  terminal and from the manual run. The A2UI client sends
+  `X-A2A-Extensions` on every turn; CORS's allow-list did not name it, so the
+  browser's `OPTIONS /` was *400 Disallowed CORS headers* and the POST never
+  left. A manual run made of `curl` cannot see a CORS defect: the one test
+  that can is a preflight with exactly the headers the client sends, and
+  `test_cors_a2a.py` is that test. The browser pane found it in a minute.

@@ -35,6 +35,12 @@ part". frontend/0011 is that client.
   `actions`, `GET /v1/views` and both catalog artefacts regenerate, and the
   flag's default flips to on. A tapped bar and a tapped chip both run.
 - The OpenAPI stream example gains the field; the A2A adapter's tests pin it.
+- **CORS admits `X-A2A-Extensions`.** The client sends it on every turn (the
+  A2UI extension declaration, ADR-J); the allow-list did not name it, so a
+  browser's preflight to `/` answered *400 Disallowed CORS headers* and the
+  Assistant reported *the agent could not be reached* while `curl` — which
+  never preflights — worked. A test now preflights `/` with exactly the
+  headers the client sends.
 
 ## 3. Rulings
 
