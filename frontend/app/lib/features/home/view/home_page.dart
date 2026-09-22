@@ -1,5 +1,6 @@
 import 'package:finance_app/features/home/bloc/home_bloc.dart';
 import 'package:finance_app/features/home/view/home_view.dart';
+import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,6 +15,6 @@ class HomePage extends StatelessWidget {
     create: (context) =>
         HomeBloc(viewsRepository: context.read<ViewsRepository>())
           ..add(const HomeRequested()),
-    child: const HomeView(),
+    child: HomeView(onSignOut: () => context.read<AuthRepository>().signOut()),
   );
 }

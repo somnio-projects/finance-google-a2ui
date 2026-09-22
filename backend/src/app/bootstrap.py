@@ -33,6 +33,7 @@ from app.services.agent_card_service import build_agent_card
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 from app.services.prompt_service import build_system_prompt
+from app.services.user_bootstrap import provision_admins
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
@@ -83,6 +84,10 @@ def _build_lifespan(
     async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
         """Log startup, yield control, then release the engine on shutdown."""
         log.info("startup", public_base_url=container.settings.public_base_url)
+        await provision_admins(
+            emails=container.settings.auth_bootstrap_admins,
+            session_factory=container.session_factory,
+        )
         yield
         await container.engine.dispose()
         log.info("shutdown")

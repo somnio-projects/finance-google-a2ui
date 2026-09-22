@@ -65,6 +65,17 @@ erDiagram
         decimal price "NUMERIC(38,18)"
         datetime created_at
     }
+    USERS {
+        uuid id PK
+        string email UK "lower-cased — the join key to a token's email claim"
+        string display_name
+        string role "member | admin — CHECK"
+        string status "requested | invited | active | revoked — CHECK"
+        string invited_by "an admin's e-mail, or bootstrap"
+        datetime last_seen_at
+        datetime created_at
+        datetime updated_at
+    }
     CONVERSATION_SESSIONS ||--o{ CONVERSATION_MESSAGES : "cascade delete"
     PORTFOLIOS ||--o{ PORTFOLIO_LOTS : "the open lots"
     PORTFOLIOS ||--o{ PORTFOLIO_TRANSACTIONS : "the ledger"
@@ -77,6 +88,7 @@ erDiagram
 | `0003_audit_event_target` | `target`, so `action` stays `<domain>.<verb>` in `String(64)` |
 | `0004_sessions` *(GGU-46)* | subject-scoped conversations and their messages |
 | `0005_portfolios` *(spec [`backend/0020`](../../specs/backend/0020-portfolio-persistence.md))* | the portfolio, its open tax lots and its transaction ledger |
+| `0006_users` *(spec [`backend/0027`](../../specs/backend/0027-user-provisioning.md))* | the provisioning registry — who was invited; no credential, ever |
 
 **No holdings table, on purpose.** `Portfolio.positions` is derived from the
 lots and `Portfolio.validate` proves the derivation on every load; persisting

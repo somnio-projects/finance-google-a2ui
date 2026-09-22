@@ -67,7 +67,7 @@ void main() {
           'packages',
           interpreterMechanisms,
           allow: const <String>{
-            'packages/finance_api_client/lib/src/finance_api_client.dart',
+            'packages/finance_api_client/lib/src/response_decoder.dart',
             // The agent path's decoder. Same allowance and same reason: an
             // event stream stops being text and becomes data here, inside the
             // transport, and nowhere above it.

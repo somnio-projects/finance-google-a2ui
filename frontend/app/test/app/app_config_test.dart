@@ -3,40 +3,44 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group(AppConfig, () {
+    const firebase = FirebaseConfig(
+      apiKey: 'k',
+      appId: '1:1:web:a',
+      projectId: 'p',
+      authDomain: 'p.firebaseapp.com',
+      messagingSenderId: '1',
+    );
+
     test('supports value equality', () {
       final a = AppConfig(
         backendBaseUrl: Uri.parse('http://localhost:8000'),
-        devBearerToken: 'x',
+        firebase: firebase,
       );
       final b = AppConfig(
         backendBaseUrl: Uri.parse('http://localhost:8000'),
-        devBearerToken: 'x',
+        firebase: firebase,
       );
       expect(a, equals(b));
+      expect(firebase.props, hasLength(5));
     });
 
     test('props are correct', () {
       final url = Uri.parse('http://localhost:8000');
       expect(
-        AppConfig(backendBaseUrl: url, devBearerToken: null).props,
+        AppConfig(backendBaseUrl: url).props,
         equals(<Object?>[url, null]),
       );
     });
 
     group('fromEnvironment', () {
-      test('defaults to the local stack when nothing is defined', () {
-        // The test binary carries no --dart-define, so this exercises the
-        // default branch; the defined branch is exercised by a build that
-        // passes one, and by the explicit constructor above.
+      test('defaults to the local stack with no identity provider', () {
         final config = AppConfig.fromEnvironment();
         expect(
           config.backendBaseUrl,
           equals(Uri.parse('http://localhost:8000')),
         );
-      });
-
-      test('reports no credential when the define is empty', () {
-        expect(AppConfig.fromEnvironment().devBearerToken, isNull);
+        // No FIREBASE_API_KEY define in a test run: the seam is the null one.
+        expect(config.firebase, isNull);
       });
     });
   });

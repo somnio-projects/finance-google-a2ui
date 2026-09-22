@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'helpers/auth_fakes.dart';
 import 'helpers/fixtures.dart';
 
 class _MockViewsRepository extends Mock implements ViewsRepository;
@@ -20,10 +21,7 @@ void main() {
   group('bootstrap', () {
     test('builds the whole tree from configuration alone', () {
       final widget = bootstrap(
-        config: AppConfig(
-          backendBaseUrl: Uri.parse('http://localhost:8000'),
-          devBearerToken: null,
-        ),
+        config: AppConfig(backendBaseUrl: Uri.parse('http://localhost:8000')),
         httpClient: MockClient((_) async => http.Response('{}', 200)),
       );
       expect(widget, isA<FinanceApp>());
@@ -40,28 +38,6 @@ void main() {
       // Constructing the tree opens no socket; the first request would,
       // and this test never lets one happen.
       expect(bootstrap(), isA<FinanceApp>());
-    });
-  });
-
-  group('devTokenProvider', () {
-    test('supplies the configured development credential', () async {
-      final provider = devTokenProvider(
-        AppConfig(
-          backendBaseUrl: Uri.parse('http://localhost:8000'),
-          devBearerToken: 'dev-token',
-        ),
-      );
-      expect(await provider(), equals('dev-token'));
-    });
-
-    test('reports an anonymous caller when none is configured', () async {
-      final provider = devTokenProvider(
-        AppConfig(
-          backendBaseUrl: Uri.parse('http://localhost:8000'),
-          devBearerToken: null,
-        ),
-      );
-      expect(await provider(), isNull);
     });
   });
 
@@ -91,6 +67,8 @@ void main() {
         buildApp(
           viewsRepository: repository,
           agentRepository: _MockAgentRepository(),
+          authRepository: fakeAuthRepository(),
+          gated: false,
         ),
       );
       await tester.pumpAndSettle();
@@ -118,7 +96,9 @@ void main() {
         buildApp(
           viewsRepository: repository,
           agentRepository: _MockAgentRepository(),
+          authRepository: fakeAuthRepository(),
           componentRegistry: ComponentRegistry(),
+          gated: false,
         ),
       );
       await tester.pumpAndSettle();

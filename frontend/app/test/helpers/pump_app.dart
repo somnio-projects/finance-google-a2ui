@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/theme/app_theme.dart';
+import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,6 +27,7 @@ extension PumpApp on WidgetTester {
     Widget widget, {
     ViewsRepository? viewsRepository,
     AgentRepository? agentRepository,
+    AuthRepository? authRepository,
     ComponentRegistry? componentRegistry,
     Brightness brightness = Brightness.light,
     Size? surfaceSize,
@@ -41,6 +43,8 @@ extension PumpApp on WidgetTester {
             RepositoryProvider<ViewsRepository>.value(value: viewsRepository),
           if (agentRepository != null)
             RepositoryProvider<AgentRepository>.value(value: agentRepository),
+          if (authRepository != null)
+            RepositoryProvider<AuthRepository>.value(value: authRepository),
           RepositoryProvider<ComponentRegistry>.value(
             value: componentRegistry ?? ComponentRegistry(),
           ),

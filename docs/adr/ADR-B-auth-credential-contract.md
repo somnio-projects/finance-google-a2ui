@@ -108,3 +108,18 @@ for the demo or whether Epic 1 should carry a revocation ticket; and whether `au
 should be reserved in the code list as a forward-compatible name or left out entirely (this
 amendment leaves it out, because a reserved code a client might branch on is the defect D-6 just
 fixed).
+
+## Amendment 2026-09-21 — provisioning becomes a registry (spec backend/0027)
+
+- **D-13** **Provisioning is data in this service, joined on the verified e-mail.** D-5 said accounts are
+  "provisioned by us, never self-signup" and located that at the identity provider, by hand. The
+  design (`Login.dc.html`) needs the service to *answer* the question — *This account isn't
+  provisioned for the preview* — and an operator to invite, approve and revoke from the product. So a
+  `users` table holds who was invited, `GET /v1/me/access` joins a verified token's `email` against
+  it, and `admin`-scoped routes manage it, each audited. The identity provider still proves identity
+  and still holds every credential; this service holds only e-mails and statuses.
+- D-5a is unchanged: enabling Google sign-in at the IdP — which the design draws — is the deliberate
+  amendment D-5a exists to force, to be ratified with the Firebase project.
+- On a laptop, where there is no Firebase, `POST /v1/preview-sign-ins` mints the HS256 development
+  token for a provisioned e-mail; it is refused under `oidc`, so no deployed stack can issue a
+  credential. Spec 0027 OD-3 carries the security argument.

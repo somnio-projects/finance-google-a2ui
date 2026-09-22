@@ -19,6 +19,7 @@ workspace:
   - packages/finance_core
   - packages/finance_api_client
   - packages/finance_views_repository
+  - packages/finance_auth
   - packages/finance_charts
 
 # The workspace root ships no library code, but `tool/` lives here and the

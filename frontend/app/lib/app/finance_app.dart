@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/theme/app_theme.dart';
+import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +17,7 @@ class FinanceApp extends StatelessWidget {
     required this.router,
     required this.viewsRepository,
     required this.agentRepository,
+    required this.authRepository,
     required this.componentRegistry,
     super.key,
   });
@@ -29,6 +31,9 @@ class FinanceApp extends StatelessWidget {
   /// The agent-turn repository the conversation page's bloc resolves.
   final AgentRepository agentRepository;
 
+  /// Who is signed in; the sign-in page and the header read it.
+  final AuthRepository authRepository;
+
   /// The component registry `ComponentHost` resolves with `context.read`.
   final ComponentRegistry componentRegistry;
 
@@ -38,6 +43,7 @@ class FinanceApp extends StatelessWidget {
       providers: <RepositoryProvider<dynamic>>[
         RepositoryProvider<ViewsRepository>.value(value: viewsRepository),
         RepositoryProvider<AgentRepository>.value(value: agentRepository),
+        RepositoryProvider<AuthRepository>.value(value: authRepository),
         RepositoryProvider<ComponentRegistry>.value(value: componentRegistry),
       ],
       child: MaterialApp.router(

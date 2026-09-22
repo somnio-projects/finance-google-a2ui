@@ -3401,3 +3401,46 @@ What the run taught:
   that overflow at phone width (now `Text.rich` and `Flexible`), and a test
   fixture whose root route moved. The catalog snapshot was regenerated
   **three** times before the literals were final — copy them last.
+
+## 2026-09-21 — GGU-115 · sign-in is invite-only, and the app has a door
+
+`feat/GGU-115_sign_in`. Backend spec `backend/0027`: a `users` registry
+(migration `0006`), `GET /v1/me/access`, admin routes to invite / approve /
+revoke, a public `POST /v1/access-requests`, and — for a stack with no
+Firebase — `POST /v1/preview-sign-ins`, which mints the HS256 development
+token for a **provisioned** e-mail and answers 404 under `oidc`. The first
+admins come from `AUTH_BOOTSTRAP_ADMINS` at boot. ADR-B gains D-13.
+Frontend spec `frontend/0008`: `packages/finance_auth` (session, the
+`IdentityProvider` seam, `AccessGateway`, `AuthRepository`), the Firebase
+adapter confined to `app/lib/auth/`, `AuthGate` as the router's one
+`redirect`, `Login.dc.html` at the design's tokens in both themes with its
+three states, the request-access sheet, sign-out from the Home avatar, and
+`FinanceApiClient.postJson` plus the 401 hook. `SECURITY.md` G-1 and G-3
+close; G-2 narrows. Firebase project `finance-a2ui`: `localhost` authorized,
+e-mail-link sign-in enabled; Google needs the console's OAuth client (OD-8).
+
+What the run taught:
+
+- **A `Write` on a name you have not read is a delete.** `domain/symbols.py`
+  existed; writing a new module under that name took twenty-three imports
+  with it. Restored from `HEAD`. The rule was already in the log; it is now
+  the first thing to check before a new file.
+- **`git status` is not `git show`.** Two `16`s — `MAX_CHOICES` in
+  `presentation/tickets.py` and in `actions/declared.py` — were both sized
+  to the crypto reference by coincidence and both failed the moment the
+  reference grew to 17. A bound that happens to equal a data set's size is a
+  latent assertion about the data set; both now say so in a comment.
+- **A `Spacer` in a scroll view is three layouts, not one.** `IntrinsicHeight`
+  overflowed by the height of a wrapped line; `SliverFillRemaining` did the
+  same for the same reason (intrinsics measure at a different width). What
+  works is a `Column` with `minHeight: viewport` and `spaceBetween` — no
+  flex child, no intrinsic pass. Written down so the next screen with a
+  footer does not rediscover it.
+- **Mocktail returns `null` for an unstubbed non-nullable.** The composition
+  root test crashed with a bare `_TypeError` inside `SignInPage` because
+  `isSignInWithEmailLink` was not stubbed. When a widget test throws a
+  `_TypeError` with a mock in the tree, stub the boolean first.
+- **The seam had to be split for the plugin.** `firebase_auth` is Flutter, so
+  the adapter cannot live in `packages/`; the interface can. A test now pins
+  the three files allowed to import the SDK, which is the only thing keeping
+  a feature from calling Firebase directly.

@@ -1,78 +1,90 @@
+import 'dart:async';
+
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_app/app/app_config.dart';
 import 'package:finance_app/app/finance_app.dart';
+import 'package:finance_app/auth/auth_gate.dart';
+import 'package:finance_app/auth/firebase_identity_provider.dart';
 import 'package:finance_app/components/component_manifest.g.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/router/app_router.dart';
+import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
-/// The single composition root.
+/// The composition root — the only file that constructs infrastructure.
 ///
-/// **Every** dependency in this app is constructed here and nowhere else —
-/// the analogue of the backend's `bootstrap.py`, and enforced the same way:
-/// `test/architecture/layering_test.dart` fails when an `http.Client`, a
-/// `FinanceApiClient` or a `ViewsRepository` is constructed in any other file.
-///
-/// The rule buys two things. A reader learns the whole dependency graph from
-/// one screen, and a test builds the same tree with fakes by calling
-/// [buildApp] instead of [bootstrap].
-Widget bootstrap({AppConfig? config, http.Client? httpClient}) {
+/// [firebaseAuth] is the initialised SDK when the build carries Firebase's
+/// public config (`main.dart` initialises it); without one the identity seam
+/// is the [NullIdentityProvider] and the e-mail path is the backend's preview
+/// sign-in (spec backend/0027 OD-3). There is no development token any more:
+/// the bearer is whatever [AuthRepository.token] answers (`SECURITY.md` G-1).
+Widget bootstrap({
+  AppConfig? config,
+  http.Client? httpClient,
+  FirebaseAuth? firebaseAuth,
+}) {
   final resolved = config ?? AppConfig.fromEnvironment();
   final client = httpClient ?? http.Client();
-  // Local development only. Real sign-in replaces this provider and
-  // nothing else — see AppConfig.devBearerToken and SECURITY.md G-1.
-  final tokenProvider = devTokenProvider(resolved);
+  final identity = firebaseAuth == null
+      ? const NullIdentityProvider()
+      : FirebaseIdentityProvider(auth: firebaseAuth);
+  late final AuthRepository auth;
+  late final ViewsRepository views;
+  Future<String?> token() => auth.token();
   final apiClient = FinanceApiClient(
     baseUrl: resolved.backendBaseUrl,
     httpClient: client,
-    tokenProvider: tokenProvider,
+    tokenProvider: token,
+    onUnauthenticated: () => auth.handleUnauthenticated(),
   );
-  // The agent surface is JSON-RPC at the service root, not under /v1, so it
-  // gets its own client over the *same* connection pool and the *same*
-  // credential source — one token provider, two surfaces.
+  auth = AuthRepository(
+    identity: identity,
+    access: AccessGateway(apiClient: apiClient),
+    // A cached portfolio must not outlive the credential that read it (G-3).
+    onSignedOut: () => views.clearCache(),
+  );
+  views = ViewsRepository(apiClient: apiClient);
   final a2aClient = A2aClient(
     baseUrl: resolved.backendBaseUrl,
     httpClient: client,
-    tokenProvider: tokenProvider,
+    tokenProvider: token,
   );
+  unawaited(auth.restore());
   return buildApp(
-    viewsRepository: ViewsRepository(apiClient: apiClient),
+    viewsRepository: views,
     agentRepository: AgentRepository(a2aClient: a2aClient),
+    authRepository: auth,
   );
 }
 
-/// The credential source this build uses.
+/// Assembles the app from already-built dependencies.
 ///
-/// Named rather than inlined so it can be tested on its own, and so the
-/// one place a credential is produced is greppable. Swapping it for a real
-/// identity provider is a one-line change here and nowhere else.
-AuthTokenProvider devTokenProvider(AppConfig config) =>
-    () async => config.devBearerToken;
-
-/// Assembles the widget tree over already-built dependencies.
-///
-/// Split out of [bootstrap] so a test can supply a fake repository without
-/// going anywhere near an `http.Client`.
+/// [authRepository] gates the router: without one (the tests that pump one
+/// route) every path is open, exactly as before sign-in existed.
 Widget buildApp({
   required ViewsRepository viewsRepository,
   required AgentRepository agentRepository,
+  required AuthRepository authRepository,
   ComponentRegistry? componentRegistry,
   String? initialLocation,
+  bool gated = true,
 }) {
   return FinanceApp(
-    router: buildRouter(initialLocation: initialLocation),
+    router: buildRouter(
+      initialLocation: initialLocation,
+      gate: gated ? AuthGate(authRepository) : null,
+    ),
     viewsRepository: viewsRepository,
     agentRepository: agentRepository,
+    authRepository: authRepository,
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
   );
 }
 
-/// Builds the registry with every catalog component wired in.
-///
-/// The wiring itself lives in the generated manifest, so adding a component
-/// does not edit this function either.
+/// The registry every component module registered itself into.
 ComponentRegistry buildComponentRegistry() {
   final registry = ComponentRegistry();
   registerCatalogComponents(registry);

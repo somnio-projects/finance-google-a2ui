@@ -1,40 +1,84 @@
 import 'package:equatable/equatable.dart';
 
-/// Everything the app reads from its build environment.
-///
-/// Values arrive through `--dart-define` and are read in **exactly one
-/// place**, here, so no widget, bloc or repository ever reaches for an
-/// ambient value. That is the Flutter counterpart of the backend rule "config
-/// only through `Settings`, never `os.environ` in application code".
-class AppConfig extends Equatable {
-  /// Creates a configuration explicitly, as tests do.
-  const AppConfig({required this.backendBaseUrl, required this.devBearerToken});
+/// Firebase's **public** web config (ADR-B D-10: only public config ships
+/// client-side). Absent when the build carries no `FIREBASE_API_KEY`, which is
+/// the local stack: there the design's e-mail path is the backend's preview
+/// sign-in (spec backend/0027 OD-3) and the Google button says it is not
+/// configured, rather than pretending.
+class FirebaseConfig extends Equatable {
+  /// Creates the config.
+  const FirebaseConfig({
+    required this.apiKey,
+    required this.appId,
+    required this.projectId,
+    required this.authDomain,
+    required this.messagingSenderId,
+  });
 
-  /// Reads the configuration from the compile-time environment.
+  /// The web API key — public by design, restricted by Google to this app.
+  final String apiKey;
+
+  /// `1:<project number>:web:<hash>`.
+  final String appId;
+
+  /// The Firebase project, also the token audience the backend checks.
+  final String projectId;
+
+  /// Where the sign-in popup and the e-mail link are hosted.
+  final String authDomain;
+
+  /// The project number.
+  final String messagingSenderId;
+
+  @override
+  List<Object?> get props => <Object?>[
+    apiKey,
+    appId,
+    projectId,
+    authDomain,
+    messagingSenderId,
+  ];
+}
+
+/// Build-time configuration.
+///
+/// Values arrive through `--dart-define` and are read in **exactly one**
+/// place — `layering_test.dart` fails any other `String.fromEnvironment`.
+/// There is no credential here any more: sign-in produces the bearer at run
+/// time (spec frontend/0008; `SECURITY.md` G-1 closed).
+class AppConfig extends Equatable {
+  /// Creates the config.
+  const AppConfig({required this.backendBaseUrl, this.firebase});
+
+  /// Reads the `--dart-define`s.
   factory AppConfig.fromEnvironment() {
     const baseUrl = String.fromEnvironment(
       'BACKEND_BASE_URL',
       defaultValue: 'http://localhost:8000',
     );
-    const token = String.fromEnvironment('BACKEND_DEV_TOKEN');
+    const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
     return AppConfig(
       backendBaseUrl: Uri.parse(baseUrl),
-      devBearerToken: token.isEmpty ? null : token,
+      firebase: apiKey.isEmpty
+          ? null
+          : const FirebaseConfig(
+              apiKey: apiKey,
+              appId: String.fromEnvironment('FIREBASE_APP_ID'),
+              projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+              authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+              messagingSenderId: String.fromEnvironment(
+                'FIREBASE_MESSAGING_SENDER_ID',
+              ),
+            ),
     );
   }
 
-  /// Where the finance backend lives, e.g. `http://localhost:8000`.
+  /// The API's origin; every request resolves against it.
   final Uri backendBaseUrl;
 
-  /// A local-development bearer token, or `null` when none was supplied.
-  ///
-  /// **This is a development affordance and a known gap** (`frontend/
-  /// SECURITY.md` G-1). A `--dart-define` is compiled into the bundle, so the
-  /// value is readable by anyone who can read the build output: only a token
-  /// minted by `cd backend && make token` for a local stack may go here, never
-  /// a credential for a deployed environment. Real sign-in replaces it.
-  final String? devBearerToken;
+  /// The identity provider's public config, when this build has one.
+  final FirebaseConfig? firebase;
 
   @override
-  List<Object?> get props => <Object?>[backendBaseUrl, devBearerToken];
+  List<Object?> get props => <Object?>[backendBaseUrl, firebase];
 }

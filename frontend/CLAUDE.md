@@ -103,10 +103,12 @@ frontend/
 │   ├── finance_core/             Result, AppFailure, ProblemDetails. Depends on nothing.
 │   ├── finance_api_client/       DATA layer: the only code that speaks HTTP.
 │   ├── finance_views_repository/ REPOSITORY layer: envelope, ViewPayload, ETag cache.
+│   ├── finance_auth/             AUTH: session, IdentityProvider seam, AccessGateway, AuthRepository.
 │   └── finance_charts/           CHART GEOMETRY: scales, nice ticks, (steps, size) → rects.
 ├── app/lib/                      Flutter
 │   ├── bootstrap.dart            THE composition root — the only file that constructs anything
-│   ├── main.dart                 runApp(bootstrap())
+│   ├── main.dart                 initialises Firebase when configured, then runApp(bootstrap(...))
+│   ├── auth/                     the Firebase IdentityProvider and the router's AuthGate — the only Firebase importers
 │   ├── app/                      AppConfig (the only reader of --dart-define), FinanceApp
 │   ├── router/                   go_router table + the single auth-gate redirect
 │   ├── theme/                    Material 3 themes + the AppSpacing ThemeExtension
