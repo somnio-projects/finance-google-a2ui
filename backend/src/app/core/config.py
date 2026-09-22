@@ -99,7 +99,7 @@ class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
         min_length=1,
         max_length=255,
     )
-    gemini_timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
+    gemini_timeout_seconds: float = Field(default=60.0, ge=1.0, le=120.0)  # 0036
     gemini_max_attempts: int = Field(default=3, ge=1, le=5)
     agent_max_tool_iterations: int = Field(default=4, ge=1, le=10)
 

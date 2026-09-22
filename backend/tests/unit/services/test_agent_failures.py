@@ -79,7 +79,14 @@ async def test_run_turn_reports_and_reraises_a_model_failure(
 
     assert reporter.exceptions == [failure]
     assert reporter.metrics == [
-        (TURN_METRIC, {"model": "failing", "outcome": "model-unavailable"})
+        (
+            TURN_METRIC,
+            {
+                "model": "failing",
+                "outcome": "model-unavailable",
+                "composed": "False",
+            },
+        )
     ]
 
 
@@ -109,4 +116,9 @@ async def test_run_turn_reports_and_counts_an_untyped_failure(
         await service.run_turn(prompt="hi", history=[], context=tool_context)
 
     assert reporter.exceptions == [failure]
-    assert reporter.metrics == [(TURN_METRIC, {"model": "failing", "outcome": "error"})]
+    assert reporter.metrics == [
+        (
+            TURN_METRIC,
+            {"model": "failing", "outcome": "error", "composed": "False"},
+        )
+    ]

@@ -91,14 +91,29 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
       // purpose — the server echoes it and resolves nothing from it (ADR-J).
       messageId: 'm-${state.entries.length}',
     );
-    await for (final agentEvent in turn) {
-      await _apply(agentEvent, emit);
-    }
-    if (state.status == ConversationStatus.running) {
-      // The stream ended without a terminal status — a turn that stopped
-      // mid-flight. Showing what arrived beats leaving the surface spinning
-      // forever, and the events that did land are still on screen.
-      emit(state.copyWith(status: () => ConversationStatus.idle));
+    try {
+      await for (final agentEvent in turn) {
+        await _apply(agentEvent, emit);
+      }
+    } finally {
+      if (state.status == ConversationStatus.running) {
+        // The turn ended without a terminal status — it stopped mid-flight,
+        // or something escaped the stream. Showing what arrived beats
+        // leaving the surface spinning forever, and the events that did land
+        // are still on screen.
+        //
+        // `finally`, not a plain statement after the loop. The repository
+        // now converts a stream error into an `AgentFailed` event, so
+        // nothing SHOULD escape — but "should" is what the status was
+        // trusting before, and the cost of being wrong is the whole screen:
+        // an exception out of this handler leaves the state at `running`,
+        // Bloc reports it to `onError`, and the typing indicator and the
+        // disabled composer stay that way until the app is reloaded. There
+        // is no state of the world in which a finished turn should still
+        // look like it is running, so the exit is unconditional
+        // (spec `frontend/0018`).
+        emit(state.copyWith(status: () => ConversationStatus.idle));
+      }
     }
   }
 }

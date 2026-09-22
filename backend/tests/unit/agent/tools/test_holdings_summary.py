@@ -32,7 +32,7 @@ async def test_it_describes_itself_for_the_model_to_choose_by(
     assert "gainers" in tool.description
     properties = tool.parameters["properties"]
     assert isinstance(properties, dict)
-    assert set(properties) == {"sort_by", "symbols", "top_n"}
+    assert set(properties) == {"sort_by", "symbols", "top_n", "group_by"}
     assert tool.parameters["additionalProperties"] is False
 
 

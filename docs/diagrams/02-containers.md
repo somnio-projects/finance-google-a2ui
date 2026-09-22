@@ -55,7 +55,9 @@ flowchart LR
     %% same `frontend/tool/build_web.sh`, which is why the edge between them is
     %% solid: it is a "built by" relation, not a network call.
     %% Neither container holds a credential; the browser, not the container, is
-    %% what talks to the backend. Locally: db + backend, plus the A2UI client on
-    %% :3001 behind `--profile frontend` and client_flutter on :3000 behind
-    %% `--profile client`, all under the one compose project `finance-a2ui`.
+    %% what talks to the backend. Locally `docker compose up` is db + backend +
+    %% the A2UI client on :3001, all under the one project `finance-a2ui`.
+    %% client_flutter is NOT in that stack: it has its own compose file and
+    %% comes up beside it as `client-flutter`, which is the honest shape for a
+    %% separate deployable.
 ```

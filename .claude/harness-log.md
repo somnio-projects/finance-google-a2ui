@@ -3824,6 +3824,34 @@ What the run taught:
 - **The public key is public and still stays out of git**, because the
   secret scanner cannot read the ADR that says so (0002 OD-3).
 
+## 2026-09-22 — the migrate job had been running an old image all along
+
+`fix/the_migrate_job_runs_the_released_image`, spec `infra/0003`. A deploy to
+dev failed with `Can't locate revision identified by '0007'` — a message that
+reads like a broken Alembic chain and was a stale container image: the Cloud
+Run *job* kept the image it was created with while the service moved on, and
+`gcloud run jobs execute` runs whatever the job carries.
+
+What the run taught:
+
+- **An `ignore_changes` is a claim that something else owns the field.**
+  Terraform ignored the job's image so the pipeline could set it; the pipeline
+  never did. Nobody owned it and both files looked correct in isolation — the
+  same shape as the gate-pair defects in `ci-conventions.md` §5, one level out
+  from the repository.
+- **A comment that asserts behaviour is a test that never runs.** The script
+  said "the job runs on the image being released" and the suite had 44
+  assertions, none of them about the migrate step. The sentence had been false
+  since the second deploy.
+- **A second mechanism hid the first.** `RUN_MIGRATIONS=true` on the service
+  meant the schema moved anyway, at container boot, so the only symptom was
+  the job failing *afterwards* on a version its older code did not know. Left
+  in place deliberately (0003 OD-2): removing it reorders boot and migration,
+  and the admin bootstrap runs at boot.
+- **Diagnosis came from comparing two images, not from reading migrations.**
+  `gcloud run jobs describe … --format="value(…containers[0].image)"` against
+  the same field on the service is the one-line check; it belongs in the
+  runbook next time a migration "fails" on a chain that is provably contiguous.
 ## 2026-09-22 — The client runs in the stack and ships itself
 
 `feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
@@ -3888,6 +3916,88 @@ What the run taught:
   runs on the pull request. Not added in this PR — `repo.spelling` already
   walks every tracked file and could carry it — and named as the gap it is.
 
+## 2026-09-22 — Eleven components, five the agent can reach
+
+`fix/agent_reach_over_the_catalog`, spec `backend/0037`. Found by asking the
+turn telemetry a question it could finally answer.
+
+What the run taught:
+
+- **A component can be complete and unreachable.** Written, registered,
+  100 %-covered, published to `/v1/views`, printed in the frozen contract,
+  bound by a Flutter widget — and impossible for the agent to compose,
+  because a render intent is attached by a *tool* and no tool names it.
+  Every gate was green over all eleven.
+- **The symptoms did not look like the cause.** "Show me my biggest winners
+  and losers" answering in prose looks like a prompt problem. "Compare
+  keeping NVDA against trimming it" drawing a tax-lot table looks like the
+  model choosing badly. Both were the same thing: the component for that
+  answer was unreachable, so the model reached for the nearest thing it
+  could actually get. **A model asked for something it cannot produce does
+  not fail — it substitutes**, and the substitute is plausible.
+- **This is GGU-79 one level up**, and the second time this repository has
+  found it. There, a component could be registered and not reachable from a
+  *route*; here, not reachable by the *agent*. Both times the seam was
+  sound and the thing past the seam was never compared with it. Worth
+  asking, the next time a registry is added: *who consumes this, and is
+  there a test that every entry reaches each consumer?*
+- **The check asserts classification, not reachability.** Demanding that
+  every view be agent-composable would be wrong — a view a screen requests
+  by `?view=` is not an answer. What must not exist is an *undeclared* gap,
+  so the registry splits three ways and a new view is red until its author
+  picks one. Same shape as `test_component_names.py`, which is red until
+  design has named the component.
+- **Reachability is read from the sources, not by running the tools.**
+  Discovering intents by exercising tools against a portfolio would make
+  the inventory depend on the seed: a tool that attaches its surface only
+  for a non-empty result would read as unreachable on an empty one, and the
+  check would change meaning when the seed changes.
+## 2026-09-22 — The assistant, measured against the real model
+
+`fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
+agent was reported as crashing. It was not crashing; it was doing four things
+wrong at once and reporting none of them.
+
+What the run taught:
+
+- **A badge that is chrome cannot tell you anything.** The header's
+  `Simulated` pill is hardcoded from the artboards and refers to the
+  simulated **portfolio**. It reads as a statement about the model, it says
+  `Gemini · A2UI` whatever the backend runs, and the first ten minutes of
+  this investigation went into a screenshot that could not have been
+  evidence either way.
+- **`ReadTimeout` is a `TransportError`, and that inheritance was a trap.**
+  "Retry transport errors" therefore retried a model that answered too
+  slowly, three times, turning one slow turn into a 64 s failure. The lesson
+  generalises: a retry predicate written against an exception *hierarchy*
+  inherits whatever the library decided to group, and the grouping is not
+  always the one your policy means.
+- **A prompt that asks for something the model cannot do gets prose.** The
+  catalog header told the model to "pick a view by id and fill its options".
+  Nothing in the tool surface lets it. So it wrote the JSON into its answer —
+  twice in three runs of one question — and once refused an option the
+  catalog declares. The model was not confused; the instruction was wrong.
+- **The option had been declared for weeks and nothing passed it.** A
+  projection can hold a perfectly good `group_by` enum while every caller
+  sends the default, and the only visible symptom is a chart that quietly
+  disagrees with the sentence above it. **A declared option with no caller is
+  a dead option**, and nothing in the gate says so — `make catalog` proves the
+  artefact is current, never that anything uses it.
+- **Telemetry that cannot answer the product's own question.** `agent.turn`
+  logged iterations and tool calls, and nothing about whether the turn
+  composed a surface. This showcase exists to demonstrate composed UI; the
+  one number that says whether it happened was the one number absent. That is
+  why the sector defect survived: no log could have shown it.
+- **`blocTest` with an `errors:` matcher can hide the assertion.** The
+  handler's exception ends `act`, so `verify` never runs and the suite passes
+  with the fix reverted. Caught by mutating, not by reading. A bloc must also
+  be **constructed inside** `runZonedGuarded` for its unhandled errors to
+  reach that handler — built outside, they go to the test framework's zone.
+- **A docstring that names the case it does not cover.** `AgentRepository`
+  said "every failure is an event … because a turn can fail after it has
+  already produced surfaces", and an error raised *on* the stream — that
+  exact case — escaped as an exception and froze the composer. When a comment
+  states a guarantee, the test to write is the one that matches its wording.
 ## 2026-09-22 — The portfolio gets an owner, and the tabs really filter
 
 **Specs:** [`backend/0035`](../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md)

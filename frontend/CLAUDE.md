@@ -99,10 +99,11 @@ re-resolves and builds something nobody reviewed.
 
 ```bash
 # from the repository root — no Flutter SDK needed
-APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose --profile frontend up --build
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build
 ```
 
-`:3001`, in the one compose project `finance-a2ui`. Delivery is
+`:3001`, in the one compose project `finance-a2ui`, as part of the default
+`up`. `docker compose up db backend` skips its build. Delivery is
 `.github/workflows/frontend-cd.yaml`, a button: gate → bundle → preview
 channel → verify → live → verify. Spec
 [`frontend/0017`](../specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md),
