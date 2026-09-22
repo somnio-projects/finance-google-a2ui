@@ -16,4 +16,8 @@
 #            title no longer cites the standard. Never "fix" this one.
 #   homestate  codespell reads the Bloc class `HomeState` (frontend/…/home)
 #            as the misspelling of "home state"; it is a type name.
-ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate
+#   hace     Spanish. Specs quote the TL's own words verbatim when a defect
+#            was reported in them — "no hace nada" is the report, and a
+#            paraphrase in English would be a second-hand account of the
+#            only evidence a UI defect had. codespell reads it as "have".
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate,hace
