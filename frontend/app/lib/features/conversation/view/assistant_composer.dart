@@ -1,3 +1,5 @@
+import 'package:finance_app/features/conversation/view/assistant_mic_button.dart';
+import 'package:finance_app/features/conversation/view/composer_round_button.dart';
 import 'package:finance_app/theme/assistant_tokens.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,11 @@ import 'package:flutter/material.dart';
 /// The composer: a 48 px rounded field, the mic and the send button
 /// (spec frontend/0011 §2). [enabled] is false while a turn runs, which
 /// greys the send button as the artboard's composing state does.
+///
+/// The mic used to be drawn here with a snackbar saying it was not wired
+/// (0011 OD-5). It is wired now, and it owns its own states, so it is
+/// [AssistantMicButton] and this file no longer knows what it does
+/// (spec frontend/0023).
 class AssistantComposer extends StatelessWidget {
   /// Creates the composer.
   const AssistantComposer({
@@ -17,11 +24,7 @@ class AssistantComposer extends StatelessWidget {
   /// The design's placeholder.
   static const String hint = 'Ask about your portfolio…';
 
-  /// What the mic says when tapped (OD-5): drawn, not wired.
-  static const String micNotice =
-      'Voice input is not part of this preview yet.';
-
-  /// The field's text.
+  /// The field's text. Typed into, and dictated into (spec 0023 OD-1).
   final TextEditingController controller;
 
   /// Sends the field's text.
@@ -69,20 +72,9 @@ class AssistantComposer extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              _Round(
-                color: assistant.mic,
-                tooltip: 'Voice input',
-                onTap: () =>
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text(micNotice))),
-                child: Icon(
-                  Icons.mic_none_rounded,
-                  size: 22,
-                  color: assistant.micGlyph,
-                ),
-              ),
+              const AssistantMicButton(),
               const SizedBox(width: 8),
-              _Round(
+              ComposerRoundButton(
                 color: enabled ? assistant.send : assistant.sendDisabled,
                 tooltip: 'Send',
                 onTap: enabled ? onSend : null,
@@ -98,32 +90,4 @@ class AssistantComposer extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Round extends StatelessWidget {
-  const _Round({
-    required this.color,
-    required this.tooltip,
-    required this.onTap,
-    required this.child,
-  });
-
-  final Color color;
-  final String tooltip;
-  final VoidCallback? onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: color,
-    shape: const CircleBorder(),
-    child: Tooltip(
-      message: tooltip,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(width: 46, height: 46, child: Center(child: child)),
-      ),
-    ),
-  );
 }

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:finance_app/components/surface_actions.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
+import 'package:finance_app/features/conversation/bloc/voice_input_bloc.dart';
 import 'package:finance_app/features/conversation/view/conversation_view.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -38,11 +40,18 @@ class ConversationPage extends StatefulWidget {
 
 class _ConversationPageState extends State<ConversationPage> {
   ConversationBloc? _bloc;
+  VoiceInputBloc? _voice;
 
   ConversationBloc get _conversation => _bloc ??= ConversationBloc(
     agentRepository: context.read<AgentRepository>(),
     viewsRepository: context.read<ViewsRepository>(),
   );
+
+  /// The dictation bloc, built here for the same reason the conversation's
+  /// is: this is the page, so this is where a bloc's lifetime and the seam it
+  /// needs are resolved (spec frontend/0023 OD-2).
+  VoiceInputBloc get _voiceInput =>
+      _voice ??= VoiceInputBloc(recognizer: context.read<SpeechRecognizer>());
 
   @override
   void initState() {
@@ -76,13 +85,17 @@ class _ConversationPageState extends State<ConversationPage> {
     // The bloc's own close is a Future nobody awaits: `dispose` is
     // synchronous by contract and the element is going away regardless.
     unawaited(_bloc?.close() ?? Future<void>.value());
+    unawaited(_voice?.close() ?? Future<void>.value());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ConversationBloc>.value(
-      value: _conversation,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ConversationBloc>.value(value: _conversation),
+        BlocProvider<VoiceInputBloc>.value(value: _voiceInput),
+      ],
       // A surface's tap becomes a turn through the one bloc that owns the
       // conversation (spec frontend/0011 OD-4).
       child: Builder(

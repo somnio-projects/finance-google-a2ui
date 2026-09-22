@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:finance_app/features/conversation/view/assistant_composer.dart';
+import 'package:finance_app/features/conversation/view/voice_notice.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -114,13 +115,18 @@ void main() {
       expect(find.text(r'$482,915.20'), findsOneWidget);
     });
 
-    testWidgets('the mic is drawn and says it is not wired (OD-5)', (
+    testWidgets('the mic is drawn and never inert (0011 OD-5, 0022 AC-1)', (
       tester,
     ) async {
+      // 0011 OD-5 drew it and said it was not wired. It is wired now, and
+      // what stayed is the half that mattered: on a build with no engine —
+      // which is every build a test runs — the tooltip says so and the tap
+      // still produces a sentence. `voice_composer_test.dart` owns the rest.
       await pumpConversation(tester, agent: agent, views: views);
-      await tester.tap(find.byTooltip('Voice input'));
+      expect(find.byTooltip(voiceUnavailableTooltip), findsOneWidget);
+      await tester.tap(find.byTooltip(voiceUnavailableTooltip));
       await tester.pump();
-      expect(find.text(AssistantComposer.micNotice), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
     });
   });
 }

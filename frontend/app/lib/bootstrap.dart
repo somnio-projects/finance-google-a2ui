@@ -8,6 +8,13 @@ import 'package:finance_app/auth/firebase_identity_provider.dart';
 import 'package:finance_app/components/component_manifest.g.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/router/app_router.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
+// The platform choice for dictation lives HERE, in the composition root,
+// rather than in a barrel of one conditional export: such a barrel has no
+// executable line, lcov writes no record for it, and the coverage gate would
+// then have to excuse a file that does nothing (spec frontend/0023 OD-2).
+import 'package:finance_app/speech/speech_stub.dart'
+    if (dart.library.js_interop) 'package:finance_app/speech/speech_web.dart';
 import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -58,6 +65,7 @@ Widget bootstrap({
     viewsRepository: views,
     agentRepository: AgentRepository(a2aClient: a2aClient),
     authRepository: auth,
+    speechRecognizer: createSpeechRecognizer(),
   );
 }
 
@@ -65,12 +73,17 @@ Widget bootstrap({
 ///
 /// [authRepository] gates the router: without one (the tests that pump one
 /// route) every path is open, exactly as before sign-in existed.
+///
+/// [speechRecognizer] is the dictation seam. It is a parameter rather than a
+/// construction because this function is what a test calls, and a test must
+/// be able to hand in a fake engine (spec frontend/0023 OD-2).
 Widget buildApp({
   required ViewsRepository viewsRepository,
   required AgentRepository agentRepository,
   required AuthRepository authRepository,
   ComponentRegistry? componentRegistry,
   ThemeModeController? themeMode,
+  SpeechRecognizer? speechRecognizer,
   String? initialLocation,
   bool gated = true,
 }) {
@@ -84,6 +97,9 @@ Widget buildApp({
     authRepository: authRepository,
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
     themeMode: themeMode ?? ThemeModeController(),
+    // A tree pumped without one gets the honest no-op: the mic is drawn,
+    // answers a tap, and says this build cannot dictate (spec 0023 AC-1).
+    speechRecognizer: speechRecognizer ?? const UnsupportedSpeechRecognizer(),
   );
 }
 

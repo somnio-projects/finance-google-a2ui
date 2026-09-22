@@ -1,4 +1,5 @@
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
 import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
@@ -21,6 +22,7 @@ class FinanceApp extends StatelessWidget {
     required this.authRepository,
     required this.componentRegistry,
     required this.themeMode,
+    required this.speechRecognizer,
     super.key,
   });
 
@@ -42,6 +44,9 @@ class FinanceApp extends StatelessWidget {
   /// Which theme shows; the sign-in toggle and the session sheet set it.
   final ThemeModeController themeMode;
 
+  /// The dictation engine `ConversationPage` builds its voice bloc over.
+  final SpeechRecognizer speechRecognizer;
+
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
@@ -50,6 +55,7 @@ class FinanceApp extends StatelessWidget {
         RepositoryProvider<AgentRepository>.value(value: agentRepository),
         RepositoryProvider<AuthRepository>.value(value: authRepository),
         RepositoryProvider<ComponentRegistry>.value(value: componentRegistry),
+        RepositoryProvider<SpeechRecognizer>.value(value: speechRecognizer),
       ],
       child: ThemeModeScope(
         controller: themeMode,
