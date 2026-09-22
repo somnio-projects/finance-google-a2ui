@@ -3887,3 +3887,40 @@ What the run taught:
   on `develop`. The check that would have caught it is one in `repo-ci`, which
   runs on the pull request. Not added in this PR — `repo.spelling` already
   walks every tracked file and could carry it — and named as the gap it is.
+
+## 2026-09-22 — Eleven components, five the agent can reach
+
+`fix/agent_reach_over_the_catalog`, spec `backend/0037`. Found by asking the
+turn telemetry a question it could finally answer.
+
+What the run taught:
+
+- **A component can be complete and unreachable.** Written, registered,
+  100 %-covered, published to `/v1/views`, printed in the frozen contract,
+  bound by a Flutter widget — and impossible for the agent to compose,
+  because a render intent is attached by a *tool* and no tool names it.
+  Every gate was green over all eleven.
+- **The symptoms did not look like the cause.** "Show me my biggest winners
+  and losers" answering in prose looks like a prompt problem. "Compare
+  keeping NVDA against trimming it" drawing a tax-lot table looks like the
+  model choosing badly. Both were the same thing: the component for that
+  answer was unreachable, so the model reached for the nearest thing it
+  could actually get. **A model asked for something it cannot produce does
+  not fail — it substitutes**, and the substitute is plausible.
+- **This is GGU-79 one level up**, and the second time this repository has
+  found it. There, a component could be registered and not reachable from a
+  *route*; here, not reachable by the *agent*. Both times the seam was
+  sound and the thing past the seam was never compared with it. Worth
+  asking, the next time a registry is added: *who consumes this, and is
+  there a test that every entry reaches each consumer?*
+- **The check asserts classification, not reachability.** Demanding that
+  every view be agent-composable would be wrong — a view a screen requests
+  by `?view=` is not an answer. What must not exist is an *undeclared* gap,
+  so the registry splits three ways and a new view is red until its author
+  picks one. Same shape as `test_component_names.py`, which is red until
+  design has named the component.
+- **Reachability is read from the sources, not by running the tools.**
+  Discovering intents by exercising tools against a portfolio would make
+  the inventory depend on the seed: a tool that attaches its surface only
+  for a non-empty result would read as unreachable on an empty one, and the
+  check would change meaning when the seed changes.
