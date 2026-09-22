@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:finance_app/bootstrap.dart';
+import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -27,6 +28,7 @@ void main() {
       when(
         () => agent.startTurn(
           text: any(named: 'text'),
+          action: any(named: 'action'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -45,17 +47,17 @@ void main() {
     ) async {
       await pump(tester);
       await tester.enterText(find.byType(TextField), 'what moved?');
-      await tester.tap(find.byIcon(Icons.send));
+      await tester.tap(find.byTooltip('Send'));
       await tester.pump();
       await tester.pump();
 
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.byType(StreamingDots), findsOneWidget);
 
       turn.add(const AgentTurnEnded(AgentTurnState.completed));
       await turn.close();
       await tester.pumpAndSettle();
 
-      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(StreamingDots), findsNothing);
     });
 
     testWidgets('stops showing progress when a turn ends mid-flight', (
@@ -65,13 +67,13 @@ void main() {
       // spinning forever would be worse than showing what arrived.
       await pump(tester);
       await tester.enterText(find.byType(TextField), 'what moved?');
-      await tester.tap(find.byIcon(Icons.send));
+      await tester.tap(find.byTooltip('Send'));
       await tester.pump();
 
       await turn.close();
       await tester.pumpAndSettle();
 
-      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(StreamingDots), findsNothing);
       expect(find.text('what moved?'), findsOneWidget);
     });
 
@@ -86,6 +88,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'what moved?',
+          action: any(named: 'action'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -109,7 +112,7 @@ void main() {
       );
       await pump(tester);
       await tester.enterText(find.byType(TextField), 'what moved?');
-      await tester.tap(find.byIcon(Icons.send));
+      await tester.tap(find.byTooltip('Send'));
       await tester.pump();
 
       turn.add(

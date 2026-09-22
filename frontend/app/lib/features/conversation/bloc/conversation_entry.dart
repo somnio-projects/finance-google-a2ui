@@ -1,4 +1,5 @@
-part of 'conversation_bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:finance_views_repository/finance_views_repository.dart';
 
 /// One thing the conversation shows, in arrival order.
 ///
@@ -71,4 +72,20 @@ final class SurfaceUnavailable extends ConversationEntry {
 
   @override
   List<Object?> get props => <Object?>[view, message];
+}
+
+/// A surface the agent asked for whose payload has not arrived yet.
+///
+/// Shown as the design's skeleton (spec frontend/0011 OD-2) and replaced in
+/// place by [AgentSurface] or [SurfaceUnavailable], so the transcript keeps
+/// the streaming order (N-10).
+final class SurfacePending extends ConversationEntry {
+  /// Records that [view] is being composed.
+  const SurfacePending(this.view);
+
+  /// The view id the agent chose.
+  final String view;
+
+  @override
+  List<Object?> get props => <Object?>[view];
 }

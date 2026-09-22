@@ -3495,3 +3495,43 @@ What the run taught:
   of the loop was a branch no test reached; at the bottom, both arms are
   covered by the tests that already existed. Same behaviour, one more line
   of evidence.
+
+## 2026-09-22 — the Assistant, as Flow A, B and C frame it
+
+`feat/assistant_as_designed`. Frontend spec `frontend/0011`: the Assistant
+tab rebuilt to the measured artboards — header with the model pill and the
+`Simulated` badge, indigo bubbles on the right, the `Assistant` label with
+streaming dots, the composition skeleton while a surface is fetched, the
+follow-up chip row, the rounded composer with mic and send — light and dark
+(`AssistantTokens`). Backend spec `backend/0029`: the terminal `message`
+event carries `suggestions` (curated keys with labels, minus the one just
+asked), and `SHIPPED_ENABLED` flips on, so the waterfall declares its drill
+and both taps run: a chip sends `ask.suggested.v1`, a bar sends
+`drill.attribution.v1`, each as a `data` part the backend composes into a
+prompt (0022 §3.1). `SurfaceActions` is an `InheritedWidget` the
+conversation page provides; the `ViewComponent` seam did not change.
+
+What the run taught:
+
+- **A type's home is decided by who may import it.** `SurfaceActionRequest`
+  first lived in `finance_api_client`, and `layering_test` failed twice: a
+  bloc and a component had imported the transport. It moved to the
+  repository layer and the client takes an id and scalars. The test knew the
+  rule better than the author did.
+- **The label with dots must exist before the agent has said anything.** The
+  first pass drew it only above an agent entry, so the running state showed
+  a bare question and nothing composing — exactly what the L2 artboard says
+  not to do. The transcript now appends the label as a row of its own while
+  the last entry is the user's.
+- **A widened mock signature is a silent mismatch.** Adding `action` to
+  `startTurn` made every `when(() => agent.startTurn(text: …))` stub stop
+  matching, because the real call now passes `action: null` too. Every stub
+  and `verify` gained `action: any(named: 'action')` in one patch; a
+  harness that names the arguments once would have needed one edit.
+- **A `Future.delayed(days: 1)` is a pending timer at teardown.** The
+  "fetch that never answers" is a `Completer`, and the test completes it at
+  the end so it also proves the skeleton yields to the surface.
+- **The design's bold figure inside the sentence is not ours to make.**
+  Emphasising `+$3,240 (+0.68%)` inside prose means finding a figure in text
+  and re-styling it — N-1 to N-4 in one move (0011 OD-1). The answer renders
+  as written; the backend can send an emphasised part if design insists.

@@ -23,6 +23,7 @@ final class ConversationState extends Equatable {
   const ConversationState({
     this.status = ConversationStatus.idle,
     this.entries = const <ConversationEntry>[],
+    this.suggestions = const <Suggestion>[],
     this.failure,
   });
 
@@ -31,6 +32,10 @@ final class ConversationState extends Equatable {
 
   /// Everything said and shown so far, oldest first.
   final List<ConversationEntry> entries;
+
+  /// The follow-ups the last turn recommended, in the backend's order;
+  /// empty while a turn runs.
+  final List<Suggestion> suggestions;
 
   /// Why the last turn failed, when it did.
   ///
@@ -45,13 +50,15 @@ final class ConversationState extends Equatable {
   ConversationState copyWith({
     ConversationStatus Function()? status,
     List<ConversationEntry> Function()? entries,
+    List<Suggestion> Function()? suggestions,
     AgentFailed? Function()? failure,
   }) => ConversationState(
     status: status != null ? status() : this.status,
     entries: entries != null ? entries() : this.entries,
+    suggestions: suggestions != null ? suggestions() : this.suggestions,
     failure: failure != null ? failure() : this.failure,
   );
 
   @override
-  List<Object?> get props => <Object?>[status, entries, failure];
+  List<Object?> get props => <Object?>[status, entries, suggestions, failure];
 }

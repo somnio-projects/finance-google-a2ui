@@ -1,3 +1,4 @@
+import 'package:finance_app/components/surface_actions.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
 import 'package:finance_app/features/conversation/view/conversation_view.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -32,7 +33,16 @@ class ConversationPage extends StatelessWidget {
         }
         return bloc;
       },
-      child: const ConversationView(),
+      // A surface's tap becomes a turn through the one bloc that owns the
+      // conversation (spec frontend/0011 OD-4).
+      child: Builder(
+        builder: (context) => SurfaceActions(
+          onAction: (request) => context.read<ConversationBloc>().add(
+            ConversationActionSent(request),
+          ),
+          child: const ConversationView(),
+        ),
+      ),
     );
   }
 }

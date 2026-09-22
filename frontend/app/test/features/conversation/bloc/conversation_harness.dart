@@ -26,6 +26,7 @@ ConversationBloc buildBloc({
   when(
     () => agent.startTurn(
       text: any(named: 'text'),
+      action: any(named: 'action'),
       messageId: any(named: 'messageId'),
       contextId: any(named: 'contextId'),
     ),

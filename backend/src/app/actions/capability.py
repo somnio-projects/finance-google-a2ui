@@ -21,9 +21,9 @@ nothing advertises it — safe. The reverse, advertising more than the service
 will do, is the defect. A static artefact cannot track a dynamic flag, so it
 errs towards claiming less.
 
-Flipping this to ``True`` is what GGU-31/GGU-32 do: the declaration appears
-everywhere at once, ``make catalog`` regenerates, and the gate fails until the
-contract is committed.
+Flipping this to ``True`` (spec 0029 OD-3) made the declaration appear
+everywhere at once, ``make catalog`` regenerate, and the gate fail until the
+contract was committed.
 """
 
 from typing import Final
@@ -31,8 +31,8 @@ from typing import Final
 #: The flag key, so the service and the tests spell it once.
 FEATURE_KEY: Final[str] = "surface.actions"
 
-#: What the capability resolves to as shipped. Off until a client can send a
-#: `data` part, and until the GGU-47 render-intent gap in §9 is closed.
-SHIPPED_ENABLED: Final[bool] = False
+#: What the capability resolves to as shipped. On since spec 0029: the client
+#: sends `data` parts (frontend/0011) and the turn recommends its chips.
+SHIPPED_ENABLED: Final[bool] = True
 
 __all__ = ["FEATURE_KEY", "SHIPPED_ENABLED"]

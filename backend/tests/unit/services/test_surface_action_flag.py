@@ -9,6 +9,7 @@ that reads it from a stored row only holds while nobody has ever written one.
 
 import pytest
 
+from app.actions.capability import SHIPPED_ENABLED
 from app.core.errors import FeatureDisabledError
 from app.core.principal import Principal
 from app.schemas.a2a_parts import ActionData
@@ -29,12 +30,13 @@ def _drill() -> ActionData:
     return ActionData(action=DRILL, args={"driver": "XOM"})
 
 
-async def test_the_capability_is_dark_launched_off_when_no_row_exists() -> None:
-    """AC-13, §9 — `surface.actions` is off until GGU-31/GGU-32 turn it on.
+async def test_the_capability_ships_on_when_no_row_exists() -> None:
+    """0022 AC-13 as amended by 0029 — `surface.actions` ships **on**.
 
-    Asserted here rather than against a database: "off by default" is a
-    property of the call this service makes, and a test that reads it from a
-    stored row only holds while nobody has ever written one.
+    Asserted here rather than against a database: the default is a property
+    of the call this service makes, and a test that reads it from a stored
+    row only holds while nobody has ever written one. The admin API can still
+    turn it off; ``SHIPPED_ENABLED`` is what it resolves to before anyone has.
     """
     flags = EchoingFlags()
     service = SurfaceActionService(
@@ -43,8 +45,8 @@ async def test_the_capability_is_dark_launched_off_when_no_row_exists() -> None:
         reporter=FakeReporter(),
     )
 
-    assert await service.enabled() is False
-    assert flags.asked == [(FEATURE_KEY, False)]
+    assert await service.enabled() is SHIPPED_ENABLED
+    assert flags.asked == [(FEATURE_KEY, SHIPPED_ENABLED)]
 
 
 async def test_an_action_is_refused_outright_while_the_flag_is_off(

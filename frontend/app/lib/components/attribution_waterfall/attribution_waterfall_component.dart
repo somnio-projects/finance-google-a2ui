@@ -1,6 +1,7 @@
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/surface_actions.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:finance_core/finance_core.dart';
@@ -28,9 +29,42 @@ class AttributionWaterfallComponent extends ViewComponent {
   @override
   String get a2uiComponent => 'AttributionWaterfall';
 
+  /// The one action this surface may send (spec backend/0022 §3.3).
+  static const String drillAction = 'drill.attribution.v1';
+
   @override
-  Widget build(BuildContext context, ViewPayload payload) =>
-      AttributionWaterfallCard(data: read(payload));
+  Widget build(BuildContext context, ViewPayload payload) {
+    // A tap is a `data` part only inside a scope that wants actions, for a
+    // key the payload's own drill declaration lists (frontend/0011 OD-4).
+    final scope = SurfaceActions.maybeOf(context);
+    final drivers = scope == null ? null : drillableDrivers(payload);
+    return AttributionWaterfallCard(
+      data: read(payload),
+      onSegmentTap: drivers == null
+          ? null
+          : (key) {
+              if (drivers.contains(key)) {
+                scope!.onAction(
+                  SurfaceActionRequest(
+                    action: drillAction,
+                    args: <String, String>{'driver': key},
+                  ),
+                );
+              }
+            },
+    );
+  }
+
+  /// The drivers the payload's `drill.attribution.v1` declaration accepts,
+  /// or null when the surface declares no drill.
+  static Set<String>? drillableDrivers(ViewPayload payload) {
+    for (final action in payload.rows('actions')) {
+      if (action.text('action') == drillAction) {
+        return action.strings('choices').toSet();
+      }
+    }
+    return null;
+  }
 
   /// Reads [payload] into the model the card draws.
   ///
@@ -83,12 +117,8 @@ class AttributionWaterfallComponent extends ViewComponent {
     );
   }
 
-  /// The synthetic keys the two totals carry.
-  ///
-  /// The contract gives a `key` to each bucket but not to `start` or `end`,
-  /// because neither is drillable — there is nothing to drill into. They are
-  /// They are never matched by shape: the card decides drillability from the
-  /// step's `kind`, which is a sealed enum, not from the spelling of the key.
+  /// The synthetic keys of the two totals — never matched by shape: the card
+  /// decides drillability from the step's `kind`, a sealed enum.
   static const String _startKey = ':start';
   static const String _endKey = ':end';
 

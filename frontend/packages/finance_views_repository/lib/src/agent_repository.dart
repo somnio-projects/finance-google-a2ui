@@ -2,6 +2,7 @@ import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/src/agent_event.dart';
 import 'package:finance_views_repository/src/agent_event_parser.dart';
+import 'package:finance_views_repository/src/surface_action_request.dart';
 
 /// Runs agent turns and reports them as a stream of [AgentEvent].
 ///
@@ -29,12 +30,15 @@ class AgentRepository {
   /// [contextId] is echoed by the server for correlation only and is never
   /// trusted as an identity (ADR-J D-4); omitting it is not an error.
   Stream<AgentEvent> startTurn({
-    required String text,
     required String messageId,
+    String? text,
+    SurfaceActionRequest? action,
     String? contextId,
   }) async* {
     final opened = await _a2aClient.startTurn(
       text: text,
+      action: action?.action,
+      actionArgs: action?.args ?? const <String, String>{},
       messageId: messageId,
       contextId: contextId,
     );

@@ -34,13 +34,13 @@ def _message(text: str = "why did I move?") -> ClientMessage:
 
 
 async def _collect(
-    service: A2aService, context: ToolContext
+    service: A2aService, context: ToolContext, *, text: str = "why did I move?"
 ) -> list[dict[str, object]]:
     return [
         json.loads(chunk.removeprefix("data: ").strip())
         async for chunk in service.stream(
-            message=_message(),
-            prompt=_message().text(),
+            message=_message(text),
+            prompt=_message(text).text(),
             task_id="task-1",
             context=context,
         )

@@ -692,15 +692,69 @@
       "view": "activity.timeline.v1"
     },
     {
-      "actions": [],
+      "actions": [
+        {
+          "action": "drill.attribution.v1",
+          "arg": "driver",
+          "choices": [
+            "AAPL",
+            "AGG",
+            "AMD",
+            "AVGO",
+            "BND",
+            "GLD",
+            "JNJ",
+            "MSFT",
+            "NVDA",
+            "PG",
+            "PYPL",
+            "TIP",
+            "TSLA",
+            "USD",
+            "VNQ",
+            "VOO",
+            "XOM"
+          ],
+          "control": "choice",
+          "label": "Break this down",
+          "pattern": null
+        }
+      ],
       "component": "AttributionWaterfall",
-      "digest": "3bb3ee56b3d7",
+      "digest": "a4926e77dfef",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
       ],
       "example": {
-        "actions": [],
+        "actions": [
+          {
+            "action": "drill.attribution.v1",
+            "arg": "driver",
+            "choices": [
+              "AAPL",
+              "AGG",
+              "AMD",
+              "AVGO",
+              "BND",
+              "GLD",
+              "JNJ",
+              "MSFT",
+              "NVDA",
+              "PG",
+              "PYPL",
+              "TIP",
+              "TSLA",
+              "USD",
+              "VNQ",
+              "VOO",
+              "XOM"
+            ],
+            "control": "choice",
+            "label": "Break this down",
+            "pattern": null
+          }
+        ],
         "annotations": [
           {
             "label": "NVIDIA Corp",

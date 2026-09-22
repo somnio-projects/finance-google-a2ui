@@ -140,7 +140,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
 | [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `dcb1032a4438` | 21 | `kind`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `3bb3ee56b3d7` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `a4926e77dfef` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `279142f5554a` | 38 | read-only | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
@@ -650,7 +650,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `3bb3ee56b3d7`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `a4926e77dfef`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -709,7 +709,9 @@ _This surface sends nothing back: tapping it starts no turn._
 
 ### Actions
 
-_This surface sends nothing back: tapping it starts no turn._
+| Action | Label | Argument | Control | Accepts |
+|---|---|---|---|---|
+| `drill.attribution.v1` | Break this down | `driver` | choice | 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' |
 
 ### Example payload
 
@@ -929,7 +931,34 @@ _This surface sends nothing back: tapping it starts no turn._
       "text": "$61,204.05"
     }
   ],
-  "actions": []
+  "actions": [
+    {
+      "action": "drill.attribution.v1",
+      "label": "Break this down",
+      "arg": "driver",
+      "control": "choice",
+      "choices": [
+        "AAPL",
+        "AGG",
+        "AMD",
+        "AVGO",
+        "BND",
+        "GLD",
+        "JNJ",
+        "MSFT",
+        "NVDA",
+        "PG",
+        "PYPL",
+        "TIP",
+        "TSLA",
+        "USD",
+        "VNQ",
+        "VOO",
+        "XOM"
+      ],
+      "pattern": null
+    }
+  ]
 }
 ```
 

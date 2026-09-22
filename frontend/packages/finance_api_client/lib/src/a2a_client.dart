@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:finance_api_client/src/a2a_envelope.dart';
 import 'package:finance_api_client/src/auth_token_provider.dart';
 import 'package:finance_api_client/src/event_stream.dart';
 import 'package:finance_core/finance_core.dart';
@@ -49,14 +50,27 @@ class A2aClient {
   /// [contextId] is echoed by the server for correlation and nothing more; it
   /// is omitted when null, which is not an error.
   Future<Result<Stream<Map<String, dynamic>>>> startTurn({
-    required String text,
     required String messageId,
+    String? text,
+    String? action,
+    Map<String, String> actionArgs = const <String, String>{},
     String? contextId,
     String requestId = 'req-1',
   }) async {
+    // One part per turn: a sentence, or a tap (spec 0022 §3.2).
+    assert(
+      (text == null) != (action == null),
+      'a turn is either a text or a surface action',
+    );
+    final part = action == null
+        ? <String, dynamic>{'kind': 'text', 'text': text}
+        : <String, dynamic>{
+            'kind': 'data',
+            'data': <String, dynamic>{'action': action, 'args': actionArgs},
+          };
     final request = http.Request('POST', _baseUrl.resolve('/'))
       ..headers.addAll(await _headers())
-      ..body = jsonEncode(_envelope(text, messageId, contextId, requestId));
+      ..body = jsonEncode(a2aEnvelope(part, messageId, contextId, requestId));
     try {
       final response = await _httpClient.send(request);
       return await _interpret(response);
@@ -112,27 +126,6 @@ class A2aClient {
     }
     return 'the agent refused the request';
   }
-
-  Map<String, dynamic> _envelope(
-    String text,
-    String messageId,
-    String? contextId,
-    String requestId,
-  ) => <String, dynamic>{
-    'jsonrpc': '2.0',
-    'id': requestId,
-    'method': 'message/stream',
-    'params': <String, dynamic>{
-      'message': <String, dynamic>{
-        'role': 'user',
-        'messageId': messageId,
-        'contextId': ?contextId,
-        'parts': <Map<String, dynamic>>[
-          <String, dynamic>{'kind': 'text', 'text': text},
-        ],
-      },
-    },
-  };
 
   Future<Map<String, String>> _headers() async {
     final headers = <String, String>{
