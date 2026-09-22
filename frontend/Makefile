@@ -15,12 +15,13 @@ LCOV := app/coverage/lcov.info \
 	packages/finance_charts/coverage/lcov.info \
 	packages/finance_auth/coverage/lcov.info
 
-.PHONY: install toolchain toolchain-test format format-check analyze budget \
-	manifest manifest-check test test-tool test-packages test-app coverage gate clean
+.PHONY: install toolchain toolchain-test verify-release-test format format-check \
+	analyze budget manifest manifest-check test test-tool test-packages test-app \
+	coverage gate clean
 
 # The first thing the gate proves, because everything after it is read through
-# `dart` and `flutter` (GGU-94). The pinned version lives in `.flutter-version`
-# — one file, read here and by frontend-ci.yaml's SDK setup step. Without this,
+# `dart` and `flutter` (GGU-94). The pinned version lives in `.fvmrc` — one
+# file, read here, by frontend-ci.yaml's SDK setup step and by the Dockerfile. Without this,
 # a machine carrying the wrong Dart announced itself as three unformatted files
 # and exit 65, which reads like a red branch and is not one.
 toolchain:
@@ -33,6 +34,15 @@ toolchain:
 # nowhere else to be exercised.
 toolchain-test:
 	bash tool/tests/test_check_toolchain.sh
+
+# The delivery check's own suite, with a stubbed curl. `verify_release.sh` is
+# what turns "frontend-cd's deploy step exited 0" into "the origin is serving
+# this commit", and on a runner it can only ever be seen accepting — the
+# deploy it follows has just succeeded. Its rejection paths have nowhere else
+# to be exercised, which is the same argument `toolchain-test` makes and the
+# same one `repo.manual-run` makes for the backend's evidence check.
+verify-release-test:
+	bash tool/tests/test_verify_release.sh
 
 # --enforce-lockfile from day one. Plain `pub get` silently re-resolves, so a
 # build can differ from the one that was reviewed; the strict flag fails
@@ -89,7 +99,8 @@ test-app:
 coverage:
 	dart run tool/check_coverage.dart $(LCOV)
 
-gate: toolchain toolchain-test format-check analyze budget manifest-check test coverage
+gate: toolchain toolchain-test verify-release-test format-check analyze budget \
+	manifest-check test coverage
 	@echo "frontend ship gate green"
 
 clean:

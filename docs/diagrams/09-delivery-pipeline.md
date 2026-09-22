@@ -62,9 +62,23 @@ flowchart LR
 
 **What this diagram does not draw.** `q`, `t`, `s` and `img` are `backend-ci`.
 `frontend-ci` runs beside them on a `frontend/**` pull request — quality, tests
-and a release web build — and is not drawn here; `client-ci` does not exist at
-all (`.claude/rules/ci-conventions.md` §4b). Said rather than left implied: a
-reader should not take this as the whole set of pipelines.
+and a release web build — and `client-ci` on a `client_flutter/**` one; neither
+is drawn here. Said rather than left implied: a reader should not take this as
+the whole set of pipelines.
+
+> This paragraph said *"`client-ci` does not exist at all"*, and it was true
+> when it was written and false by the time anyone read it — GGU-1 (PRs #26 and
+> #30) wrote that workflow. A sentence asserting the absence of a file is a
+> claim with a truth value, and it has to be re-read whenever that file's
+> directory changes. `.claude/rules/ci-conventions.md` §4b keeps the same table
+> honest and records the same lesson, having been walked back once itself.
+
+**The `cd` box is the backend's.** The A2UI client has one too — `frontend-cd`,
+a button, gate-first, publishing to Firebase Hosting — and it is drawn on its
+own in [13 — How the A2UI client reaches a browser](13-client-delivery.md),
+because it answers a different question and this diagram is already at its node
+budget. `infra/scripts/tests/test_dev_environment.sh` asserts both pipelines'
+`needs:` edges, so neither can lose its gate quietly.
 
 **Why the frontend gate opens with a toolchain preflight.** `frontend.toolchain`
 (`frontend/tool/check_toolchain.sh`) runs first, locally and on the runner,

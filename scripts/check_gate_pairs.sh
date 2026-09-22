@@ -139,6 +139,50 @@ for app in $pin_apps; do
   done < <(git ls-files -- "${app}/.fvmrc" "${app}/.flutter-version" "${app}/.fvm/*" "${app}/.tool-versions")
 done
 
+# 3. No app's Dockerfile may name its own Flutter version either.
+#
+#    This is the fourth instance of GGU-94's defect and the first one found in
+#    a file the check was not reading. On 2026-09-22, while the same builder
+#    stage was written for `frontend/`, `client_flutter/Dockerfile` was found
+#    carrying `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc` pinning 3.47.3 —
+#    so the image shipped a bundle compiled by an SDK the gate never proved
+#    the app against, and both halves looked fine on their own. Rules 1 and 2
+#    above could not see it: it is not a workflow, and a Dockerfile is not a
+#    pin file.
+#
+#    Two assertions, because either alone is satisfiable by the wrong file: the
+#    Dockerfile must not carry a version, AND it must be shown to read the one
+#    that exists. Comments are stripped first — these files argue at length
+#    about which version was chosen and why, and prose about a past mistake is
+#    not a pin.
+for app in $pin_apps; do
+  dockerfile="${app}/Dockerfile"
+  [ -f "$dockerfile" ] || continue
+
+  code="$(sed 's/[[:space:]]*#.*$//' "$dockerfile")"
+
+  if printf '%s' "$code" | grep -Eq 'FLUTTER_VERSION[[:space:]]*[=:]'; then
+    echo "repo.gate-pairs: ${dockerfile} sets FLUTTER_VERSION" >&2
+    echo "  the pin lives in ${app}/.fvmrc; read it in the build instead:" >&2
+    # shellcheck disable=SC2016 # deliberate: this prints a RUN line for the
+    # reader to copy, so `$(jq …)` must survive verbatim.
+    echo '    RUN version="$(jq -r .flutter /tmp/pin/.fvmrc)"' >&2
+    pin_failed=$(( pin_failed + 1 ))
+  fi
+
+  # A COPY of the file, not a MENTION of it. The first draft of this rule
+  # grepped for the string `.fvmrc` and was satisfied by an error message that
+  # merely named it — mutation-tested on 2026-09-22: the pin was removed from
+  # the build and the check stayed green, because one `echo` still contained
+  # the word. A check a comment can satisfy is not a check.
+  if ! printf '%s' "$code" | grep -Eq '^[[:space:]]*COPY([[:space:]]+--[^[:space:]]+)*[[:space:]]+\.fvmrc([[:space:]]|$)'; then
+    echo "repo.gate-pairs: ${dockerfile} has no COPY of ${app}/.fvmrc" >&2
+    echo "  an image built by an unstated SDK is not the app the gate proved;" >&2
+    echo "  copy the pin in and read it, do not restate the version here." >&2
+    pin_failed=$(( pin_failed + 1 ))
+  fi
+done
+
 if [ "$pin_failed" -gt 0 ]; then
   echo "repo.gate-pairs: a Flutter SDK pin has ${pin_failed} home(s) too many" >&2
   exit 1

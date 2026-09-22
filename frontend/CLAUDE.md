@@ -71,7 +71,7 @@ carries a credential for a deployed environment.
 ## Verify — a change is not done without this
 
 ```bash
-cd frontend && make gate    # toolchain · toolchain-test · format · analyze · budget · manifest · tests · coverage
+cd frontend && make gate    # toolchain · toolchain-test · verify-release-test · format · analyze · budget · manifest · tests · coverage
 cd frontend && make format  # apply formatting
 cd frontend && make manifest # regenerate the component manifest after adding one
 cd frontend/app && flutter test --update-goldens   # after an intended visual change
@@ -95,6 +95,36 @@ cd frontend/app && flutter build web --release
 Always `flutter pub get --enforce-lockfile`. Plain `pub get` silently
 re-resolves and builds something nobody reviewed.
 
+## It runs in the stack, and it ships itself
+
+```bash
+# from the repository root — no Flutter SDK needed
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose --profile frontend up --build
+```
+
+`:3001`, in the one compose project `finance-a2ui`. Delivery is
+`.github/workflows/frontend-cd.yaml`, a button: gate → bundle → preview
+channel → verify → live → verify. Spec
+[`frontend/0017`](../specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md),
+drawn in [diagram 13](../docs/diagrams/13-client-delivery.md).
+
+Three things about it are easy to get wrong and are enforced:
+
+- **The build flags live in `tool/build_web.sh` and nowhere else.** The
+  Dockerfile and the workflow both call it. Neither is a ship-gate command, so
+  `repo.gate-pairs` cannot compare them — this is the one pair with no machine
+  check, and the defence is not writing the list twice.
+- **The image's Flutter version comes from `.fvmrc`**, resolved to a checksum
+  through `docker/flutter-sdk-checksums.json`. `scripts/check_gate_pairs.sh`
+  rule 3 fails a Dockerfile that names a version, or one that does not `COPY`
+  the pin in. It exists because `client_flutter/Dockerfile` had drifted exactly
+  that way (spec 0017 OD-7).
+- **Configuration is compiled in, so the image is per environment** — the
+  opposite of `client_flutter`'s Decision 1, because this app's deployable is a
+  static Hosting release with no process to render `/config.json`. What
+  replaces artifact identity is verification after the fact: `/release.json`,
+  read back off the origin by the pipeline that published it.
+
 ## Layout, and what each layer may import
 
 ```
@@ -115,8 +145,14 @@ frontend/
 │   ├── charts/                   the CustomPainter + ChartPalette — the half that needs dart:ui
 │   ├── components/               one directory per catalog view + the generated manifest
 │   └── features/<name>/bloc|view business logic and screens
+├── docker/                       nginx config + entrypoint for the container (CSP, COOP)
+├── Dockerfile                    builder (SDK read from .fvmrc) + nginx-unprivileged runtime
 ├── test/tool/                    the suite over the gate's own scripts (`make test-tool`)
-└── tool/                         the gate's own scripts
+└── tool/                         the gate's own scripts, and the two delivery ones:
+                                  build_web.sh (the ONE home of the build flags,
+                                  called by Dockerfile and frontend-cd) and
+                                  verify_release.sh (asks a deployed origin
+                                  which build it serves)
 ```
 
 Dependencies point one way: `view → bloc → repository → api client → core`.
