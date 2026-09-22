@@ -1,6 +1,7 @@
 import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/chart_text.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_swatch.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +70,7 @@ class AllocationLegendRow extends StatelessWidget {
               ),
               child: Row(
                 children: <Widget>[
-                  _Swatch(color: color, selected: selected),
+                  AllocationSwatch(color: color, selected: selected),
                   const SizedBox(width: HoldingsAllocationLegend.columnGap),
                   Expanded(
                     child: Text(
@@ -89,29 +90,38 @@ class AllocationLegendRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   // Both columns give way, so a narrow legend trims a
-                  // figure rather than overflowing the row.
+                  // figure rather than overflowing the row — and the `Align`
+                  // is what puts the figures against that right edge.
+                  // `Expanded` and `Flexible` both default to `flex: 1`, so
+                  // the free space was split 50/50 and this loose column sat
+                  // at the START of its half; `crossAxisAlignment: end`
+                  // cannot fix that, because the Column is already as wide
+                  // as its widest child (spec frontend/0021 OD-1).
                   Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          category.valueDisplay,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: ChartText.legendFigure(
-                            palette.legendValue,
-                            size: 12.5,
-                          ),
-                        ),
-                        if (change.isNotEmpty)
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
                           Text(
-                            '$glyph $change',
+                            category.valueDisplay,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: ChartText.legendFigure(tone, size: 11),
+                            style: ChartText.legendFigure(
+                              palette.legendValue,
+                              size: 12.5,
+                            ),
                           ),
-                      ],
+                          if (change.isNotEmpty)
+                            Text(
+                              '$glyph $change',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ChartText.legendFigure(tone, size: 11),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -122,28 +132,4 @@ class AllocationLegendRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({required this.color, required this.selected});
-
-  final Color color;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: HoldingsAllocationLegend.swatchSize,
-    height: HoldingsAllocationLegend.swatchSize,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(
-        HoldingsAllocationLegend.swatchRadius,
-      ),
-      // Selection is a ring around the swatch, which leaves the category's
-      // own colour saying what it says (the waterfall's rule for a bar).
-      border: selected
-          ? Border.all(color: ChartPalette.of(context).title, width: 1.5)
-          : null,
-    ),
-  );
 }
