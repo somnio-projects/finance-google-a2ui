@@ -60,19 +60,15 @@ DECLARED_GAPS: Final[dict[str, str]] = {
     "activity.timeline.v1": (
         "No tool reads the ledger. Asked what was earned in dividends this "
         "year the agent answers that the data is not available, while the "
-        "Activity tab now shows sixteen of them — spec backend/0035 "
-        "quadrupled the seeded dividends, which makes the gap MORE visible "
-        "rather than closing it. Recorded there as OD-11: a dividend-income "
-        "tool needs its own *Display figures, its own prompt fragment and a "
-        "period rule the domain does not have, so it is a spec of its own."
+        "Activity tab now shows sixteen — spec backend/0035 quadrupled them, "
+        "widening the gap rather than closing it, and recorded it as OD-11."
     ),
     "holdings.positions.v1": (
         "`get_holdings_summary` sorts by `gainers`/`losers` but attaches no "
         "surface for them — `holdings.allocation.v1` is suppressed for a "
         "return-ordered answer (spec 0011 OD-1) and nothing takes its place. "
-        "Spec backend/0035 gave this view `query` and `asset_class` options, "
-        "which the TABS send; it attached no tool, so the agent still cannot "
-        "compose it and the gap stands. Unowned from here."
+        "Spec backend/0035 gave this view `query` and `asset_class`, which "
+        "the TABS send; it attached no tool, so the gap stands. Unowned."
     ),
     "scenario.comparison.v1": (
         "`simulate_sale` computes one scenario and attaches the tax-lot "
