@@ -3600,6 +3600,9 @@ What the run taught:
   produced (0033 OD-5). The drill first re-ran the waterfall for one
   symbol; once `driver_detail` landed (GGU-100, same integration) the entry
   calls it and the card a tapped bar opens is the day's, as the design draws.
+  Flow C likewise: one `payoff` leg with no surface until `draft_order`
+  (GGU-108) existed, then the design's three-leg ticket with the legs the tool
+  composed — the *extended when* table shrank to Flow B's comparison card.
 - **A registry filled by import is empty until someone imports.** Pointing the
   drill at `driver_detail` made every scripted turn fall back to the default
   view when the two suites ran alone — `make_resolver` built a `ViewService`

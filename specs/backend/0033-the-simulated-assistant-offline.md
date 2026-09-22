@@ -44,7 +44,7 @@ written down.
   |---|---|---|---|
   | *What moved my portfolio today?* (Flow A) | `compute_attribution {window: 1d}` | `attribution.waterfall.v1` | *Your portfolio is {trend} {changeDisplay} ({changePctDisplay}) today. Here's what drove it:* |
   | *If I sell $20k of NVDA, what's the tax hit?* (Flow B) | `simulate_sale {symbol: NVDA, amount_usd: "20000", lot_method: FIFO}` | `taxlots.table.v1` | the quantity, proceeds, realised P/L and its short/long split, then *The tax itself depends on your rate, which I don't apply; nothing is traded.* |
-  | *Put about $10k into semiconductors, keep it diversified.* (Flow C) | `payoff {symbol: NVDA, size: "10000", size_in: usd, side: buy}` | — (0014 OD-7) | the notional, units, entry and break-even, then *a ticket spread across several names is not available yet.* |
+  | *Put about $10k into semiconductors, keep it diversified.* (Flow C) | `draft_order {amount: "10000", basket: semiconductors}` (spec 0031, GGU-108) | `order.ticket.v2` with the same `legs` | *Here is a draft across the semiconductor basket: {impact.totalDisplay} in {impact.unitsDisplay} whole shares, fees {impact.feesDisplay}, leaving {impact.cashRemainingDisplay} in cash of {constraints.maxCashDisplay}. Edit the legs on the ticket; nothing is placed.* |
   | chip `allocation` — *Show me what I hold and how my portfolio is allocated.* | `get_holdings_summary {}` | `holdings.allocation.v1` | the market value and unrealised P/L, *Here is how it is allocated, largest first:* |
   | chip `biggest-drivers` — *Which holdings drove my performance the most over the last week?* | `compute_attribution {window: 7d}` | `attribution.waterfall.v1` | the week's move, *The holdings that moved it most are drawn first:* |
   | chip `tax-lots` — *Show me the tax lots a sale would consume and what it would realise.* | `simulate_sale` (the Flow B sale) | `taxlots.table.v1` | *As the example, … split by term below. Nothing is traded.* |
@@ -70,13 +70,14 @@ written down.
   double it always also was, and its `UNCONFIGURED_MESSAGE` is what the
   scripted client says outside its table.
 
-**Extended when the views land.** Two of the design's surfaces have no tool
-that aims at them yet, and the script does not pretend otherwise:
+**Extended when the views land.** One of the design's surfaces has no tool
+that aims at it yet, and the script does not pretend otherwise (Flow C's
+ticket and the drill's card were rows of this table until GGU-108 and GGU-100
+landed in the same integration):
 
 | Design shows | Today's script | Extended when |
 |---|---|---|
 | Flow B's second card, the method-by-method comparison | one `taxlots.table.v1` under FIFO | a tool emits `scenario.comparison.v1` (the projection exists — 0017 — but no tool renders it; the model cannot ask for a view a tool did not produce) |
-| Flow C's multi-leg order ticket across NVDA / AVGO / AMD | one `payoff` leg on NVDA, no surface | `order.ticket.v2` and its tool land (in progress on a sibling branch); the entry then adds the ticket's call and drops *not available yet* |
 
 ## 3. Rulings
 
@@ -116,10 +117,10 @@ that aims at them yet, and the script does not pretend otherwise:
 - **OD-5 — the script picks tool calls; the tools decide everything else.** No
   render intent is scripted. The waterfall, the donut and the tax-lot table
   appear because the *tool* emitted them and the projection registry accepted
-  them (ADR-K D-11/D-12, GGU-84), and `payoff` draws nothing because it emits
-  nothing (0014 OD-7). A script cannot aim a view at an answer, which is the
-  same bound the real model has — and why Flow C shows no ticket until a tool
-  produces one.
+  them (ADR-K D-11/D-12, GGU-84); Flow C's ticket appears because
+  `draft_order` emits it with the legs it composed (0031 AC-7). A script
+  cannot aim a view at an answer, which is the same bound the real model has
+  — and why Flow C showed no ticket until a tool produced one.
 - **OD-6 — nothing here is a chip.** The scripted turn ends with the same
   `suggestions` the adapter chooses from the curated table minus the prompt
   just run (0029 OD-1); the script neither adds nor reorders one (0022 OD-1).
