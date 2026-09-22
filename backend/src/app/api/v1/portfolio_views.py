@@ -95,9 +95,10 @@ async def read_portfolio_views(
 ) -> PortfolioViewsResponse | Response:
     """Render every requested projection in one round trip. Spec 0005 AC-6.
 
-    The body is a pure function of the subject, the portfolio, the views, the
-    options and ``as_of``, so it carries a strong ``ETag`` built from exactly
-    those and revalidates to 304 (ADR-K D-20, spec 0012 AC-7).
+    The body is a pure function of the subject, who they are greeted as, the
+    portfolio, the views, the options and ``as_of``, so it carries a strong
+    ``ETag`` built from exactly those and revalidates to 304 (ADR-K D-20, spec
+    0012 AC-7, spec 0030).
     """
     body = await service.render(
         principal, portfolio_id=portfolio_id, query=query, default=DEFAULT_VIEW
@@ -105,6 +106,10 @@ async def read_portfolio_views(
     etag = strong_etag(
         "portfolio-views",
         principal.subject,
+        # Who the shell greets is in the body, so it is in the tag (spec 0030):
+        # without it a browser that signed in after a name change would
+        # revalidate its cached greeting and be told 304.
+        await service.owner(principal),
         portfolio_id,
         sorted(body.views),
         query.options(),

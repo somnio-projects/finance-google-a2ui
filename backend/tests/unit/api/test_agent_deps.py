@@ -15,6 +15,7 @@ from app.helpers.clock import FixedClock
 from app.infra.model.null_client import UNCONFIGURED_MESSAGE
 from app.services.agent_service import AgentService
 from tests.conftest import FROZEN_NOW
+from tests.unit.api.app_factory import NoUsers
 
 
 def test_get_tool_context_scopes_the_context_to_the_caller(
@@ -40,7 +41,7 @@ async def test_the_wired_service_runs_a_turn_against_the_configured_model(
 ) -> None:
     container = app.state.container
     portfolio = InMemoryPortfolioProvider(clock=FixedClock(FROZEN_NOW))
-    service = get_agent_service(container, portfolio)
+    service = get_agent_service(container, portfolio, NoUsers())
 
     result = await service.run_turn(
         prompt="what do I hold?",

@@ -1,20 +1,21 @@
 """The one path from a request — or an agent turn — to a rendered view.
 
-Both callers of ADR-K D-11 land here: the HTTP controller with a ``ViewQuery``
-and ``RenderIntentService`` with the model's choice. They share the registry,
-the options models and the portfolio lookup, so a view id means the same thing
-and an option is judged the same way on both paths.
+Both callers of ADR-K D-11 land here — the HTTP controller with a ``ViewQuery``,
+``RenderIntentService`` with the model's choice — and share the registry, the
+options models and the portfolio lookup, so both judge a view the same way.
 
-The service performs no shaping of its own. It resolves the portfolio, hands
-*(portfolio, options)* to the projection and returns what came back: the
-rendering stays pure and unit-testable in ``app.presentation`` (ADR-K D-6).
+The service performs no shaping of its own: it resolves the portfolio, hands
+*(portfolio, options)* to the projection and returns what came back (ADR-K D-6).
 """
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any
 
 from app.core.errors import NotFoundError
 from app.core.principal import Principal
+from app.core.protocols import OwnerResolver
+from app.domain.persona import PortfolioOwner
 from app.domain.portfolio import Portfolio
 from app.domain.provider import PortfolioProvider
 from app.presentation.contract import catalog_entry
@@ -35,11 +36,18 @@ class ViewService:
     """Resolve, validate and render the projections a caller asked for."""
 
     def __init__(
-        self, *, provider: PortfolioProvider, registry: ProjectionRegistry
+        self,
+        *,
+        provider: PortfolioProvider,
+        registry: ProjectionRegistry,
+        owners: OwnerResolver | None = None,
     ) -> None:
         """Create the service over the process provider and registry."""
         self._provider = provider
         self._registry = registry
+        self._owners = owners
+        self._owner: PortfolioOwner | None = None
+        self._owner_known = False
 
     async def catalog(self) -> list[ViewDescriptor]:
         """Describe every registered projection for `/v1/views` (0005 AC-8)."""
@@ -94,7 +102,20 @@ class ViewService:
         if portfolio_id != CURRENT_PORTFOLIO:
             msg = f"portfolio {portfolio_id!r} does not exist"
             raise NotFoundError(msg)
-        return await self._provider.get(principal.subject)
+        portfolio = await self._provider.get(principal.subject)
+        # The owner lives in the users registry, not the provider; set here,
+        # every projection reads it like `as_of` (spec 0030 OD-3).
+        owner = await self.owner(principal)
+        return replace(portfolio, owner=owner) if owner else portfolio
+
+    async def owner(self, principal: Principal) -> PortfolioOwner | None:
+        """Who the shell greets, looked up once (spec 0030); it is in the ETag too."""
+        if not self._owner_known:
+            self._owner = (
+                await self._owners.owner_for(principal) if self._owners else None
+            )
+            self._owner_known = True
+        return self._owner
 
     def render_one(
         self, portfolio: Portfolio, *, view: str, options: Mapping[str, Any]
@@ -109,15 +130,10 @@ class ViewService:
         return projection.render(portfolio, validated_options(projection, options))
 
     def validate(self, *, view: str, options: Mapping[str, Any]) -> None:
-        """Judge a view id and its options without rendering anything.
+        """Judge ``view`` and ``options`` without rendering anything.
 
-        The agent turn asks this before a surface leaves it: the portfolio is
-        irrelevant to whether a projection exists and whether its options are
-        in range, and a turn must not pay for a read to find that out.
-
-        Args:
-            view: The projection id the caller picked.
-            options: What the caller wants to fill in it.
+        The agent asks this before a surface leaves the turn; it must not pay
+        for a portfolio read to learn whether a projection exists.
 
         Raises:
             UnknownViewError: When ``view`` is not registered.

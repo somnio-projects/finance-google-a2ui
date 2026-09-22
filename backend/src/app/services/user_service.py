@@ -12,6 +12,7 @@ from typing import Final
 from app.core.errors import AuthorizationError, NotFoundError
 from app.core.principal import Principal
 from app.core.protocols import Clock
+from app.domain.persona import PortfolioOwner, owner_from
 from app.repositories.user_repository import UserRepository
 from app.schemas.access import (
     NOT_PROVISIONED_MESSAGE,
@@ -71,6 +72,12 @@ class UserService:
             display_name=row.display_name,
             message=WELCOME_MESSAGE,
         )
+
+    async def owner_for(self, principal: Principal) -> PortfolioOwner | None:
+        """Name ``principal`` for the shell (spec 0030): registry first, e-mail next."""
+        email = principal.email.lower() if principal.email else None
+        row = await self._repository.find_by_email(email) if email else None
+        return owner_from(display_name=row.display_name if row else None, email=email)
 
     async def list_users(
         self, principal: Principal, *, limit: int, request_id: str

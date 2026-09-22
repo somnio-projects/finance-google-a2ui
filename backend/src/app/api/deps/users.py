@@ -25,6 +25,10 @@ def get_user_service(
     )
 
 
+#: The provisioning service, resolved per request.
+UsersDep = Annotated[UserService, Depends(get_user_service)]
+
+
 def get_preview_sign_in_service(
     container: ContainerDep, session: SessionDep, audit: AuditDep
 ) -> PreviewSignInService:
@@ -35,3 +39,6 @@ def get_preview_sign_in_service(
         clock=container.clock,
         settings=container.settings,
     )
+
+
+__all__ = ["AuditDep", "UsersDep", "get_preview_sign_in_service", "get_user_service"]

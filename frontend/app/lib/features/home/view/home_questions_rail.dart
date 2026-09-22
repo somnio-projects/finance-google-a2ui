@@ -1,16 +1,21 @@
 import 'package:finance_app/features/home/view/home_questions.dart';
-import 'package:finance_app/theme/home_tokens.dart';
+import 'package:finance_app/features/home/view/home_rail_arrow.dart';
 import 'package:flutter/material.dart';
 
 /// The horizontal rail of question chips, with what the design's flat row
-/// lacked: a fading right edge while more chips are off-screen, and a round
-/// arrow that scrolls them into view — so it reads as a slider, not a cut.
+/// lacked: a fading edge on whichever side has chips off-screen, and a round
+/// arrow there that scrolls them into view — so it reads as a slider, not a
+/// cut. Both ends: once the reader has gone right, the left edge fades and
+/// its arrow brings the first chips back (spec frontend/0012).
 class HomeQuestionsRail extends StatefulWidget {
   /// Creates the rail.
   const HomeQuestionsRail({required this.questions, super.key});
 
-  /// Where the arrow lives, for tests.
+  /// Where the forward arrow lives, for tests.
   static const Key arrowKey = Key('questions-rail-arrow');
+
+  /// Where the back arrow lives, for tests.
+  static const Key backKey = Key('questions-rail-back');
 
   /// How far one tap on the arrow scrolls.
   static const double step = 220;
@@ -25,6 +30,7 @@ class HomeQuestionsRail extends StatefulWidget {
 class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
   final ScrollController _controller = ScrollController();
   bool _moreToTheRight = true;
+  bool _moreToTheLeft = false;
 
   @override
   void initState() {
@@ -44,16 +50,27 @@ class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
   void _update() {
     if (!_controller.hasClients) return;
     final position = _controller.position;
-    final more = position.pixels < position.maxScrollExtent - 1;
-    if (more != _moreToTheRight) setState(() => _moreToTheRight = more);
+    final right = position.pixels < position.maxScrollExtent - 1;
+    final left = position.pixels > position.minScrollExtent + 1;
+    if (right != _moreToTheRight || left != _moreToTheLeft) {
+      setState(() {
+        _moreToTheRight = right;
+        _moreToTheLeft = left;
+      });
+    }
   }
 
-  void _advance() {
+  /// Scrolls one [HomeQuestionsRail.step] forward, or back when [forward]
+  /// is false, clamped to the rail's ends.
+  void _advance({required bool forward}) {
     if (!_controller.hasClients) return;
     final position = _controller.position;
-    final target = position.pixels + HomeQuestionsRail.step;
+    final step = forward ? HomeQuestionsRail.step : -HomeQuestionsRail.step;
     _controller.animateTo(
-      target > position.maxScrollExtent ? position.maxScrollExtent : target,
+      (position.pixels + step).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      ),
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOut,
     );
@@ -61,7 +78,6 @@ class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = HomeTokens.of(context);
     return SizedBox(
       height: 44,
       child: Stack(
@@ -69,6 +85,10 @@ class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
           ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: <Color>[
+                if (_moreToTheLeft)
+                  Colors.white.withValues(alpha: 0)
+                else
+                  Colors.white,
                 Colors.white,
                 Colors.white,
                 if (_moreToTheRight)
@@ -76,7 +96,7 @@ class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
                 else
                   Colors.white,
               ],
-              stops: const <double>[0, 0.82, 1],
+              stops: const <double>[0, 0.18, 0.82, 1],
             ).createShader(bounds),
             blendMode: BlendMode.dstIn,
             child: ListView.separated(
@@ -89,34 +109,26 @@ class _HomeQuestionsRailState extends State<HomeQuestionsRail> {
                   QuestionChip(text: widget.questions[index]),
             ),
           ),
+          if (_moreToTheLeft)
+            Positioned(
+              left: 16,
+              top: 4,
+              child: RailArrow(
+                key: HomeQuestionsRail.backKey,
+                icon: Icons.chevron_left_rounded,
+                label: 'Earlier questions',
+                onTap: () => _advance(forward: false),
+              ),
+            ),
           if (_moreToTheRight)
             Positioned(
               right: 16,
               top: 4,
-              child: Semantics(
-                button: true,
+              child: RailArrow(
+                key: HomeQuestionsRail.arrowKey,
+                icon: Icons.chevron_right_rounded,
                 label: 'More questions',
-                child: Material(
-                  color: tokens.chip,
-                  shape: CircleBorder(
-                    side: BorderSide(color: tokens.chipBorder),
-                  ),
-                  elevation: 1,
-                  child: InkWell(
-                    key: HomeQuestionsRail.arrowKey,
-                    customBorder: const CircleBorder(),
-                    onTap: _advance,
-                    child: SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 22,
-                        color: tokens.chipText,
-                      ),
-                    ),
-                  ),
-                ),
+                onTap: () => _advance(forward: true),
               ),
             ),
         ],

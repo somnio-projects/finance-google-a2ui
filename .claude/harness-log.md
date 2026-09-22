@@ -3543,3 +3543,29 @@ What the run taught:
   left. A manual run made of `curl` cannot see a CORS defect: the one test
   that can is a preflight with exactly the headers the client sends, and
   `test_cors_a2a.py` is that test. The browser pane found it in a minute.
+
+## 2026-09-22 — details the review of the running app found
+
+`fix/details_the_review_found`, specs `backend/0030` and `frontend/0012`. The
+Home greeting names the signed-in person — the registry's display name,
+else the e-mail's local part raised — through `Portfolio.owner`, set by the
+view service from an `OwnerResolver` the composition root binds to the user
+service; the persona stays the fallback. The Home question rail gained the
+way back: a fading left edge and a mirrored arrow.
+
+What the run taught:
+
+- **A test that names the fake at the wrong seam fails the neighbour.**
+  Overriding `get_user_service` for every unit-test app let the view routes
+  run without a database — and broke the access route's test that asserts
+  the *real* service reaches for one. The owner lookup became its own
+  dependency, `get_owner_resolver`, and the override moved there.
+- **A default is an oracle's premise.** Moving the payoff's default symbol to
+  the design's NVDA turned nine hand-verified payoff literals red, then nine
+  frontend payoff tests through the regenerated catalog. Regenerating an
+  oracle from the code it tests is the one thing an oracle must never be, so
+  the default stays `VOO` and the spec says why: the agent names the symbol.
+- **The report was the viewport, not the app.** The tab bar and the sign-in
+  footer "missing" at 440×956 were under Chrome's docked DevTools; in a
+  viewport that fits the device they are where the artboards put them.
+  Recorded in 0012 so the next reviewer checks the frame before filing.

@@ -18,7 +18,7 @@ from app.api.deps.common import (
     get_audit_service,
     get_feature_flag_service,
 )
-from app.api.deps.views import get_render_intent_service
+from app.api.deps.views import OwnersDep, get_render_intent_service
 from app.schemas.agent_card import AgentCard
 from app.services.a2a_service import A2aService
 from app.services.agent_renders import TurnRenderResolver
@@ -28,7 +28,9 @@ from app.services.feature_flag_service import FeatureFlagService
 from app.services.surface_action_service import SurfaceActionService
 
 
-def get_agent_service(container: ContainerDep, portfolio: PortfolioDep) -> AgentService:
+def get_agent_service(
+    container: ContainerDep, portfolio: PortfolioDep, owners: OwnersDep
+) -> AgentService:
     """Provide the agent host over the request's portfolio (spec 0006).
 
     The portfolio provider is the request's own, so the render-intent entry
@@ -40,7 +42,7 @@ def get_agent_service(container: ContainerDep, portfolio: PortfolioDep) -> Agent
         tools=container.agent.tools,
         reporter=container.reporter,
         renders=TurnRenderResolver(
-            intents=get_render_intent_service(container, portfolio)
+            intents=get_render_intent_service(container, portfolio, owners)
         ),
         clock=container.clock,
         max_iterations=container.settings.agent_max_tool_iterations,
@@ -62,9 +64,11 @@ def get_surface_action_service(
     return SurfaceActionService(flags=flags, audit=audit, reporter=container.reporter)
 
 
-def get_a2a_service(container: ContainerDep, portfolio: PortfolioDep) -> A2aService:
+def get_a2a_service(
+    container: ContainerDep, portfolio: PortfolioDep, owners: OwnersDep
+) -> A2aService:
     """Provide the A2A protocol adapter over the agent host (ADR-J D-2)."""
-    return A2aService(agent=get_agent_service(container, portfolio))
+    return A2aService(agent=get_agent_service(container, portfolio, owners))
 
 
 def get_agent_card(container: ContainerDep) -> AgentCard:
