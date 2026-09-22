@@ -4255,3 +4255,36 @@ What the run taught:
   against the old page first and failed with `All calls: … text: first`.
   Without that line the fix would have been a plausible edit; with it, it is
   a closed defect.
+
+## 2026-09-22 — The deployed client has a policy no test sees
+
+**Spec:** [`frontend/0022`](../specs/frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md).
+Branch `fix/csp_allows_the_firebase_loader`, cut from `develop`.
+
+`https://finance-a2ui.web.app` served a **white page** while every gate was
+green. `firebase_core_web` boots the Firebase JS SDK from an inline script it
+writes at run time; `script-src` blocked it, `Firebase.initializeApp` threw,
+and `main()` never rendered. The only symptom was one console line.
+
+**What this says about the harness, which is the part worth keeping.** The
+client is tested exclusively in places that have no Content-Security-Policy: a
+widget harness has no browser, a local static server sends no headers, and
+`verify_release.sh` asks for `/release.json` — a static file a dead app serves
+perfectly. The policy lived in two files (`firebase.json`,
+`docker/nginx.conf.template`) that were **data nothing read**. That is §5's
+second question again — *does the command cover what its name claims?* — for a
+gate that did not exist at all.
+
+`frontend.csp` (`frontend/tool/check_csp_hashes.sh`) closes it by deriving the
+hash from the resolved plugin rather than trusting a pasted one: bump
+`firebase_core_web` and the gate fails with the new string to paste, instead of
+the site failing. Four hashes, not one — the plugin writes different bytes for
+browsers with Trusted Types than for those without, so authorising only
+Chrome's pair would have left Safari white. It also refuses to pass vacuously
+(eight policy × hash pairs asserted) and fails if `pubspec.lock` gains a
+FlutterFire plugin the service list does not cover.
+
+**Next person:** `frontend-cd` proves the origin serves the right *bytes*, not
+that the app *boots*. Spec 0022 §5 records why that was left alone — it needs a
+headless browser in the pipeline, which is a cost decision rather than a bug
+fix — and it is the reason this defect reached the TL's screen.

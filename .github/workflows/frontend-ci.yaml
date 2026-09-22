@@ -99,6 +99,13 @@ jobs:
       - name: Verify the generated component manifest is current (generate_component_manifest.dart)
         run: dart run tool/generate_component_manifest.dart --check
 
+      # The policy the DEPLOYED client is served under. No local run and no
+      # widget test sees a CSP, so the one inline script Firebase's web SDK
+      # loader needs was blocked in production only — a white page whose only
+      # symptom was a console line.
+      - name: Prove both CSPs authorise the Firebase SDK loader (check_csp_hashes.sh)
+        run: bash tool/check_csp_hashes.sh
+
   tests:
     name: "Frontend · unit and widget tests at 100% line coverage per file"
     runs-on: ubuntu-latest

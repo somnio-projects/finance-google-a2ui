@@ -16,7 +16,7 @@ LCOV := app/coverage/lcov.info \
 	packages/finance_auth/coverage/lcov.info
 
 .PHONY: install toolchain toolchain-test verify-release-test format format-check \
-	analyze budget manifest manifest-check test test-tool test-packages test-app \
+	analyze budget manifest manifest-check csp test test-tool test-packages test-app \
 	coverage gate clean
 
 # The first thing the gate proves, because everything after it is read through
@@ -43,6 +43,15 @@ toolchain-test:
 # same one `repo.manual-run` makes for the backend's evidence check.
 verify-release-test:
 	bash tool/tests/test_verify_release.sh
+
+# The CSP the *deployed* client is served under, which no local run and no
+# widget test can see. `firebase_core_web` boots the Firebase JS SDK from an
+# inline script; a strict `script-src` blocks it and the app renders a white
+# page with only a console line to say why. This derives the hash of that
+# script from the resolved plugin and proves both policies — Hosting's
+# `firebase.json` and the container's nginx template — authorise it.
+csp:
+	bash tool/check_csp_hashes.sh
 
 # --enforce-lockfile from day one. Plain `pub get` silently re-resolves, so a
 # build can differ from the one that was reviewed; the strict flag fails
@@ -100,7 +109,7 @@ coverage:
 	dart run tool/check_coverage.dart $(LCOV)
 
 gate: toolchain toolchain-test verify-release-test format-check analyze budget \
-	manifest-check test coverage
+	manifest-check csp test coverage
 	@echo "frontend ship gate green"
 
 clean:
