@@ -5,7 +5,7 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// One component's detail page at `/catalog/<view-id>` (spec frontend/0013).
+/// One component's detail page at `/catalog/<view-id>` (spec frontend/0016).
 ///
 /// The view id arrives from the route and is handed to the backend as-is:
 /// the catalog decides whether it names a view, and the page shows the

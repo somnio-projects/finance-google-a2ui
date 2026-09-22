@@ -176,7 +176,7 @@ something, the seam is wrong; fix the seam.
 >    compared the router with the registry — so a component could be added,
 >    registered, 100 %-covered and **invisible, with a green gate**. The route
 >    no longer names any view: the page asks the registry (today `CatalogPage`,
->    which crosses it with the backend's catalog — spec frontend/0013), so the
+>    which crosses it with the backend's catalog — spec frontend/0016), so the
 >    two cannot disagree. Asserted by
 >    `app_router_test.dart::every registered component is reachable from the route`.
 > 2. **The fifth component broke the screen.** The read endpoint takes at most

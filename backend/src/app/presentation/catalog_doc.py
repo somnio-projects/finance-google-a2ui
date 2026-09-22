@@ -37,7 +37,7 @@ DIGEST_LENGTH: Final[int] = 12
 #: the field inventory is the payload schema walked, the prompt fragment is
 #: the summary, options and guidance joined. Hashing them too would move
 #: every frozen `v1` digest the day a rendering changed its wording, while
-#: nothing a client binds had moved (spec 0031 OD-2).
+#: nothing a client binds had moved (spec 0034 OD-2).
 DERIVED_KEYS: Final[tuple[str, ...]] = ("fields", "prompt")
 
 

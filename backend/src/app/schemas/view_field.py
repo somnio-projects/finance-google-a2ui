@@ -1,4 +1,4 @@
-"""One row of a view's field inventory, as `GET /v1/views` serves it (spec 0031).
+"""One row of a view's field inventory, as `GET /v1/views` serves it (spec 0034).
 
 Split from `view_catalog.py` under the 150-line budget along the seam already
 there: that module describes a *view*, this describes one *field* of its

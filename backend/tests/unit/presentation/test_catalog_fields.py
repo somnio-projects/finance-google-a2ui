@@ -1,4 +1,4 @@
-"""Spec 0031 — the catalog serves what the developer gallery binds.
+"""Spec 0034 — the catalog serves what the developer gallery binds.
 
 Two facts the snapshot has carried since GGU-53 now reach `GET /v1/views` as
 well: the field inventory and the prompt fragment. Both are *renderings* of

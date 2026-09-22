@@ -94,7 +94,7 @@ class ViewDescriptor(BaseModel):
         description=(
             "Every path of the rendered payload with its type, presence, "
             "binding, the state it drives and the option that sets it — the "
-            "field inventory the frozen contract prints (spec 0031)."
+            "field inventory the frozen contract prints (spec 0034)."
         ),
     )
     prompt: str = Field(
@@ -103,7 +103,7 @@ class ViewDescriptor(BaseModel):
             "The lines the system prompt carries for this view, verbatim: its "
             "purpose, its options with their bounds and, where design wrote "
             "one, the do/don't pair. What the agent is taught, not a summary "
-            "of it (spec 0031)."
+            "of it (spec 0034)."
         ),
         examples=["- holdings.allocation.v1 — Allocation by holding.\n  options: …"],
     )

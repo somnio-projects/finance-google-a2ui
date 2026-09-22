@@ -65,7 +65,7 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         # a sentence this backend invented for itself (`presentation.guidance`).
         "guidance": guidance_of(projection),
         # The lines the system prompt carries for this view, verbatim, so the
-        # developer catalog shows what the model is taught (spec 0031).
+        # developer catalog shows what the model is taught (spec 0034).
         "prompt": view_fragment(projection),
         "example": example,
     }

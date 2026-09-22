@@ -6,7 +6,7 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 
 /// Zone 1: the label row, then one state card per render — a live render at
-/// full width, the loading and absent notes in pairs (spec 0013 OD-5).
+/// full width, the loading and absent notes in pairs (spec 0016 OD-5).
 class CatalogPreviewZone extends StatelessWidget {
   /// Creates the zone.
   const CatalogPreviewZone({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// The colours of a detail page's three zones, **measured** from the six
-/// `Catalog_<Component>.dc.html` pages (spec frontend/0013 §2): the dark
+/// `Catalog_<Component>.dc.html` pages (spec frontend/0016 §2): the dark
 /// schema panel and its syntax colours, the prompt panel, and the Do /
 /// Don't cards. A plain value inside `CatalogTokens` rather than a second
 /// `ThemeExtension`, so the theme registers the catalog once.

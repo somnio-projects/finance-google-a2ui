@@ -7,7 +7,7 @@ import 'package:finance_views_repository/src/view_payload.dart';
 
 /// One entry of `GET /v1/views` — what the backend can render and how.
 ///
-/// The developer catalog (spec frontend/0013) binds these fields and nothing
+/// The developer catalog (spec frontend/0016) binds these fields and nothing
 /// else: the words, the inventory, the prompt fragment and the example are
 /// all the backend's, verbatim. [optionNames] is read so a caller can keep
 /// N-7 — send only an option the view declares — without interpreting the

@@ -1,9 +1,9 @@
-# 0013 — The component catalog, as the gallery pages frame it
+# 0016 — The component catalog, as the gallery pages frame it
 
-- **Area:** frontend (+ backend/0031 for the two served facts)
+- **Area:** frontend (+ backend/0034 for the two served facts)
 - **Status:** In progress
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here. The per-component gaps it surfaces are GGU-101..GGU-104._
-- **Also:** [backend/0031](../backend/0031-the-catalog-serves-the-gallery.md), [backend/0023](../backend/0023-catalog-serves-the-client.md) (naming, guidance), [backend/0024](../backend/0024-contract-serves-the-designs.md), [frontend/0009](0009-holdings-and-activity-tabs.md) OD-5 (the `Catalog` chip), [client/0003](../client/0003-client-backend-contract.md) N-3/N-6/N-7/N-9/N-10, [ADR-L](../../docs/adr/ADR-L-client-architecture.md) D-3
+- **Also:** [backend/0034](../backend/0034-the-catalog-serves-the-gallery.md), [backend/0023](../backend/0023-catalog-serves-the-client.md) (naming, guidance), [backend/0024](../backend/0024-contract-serves-the-designs.md), [frontend/0009](0009-holdings-and-activity-tabs.md) OD-5 (the `Catalog` chip), [client/0003](../client/0003-client-backend-contract.md) N-3/N-6/N-7/N-9/N-10, [ADR-L](../../docs/adr/ADR-L-client-architecture.md) D-3
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-22
 
 ## 1. Problem
@@ -23,7 +23,7 @@ the options schema, the actions and the do/don't pair, but not the field
 inventory (only the generated snapshot had it) and not the text the prompt
 actually carries for a view (only `prompt.py` composed it, for the model).
 A gallery drawn from anything else would have been a second declaration of
-the contract — the defect 0023 exists for. Backend/0031 adds both to the
+the contract — the defect 0023 exists for. Backend/0034 adds both to the
 served entry; this spec binds them.
 
 ## 2. Measured, not transcribed

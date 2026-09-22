@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// The design prints a hand-written `props` schema with camelCase names the
 /// backend never emits (`weightPct`, `onSliceTap`). What is drawn instead is
 /// the inventory `GET /v1/views` serves, so the panel is the contract the
-/// client binds and cannot say otherwise (spec 0013 OD-4).
+/// client binds and cannot say otherwise (spec 0016 OD-4).
 class CatalogSchemaZone extends StatelessWidget {
   /// Creates the zone for [entry].
   const CatalogSchemaZone({required this.entry, super.key});

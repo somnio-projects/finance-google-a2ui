@@ -102,7 +102,7 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         # Protocol member, so adding a chart still edits no shared file
         # (ADR-K D-15, spec 0022 AC-11) and this catalog names the component
         # the A2UI surface really emits (GGU-53, spec 0023). `fields` and
-        # `prompt` are what the developer catalog binds (spec 0031).
+        # `prompt` are what the developer catalog binds (spec 0034).
         "fields": field_rows(projection),
         "actions": list(example.get("actions", ())),
         "component": component_of(projection),

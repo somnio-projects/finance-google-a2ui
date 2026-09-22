@@ -1,6 +1,6 @@
-# 0031 — The catalog serves the gallery
+# 0034 — The catalog serves the gallery
 
-- **Area:** backend (+ frontend/0013, which binds it)
+- **Area:** backend (+ frontend/0016, which binds it)
 - **Status:** In progress
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here_
 - **Also:** [0021](0021-machine-readable-catalog.md) (the snapshot's `fields`), [0023](0023-catalog-serves-the-client.md) (guidance, component names), [0009](0009-prompt-fragments.md) (the prompt is generated), [ADR-K](../../docs/adr/ADR-K-response-shaping.md) D-8/D-14/D-15
@@ -8,7 +8,7 @@
 
 ## 1. Problem
 
-The developer catalog (frontend/0013) draws two things per view that a
+The developer catalog (frontend/0016) draws two things per view that a
 client could not get from `GET /v1/views`: the field inventory and the text
 the system prompt carries for the view. The inventory existed only in
 `docs/catalog/view-catalog.snapshot.json`, an artefact for a test to load,

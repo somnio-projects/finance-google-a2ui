@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 /// the catalog as a whole. The design's paragraph counts *six* components and
 /// names an *ADK* backend; the count is the backend's to state (it serves as
 /// many entries as it registers) and the backend is FastAPI, so neither word
-/// is printed (spec 0013 OD-3).
+/// is printed (spec 0016 OD-3).
 class CatalogHeader extends StatelessWidget {
   /// Creates the header.
   const CatalogHeader({super.key});
@@ -27,7 +27,7 @@ class CatalogHeader extends StatelessWidget {
 
   /// The pills: the API version and the licence, both facts of this
   /// repository. The design's `A2UI v1.0` is a protocol version nothing here
-  /// serves, so it is not claimed (spec 0013 OD-3).
+  /// serves, so it is not claimed (spec 0016 OD-3).
   static const List<String> pills = <String>['Catalog v1', 'Apache 2.0'];
 
   @override

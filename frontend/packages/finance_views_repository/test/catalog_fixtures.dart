@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'fixtures.dart';
 
-/// One `GET /v1/views` entry in the served shape (spec backend/0031).
+/// One `GET /v1/views` entry in the served shape (spec backend/0034).
 ///
 /// A fixture, not a contract: the snapshot keys its entries by `view` where
 /// the endpoint says `id`, so the suite cannot read it and this shape is

@@ -23,7 +23,7 @@ abstract final class AppRoutes {
   static const String orderTicketV2 = '/order-ticket-v2';
 
   /// The component catalog index — every served view this build renders,
-  /// one live card each (spec frontend/0013).
+  /// one live card each (spec frontend/0016).
   static const String catalog = '/catalog';
 
   /// One component's catalog page; [catalogViewParameter] carries the id.

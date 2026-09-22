@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 /// A detail page's header: the component as the title, the backend's
 /// summary under it, and three pills — the view id, `A2UI component`, and
-/// the component in teal (spec 0013 OD-2).
+/// the component in teal (spec 0016 OD-2).
 class CatalogDetailHeader extends StatelessWidget {
   /// Creates the header for [entry].
   const CatalogDetailHeader({required this.entry, super.key});

@@ -6,7 +6,7 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 part 'catalog_event.dart';
 part 'catalog_state.dart';
 
-/// Loads the catalog the index page draws (spec frontend/0013).
+/// Loads the catalog the index page draws (spec frontend/0016).
 ///
 /// One request: `GET /v1/views`. The repository revalidates it with its
 /// `ETag`, so opening the index twice costs one header the second time.

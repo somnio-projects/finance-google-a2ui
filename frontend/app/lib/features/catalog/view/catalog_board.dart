@@ -1,7 +1,7 @@
 import 'package:finance_app/theme/catalog_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// The 1024-point board every catalog page is drawn on (spec 0013 §2).
+/// The 1024-point board every catalog page is drawn on (spec 0016 §2).
 ///
 /// Centred and capped at the design's width; narrower viewports get the same
 /// column at their own width, so a phone reads the catalog one card deep.

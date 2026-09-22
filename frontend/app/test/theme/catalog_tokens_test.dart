@@ -10,7 +10,7 @@ import '../helpers/pump_app.dart';
 void main() {
   group(CatalogTokens, () {
     test('the light palette is the measured light artboard', () {
-      // Literals, on purpose: read from the pages' inline styles (0013 §2).
+      // Literals, on purpose: read from the pages' inline styles (0016 §2).
       expect(catalogTokensLight.board, const Color(0xFFF4F2F8));
       expect(catalogTokensLight.topBar, const Color(0xFFFDFBFF));
       expect(catalogTokensLight.accent, const Color(0xFF4F5DFF));

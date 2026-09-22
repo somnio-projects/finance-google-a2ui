@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 /// One gallery card: the live thumbnail, the component name, the backend's
 /// summary, the view id as a mono badge and `View schema →`.
 ///
-/// Every word but the arrow's is the entry's (spec 0013 OD-2): the design's
+/// Every word but the arrow's is the entry's (spec 0016 OD-2): the design's
 /// hand-written card titles have no backend field, so the title is the
 /// component the client registers against.
 class CatalogCard extends StatelessWidget {

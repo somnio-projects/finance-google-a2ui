@@ -3722,7 +3722,7 @@ What the run taught:
   ellipsise.
 ## 2026-09-22 — the component catalog, as the gallery pages frame it
 
-`feat/catalog_gallery`, specs `frontend/0013` and `backend/0031`. `/catalog`
+`feat/catalog_gallery`, specs `frontend/0016` and `backend/0034`. `/catalog`
 is the gallery index — top bar, header, token legend, one live card per view
 the backend serves and this build renders — and `/catalog/<view-id>` is a
 detail page with the three zones the artboards draw: the example and the
@@ -3751,7 +3751,7 @@ What the run taught:
 - **The design's pairs assume mock components.** Zone 1 draws its secondary
   states side by side at ~290 px; the real tax-lot table overflowed by 30 px
   there in the first run. A live card now takes the full column and only the
-  skeleton and absent notes pair (0013 OD-5) — the artboard's rhythm kept
+  skeleton and absent notes pair (0016 OD-5) — the artboard's rhythm kept
   where it can be, the component's width where it must be.
 - **A state you cannot produce is a sentence, not a payload.** Over-cash
   validation, hold-vs-sell comparison, an empty lot table and a 2-scenario

@@ -13,7 +13,7 @@ import '../helpers/pump_app.dart';
 import 'app_router_harness.dart';
 
 /// The catalog's two routes, split from `app_router_test.dart` under the
-/// 150-line budget (spec frontend/0013).
+/// 150-line budget (spec frontend/0016).
 void main() {
   group('buildRouter catalog', () {
     late MockViewsRepository repository;

@@ -4,7 +4,7 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The developer catalog's index at `/catalog` (spec frontend/0013).
+/// The developer catalog's index at `/catalog` (spec frontend/0016).
 ///
 /// A page, so the only file of this feature allowed to read the repository
 /// from the tree: it builds the bloc that needs one

@@ -46,7 +46,7 @@ abstract final class AppTheme {
         holdingsTokensFor(brightness),
         activityTokensFor(brightness),
         assistantTokensFor(brightness),
-        // The developer catalog's measured chrome (spec frontend/0013 §2).
+        // The developer catalog's measured chrome (spec frontend/0016 §2).
         catalogTokensFor(brightness),
         // Chart palettes stay separate: gain, loss and "a total" are semantic
         // roles Material 3 has no slot for, and they are measured the same way

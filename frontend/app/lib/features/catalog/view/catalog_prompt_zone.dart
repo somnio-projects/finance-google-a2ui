@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 ///
 /// The text is the entry's `prompt`, which is the fragment
 /// `presentation/prompt.py` composes for the model — what the agent is
-/// taught, not a paraphrase of it (spec backend/0031).
+/// taught, not a paraphrase of it (spec backend/0034).
 class CatalogPromptZone extends StatelessWidget {
   /// Creates the zone for [entry].
   const CatalogPromptZone({required this.entry, super.key});

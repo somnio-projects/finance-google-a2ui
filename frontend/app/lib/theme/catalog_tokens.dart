@@ -2,7 +2,7 @@ import 'package:finance_app/theme/catalog_zone_colors.dart';
 import 'package:flutter/material.dart';
 
 /// The developer catalog's colours, **measured** from `Catalog_Index.dc.html`
-/// and the six detail pages (spec frontend/0013 §2), light and dark.
+/// and the six detail pages (spec frontend/0016 §2), light and dark.
 ///
 /// Every value was read out of the pages' inline styles. They are a
 /// `ThemeExtension` because Material has no role for "the thumbnail well

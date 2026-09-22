@@ -2,7 +2,7 @@ import 'package:finance_app/theme/catalog_tokens.dart';
 import 'package:finance_app/theme/catalog_zone_colors.dart';
 import 'package:flutter/material.dart';
 
-/// The catalog's two measured palettes (spec frontend/0013 §2). Split from
+/// The catalog's two measured palettes (spec frontend/0016 §2). Split from
 /// `catalog_tokens.dart` under the 150-line budget along the seam it already
 /// had: the class says what a token *is*, this says what each one *measured*.
 

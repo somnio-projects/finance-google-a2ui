@@ -21,7 +21,7 @@ enum PreviewKind {
   absent,
 }
 
-/// One Zone 1 state of a detail page (spec frontend/0013 §3).
+/// One Zone 1 state of a detail page (spec frontend/0016 §3).
 class PreviewState extends Equatable {
   /// Creates a state.
   const PreviewState({

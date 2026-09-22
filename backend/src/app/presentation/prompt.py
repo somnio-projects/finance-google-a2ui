@@ -57,7 +57,7 @@ def view_fragment(projection: Projection) -> str:
     """Render the lines the system prompt carries for one projection.
 
     This is **the text the agent is actually taught** about a view, and the
-    catalog publishes it verbatim (``contract.catalog_entry``, spec 0031) so
+    catalog publishes it verbatim (``contract.catalog_entry``, spec 0034) so
     the developer catalog's *Zone 3 · Prompt fragment* shows the sentence the
     model reads rather than a paraphrase of it.
 
