@@ -105,7 +105,7 @@ class ScriptedModelClient:
             return ModelReply(text=UNCONFIGURED_MESSAGE)
         if not results:
             return ModelReply(tool_calls=_tool_calls(script))
-        return ModelReply(text=fill(script.answer, results))
+        return ModelReply(text=fill(script.answer, results, fallback=script.otherwise))
 
 
 __all__ = ["MODEL_NAME", "ScriptedModelClient"]

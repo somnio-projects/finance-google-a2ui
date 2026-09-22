@@ -3597,7 +3597,17 @@ What the run taught:
   and Flow C's multi-leg ticket have no tool aiming at them, so the script
   draws one tax-lot table and one payoff leg with no surface, and the spec
   carries an *extended when* table instead of a render intent nobody
-  produced (0033 OD-5). The drill answers the default window and says so.
+  produced (0033 OD-5). The drill first re-ran the waterfall for one
+  symbol; once `driver_detail` landed (GGU-100, same integration) the entry
+  calls it and the card a tapped bar opens is the day's, as the design draws.
+- **A registry filled by import is empty until someone imports.** Pointing the
+  drill at `driver_detail` made every scripted turn fall back to the default
+  view when the two suites ran alone — `make_resolver` built a `ViewService`
+  over `REGISTRY` and nothing in that import chain loaded
+  `app.presentation.views`, so the whole suite was green only because an
+  earlier test module had. The double now imports `LOADED` the way
+  `api/deps/views.py` does, and asserts it is non-empty. A test that passes
+  in the suite and fails alone is order-dependent, not passing.
 - **Two declarations of a key, compared.** The chip keys are held against
   `DECLARED_KEYS`, the drill keys against `MARKET_REFERENCE`, every tool name
   against the discovered registry, and every table row runs as a whole turn

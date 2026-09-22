@@ -53,8 +53,8 @@ def test_a_drill_on_every_market_symbol_is_a_key_of_the_table(symbol: str) -> No
 
     script = DEMO_SCRIPTS[normalise(composed)]
 
-    assert [call.arguments for call in script.calls] == [
-        {"window": "7d", "symbols": [symbol]}
+    assert [(call.name, call.arguments) for call in script.calls] == [
+        ("driver_detail", {"symbol": symbol})
     ]
 
 

@@ -49,7 +49,7 @@ written down.
   | chip `biggest-drivers` — *Which holdings drove my performance the most over the last week?* | `compute_attribution {window: 7d}` | `attribution.waterfall.v1` | the week's move, *The holdings that moved it most are drawn first:* |
   | chip `tax-lots` — *Show me the tax lots a sale would consume and what it would realise.* | `simulate_sale` (the Flow B sale) | `taxlots.table.v1` | *As the example, … split by term below. Nothing is traded.* |
   | chip `why-did-i-move` — *Why did my portfolio move over the last week?* | `compute_attribution {window: 7d}` | `attribution.waterfall.v1` | *Your portfolio is {trend} … over the last week. Here's what drove it:* |
-  | `drill.attribution.v1` for each of the 17 market symbols — *Break down the contribution of {S} in more detail for the same window, and show the result.* | `compute_attribution {window: 7d, symbols: [S]}` | `attribution.waterfall.v1` | *On its own, {S} contributed {changeDisplay} ({changePctDisplay}) over the last week; here is its waterfall.* |
+  | `drill.attribution.v1` for each of the 17 market symbols — *Break down the contribution of {S} in more detail for the same window, and show the result.* | `driver_detail {symbol: S}` (spec 0032) | `attribution.driver.v1` | *{name} ({S}) contributed {contributionDisplay} today: its price moved {priceMovePctDisplay} ({priceMoveDisplay}) on {sharesDisplay} shares at {priceDisplay}, {shareOfDayDisplay} of the day's {dayGainDisplay}.* |
 
   The chip and drill keys are produced by calling the actions' own `compose`
   (`ask.suggested.v1`, `drill.attribution.v1`) over `DECLARED_KEYS` and
@@ -61,7 +61,10 @@ written down.
   of the fed-back results into `{dotted.path}` holes and answers
   `TOOLS_FAILED_MESSAGE` — *The tools could not complete that request, so
   there is nothing to show yet.* — the moment one hole has no string to fill
-  it (a `tool-failed`, a `position-too-small`, a `None` percentage).
+  it (a `tool-failed`, a `position-too-small`, a `None` percentage) — or
+  the script's own `otherwise` sentence when the empty answer has a meaning:
+  a drill on a market symbol the portfolio does not hold says *S is not held
+  in this portfolio, so there is no contribution to break down.*
 - **`build_model_client`** returns `ScriptedModelClient()` for a missing key
   and `GeminiModelClient` otherwise; `NullModelClient` stays as the test
   double it always also was, and its `UNCONFIGURED_MESSAGE` is what the
@@ -74,7 +77,6 @@ that aims at them yet, and the script does not pretend otherwise:
 |---|---|---|
 | Flow B's second card, the method-by-method comparison | one `taxlots.table.v1` under FIFO | a tool emits `scenario.comparison.v1` (the projection exists — 0017 — but no tool renders it; the model cannot ask for a view a tool did not produce) |
 | Flow C's multi-leg order ticket across NVDA / AVGO / AMD | one `payoff` leg on NVDA, no surface | `order.ticket.v2` and its tool land (in progress on a sibling branch); the entry then adds the ticket's call and drops *not available yet* |
-| The drill's "same window" | the default `7d` window, and the sentence says *over the last week* | the client sends the window it drilled from as a declared argument of `drill.attribution.v1` |
 
 ## 3. Rulings
 
@@ -95,12 +97,15 @@ that aims at them yet, and the script does not pretend otherwise:
   with `TOOLS_FAILED_MESSAGE` rather than leaving a bracket or a guess. This
   is spec 0006 AC-8 with the model removed: the one party that could have
   paraphrased a number is a table.
-- **OD-3 — the drill answers the default window.** The client is stateless on
-  purpose (0006 §3.1) and matches the last user message; reading the previous
-  turn's `window` out of the history would be inference the exact-match rule
-  forbids. The sentence therefore says *over the last week*, which is what was
-  computed. The honest fix is a declared argument on the action, recorded
-  above.
+- **OD-3 — the drill answers today's card, not a window.** The client is
+  stateless on purpose (0006 §3.1) and matches the last user message; reading
+  the previous turn's `window` out of the history would be inference the
+  exact-match rule forbids. The first cut therefore re-ran the waterfall for
+  one symbol over the default week and said so. Since spec 0032 the turn a
+  tapped bar opens has a tool of its own, `driver_detail`, whose card is the
+  day's by definition — the design's D2 *Top contributor today* — so the
+  script calls it and the window question no longer arises: the card is not
+  a re-run of the chart, it is what the bar meant.
 - **OD-4 — a real key switches the script off, entirely.** `build_model_client`
   is a two-way choice: a configured `GEMINI_API_KEY` yields `GeminiModelClient`
   and the table is never consulted. There is no mixed mode where a known

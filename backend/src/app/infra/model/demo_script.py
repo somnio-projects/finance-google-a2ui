@@ -20,6 +20,7 @@ from app.actions.defined.ask_suggested import compose as chip_prompt
 from app.actions.defined.drill_attribution import DrillAttributionArgs
 from app.actions.defined.drill_attribution import compose as drill_prompt
 from app.domain.market import MARKET_REFERENCE
+from app.infra.model.demo_drill import drill
 from app.infra.model.script import Script, ScriptedCall, normalise
 
 ATTRIBUTION: Final[str] = "compute_attribution"
@@ -106,17 +107,6 @@ CHIP_SCRIPTS: Final[Mapping[str, Script]] = {
 }
 
 
-def _drill(symbol: str) -> Script:
-    """Return the turn a tapped waterfall bar for ``symbol`` runs (0033 OD-3)."""
-    return Script(
-        calls=(ScriptedCall(ATTRIBUTION, {"window": "7d", "symbols": [symbol]}),),
-        answer=(
-            f"On its own, {symbol} contributed {{changeDisplay}} "
-            "({changePctDisplay}) over the last week; here is its waterfall."
-        ),
-    )
-
-
 def _chip_key(key: str) -> str:
     """Return the prompt ``ask.suggested.v1`` composes for ``key``, normalised."""
     return normalise(chip_prompt(AskSuggestedArgs.model_validate({"suggestion": key})))
@@ -132,7 +122,7 @@ def _drill_key(symbol: str) -> str:
 DEMO_SCRIPTS: Final[Mapping[str, Script]] = {
     **{normalise(prompt): script for prompt, script in FLOW_SCRIPTS.items()},
     **{_chip_key(key): script for key, script in CHIP_SCRIPTS.items()},
-    **{_drill_key(asset.symbol): _drill(asset.symbol) for asset in MARKET_REFERENCE},
+    **{_drill_key(asset.symbol): drill(asset.symbol) for asset in MARKET_REFERENCE},
 }
 
 __all__ = [

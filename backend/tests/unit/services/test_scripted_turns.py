@@ -31,6 +31,7 @@ SURFACE_OF: Mapping[str, str | None] = {
     "get_holdings_summary": "holdings.allocation.v1",
     "simulate_sale": "taxlots.table.v1",
     "payoff": None,
+    "driver_detail": "attribution.driver.v1",
 }
 
 #: The design's Flow A sentence, with the seed's own figures (spec 0025 §2):
@@ -62,9 +63,18 @@ async def test_every_scripted_prompt_draws_its_surfaces_and_copies_its_figures(
     key: str, tool_context: ToolContext
 ) -> None:
     script = DEMO_SCRIPTS[key]
+    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    held = {holding.symbol for holding in portfolio.holdings()}
 
     result, model, reporter = await run(key, tool_context)
 
+    if any(call.arguments.get("symbol") not in held | {None} for call in script.calls):
+        # A drill on a market symbol the seed does not hold: the tool answers
+        # ``held: false``, draws nothing, and the script says its own sentence.
+        assert result.render_intents == ()
+        assert result.message == script.otherwise
+        assert reporter.exceptions == []
+        return
     expected_views = [
         SURFACE_OF[call.name]
         for call in script.calls
