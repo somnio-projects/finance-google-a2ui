@@ -1,10 +1,11 @@
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/component_host.dart';
+import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_card.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_skeleton.dart';
 import 'package:finance_app/features/catalog/bloc/catalog_detail_bloc.dart';
 import 'package:finance_app/features/catalog/preview_states.dart';
 import 'package:finance_app/features/catalog/view/catalog_state_preview.dart';
-import 'package:finance_app/features/conversation/view/assistant_skeleton.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,10 @@ void main() {
         const PreviewRender(state: PreviewState.loading),
         holdings,
       );
-      expect(find.byType(SurfaceSkeleton), findsOneWidget);
+      // The skeleton is the component's own, through the registry (0015
+      // OD-3): the holdings page shows the ring, not the generic bars.
+      expect(find.byType(ComponentSkeletonHost), findsOneWidget);
+      expect(find.byType(HoldingsAllocationSkeleton), findsOneWidget);
       expect(find.text(PreviewState.loadingNote), findsOneWidget);
     });
 

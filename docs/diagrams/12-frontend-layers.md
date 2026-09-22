@@ -20,6 +20,7 @@ graph TD
     comp["components/&lt;name&gt;/<br/>one directory per view id"]
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
     charts["charts/<br/>CustomPainters · palettes<br/><i>needs dart:ui, so it lives here</i>"]
+    skel["skeleton/<br/>shimmer · pulse · caption · the generic surface<br/><i>what a component draws before its payload</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
@@ -62,6 +63,9 @@ graph TD
   a2a --> core
   comp --> repo
   comp --> charts
+  comp --> skel
+  %% a component's skeleton() and the host's fallback both draw from here;
+  %% skeleton/ imports theme/ and nothing else (spec frontend/0015 OD-3)
   charts --> geom
   comp --> geom
 

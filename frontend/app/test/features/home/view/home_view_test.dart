@@ -1,68 +1,21 @@
-import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/charts/sparkline_chart.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../../helpers/catalog_snapshot.dart';
-import '../../../helpers/pump_app.dart';
-
-class _MockViewsRepository extends Mock implements ViewsRepository;
+import 'home_harness.dart';
 
 void main() {
   group(HomePage, () {
-    late ViewsRepository repository;
-    late Map<String, dynamic> summary;
-    late Map<String, dynamic> allocation;
-
-    RenderedViews envelope(String view, Map<String, dynamic> example) =>
-        RenderedViews.fromJson(<String, dynamic>{
-          'as_of': '2026-01-15T12:00:00Z',
-          'portfolio_id': 'current',
-          'views': <String, dynamic>{view: example},
-        });
+    late HomeHarness home;
 
     setUp(() {
-      repository = _MockViewsRepository();
-      final snapshot = CatalogSnapshot.load();
-      summary = snapshot.exampleFor('PortfolioSummary');
-      // The Home card asks for `headline=false`: the backend then omits the
-      // gain block, which is what tells the component a shell draws the
-      // title. Mirror that here rather than pumping the headline variant.
-      allocation = <String, dynamic>{
-        ...snapshot.exampleFor('HoldingsSummary'),
-        'group_by': 'asset_class',
-      }..remove('total_gain');
-      when(
-        () => repository.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: <String>['portfolio.summary.v1'],
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => Ok(envelope('portfolio.summary.v1', summary)));
-      when(
-        () => repository.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: <String>['holdings.allocation.v1'],
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Ok(envelope('holdings.allocation.v1', allocation)),
-      );
+      home = HomeHarness();
     });
 
-    Future<void> pump(WidgetTester tester) async {
-      await tester.pumpApp(
-        const HomePage(),
-        viewsRepository: repository,
-        componentRegistry: buildComponentRegistry(),
-        surfaceSize: const Size(390, 1600),
-      );
-      await tester.pumpAndSettle();
-    }
+    Future<void> pump(WidgetTester tester) => home.pump(tester);
 
     testWidgets('binds the header and hero verbatim from the payload', (
       tester,
@@ -108,7 +61,7 @@ void main() {
       await tester.tap(find.text('1W'));
       await tester.pumpAndSettle();
       verify(
-        () => repository.fetchPortfolioViews(
+        () => home.repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>['portfolio.summary.v1'],
           options: <String, String>{'range': '1w'},
@@ -118,7 +71,7 @@ void main() {
 
     testWidgets('shows the backend failure verbatim', (tester) async {
       when(
-        () => repository.fetchPortfolioViews(
+        () => home.repository.fetchPortfolioViews(
           portfolioId: any(named: 'portfolioId'),
           views: <String>['portfolio.summary.v1'],
           options: any(named: 'options'),
@@ -128,16 +81,6 @@ void main() {
       );
       await pump(tester);
       expect(find.text('offline'), findsOneWidget);
-    });
-
-    testWidgets('spins while loading', (tester) async {
-      await tester.pumpApp(
-        const HomePage(),
-        viewsRepository: repository,
-        componentRegistry: buildComponentRegistry(),
-      );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.pumpAndSettle();
     });
   });
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:finance_app/features/conversation/view/assistant_composer.dart';
-import 'package:finance_app/features/conversation/view/assistant_skeleton.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -96,8 +96,9 @@ void main() {
       await tester.tap(find.byTooltip('Send'));
       await tester.pump();
       await tester.pump();
-      expect(find.byType(SurfaceSkeleton), findsOneWidget);
-      expect(find.text('Composing UI…'), findsOneWidget);
+      // The skeleton is the holdings component's own (spec 0015 OD-3).
+      expect(find.byType(ComponentSkeletonHost), findsOneWidget);
+      expect(find.text('get_holdings()…'), findsOneWidget);
       expect(find.byType(StreamingDots), findsOneWidget);
       // The send button is quiet while the turn runs.
       await tester.enterText(find.byType(TextField), 'again');
@@ -108,7 +109,7 @@ void main() {
       // ends and the dots go quiet.
       never.complete(Ok<RenderedViews>(renderedViews()));
       await tester.pumpAndSettle();
-      expect(find.byType(SurfaceSkeleton), findsNothing);
+      expect(find.byType(ComponentSkeletonHost), findsNothing);
       expect(find.byType(StreamingDots), findsNothing);
       expect(find.text(r'$482,915.20'), findsOneWidget);
     });

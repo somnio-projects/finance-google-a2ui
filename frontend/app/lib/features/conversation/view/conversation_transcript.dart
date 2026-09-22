@@ -1,9 +1,9 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
 import 'package:finance_app/features/conversation/view/assistant_answer.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
-import 'package:finance_app/features/conversation/view/assistant_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -90,7 +90,12 @@ class ConversationEntryTile extends StatelessWidget {
       // Verbatim. The backend wrote this text and the client never rewrites,
       // truncates or reformats it (N-9).
       AgentSaid(:final text) => AssistantAnswer(text: text),
-      SurfacePending() => const SurfaceSkeleton(),
+      // The skeleton is the component's own, found through the same
+      // registry the surface will resolve through (spec 0015 OD-3).
+      SurfacePending(:final view) => ComponentSkeletonHost(
+        registry: context.read<ComponentRegistry>(),
+        view: view,
+      ),
       // **The same registry, not a parallel path.** A surface the agent asked
       // for is resolved by exactly the widget a `?view=` read goes through,
       // so an unregistered view degrades to the host's placeholder instead of

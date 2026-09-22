@@ -2,6 +2,7 @@ import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_card.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_skeleton.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -39,6 +40,9 @@ class ScenarioComparisonComponent extends ViewComponent {
   @override
   Widget build(BuildContext context, ViewPayload payload) =>
       ScenarioComparisonCard(data: read(payload));
+
+  @override
+  Widget skeleton(BuildContext context) => const ScenarioComparisonSkeleton();
 
   /// Reads [payload] into the model the card draws.
   ///

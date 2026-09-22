@@ -1,6 +1,7 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/payoff_chart/payoff_chart_card.dart';
 import 'package:finance_app/components/payoff_chart/payoff_chart_model.dart';
+import 'package:finance_app/components/payoff_chart/payoff_chart_skeleton.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -29,6 +30,9 @@ class PayoffChartComponent extends ViewComponent {
   @override
   Widget build(BuildContext context, ViewPayload payload) =>
       PayoffChartCard(data: read(payload));
+
+  @override
+  Widget skeleton(BuildContext context) => const PayoffChartSkeleton();
 
   /// Reads [payload] into the model the card draws.
   ///
