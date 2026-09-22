@@ -34,10 +34,23 @@ depends_on: str | Sequence[str] | None = None
 
 _TABLE = "portfolios"
 
+#: The table as a SQLAlchemy construct, so emptying it is
+#: ``_PORTFOLIOS.delete()`` rather than ``sa.text(f"DELETE FROM {_TABLE}")``.
+#:
+#: The f-string form is what `.claude/rules/backend/security.md` § *Data*
+#: means by "parameterised queries only; raw ``text()`` is limited to health
+#: probes and migrations" — and semgrep's `avoid-sqlalchemy-text` flagged it
+#: anyway, correctly by its own lights: it cannot see that `_TABLE` is a
+#: module constant. Suppressing the rule would have been the cheap answer;
+#: the rule's own advice is to use a normal SQLAlchemy operator, and there
+#: is one, so the finding goes away because the code no longer does the
+#: thing rather than because the scanner was told not to look.
+_PORTFOLIOS = sa.table(_TABLE)
+
 
 def upgrade() -> None:
     """Replace ``subject`` with ``owner_email``, emptying the table first."""
-    op.execute(sa.text(f"DELETE FROM {_TABLE}"))
+    op.execute(_PORTFOLIOS.delete())
     op.drop_constraint("uq_portfolios_subject", _TABLE, type_="unique")
     op.drop_index(op.f("ix_portfolios_subject"), table_name=_TABLE)
     op.drop_column(_TABLE, "subject")
@@ -52,7 +65,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Restore ``subject``, emptying the table for the same reason."""
-    op.execute(sa.text(f"DELETE FROM {_TABLE}"))
+    op.execute(_PORTFOLIOS.delete())
     op.drop_constraint("uq_portfolios_owner_email", _TABLE, type_="unique")
     op.drop_index(op.f("ix_portfolios_owner_email"), table_name=_TABLE)
     op.drop_column(_TABLE, "owner_email")
