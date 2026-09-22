@@ -79,8 +79,10 @@ duplicated one are both visible at a glance.
 | [backend/0029-the-turn-recommends-its-chips.md](backend/0029-the-turn-recommends-its-chips.md) | In progress | *unassigned* |
 | [frontend/0011-the-assistant-as-designed.md](frontend/0011-the-assistant-as-designed.md) | In progress | *unassigned* |
 | [backend/0030-the-greeting-names-the-caller.md](backend/0030-the-greeting-names-the-caller.md) | In progress | *unassigned* |
+| [backend/0031-order-ticket-v2.md](backend/0031-order-ticket-v2.md) | In progress | GGU-108 |
 | [frontend/0012-details-the-review-found.md](frontend/0012-details-the-review-found.md) | In progress | *unassigned* |
 | [backend/0033-the-simulated-assistant-offline.md](backend/0033-the-simulated-assistant-offline.md) | In progress | *unassigned* |
+| [frontend/0013-order-ticket-v2.md](frontend/0013-order-ticket-v2.md) | In progress | GGU-108 |
 | [frontend/0008-sign-in.md](frontend/0008-sign-in.md) | In progress | *unassigned* |
 | [frontend/0010-appearance-selector.md](frontend/0010-appearance-selector.md) | In progress | *unassigned* |
 | [backend/0032-attribution-headline-and-driver-detail.md](backend/0032-attribution-headline-and-driver-detail.md) | In progress | GGU-100 (the waterfall fields); the drill-down card *unassigned* |

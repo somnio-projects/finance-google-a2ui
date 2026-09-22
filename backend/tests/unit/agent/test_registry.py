@@ -15,6 +15,7 @@ from tests.unit.conftest import FakeTool
 #: tool simply never reaches the model (spec 0013 AC-1).
 EXPECTED_TOOLS = (
     "compute_attribution",
+    "draft_order",
     "driver_detail",
     "get_holdings_summary",
     "payoff",

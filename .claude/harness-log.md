@@ -3675,3 +3675,45 @@ What the run taught:
 - **The rate limit dropped the harness's read state, not the files.** After
   the interruption every `Edit` was refused until the file was `Read` again
   in full; `git status` was the only thing that needed checking.
+## 2026-09-22 — GGU-108 `order.ticket.v2`, the multi-leg draft order
+
+`feat/GGU-108_order_ticket_v2`, specs `backend/0031` and `frontend/0013`.
+The design's `OrderTicket` — three legs with a stepper each, a live *Order
+impact* panel, an over-cash blocked state — as a second projection beside an
+untouched `order.ticket.v1`; the `draft_order` tool that turns *"put about
+$10k into semiconductors"* into the legs the design draws; and the Flutter
+component, pixel-measured from the catalog page in both themes, re-fetching
+through v1's bloc. Post-demo on the ticket, pulled forward by the product
+owner once spec 0025's equities seed made sector weights computable.
+
+What the run taught:
+
+- **A stepper is the numbers rule at its sharpest.** `+` cannot add one to
+  `3` on this client, so each rendered leg carries the whole `legs` option
+  value its two taps send, written by the backend from the same parser and
+  bound the options model enforces. The test that closes it feeds every
+  published stepper value back through `validated_options`.
+- **The interactivity declaration decided the payload's names.** The
+  registry-wide `test_declared_interactivity` matches options to payload
+  fields by name at any depth and round-trips the field's value through the
+  option. A `legs[]` list under an option called `legs` fails that round
+  trip, so the echo is `legs` (a string) and the rendered legs are
+  `lines[]` — the same split v1 made between `size` and `quantity`.
+- **The design's name went to the wrong version, on purpose.** Spec 0023's
+  rule gives `OrderTicket` to the multi-leg ticket, and the ticket forbids
+  moving v1 by a byte. v2 is `MultiLegOrderTicket`, the README table says
+  why, and the re-pointing is filed rather than done in passing.
+- **The 512-character tool description and the 400-character guidance
+  sentence are bounds a first draft hits.** Both failed at import, which is
+  the right time.
+- **`sum(generator, ZERO)` is the codebase's idiom and basedpyright accepts
+  it**; the IDE's pyright reports `int | Decimal` for the same line. The gate
+  is basedpyright strict and it is green.
+- **`Semantics(label:)` without `container: true` merges into its ancestor's
+  node**, so a stepper's count labelled `NVDA shares` was findable by nothing.
+  Every labelled control is its own node with `excludeSemantics`, which is
+  also what a screen reader should hear.
+- **A stretched `Row` inside a minimum-size `Column` has no height to
+  stretch to.** The leg's 3 px rail needed `IntrinsicHeight`; the test font is
+  also wide enough that a caption row overflowed at 390 until its note could
+  ellipsise.

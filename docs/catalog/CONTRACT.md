@@ -145,6 +145,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `279142f5554a` | 38 | read-only | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
+| [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `e6c713d6a144` | 64 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `7066577b5390` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `a7389adf90d7` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `6f73ed9fad79` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
@@ -2283,6 +2284,245 @@ _This surface sends nothing back: tapping it starts no turn._
   ],
   "effect": "recalculate",
   "disclosure": "Illustrative ticket. This showcase has no broker and no execution: changing a field re-renders these figures, and nothing is ever sent, placed or settled."
+}
+```
+
+## `order.ticket.v2`
+
+> Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.
+
+- **Frozen id:** `order.ticket.v2` · **digest:** `e6c713d6a144`
+- **Component:** `MultiLegOrderTicket`
+- **Payload type:** `OrderTicketV2Payload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** `side`, `legs`
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `legs` | string ≤89 chars | string matching ^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$ | `"NVDA:3,AVGO:2,AMD:14"` | The legs of the draft as `TICKER:SHARES` pairs separated by commas, one to five of them, whole shares, each ticker from the market reference and named once. Every rendered leg carries the value a `+` or `-` sends back, so a stepper edit is this option re-sent with one number moved. |
+| `side` | enum buy / sell | one of 'buy', 'sell' | `"buy"` | Which way every leg goes. A `buy` draws on the portfolio's cash and is blocked when it would exceed it; a `sell` raises cash. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'order.ticket.v2' | default `"order.ticket.v2"` | `constant` | — | — |
+| `title` | string ≤120 chars | required | `text` | — | — |
+| `badge` | enum editable / blocked | required | `enum` | variant | — |
+| `side` | enum buy / sell | required | `enum` | variant | input · one of 'buy', 'sell' |
+| `legs` | string ≤89 chars | required | `text` | — | input · string matching ^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$ |
+| `lines` | array ≤5 items | required | `container` | empty | — |
+| `lines[].key` | string ≤10 chars | required | `text` | — | — |
+| `lines[].symbol` | string ≤10 chars | required | `text` | — | — |
+| `lines[].name` | string ≤64 chars | required | `text` | — | — |
+| `lines[].price` | object | required | `container` | — | — |
+| `lines[].price.amount` | decimal | required | `raw` | — | — |
+| `lines[].price.display` | string ≤32 chars | required | `display` | — | — |
+| `lines[].quantity` | object | required | `container` | — | — |
+| `lines[].quantity.units` | decimal | required | `raw` | — | — |
+| `lines[].quantity.display` | string ≤32 chars | required | `display` | — | — |
+| `lines[].notional` | object | required | `container` | — | — |
+| `lines[].notional.amount` | decimal | required | `raw` | — | — |
+| `lines[].notional.display` | string ≤32 chars | required | `display` | — | — |
+| `lines[].weight` | object | required | `container` | — | — |
+| `lines[].weight.value` | decimal | required | `raw` | — | — |
+| `lines[].weight.display` | string ≤16 chars | required | `display` | — | — |
+| `lines[].increment` | string ≤89 chars | required | `text` | null | — |
+| `lines[].decrement` | string ≤89 chars | required | `text` | null | — |
+| `impact` | object | required | `container` | — | — |
+| `impact.total` | object | required | `container` | — | — |
+| `impact.total.label` | string ≤64 chars | required | `text` | — | — |
+| `impact.total.amount` | object | required | `container` | — | — |
+| `impact.total.amount.amount` | decimal | required | `raw` | — | — |
+| `impact.total.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `impact.units` | object | required | `container` | — | — |
+| `impact.units.label` | string ≤64 chars | required | `text` | — | — |
+| `impact.units.units` | object | required | `container` | — | — |
+| `impact.units.units.units` | decimal | required | `raw` | — | — |
+| `impact.units.units.display` | string ≤32 chars | required | `display` | — | — |
+| `impact.fees` | object | required | `container` | — | — |
+| `impact.fees.label` | string ≤64 chars | required | `text` | — | — |
+| `impact.fees.amount` | object | required | `container` | — | — |
+| `impact.fees.amount.amount` | decimal | required | `raw` | — | — |
+| `impact.fees.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `impact.cash_remaining` | object | required | `container` | — | — |
+| `impact.cash_remaining.label` | string ≤64 chars | required | `text` | — | — |
+| `impact.cash_remaining.amount` | object | required | `container` | — | — |
+| `impact.cash_remaining.amount.amount` | decimal | required | `raw` | — | — |
+| `impact.cash_remaining.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `impact.weight_shifts` | array ≤5 items | required | `container` | empty | — |
+| `impact.weight_shifts[].label` | string ≤64 chars | required | `text` | — | — |
+| `impact.weight_shifts[].key` | string ≤32 chars | required | `text` | — | — |
+| `impact.weight_shifts[].before` | object | required | `container` | — | — |
+| `impact.weight_shifts[].before.value` | decimal | required | `raw` | — | — |
+| `impact.weight_shifts[].before.display` | string ≤16 chars | required | `display` | — | — |
+| `impact.weight_shifts[].after` | object | required | `container` | — | — |
+| `impact.weight_shifts[].after.value` | decimal | required | `raw` | — | — |
+| `impact.weight_shifts[].after.display` | string ≤16 chars | required | `display` | — | — |
+| `constraints` | object | required | `container` | — | — |
+| `constraints.max_cash` | object | required | `container` | — | — |
+| `constraints.max_cash.label` | string ≤64 chars | required | `text` | — | — |
+| `constraints.max_cash.amount` | object | required | `container` | — | — |
+| `constraints.max_cash.amount.amount` | decimal | required | `raw` | — | — |
+| `constraints.max_cash.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `constraints.breach` | enum none / over_cash | required | `enum` | variant | — |
+| `constraints.shortfall` | object | default `null` | `text` | null | — |
+| `constraints.message` | string ≤160 chars | default `null` | `text` | null | — |
+| `disclosure` | string ≤300 chars | required | `text` | — | — |
+| `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
+
+### When the agent picks this
+
+- **Use it when** the user expresses buy or sell INTENT that resolves to a concrete, editable order — including vague intent such as "put ~$10k into semis, keep it diversified". Propose legs through `draft_order`; the impact (weights, cash, shares) is always shown so the consequences are visible before anything is confirmed, and the backend recomputes it on every edit.
+- **Do not use it for** placing or confirming an order in prose — nothing here executes, and the ticket says so. A single asset with no impact panel is `order.ticket.v1`; what a proposed sale realises under each lot method is `scenario.comparison.v1`. Never recompute a figure the payload already carries.
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "order.ticket.v2",
+  "title": "Draft order \u00b7 Buy \u00b7 3 legs",
+  "badge": "editable",
+  "side": "buy",
+  "legs": "NVDA:3,AVGO:2,AMD:14",
+  "lines": [
+    {
+      "key": "NVDA",
+      "symbol": "NVDA",
+      "name": "NVIDIA Corp",
+      "price": {
+        "amount": "1204.66",
+        "display": "$1,204.66"
+      },
+      "quantity": {
+        "units": "3",
+        "display": "3"
+      },
+      "notional": {
+        "amount": "3613.98",
+        "display": "$3,613.98"
+      },
+      "weight": {
+        "value": "0.3833330858378112344581651248",
+        "display": "38.33%"
+      },
+      "increment": "NVDA:4,AVGO:2,AMD:14",
+      "decrement": "NVDA:2,AVGO:2,AMD:14"
+    },
+    {
+      "key": "AVGO",
+      "symbol": "AVGO",
+      "name": "Broadcom Inc.",
+      "price": {
+        "amount": "1740.00",
+        "display": "$1,740.00"
+      },
+      "quantity": {
+        "units": "2",
+        "display": "2"
+      },
+      "notional": {
+        "amount": "3480.00",
+        "display": "$3,480.00"
+      },
+      "weight": {
+        "value": "0.3691218929588938222996293931",
+        "display": "36.91%"
+      },
+      "increment": "NVDA:3,AVGO:3,AMD:14",
+      "decrement": "NVDA:3,AVGO:1,AMD:14"
+    },
+    {
+      "key": "AMD",
+      "symbol": "AMD",
+      "name": "Advanced Micro Devices",
+      "price": {
+        "amount": "166.70",
+        "display": "$166.70"
+      },
+      "quantity": {
+        "units": "14",
+        "display": "14"
+      },
+      "notional": {
+        "amount": "2333.80",
+        "display": "$2,333.80"
+      },
+      "weight": {
+        "value": "0.2475450212032949432422054821",
+        "display": "24.75%"
+      },
+      "increment": "NVDA:3,AVGO:2,AMD:15",
+      "decrement": "NVDA:3,AVGO:2,AMD:13"
+    }
+  ],
+  "impact": {
+    "total": {
+      "label": "Total order",
+      "amount": {
+        "amount": "9427.78",
+        "display": "$9,427.78"
+      }
+    },
+    "units": {
+      "label": "Est. shares",
+      "units": {
+        "units": "19",
+        "display": "19"
+      }
+    },
+    "fees": {
+      "label": "Est. fees \u00b7 sim",
+      "amount": {
+        "amount": "0",
+        "display": "$0.00"
+      }
+    },
+    "cash_remaining": {
+      "label": "Cash remaining",
+      "amount": {
+        "amount": "29205.440000",
+        "display": "$29,205.44"
+      }
+    },
+    "weight_shifts": [
+      {
+        "label": "Portfolio weight \u00b7 Technology",
+        "key": "technology",
+        "before": {
+          "value": "0.4657202755266349040162744929",
+          "display": "46.57%"
+        },
+        "after": {
+          "value": "0.4852429163546726216114133496",
+          "display": "48.52%"
+        }
+      }
+    ]
+  },
+  "constraints": {
+    "max_cash": {
+      "label": "Available cash",
+      "amount": {
+        "amount": "38633.220000",
+        "display": "$38,633.22"
+      }
+    },
+    "breach": "none",
+    "shortfall": null,
+    "message": null
+  },
+  "disclosure": "Illustrative draft. This showcase has no broker and no execution: stepping a leg re-renders these figures, fees are simulated at zero, and nothing is ever sent, placed or settled.",
+  "effect": "recalculate"
 }
 ```
 

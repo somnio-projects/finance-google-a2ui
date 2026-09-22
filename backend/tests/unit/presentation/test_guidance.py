@@ -31,7 +31,13 @@ from app.schemas.view_catalog import (
 #: The views whose design detail page was exported (GGU-53). The other three
 #: were not, so they carry no guidance — asserted, not assumed.
 DESIGNED: Final[frozenset[str]] = frozenset(
-    {"attribution.waterfall.v1", "scenario.comparison.v1", "taxlots.table.v1"}
+    {
+        "attribution.waterfall.v1",
+        "scenario.comparison.v1",
+        "taxlots.table.v1",
+        # Its page's Zone 3 is the multi-leg ticket's (spec 0031 OD-6).
+        "order.ticket.v2",
+    }
 )
 
 

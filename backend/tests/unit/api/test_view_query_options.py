@@ -94,6 +94,7 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "headline": "headline=false",
         "kind": "kind=dividend",
         "limit": "limit=50",
+        "legs": "legs=NVDA:1",
     }[option]
 
     response = client.get(

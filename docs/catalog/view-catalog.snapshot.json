@@ -3889,6 +3889,740 @@
     },
     {
       "actions": [],
+      "component": "MultiLegOrderTicket",
+      "digest": "e6c713d6a144",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "badge": "editable",
+        "constraints": {
+          "breach": "none",
+          "max_cash": {
+            "amount": {
+              "amount": "38633.220000",
+              "display": "$38,633.22"
+            },
+            "label": "Available cash"
+          },
+          "message": null,
+          "shortfall": null
+        },
+        "disclosure": "Illustrative draft. This showcase has no broker and no execution: stepping a leg re-renders these figures, fees are simulated at zero, and nothing is ever sent, placed or settled.",
+        "effect": "recalculate",
+        "impact": {
+          "cash_remaining": {
+            "amount": {
+              "amount": "29205.440000",
+              "display": "$29,205.44"
+            },
+            "label": "Cash remaining"
+          },
+          "fees": {
+            "amount": {
+              "amount": "0",
+              "display": "$0.00"
+            },
+            "label": "Est. fees · sim"
+          },
+          "total": {
+            "amount": {
+              "amount": "9427.78",
+              "display": "$9,427.78"
+            },
+            "label": "Total order"
+          },
+          "units": {
+            "label": "Est. shares",
+            "units": {
+              "display": "19",
+              "units": "19"
+            }
+          },
+          "weight_shifts": [
+            {
+              "after": {
+                "display": "48.52%",
+                "value": "0.4852429163546726216114133496"
+              },
+              "before": {
+                "display": "46.57%",
+                "value": "0.4657202755266349040162744929"
+              },
+              "key": "technology",
+              "label": "Portfolio weight · Technology"
+            }
+          ]
+        },
+        "legs": "NVDA:3,AVGO:2,AMD:14",
+        "lines": [
+          {
+            "decrement": "NVDA:2,AVGO:2,AMD:14",
+            "increment": "NVDA:4,AVGO:2,AMD:14",
+            "key": "NVDA",
+            "name": "NVIDIA Corp",
+            "notional": {
+              "amount": "3613.98",
+              "display": "$3,613.98"
+            },
+            "price": {
+              "amount": "1204.66",
+              "display": "$1,204.66"
+            },
+            "quantity": {
+              "display": "3",
+              "units": "3"
+            },
+            "symbol": "NVDA",
+            "weight": {
+              "display": "38.33%",
+              "value": "0.3833330858378112344581651248"
+            }
+          },
+          {
+            "decrement": "NVDA:3,AVGO:1,AMD:14",
+            "increment": "NVDA:3,AVGO:3,AMD:14",
+            "key": "AVGO",
+            "name": "Broadcom Inc.",
+            "notional": {
+              "amount": "3480.00",
+              "display": "$3,480.00"
+            },
+            "price": {
+              "amount": "1740.00",
+              "display": "$1,740.00"
+            },
+            "quantity": {
+              "display": "2",
+              "units": "2"
+            },
+            "symbol": "AVGO",
+            "weight": {
+              "display": "36.91%",
+              "value": "0.3691218929588938222996293931"
+            }
+          },
+          {
+            "decrement": "NVDA:3,AVGO:2,AMD:13",
+            "increment": "NVDA:3,AVGO:2,AMD:15",
+            "key": "AMD",
+            "name": "Advanced Micro Devices",
+            "notional": {
+              "amount": "2333.80",
+              "display": "$2,333.80"
+            },
+            "price": {
+              "amount": "166.70",
+              "display": "$166.70"
+            },
+            "quantity": {
+              "display": "14",
+              "units": "14"
+            },
+            "symbol": "AMD",
+            "weight": {
+              "display": "24.75%",
+              "value": "0.2475450212032949432422054821"
+            }
+          }
+        ],
+        "side": "buy",
+        "title": "Draft order · Buy · 3 legs",
+        "view": "order.ticket.v2"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": null,
+          "path": "view",
+          "presence": "default `\"order.ticket.v2\"`",
+          "state": null,
+          "type": "const 'order.ticket.v2'"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "title",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "badge",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum editable / blocked"
+        },
+        {
+          "binding": "enum",
+          "input": "input · one of 'buy', 'sell'",
+          "path": "side",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum buy / sell"
+        },
+        {
+          "binding": "text",
+          "input": "input · string matching ^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$",
+          "path": "legs",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤89 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines",
+          "presence": "required",
+          "state": "empty",
+          "type": "array ≤5 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤10 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].symbol",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤10 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].name",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines[].price",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "lines[].price.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "lines[].price.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines[].quantity",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "lines[].quantity.units",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "lines[].quantity.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines[].notional",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "lines[].notional.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "lines[].notional.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines[].weight",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "lines[].weight.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "lines[].weight.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].increment",
+          "presence": "required",
+          "state": "null",
+          "type": "string ≤89 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].decrement",
+          "presence": "required",
+          "state": "null",
+          "type": "string ≤89 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.total",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.total.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.total.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.total.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.total.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.units",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.units.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.units.units",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.units.units.units",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.units.units.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.fees",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.fees.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.fees.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.fees.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.fees.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.cash_remaining",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.cash_remaining.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.cash_remaining.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.cash_remaining.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.cash_remaining.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.weight_shifts",
+          "presence": "required",
+          "state": "empty",
+          "type": "array ≤5 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.weight_shifts[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "impact.weight_shifts[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.weight_shifts[].before",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.weight_shifts[].before.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.weight_shifts[].before.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "impact.weight_shifts[].after",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "impact.weight_shifts[].after.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "impact.weight_shifts[].after.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "constraints",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "constraints.max_cash",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "constraints.max_cash.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "constraints.max_cash.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "constraints.max_cash.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "constraints.max_cash.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "constraints.breach",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum none / over_cash"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "constraints.shortfall",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "constraints.message",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤160 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "disclosure",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤300 chars"
+        },
+        {
+          "binding": "constant",
+          "input": null,
+          "path": "effect",
+          "presence": "default `\"recalculate\"`",
+          "state": null,
+          "type": "const 'recalculate'"
+        }
+      ],
+      "guidance": {
+        "avoid_when": "placing or confirming an order in prose — nothing here executes, and the ticket says so. A single asset with no impact panel is `order.ticket.v1`; what a proposed sale realises under each lot method is `scenario.comparison.v1`. Never recompute a figure the payload already carries.",
+        "use_when": "the user expresses buy or sell INTENT that resolves to a concrete, editable order — including vague intent such as \"put ~$10k into semis, keep it diversified\". Propose legs through `draft_order`; the impact (weights, cash, shares) is always shown so the consequences are visible before anything is confirmed, and the backend recomputes it on every edit."
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``order.ticket.v2``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "legs": {
+            "default": "NVDA:3,AVGO:2,AMD:14",
+            "description": "The legs of the draft as `TICKER:SHARES` pairs separated by commas, one to five of them, whole shares, each ticker from the market reference and named once. Every rendered leg carries the value a `+` or `-` sends back, so a stepper edit is this option re-sent with one number moved.",
+            "examples": [
+              "NVDA:3,AVGO:2,AMD:14",
+              "NVDA:4,AVGO:2,AMD:14"
+            ],
+            "maxLength": 89,
+            "pattern": "^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$",
+            "title": "Legs",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "side": {
+            "default": "buy",
+            "description": "Which way every leg goes. A `buy` draws on the portfolio's cash and is blocked when it would exceed it; a `sell` raises cash.",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "examples": [
+              "buy"
+            ],
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "title": "OrderTicketV2Options",
+        "type": "object"
+      },
+      "payload_type": "OrderTicketV2Payload",
+      "summary": "Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.",
+      "view": "order.ticket.v2"
+    },
+    {
+      "actions": [],
       "component": "RiskPayoffChart",
       "digest": "7066577b5390",
       "endpoints": [

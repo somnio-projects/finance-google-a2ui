@@ -48,6 +48,7 @@ DESIGN_CATALOG: Final[dict[str, str]] = {
     "holdings.allocation.v1": "HoldingsSummary",
     # Page now exported and it changed nothing: every rendering agrees.
     "order.ticket.v1": "OrderTicket",
+    "order.ticket.v2": "MultiLegOrderTicket",  # v1 holds the name (0031 OD-1)
     # Page now exported: Zone 2 + breadcrumb + badge. Index: `PayoffChart`.
     "payoff.curve.v1": "RiskPayoffChart",
     # Zone 2 + breadcrumb + fragment; the index card says `ComparisonCard`.

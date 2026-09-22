@@ -4,6 +4,7 @@ import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
+import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
@@ -94,6 +95,10 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
       GoRoute(
         path: AppRoutes.orderTicket,
         builder: (context, state) => const OrderTicketPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.orderTicketV2,
+        builder: (context, state) => const OrderTicketV2Page(),
       ),
     ],
   );

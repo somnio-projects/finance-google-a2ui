@@ -4,18 +4,14 @@ Split from `views.py` under the 150-line budget, along the seam that was
 already there: that module declares the endpoint's **envelope**, this declares
 the knobs a projection can be asked for.
 
-**Why this module exists at all.** GGU-41 added four projections, each with
-options of its own, and nothing extended the endpoint's query model — which
-carries `extra="forbid"`. So `GET /v1/views` advertised `symbol`, `quantity`,
-`lot_method`, `methods`, `side`, `size`, `size_in`, `range_pct` and `steps`,
-and `GET /v1/portfolios/{id}/views?view=…&symbol=NVDA` answered **422** for
-every one of them. Four of six projections were unreachable by the client
-path while the catalog promised them, and `POST /v1/view-renders` — which
-forwards options as a dict and lets the projection validate — served the
-identical request with a 201. The catalog and the endpoint were two
-declarations of one fact, and nothing compared them.
-
-`test_view_query_accepts_every_registered_option` is what compares them now.
+**Why this module exists at all.** GGU-41 added four projections with nine
+options between them and nothing extended this query model, which carries
+`extra="forbid"`: the catalog advertised `symbol`, `quantity`, `lot_method`,
+`methods`, `side`, `size`, `size_in`, `range_pct` and `steps` while
+`GET /v1/portfolios/{id}/views?view=…&symbol=NVDA` answered **422** for every
+one, and `POST /v1/view-renders` — which forwards a dict — served the same
+request with a 201. Two declarations of one fact, compared by nothing until
+`test_view_query_accepts_every_registered_option`.
 
 **What these bounds are, and are not.** They are "could any registered view
 accept this?", not "is this valid for the view you asked for". Several options
@@ -23,9 +19,10 @@ share a name with a different schema per view — `quantity`, `side`, `size`,
 `size_in`, `symbol` — so a flat model carries the union; the projection's own
 strict options model runs right after, and an out-of-range value is its 422.
 
-`symbol` is a pattern rather than the eight tickers of the market reference on
-purpose: enumerating them here would put the asset list in two places, and the
-projection already rejects a symbol it does not hold.
+`symbol` is a pattern, not the market reference's tickers: enumerating them
+here would put the asset list in two places, and the projection rejects one
+it does not hold. `legs` copies the domain's pattern for the same reason, and
+`test_order_ticket_v2_options` compares the two copies.
 """
 
 from typing import Annotated, Literal
@@ -34,19 +31,19 @@ from pydantic import BaseModel, Field
 
 #: Lot-selection strategies (`domain/lot_selection.py`).
 LotMethod = Literal["FIFO", "LIFO", "HIFO"]
-#: Periods the Home hero can be measured over (`presentation/summary_options.py`).
+#: Periods the Home hero is measured over; groupings of the allocation donut.
 Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
-#: Groupings of the allocation donut (`presentation/allocation_rows.py`).
 GroupBy = Literal["holding", "asset_class", "sector"]
 ActivityKind = Literal["all", "buy", "sell", "dividend", "deposit"]
-#: Which way an order goes.
+#: Which way an order goes, and what its `size` counts.
 Side = Literal["buy", "sell"]
-#: What an order's `size` counts.
 SizeIn = Literal["units", "usd"]
 #: A decimal string, never a float (ADR-E D-5).
 DECIMAL_PATTERN = r"^[0-9]{1,9}(\.[0-9]{1,8})?$"
 #: A ticker of the market reference; membership is the projection's to enforce.
 TICKER_PATTERN = r"^[A-Z]{2,10}$"
+#: `order.ticket.v2`'s legs, `TICKER:SHARES` pairs (`domain/draft_legs.py`).
+LEGS_PATTERN = r"^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$"
 
 
 class ProjectionOptions(BaseModel):
@@ -123,6 +120,9 @@ class ProjectionOptions(BaseModel):
         default=None,
         description="Whether the allocation card carries its total and gain block.",
         examples=[False],
+    )
+    legs: Annotated[str, Field(pattern=LEGS_PATTERN)] | None = Field(
+        default=None, description="`order.ticket.v2`: `TICKER:SHARES` pairs."
     )
     kind: ActivityKind | None = Field(
         default=None,
