@@ -5,6 +5,7 @@ import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_hero.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_snack.dart';
 import 'package:finance_app/theme/login_tokens.dart';
+import 'package:finance_app/theme/theme_toggle_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,14 +31,21 @@ class SignInView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: tokens.page,
         body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: maxWidth),
-              child: BlocBuilder<SignInBloc, SignInState>(
-                builder: (context, state) =>
-                    _Body(state: state, emailLink: emailLink),
+          child: Stack(
+            children: <Widget>[
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: maxWidth),
+                  child: BlocBuilder<SignInBloc, SignInState>(
+                    builder: (context, state) =>
+                        _Body(state: state, emailLink: emailLink),
+                  ),
+                ),
               ),
-            ),
+              // Both artboards exist; this is how a visitor reaches the other
+              // one before signing in (spec frontend/0010).
+              const Positioned(top: 8, right: 8, child: ThemeToggleButton()),
+            ],
           ),
         ),
       ),
