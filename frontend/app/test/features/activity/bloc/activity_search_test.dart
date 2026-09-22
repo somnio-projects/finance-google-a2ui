@@ -14,10 +14,17 @@ const Duration _debounce = Duration(milliseconds: 5);
 void main() {
   group('$ActivityBloc search', () {
     late ViewsRepository repository;
+    late List<Map<String, String>> calls;
 
     setUp(() {
       repository = _MockViewsRepository();
-      stubView(repository, ActivityBloc.timelineView, 'ActivityTimeline');
+      calls = <Map<String, String>>[];
+      stubView(
+        repository,
+        ActivityBloc.timelineView,
+        'ActivityTimeline',
+        onCall: calls.add,
+      );
     });
 
     ActivityBloc build() =>
@@ -31,7 +38,10 @@ void main() {
           ..add(const ActivityQueryChanged('n'))
           ..add(const ActivityQueryChanged('nv'))
           ..add(const ActivityQueryChanged('nvda'));
-        await Future<void>.delayed(_debounce * 4);
+        await awaitRequest(calls, <String, String>{
+          'kind': 'all',
+          'query': 'nvda',
+        });
       },
       verify: (_) => verify(
         () => repository.fetchPortfolioViews(
@@ -49,7 +59,10 @@ void main() {
         bloc
           ..add(const ActivityKindChanged('sell'))
           ..add(const ActivityQueryChanged('voo'));
-        await Future<void>.delayed(_debounce * 4);
+        await awaitRequest(calls, <String, String>{
+          'kind': 'sell',
+          'query': 'voo',
+        });
       },
       verify: (_) => verify(
         () => repository.fetchPortfolioViews(
@@ -65,9 +78,12 @@ void main() {
       build: build,
       act: (bloc) async {
         bloc.add(const ActivityQueryChanged('nvda'));
-        await Future<void>.delayed(_debounce * 4);
+        await awaitRequest(calls, <String, String>{
+          'kind': 'all',
+          'query': 'nvda',
+        });
         bloc.add(const ActivityQueryChanged(''));
-        await Future<void>.delayed(_debounce * 4);
+        await awaitRequest(calls, <String, String>{'kind': 'all'});
       },
       verify: (_) => verify(
         () => repository.fetchPortfolioViews(
@@ -99,6 +115,10 @@ void main() {
     test('a bloc closed mid-burst does not fire its timer', () async {
       final bloc = build()..add(const ActivityQueryChanged('nv'));
       await bloc.close();
+      // A wait for something that must NOT happen cannot be an
+      // `untilCalled`: it would hang until the test timed out. This
+      // one stays a delay, and a too-short delay here fails safe —
+      // it can only make the assertion easier to pass, never flaky.
       await Future<void>.delayed(_debounce * 4);
 
       verifyNever(
