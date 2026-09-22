@@ -232,10 +232,20 @@ directive`. Necessary and sufficient, with `'unsafe-eval'` absent.
    container at start — not at build — with `Cache-Control: no-store`; starting
    the container without `BACKEND_BASE_URL`, or with a value that is not a bare
    http(s) origin, exits non-zero with a message naming the variable.
-6. **AC-6** — `docker compose up --build` still starts Postgres and the backend
-   only; `docker compose --profile client up --build` additionally serves the
-   client on `http://localhost:3000`, an origin already in the backend's
-   `CORS_ALLOWED_ORIGINS`.
+6. **AC-6** *(restated 2026-09-22 — the profile is gone)* — the client comes
+   up on `http://localhost:3000`, an origin still in the root backend's
+   `CORS_ALLOWED_ORIGINS`, non-root and read-only, from **its own** compose
+   file: `docker compose -f client_flutter/docker-compose.yml up --build`,
+   under the project name `client-flutter`.
+
+   It used to be a `client` profile in the repository's root
+   `docker-compose.yml`. It was moved out when that file became the one local
+   stack for the app the repository is about — backend plus the A2UI client
+   (spec `frontend/0017`) — because a profile made `docker compose up` mean a
+   different set of services depending on which flag you remembered. Two
+   deployables with two gates and two pipelines (GGU-91) get two stacks. The
+   property this AC is about is unchanged; only the file that provides it
+   moved, and the root stack's backend is still what the browser calls.
 7. **AC-7** *(GGU-1's lane, not satisfied by this PR)* — the app fetches
    `/config.json` before its first API call and uses `backendBaseUrl`, falling
    back to the compiled-in constant only when the fetch fails. Listed as a gap
@@ -267,7 +277,7 @@ subject is a container, and the evidence is the container answering.
 | AC-3 | `curl -I http://localhost:3000/` and `grep` for `unsafe-eval` | PR body |
 | AC-4 | `curl -i .../health`; `docker ps` showing `(healthy)` | PR body |
 | AC-5 | `curl -i .../config.json` with two different `BACKEND_BASE_URL` values on the **same image id**; a `docker run` with the variable unset and one with a malformed value, both non-zero | PR body |
-| AC-6 | `docker compose config --services` with and without `--profile client` | PR body |
+| AC-6 | `docker compose -f client_flutter/docker-compose.yml config --services`, and `docker compose config --services` at the root showing it is **not** there | PR body |
 | AC-3 (renderer) | the page loaded in a real browser under the real header, console read for CSP violations | PR body (OD-3) |
 | AC-9 | `cd backend && make gate` | PR body |
 
@@ -292,7 +302,7 @@ down in §9 rather than left for a reader to notice.
   asserting the header set and the absence of `unsafe-eval`; **the page loaded
   headless with the console asserted empty of CSP violations** — the one check
   here that a header grep cannot stand in for, since a CSP can be present and
-  still break the app; **`docker compose --profile client up` and
+  still break the app; **`docker compose -f client_flutter/docker-compose.yml up` and
   `docker inspect` asserting `ReadonlyRootfs`/`SecurityOpt`**, which closes
   G-11 — and it can do this **without a secret on the runner**, by overlaying
   `services.backend.env_file: !reset null` so compose parses with no
