@@ -4179,3 +4179,38 @@ another agent's backend, which answered `local+f5a7da2` when the branch head
 was `b69f81a`. The GGU-93 check found a real wrong-build reading on its first
 outing after being written for exactly that.
 
+
+## 2026-09-22 — Three defects a reader found in one sitting
+
+`fix/client_navigation_and_alignment`, spec `frontend/0021`. None was caught
+by a gate, and each was a different kind of blind spot.
+
+What the run taught:
+
+- **Two `flex: 1`s split the row in half, and one of them did not want a
+  half.** `Expanded` and `Flexible` both default to a flex of 1, so a
+  "label grows, figures shrink" row was actually "each takes 50 %" — and the
+  loose one then sat at the *start* of its half. It reads as a column
+  drifting left. `crossAxisAlignment: end` is the natural first reach and
+  cannot work: the Column is already as wide as its widest child.
+  **Measure before fixing a layout.** Two `getRect` calls said what an hour
+  of reading the widget tree would not have: both blocks began at the same x
+  and ended at different ones, which is not "slightly off", it is not
+  right-aligned at all.
+- **`StatefulShellRoute` keeps a branch alive, so anything in
+  `BlocProvider.create` happens once per app run.** Delivering a route
+  parameter there works exactly once and then silently stops. The symptom —
+  "it opens the Assistant and does nothing" — points at the chip, the route
+  and the bloc before it points at widget-element reuse.
+- **A route placed outside the shell inherits none of the shell's
+  affordances, and that is easy to decide and easy to forget.** Putting the
+  catalog outside was right; nobody then asked what a reader does next. The
+  browser's back button hid it during development, which is the trap: a web
+  build has an escape hatch the app does not.
+- **`InkResponse` needs a `Material` ancestor.** Six existing tests went red
+  the moment one appeared on a `Container`-based bar — the suite catching a
+  framework requirement, which is what a widget suite is for.
+- **The reproduction is the deliverable.** The Assistant suite was written
+  against the old page first and failed with `All calls: … text: first`.
+  Without that line the fix would have been a plausible edit; with it, it is
+  a closed defect.

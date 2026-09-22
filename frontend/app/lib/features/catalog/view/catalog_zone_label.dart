@@ -22,7 +22,12 @@ class CatalogZoneLabel extends StatelessWidget {
     final tokens = CatalogTokens.of(context);
     return Row(
       children: <Widget>[
-        CatalogSubtag(label, color: tokens.accent),
+        // Flexible: the zone's own name is the part that may ellipsise. The
+        // rule beside it is already `Expanded` and collapses to nothing, so
+        // once it had, the fixed parts still exceeded a narrow row — which
+        // is what happened the moment these pages moved inside the shell
+        // and lost the tab bar's width (spec frontend/0021 OD-3).
+        Flexible(child: CatalogSubtag(label, color: tokens.accent)),
         const SizedBox(width: 8),
         Expanded(child: Container(height: 1, color: tokens.rule)),
         if (simulated) ...<Widget>[

@@ -29,6 +29,15 @@ abstract final class AppRoutes {
   /// One component's catalog page; [catalogViewParameter] carries the id.
   static const String catalogDetail = '/catalog/:$catalogViewParameter';
 
+  /// The catalog as a CHILD of the Home branch — the same location without
+  /// the leading slash, which is what `GoRoute` wants from a sub-route.
+  /// Nesting it there is what keeps the tab bar on screen inside the
+  /// documentation (spec frontend/0021 OD-3).
+  static const String catalogUnderHome = 'catalog';
+
+  /// A component's page as a child of the index, for the same reason.
+  static const String catalogDetailUnderIndex = ':$catalogViewParameter';
+
   /// The path parameter that names the view on a detail page.
   static const String catalogViewParameter = 'view';
 
