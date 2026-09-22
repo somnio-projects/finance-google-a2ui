@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Initialize the Firestore instance
         val db = FirebaseFirestore.getInstance("<database-name>")
-
+        
         setContent {
             MaterialTheme {
                 Text("Firestore initialized!")

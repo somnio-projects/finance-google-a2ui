@@ -142,8 +142,8 @@ query @redact { ... }  # Query result hidden but @check still runs
 Check database permissions before allowing mutation:
 
 ```graphql
-mutation UpdateMovie($id: UUID!, $title: String!)
-  @auth(level: USER)
+mutation UpdateMovie($id: UUID!, $title: String!) 
+  @auth(level: USER) 
   @transaction {
   # Step 1: Check user has permission
   query @redact {
@@ -162,7 +162,7 @@ mutation UpdateMovie($id: UUID!, $title: String!)
 
 ```graphql
 mutation MustDeleteMovie($id: UUID!) @auth(level: USER) @transaction {
-  movie_delete(id: $id)
+  movie_delete(id: $id) 
     @check(expr: "this != null", message: "Movie not found")
 }
 ```

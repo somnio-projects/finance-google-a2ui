@@ -11,7 +11,12 @@ Licensed under the Apache License, Version 2.0. See LICENSE.
 Third-party material
 --------------------------------------------------------------------------------
 
-No third-party source is vendored in this repository.
+The only third-party source vendored here is `.agents/skills/`: Firebase's
+own agent skills, installed with `npx skills add` and checked in so a clone
+builds with the same guidance. They are documentation for a tool, not code
+this project ships, and they carry their upstream terms.
+
+No third-party *application* source is vendored any more.
 
 Until 2026-09-22 a second Flutter app lived under `client_flutter/` and was
 derived from the "restaurant finder" sample in Google's genui repository

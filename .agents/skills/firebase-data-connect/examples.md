@@ -74,7 +74,7 @@ type Review @table @unique(fields: ["movie", "user"]) {
 # queries.gql
 
 # Public: List movies with filtering
-query ListMovies($genre: String, $minRating: Float, $limit: Int)
+query ListMovies($genre: String, $minRating: Float, $limit: Int) 
   @auth(level: PUBLIC) {
   movies(
     where: {
@@ -125,7 +125,7 @@ mutation UpsertUser($email: String!, $displayName: String) @auth(level: USER) {
 }
 
 # User: Add review (one per movie per user)
-mutation AddReview($movieId: UUID!, $rating: Int!, $text: String)
+mutation AddReview($movieId: UUID!, $rating: Int!, $text: String) 
   @auth(level: USER) {
   review_upsert(data: {
     movie: { id: $movieId },
@@ -327,12 +327,12 @@ mutation AddToCart($productId: UUID!, $quantity: Int!) @auth(level: USER) {
 }
 
 # User: Checkout (transactional)
-mutation Checkout($shippingAddress: String!)
-  @auth(level: USER)
+mutation Checkout($shippingAddress: String!) 
+  @auth(level: USER) 
   @transaction {
   # Query cart items
   query @redact {
-    cartItems(where: { user: { uid: { eq_expr: "auth.uid" }}})
+    cartItems(where: { user: { uid: { eq_expr: "auth.uid" }}}) 
       @check(expr: "this.size() > 0", message: "Cart is empty") {
       quantity
       product { id price }
@@ -418,8 +418,8 @@ query PublishedPosts @auth(level: PUBLIC) {
 }
 
 # Author+: Create post
-mutation CreatePost($title: String!, $content: String!)
-  @auth(level: USER)
+mutation CreatePost($title: String!, $content: String!) 
+  @auth(level: USER) 
   @transaction {
   # Check user is at least AUTHOR
   query @redact {
@@ -436,8 +436,8 @@ mutation CreatePost($title: String!, $content: String!)
 }
 
 # Editor+: Publish any post
-mutation PublishPost($id: UUID!)
-  @auth(level: USER)
+mutation PublishPost($id: UUID!) 
+  @auth(level: USER) 
   @transaction {
   query @redact {
     blogPermission(key: { user: { uid_expr: "auth.uid" }}) {
@@ -451,8 +451,8 @@ mutation PublishPost($id: UUID!)
 }
 
 # Admin: Grant role
-mutation GrantRole($userUid: String!, $role: UserRole!)
-  @auth(level: USER)
+mutation GrantRole($userUid: String!, $role: UserRole!) 
+  @auth(level: USER) 
   @transaction {
   query @redact {
     blogPermission(key: { user: { uid_expr: "auth.uid" }}) {
@@ -587,11 +587,11 @@ together.
 ```graphql
 mutation SafeTransfer($from: UUID!, $to: UUID!, $amount: Float!) @auth(level: USER) @transaction {
   deduct: _execute(
-    sql: "UPDATE account SET balance = balance - $2 WHERE id = $1",
+    sql: "UPDATE account SET balance = balance - $2 WHERE id = $1", 
     params: [$from, $amount]
   )
   add: _execute(
-    sql: "UPDATE account SET balance = balance + $2 WHERE id = $1",
+    sql: "UPDATE account SET balance = balance + $2 WHERE id = $1", 
     params: [$to, $amount]
   )
 }
@@ -610,20 +610,20 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 query GetNearbyActiveRestaurants($userLong: Float!, $userLat: Float!, $maxDistanceMeters: Float!) @auth(level: USER) {
   nearby: _select(
     sql: """
-      SELECT
-        id,
+      SELECT 
+        id, 
         name,
         tags,
         ST_Distance(
-          ST_MakePoint((metadata->>'longitude')::float, (metadata->>'latitude')::float)::geography,
+          ST_MakePoint((metadata->>'longitude')::float, (metadata->>'latitude')::float)::geography, 
           ST_MakePoint($1, $2)::geography
         ) as distance_meters
       FROM restaurant
       WHERE active = true
         AND metadata ? 'longitude' AND metadata ? 'latitude'
         AND ST_DWithin(
-          ST_MakePoint((metadata->>'longitude')::float, (metadata->>'latitude')::float)::geography,
-          ST_MakePoint($1, $2)::geography,
+          ST_MakePoint((metadata->>'longitude')::float, (metadata->>'latitude')::float)::geography, 
+          ST_MakePoint($1, $2)::geography, 
           $3
         )
       ORDER BY distance_meters ASC

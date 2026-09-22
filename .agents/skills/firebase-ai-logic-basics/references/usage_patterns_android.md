@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
         val ai = Firebase.ai
         // [AGENT] Replace with the latest model from https://firebase.google.com/docs/ai-logic/models.md.txt
         val model = ai.generativeModel("<latest_supported_model>")
-
+        
         lifecycleScope.launch {
             val response = model.generateContent("Hello Gemini!")
             setContent {

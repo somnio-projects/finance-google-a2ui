@@ -39,7 +39,7 @@ to upgrade their plan.
 This is the recommended flow for most users.
 
 1. Configure `firebase.json` with an `apphosting` block.
-
+   
    ```json
    {
      "apphosting": {

@@ -103,11 +103,11 @@ class AuthService {
         if (googleUser == null) return null; // Cancelled
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
+        
         final AuthCredential credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
         );
-
+        
         return await _auth.signInWithCredential(credential);
       }
     } catch (e) {

@@ -2,12 +2,17 @@
 #
 # The A2UI finance client (`frontend/`), built once and served as static files.
 #
-# Shape mirrors backend/Dockerfile and client_flutter/Dockerfile: a builder
+# Shape mirrors backend/Dockerfile, and mirrored client_flutter/Dockerfile: a builder
 # stage carrying the whole toolchain, a runtime stage carrying nothing but what
 # is served, both pinned by digest, non-root, read-only root filesystem
 # (enforced by docker-compose.yml), no-new-privileges, health check.
 #
-# Two of its decisions differ from client_flutter's, and both are deliberate.
+# Two of its decisions differed from client_flutter's, and both are deliberate.
+#
+# **`client_flutter/` no longer exists.** It was retired on 2026-09-22
+# (spec `specs/repo/0002-retire-the-client-flutter-app.md`). The comparisons
+# below are kept in the past tense because they record *why* these choices
+# are what they are; read them in the Git history, not in the tree.
 #
 # ---------------------------------------------------------------------------
 # Decision 1 — configuration is COMPILED IN, and this image is per-environment.
