@@ -6,8 +6,7 @@ catalog, the projection's A2UI adapter, the generated JSON snapshot and the
 generated Markdown contract — and until this file existed nothing compared
 them. Spec 0021 §1 predicted the consequence and named it: the backend emitted
 ``WaterfallChart`` and ``DonutChart`` while the design catalog drew the same
-two components under different names, and both halves were internally
-consistent, so both gates stayed green.
+two under other names, and both halves were consistent, so both gates stayed green.
 
 `.claude/rules/backend/testing.md`: **a property that spans two declarations
 gets a test comparing them.** This one spans four. ``DESIGN_CATALOG`` below is
