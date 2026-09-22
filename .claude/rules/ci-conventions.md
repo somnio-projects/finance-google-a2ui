@@ -60,29 +60,22 @@ build produces is checked in *and* re-rendered by the gate and diffed, and the
 check fails with the exact command that fixes it. A second such artefact copies
 that shape rather than relying on a reviewer remembering to look.
 
-**Client.** `dart format --set-exit-if-changed` and `dart analyze
---fatal-infos --fatal-warnings`, both **over `app/lib app/test e2e_test`,
-never a bare `.`**. `flutter pub get` unpacks plugin sources under
-`app/build/` — firebase_auth ships its own tests through Swift Package
-Manager — and those trees carry **their own `pubspec.yaml`**, which makes each
-of them a separate package root. That is why `analysis_options.yaml`'s
-`exclude: ["**/build/**"]` does **not** cover them (it only reaches inside our
-own package, and it is kept for the IDE) and why `dart format` cannot be
-fixed at all from config: it has no exclude flag. Passing the source
-directories is the only thing that holds for both, so both commands carry the
-same list and it is one decision. Symptom when this regresses: hundreds of
-foreign lints and reformatted files nobody wrote. Then the two grep gates
-(`tool/check_tokens.sh` — no colour literals outside `theme/`;
-`tool/check_config.sh` — no endpoint URLs outside `config/`), `flutter test
---coverage`, and `flutter build web --release`. The grep gates guard
-architecture rather than style, which is why they are gates and not review
-notes. The Flutter SDK is pinned in `client_flutter/.fvmrc` and **nowhere
-else** — `client-ci` reads that file and so does `client_flutter/Dockerfile`,
-which until 2026-09-22 carried `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc`
-pinning **3.47.3**. That is §5's third question (*under what does the command
-run?*) failing in a file the check was not reading, so `repo.gate-pairs` now
-reads Dockerfiles too: an app's Dockerfile may not name a Flutter version, and
-must be shown to `COPY` the pin in. Both halves are mutation-tested.
+**Client — retired 2026-09-22, and one ruling outlived it.** `client_flutter/`
+was the older of two Flutter apps. It had its own gate here (`dart.*`,
+`client.*`, `flutter.*`), its own two grep gates and its own workflow
+(`client-ci.yaml`). All of it was removed with the directory (spec
+`repo/0002`); `frontend/` is the only Flutter app this repository ships.
+
+What survives that deletion is §5's third question, because it was found in
+that app: `client_flutter/Dockerfile` carried `ARG FLUTTER_VERSION=3.47.5`
+beside a `.fvmrc` pinning **3.47.3**, so the image shipped a bundle compiled by
+an SDK the gate never proved the app against — *under what does the command
+run?* failing in a file the check was not reading. `repo.gate-pairs` therefore
+reads Dockerfiles: an app's Dockerfile may not name a Flutter version, and must
+be shown to `COPY` the pin in. Both halves are mutation-tested, `frontend/` is
+held to them today, and `pin_apps` in `scripts/check_gate_pairs.sh` stays a
+**list** of apps rather than the word `frontend`, so a second app arriving is
+one word rather than a rewrite of the rule.
 
 **Frontend.** `cd frontend && make gate`, opening with `toolchain` for the
 reason §5 records, and carrying two suites a runner cannot exercise any other
@@ -122,27 +115,34 @@ repository-wide one is not, on purpose:
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
-| `client-ci` | pull requests | `client_flutter/**`, its own file | yes |
+| ~~`client-ci`~~ | — | `client_flutter/**` | **gone** — the app it gated was retired 2026-09-22 (spec `repo/0002`) |
 | `backend-cd` | **the button only** | — | yes |
 | `frontend-cd` | **the button only** | — | yes |
 
-**`client-ci` now exists, and the history is worth keeping.** This table once
-listed it as though it were one of the scoped workflows, with no marker, from
-before `frontend-ci` was written — while nothing covered `client_flutter/**`.
-Its container, its nginx CSP template and `docker/entrypoint.sh` — which
-validates an origin and substitutes it into `connect-src` — were built, linted
-and scanned by nothing, while this file asserted a pipeline. That was corrected
-to say **no**, and GGU-1 (PR #26/#30) has since written it, so the row says
-**yes** again — this time because the file is there.
+**`client-ci`'s row went yes → no → yes → gone, and the history is the
+lesson.** The table once listed it as though it were one of the scoped
+workflows, with no marker, from before `frontend-ci` was written — while
+nothing covered `client_flutter/**`. Its container, its nginx CSP template and
+`docker/entrypoint.sh` — which validates an origin and substitutes it into
+`connect-src` — were built, linted and scanned by nothing, while this file
+asserted a pipeline. That was corrected to say **no**; GGU-1 (PR #26/#30) then
+wrote the workflow, so the row said **yes** again, this time because the file
+was there. On 2026-09-22 the app itself was retired and the workflow deleted
+with it, so the row is struck through rather than removed.
 
 **A row in this table is a claim about the repository, and a claim gets a truth
-value.** The rule that survives is not "client-ci exists"; it is that the row
-had to be walked back once, and the way to keep it honest is to change it in
-the same pull request that changes the workflow directory.
+value.** The rule that survives is not "client-ci exists" and not "client-ci is
+gone"; it is that the row has to be walked to whatever is true **in the same
+pull request that changes the workflow directory**. It has been walked three
+times now, in both directions, and every one of those changes was a file being
+added or deleted one directory away from this sentence.
 
-`frontend-ci` and `client-ci` are two pipelines over two Flutter apps, which is
-the table working, not a duplication: they are separate deployables with
-separate gates, and a change to one must not pay for the other's build.
+The struck-through row is kept for one more reason: it is the only place that
+records that this repository once ran **two** pipelines over **two** Flutter
+apps, which was the table working rather than a duplication. Two separate
+deployables get two gates, and a change to one must never pay for the other's
+build. If a second Flutter app ever returns, it gets its own row, not a job
+bolted onto `frontend-ci`.
 
 A new stack gets its own `<area>-ci.yaml` with its own `paths:`. Adding jobs to
 an existing workflow so that "everything runs together" is the thing this table
@@ -165,15 +165,21 @@ the button appear.
 
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done. It has **five** parts —
-it said three until `repo.*` and `frontend.*` arrived and nobody updated the
-sentence, which is this rule's own failure mode in miniature — each with a
-runner and a workflow that must stay identical to it:
+`.claude/ship-gate.json` is the Definition of Done. It has **four** parts,
+each with a runner and a workflow that must stay identical to it.
+
+**The count in that sentence has been wrong twice, in both directions, which
+is this rule's own failure mode in miniature.** It said three until `repo.*`
+and `frontend.*` arrived and nobody updated it; it then said five after the
+`dart.*` / `client.*` / `flutter.*` part left with `client_flutter/`
+(2026-09-22, spec `repo/0002`). `ship-gate.json`'s own `_note` was the other
+half of the same defect — it still opened with "in three parts" while this
+sentence said five. **Adding or removing a part means editing the number here,
+the row below, and that `_note`, in the same commit.**
 
 | Part | Runner | Workflow | Also in |
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
-| `dart.*` · `client.*` · `flutter.*` | the entries themselves, from `client_flutter/` and `client_flutter/app/` — there is no client Makefile | `client-ci.yaml` | pre-commit (format, analyze, grep gates, tests) + pre-push (the web build) |
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
@@ -264,7 +270,10 @@ scripts this repository ships in containers were outside it. Pointing
 shellcheck at them for the first time, on 2026-09-20, found a finding in each
 (SC2086 in `backend/docker/entrypoint.sh`, SC2016 in
 `client_flutter/docker/entrypoint.sh` — both deliberate constructs that now
-carry justified `disable` directives). The same was true of gitleaks in the
+carry justified `disable` directives). That second file went with its app on
+2026-09-22; `scripts/check_shell.sh` asserts `frontend/docker/entrypoint.sh`
+by name in its place, because an assertion over a file that no longer exists
+passes for the wrong reason. The same was true of gitleaks in the
 other direction: it sat in `backend-ci`, matched its documentation, and could
 not see a client-only pull request.
 

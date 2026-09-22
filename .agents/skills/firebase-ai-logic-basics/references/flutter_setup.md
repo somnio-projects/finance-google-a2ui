@@ -77,7 +77,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 Future<String> generateText(String prompt) async {
   final googleAI = FirebaseAI.googleAI(auth: FirebaseAuth.instance);
-  
+
   // [AGENT] Replace '<latest_supported_model>' with the latest model from https://firebase.google.com/docs/ai-logic/models.md.txt
   final model = googleAI.generativeModel(model: '<latest_supported_model>');
 

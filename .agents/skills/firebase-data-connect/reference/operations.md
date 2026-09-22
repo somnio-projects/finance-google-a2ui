@@ -330,8 +330,8 @@ ______________________________________________________________________
 Ensures atomicity - all steps succeed or all rollback:
 
 ```graphql
-mutation CreateUserWithProfile($name: String!, $bio: String!) 
-  @auth(level: USER) 
+mutation CreateUserWithProfile($name: String!, $bio: String!)
+  @auth(level: USER)
   @transaction {
   # Step 1: Create user
   user_insert(data: {
@@ -351,8 +351,8 @@ mutation CreateUserWithProfile($name: String!, $bio: String!)
 Access results from previous steps:
 
 ```graphql
-mutation CreateTodoWithItem($listName: String!, $itemText: String!) 
-  @auth(level: USER) 
+mutation CreateTodoWithItem($listName: String!, $itemText: String!)
+  @auth(level: USER)
   @transaction {
   todoList_insert(data: {
     id_expr: "uuidV4()",

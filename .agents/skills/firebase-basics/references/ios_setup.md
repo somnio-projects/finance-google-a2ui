@@ -81,7 +81,7 @@ struct YourApp: App {
   init() {
     // ✅ SAFE: This runs FIRST
     FirebaseApp.configure()
-    
+
     // ✅ SAFE: Initialize state ONLY AFTER Firebase is configured
     _authManager = State(initialValue: AuthManager())
   }

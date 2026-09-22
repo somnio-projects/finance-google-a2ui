@@ -11,19 +11,19 @@ Licensed under the Apache License, Version 2.0. See LICENSE.
 Third-party material
 --------------------------------------------------------------------------------
 
-The Flutter client under client_flutter/ originates from the "restaurant
-finder" sample in Google's genui repository, which is also licensed under the
-Apache License, Version 2.0:
+No third-party source is vendored in this repository.
 
-    Copyright 2024 Google LLC
+Until 2026-09-22 a second Flutter app lived under `client_flutter/` and was
+derived from the "restaurant finder" sample in Google's genui repository
+(Copyright 2024 Google LLC, Apache 2.0). That app has been removed in full
+(spec `specs/repo/0002-retire-the-client-flutter-app.md`). The A2UI client in
+`frontend/` was written from scratch and derives nothing from that sample: it
+carries no Google copyright headers and does not depend on the genui packages
+(`genui`, `genui_a2a`, `a2ui_core`) — a decision recorded in
+`specs/frontend/0002-a2ui-agent-path.md` OD-1, because this service streams
+render intents rather than A2UI component trees. The attribution above is
+therefore retired with the code it covered; the Git history keeps it, as the
+licence expects.
 
-Files derived from that sample keep their original Apache 2.0 headers and the
-Google copyright line, as the licence requires. As of this release the client
-is still substantially the upstream sample; it is being replaced with the
-finance catalog under Epic 1 (GGU-7), and headers on files rewritten from
-scratch carry the Somnio copyright instead.
-
-The client depends on the genui packages (genui, genui_a2a, a2ui_core)
-published by Google, and the backend speaks the A2A protocol. Those are
-dependencies and protocol implementations, not vendored source, and are
-governed by their own licences.
+The backend speaks Google's A2A protocol. A protocol implementation is not
+vendored source and is governed by its own dependencies' licences.

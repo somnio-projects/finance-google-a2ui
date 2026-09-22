@@ -7,9 +7,11 @@ transforms nothing. Read the root `CLAUDE.md` first; the decisions behind this
 layout are [ADR-L](../docs/adr/ADR-L-client-architecture.md) and the spec is
 [`specs/frontend/0001-frontend-skeleton.md`](../specs/frontend/0001-frontend-skeleton.md).
 
-> Not to be confused with `client_flutter/`, a separate, older app owned by
-> another developer. The two share no code and no pipeline. Do not edit it from
-> here.
+> This is the **only** Flutter app in the repository. A second one,
+> `client_flutter/`, existed until 2026-09-22 and was retired in full (spec
+> [`repo/0002`](../specs/repo/0002-retire-the-client-flutter-app.md)). It
+> shared no code with this one; references to it below are history, kept
+> because they are the reasons some of these decisions look the way they do.
 
 ## Run
 
@@ -119,10 +121,12 @@ Three things about it are easy to get wrong and are enforced:
   through `docker/flutter-sdk-checksums.json`. `scripts/check_gate_pairs.sh`
   rule 3 fails a Dockerfile that names a version, or one that does not `COPY`
   the pin in. It exists because `client_flutter/Dockerfile` had drifted exactly
-  that way (spec 0017 OD-7).
+  that way (spec 0017 OD-7) — that app is gone, the rule is not, and this
+  Dockerfile is what it holds today.
 - **Configuration is compiled in, so the image is per environment** — the
-  opposite of `client_flutter`'s Decision 1, because this app's deployable is a
-  static Hosting release with no process to render `/config.json`. What
+  opposite of what `client_flutter` decided (its Dockerfile's Decision 1),
+  because this app's deployable is a static Hosting release with no process to
+  render `/config.json`. What
   replaces artifact identity is verification after the fact: `/release.json`,
   read back off the origin by the pipeline that published it.
 

@@ -62,16 +62,19 @@ flowchart LR
 
 **What this diagram does not draw.** `q`, `t`, `s` and `img` are `backend-ci`.
 `frontend-ci` runs beside them on a `frontend/**` pull request — quality, tests
-and a release web build — and `client-ci` on a `client_flutter/**` one; neither
-is drawn here. Said rather than left implied: a reader should not take this as
-the whole set of pipelines.
+and a release web build — and `repo-ci` on every pull request whatever it
+touches; neither is drawn here. Said rather than left implied: a reader should
+not take this as the whole set of pipelines.
 
-> This paragraph said *"`client-ci` does not exist at all"*, and it was true
-> when it was written and false by the time anyone read it — GGU-1 (PRs #26 and
-> #30) wrote that workflow. A sentence asserting the absence of a file is a
-> claim with a truth value, and it has to be re-read whenever that file's
-> directory changes. `.claude/rules/ci-conventions.md` §4b keeps the same table
-> honest and records the same lesson, having been walked back once itself.
+> This paragraph has been wrong about `client-ci` twice, in both directions. It
+> said *"`client-ci` does not exist at all"*, which was true when written and
+> false by the time anyone read it — GGU-1 (PRs #26 and #30) wrote that
+> workflow. It then named it as a live pipeline until 2026-09-22, when
+> `client_flutter/` was retired and the workflow deleted (spec `repo/0002`). A
+> sentence asserting the presence **or** the absence of a file is a claim with
+> a truth value, and it has to be re-read whenever that file's directory
+> changes. `.claude/rules/ci-conventions.md` §4b keeps the same table honest
+> and records the same lesson, having been walked back twice itself.
 
 **The `cd` box is the backend's.** The A2UI client has one too — `frontend-cd`,
 a button, gate-first, publishing to Firebase Hosting — and it is drawn on its

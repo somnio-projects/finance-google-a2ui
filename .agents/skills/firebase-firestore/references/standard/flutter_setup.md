@@ -44,8 +44,8 @@ class Item {
       id: doc.id,
       name: data['name'] as String? ?? '',
       ownerId: data['ownerId'] as String? ?? '',
-      createdAt: data['createdAt'] is Timestamp 
-          ? (data['createdAt'] as Timestamp).toDate() 
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
     );
   }

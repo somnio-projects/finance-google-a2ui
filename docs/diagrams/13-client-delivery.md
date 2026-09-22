@@ -42,6 +42,8 @@ flowchart LR
 ```
 
 **What this diagram does not draw.** The gate itself — that is `frontend-ci`,
-drawn as part of [09](09-delivery-pipeline.md). Nor the older
-`client_flutter/` app, which has a CI pipeline (`client-ci`) and **no** CD:
-where it is hosted is still open (spec `client/0002` OD-1).
+drawn as part of [09](09-delivery-pipeline.md). It used to mention a second
+Flutter app, `client_flutter/`, which had CI and **no** CD because where it
+would be hosted was never decided (spec `client/0002` OD-1); that app was
+retired on 2026-09-22 (spec `repo/0002`), so this is the only client delivery
+path there is.

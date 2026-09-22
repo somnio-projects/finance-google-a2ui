@@ -4255,3 +4255,77 @@ What the run taught:
   against the old page first and failed with `All calls: … text: first`.
   Without that line the fix would have been a plausible edit; with it, it is
   a closed defect.
+
+---
+
+## 2026-09-22 — `client_flutter/` is retired, and the README says what is true
+
+**Spec.** `specs/repo/0002-retire-the-client-flutter-app.md` (TL request, no
+ticket). Two coupled tasks in one PR, coupled because the README documented the
+directory being deleted.
+
+**Code.** There is none. 117 tracked files under `client_flutter/` are gone,
+with `.github/workflows/client-ci.yaml`, the six `dart.*` / `client.*` /
+`flutter.*` entries in `.claude/ship-gate.json`, seven `client-*` pre-commit
+hooks, the `/client_flutter` Dependabot entry and
+`docs/diagrams/11-client-architecture.md`.
+
+**Harness.** Four rules under `.claude/rules/client/` deleted with their rows
+in the root `CLAUDE.md` index (`infra.rules-index` proves both halves moved
+together). `.claude/rules/ci-conventions.md` §4, §4b and §5 rewritten:
+`client-ci`'s row is **struck through, not removed**, because its history —
+yes → no → yes → gone — is the lesson that a row in that table is a claim with
+a truth value. `scripts/check_gate_pairs.sh` keeps `pin_apps` as a **list**
+with one entry, so a second Flutter app is one word rather than a rewrite.
+
+**The count was wrong in both files, in opposite directions.**
+`ci-conventions.md` §5 opened with "It has **five** parts" while
+`ship-gate.json`'s own `_note` opened with "in three parts" — the drift defect
+§5 exists to prevent, sitting in the two files that define it. Both now say
+**four**, and both say that removing a part means editing the number in both
+places plus the root `CLAUDE.md`.
+
+**A gate was found toothless, by a mutation the spec promised.**
+`scripts/check_shell.sh` asserts two container entry points by name, behind
+`[ -f "$required" ] || continue` — commented *"the tree is allowed to lose a
+file; it is not allowed to skip one"*, which reads as prudence and is
+vacuity. Measured: `git mv`-ing `frontend/docker/entrypoint.sh` away left the
+check **green**, reporting the same "19 scripts linted". A name that does not
+resolve is now a failure with the fix in the message. This is the fifth
+instance of §5's defect class and the second in a check's *subject* rather
+than its command string.
+
+**Superseded, not erased.** `specs/client/0001` and `0002` carry
+`Superseded by repo/0002` banners and stay in place; `client/0003` (the
+backend contract) is explicitly **left live**, because its subject is the
+server, `frontend/` binds it, and `specs/frontend/0002` OD-1 quotes its §8.3.
+ADR-I is `Superseded by ADR-L` — its D-3 outlived the app and ADR-L D-5
+restates it. ADR-H D-2 and D-6 are struck in place. Diagram 11 is the one
+outright **deletion** of a shipped artefact, argued in the spec §4: a diagram
+has no superseded form, and its number is retired rather than reused.
+
+**README.** Rewritten. Five claims it made were false on the day they were
+read — "under construction", "no end-to-end demo to run today", "Flutter
+client: upstream Google sample, unmodified", "delivery pipeline: never run",
+"A2A transport: not built". Every replacement was measured rather than
+assumed: `https://finance-a2ui.web.app/release.json` and the dev API's
+`/health` both answered `0.1.0+44968fd`, which is `develop`'s head, so both
+pipelines have demonstrably run and are current. The simulated-data honesty
+survives — that part was never wrong. Two claims in the brief were checked and
+**declined**: the agent does not reach Gemini over A2A (it calls
+`generateContent` over REST; A2A/SSE is the *client → backend* leg), and
+`make token` prints a raw JWT, not a curl line.
+
+**What the next person should know.** Two pre-existing failures surfaced
+while running `pre-commit run --all-files` and are **not** from this branch:
+
+- **`repo.spelling`'s two halves run different codespell versions.** The
+  pre-commit hook pins `v2.3.0`, `make gate` resolves `2.4.3` from
+  `backend/uv.lock`. 2.4.3 honours `socio` in `.codespellrc` for the
+  hyphenated `socio-economic`; 2.3.0 does not, so `CODE_OF_CONDUCT.md:7` fails
+  the hook and passes the gate. That is §5's **third** question — *under what
+  does the command run?* — in the spelling check itself, and it is the same
+  shape as GGU-94's Dart pin: a version pinned in one half only.
+- The `ruff` pre-commit hook reports `F811` in
+  `backend/tests/unit/agent/tools/test_holdings_arguments.py` while
+  `cd backend && make gate` is green.

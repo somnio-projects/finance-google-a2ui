@@ -116,8 +116,8 @@ Use these root fields in `query` or `mutation` operations:
   mutation UpdateMyReview($movieId: UUID!, $text: String!) @auth(level: USER) {
     updatedReview: _executeReturningFirst(
       sql: """
-        UPDATE review SET text = $2 
-        WHERE movie_id = $1 AND user_id = $3 
+        UPDATE review SET text = $2
+        WHERE movie_id = $1 AND user_id = $3
         RETURNING id, text
       """,
       params: [$movieId, $text, {_expr: "auth.uid"}]

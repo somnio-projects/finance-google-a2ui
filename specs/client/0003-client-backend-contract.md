@@ -6,6 +6,17 @@
 - **ADRs:** [ADR-K](../../docs/adr/ADR-K-response-shaping.md) (response shaping — the constraint this whole document hangs on), [ADR-J](../../docs/adr/ADR-J-rest-api-and-a2a-surface.md) (two surfaces), [ADR-E](../../docs/adr/ADR-E-money-representation.md) (money), [ADR-B](../../docs/adr/ADR-B-auth-credential-contract.md) (credential), [ADR-D](../../docs/adr/ADR-D-a2ui-streaming-transport.md) (streaming), [ADR-A](../../docs/adr/ADR-A-session-identity.md) (session identity)
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-20
 
+> **Still live, and deliberately not superseded (2026-09-22).** This spec was
+> written when two Flutter apps bound this contract. `client_flutter/` was
+> retired by [`repo/0002`](../repo/0002-retire-the-client-flutter-app.md), and
+> its two specs — [client/0001](0001-client-foundation.md) and
+> [client/0002](0002-client-delivery.md) — went `Superseded` with it. **This
+> one did not**, because its subject is the *backend's* contract, not that
+> app: `frontend/` binds it today, [ADR-L](../../docs/adr/ADR-L-client-architecture.md)
+> cites it, and `specs/frontend/0002` §OD-1 argues against `genui` by quoting
+> its §8.3. Where the text below says `client_flutter/`, read it as history —
+> the sentences about what the backend answers are unaffected.
+
 > **Every response body, header and event in this document was captured from a
 > running stack** (`docker compose up`, `AUTH_PROVIDER=jwt`, seeded portfolio,
 > `as_of` 2026-09-20T19:00:21Z) on 2026-09-20, not transcribed from types. The
@@ -39,7 +50,7 @@ two error shapes, and the prohibitions. Numbered ACs a client PR can cite.
 **Out.**
 - Flutter architecture, state management, file budget, test rules — [client/0001](0001-client-foundation.md).
 - The client container, hosting and `BACKEND_BASE_URL` — [client/0002](0002-client-delivery.md).
-- Anything under `client_flutter/app/`, `.github/workflows/client-ci.yaml` and the Flutter half of `.claude/ship-gate.json` — GGU-1 owns them (Timur's PRs #26 and #30).
+- ~~Anything under `client_flutter/app/`, `.github/workflows/client-ci.yaml` and the Flutter half of `.claude/ship-gate.json` — GGU-1 owns them (Timur's PRs #26 and #30).~~ All three were deleted on 2026-09-22 (spec `repo/0002`). The equivalent exclusion today: anything under `frontend/app/`, `frontend-ci.yaml` and the `frontend.*` half of the gate, which [ADR-L](../../docs/adr/ADR-L-client-architecture.md) and `.claude/rules/frontend/` own.
 - Session persistence across turns. The A2A adapter echoes `contextId` but loads **no history** (`a2a_service.py` says so in its own docstring): every turn starts empty. `POST /v1/sessions` and `/v1/sessions/{id}/messages` exist and are listed in §3, but nothing wires them into a turn yet. **The client must not assume the agent remembers the previous message.**
 
 ## 3. The two surfaces, and the seventeen operations

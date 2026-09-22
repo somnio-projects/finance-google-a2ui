@@ -5,8 +5,10 @@ shapes every payload; this app **binds what it receives** and transforms
 nothing — no formatting, no arithmetic, no re-ordering
 ([ADR-K](../docs/adr/ADR-K-response-shaping.md)).
 
-> A second Flutter app, `client_flutter/`, also lives in this repository. The
-> two share no code, no pipeline and no specs. This one is GGU-91.
+> This is the only Flutter app in the repository. A second one,
+> `client_flutter/`, lived here until 2026-09-22 and was retired in full (spec
+> [`repo/0002`](../specs/repo/0002-retire-the-client-flutter-app.md)); the two
+> shared no code, no pipeline and no specs. This one is GGU-91.
 
 ## Quick start
 
@@ -63,8 +65,9 @@ The client is then on **http://localhost:3001**, under the one compose project
 `up`, not behind a profile. To skip its build, name the other services:
 `docker compose up db backend`.
 
-The image is **per environment**, unlike `client_flutter`'s, and the reason is
-in `Dockerfile` Decision 1: this app's deployable is a static Hosting release,
+The image is **per environment** — unlike the retired `client_flutter`'s, whose
+container rendered a `/config.json` at start — and the reason is in
+`Dockerfile` Decision 1: this app's deployable is a static Hosting release,
 which has no process to render a `/config.json` at start. The default build
 args are the local stack — the backend on `:8000`, and **no** Firebase, so the
 Google button says it is not configured and the e-mail path is the backend's

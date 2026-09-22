@@ -11,8 +11,11 @@
 summary, a description naming its spec, a snake_case `operation_id`, a
 registered tag, a `response_model`, **every** status it can answer, request and
 response examples, and a description on every schema and every field. It is the
-contract a client is generated from: `client_flutter/` and `frontend/` are both
-written against `/openapi.json`.
+contract a client is generated from: `client_flutter/` and `frontend/` were
+both written against `/openapi.json` when this spec was written. `frontend/` is
+the only one now — `client_flutter/` was retired on 2026-09-22 (spec
+`repo/0002`) — which does not weaken the argument: an open-source reader
+generating a client from this document is the case the spec is really about.
 
 Nothing proved it. `tests/unit/api/test_openapi_contract.py` proved a useful
 subset — a summary exists, a description is over forty characters, an operation
@@ -79,7 +82,7 @@ after twenty-three routes.
 - **The `PUBLIC` set in `test_openapi_contract.py`.** It stays: a route joining
   the public set is a security decision and should need a person to write it
   down, which is a different question from whether the document is complete.
-- `client-ci` and the Flutter clients. Nothing here regenerates a client.
+- The Flutter client's pipeline. Nothing here regenerates a client. (This line also named `client-ci`, retired with its app on 2026-09-22.)
 
 ## 3. What ships
 

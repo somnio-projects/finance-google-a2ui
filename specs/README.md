@@ -14,13 +14,19 @@ specs/
 ├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
 ├── infra/             NNNN-<topic>.md   — Google Cloud infrastructure (infra/) and the delivery pipeline
 ├── repo/              NNNN-<topic>.md   — repository-level work: licensing, docs, hygiene
-├── client/            NNNN-<feature>.md — the client_flutter/ app and the backend contract both apps bind
+├── client/            NNNN-<topic>.md   — CLOSED. See below
 └── frontend/          NNNN-<feature>.md — the A2UI client (frontend/)
 ```
 
 One area per solution folder, so `frontend/`'s specs are found where its code
-is. `client/` keeps the specs that are not one app's — chiefly
-`0003-client-backend-contract.md`, which both Flutter apps bind.
+is.
+
+**`client/` is a closed area: no new spec goes there.** It held the specs for
+`client_flutter/`, the older of two Flutter apps, which was retired on
+2026-09-22 by [`repo/0002`](repo/0002-retire-the-client-flutter-app.md).
+`0001` and `0002` are `Superseded` and kept in place; `0003-client-backend-contract.md`
+is **still live** — its subject is the backend's contract rather than that
+app, and `frontend/` binds it. A new client spec goes in `frontend/`.
 
 Numbers are per area, zero-padded, never reused. The filename is stable once
 merged; a replaced spec is marked `Superseded by NNNN` and kept.
@@ -99,11 +105,12 @@ duplicated one are both visible at a glance.
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |
 | [frontend/0018-the-tabs-search-and-filter-for-real.md](frontend/0018-the-tabs-search-and-filter-for-real.md) | Draft | *unassigned* |
-| [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
-| [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
-| [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |
+| [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
+| [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
+| [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |
 | [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [infra/0002-firebase-sign-in-on-dev.md](infra/0002-firebase-sign-in-on-dev.md) | In progress | *unassigned* |
 | [infra/0003-the-migrate-job-runs-the-released-image.md](infra/0003-the-migrate-job-runs-the-released-image.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
+| [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |
