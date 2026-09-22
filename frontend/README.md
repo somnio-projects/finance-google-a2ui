@@ -18,13 +18,25 @@ flutter pub get --enforce-lockfile        # never plain `pub get` — it re-reso
 docker compose up --build                 # Postgres + backend on :8000
 
 cd app && flutter run -d chrome \
-  --dart-define=BACKEND_BASE_URL=http://localhost:8000 \
-  --dart-define=BACKEND_DEV_TOKEN=<a token from `cd backend && make token`>
+  --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
 
-`BACKEND_DEV_TOKEN` is for local development only and is a recorded gap
-([`SECURITY.md`](SECURITY.md) G-1): a `--dart-define` is compiled into the
-bundle, so it must never carry a credential for a deployed environment.
+Sign in with **`demo@somnio.dev`** on the e-mail path: the local stack has no
+Firebase, so the backend's preview sign-in answers it for a provisioned
+e-mail (spec `backend/0027` OD-3; `docker-compose.yml` provisions that one at
+boot). To sign in through Firebase — Google or an e-mail link — pass its
+**public** web config, which is not a credential (ADR-B D-10):
+
+```bash
+  --dart-define=FIREBASE_API_KEY=… --dart-define=FIREBASE_APP_ID=… \
+  --dart-define=FIREBASE_PROJECT_ID=finance-a2ui \
+  --dart-define=FIREBASE_AUTH_DOMAIN=finance-a2ui.firebaseapp.com \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID=…
+```
+
+There is no development token any more ([`SECURITY.md`](SECURITY.md) G-1,
+closed): whoever signs in is whoever the backend's provisioning registry
+says may.
 
 ## Verify
 

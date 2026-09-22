@@ -18,10 +18,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   equatable: ^3.0.0
   finance_api_client: ^0.1.0
+  # Who is signed in and whether they were invited (spec frontend/0008).
+  finance_auth: ^0.1.0
   # The geometry half of every chart: scales and layouts, pure Dart.
   finance_charts: ^0.1.0
   finance_core: ^0.1.0
   finance_views_repository: ^0.1.0
+  firebase_auth: ^6.7.0
+  firebase_core: ^4.15.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1

@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/auth_fakes.dart';
 import '../helpers/fixtures.dart';
 
 class _MockViewsRepository extends Mock implements ViewsRepository;
@@ -35,6 +36,8 @@ void main() {
       buildApp(
         viewsRepository: repository,
         agentRepository: _MockAgentRepository(),
+        authRepository: fakeAuthRepository(),
+        gated: false,
       ),
     );
 

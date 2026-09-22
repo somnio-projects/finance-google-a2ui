@@ -14,20 +14,24 @@ from fastapi import APIRouter
 
 from app.api import a2a, agent_card
 from app.api.v1 import (
+    access,
     feature_flags,
     health,
     identity,
     portfolio_views,
     session_messages,
     sessions,
+    users,
     view_renders,
     views,
 )
 
 api_router = APIRouter()
 api_router.include_router(health.router)
+api_router.include_router(access.router)
 api_router.include_router(feature_flags.router)
 api_router.include_router(identity.router)
+api_router.include_router(users.router)
 api_router.include_router(portfolio_views.router)
 api_router.include_router(view_renders.router)
 api_router.include_router(views.router)

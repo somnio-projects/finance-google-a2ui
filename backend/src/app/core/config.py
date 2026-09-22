@@ -84,8 +84,10 @@ class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
     auth_jwt_secret: SecretStr | None = None
     auth_oidc_jwks_url: str | None = None
     auth_leeway_seconds: int = Field(default=30, ge=0, le=300)
-    # None = decide by environment (required in production, optional elsewhere)
-    auth_admin_require_mfa: bool | None = None
+    auth_admin_require_mfa: bool | None = None  # None = required in production only
+    auth_bootstrap_admins: CsvList = Field(default_factory=list)  # spec 0027
+    auth_preview_sign_in_enabled: bool = False
+    auth_preview_token_ttl_seconds: int = Field(default=28_800, ge=300, le=86_400)
 
     # --- agent host (spec 0006) -------------------------------------------
     # Unset key = NullModelClient, exactly as an unset SENTRY_DSN means the

@@ -1,38 +1,20 @@
+import 'package:finance_app/auth/auth_gate.dart';
 import 'package:finance_app/features/activity/view/activity_page.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
+import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
+import 'package:finance_app/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
+
+export 'package:finance_app/router/app_routes.dart';
 
 /// Every route path in the app, as constants.
 ///
 /// A path literal appears here and nowhere else, so a rename is one edit and
 /// a typo is a compile error rather than a blank screen.
-abstract final class AppRoutes {
-  /// The Home tab — the app's first screen (spec 0026).
-  static const String home = '/';
-
-  /// The Holdings tab. Today it is the catalog list; the design's position
-  /// list lands with its projection.
-  static const String portfolio = '/holdings';
-
-  /// The Activity tab.
-  static const String activity = '/activity';
-
-  /// The Assistant tab, where the agent answers in interfaces.
-  static const String conversation = '/ask';
-
-  /// The interactive order ticket.
-  ///
-  /// A surface of its own because its options must travel alone: the read
-  /// endpoint applies one flat option set to every view in a request, so the
-  /// ticket's `side` sent beside the portfolio's other views would 422 all of
-  /// them (N-7, spec `frontend/0006` OD-5). It sits outside the tab shell.
-  static const String orderTicket = '/order-ticket';
-}
-
 /// Builds the app's router.
 ///
 /// `go_router` is the choice, and it is a **deliberate departure from ADR-I**,
@@ -47,14 +29,14 @@ abstract final class AppRoutes {
 /// The four tabs are branches of one `StatefulShellRoute`, so each keeps its
 /// scroll position and state while the reader moves between them, which is
 /// what a tab bar promises (spec 0026).
-GoRouter buildRouter({String? initialLocation}) {
+GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
   return GoRouter(
     initialLocation: initialLocation ?? AppRoutes.home,
+    refreshListenable: gate,
     // The auth gate is a single `redirect`, not a check inside each screen
-    // (ADR-I D-3 still binds). It returns null today because this skeleton has
-    // no sign-in; when one lands it is this function that grows, and no
-    // feature route changes.
-    redirect: (context, state) => null,
+    // (ADR-I D-3). With no gate — the tests that pump one route — every path
+    // is open; with one, `AuthGate.redirectFor` is the whole decision.
+    redirect: (context, state) => gate?.redirectFor(state.matchedLocation),
     routes: <RouteBase>[
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -96,6 +78,10 @@ GoRouter buildRouter({String? initialLocation}) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.signIn,
+        builder: (context, state) => const SignInPage(),
       ),
       GoRoute(
         path: AppRoutes.orderTicket,

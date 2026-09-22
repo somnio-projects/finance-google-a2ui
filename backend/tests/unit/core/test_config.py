@@ -100,3 +100,10 @@ def test_settings_admin_mfa_required_follows_environment_unless_set(
 
 def test_settings_audit_retention_defaults_to_thirteen_months() -> None:
     assert make_settings().audit_retention_days == 400
+
+
+def test_provisioning_settings_default_to_closed() -> None:
+    settings = make_settings()
+    assert settings.auth_bootstrap_admins == []
+    assert settings.auth_preview_sign_in_enabled is False
+    assert settings.auth_preview_token_ttl_seconds == 28_800

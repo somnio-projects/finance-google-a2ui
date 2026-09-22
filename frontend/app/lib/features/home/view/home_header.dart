@@ -9,7 +9,10 @@ import 'package:flutter/material.dart';
 /// portfolio it is except by reading it.
 class HomeHeader extends StatelessWidget {
   /// Creates the header.
-  const HomeHeader({required this.payload, super.key});
+  const HomeHeader({required this.payload, this.onAccountTap, super.key});
+
+  /// Called when the avatar is tapped — the shell's one sign-out entry.
+  final VoidCallback? onAccountTap;
 
   /// `portfolio.summary.v1`.
   final ViewPayload payload;
@@ -23,20 +26,27 @@ class HomeHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
         child: Row(
           children: <Widget>[
-            Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: tokens.accent,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                payload.text('account.initial'),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+            Semantics(
+              button: true,
+              label: 'Account',
+              child: GestureDetector(
+                onTap: onAccountTap,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: tokens.accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    payload.text('account.initial'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),

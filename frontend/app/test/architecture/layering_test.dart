@@ -110,6 +110,8 @@ void main() {
             'ViewsRepository(',
             'A2aClient(',
             'AgentRepository(',
+            'AuthRepository(',
+            'AccessGateway(',
           ],
           allow: <String>{'app/lib/bootstrap.dart'},
         ),

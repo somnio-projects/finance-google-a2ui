@@ -7,6 +7,7 @@ library;
 
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/theme/app_theme.dart';
+import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,11 +34,13 @@ Future<void> pumpRouter(
   GoRouter router, {
   required ViewsRepository repository,
   ComponentRegistry? registry,
+  AuthRepository? auth,
 }) => tester.pumpWidget(
   MultiRepositoryProvider(
     providers: <RepositoryProvider<dynamic>>[
       RepositoryProvider<ViewsRepository>.value(value: repository),
       RepositoryProvider<AgentRepository>.value(value: MockAgentRepository()),
+      if (auth != null) RepositoryProvider<AuthRepository>.value(value: auth),
       RepositoryProvider<ComponentRegistry>.value(
         value: registry ?? ComponentRegistry(),
       ),

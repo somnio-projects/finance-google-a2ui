@@ -26,7 +26,14 @@ GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 #: path here is a security decision: it needs a note in the feature spec and
 #: the reviewer's sign-off, which is why the list is spelled out rather than
 #: inferred from whether a route happens to declare a 401.
-PUBLIC = {"/health", "/readyz", "/.well-known/agent-card.json"}
+PUBLIC = {
+    "/health",
+    "/readyz",
+    "/.well-known/agent-card.json",
+    # Spec 0027: a person who cannot sign in yet has no token to present.
+    "/v1/access-requests",
+    "/v1/preview-sign-ins",
+}
 
 
 def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
@@ -55,7 +62,7 @@ def test_every_operation_documents_its_error_responses(app: FastAPI) -> None:
     for path, method, operation in _operations(app):
         where = f"{method.upper()} {path}"
         statuses = {int(code) for code in operation["responses"] if code.isdigit()}
-        assert statuses & {200, 201, 204}, f"{where} documents no success response"
+        assert statuses & {200, 201, 202, 204}, f"{where} documents no success response"
         errors = {status for status in statuses if status >= 400}
         assert errors, f"{where} documents no error response"
         assert errors <= set(PROBLEM_DESCRIPTIONS), (

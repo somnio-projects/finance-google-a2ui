@@ -63,6 +63,13 @@ services:
       # (spec backend/0007 AC-5).
       APP_RELEASE: ${APP_RELEASE:-local}
       CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      # The local stack has no Firebase, so the sign-in screen's e-mail path
+      # is answered by the preview sign-in (spec 0027 OD-3) and the demo
+      # account is provisioned at boot. Both are honoured only under the
+      # `jwt` provider this stack runs; Terraform sets neither, so dev and
+      # production (oidc) answer 404 for the route.
+      AUTH_PREVIEW_SIGN_IN_ENABLED: ${AUTH_PREVIEW_SIGN_IN_ENABLED:-true}
+      AUTH_BOOTSTRAP_ADMINS: ${AUTH_BOOTSTRAP_ADMINS:-demo@somnio.dev}
       UVICORN_EXTRA_ARGS: --reload --reload-dir /app/src
     volumes:
       - ./backend/src:/app/src:ro       # hot reload; image keeps its own deps

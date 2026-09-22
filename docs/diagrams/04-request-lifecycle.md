@@ -29,6 +29,10 @@ sequenceDiagram
     AU-->>C: 401 problem+json if invalid
     AU->>SV: Principal (subject, scopes, amr, fingerprint)
     SV->>SV: authorize by scope (+ MFA for admin in prod)
+    %% Provisioning is a second question, asked by the client once per
+    %% session: GET /v1/me/access joins the token's email against `users`
+    %% (spec 0027) and answers `provisioned` as data — a valid token for an
+    %% uninvited person is 200 + false, never a 401.
     SV->>DB: one session per request (commit / rollback)
     SV->>DB: write audit event <domain>.<verb>
     SV->>CD: the DTO, on a read that revalidates

@@ -67,6 +67,10 @@ TAGS_METADATA: Final[list[dict[str, Any]]] = [
         ),
     },
     {
+        "name": "users",
+        "description": "The provisioning registry (spec 0027) — `admin` scope.",
+    },
+    {
         "name": "feature-flags",
         "description": (
             "Runtime switches for endpoints (spec 0002). Administrative: the "

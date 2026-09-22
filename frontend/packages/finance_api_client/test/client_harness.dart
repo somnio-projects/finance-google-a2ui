@@ -14,10 +14,12 @@ class ClientHarness {
   ClientHarness(
     Future<http.Response> Function(http.Request request) handler, {
     AuthTokenProvider tokenProvider = anonymousToken,
+    void Function()? onUnauthenticated,
   }) {
     client = FinanceApiClient(
       baseUrl: Uri.parse('http://localhost:8000'),
       tokenProvider: tokenProvider,
+      onUnauthenticated: onUnauthenticated,
       httpClient: MockClient((request) {
         sent.add(request);
         return handler(request);

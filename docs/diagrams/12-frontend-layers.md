@@ -27,6 +27,7 @@ graph TD
     agentrepo["AgentRepository<br/>AgentEvent union · reads to end of stream"]
     api["finance_api_client<br/><b>the only HTTP speaker</b>"]
     a2a["A2aClient + decodeEventStream<br/>JSON-RPC · SSE · three answer shapes"]
+    auth["finance_auth<br/>AuthRepository · IdentityProvider seam<br/>AccessGateway → /v1/me/access"]
     core["finance_core<br/>Result · AppFailure · ProblemDetails"]
     geom["finance_charts<br/>scales · nice ticks · layouts<br/><i>(data, size) → paths</i>"]
   end
@@ -38,6 +39,9 @@ graph TD
   boot --> router
   boot -.->|"constructs everything:<br/>http.Client, FinanceApiClient,<br/>ViewsRepository, A2aClient,<br/>AgentRepository, registry"| repo
   boot -.-> agentrepo
+  boot -.->|"FirebaseIdentityProvider (app/lib/auth)<br/>implements the seam; NullIdentityProvider<br/>when the build has no Firebase config"| auth
+  auth --> api
+  router -->|"redirect: AuthGate.redirectFor<br/>signed out → /sign-in (no shell)"| auth
   boot --> manifest
   manifest -->|"register()"| host
   router --> page

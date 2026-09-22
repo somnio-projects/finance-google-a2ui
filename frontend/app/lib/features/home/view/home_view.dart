@@ -4,6 +4,7 @@ import 'package:finance_app/features/home/view/home_header.dart';
 import 'package:finance_app/features/home/view/home_hero.dart';
 import 'package:finance_app/features/home/view/home_movers.dart';
 import 'package:finance_app/features/home/view/home_questions.dart';
+import 'package:finance_app/features/shell/view/session_sheet.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +16,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// only words this file owns are the failure fallbacks.
 class HomeView extends StatelessWidget {
   /// Creates the view.
-  const HomeView({super.key});
+  const HomeView({this.onSignOut, super.key});
+
+  /// Called from the avatar's sheet; the page wires it to the session.
+  final VoidCallback? onSignOut;
 
   /// The design's side gutter.
   static const double gutter = 16;
@@ -40,7 +44,12 @@ class HomeView extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
-              HomeHeader(payload: summary),
+              HomeHeader(
+                payload: summary,
+                onAccountTap: onSignOut == null
+                    ? null
+                    : () => showSessionSheet(context, onSignOut: onSignOut!),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
                 child: HomeHero(

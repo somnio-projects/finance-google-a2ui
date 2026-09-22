@@ -6,13 +6,14 @@
 # is slow and belongs on a runner — the same split as backend-ci's `image`
 # job.) When you change one, change its pair: `.claude/rules/ci-conventions.md`
 # §5 exists because a paraphrase drifted until a finding reached `develop`.
-PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository packages/finance_charts
+PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository packages/finance_charts packages/finance_auth
 PACKAGE_CONFIG := $(CURDIR)/.dart_tool/package_config.json
 LCOV := app/coverage/lcov.info \
 	packages/finance_core/coverage/lcov.info \
 	packages/finance_api_client/coverage/lcov.info \
 	packages/finance_views_repository/coverage/lcov.info \
-	packages/finance_charts/coverage/lcov.info
+	packages/finance_charts/coverage/lcov.info \
+	packages/finance_auth/coverage/lcov.info
 
 .PHONY: install toolchain toolchain-test format format-check analyze budget \
 	manifest manifest-check test test-tool test-packages test-app coverage gate clean
