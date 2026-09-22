@@ -4084,3 +4084,31 @@ This spec quadruples the dividend rows the Activity tab shows, which makes the
 gap **more** visible, so it is recorded as 0035 OD-11 rather than fixed in
 passing: a dividend-income tool needs its own `*Display` figures, its own
 prompt fragment and a period rule the domain does not have yet.
+
+### Addendum — what the review caught, and the two worth generalising
+
+`backend-reviewer` came back with four blocking findings. Two were local
+slips; two are worth carrying:
+
+- **`ignore_changes` on an image is correct only where something else owns
+  that image.** The seed job copied `migrate`'s `lifecycle` block because it
+  was "shaped like" it, and the premise did not hold: `deploy_cloud_run.sh`
+  updates the migration's image and updates nothing on the seed job — which
+  the same PR's `test_dev_environment.sh` asserts. Frozen, it would have
+  seeded an old ledger into a migrated database months later, which is
+  exactly the defect #98 had just fixed one job over. Recorded as 0035 OD-12.
+- **A bound with no test is a sentence, and §5 was leaning on it.** Both
+  `QUERY_PATTERN` and `MAX_QUERY` could be deleted with the suite green,
+  while the spec's security section cited them as the argument. So could a
+  `Literal` set: a comment claimed the endpoint's `AssetClassFilter` and the
+  projection's `AssetFilter` were compared, and the test it named compares
+  option **names**, never members — add `crypto` to one side and the catalog
+  advertises a value the route 422s, all green. Both now have tests, and both
+  were mutation-checked in the directions that matter.
+
+And the operational one, which cost nothing and proved itself: **`/health`
+caught a stale build during this very PR.** Port `8011` turned out to hold
+another agent's backend, which answered `local+f5a7da2` when the branch head
+was `b69f81a`. The GGU-93 check found a real wrong-build reading on its first
+outing after being written for exactly that.
+

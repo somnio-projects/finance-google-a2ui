@@ -23,9 +23,12 @@ from pydantic import BaseModel, Field
 Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
 GroupBy = Literal["holding", "asset_class", "sector"]
 ActivityKind = Literal["all", "buy", "sell", "dividend", "deposit"]
-#: `holdings.positions.v1`'s class chips; the presentation layer's
-#: `AssetFilter` is the same closed set and the two are compared by
-#: `test_view_query_accepts_every_registered_option`.
+#: `holdings.positions.v1`'s class chips. The presentation layer's
+#: `AssetFilter` is the same closed set, and `tests/unit/schemas/
+#: test_view_option_members.py` compares the two **member for member** —
+#: the names-only comparison in `test_view_query_accepts_every_registered_
+#: option` cannot see a value on one side alone, which is a 422 for
+#: something the catalog advertises.
 AssetClassFilter = Literal["all", "equities", "bonds", "alternatives", "cash"]
 #: A search needle. Bounded in length *and* in alphabet: it reaches no SQL,
 #: no template and no log line (spec 0035 §5), and a bound that says so is

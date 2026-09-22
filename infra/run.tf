@@ -309,6 +309,15 @@ resource "google_cloud_scheduler_job" "purge_audit_monthly" {
 #
 # The job is safe to re-run: an owner who already has a portfolio is skipped
 # unless `--reset` is passed (`app/jobs/seed_portfolios.py`).
+#
+# **No `ignore_changes` on the image, unlike `migrate`.** That block exists
+# there because `deploy_cloud_run.sh` runs `gcloud run jobs update --image=`
+# on the migration and Terraform must not fight the deploy. Nothing updates
+# this job's image — `infra/scripts/tests/test_dev_environment.sh` asserts
+# the deploy script never mentions it — so the same block would freeze it at
+# whatever was applied first, and a human executing it months later would
+# seed an old ledger into a migrated database. That is #98's defect, in the
+# one job whose whole purpose is to be run by hand long after a deploy.
 resource "google_cloud_run_v2_job" "seed_portfolios" {
   name                = "${local.name}-seed-portfolios"
   location            = var.region
@@ -362,9 +371,5 @@ resource "google_cloud_run_v2_job" "seed_portfolios" {
         }
       }
     }
-  }
-
-  lifecycle {
-    ignore_changes = [template[0].template[0].containers[0].image]
   }
 }

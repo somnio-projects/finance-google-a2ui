@@ -1,7 +1,7 @@
 # 0018 — The tabs search and filter for real
 
 - **Area:** frontend (the client half of [`backend/0035`](../backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md))
-- **Status:** In progress
+- **Status:** Draft
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here_
 - **Also:** [frontend/0009](0009-holdings-and-activity-tabs.md) (the two tabs, and OD-7 which this supersedes), [frontend/0015](0015-loading-states.md), [backend/0028](../backend/0028-holdings-and-activity.md), [ADR-L](../../docs/adr/ADR-L-frontend-architecture.md), [`.claude/rules/frontend/contract-binding.md`](../../.claude/rules/frontend/contract-binding.md) N-6, N-7, N-9, N-10
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-22

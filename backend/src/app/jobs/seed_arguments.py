@@ -27,15 +27,22 @@ def owners_from(values: Sequence[str]) -> list[str]:
         ValueError: When an entry is not an address or is longer than the
             column, or when the call names none at all. A typo must stop the
             job rather than quietly seed a portfolio nobody will ever read.
+
+            **The offending value is not in the message**, only its position:
+            an exception from a Cloud Run job is a log line, and spec 0035 §5
+            says an address never becomes one. The operator typed the list
+            and can count to the index.
     """
     owners: list[str] = []
+    position = 0
     for raw in values:
         for part in raw.split(","):
+            position += 1
             email = part.strip().lower()
             if not email:
                 continue
             if "@" not in email or len(email) > MAX_EMAIL:
-                msg = f"not an e-mail address: {part.strip()!r}"
+                msg = f"argument {position} is not an e-mail address"
                 raise ValueError(msg)
             if email not in owners:
                 owners.append(email)

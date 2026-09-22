@@ -1,7 +1,7 @@
 # 0035 — The portfolio has an owner, and the tabs really filter
 
 - **Area:** backend (+ the client half in [`frontend/0018`](../frontend/0018-the-tabs-search-and-filter-for-real.md))
-- **Status:** In progress
+- **Status:** Draft
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here (see 0025 §6)_
 - **Also:** 0003 (the domain seed), 0020 (portfolio persistence), 0027 (user provisioning), 0028 (the Holdings and Activity tabs), 0030 (the greeting names the caller), [ADR-K](../../docs/adr/ADR-K-response-shaping.md), [ADR-E](../../docs/adr/ADR-E-money-representation.md), [ADR-B](../../docs/adr/ADR-B-auth-credential-contract.md)
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-22
@@ -199,12 +199,15 @@ python -m app.jobs.seed_portfolios <email> [<email> ...] [--reset]
 | dev, resetting | the same with `--args=--reset,lbertuzzi@somniosoftware.com` |
 
 The Cloud Run job is `infra/run.tf::google_cloud_run_v2_job.seed_portfolios`,
-shaped exactly like `purge_audit` (same image, same service account, same
-secrets, no HTTP surface). Its default audience is
-`var.seed_portfolio_owners`, which `infra/variables.tf` defaults to
-`["lbertuzzi@somniosoftware.com"]`; `--args` overrides it per execution,
+shaped exactly like `purge_audit` — same image, same service account, same
+secrets, no HTTP surface, **and no `ignore_changes` on the image**. That last
+one is not an omission (OD-12). `var.seed_portfolio_owners` is the audience
+the environment is created with and `--args` overrides it per execution,
 which is why the audience is an *argument list* and not an environment
-variable.
+variable. **It defaults to `[]`**: OD-2 refuses to put a named person's
+address into an open-source repository, and an argument-less run fails loudly
+because the parser requires at least one address — the right outcome for a
+job nobody asked to run.
 
 **Nothing runs it for you.** `deploy_cloud_run.sh` executes the `migrate`
 job and not this one, and no Cloud Scheduler points at it — deciding who
@@ -333,6 +336,19 @@ best-effort guess.
   fragment and its own period rule — *this year* is a calendar question the
   domain does not currently answer. Writing one inside a seed change would
   be the numbers-from-tools invariant decided in passing.
+- **OD-12 — the seed job must *not* pin its image, and `migrate` must.**
+  `migrate` carries `lifecycle { ignore_changes = [...image] }` because
+  `deploy_cloud_run.sh` runs `gcloud run jobs update --image=` on it and
+  Terraform must not fight the deploy. Copying that block onto the seed job
+  looked like consistency and was the opposite: **nothing** updates this
+  job's image — `test_dev_environment.sh` asserts the deploy script never
+  mentions it — so the block would freeze it at whatever was applied first,
+  and a human executing it months later would seed an old ledger into a
+  migrated database. That is the defect #98 fixed for the migration job,
+  recreated in the one job whose whole purpose is to be run by hand long
+  after a deploy. The rule worth keeping: `ignore_changes` on an image is
+  correct **only** where something else owns that image, and "shaped like the
+  other job" is not a reason to copy a block whose premise does not hold.
 - **OD-8 — income and deposits still do not move the cash lot.** Twenty-five
   income rows now sit against a `USD` balance that is seed data. That was
   already recorded in 0028 and is now much more visible, so it is restated:
@@ -389,7 +405,7 @@ best-effort guess.
 | AC-5 | `tests/unit/presentation/test_activity_timeline.py` | — |
 | AC-6, AC-8 | `tests/unit/presentation/test_activity_search.py` | `tests/integration/test_views_flow.py` |
 | AC-7, AC-8 | `tests/unit/presentation/test_holdings_positions.py` | `tests/integration/test_views_flow.py` |
-| AC-9 | `tests/unit/api/test_portfolio_views.py`, `tests/unit/schemas/test_view_options.py` | — |
+| AC-9 | `tests/unit/api/test_view_query_bounds.py`, `tests/unit/schemas/test_view_option_members.py` | — |
 | AC-10 | `tests/unit/jobs/test_seed_portfolios.py` | `tests/integration/test_seed_portfolios_job.py` |
 | AC-11 | `tests/unit/presentation/test_catalog_contract.py` (re-render + diff, existing) | — |
 

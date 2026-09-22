@@ -70,15 +70,22 @@ def test_owners_from_normalises_the_addresses(
 @pytest.mark.parametrize(
     ("argv", "message"),
     [
-        (["not-an-address"], "not an e-mail address"),
-        ([f"{'x' * MAX_EMAIL}@y.test"], "not an e-mail address"),
+        (["not-an-address"], "argument 1 is not an e-mail address"),
+        ([f"{'x' * MAX_EMAIL}@y.test"], "argument 1 is not an e-mail address"),
+        (["a@x.test,nope"], "argument 2 is not an e-mail address"),
         ([","], "at least one owner"),
     ],
-    ids=["no_at_sign", "longer_than_the_column", "nothing_but_separators"],
+    ids=[
+        "no_at_sign",
+        "longer_than_the_column",
+        "the_second_of_a_comma_list",
+        "nothing_but_separators",
+    ],
 )
 def test_owners_from_refuses_what_the_database_would_not_hold(
     argv: list[str], message: str
 ) -> None:
+    """The message names the POSITION, never the value: it becomes a log line."""
     with pytest.raises(ValueError, match=message):
         owners_from(argv)
 

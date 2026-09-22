@@ -15,6 +15,8 @@ flowchart LR
     subgraph run["Cloud Run (planned — infra/run.tf)"]
         svc["backend service<br/>uid 10001 · read-only FS"]
         job["purge job<br/>python -m app.jobs.purge_audit"]
+        mig["migrate job<br/>alembic upgrade head<br/><i>the deploy runs it</i>"]
+        seed["seed job<br/>python -m app.jobs.seed_portfolios<br/><i>a HUMAN runs it</i>"]
     end
     subgraph data["Data"]
         sql[("Cloud SQL PostgreSQL 16<br/>private IP · regional HA · PITR")]
@@ -35,6 +37,8 @@ flowchart LR
     svc -- "asyncpg over private VPC" --> sql
     svc -- "secretAccessor per secret" --> sm
     job --> sql
+    mig --> sql
+    seed --> sql
     sched --> job
     svc --> obs
     job --> obs

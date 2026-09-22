@@ -107,6 +107,8 @@ seeding to provisioning order and turn a first read into a 500.
 The portfolio used to be in process memory, seeded per session — the original
 [ADR-F](../adr/ADR-F-persistence-and-session-lifetime.md) D-1/D-2. It moved
 here because Cloud Run runs more than one instance: two caches meant one
-subject with two `as_of`, and `uq_portfolios_subject` is what makes two
-instances seeding a new subject converge on one row. ADR-F D-7 carries the
-current ruling.
+caller with two `as_of`, and the unique constraint on the ownership key is
+what makes two instances seeding a new one converge on a single row. That
+constraint was `uq_portfolios_subject` until migration `0008` re-keyed the
+table; it is `uq_portfolios_owner_email` now, and the property it buys is
+unchanged. ADR-F D-7 carries the current ruling.
