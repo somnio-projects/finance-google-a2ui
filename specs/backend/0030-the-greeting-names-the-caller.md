@@ -32,6 +32,11 @@ purpose, and recorded so it is not mistaken for an oversight.
   passes `UserService`, whose `owner_for(principal)` reads the registry once.
   The A2A path renders through the same service, so a surface the agent asks
   for greets the same person.
+- **The owner is part of the entity tag.** The first browser run showed *Alex
+  Chen* after signing in as `demo@somnio.dev`: the body had changed but the
+  `ETag` had not, so the request revalidated to 304 and the cached greeting
+  stayed. `ViewService.owner()` is looked up once per request and folded into
+  the tag beside the subject.
 - `portfolio.summary.v1` binds `account` from the owner when there is one.
   The `Simulated portfolio` badge is unchanged: it is a compliance statement,
   not a name (0026 OD-1).
