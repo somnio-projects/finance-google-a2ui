@@ -50,6 +50,38 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
               GoRoute(
                 path: AppRoutes.home,
                 builder: (context, state) => const HomePage(),
+                // The catalog lives INSIDE this branch, so the tab bar stays
+                // on screen while a reader is in the documentation.
+                //
+                // It used to be a pair of top-level routes, outside the
+                // shell — defensible (a documentation surface is not a tab)
+                // and a dead end in practice: neither page inherited the bar,
+                // so from the index there was no way back into the app at
+                // all. The browser's back button hides that on the web,
+                // which is why it survived development.
+                //
+                // Under Home rather than a fifth branch: a fifth branch is a
+                // fifth tab, and the catalog is a detour from the Home card
+                // that opens it, not a destination of its own
+                // (spec frontend/0021 OD-3).
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: AppRoutes.catalogUnderHome,
+                    // **No view ids here.** The index asks the backend's
+                    // catalog and the registry, so a registered component is
+                    // reachable by construction (`app_router_test.dart`).
+                    builder: (context, state) => const CatalogPage(),
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: AppRoutes.catalogDetailUnderIndex,
+                        builder: (context, state) => CatalogDetailPage(
+                          viewId: state
+                              .pathParameters[AppRoutes.catalogViewParameter]!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -88,19 +120,6 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
       GoRoute(
         path: AppRoutes.signIn,
         builder: (context, state) => const SignInPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.catalog,
-        // **No view ids here.** The index asks the backend's catalog and the
-        // registry, so a registered component is reachable by construction
-        // (`app_router_test.dart`).
-        builder: (context, state) => const CatalogPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.catalogDetail,
-        builder: (context, state) => CatalogDetailPage(
-          viewId: state.pathParameters[AppRoutes.catalogViewParameter]!,
-        ),
       ),
       GoRoute(
         path: AppRoutes.orderTicket,

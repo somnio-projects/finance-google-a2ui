@@ -85,22 +85,31 @@ class CatalogTopBar extends StatelessWidget {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: component == null
-                ? null
-                : () => context.go(AppRoutes.catalog),
-            child: Text.rich(
-              TextSpan(
-                text: component == null ? crumb : '$crumb / ',
-                children: <InlineSpan>[
-                  if (component case final String name)
-                    TextSpan(
-                      text: name,
-                      style: TextStyle(color: tokens.accent),
-                    ),
-                ],
+          // Flexible, and the title above is `Expanded`: the crumb is the
+          // part that gives way on a narrow bar. It was fixed-width text and
+          // the bar overflowed by 57 px the moment the back control was
+          // added beside it — the row had no slack and nothing in it was
+          // allowed to shrink.
+          Flexible(
+            child: GestureDetector(
+              onTap: component == null
+                  ? null
+                  : () => context.go(AppRoutes.catalog),
+              child: Text.rich(
+                TextSpan(
+                  text: component == null ? crumb : '$crumb / ',
+                  children: <InlineSpan>[
+                    if (component case final String name)
+                      TextSpan(
+                        text: name,
+                        style: TextStyle(color: tokens.accent),
+                      ),
+                  ],
+                ),
+                style: crumbStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              style: crumbStyle,
             ),
           ),
         ],

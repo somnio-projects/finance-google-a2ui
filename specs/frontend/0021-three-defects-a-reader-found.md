@@ -53,12 +53,28 @@ a gate, and each was a different kind of blind spot.
   monospace crumb that does not read as one. On the web the browser's back
   button hides this; in the app both pages are dead ends.
 
-  A back control leads the top bar. **Where it goes is the page's answer, not
-  `pop()`**: the catalog is reachable from a Home chip and from a Holdings
-  card, so what is underneath on the stack is not always what a reader means
-  by "back". The index returns Home; a detail page returns to the index — the
-  same destination the crumb names, so the two controls on one bar cannot
-  disagree.
+  **The fix is the tab bar, and the back control is the second half.** The
+  TL's answer when shown the back button was *"mejor dejá el menú inferior
+  visible"*, and they are right: the bar is the affordance a reader already
+  knows. The two catalog routes are now **children of the Home branch**, so
+  the shell — and its tab bar — stays on screen. Under Home rather than a
+  fifth branch, because a fifth branch is a fifth tab and the catalog is a
+  detour from the Home card that opens it, not a destination of its own.
+
+  The back control stays, because the tab bar cannot take a reader from a
+  component's page to the index; only out of the catalog entirely. **Where it
+  goes is the page's answer, not `pop()`**: the catalog is reachable from a
+  Home chip and from a Holdings card, so what is underneath on the stack is
+  not always what a reader means by "back". The index returns Home; a detail
+  page returns to the index — the same destination the crumb names, so the
+  two controls on one bar cannot disagree.
+
+  Two layouts gave way once the pages lost the width they had outside the
+  shell: the top bar's crumb (which overflowed by 57 px the moment the back
+  control joined a row with no slack) and the zone label's subtag (38 px).
+  Both are `Flexible` now — the parts that should ellipsise, rather than the
+  rule between them, which was already `Expanded` and had nothing left to
+  give.
 
   `GestureDetector`, not `InkResponse`: the bar is a `Container` with no
   `Material` ancestor (six existing tests went red on that), and every other
@@ -77,7 +93,8 @@ a gate, and each was a different kind of blind spot.
 4. **AC-4** — opening the Assistant tab with no question replays nothing.
 5. **AC-5** — a rebuild with the same question does not re-ask it.
 6. **AC-6** — the catalog index's back control goes Home; a component page's goes to the index; both announce where they go.
-7. **AC-7** — `cd frontend && make gate` green, 100 % line coverage per file.
+7. **AC-7** — both catalog routes render inside the shell, so the tab bar is on screen, and neither page overflows at the width that leaves them.
+8. **AC-8** — `cd frontend && make gate` green, 100 % line coverage per file.
 
 ## 4. Test plan
 

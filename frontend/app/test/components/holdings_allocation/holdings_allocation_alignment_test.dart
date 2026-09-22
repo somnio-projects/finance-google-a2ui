@@ -40,9 +40,7 @@ void main() {
   ];
 
   group('$HoldingsAllocationLegend alignment', () {
-    testWidgets('every figure ends at the legend\'s right edge', (
-      tester,
-    ) async {
+    testWidgets("every figure ends at the legend's right edge", (tester) async {
       await tester.pumpApp(
         const HoldingsAllocationLegend(categories: categories),
         surfaceSize: const Size(400, 400),
