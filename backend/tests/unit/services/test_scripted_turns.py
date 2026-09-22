@@ -30,7 +30,7 @@ SURFACE_OF: Mapping[str, str | None] = {
     "compute_attribution": "attribution.waterfall.v1",
     "get_holdings_summary": "holdings.allocation.v1",
     "simulate_sale": "taxlots.table.v1",
-    "payoff": None,
+    "draft_order": "order.ticket.v2",
     "driver_detail": "attribution.driver.v1",
 }
 
@@ -119,14 +119,16 @@ async def test_flow_b_costs_the_designs_sale_and_draws_the_lots(
     assert "NVDA sold under FIFO raises $20,000.00" in result.message
 
 
-async def test_flow_c_prices_the_order_and_draws_nothing_yet(
+async def test_flow_c_drafts_the_designs_basket_and_draws_the_ticket(
     tool_context: ToolContext,
 ) -> None:
     result, _, _ = await run(FLOW_C, tool_context)
 
-    assert result.render_intents == ()
-    assert result.message.startswith("Here is a $10,000.00 buy of NVIDIA Corp:")
-    assert "not available yet" in result.message
+    (intent,) = result.render_intents
+    assert intent.view == "order.ticket.v2"
+    assert intent.options == {"legs": "NVDA:3,AVGO:2,AMD:14", "side": "buy"}
+    assert result.message.startswith("Here is a draft across the semiconductor basket:")
+    assert "nothing is placed" in result.message
 
 
 async def test_a_prompt_outside_the_table_still_answers_honestly(

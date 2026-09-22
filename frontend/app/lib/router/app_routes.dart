@@ -19,6 +19,9 @@ abstract final class AppRoutes {
   /// The order ticket, outside the tabs.
   static const String orderTicket = '/order-ticket';
 
+  /// The multi-leg draft order, outside the tabs for the same reason.
+  static const String orderTicketV2 = '/order-ticket-v2';
+
   /// The component catalog index — every registered component, one card each.
   static const String catalog = '/catalog';
 

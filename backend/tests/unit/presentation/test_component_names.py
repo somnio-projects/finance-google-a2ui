@@ -6,8 +6,7 @@ catalog, the projection's A2UI adapter, the generated JSON snapshot and the
 generated Markdown contract — and until this file existed nothing compared
 them. Spec 0021 §1 predicted the consequence and named it: the backend emitted
 ``WaterfallChart`` and ``DonutChart`` while the design catalog drew the same
-two components under different names, and both halves were internally
-consistent, so both gates stayed green.
+two under other names, and both halves were consistent, so both gates stayed green.
 
 `.claude/rules/backend/testing.md`: **a property that spans two declarations
 gets a test comparing them.** This one spans four. ``DESIGN_CATALOG`` below is
@@ -48,6 +47,7 @@ DESIGN_CATALOG: Final[dict[str, str]] = {
     "holdings.allocation.v1": "HoldingsSummary",
     # Page now exported and it changed nothing: every rendering agrees.
     "order.ticket.v1": "OrderTicket",
+    "order.ticket.v2": "MultiLegOrderTicket",  # v1 holds the name (0031 OD-1)
     # Page now exported: Zone 2 + breadcrumb + badge. Index: `PayoffChart`.
     "payoff.curve.v1": "RiskPayoffChart",
     # Zone 2 + breadcrumb + fragment; the index card says `ComparisonCard`.
