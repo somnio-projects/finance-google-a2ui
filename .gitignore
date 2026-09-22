@@ -91,3 +91,9 @@ infra/.terraform.tfstate.lock.info
 # files and a 69 KB support.js in its worktree.
 .claude/launch.json
 .design-refs/
+
+# Firebase CLI deploy state — a per-machine cache of what was last uploaded.
+# Written by `firebase deploy`, meaningless to anyone else, and it names local
+# paths. Added when the client started shipping from a laptop as well as from
+# frontend-cd (spec frontend/0017).
+.firebase/

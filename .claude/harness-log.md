@@ -3823,3 +3823,67 @@ What the run taught:
   only, no secret material in the transcript.
 - **The public key is public and still stays out of git**, because the
   secret scanner cannot read the ADR that says so (0002 OD-3).
+
+## 2026-09-22 — The client runs in the stack and ships itself
+
+`feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
+became a deployed web app under `infra/0002` and nothing owned it: no way to
+run it from the stack, a laptop for a pipeline, and Hosting serving the
+container's bundle with none of the container's headers — because the
+container did not exist yet either. This adds `frontend/Dockerfile`, a
+`frontend` service in the root compose project, and `frontend-cd`.
+
+What the run taught:
+
+- **Four checks of the same class, and the fourth was in a file the check
+  could not read.** `client_flutter/Dockerfile` carried
+  `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc` pinning **3.47.3**, so its
+  image shipped a bundle compiled by an SDK its gate never proved it against.
+  `scripts/check_gate_pairs.sh` greps *workflows* for `FLUTTER_VERSION:` and
+  checks a fixed list of *pin files*; a Dockerfile is neither. Found only by
+  writing the same builder stage for `frontend/` and asking where its version
+  would live. Rule 3 now reads Dockerfiles.
+- **A check a comment can satisfy is not a check.** Rule 3's first draft
+  asserted the Dockerfile "mentions `.fvmrc`". Mutating the file — removing
+  the pin from the build entirely — left it **green**, because one `echo` in
+  an error message still contained the string. It now requires a `COPY` of the
+  file. Both halves are mutation-tested, and the mutation is what found the
+  weakness, not review.
+- **A red gate is not evidence that it is red for your reason** has a mirror:
+  a *green* console is not evidence the policy is right. The container's CSP
+  looked correct and the app rendered; the console carried a violation per
+  fallback font, because CanvasKit `fetch()`es them from `fonts.gstatic.com`
+  and installs them through `FontFace` — so the directive is **`connect-src`,
+  not `font-src`**, which is the opposite of where anyone would look.
+  `client_flutter`'s template has the same gap.
+- **`Cross-Origin-Opener-Policy: same-origin` breaks `signInWithPopup`.** It
+  severs `window.opener`, which is the handle the promise resolves on: the
+  popup completes, closes, and the app waits forever.
+  `same-origin-allow-popups` is the value for any page that signs in through a
+  popup, and the container's copy of the header set inherited the wrong one.
+- **Two files that build the same artifact, and no machine check between
+  them.** The Dockerfile and `frontend-cd` both compile the bundle, and
+  neither is a ship-gate command, so `repo.gate-pairs` is structurally unable
+  to compare them. `frontend/tool/build_web.sh` is the answer: don't write the
+  flag list twice. It is the one §5 pair in this repository whose only defence
+  is the shape of the code.
+- **`/release.json` is GGU-93 moved to a thing with no process.** A static
+  bundle cannot be asked which build it is. The build writes the answer beside
+  it and the pipeline reads it back over HTTP — once off a preview channel
+  before anything is live, once off the live origin after. Two claims that look
+  like one until they disagree.
+- **`.claude/rules/ci-conventions.md` had unresolved conflict markers on
+  `develop` since `f4fa557` (PR #26).** Two regions, both sides wanted, the
+  merge simply never performed. The file that defines "change one, change its
+  pair" could not be edited around them. Two stale counts came out with them:
+  §5 said the gate "has three parts" and warned about "a fourth runner", with
+  five in the table. And `check-merge-conflict` **was already in
+  `.pre-commit-config.yaml` at that commit** — checked, not assumed — so the
+  hook did not fail to exist; it failed to run on whatever produced that
+  commit. This repository squash-merges, and a squash merge is performed by
+  GitHub, where no local hook exists. Why this one got through is not
+  established here, and the useful conclusion is narrower than a cause: a
+  pre-commit hook is evidence about a developer's laptop, never about what is
+  on `develop`. The check that would have caught it is one in `repo-ci`, which
+  runs on the pull request. Not added in this PR — `repo.spelling` already
+  walks every tracked file and could carry it — and named as the gap it is.

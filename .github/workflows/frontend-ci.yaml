@@ -28,7 +28,16 @@ on:
   pull_request:
     paths:
       - "frontend/**"
+      # The A2UI client is a service in the root compose file now, so a change
+      # to the stack's shape has to start the gate that proves the app it
+      # builds (spec frontend/0017).
+      - "docker-compose.yml"
       - ".github/workflows/frontend-ci.yaml"
+  # `frontend-cd` calls this workflow as a job, so the deploy can `needs:` it
+  # and cannot start unless every gate job succeeded — the same structure
+  # backend-cd uses, and the reason neither has a `push:` trigger: it would
+  # run the same gate twice on the same commit and pay for it twice.
+  workflow_call:
 
 permissions:
   contents: read
@@ -68,6 +77,12 @@ jobs:
       # runner can never reach — the runner always has the pinned SDK.
       - name: Prove the preflight rejects a wrong or missing SDK (test_check_toolchain.sh)
         run: bash tool/tests/test_check_toolchain.sh
+
+      # Also a rejection-path suite that a runner cannot exercise any other
+      # way: `verify_release.sh` is what frontend-cd runs against a deployed
+      # origin, and there it can only ever be seen accepting.
+      - name: Prove the delivery check rejects a stale release (test_verify_release.sh)
+        run: bash tool/tests/test_verify_release.sh
 
       - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
         run: flutter pub get --enforce-lockfile
@@ -175,7 +190,7 @@ jobs:
             echo ""
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
-            echo "| Quality | dart format, analyzer with infos fatal, 150-line budget, generated component manifest | ${{ needs.quality.result }} |"
+            echo "| Quality | toolchain preflight and its suite, the delivery check's suite, dart format, analyzer with infos fatal, 150-line budget, generated component manifest | ${{ needs.quality.result }} |"
             echo "| Tests | three pure-Dart suites + the widget suite, 100 % line coverage per file | ${{ needs.tests.result }} |"
             echo "| Build | the release web bundle compiles | ${{ needs.build.result }} |"
             echo ""

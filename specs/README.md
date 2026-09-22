@@ -89,6 +89,7 @@ duplicated one are both visible at a glance.
 | [frontend/0014-flow-a-drill-down.md](frontend/0014-flow-a-drill-down.md) | In progress | GGU-100 (the binding); the card *unassigned* |
 | [backend/0034-the-catalog-serves-the-gallery.md](backend/0034-the-catalog-serves-the-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
 | [frontend/0016-component-catalog-gallery.md](frontend/0016-component-catalog-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
+| [frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md](frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md) | In progress | *unassigned* |
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |

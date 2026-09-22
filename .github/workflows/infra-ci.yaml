@@ -25,6 +25,12 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      # `test_dev_environment.sh` asserts the client's delivery shape too now
+      # (spec frontend/0017): a called gate, the `needs:` edges, the preview
+      # channel and the post-release identity check. A change to either file
+      # has to start the suite that holds them.
+      - ".github/workflows/frontend-cd.yaml"
+      - ".github/workflows/frontend-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
       - "backend/docs/SECURITY.md"
@@ -38,6 +44,12 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      # `test_dev_environment.sh` asserts the client's delivery shape too now
+      # (spec frontend/0017): a called gate, the `needs:` edges, the preview
+      # channel and the post-release identity check. A change to either file
+      # has to start the suite that holds them.
+      - ".github/workflows/frontend-cd.yaml"
+      - ".github/workflows/frontend-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
       - "backend/docs/SECURITY.md"
