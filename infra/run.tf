@@ -24,6 +24,7 @@ locals {
     AUTH_ISSUER               = var.auth_issuer
     AUTH_AUDIENCE             = var.auth_audience
     AUTH_OIDC_JWKS_URL        = var.auth_oidc_jwks_url
+    AUTH_BOOTSTRAP_ADMINS     = var.auth_bootstrap_admins
     AUTH_ADMIN_REQUIRE_MFA    = "true"
     AUDIT_RETENTION_DAYS      = "400"
     RUN_MIGRATIONS            = "true"
@@ -34,6 +35,9 @@ locals {
     DATABASE_URL    = google_secret_manager_secret.database_url.secret_id
     AUTH_JWT_SECRET = google_secret_manager_secret.auth_jwt_secret.secret_id
     SENTRY_DSN      = google_secret_manager_secret.external["SENTRY_DSN"].secret_id
+    # Unset in the container = the scripted assistant (spec backend/0033); the
+    # secret's value is set out of band by the security owner (secrets.tf).
+    GEMINI_API_KEY = google_secret_manager_secret.external["GEMINI_API_KEY"].secret_id
   }
 }
 

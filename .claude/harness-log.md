@@ -3802,3 +3802,24 @@ What the run taught:
   caption is on screen; the client says `Loading…` and nothing it made up
   (N-9). The tool names on the catalog skeletons are chrome the way
   `Composing UI…` is.
+
+## 2026-09-22 — Firebase sign-in on dev, the joins nobody had made
+
+`feat/firebase_sign_in_on_dev`, spec `infra/0002`. The provider, the adapter,
+the registry and the secret all existed; the service had no bootstrap admin,
+the model key was declared and mounted nowhere, CORS named a port no deployed
+browser uses, and Hosting served the other app.
+
+What the run taught:
+
+- **A secret with a version and no mount is a green checkbox that does
+  nothing.** `finance-a2ui-dev-gemini-api-key` has had a version since
+  2026-09-20; `run.tf` never listed it. Diagram 08 drew it in Secret Manager
+  and the dashed accessor edge — true — and nothing drew the mount, so the
+  picture matched a deployment where the assistant could never use it. When
+  a secret is declared, the diagram should say which service reads it.
+- **`gcloud run services describe … --format="yaml(…env)"` with the values
+  grepped out is the honest way to audit a service's configuration**: names
+  only, no secret material in the transcript.
+- **The public key is public and still stays out of git**, because the
+  secret scanner cannot read the ADR that says so (0002 OD-3).

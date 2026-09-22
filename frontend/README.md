@@ -34,6 +34,26 @@ boot). To sign in through Firebase — Google or an e-mail link — pass its
   --dart-define=FIREBASE_MESSAGING_SENDER_ID=…
 ```
 
+The five values are one file away from a build: copy
+`app/config/firebase.example.json` to `app/config/firebase.json` (git-ignored),
+paste the web `apiKey` from the Firebase console (*Project settings › Your
+apps › Default Web App*; it is the public browser key, ADR-B D-10), and pass
+the file — it also carries `BACKEND_BASE_URL`, so one file names one
+environment:
+
+```bash
+cd app && flutter build web --release --dart-define-from-file=config/firebase.json
+firebase deploy --only hosting     # firebase.json serves app/build/web at finance-a2ui.web.app
+```
+
+The Google button signs in through Firebase's Google provider
+(`signInWithPopup`); it answers *operation-not-allowed* until the provider is
+enabled once in the console (spec 0008 OD-8). The e-mail button sends a
+Firebase sign-in link. Either way the backend then asks its registry whether
+that e-mail was invited (`GET /v1/me/access`, spec backend/0027) — the first
+admins are `AUTH_BOOTSTRAP_ADMINS`, set for dev in
+`infra/environments/dev.tfvars`.
+
 There is no development token any more ([`SECURITY.md`](SECURITY.md) G-1,
 closed): whoever signs in is whoever the backend's provisioning registry
 says may.
