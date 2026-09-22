@@ -5,6 +5,7 @@ import 'package:finance_app/features/catalog/bloc/catalog_bloc.dart';
 import 'package:finance_app/features/catalog/view/catalog_card.dart';
 import 'package:finance_app/features/catalog/view/catalog_header.dart';
 import 'package:finance_app/features/catalog/view/catalog_legend.dart';
+import 'package:finance_app/features/catalog/view/catalog_loading.dart';
 import 'package:finance_app/features/catalog/view/catalog_page.dart';
 import 'package:finance_app/features/catalog/view/catalog_top_bar.dart';
 import 'package:finance_app/features/catalog/view/catalog_view.dart';
@@ -38,11 +39,15 @@ void main() {
           surfaceSize: const Size(1024, 1400),
         );
 
-    testWidgets('spins while the catalog loads', (tester) async {
+    testWidgets('draws the board in its own shape while it loads', (
+      tester,
+    ) async {
       when(() => bloc.state)
           .thenReturn(const CatalogState(status: CatalogStatus.loading));
       await pump(tester);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // A surface, not an action (spec 0020 OD-1, AC-6).
+      expect(find.byType(CatalogIndexLoading), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
     testWidgets('shows the backend sentence when it fails', (tester) async {

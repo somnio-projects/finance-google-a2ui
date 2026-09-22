@@ -76,10 +76,13 @@ void main() {
       'the toggle refetches the card alone, by sector',
       build: build,
       act: (bloc) => bloc.add(const HoldingsGroupByChanged('sector')),
+      // AC-2: the card is in flight for exactly the interval between the
+      // two emissions, so the view can grey the ring the option governs.
       expect: () => <dynamic>[
-        const HoldingsState(groupBy: 'sector'),
+        const HoldingsState(groupBy: 'sector', allocationLoading: true),
         isA<HoldingsState>()
             .having((s) => s.groupBy, 'groupBy', 'sector')
+            .having((s) => s.allocationLoading, 'in flight', isFalse)
             .having((s) => s.allocation, 'allocation', isNotNull),
       ],
       verify: (_) {
@@ -110,12 +113,12 @@ void main() {
       build: build,
       act: (bloc) => bloc.add(const HoldingsGroupByChanged('sector')),
       expect: () => <dynamic>[
-        const HoldingsState(groupBy: 'sector'),
-        isA<HoldingsState>().having(
-          (s) => s.status,
-          'status',
-          HoldingsStatus.failure,
-        ),
+        const HoldingsState(groupBy: 'sector', allocationLoading: true),
+        isA<HoldingsState>()
+            .having((s) => s.status, 'status', HoldingsStatus.failure)
+            // A failed regrouping must clear the flag too, or the ring
+            // shimmers under the failure for ever.
+            .having((s) => s.allocationLoading, 'in flight', isFalse),
       ],
     );
 

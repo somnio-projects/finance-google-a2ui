@@ -1,6 +1,7 @@
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_card.dart';
 import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_page.dart';
 import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_view.dart';
+import 'package:finance_app/skeleton/surface_skeleton.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -46,10 +47,15 @@ void main() {
       expect(captured.single, equals(<String>[ticketV2ViewId()]));
     });
 
-    testWidgets('shows a spinner before anything has arrived', (tester) async {
+    testWidgets('draws the component skeleton before anything arrives', (
+      tester,
+    ) async {
       stubFetch(repository, Ok<RenderedViews>(ticketV2Envelope()));
       await pumpPage(tester);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // The component's own `skeleton()`, through the seam it already has —
+      // not a Material spinner (spec 0015 OD-3, 0020 AC-7).
+      expect(find.byType(SurfaceSkeleton), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       await tester.pumpAndSettle();
     });
 

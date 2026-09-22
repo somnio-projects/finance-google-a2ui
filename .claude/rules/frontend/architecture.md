@@ -93,6 +93,37 @@ A component may create more than one file — the widget usually belongs beside
 the binding — and the 150-line budget is a gate while "one file" is a
 preference. Name them after the directory so the group is obvious in a listing.
 
+## 3b. A skeleton for a surface, a spinner for an action
+
+Every wait has an affordance and the two are not interchangeable
+(spec [frontend/0020](../../../specs/frontend/0020-transition-states.md) OD-1):
+
+- A **surface** is a region whose *content* is being fetched — a card, a list,
+  a page, a component. It waits as a **skeleton**: its own shape, in
+  `SkeletonTokens` grey, occupying the layout the content will occupy, so
+  nothing reflows when the payload lands.
+- An **action** is a control the person just operated whose *effect* is in
+  flight — the sign-in button, an order-ticket field being re-rendered. It
+  waits as a **spinner**, attached to that control; the surface around it does
+  not change, because it is not what is loading.
+
+Two consequences that are gate failures rather than review notes
+(`app/test/architecture/transition_rules_test.dart`):
+
+- A `CircularProgressIndicator` under `features/**/view/` or `components/**`
+  is a **page wearing an action's clothes**. Exactly two files are allowed it,
+  by path, and the allow set's size is asserted. Six pages had drifted this
+  way before the rule was written, which is why it is a test.
+- A new skeleton **composes the 0015 primitives and declares no
+  `AnimationController` of its own**. Reduced motion is inherited that way —
+  each primitive reads `MediaQuery.disableAnimations` — and an animation
+  nobody can turn off is an accessibility defect (0020 OD-7).
+
+When an **option** is what is loading, grey exactly what that option governs
+and keep the rest, including the control the person just touched (0020 OD-3).
+Leaving the previous option's figures under the new option's label is a
+contract violation, not a cosmetic one.
+
 ## 4. Errors are values
 
 - Every boundary returns `Result<T>`; `AppFailure` is `sealed`, so a `switch`

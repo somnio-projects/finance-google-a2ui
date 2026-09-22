@@ -37,7 +37,13 @@ class OrderTicketView extends StatelessWidget {
               OrderTicketStatus.rejected => _Failure(
                 message: state.rejection ?? 'The request failed.',
               ),
-              _ => const Center(child: CircularProgressIndicator()),
+              // The component's own `Loading · skeleton`, reached through
+              // the component this view already holds — the same seam
+              // `ComponentSkeletonHost` uses (spec 0015 OD-3, 0020 AC-7).
+              _ => Padding(
+                padding: EdgeInsets.all(AppSpacing.of(context).md),
+                child: OrderTicketView.component.skeleton(context),
+              ),
             };
           }
           return _Ticket(state: state, payload: payload);

@@ -31,6 +31,7 @@ class HoldingsState extends Equatable {
     this.status = HoldingsStatus.initial,
     this.groupBy = 'asset_class',
     this.list = HoldingsList.positions,
+    this.allocationLoading = false,
     this.positions,
     this.allocation,
     this.failure,
@@ -41,6 +42,15 @@ class HoldingsState extends Equatable {
 
   /// The card's grouping — a declared option value.
   final String groupBy;
+
+  /// Whether a new [groupBy]'s card is on the way.
+  ///
+  /// Distinct from [status], which is the whole tab: a regrouping reloads the
+  /// ring and the class rows while the position list is untouched, and the
+  /// view has to be able to grey exactly the half the option governs
+  /// (spec frontend/0020 OD-3). Until it lands, [allocation] still holds the
+  /// *previous* grouping's figures, which is why they must not be shown.
+  final bool allocationLoading;
 
   /// Which list is shown.
   final HoldingsList list;
@@ -59,6 +69,7 @@ class HoldingsState extends Equatable {
     HoldingsStatus? status,
     String? groupBy,
     HoldingsList? list,
+    bool? allocationLoading,
     ViewPayload? Function()? positions,
     ViewPayload? Function()? allocation,
     AppFailure? Function()? failure,
@@ -66,6 +77,7 @@ class HoldingsState extends Equatable {
     status: status ?? this.status,
     groupBy: groupBy ?? this.groupBy,
     list: list ?? this.list,
+    allocationLoading: allocationLoading ?? this.allocationLoading,
     positions: positions == null ? this.positions : positions(),
     allocation: allocation == null ? this.allocation : allocation(),
     failure: failure == null ? this.failure : failure(),
@@ -76,6 +88,7 @@ class HoldingsState extends Equatable {
     status,
     groupBy,
     list,
+    allocationLoading,
     positions,
     allocation,
     failure,

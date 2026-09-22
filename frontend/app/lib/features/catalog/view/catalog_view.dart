@@ -4,6 +4,7 @@ import 'package:finance_app/features/catalog/view/catalog_board.dart';
 import 'package:finance_app/features/catalog/view/catalog_grid.dart';
 import 'package:finance_app/features/catalog/view/catalog_header.dart';
 import 'package:finance_app/features/catalog/view/catalog_legend.dart';
+import 'package:finance_app/features/catalog/view/catalog_loading.dart';
 import 'package:finance_app/features/catalog/view/catalog_top_bar.dart';
 import 'package:finance_app/theme/catalog_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -29,9 +30,9 @@ class CatalogView extends StatelessWidget {
       backgroundColor: tokens.board,
       body: BlocBuilder<CatalogBloc, CatalogState>(
         builder: (context, state) => switch (state.status) {
-          CatalogStatus.initial || CatalogStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          // The board in its own shape, not a spinner (spec 0020 AC-6).
+          CatalogStatus.initial ||
+          CatalogStatus.loading => const CatalogIndexLoading(),
           CatalogStatus.failure => CatalogFailure(
             message: state.failure?.message ?? 'The request failed.',
           ),
