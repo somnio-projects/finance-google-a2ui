@@ -46,6 +46,59 @@ cd app && flutter build web --release --dart-define-from-file=config/firebase.js
 firebase deploy --only hosting     # firebase.json serves app/build/web at finance-a2ui.web.app
 ```
 
+**`--only hosting` is not optional.** The root `firebase.json` also carries an
+`auth` block — config-as-code for Authentication — and a bare `firebase deploy`
+would replace the project's authorized domains with that list.
+
+## Run it as a container
+
+No Flutter SDK needed. From the repository root:
+
+```bash
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build
+```
+
+The client is then on **http://localhost:3001**, under the one compose project
+`finance-a2ui`, alongside Postgres and the backend — it is part of the default
+`up`, not behind a profile. To skip its build, name the other services:
+`docker compose up db backend`.
+
+The image is **per environment**, unlike `client_flutter`'s, and the reason is
+in `Dockerfile` Decision 1: this app's deployable is a static Hosting release,
+which has no process to render a `/config.json` at start. The default build
+args are the local stack — the backend on `:8000`, and **no** Firebase, so the
+Google button says it is not configured and the e-mail path is the backend's
+preview sign-in with `demo@somnio.dev`. To build it against a real environment,
+pass the five public values as `--build-arg`.
+
+`GET /release.json` says which build is being served — `local+<sha>` when the
+stack was brought up with `APP_RELEASE`, exactly as the backend's `/health`
+does. It is the same file the delivery pipeline reads back off a deployed
+origin.
+
+## Deliver it
+
+Actions → **frontend-cd** → *Run workflow*, on `develop` (dev) or `main`
+(production, behind its Environment reviewer). Nothing is published by a merge.
+
+The run calls `frontend-ci` and `repo-ci` as jobs, so a red gate on that commit
+leaves the publish and deploy jobs *skipped* and the run red. It then compiles
+the bundle **once** with `tool/build_web.sh` — the same script `Dockerfile`
+runs — deploys it to a Hosting **preview channel**, reads `/release.json` back
+off that URL, releases the same bytes to live, and reads it again. Either check
+failing fails the run.
+
+`preview_only: true` stops after the preview, which is how to rehearse a change
+without going live. **Rollback is Hosting's own release history** (console →
+Hosting → Release history → Rollback); this pipeline does not automate it,
+because an untested rollback path is not one.
+
+Before the first run, a human has to create the repository *variables*
+(`FRONTEND_SITE_URL_DEV` and the four `FIREBASE_*_DEV` — they are public config,
+not secrets, ADR-B D-10) and apply the Terraform that grants the deployer
+`roles/firebasehosting.admin`. The workflow fails naming each missing variable.
+Spec: [`frontend/0017`](../specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md).
+
 The Google button signs in through Firebase's Google provider
 (`signInWithPopup`); it answers *operation-not-allowed* until the provider is
 enabled once in the console (spec 0008 OD-8). The e-mail button sends a

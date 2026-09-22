@@ -47,7 +47,19 @@ dependency hygiene · pylint duplication and design limits · codespell), `test`
 (pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
 `backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
 
-<<<<<<< HEAD
+`catalog-check` sits between `budget` and `quality`: it re-renders **every**
+generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
+`backend/0019`) and `docs/catalog/view-catalog.snapshot.json` (GGU-53, spec
+`backend/0021`) — from the projection registry into a buffer and diffs each
+against the checked-in file. One command, one render pass: a new artefact is an
+entry in `presentation/catalog_artifacts.ARTIFACTS`, not a new gate step, so
+`ship-gate.json` and the workflows keep matching verbatim.
+
+**A generated artefact is gated by regeneration, never by trust.** Anything the
+build produces is checked in *and* re-rendered by the gate and diffed, and the
+check fails with the exact command that fixes it. A second such artefact copies
+that shape rather than relying on a reviewer remembering to look.
+
 **Client.** `dart format --set-exit-if-changed` and `dart analyze
 --fatal-infos --fatal-warnings`, both **over `app/lib app/test e2e_test`,
 never a bare `.`**. `flutter pub get` unpacks plugin sources under
@@ -64,22 +76,29 @@ foreign lints and reformatted files nobody wrote. Then the two grep gates
 `tool/check_config.sh` — no endpoint URLs outside `config/`), `flutter test
 --coverage`, and `flutter build web --release`. The grep gates guard
 architecture rather than style, which is why they are gates and not review
-notes. The Flutter SDK is pinned in `client_flutter/.fvmrc`; CI reads the same
-version, and bumping one without the other makes local and CI disagree
-silently.
-=======
-`catalog-check` sits between `budget` and `quality`: it re-renders **every**
-generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
-`backend/0019`) and `docs/catalog/view-catalog.snapshot.json` (GGU-53, spec
-`backend/0021`) — from the projection registry into a buffer and diffs each
-against the checked-in file. One command, one render pass: a new artefact is an
-entry in `presentation/catalog_artifacts.ARTIFACTS`, not a new gate step, so
-`ship-gate.json` and the workflows keep matching verbatim.
+notes. The Flutter SDK is pinned in `client_flutter/.fvmrc` and **nowhere
+else** — `client-ci` reads that file and so does `client_flutter/Dockerfile`,
+which until 2026-09-22 carried `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc`
+pinning **3.47.3**. That is §5's third question (*under what does the command
+run?*) failing in a file the check was not reading, so `repo.gate-pairs` now
+reads Dockerfiles too: an app's Dockerfile may not name a Flutter version, and
+must be shown to `COPY` the pin in. Both halves are mutation-tested.
 
-**A generated artefact is gated by regeneration, never by trust.** Anything the
-build produces is checked in *and* re-rendered by the gate and diffed, and the
-check fails with the exact command that fixes it. A second such artefact copies
-that shape rather than relying on a reviewer remembering to look.
+**Frontend.** `cd frontend && make gate`, opening with `toolchain` for the
+reason §5 records, and carrying two suites a runner cannot exercise any other
+way: `toolchain-test` (a stubbed SDK) and `verify-release-test` (a stubbed
+curl). The second is the delivery check — `frontend/tool/verify_release.sh`
+asks a deployed origin for `/release.json` and fails if it is not the commit
+that was built — and on a runner it can only ever be seen *accepting*, because
+the deploy it follows has just succeeded. Same shape as `repo.manual-run`: the
+gate runs the proof that the check rejects.
+
+**One build script, two consumers.** `frontend/tool/build_web.sh` owns the
+`flutter build web` flags, and both `frontend/Dockerfile` and `frontend-cd`
+call it. Neither is a ship-gate command, so `repo.gate-pairs` cannot compare
+them — which is exactly why the flags must not be written twice. A container
+compiled with different flags than the bundle that ships is a rehearsal of
+something else.
 
 ## 4b. One pipeline per stack, and delivery is a button
 
@@ -105,6 +124,7 @@ repository-wide one is not, on purpose:
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
 | `client-ci` | pull requests | `client_flutter/**`, its own file | yes |
 | `backend-cd` | **the button only** | — | yes |
+| `frontend-cd` | **the button only** | — | yes |
 
 **`client-ci` now exists, and the history is worth keeping.** This table once
 listed it as though it were one of the scoped workflows, with no marker, from
@@ -142,20 +162,18 @@ from the default branch only, so a delivery workflow that exists only on
 `develop` is invisible in the Actions tab and `gh workflow run` answers *"not
 found on the default branch"*. Releasing `develop` into `main` is what makes
 the button appear.
->>>>>>> origin/develop
 
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done and has three parts, each
-with a runner and a workflow that must stay identical to it:
+`.claude/ship-gate.json` is the Definition of Done. It has **five** parts —
+it said three until `repo.*` and `frontend.*` arrived and nobody updated the
+sentence, which is this rule's own failure mode in miniature — each with a
+runner and a workflow that must stay identical to it:
 
 | Part | Runner | Workflow | Also in |
 |---|---|---|---|
 | `py.*` | `cd backend && make gate` | `backend-ci.yaml` | pre-commit (the cheap steps) + pre-push (the whole gate) |
-<<<<<<< HEAD
 | `dart.*` · `client.*` · `flutter.*` | the entries themselves, from `client_flutter/` and `client_flutter/app/` — there is no client Makefile | `client-ci.yaml` | pre-commit (format, analyze, grep gates, tests) + pre-push (the web build) |
-| `infra.*` | `bash infra/scripts/tests/*.sh` from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
-=======
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
@@ -296,7 +314,7 @@ PR body and compares the `<version>+<sha>` on `/health` with the branch head;
 what the gate runs is its **suite**, because the check needs a PR body and the
 gate has none. A check that has never been shown to reject is the same defect
 one level up, so the suite asserts the four rejections and only one pass.
->>>>>>> origin/develop
 
-A PR that changes one without its pair is incomplete. If a fourth runner ever
-appears, it goes in this table rather than in a comment.
+A PR that changes one without its pair is incomplete. A new runner goes in
+this table rather than in a comment — and the count in the sentence above it
+goes up in the same edit.

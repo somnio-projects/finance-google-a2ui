@@ -141,4 +141,6 @@ async def test_a_prompt_outside_the_table_still_answers_honestly(
     assert result.tool_calls == 0
     assert model.calls[0].system == TEST_PROMPT
     assert [spec.name for spec in model.calls[0].tools] == list(load_tools().names())
-    assert reporter.metrics == [(TURN_METRIC, {"model": "scripted", "outcome": "ok"})]
+    assert reporter.metrics == [
+        (TURN_METRIC, {"model": "scripted", "outcome": "ok", "composed": "False"})
+    ]

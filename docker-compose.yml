@@ -1,13 +1,31 @@
 # Local stack for the finance-a2ui showcase (run from the repo root).
 #   cp backend/env.example backend/.env   -> once; per-solution env files, never committed
-#   docker compose up --build             -> Postgres + backend (:8000, hot reload)
+#   docker compose up --build             -> Postgres + backend (:8000) + the
+#                                            A2UI client (:3001), one stack
+#   docker compose up --build db backend  -> just the API, skipping the client's
+#                                            build (see below)
 #   docker compose up db                  -> only the database (for `make test`, TEST_DATABASE_URL)
-#   docker compose --profile client up --build
-#                                         -> the above plus the web client (:3000)
 #
-# The client sits behind a profile so that `docker compose up --build` is still
-# Postgres + backend and nothing else: building the Flutter bundle downloads an
-# SDK and takes minutes, and a backend developer should never pay for it.
+# ONE PROJECT, `finance-a2ui` (the `name:` below), and one default set of
+# services. Everything this repository ships locally comes up under that one
+# heading in `docker ps` and in Docker Desktop, and one `docker compose down`
+# takes it down.
+#
+# The A2UI client used to sit behind a `frontend` profile, and the older
+# `client_flutter` behind a `client` one. Both are gone:
+#
+#   - `client_flutter` is a separate deployable with its own gate and its own
+#     pipeline (GGU-91), and keeping it here made the repository's ONE stack
+#     ambiguous — `docker compose up` brought up a different set depending on
+#     which profile you remembered. It has its own compose file now, in its
+#     own directory and under its own project name:
+#         docker compose -f client_flutter/docker-compose.yml up --build
+#   - the `frontend` profile is gone because a profile is a thing to forget.
+#     The client is the app this repository is about; it belongs in the
+#     default `up`. The cost argument that justified the profile — a backend
+#     developer should not pay for a Flutter SDK download — is answered by
+#     naming the services instead: `docker compose up db backend` skips it
+#     entirely, and needs no profile to exist.
 #
 # Env policy: this file only carries the *topology* (hostnames, ports, origins
 # the services need to reach each other). Credentials and tunables live in each
@@ -62,7 +80,13 @@ services:
       # `<version>+<short sha>`, composed by infra/scripts/deploy_cloud_run.sh
       # (spec backend/0007 AC-5).
       APP_RELEASE: ${APP_RELEASE:-local}
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      # :3001 is this file's `frontend`. :3000 is `client_flutter`, which no
+      # longer has a service here — the origin stays because that app can
+      # still be run against this backend (its own compose file, or
+      # `flutter run`), and silently breaking someone else's local loop is
+      # not what removing a service from this file is for. :5173 is a
+      # `flutter run -d chrome` from a laptop.
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173
       # The local stack has no Firebase, so the sign-in screen's e-mail path
       # is answered by the preview sign-in (spec 0027 OD-3) and the demo
       # account is provisioned at boot. Both are honoured only under the
@@ -84,29 +108,38 @@ services:
       timeout: 3s
       retries: 5
 
-  client:
-    profiles: ["client"]              # opt in: `docker compose --profile client up`
+  frontend:
     build:
-      context: ./client_flutter
+      context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # The *browser's* view of the API, not the compose network's:
+        # this value is compiled into the bundle and `http://backend:8000`
+        # does not resolve in a browser.
+        BACKEND_BASE_URL: http://localhost:8000
+        # `local+<sha>`, exactly as the backend's APP_RELEASE (GGU-93): the
+        # bundle serves it at /release.json, so a screenshot of this client
+        # can be traced to the commit that built it. Bring the stack up as
+        #   APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose …
+        # and both halves of the stack report the same identity.
+        APP_RELEASE: ${APP_RELEASE:-local}
+        # No Firebase here, on purpose. This stack has no Firebase project,
+        # so the Google button says it is not configured rather than
+        # pretending, and the e-mail path is the backend's preview sign-in
+        # with `demo@somnio.dev` (spec backend/0027 OD-3, provisioned by
+        # AUTH_BOOTSTRAP_ADMINS above). To exercise the real Firebase path
+        # locally, pass the five public values from
+        # frontend/app/config/firebase.json as build args — they are public
+        # by design (ADR-B D-10), but they name a deployed environment, so
+        # they are not defaulted here.
     depends_on:
       backend:
         condition: service_healthy
     ports:
-      - "3000:8080"                   # 3000 is already in the backend's CORS allow-list above
-    env_file:
-      - path: ./client_flutter/.env   # optional: the client holds no credentials by design.
-        required: false               # Everything it is given reaches the browser, so a secret
-                                      # here would be a published secret. The hook exists only so
-                                      # a developer can override the values below locally.
-    environment:                      # topology only
-      # The *browser's* view of the API, not the compose network's: this value
-      # is served to the page, and `http://backend:8000` does not resolve there.
-      BACKEND_BASE_URL: http://localhost:8000
-      PORT: 8080
+      - "3001:8080"                   # 3001 is in the backend's CORS allow-list above
     read_only: true
     tmpfs:
-      - /tmp                          # the entrypoint renders nginx.conf and /config.json here
+      - /tmp                          # the entrypoint renders nginx.conf there
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -114,7 +147,6 @@ services:
       interval: 15s
       timeout: 3s
       retries: 5
-
 
 volumes:
   db-data:

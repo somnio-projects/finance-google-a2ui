@@ -127,6 +127,30 @@ resource "google_cloud_run_v2_job_iam_member" "deployer_runs_migrations" {
   member   = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+# Publish the A2UI client's bundle to Firebase Hosting (spec frontend/0017).
+#
+# PROJECT-SCOPED, and that is a real widening worth naming rather than
+# burying: every other grant above is on one resource — this repository's
+# Artifact Registry repository, this service, this job — because Google offers
+# resource-level IAM for them. Firebase Hosting does not. There are no
+# per-site IAM bindings, so `roles/firebasehosting.admin` on the project is
+# the narrowest role that can deploy a site, and it can deploy, delete and
+# roll back every site in the project.
+#
+# What bounds it is the identity, not the role: this service account is
+# impersonable only through the Workload Identity pool, only from
+# `var.github_repository`, and on production only from `refs/heads/main`
+# (the attribute condition above). `test_wif_conditions.sh` fails the build if
+# that narrowing is ever removed.
+#
+# Not `roles/firebase.admin`, which is the whole product — Firestore, Auth
+# configuration, the lot — and would let the deployer change who may sign in.
+resource "google_project_iam_member" "deployer_hosting" {
+  project = data.google_project.this.project_id
+  role    = "roles/firebasehosting.admin"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 # Deploy a revision that RUNS AS the backend identity, without being able to
 # act as any other service account in the project.
 resource "google_service_account_iam_member" "deployer_acts_as_backend" {

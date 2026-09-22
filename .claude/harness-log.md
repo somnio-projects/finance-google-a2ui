@@ -3852,3 +3852,113 @@ What the run taught:
   `gcloud run jobs describe … --format="value(…containers[0].image)"` against
   the same field on the service is the one-line check; it belongs in the
   runbook next time a migration "fails" on a chain that is provably contiguous.
+## 2026-09-22 — The client runs in the stack and ships itself
+
+`feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
+became a deployed web app under `infra/0002` and nothing owned it: no way to
+run it from the stack, a laptop for a pipeline, and Hosting serving the
+container's bundle with none of the container's headers — because the
+container did not exist yet either. This adds `frontend/Dockerfile`, a
+`frontend` service in the root compose project, and `frontend-cd`.
+
+What the run taught:
+
+- **Four checks of the same class, and the fourth was in a file the check
+  could not read.** `client_flutter/Dockerfile` carried
+  `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc` pinning **3.47.3**, so its
+  image shipped a bundle compiled by an SDK its gate never proved it against.
+  `scripts/check_gate_pairs.sh` greps *workflows* for `FLUTTER_VERSION:` and
+  checks a fixed list of *pin files*; a Dockerfile is neither. Found only by
+  writing the same builder stage for `frontend/` and asking where its version
+  would live. Rule 3 now reads Dockerfiles.
+- **A check a comment can satisfy is not a check.** Rule 3's first draft
+  asserted the Dockerfile "mentions `.fvmrc`". Mutating the file — removing
+  the pin from the build entirely — left it **green**, because one `echo` in
+  an error message still contained the string. It now requires a `COPY` of the
+  file. Both halves are mutation-tested, and the mutation is what found the
+  weakness, not review.
+- **A red gate is not evidence that it is red for your reason** has a mirror:
+  a *green* console is not evidence the policy is right. The container's CSP
+  looked correct and the app rendered; the console carried a violation per
+  fallback font, because CanvasKit `fetch()`es them from `fonts.gstatic.com`
+  and installs them through `FontFace` — so the directive is **`connect-src`,
+  not `font-src`**, which is the opposite of where anyone would look.
+  `client_flutter`'s template has the same gap.
+- **`Cross-Origin-Opener-Policy: same-origin` breaks `signInWithPopup`.** It
+  severs `window.opener`, which is the handle the promise resolves on: the
+  popup completes, closes, and the app waits forever.
+  `same-origin-allow-popups` is the value for any page that signs in through a
+  popup, and the container's copy of the header set inherited the wrong one.
+- **Two files that build the same artifact, and no machine check between
+  them.** The Dockerfile and `frontend-cd` both compile the bundle, and
+  neither is a ship-gate command, so `repo.gate-pairs` is structurally unable
+  to compare them. `frontend/tool/build_web.sh` is the answer: don't write the
+  flag list twice. It is the one §5 pair in this repository whose only defence
+  is the shape of the code.
+- **`/release.json` is GGU-93 moved to a thing with no process.** A static
+  bundle cannot be asked which build it is. The build writes the answer beside
+  it and the pipeline reads it back over HTTP — once off a preview channel
+  before anything is live, once off the live origin after. Two claims that look
+  like one until they disagree.
+- **`.claude/rules/ci-conventions.md` had unresolved conflict markers on
+  `develop` since `f4fa557` (PR #26).** Two regions, both sides wanted, the
+  merge simply never performed. The file that defines "change one, change its
+  pair" could not be edited around them. Two stale counts came out with them:
+  §5 said the gate "has three parts" and warned about "a fourth runner", with
+  five in the table. And `check-merge-conflict` **was already in
+  `.pre-commit-config.yaml` at that commit** — checked, not assumed — so the
+  hook did not fail to exist; it failed to run on whatever produced that
+  commit. This repository squash-merges, and a squash merge is performed by
+  GitHub, where no local hook exists. Why this one got through is not
+  established here, and the useful conclusion is narrower than a cause: a
+  pre-commit hook is evidence about a developer's laptop, never about what is
+  on `develop`. The check that would have caught it is one in `repo-ci`, which
+  runs on the pull request. Not added in this PR — `repo.spelling` already
+  walks every tracked file and could carry it — and named as the gap it is.
+
+## 2026-09-22 — The assistant, measured against the real model
+
+`fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
+agent was reported as crashing. It was not crashing; it was doing four things
+wrong at once and reporting none of them.
+
+What the run taught:
+
+- **A badge that is chrome cannot tell you anything.** The header's
+  `Simulated` pill is hardcoded from the artboards and refers to the
+  simulated **portfolio**. It reads as a statement about the model, it says
+  `Gemini · A2UI` whatever the backend runs, and the first ten minutes of
+  this investigation went into a screenshot that could not have been
+  evidence either way.
+- **`ReadTimeout` is a `TransportError`, and that inheritance was a trap.**
+  "Retry transport errors" therefore retried a model that answered too
+  slowly, three times, turning one slow turn into a 64 s failure. The lesson
+  generalises: a retry predicate written against an exception *hierarchy*
+  inherits whatever the library decided to group, and the grouping is not
+  always the one your policy means.
+- **A prompt that asks for something the model cannot do gets prose.** The
+  catalog header told the model to "pick a view by id and fill its options".
+  Nothing in the tool surface lets it. So it wrote the JSON into its answer —
+  twice in three runs of one question — and once refused an option the
+  catalog declares. The model was not confused; the instruction was wrong.
+- **The option had been declared for weeks and nothing passed it.** A
+  projection can hold a perfectly good `group_by` enum while every caller
+  sends the default, and the only visible symptom is a chart that quietly
+  disagrees with the sentence above it. **A declared option with no caller is
+  a dead option**, and nothing in the gate says so — `make catalog` proves the
+  artefact is current, never that anything uses it.
+- **Telemetry that cannot answer the product's own question.** `agent.turn`
+  logged iterations and tool calls, and nothing about whether the turn
+  composed a surface. This showcase exists to demonstrate composed UI; the
+  one number that says whether it happened was the one number absent. That is
+  why the sector defect survived: no log could have shown it.
+- **`blocTest` with an `errors:` matcher can hide the assertion.** The
+  handler's exception ends `act`, so `verify` never runs and the suite passes
+  with the fix reverted. Caught by mutating, not by reading. A bloc must also
+  be **constructed inside** `runZonedGuarded` for its unhandled errors to
+  reach that handler — built outside, they go to the test framework's zone.
+- **A docstring that names the case it does not cover.** `AgentRepository`
+  said "every failure is an event … because a turn can fail after it has
+  already produced surfaces", and an error raised *on* the stream — that
+  exact case — escaped as an exception and froze the composer. When a comment
+  states a guarantee, the test to write is the one that matches its wording.
