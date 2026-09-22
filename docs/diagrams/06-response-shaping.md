@@ -16,7 +16,7 @@ flowchart TB
     sel["Selection rule<br/>(nobody chose → highest fitness)"]
     subgraph views["presentation/views/* — one module each"]
         v1["holdings.allocation.v1 · portfolio.summary.v1<br/>attribution.waterfall.v1<br/><i>fitness > 0 — selectable</i>"]
-        v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
+        v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/>holdings.positions.v1 · activity.timeline.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
         vn["…the next one: one new file"]
     end
     frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display<br/>every figure: display string + raw for geometry"]

@@ -77,6 +77,7 @@ def transaction_row(
         quantity=transaction.quantity,
         price=transaction.price,
         amount=transaction.amount,
+        memo=transaction.memo,
     )
 
 
@@ -115,6 +116,7 @@ def transaction_of(row: PortfolioTransaction) -> Transaction:
         quantity=row.quantity,
         price=row.price,
         amount=row.amount,
+        memo=row.memo,
     )
 
 

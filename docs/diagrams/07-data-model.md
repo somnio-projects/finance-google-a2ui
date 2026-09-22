@@ -63,6 +63,7 @@ erDiagram
         string symbol
         decimal quantity "NUMERIC(38,18)"
         decimal price "NUMERIC(38,18)"
+        string memo "words beside the row — 0007, nullable"
         datetime created_at
     }
     USERS {
@@ -89,6 +90,7 @@ erDiagram
 | `0004_sessions` *(GGU-46)* | subject-scoped conversations and their messages |
 | `0005_portfolios` *(spec [`backend/0020`](../../specs/backend/0020-portfolio-persistence.md))* | the portfolio, its open tax lots and its transaction ledger |
 | `0006_users` *(spec [`backend/0027`](../../specs/backend/0027-user-provisioning.md))* | the provisioning registry — who was invited; no credential, ever |
+| `0007_transaction_memo` *(spec [`backend/0028`](../../specs/backend/0028-holdings-and-activity.md))* | `memo` on the ledger, for the words the Activity tab prints beside a row |
 
 **No holdings table, on purpose.** `Portfolio.positions` is derived from the
 lots and `Portfolio.validate` proves the derivation on every load; persisting

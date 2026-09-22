@@ -1,3 +1,4 @@
+import 'package:finance_app/features/home/view/home_questions_rail.dart';
 import 'package:finance_app/router/app_router.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -49,26 +50,23 @@ class HomeQuestions extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: <Widget>[
-              for (final question in payload.rows('questions'))
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: _QuestionChip(text: question.text('text')),
-                ),
-            ],
-          ),
+        HomeQuestionsRail(
+          questions: <String>[
+            for (final question in payload.rows('questions'))
+              question.text('text'),
+          ],
         ),
       ],
     );
   }
 }
 
-class _QuestionChip extends StatelessWidget {
-  const _QuestionChip({required this.text});
+/// One suggested question: `💬` and the backend's words, tapping asks it.
+class QuestionChip extends StatelessWidget {
+  /// Creates the chip.
+  const QuestionChip({required this.text, super.key});
+
+  /// The question, verbatim.
 
   final String text;
 
@@ -80,7 +78,7 @@ class _QuestionChip extends StatelessWidget {
       shape: StadiumBorder(side: BorderSide(color: tokens.chipBorder)),
       child: InkWell(
         customBorder: const StadiumBorder(),
-        onTap: () => context.go(AppRoutes.conversation),
+        onTap: () => context.go(askRoute(text)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Text(

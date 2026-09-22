@@ -9,10 +9,15 @@ export 'allocation_example.dart';
 ViewPayload holdingsAllocationPayload() =>
     ViewPayload.fromJson(holdingsAllocationExample);
 
-/// The Home hero's example, read from the snapshot: the shell fetches it
-/// beside the allocation, so any tree that mounts the root route needs both.
+/// Every view a tab fetches on mount, read from the snapshot: the Home hero
+/// beside the allocation, the Holdings list and the Activity timeline. A tree
+/// that mounts the shell can land on any tab, and a tab whose view is missing
+/// from the envelope spins forever — which a `pumpAndSettle` reports as a
+/// timeout, not as the missing view.
 Map<String, dynamic> homeViews() => <String, dynamic>{
   'portfolio.summary.v1': CatalogSnapshot.load().exampleFor('PortfolioSummary'),
+  'holdings.positions.v1': CatalogSnapshot.load().exampleFor('PositionList'),
+  'activity.timeline.v1': CatalogSnapshot.load().exampleFor('ActivityTimeline'),
 };
 
 /// An envelope carrying [holdingsAllocationExample].

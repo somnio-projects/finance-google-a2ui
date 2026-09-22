@@ -12,15 +12,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// widget tree`).
 class ConversationPage extends StatelessWidget {
   /// Creates the page.
-  const ConversationPage({super.key});
+  const ConversationPage({this.initialQuestion, super.key});
+
+  /// A question to send as soon as the page opens — the Home chips and the
+  /// Holdings hand-off arrive with one; the tab itself arrives with none.
+  final String? initialQuestion;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ConversationBloc>(
-      create: (context) => ConversationBloc(
-        agentRepository: context.read<AgentRepository>(),
-        viewsRepository: context.read<ViewsRepository>(),
-      ),
+      create: (context) {
+        final bloc = ConversationBloc(
+          agentRepository: context.read<AgentRepository>(),
+          viewsRepository: context.read<ViewsRepository>(),
+        );
+        final question = initialQuestion;
+        if (question != null && question.isNotEmpty) {
+          bloc.add(ConversationMessageSent(question));
+        }
+        return bloc;
+      },
       child: const ConversationView(),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_app/router/app_router.dart';
@@ -37,6 +38,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SignInPage), findsOneWidget);
       expect(find.byType(AppShell), findsNothing);
+    });
+
+    testWidgets('serves the catalog index at its own location', (tester) async {
+      await pumpRouter(
+        tester,
+        buildRouter(initialLocation: AppRoutes.catalog),
+        repository: repository,
+        auth: fakeAuthRepository(),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PortfolioViewsPage), findsOneWidget);
     });
   });
 }

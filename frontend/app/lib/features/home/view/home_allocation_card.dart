@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/features/home/view/catalog_chip.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class HomeAllocationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                _CatalogChip(),
+                const CatalogChip(),
               ],
             ),
             const SizedBox(height: 14),
@@ -56,28 +57,6 @@ class HomeAllocationCard extends StatelessWidget {
               payload: payload,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CatalogChip extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final tokens = HomeTokens.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(color: tokens.catalogBorder),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        'Catalog',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: tokens.catalogText,
         ),
       ),
     );

@@ -20,8 +20,10 @@ from typing import Final
 #: Every registered projection id, in the order ``REGISTRY.all()`` returns
 #: them — which is sorted, and asserted to be sorted.
 SHIPPED_VIEWS: Final[tuple[str, ...]] = (
+    "activity.timeline.v1",
     "attribution.waterfall.v1",
     "holdings.allocation.v1",
+    "holdings.positions.v1",
     "order.ticket.v1",
     "payoff.curve.v1",
     "portfolio.summary.v1",

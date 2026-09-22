@@ -46,6 +46,7 @@ def _to_transaction(row: TransactionRow, *, as_of: datetime) -> Transaction:
         quantity=Decimal(row.quantity),
         price=Decimal(row.price),
         amount=Decimal(row.amount),
+        memo=row.memo,
     )
 
 

@@ -20,9 +20,8 @@ declarations of one fact, and nothing compared them.
 **What these bounds are, and are not.** They are "could any registered view
 accept this?", not "is this valid for the view you asked for". Several options
 share a name with a different schema per view — `quantity`, `side`, `size`,
-`size_in`, `symbol` — so a flat model can only carry the union. The
-projection's own options model runs immediately afterwards and is strict; an
-out-of-range value is still a 422, raised by the owner of the rule.
+`size_in`, `symbol` — so a flat model carries the union; the projection's own
+strict options model runs right after, and an out-of-range value is its 422.
 
 `symbol` is a pattern rather than the eight tickers of the market reference on
 purpose: enumerating them here would put the asset list in two places, and the
@@ -39,6 +38,7 @@ LotMethod = Literal["FIFO", "LIFO", "HIFO"]
 Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
 #: Groupings of the allocation donut (`presentation/allocation_rows.py`).
 GroupBy = Literal["holding", "asset_class", "sector"]
+ActivityKind = Literal["all", "buy", "sell", "dividend", "deposit"]
 #: Which way an order goes.
 Side = Literal["buy", "sell"]
 #: What an order's `size` counts.
@@ -124,11 +124,23 @@ class ProjectionOptions(BaseModel):
         description="Whether the allocation card carries its total and gain block.",
         examples=[False],
     )
+    kind: ActivityKind | None = Field(
+        default=None,
+        description="`activity.timeline.v1`: rows to show.",
+        examples=["dividend"],
+    )
+    limit: int | None = Field(
+        default=None,
+        ge=1,
+        le=200,
+        description="`activity.timeline.v1`: newest rows kept.",
+    )
 
 
 __all__ = [
     "DECIMAL_PATTERN",
     "TICKER_PATTERN",
+    "ActivityKind",
     "GroupBy",
     "LotMethod",
     "ProjectionOptions",

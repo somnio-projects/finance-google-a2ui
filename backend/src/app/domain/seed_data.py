@@ -53,6 +53,7 @@ class TransactionRow:
     quantity: str
     price: str
     amount: str
+    memo: str | None = None
 
 
 SEEDED_LOTS: Final[tuple[LotRow, ...]] = (
@@ -105,6 +106,42 @@ SEEDED_TRANSACTIONS: Final[tuple[TransactionRow, ...]] = (
     # same-date tiebreak in ``Portfolio.transactions`` is stable (AC-4).
     TransactionRow("txn-0014", 210, "buy", "PYPL", "250.0000", "88.60", "22150.00"),
     TransactionRow("txn-0015", 210, "sell", "VOO", "20.0000", "489.00", "9780.00"),
+    # Income and funding (spec 0028): what the Activity tab groups under
+    # TODAY / THIS WEEK / the month. Dividends carry the per-share amount as
+    # the price and the shares as the quantity; deposits are dollars at one.
+    # None of them moves a lot — cash is the seeded balance, not a running sum.
+    TransactionRow(
+        "txn-0017", 0, "dividend", "VOO", "85.0000", "1.62", "137.70", "qualified"
+    ),
+    TransactionRow(
+        "txn-0018",
+        2,
+        "deposit",
+        "USD",
+        "5000.0000",
+        "1.00",
+        "5000.00",
+        "Bank transfer · Chase ••4021",
+    ),
+    TransactionRow(
+        "txn-0019", 9, "dividend", "MSFT", "110.0000", "0.83", "91.30", "qualified"
+    ),
+    TransactionRow(
+        "txn-0020",
+        14,
+        "deposit",
+        "USD",
+        "2500.0000",
+        "1.00",
+        "2500.00",
+        "Payroll · Recurring",
+    ),
+    TransactionRow(
+        "txn-0021", 40, "dividend", "AAPL", "300.0000", "0.25", "75.00", "qualified"
+    ),
+    TransactionRow(
+        "txn-0022", 75, "dividend", "JNJ", "30.0000", "1.24", "37.20", "qualified"
+    ),
 )
 
 __all__ = ["SEEDED_LOTS", "SEEDED_TRANSACTIONS", "LotRow", "TransactionRow"]

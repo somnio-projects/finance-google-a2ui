@@ -3,6 +3,8 @@ import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/src/payload_contract_exception.dart';
 import 'package:finance_views_repository/src/raw_decimal.dart';
 
+part 'view_payload_flag.dart';
+
 /// One rendered projection, read by dotted path.
 ///
 /// This is the whole of the client's "model layer", and the absence of a
