@@ -72,7 +72,8 @@ repos:
             \.claude/skills/|
             \.agents/|
             \.claude/rules/(python|flutter)/|
-            .*\.lock
+            .*\.lock|
+            .*\.pdf
           )
   # ---------------------------------------------------------------- yaml & actions
   - repo: https://github.com/rhysd/actionlint

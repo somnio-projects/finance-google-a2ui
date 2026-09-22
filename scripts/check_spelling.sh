@@ -23,6 +23,14 @@
 #     list covers them, and a typo there is fixed upstream, not here.
 #   *.lock
 #     generated, and a hash is not prose.
+#   *.pdf
+#     a PDF is compressed binary, not prose. Decoded as latin-1 — which is
+#     what codespell falls back to — it yields dozens of "findings" per file
+#     out of the compression stream: two-letter fragments of deflated bytes
+#     that no word list can be taught. The prose it was made
+#     from IS scanned: docs/guides/feeding-charts-and-schema-mutations.pdf is
+#     generated from docs/guides/*.md, and those are tracked, opened here and
+#     checked. Excluding the derived file loses no coverage of the source.
 #
 # Word-list exceptions live in .codespellrc so this command stays short enough
 # to appear byte-identically in .claude/ship-gate.json, repo-ci.yaml and
@@ -38,7 +46,8 @@ files=$(
     ':!:.agents' \
     ':!:.claude/rules/python' \
     ':!:.claude/rules/flutter' \
-    ':!:*.lock' |
+    ':!:*.lock' \
+    ':!:*.pdf' |
     tr '\0' '\n'
 )
 

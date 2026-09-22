@@ -149,6 +149,7 @@ pre-commit install && pre-commit install --hook-type pre-push
 | `client_flutter/` | The Flutter client — upstream sample, see above |
 | `infra/` | Terraform for the Google Cloud topology ([`infra/README.md`](infra/README.md)) |
 | `specs/` | One spec per feature, written before the code ([`specs/README.md`](specs/README.md)) |
+| `docs/guides/` | Task-shaped guides — feeding charts from the endpoints, and how a schema is allowed to change ([`docs/guides/README.md`](docs/guides/README.md)) |
 | `docs/adr/` | Architecture decisions, each with its rulings and what was rejected |
 | `docs/diagrams/` | Mermaid diagrams — one question each ([`docs/diagrams/README.md`](docs/diagrams/README.md)) |
 | `docs/compliance/` | SOC 2 / ISO 27001 policies and evidence |
@@ -157,6 +158,12 @@ pre-commit install && pre-commit install --hook-type pre-push
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — how the system is put
   together and why, describing what is built rather than what is planned.
+- **[docs/guides/feeding-charts.md](docs/guides/feeding-charts.md)** — how a
+  client or the agent gets chart data out of the endpoints, walked end to end
+  with real captured responses, and
+  **[docs/guides/schema-mutations.md](docs/guides/schema-mutations.md)** — how a
+  chart's shape is allowed to change. Both are also published as one
+  [PDF](docs/guides/feeding-charts-and-schema-mutations.pdf).
 - **[docs/adr/README.md](docs/adr/README.md)** — the decisions, including the
   ones we rejected and the reasons.
 - **[docs/diagrams/README.md](docs/diagrams/README.md)** — the same system as

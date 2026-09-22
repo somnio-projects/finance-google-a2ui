@@ -21,6 +21,17 @@ no tooling, and can never drift silently from the code that a screenshot would.
 | [11-client-architecture.md](11-client-architecture.md) | What the Flutter client is made of and what each layer may reach | `.claude/rules/client/architecture.md`, ADR-I, ADR-K |
 | [12-frontend-layers.md](12-frontend-layers.md) | What may import what in the `frontend/` client | ADR-L, `frontend/app/test/architecture/layering_test.dart` |
 
+## Diagrams that live outside this folder
+
+The guides in [`docs/guides/`](../guides/README.md) carry Mermaid diagrams of
+their own — the request path for one chart, the render-intent path through an
+agent turn, the option → payload → edit round trip and the catalog
+regeneration loop. They stay there rather than being numbered here because they
+answer a **how do I use this** question inside a walkthrough, not a *what is
+this system shaped like* question. The rules below still apply to them: Mermaid
+in Markdown, one question each, and they link to the numbered diagrams rather
+than restating them.
+
 ## Rules
 
 1. **A structural change updates its diagram in the same PR.** New layer, new table, new service, new dependency, new environment, changed flow — the picture moves with the code. A PR that changes structure and leaves a diagram stale is incomplete.
