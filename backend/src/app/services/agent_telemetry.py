@@ -36,6 +36,16 @@ def record_turn(
 ) -> None:
     """Emit the turn's single metric and single log line.
 
+    **Why the surfaces are counted.** This line carried ``iterations`` and
+    ``tool_calls`` and nothing about what the turn drew, so a turn that
+    composed four surfaces and a turn that answered in prose produced
+    identical telemetry. That is the whole point of this product, and it was
+    the one thing the turn did not report: on 2026-09-22 the agent was found
+    describing an allocation "by sector" while the surface under it was
+    grouped by holding, and no log line anywhere could have shown it. A view
+    id is a catalog identifier — not a prompt, a reply, a tool argument or a
+    subject — so §5's logging rule is untouched.
+
     Args:
         reporter: Where the counter goes.
         state: The turn's accumulated counters.
@@ -43,7 +53,14 @@ def record_turn(
         outcome: ``ok``, ``truncated`` or a failure code.
         elapsed: How long the turn took.
     """
-    reporter.increment(TURN_METRIC, tags={"model": model, "outcome": outcome})
+    views = sorted({intent.view for intent in state.renders})
+    reporter.increment(
+        TURN_METRIC,
+        # `composed` and not a surface count: a tag's value set becomes a
+        # time series, and "did this turn draw anything" is the question.
+        # The count and the ids are log fields, where cardinality is free.
+        tags={"model": model, "outcome": outcome, "composed": str(bool(views))},
+    )
     log.info(
         TURN_METRIC,
         model=model,
@@ -51,6 +68,8 @@ def record_turn(
         duration_ms=int(elapsed.total_seconds() * 1000),
         iterations=state.iterations,
         tool_calls=state.tool_calls,
+        surfaces=len(state.renders),
+        views=views,
     )
 
 

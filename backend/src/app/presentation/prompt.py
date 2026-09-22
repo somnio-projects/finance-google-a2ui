@@ -17,9 +17,32 @@ from app.presentation.option_text import (
 )
 from app.presentation.registry import Projection
 
+#: What the model is told about the catalog, and — as of 2026-09-22 — what it
+#: is told NOT to do with it.
+#:
+#: The first version read "Pick one by id and fill only the options listed for
+#: it", which describes a capability the model does not have: a surface is
+#: attached by the **tool** it called (``ToolOutcome.render``), and there is no
+#: channel through which the model can name a view. Told to do something it
+#: has no way of doing, it did the only thing left and wrote the intent into
+#: its prose. Measured, same question three times:
+#:
+#:     Here is your portfolio allocation broken down by sector.
+#:     ```json
+#:     { "id": "holdings.allocation.v1", "options": {"group_by": "sector"} }
+#:     ```
+#:
+#: Twice out of three, with the surface rendered *correctly* beside it — and
+#: the third time it refused a grouping the catalog declares. The catalog is
+#: here so the model can choose the right TOOL and the right ARGUMENTS, which
+#: is the only lever it holds; saying so is the fix (spec backend/0036 OD-2).
 PROMPT_HEADER: Final[str] = (
-    "Available views. Pick one by id and fill only the options listed for it; "
-    "an unknown view, an undeclared option or an out-of-range value is "
+    "Views the client can draw. You do not choose one and you never write a "
+    "view id, an options object or JSON in your answer: a surface is attached "
+    "by the tool you call, and your lever is which tool you call and which "
+    "arguments you give it. Read this catalog to know what a tool's arguments "
+    "can produce, then answer in plain prose about what the reader is seeing. "
+    "An unknown view, an undeclared option or an out-of-range value is "
     "rejected and the default view is rendered instead. Never invent a payload "
     "shape, a field or a formatted number."
 )

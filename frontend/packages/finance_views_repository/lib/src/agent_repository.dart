@@ -13,7 +13,9 @@ import 'package:finance_views_repository/src/surface_action_request.dart';
 /// **Every failure is an event, not a thrown exception**, because a turn can
 /// fail after it has already produced surfaces and a partly-consumed stream
 /// has no caller left to return a `Result` to. Nothing throws across this
-/// boundary (ADR-L D-8).
+/// boundary (ADR-L D-8) — including an error raised **on** the stream rather
+/// than carried in it, which is the case this sentence described and did not
+/// cover until spec `frontend/0018`.
 class AgentRepository {
   /// Creates a repository over [a2aClient].
   AgentRepository({required A2aClient a2aClient}) : _a2aClient = a2aClient;
@@ -54,10 +56,44 @@ class AgentRepository {
     }
   }
 
+  /// The message shown when the turn's stream dies under us.
+  ///
+  /// Ours, not the backend's, because at this point the backend has said
+  /// nothing — that is the failure. It is a fixed, safe sentence for the same
+  /// reason `A2aClient` never passes `http.ClientException.message` through:
+  /// on `BrowserClient` that text carries the target URL (N-14).
+  static const String _streamFailed = 'the agent stopped answering';
+
   Stream<AgentEvent> _events(Stream<Map<String, dynamic>> raw) async* {
-    await for (final frame in raw) {
-      final event = parseAgentEvent(frame);
-      if (event != null) yield event;
+    // A failure ON the stream, as opposed to one reported IN it.
+    //
+    // This class's contract is that every failure is an event and nothing
+    // throws across the boundary (ADR-L D-8), and until 2026-09-22 that was
+    // false for exactly the case the contract names: a turn that fails
+    // **after** it has produced surfaces. `A2aClient` guards `send()` and the
+    // response's interpretation, but once it hands back `Ok(stream)`, a
+    // connection reset, an SSE the edge closed, or a read timeout surfaces as
+    // an error on THIS stream — which `await for` rethrows, straight out of
+    // `ConversationBloc._run`'s own `await for` and out of its event handler.
+    // Bloc reports that to `onError` and leaves the state untouched, so the
+    // status stays `running`: the typing indicator never stops and the
+    // composer never re-enables. The turn is over and the app cannot know.
+    //
+    // `on Object` rather than a narrower clause on purpose: what arrives here
+    // is whatever the transport chose to raise, across web and VM, and a
+    // clause narrow enough to miss one of them would restore the hang for
+    // that one. There is no failure on this stream that should reach the UI
+    // as an exception.
+    try {
+      await for (final frame in raw) {
+        final event = parseAgentEvent(frame);
+        if (event != null) yield event;
+      }
+    } on Object {
+      yield const AgentFailed(
+        code: 'transport-unavailable',
+        message: _streamFailed,
+      );
     }
   }
 }

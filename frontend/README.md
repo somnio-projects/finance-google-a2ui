@@ -55,14 +55,13 @@ would replace the project's authorized domains with that list.
 No Flutter SDK needed. From the repository root:
 
 ```bash
-APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose --profile frontend up --build
+APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build
 ```
 
 The client is then on **http://localhost:3001**, under the one compose project
-`finance-a2ui`, alongside Postgres and the backend. It is behind a profile so a
-backend-only `docker compose up` never pays for an SDK download;
-`COMPOSE_PROFILES=frontend,client` also brings up the older `client_flutter`
-on `:3000`.
+`finance-a2ui`, alongside Postgres and the backend — it is part of the default
+`up`, not behind a profile. To skip its build, name the other services:
+`docker compose up db backend`.
 
 The image is **per environment**, unlike `client_flutter`'s, and the reason is
 in `Dockerfile` Decision 1: this app's deployable is a static Hosting release,

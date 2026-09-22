@@ -88,8 +88,10 @@ duplicated one are both visible at a glance.
 | [backend/0032-attribution-headline-and-driver-detail.md](backend/0032-attribution-headline-and-driver-detail.md) | In progress | GGU-100 (the waterfall fields); the drill-down card *unassigned* |
 | [frontend/0014-flow-a-drill-down.md](frontend/0014-flow-a-drill-down.md) | In progress | GGU-100 (the binding); the card *unassigned* |
 | [backend/0034-the-catalog-serves-the-gallery.md](backend/0034-the-catalog-serves-the-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
+| [backend/0036-the-turn-is-fast-honest-and-observable.md](backend/0036-the-turn-is-fast-honest-and-observable.md) | In progress | *unassigned* |
 | [frontend/0016-component-catalog-gallery.md](frontend/0016-component-catalog-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
 | [frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md](frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md) | In progress | *unassigned* |
+| [frontend/0019-the-turn-always-ends.md](frontend/0019-the-turn-always-ends.md) | In progress | *unassigned* |
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
