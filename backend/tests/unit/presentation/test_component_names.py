@@ -55,9 +55,10 @@ DESIGN_CATALOG: Final[dict[str, str]] = {
     "scenario.comparison.v1": "ScenarioComparison",
     # The one component every rendering already agreed on.
     "taxlots.table.v1": "TaxLotTable",
-    # The Home hero (`Home.dc.html`): a page in design, a projection here so
-    # nothing on that screen is computed on the client. Named by us (spec 0026).
+    # The Home hero: a page in design, a projection here; named by us (0026).
     "portfolio.summary.v1": "PortfolioSummary",
+    "holdings.positions.v1": "PositionList",
+    "activity.timeline.v1": "ActivityTimeline",
 }
 
 #: `- **Component:** \`X\`` in a component's own section of the contract.

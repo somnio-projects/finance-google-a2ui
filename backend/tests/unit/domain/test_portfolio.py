@@ -68,7 +68,9 @@ def test_transactions_are_descending_with_a_stable_same_date_tiebreak(
     rows = portfolio.transactions()
     dates = [row.occurred_on for row in rows]
     assert dates == sorted(dates, reverse=True)
-    same_day = [row.transaction_id for row in rows if row.occurred_on == dates[1]]
+    # txn-0014 and txn-0015 share a date on purpose (seed_data.py).
+    paired = next(row for row in rows if row.transaction_id == "txn-0014").occurred_on
+    same_day = [row.transaction_id for row in rows if row.occurred_on == paired]
     assert same_day == ["txn-0014", "txn-0015"]
     assert [row.transaction_id for row in portfolio.transactions()] == [
         row.transaction_id for row in rows

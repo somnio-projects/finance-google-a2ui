@@ -1,7 +1,7 @@
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
-import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/router/app_router.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -60,6 +60,7 @@ void main() {
           AppRoutes.activity,
           AppRoutes.conversation,
           AppRoutes.orderTicket,
+          AppRoutes.catalog,
         ]),
       );
       router.dispose();
@@ -78,7 +79,7 @@ void main() {
         repository: repository,
       );
       await tester.pumpAndSettle();
-      expect(find.byType(PortfolioViewsPage), findsOneWidget);
+      expect(find.byType(HoldingsPage), findsOneWidget);
     });
 
     testWidgets('every registered component is reachable from the route', (
@@ -93,7 +94,7 @@ void main() {
       final registry = buildComponentRegistry();
       await pumpRouter(
         tester,
-        buildRouter(initialLocation: AppRoutes.portfolio),
+        buildRouter(initialLocation: AppRoutes.catalog),
         repository: repository,
         registry: registry,
       );

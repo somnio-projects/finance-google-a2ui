@@ -92,6 +92,8 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "range": "range=1d",
         "group_by": "group_by=asset_class",
         "headline": "headline=false",
+        "kind": "kind=dividend",
+        "limit": "limit=50",
     }[option]
 
     response = client.get(

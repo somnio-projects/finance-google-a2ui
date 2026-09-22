@@ -52,6 +52,8 @@ would read off a payload.
 | Order ticket | `OrderTicket` | `OrderTicket` | `OrderTicket` | `OrderTicket` | **`OrderTicket`** |
 | Risk / payoff | `RiskPayoffChart` | `RiskPayoffChart` | `RiskPayoffChart` | `PayoffChart` | **`RiskPayoffChart`** |
 | Home hero *(shell, `Home.dc.html`)* | *(none — a page, not a card)* | — | — | — | **`PortfolioSummary`** (ours; spec 0026) |
+| `holdings.positions.v1` | `PositionList` | — (a page: `Holdings.dc.html`) | — | — | Not a catalog card; named by us in spec backend/0028 OD-1. |
+| `activity.timeline.v1` | `ActivityTimeline` | — (a page: `Activity.dc.html`) | — | — | Not a catalog card; named by us in spec backend/0028. |
 
 The waterfall's own prompt fragment additionally calls the allocation
 component `HoldingsSummary`. A name used for a component on **another**

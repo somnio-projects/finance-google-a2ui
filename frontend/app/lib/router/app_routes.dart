@@ -19,10 +19,23 @@ abstract final class AppRoutes {
   /// The order ticket, outside the tabs.
   static const String orderTicket = '/order-ticket';
 
+  /// The component catalog index — every registered component, one card each.
+  static const String catalog = '/catalog';
+
   /// The sign-in screen, outside the shell: no tab bar for a stranger.
   static const String signIn = '/sign-in';
+
+  /// The query key that carries a question into the assistant.
+  static const String askParameter = 'ask';
 
   /// Whether [location] is the sign-in screen — the one path the gate treats
   /// differently from every other.
   static bool isSignIn(String location) => location == signIn;
 }
+
+/// The assistant's location with [question] ready to send — how the Home
+/// chips and the Holdings hand-off open it (spec frontend/0009).
+String askRoute(String question) => Uri(
+  path: AppRoutes.conversation,
+  queryParameters: <String, String>{AppRoutes.askParameter: question},
+).toString();

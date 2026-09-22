@@ -3444,3 +3444,54 @@ What the run taught:
   the adapter cannot live in `packages/`; the interface can. A test now pins
   the three files allowed to import the SDK, which is the only thing keeping
   a feature from calling Firebase directly.
+
+## 2026-09-21 — the Holdings and Activity tabs, over two new projections
+
+`feat/holdings_and_activity_tabs`. Backend spec `backend/0028`:
+`holdings.positions.v1` (`PositionList`) and `activity.timeline.v1`
+(`ActivityTimeline`), two ledger kinds (`dividend`, `deposit`) and a `memo`
+column (migration `0007`), `realized_of` reading a past sale's result from
+the ledger, and month/weekday vocabularies in `core/calendar_words`. Frontend
+spec `frontend/0009`: `Holdings.dc.html` and `Activity.dc.html` at the
+design's tokens in both themes — the expanded allocation card with its
+class/sector toggle, the segmented list switch, position tiles with the
+day-move accent and the `Ask the assistant` hand-off that opens `/ask?ask=`,
+the filter chips and the dated timeline. The catalog index moved to
+`/catalog` behind the `Catalog` chip. No ticket number: Jira's highest is
+GGU-109 and 0025 §6 already recorded that GGU-110..116 were invented, so
+this branch carries a description instead of a number.
+
+What the run taught:
+
+- **A worktree with 3,400 uncommitted lines is a claim, not a state.** The
+  previous session left the whole feature written and never ran its tests:
+  fifteen failed on first contact, the backend was over budget by one line,
+  over complexity in two blocks and under docstring coverage. None of that
+  was visible in `git status`. The first act on inherited work is the gate,
+  before reading a line of it.
+- **`text(path) == 'true'` is a contract lie.** `is_cash` is a boolean and
+  `ViewPayload.text` refuses non-strings, so every position tile threw
+  `PayloadContractException` at build. The fix is a `flag()` accessor in the
+  package (0009 OD-8), not a backend that spells booleans as words.
+- **A `Border` with one coloured side cannot take a radius.** Flutter asserts
+  in paint; the design's left accent is a 4px strip inside the clipped card
+  (a `Stack`, not a `Row` with `stretch` — that one asserts in layout when
+  the height is unbounded).
+- **The test font is square.** `+$1,738 realized` is 176 px in the test
+  renderer and ~90 px in Roboto, which is enough to overflow a caption row
+  that never overflows on a phone. The caption and its badge became one
+  `Text.rich` that ellipsizes (0009 OD-9): faithful to the design *and* a
+  layout that cannot overflow.
+- **`dart fix` turns `'\$'` into `r'\$'`.** Escaping a dollar and then
+  letting `use_raw_strings` run left a literal backslash inside every
+  expected string. Raw first, or escaped — never both.
+- **A missing view in a stub is a `pumpAndSettle` timeout.** The router
+  tests' envelope carried the Home views only; a tab whose payload never
+  arrives spins forever, and the failure names the timeout, not the view.
+  `homeViews()` now carries what every tab mounts, and says why.
+- **xenon's module rank is an average.** `domain/activity.py` had one
+  function; making it four small ones was the only way to an `A`.
+- **Coverage steers loop shape.** `if remaining <= ZERO: break` at the top
+  of the loop was a branch no test reached; at the bottom, both arms are
+  covered by the tests that already existed. Same behaviour, one more line
+  of evidence.

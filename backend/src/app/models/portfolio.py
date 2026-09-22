@@ -58,7 +58,7 @@ class PortfolioLot(TimestampMixin, Base):
 
 
 class PortfolioTransaction(TimestampMixin, Base):
-    """One executed buy or sell, cascading from its portfolio."""
+    """One ledger row — trade, dividend or deposit — cascading from its portfolio."""
 
     __tablename__ = "portfolio_transactions"
 
@@ -72,6 +72,7 @@ class PortfolioTransaction(TimestampMixin, Base):
     quantity: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     price: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     amount: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
+    memo: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 __all__ = ["EXACT", "Portfolio", "PortfolioLot", "PortfolioTransaction"]

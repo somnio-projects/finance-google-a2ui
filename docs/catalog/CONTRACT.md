@@ -139,13 +139,512 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
+| [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `dcb1032a4438` | 21 | `kind`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `3bb3ee56b3d7` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
+| [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `279142f5554a` | 38 | read-only | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `7066577b5390` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `a7389adf90d7` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `6f73ed9fad79` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
 | [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `c960b55bd552` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+
+## `activity.timeline.v1`
+
+> The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.
+
+- **Frozen id:** `activity.timeline.v1` · **digest:** `dcb1032a4438`
+- **Component:** `ActivityTimeline`
+- **Payload type:** `ActivityTimelinePayload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** `kind`, `groups[].entries[].kind`
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `kind` | enum all / buy / sell / dividend / deposit | one of 'all', 'buy', 'sell', 'dividend', 'deposit' | `"all"` | Which rows to show. |
+| `limit` | integer 1..200 | integer 1..200 | `100` | Newest rows kept. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'activity.timeline.v1' | default `"activity.timeline.v1"` | `constant` | — | — |
+| `title` | string ≤32 chars | default `"Activity"` | `text` | — | — |
+| `note` | string ≤64 chars | default `"Simulated activity \u2014 resets each session."` | `text` | — | — |
+| `kind` | enum all / buy / sell / dividend / deposit | required | `enum` | variant | input · one of 'all', 'buy', 'sell', 'dividend', 'deposit' |
+| `filters` | array ≤8 items | default `[{"key": "all", "label": "All"}, {"key": "buy", "label": "Buys"}, {"key": "sell", "label": "Sells"}, {"key": "dividend", "label": "Dividends"}, {"key": "deposit", "label": "Deposits"}]` | `container` | empty | — |
+| `filters[].key` | enum all / buy / sell / dividend / deposit | required | `enum` | variant | — |
+| `filters[].label` | string ≤16 chars | required | `text` | — | — |
+| `groups` | array ≤64 items | required | `container` | empty | — |
+| `groups[].label` | string ≤24 chars | required | `text` | — | — |
+| `groups[].entries` | array ≤200 items | required | `container` | empty | — |
+| `groups[].entries[].key` | string ≤32 chars | required | `text` | — | — |
+| `groups[].entries[].kind` | enum buy / sell / dividend / deposit | required | `enum` | variant | input · one of 'all', 'buy', 'sell', 'dividend', 'deposit' |
+| `groups[].entries[].title` | string ≤48 chars | required | `text` | — | — |
+| `groups[].entries[].detail` | string ≤64 chars | required | `text` | — | — |
+| `groups[].entries[].amount` | object | required | `container` | — | — |
+| `groups[].entries[].amount.amount` | decimal | required | `raw` | — | — |
+| `groups[].entries[].amount.display` | string ≤32 chars | required | `display` | — | — |
+| `groups[].entries[].tone` | enum up / down / flat | required | `enum` | variant | — |
+| `groups[].entries[].badge` | string ≤12 chars | required | `text` | — | — |
+| `groups[].entries[].realized` | object | default `null` | `text` | null | — |
+| `groups[].entries[].term` | object | default `null` | `text` | null | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "activity.timeline.v1",
+  "title": "Activity",
+  "note": "Simulated activity \u2014 resets each session.",
+  "kind": "all",
+  "filters": [
+    {
+      "key": "all",
+      "label": "All"
+    },
+    {
+      "key": "buy",
+      "label": "Buys"
+    },
+    {
+      "key": "sell",
+      "label": "Sells"
+    },
+    {
+      "key": "dividend",
+      "label": "Dividends"
+    },
+    {
+      "key": "deposit",
+      "label": "Deposits"
+    }
+  ],
+  "groups": [
+    {
+      "label": "TODAY",
+      "entries": [
+        {
+          "key": "txn-0017",
+          "kind": "dividend",
+          "title": "Dividend \u2014 VOO",
+          "detail": "$1.62/sh \u00b7 85 sh \u00b7 qualified",
+          "amount": {
+            "amount": "137.70",
+            "display": "+$137.70"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "THIS WEEK",
+      "entries": [
+        {
+          "key": "txn-0018",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Bank transfer",
+          "detail": "Chase \u2022\u20224021 \u00b7 Tue",
+          "amount": {
+            "amount": "5000.00",
+            "display": "+$5,000.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "JANUARY 2026",
+      "entries": [
+        {
+          "key": "txn-0019",
+          "kind": "dividend",
+          "title": "Dividend \u2014 MSFT",
+          "detail": "$0.83/sh \u00b7 110 sh \u00b7 qualified",
+          "amount": {
+            "amount": "91.30",
+            "display": "+$91.30"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0020",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Jan 1",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "DECEMBER 2025",
+      "entries": [
+        {
+          "key": "txn-0021",
+          "kind": "dividend",
+          "title": "Dividend \u2014 AAPL",
+          "detail": "$0.25/sh \u00b7 300 sh \u00b7 qualified",
+          "amount": {
+            "amount": "75.00",
+            "display": "+$75.00"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "NOVEMBER 2025",
+      "entries": [
+        {
+          "key": "txn-0022",
+          "kind": "dividend",
+          "title": "Dividend \u2014 JNJ",
+          "detail": "$1.24/sh \u00b7 30 sh \u00b7 qualified",
+          "amount": {
+            "amount": "37.20",
+            "display": "+$37.20"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "JUNE 2025",
+      "entries": [
+        {
+          "key": "txn-0014",
+          "kind": "buy",
+          "title": "Bought 250 PYPL",
+          "detail": "250 sh @ $88.60 \u00b7 Jun 19",
+          "amount": {
+            "amount": "-22150.00",
+            "display": "-$22,150.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0015",
+          "kind": "sell",
+          "title": "Sold 20 VOO",
+          "detail": "20 sh @ $489.00 \u00b7 Jun 19",
+          "amount": {
+            "amount": "9780.00",
+            "display": "$9,780.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "1738.000000",
+              "display": "+$1,738"
+            },
+            "text": "+$1,738 realized",
+            "trend": "up"
+          },
+          "term": {
+            "term": "short",
+            "label": "ST gain"
+          }
+        }
+      ]
+    },
+    {
+      "label": "MARCH 2025",
+      "entries": [
+        {
+          "key": "txn-0016",
+          "kind": "buy",
+          "title": "Bought 100 AAPL",
+          "detail": "100 sh @ $95.40 \u00b7 Mar 21",
+          "amount": {
+            "amount": "-9540.00",
+            "display": "-$9,540.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "JANUARY 2025",
+      "entries": [
+        {
+          "key": "txn-0013",
+          "kind": "buy",
+          "title": "Bought 93 VNQ",
+          "detail": "93 sh @ $106.51 \u00b7 Jan 30",
+          "amount": {
+            "amount": "-9905.43",
+            "display": "-$9,905.43"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0012",
+          "kind": "buy",
+          "title": "Bought 30 NVDA",
+          "detail": "30 sh @ $960.00 \u00b7 Jan 17",
+          "amount": {
+            "amount": "-28800.00",
+            "display": "-$28,800.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0011",
+          "kind": "buy",
+          "title": "Bought 60 NVDA",
+          "detail": "60 sh @ $760.00 \u00b7 Jan 13",
+          "amount": {
+            "amount": "-45600.00",
+            "display": "-$45,600.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "DECEMBER 2024",
+      "entries": [
+        {
+          "key": "txn-0010",
+          "kind": "buy",
+          "title": "Bought 250 GLD",
+          "detail": "250 sh @ $240.00 \u00b7 Dec 21",
+          "amount": {
+            "amount": "-60000.00",
+            "display": "-$60,000.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "NOVEMBER 2024",
+      "entries": [
+        {
+          "key": "txn-0009",
+          "kind": "buy",
+          "title": "Bought 620 BND",
+          "detail": "620 sh @ $74.10 \u00b7 Nov 11",
+          "amount": {
+            "amount": "-45942.00",
+            "display": "-$45,942.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "OCTOBER 2024",
+      "entries": [
+        {
+          "key": "txn-0008",
+          "kind": "buy",
+          "title": "Bought 30 TIP",
+          "detail": "30 sh @ $135.00 \u00b7 Oct 12",
+          "amount": {
+            "amount": "-4050.00",
+            "display": "-$4,050.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "SEPTEMBER 2024",
+      "entries": [
+        {
+          "key": "txn-0007",
+          "kind": "buy",
+          "title": "Bought 130 XOM",
+          "detail": "130 sh @ $42.00 \u00b7 Sep 22",
+          "amount": {
+            "amount": "-5460.00",
+            "display": "-$5,460.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "AUGUST 2024",
+      "entries": [
+        {
+          "key": "txn-0006",
+          "kind": "buy",
+          "title": "Bought 400 AGG",
+          "detail": "400 sh @ $108.00 \u00b7 Aug 13",
+          "amount": {
+            "amount": "-43200.00",
+            "display": "-$43,200.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "JULY 2024",
+      "entries": [
+        {
+          "key": "txn-0005",
+          "kind": "buy",
+          "title": "Bought 105 VOO",
+          "detail": "105 sh @ $402.10 \u00b7 Jul 24",
+          "amount": {
+            "amount": "-42220.50",
+            "display": "-$42,220.50"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "MAY 2024",
+      "entries": [
+        {
+          "key": "txn-0004",
+          "kind": "buy",
+          "title": "Bought 110 MSFT",
+          "detail": "110 sh @ $305.20 \u00b7 May 15",
+          "amount": {
+            "amount": "-33572.00",
+            "display": "-$33,572.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "MARCH 2024",
+      "entries": [
+        {
+          "key": "txn-0003",
+          "kind": "buy",
+          "title": "Bought 25 PG",
+          "detail": "25 sh @ $180.00 \u00b7 Mar 26",
+          "amount": {
+            "amount": "-4500.00",
+            "display": "-$4,500.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "FEBRUARY 2024",
+      "entries": [
+        {
+          "key": "txn-0002",
+          "kind": "buy",
+          "title": "Bought 30 JNJ",
+          "detail": "30 sh @ $170.00 \u00b7 Feb 15",
+          "amount": {
+            "amount": "-5100.00",
+            "display": "-$5,100.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "NOVEMBER 2023",
+      "entries": [
+        {
+          "key": "txn-0001",
+          "kind": "buy",
+          "title": "Bought 200 AAPL",
+          "detail": "200 sh @ $155.40 \u00b7 Nov 7",
+          "amount": {
+            "amount": "-31080.00",
+            "display": "-$31,080.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## `attribution.waterfall.v1`
 
@@ -627,6 +1126,628 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "-0.2%"
       },
       "trend": "down"
+    }
+  ]
+}
+```
+
+## `holdings.positions.v1`
+
+> The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.
+
+- **Frozen id:** `holdings.positions.v1` · **digest:** `279142f5554a`
+- **Component:** `PositionList`
+- **Payload type:** `HoldingsPositionsPayload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** read-only
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `sort` | enum value_desc / value_asc / label | one of 'value_desc', 'value_asc', 'label' | `"value_desc"` | Row order: by value descending, ascending, or by label. |
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'holdings.positions.v1' | default `"holdings.positions.v1"` | `constant` | — | — |
+| `title` | string ≤32 chars | default `"Holdings"` | `text` | — | — |
+| `total` | object | required | `container` | — | — |
+| `total.label` | string ≤64 chars | required | `text` | — | — |
+| `total.amount` | object | required | `container` | — | — |
+| `total.amount.amount` | decimal | required | `raw` | — | — |
+| `total.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `gain` | object | required | `container` | — | — |
+| `gain.amount` | object | required | `container` | — | — |
+| `gain.amount.amount` | decimal | required | `raw` | — | — |
+| `gain.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `gain.percent` | object | required | `container` | — | — |
+| `gain.percent.value` | decimal | required | `raw` | — | — |
+| `gain.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `gain.trend` | enum up / down / flat | required | `enum` | variant | — |
+| `gain.period` | string ≤24 chars | required | `text` | — | — |
+| `ask_label` | string ≤48 chars | default `"Ask the assistant about this"` | `text` | — | — |
+| `positions` | array ≤64 items | required | `container` | empty | — |
+| `positions[].symbol` | string ≤10 chars | required | `text` | — | — |
+| `positions[].name` | string ≤64 chars | required | `text` | — | — |
+| `positions[].detail` | string ≤48 chars | required | `text` | — | — |
+| `positions[].value` | object | required | `container` | — | — |
+| `positions[].value.amount` | decimal | required | `raw` | — | — |
+| `positions[].value.display` | string ≤32 chars | required | `display` | — | — |
+| `positions[].unrealized` | object | default `null` | `text` | null | — |
+| `positions[].day` | object | required | `container` | — | — |
+| `positions[].day.value` | decimal | required | `raw` | — | — |
+| `positions[].day.display` | string ≤16 chars | required | `display` | — | — |
+| `positions[].day_trend` | enum up / down / flat | required | `enum` | variant | — |
+| `positions[].price` | object | required | `container` | — | — |
+| `positions[].price.amount` | decimal | required | `raw` | — | — |
+| `positions[].price.display` | string ≤32 chars | required | `display` | — | — |
+| `positions[].weight` | object | required | `container` | — | — |
+| `positions[].weight.value` | decimal | required | `raw` | — | — |
+| `positions[].weight.display` | string ≤16 chars | required | `display` | — | — |
+| `positions[].is_cash` | boolean | required | `flag` | variant | — |
+| `positions[].ask` | object | required | `container` | — | — |
+| `positions[].ask.text` | string ≤80 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "holdings.positions.v1",
+  "title": "Holdings",
+  "total": {
+    "label": "Total value",
+    "amount": {
+      "amount": "482915.200000",
+      "display": "$482,915.20"
+    }
+  },
+  "gain": {
+    "amount": {
+      "amount": "61204.050000",
+      "display": "+$61,204"
+    },
+    "percent": {
+      "value": "0.1451326340316114477883736297",
+      "display": "+14.5%"
+    },
+    "trend": "up",
+    "period": "all-time unrealized"
+  },
+  "ask_label": "Ask the assistant about this",
+  "positions": [
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corp",
+      "detail": "90 sh \u00b7 avg $826.67",
+      "value": {
+        "amount": "108419.400000",
+        "display": "$108,419.40"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "34019.400000",
+          "display": "+$34,019"
+        },
+        "percent": {
+          "value": "0.45725",
+          "display": "+45.7%"
+        },
+        "trend": "up",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "0.04200328691289680823458178358",
+        "display": "+4.2%"
+      },
+      "day_trend": "up",
+      "price": {
+        "amount": "1204.66",
+        "display": "$1,204.66"
+      },
+      "weight": {
+        "value": "0.2245102245694482178237504224",
+        "display": "22.5%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my NVDA position"
+      }
+    },
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "detail": "300 sh \u00b7 avg $135.40",
+      "value": {
+        "amount": "69954.000000",
+        "display": "$69,954.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "29334.000000",
+          "display": "+$29,334"
+        },
+        "percent": {
+          "value": "0.7221565731166912850812407681",
+          "display": "+72.2%"
+        },
+        "trend": "up",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "0.01101283385362469649670482137",
+        "display": "+1.1%"
+      },
+      "day_trend": "up",
+      "price": {
+        "amount": "233.18",
+        "display": "$233.18"
+      },
+      "weight": {
+        "value": "0.1448577307154548044874131110",
+        "display": "14.5%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my AAPL position"
+      }
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "detail": "250 sh \u00b7 avg $240.00",
+      "value": {
+        "amount": "49500.000000",
+        "display": "$49,500.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-10500.000000",
+          "display": "-$10,500"
+        },
+        "percent": {
+          "value": "-0.1750",
+          "display": "-17.5%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "0.01382488479262672811059907834",
+        "display": "+1.4%"
+      },
+      "day_trend": "up",
+      "price": {
+        "amount": "198.00",
+        "display": "$198.00"
+      },
+      "weight": {
+        "value": "0.1025024683422679592607563398",
+        "display": "10.3%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my GLD position"
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft Corp",
+      "detail": "110 sh \u00b7 avg $305.20",
+      "value": {
+        "amount": "46530.000000",
+        "display": "$46,530.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "12958.000000",
+          "display": "+$12,958"
+        },
+        "percent": {
+          "value": "0.3859764089121887287024901704",
+          "display": "+38.6%"
+        },
+        "trend": "up",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.0005198242049052502244695430273",
+        "display": "-0.1%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "423.00",
+        "display": "$423.00"
+      },
+      "weight": {
+        "value": "0.09635232024173188170511095944",
+        "display": "9.6%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my MSFT position"
+      }
+    },
+    {
+      "symbol": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "detail": "85 sh \u00b7 avg $402.10",
+      "value": {
+        "amount": "44880.000000",
+        "display": "$44,880.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "10701.500000",
+          "display": "+$10,702"
+        },
+        "percent": {
+          "value": "0.3131061924894304899278786372",
+          "display": "+31.3%"
+        },
+        "trend": "up",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.04864864864864864864864864865",
+        "display": "-4.9%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "528.00",
+        "display": "$528.00"
+      },
+      "weight": {
+        "value": "0.09293557129698961639641908145",
+        "display": "9.3%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my VOO position"
+      }
+    },
+    {
+      "symbol": "BND",
+      "name": "Vanguard Total Bond",
+      "detail": "620 sh \u00b7 avg $74.10",
+      "value": {
+        "amount": "44268.000000",
+        "display": "$44,268.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-1674.000000",
+          "display": "-$1,674"
+        },
+        "percent": {
+          "value": "-0.03643724696356275303643724696",
+          "display": "-3.6%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.002096436058700209643605870021",
+        "display": "-0.2%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "71.40",
+        "display": "$71.40"
+      },
+      "weight": {
+        "value": "0.09166826805203066708192245761",
+        "display": "9.2%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my BND position"
+      }
+    },
+    {
+      "symbol": "AGG",
+      "name": "iShares Core US Aggregate Bond",
+      "detail": "400 sh \u00b7 avg $108.00",
+      "value": {
+        "amount": "39000.000000",
+        "display": "$39,000.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-4200.000000",
+          "display": "-$4,200"
+        },
+        "percent": {
+          "value": "-0.09722222222222222222222222222",
+          "display": "-9.7%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.002047082906857727737973387922",
+        "display": "-0.2%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "97.50",
+        "display": "$97.50"
+      },
+      "weight": {
+        "value": "0.08075952051208990729635347987",
+        "display": "8.1%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my AGG position"
+      }
+    },
+    {
+      "symbol": "PYPL",
+      "name": "PayPal Holdings",
+      "detail": "250 sh \u00b7 avg $88.60",
+      "value": {
+        "amount": "16325.000000",
+        "display": "$16,325.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-5825.000000",
+          "display": "-$5,825"
+        },
+        "percent": {
+          "value": "-0.2629796839729119638826185102",
+          "display": "-26.3%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.003813882532418001525553012967",
+        "display": "-0.4%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "65.30",
+        "display": "$65.30"
+      },
+      "weight": {
+        "value": "0.03380510698358635222084539894",
+        "display": "3.4%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my PYPL position"
+      }
+    },
+    {
+      "symbol": "VNQ",
+      "name": "Vanguard Real Estate",
+      "detail": "93 sh \u00b7 avg $106.51",
+      "value": {
+        "amount": "8449.980000",
+        "display": "$8,449.98"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-1455.450000",
+          "display": "-$1,455"
+        },
+        "percent": {
+          "value": "-0.1469345601351985729039526805",
+          "display": "-14.7%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "0.01519553072625698324022346369",
+        "display": "+1.5%"
+      },
+      "day_trend": "up",
+      "price": {
+        "amount": "90.86",
+        "display": "$90.86"
+      },
+      "weight": {
+        "value": "0.01749785469581408909887284558",
+        "display": "1.7%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my VNQ position"
+      }
+    },
+    {
+      "symbol": "JNJ",
+      "name": "Johnson & Johnson",
+      "detail": "30 sh \u00b7 avg $170.00",
+      "value": {
+        "amount": "4650.000000",
+        "display": "$4,650.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-450.000000",
+          "display": "-$450"
+        },
+        "percent": {
+          "value": "-0.08823529411764705882352941176",
+          "display": "-8.8%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.009900990099009900990099009901",
+        "display": "-1.0%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "155.00",
+        "display": "$155.00"
+      },
+      "weight": {
+        "value": "0.009629019753364565869949837984",
+        "display": "1.0%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my JNJ position"
+      }
+    },
+    {
+      "symbol": "XOM",
+      "name": "Exxon Mobil",
+      "detail": "130 sh \u00b7 avg $42.00",
+      "value": {
+        "amount": "4448.600000",
+        "display": "$4,448.60"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-1011.400000",
+          "display": "-$1,011"
+        },
+        "percent": {
+          "value": "-0.1852380952380952380952380952",
+          "display": "-18.5%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.01012438530517789991321955453",
+        "display": "-1.0%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "34.22",
+        "display": "$34.22"
+      },
+      "weight": {
+        "value": "0.009211969306412388758937386937",
+        "display": "0.9%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my XOM position"
+      }
+    },
+    {
+      "symbol": "PG",
+      "name": "Procter & Gamble",
+      "detail": "25 sh \u00b7 avg $180.00",
+      "value": {
+        "amount": "4200.000000",
+        "display": "$4,200.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-300.000000",
+          "display": "-$300"
+        },
+        "percent": {
+          "value": "-0.06666666666666666666666666667",
+          "display": "-6.7%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.01001767825574543311726576311",
+        "display": "-1.0%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "168.00",
+        "display": "$168.00"
+      },
+      "weight": {
+        "value": "0.008697179132071220785761143986",
+        "display": "0.9%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my PG position"
+      }
+    },
+    {
+      "symbol": "TIP",
+      "name": "iShares TIPS Bond",
+      "detail": "30 sh \u00b7 avg $135.00",
+      "value": {
+        "amount": "3657.000000",
+        "display": "$3,657.00"
+      },
+      "unrealized": {
+        "amount": {
+          "amount": "-393.000000",
+          "display": "-$393"
+        },
+        "percent": {
+          "value": "-0.09703703703703703703703703704",
+          "display": "-9.7%"
+        },
+        "trend": "down",
+        "period": "all-time"
+      },
+      "day": {
+        "value": "-0.001229004506349856616140925850",
+        "display": "-0.1%"
+      },
+      "day_trend": "down",
+      "price": {
+        "amount": "121.90",
+        "display": "$121.90"
+      },
+      "weight": {
+        "value": "0.007572758115710584384173453227",
+        "display": "0.8%"
+      },
+      "is_cash": false,
+      "ask": {
+        "text": "Tell me about my TIP position"
+      }
+    },
+    {
+      "symbol": "USD",
+      "name": "Cash & sweep",
+      "detail": "Settlement fund",
+      "value": {
+        "amount": "38633.220000",
+        "display": "$38,633.22"
+      },
+      "unrealized": null,
+      "day": {
+        "value": "0",
+        "display": "0.0%"
+      },
+      "day_trend": "flat",
+      "price": {
+        "amount": "1.00",
+        "display": "$1.00"
+      },
+      "weight": {
+        "value": "0.08000000828302774482973408168",
+        "display": "8.0%"
+      },
+      "is_cash": true,
+      "ask": {
+        "text": "What is my cash doing?"
+      }
     }
   ]
 }

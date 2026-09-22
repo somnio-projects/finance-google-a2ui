@@ -1,6 +1,8 @@
 import 'package:finance_app/charts/chart_extensions.dart';
+import 'package:finance_app/theme/activity_tokens.dart';
 import 'package:finance_app/theme/app_colors.dart';
 import 'package:finance_app/theme/app_spacing.dart';
+import 'package:finance_app/theme/holdings_tokens.dart';
 import 'package:finance_app/theme/home_palettes.dart';
 import 'package:finance_app/theme/login_palettes.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +41,8 @@ abstract final class AppTheme {
         // so it sits beside the spacing rather than inside `chartExtensions`.
         homeTokensFor(brightness),
         loginTokensFor(brightness),
+        holdingsTokensFor(brightness),
+        activityTokensFor(brightness),
         // Chart palettes stay separate: gain, loss and "a total" are semantic
         // roles Material 3 has no slot for, and they are measured the same way
         // the scheme above now is. Spread rather than listed,

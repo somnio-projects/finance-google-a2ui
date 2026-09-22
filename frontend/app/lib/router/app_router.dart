@@ -1,6 +1,7 @@
 import 'package:finance_app/auth/auth_gate.dart';
 import 'package:finance_app/features/activity/view/activity_page.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
 import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
@@ -57,7 +58,7 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
                 // **No view ids here.** The page asks the registry itself, so
                 // a registered component is reachable by construction
                 // (`app_router_test.dart`).
-                builder: (context, state) => const PortfolioViewsPage(),
+                builder: (context, state) => const HoldingsPage(),
               ),
             ],
           ),
@@ -73,7 +74,10 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
             routes: <RouteBase>[
               GoRoute(
                 path: AppRoutes.conversation,
-                builder: (context, state) => const ConversationPage(),
+                builder: (context, state) => ConversationPage(
+                  initialQuestion:
+                      state.uri.queryParameters[AppRoutes.askParameter],
+                ),
               ),
             ],
           ),
@@ -82,6 +86,10 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
       GoRoute(
         path: AppRoutes.signIn,
         builder: (context, state) => const SignInPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.catalog,
+        builder: (context, state) => const PortfolioViewsPage(),
       ),
       GoRoute(
         path: AppRoutes.orderTicket,

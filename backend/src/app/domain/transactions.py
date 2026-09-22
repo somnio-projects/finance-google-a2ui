@@ -14,10 +14,17 @@ class TransactionType(StrEnum):
 
     BUY = "buy"
     SELL = "sell"
+    DIVIDEND = "dividend"
+    DEPOSIT = "deposit"
 
 
 class Transaction(BaseModel):
-    """One executed buy or sell in the simulated history."""
+    """One ledger row of the simulated history — a trade, a dividend, a deposit.
+
+    A dividend carries the per-share amount as ``price`` and the shares as
+    ``quantity``; a deposit is ``USD`` at a price of one, so ``amount ==
+    quantity * price`` holds for every kind and one invariant covers them all.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -27,11 +34,17 @@ class Transaction(BaseModel):
         description="Stable identifier; also the same-date sort tiebreak.",
     )
     occurred_on: date = Field(description="The day it executed (UTC).")
-    kind: TransactionType = Field(description="Buy or sell.")
+    kind: TransactionType = Field(description="What the row did.")
     symbol: str = Field(pattern=SYMBOL_PATTERN, description="Ticker of the asset.")
     quantity: Quantity = Field(gt=0, description="Units bought or sold.")
     price: Money = Field(gt=0, description="Execution price per unit, in USD.")
     amount: Money = Field(gt=0, description="``quantity * price``, in USD.")
+    memo: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Words the timeline prints beside the row, server-written.",
+        examples=["Bank transfer · Chase ••4021"],
+    )
 
 
 __all__ = ["Transaction", "TransactionType"]
