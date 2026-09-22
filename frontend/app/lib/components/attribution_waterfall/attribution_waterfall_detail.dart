@@ -37,21 +37,29 @@ class AttributionWaterfallHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
     final caption = selectedLabel;
+    // The pill is one line of the backend's words and cannot wrap; on a
+    // card narrower than the design's (the catalog thumbnail) it scales down
+    // rather than overflowing the title. Nothing is truncated or recomputed.
     return Row(
       children: <Widget>[
         Expanded(child: Text(title, style: ChartText.title(palette.title))),
         const SizedBox(width: 12),
-        if (caption == null)
-          AttributionWaterfallPill(net: net)
-        else
-          Text(
-            caption,
-            style: TextStyle(
-              color: AttributionWaterfallTokens.of(context).selection,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: caption == null
+                ? AttributionWaterfallPill(net: net)
+                : Text(
+                    caption,
+                    style: TextStyle(
+                      color: AttributionWaterfallTokens.of(context).selection,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
           ),
+        ),
       ],
     );
   }
