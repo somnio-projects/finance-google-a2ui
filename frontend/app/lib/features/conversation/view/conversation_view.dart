@@ -61,7 +61,7 @@ class _ConversationViewState extends State<ConversationView> {
                 ),
               ),
               // Dictation fills the field this composer already owns; it
-              // never sends (spec frontend/0022 OD-1), so the wrapper is a
+              // never sends (spec frontend/0023 OD-1), so the wrapper is a
               // listener over the same controller rather than a second
               // path into the agent.
               VoiceInputListener(

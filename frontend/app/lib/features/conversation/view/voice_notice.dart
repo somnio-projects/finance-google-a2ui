@@ -16,7 +16,7 @@ const String voiceUnavailableTooltip = 'Voice input unavailable';
 /// owns; every sentence here is about the *device* — whether this browser has
 /// the API, whether the microphone was granted, whether anything was heard.
 /// No server knows any of it and no payload field could carry it
-/// (spec frontend/0022 OD-5).
+/// (spec frontend/0023 OD-5).
 ///
 /// The `switch` is exhaustive over [SpeechFailure], so a new kind is a
 /// compile error here rather than a snackbar with nothing in it.

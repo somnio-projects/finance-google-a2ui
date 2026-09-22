@@ -3,7 +3,7 @@
 // The voice feature's whole claim is that the Web Speech API sits behind one
 // interface: the bloc is driven by a fake, the layering test stays true, and
 // the one file a VM cannot compile is the one file the coverage gate excuses
-// (spec frontend/0022 OD-2, OD-3, AC-10). A claim like that decays the first
+// (spec frontend/0023 OD-2, OD-3, AC-10). A claim like that decays the first
 // time somebody reaches for `dart:js_interop` in a widget, so it is a test.
 //
 // Mutation-checked, both ways: adding `import 'dart:js_interop';` to
@@ -25,11 +25,11 @@ const Set<String> browserSeam = <String>{'app/lib/speech/speech_web.dart'};
 ///
 /// Importing it is construction, and construction is `bootstrap.dart`'s
 /// (ADR-L D-2). The conditional import lives there rather than in a barrel,
-/// for the reason spec 0022 OD-2 gives.
+/// for the reason spec 0023 OD-2 gives.
 const String platformChoice = 'app/lib/bootstrap.dart';
 
 void main() {
-  group('the speech seam (spec frontend/0022)', () {
+  group('the speech seam (spec frontend/0023)', () {
     late WorkspaceSources sources;
 
     setUp(() {

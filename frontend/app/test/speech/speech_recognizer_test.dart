@@ -4,7 +4,7 @@ import 'package:finance_app/speech/speech_stub.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('UnsupportedSpeechRecognizer (spec frontend/0022 AC-1)', () {
+  group('UnsupportedSpeechRecognizer (spec frontend/0023 AC-1)', () {
     const recognizer = UnsupportedSpeechRecognizer();
 
     test('says so before anybody opens a session', () {

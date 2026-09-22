@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// The composer's 46 px circular control (spec frontend/0011 §2).
 ///
 /// Extracted from `assistant_composer.dart` when the mic gained states of its
-/// own (spec frontend/0022): the two buttons are the same shape and the shape
+/// own (spec frontend/0023): the two buttons are the same shape and the shape
 /// is now built from two files, which is the point at which a private class
 /// stops being private.
 class ComposerRoundButton extends StatelessWidget {

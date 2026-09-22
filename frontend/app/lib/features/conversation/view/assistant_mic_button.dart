@@ -5,14 +5,14 @@ import 'package:finance_app/theme/assistant_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The composer's microphone, in its three states (spec frontend/0022).
+/// The composer's microphone, in its three states (spec frontend/0023).
 ///
 /// **It is never inert.** On a build with no engine it still answers a tap,
 /// with a tooltip and a sentence that say why — the defect spec 0021 OD-2
 /// recorded was a control that did nothing, and a disabled mic would be the
 /// same defect wearing a grey coat.
 ///
-/// **No colour is invented here** (spec 0022 OD-6). There is no artboard for
+/// **No colour is invented here** (spec 0023 OD-6). There is no artboard for
 /// a listening microphone, so the live state borrows the send button's
 /// active pair, which is already this composer's "this control is working"
 /// palette. `AssistantTokens` gains no field.

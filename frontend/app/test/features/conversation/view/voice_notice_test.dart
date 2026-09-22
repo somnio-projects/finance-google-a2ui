@@ -3,7 +3,7 @@ import 'package:finance_app/speech/speech_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('voiceNotice (spec frontend/0022 OD-5)', () {
+  group('voiceNotice (spec frontend/0023 OD-5)', () {
     test('every failure kind has its own sentence', () {
       // Quantified over the enum: a kind added without a sentence does not
       // compile, and a kind added with somebody else's sentence fails here.

@@ -3,7 +3,7 @@
 /// An enum rather than a sealed class: every member is a bare kind with no
 /// payload, and a `switch` over it is exhaustive by compilation either way —
 /// which is the property ADR-L D-8 is actually asking for (spec
-/// frontend/0022 §3). Adding a member is a compile error in `voiceNotice`,
+/// frontend/0023 §3). Adding a member is a compile error in `voiceNotice`,
 /// which is where a new kind must gain its sentence.
 enum SpeechFailure {
   /// This build cannot dictate at all: no Web Speech API, or not a browser.
@@ -42,7 +42,7 @@ enum SpeechFailure {
 ///
 /// The mapping lives here, in pure Dart, rather than in the web binding: it
 /// is the one decision in this feature worth getting wrong, and the binding
-/// is the one file no test can load (spec frontend/0022 OD-3).
+/// is the one file no test can load (spec frontend/0023 OD-3).
 SpeechFailure speechFailureFor(String code) => switch (code) {
   // Two codes for one refusal: `not-allowed` is the person saying no (or a
   // remembered no), `service-not-allowed` is the user agent or a policy

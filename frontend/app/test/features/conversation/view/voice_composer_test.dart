@@ -10,7 +10,7 @@ import '../../../helpers/fake_speech_recognizer.dart';
 import 'conversation_harness.dart';
 
 void main() {
-  group('the composer dictates (spec frontend/0022)', () {
+  group('the composer dictates (spec frontend/0023)', () {
     late MockAgentRepository agent;
     late MockViewsRepository views;
     late FakeSpeechRecognizer engine;

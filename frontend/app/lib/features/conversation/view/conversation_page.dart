@@ -49,7 +49,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
   /// The dictation bloc, built here for the same reason the conversation's
   /// is: this is the page, so this is where a bloc's lifetime and the seam it
-  /// needs are resolved (spec frontend/0022 OD-2).
+  /// needs are resolved (spec frontend/0023 OD-2).
   VoiceInputBloc get _voiceInput =>
       _voice ??= VoiceInputBloc(recognizer: context.read<SpeechRecognizer>());
 

@@ -144,7 +144,7 @@ http {
         add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
 
         # `microphone=(self)` and every other feature off. The Assistant's
-        # composer dictates through the Web Speech API (spec frontend/0022),
+        # composer dictates through the Web Speech API (spec frontend/0023),
         # and a policy of `microphone=()` denies it before the browser ever
         # asks the person — so the feature would work on `flutter run` and
         # fail on the deployed origin. This value and `firebase.json`'s are

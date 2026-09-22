@@ -11,11 +11,11 @@ part 'voice_input_state.dart';
 /// It does not know what a question is, it never reaches the agent, and it
 /// never formats or computes anything — a transcript is a string the person
 /// said. What it produces goes into the composer's field, from where the
-/// existing send path takes over unchanged (spec frontend/0022 OD-1, AC-8).
+/// existing send path takes over unchanged (spec frontend/0023 OD-1, AC-8).
 ///
 /// The browser is behind [SpeechRecognizer], so this class is driven by a
 /// fake in every test and `dart:js_interop` appears nowhere near it
-/// (spec 0022 OD-2).
+/// (spec 0023 OD-2).
 class VoiceInputBloc extends Bloc<VoiceInputEvent, VoiceInputState> {
   /// Creates a bloc over [recognizer].
   ///

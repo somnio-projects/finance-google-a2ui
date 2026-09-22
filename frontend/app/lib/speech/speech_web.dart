@@ -4,11 +4,12 @@ import 'dart:js_interop_unsafe';
 
 import 'package:finance_app/speech/speech_failure.dart';
 import 'package:finance_app/speech/speech_recognizer.dart';
+import 'package:finance_app/speech/speech_transcript.dart';
 import 'package:web/web.dart' as web;
 
 /// The recognizer for a build running in a browser.
 ///
-/// Chosen by the conditional import in `bootstrap.dart` (spec 0022 OD-2).
+/// Chosen by the conditional import in `bootstrap.dart` (spec 0023 OD-2).
 SpeechRecognizer createSpeechRecognizer() => WebSpeechRecognizer();
 
 /// Dictation over the browser's Web Speech API.
@@ -16,11 +17,12 @@ SpeechRecognizer createSpeechRecognizer() => WebSpeechRecognizer();
 /// **This file is the one coverage exemption this feature adds, and the
 /// reason is mechanical**: a library importing `dart:js_interop` cannot be
 /// compiled for the Dart VM, so `flutter test` can never load it and lcov can
-/// never write a record for it (spec frontend/0022 OD-3). Everything that
+/// never write a record for it (spec frontend/0023 OD-3). Everything that
 /// could be decided elsewhere has been moved elsewhere — the error-code
-/// mapping is in `speech_failure.dart` and the state machine is in
-/// `VoiceInputBloc`, both at 100 %. What is left is construction, four
-/// callback registrations and reading a string out of a JS object. It is
+/// mapping is in `speech_failure.dart`, assembling the utterance is in
+/// `speech_transcript.dart` and the state machine is in `VoiceInputBloc`,
+/// all three at 100 %. What is left is construction, four callback
+/// registrations, and copying fields out of a JS object into records. It is
 /// compiled for real by `flutter build web --release`, which `frontend-ci`
 /// runs on every pull request; that is the check this file actually has.
 class WebSpeechRecognizer extends SpeechRecognizer {
@@ -41,7 +43,7 @@ class WebSpeechRecognizer extends SpeechRecognizer {
       );
     }
     final events = StreamController<SpeechEvent>();
-    // One utterance per tap (spec 0022 OD-7): `continuous` would hold the
+    // One utterance per tap (spec 0023 OD-7): `continuous` would hold the
     // microphone open until something closed it, and a forgotten tab with an
     // open microphone is not a thing to ship. `interimResults` is what makes
     // the words appear while they are still being said (AC-3).
@@ -50,7 +52,7 @@ class WebSpeechRecognizer extends SpeechRecognizer {
           ..continuous = false
           ..interimResults = true
           // `lang` is deliberately not set: it defaults to the document's
-          // `<html lang>`, which the bundle now declares (spec 0022 OD-9).
+          // `<html lang>`, which the bundle now declares (spec 0023 OD-9).
           ..onresult = ((web.SpeechRecognitionEvent event) {
             events.add(_heard(event));
           }).toJS
@@ -92,19 +94,18 @@ JSFunction? _constructor() {
   return null;
 }
 
-/// The whole utterance the engine currently reads, and whether it is final.
+/// Copy the engine's accumulated phrases out of the JS event.
 ///
-/// `results` accumulates: each entry is one recognised phrase and entry zero
-/// of each is the engine's best alternative. Concatenating them is reading,
-/// not computing — no figure is involved and nothing here is formatted.
+/// The *reading* of them — concatenation, trimming, whether the whole
+/// utterance is final — is `heardFrom`, which is plain Dart and is tested.
+/// This is only the crossing: a loop over a JS list, producing records.
 SpeechHeard _heard(web.SpeechRecognitionEvent event) {
   final results = event.results;
-  final words = StringBuffer();
-  var isFinal = true;
-  for (var index = 0; index < results.length; index++) {
-    final result = results.item(index);
-    words.write(result.item(0).transcript);
-    if (!result.isFinal) isFinal = false;
-  }
-  return SpeechHeard(words.toString().trim(), isFinal: isFinal);
+  return heardFrom(<SpeechPhrase>[
+    for (var index = 0; index < results.length; index++)
+      (
+        transcript: results.item(index).item(0).transcript,
+        isFinal: results.item(index).isFinal,
+      ),
+  ]);
 }

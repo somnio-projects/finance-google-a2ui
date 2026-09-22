@@ -12,7 +12,7 @@ import 'package:finance_app/speech/speech_recognizer.dart';
 // The platform choice for dictation lives HERE, in the composition root,
 // rather than in a barrel of one conditional export: such a barrel has no
 // executable line, lcov writes no record for it, and the coverage gate would
-// then have to excuse a file that does nothing (spec frontend/0022 OD-2).
+// then have to excuse a file that does nothing (spec frontend/0023 OD-2).
 import 'package:finance_app/speech/speech_stub.dart'
     if (dart.library.js_interop) 'package:finance_app/speech/speech_web.dart';
 import 'package:finance_app/theme/theme_mode_scope.dart';
@@ -76,7 +76,7 @@ Widget bootstrap({
 ///
 /// [speechRecognizer] is the dictation seam. It is a parameter rather than a
 /// construction because this function is what a test calls, and a test must
-/// be able to hand in a fake engine (spec frontend/0022 OD-2).
+/// be able to hand in a fake engine (spec frontend/0023 OD-2).
 Widget buildApp({
   required ViewsRepository viewsRepository,
   required AgentRepository agentRepository,
@@ -98,7 +98,7 @@ Widget buildApp({
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
     themeMode: themeMode ?? ThemeModeController(),
     // A tree pumped without one gets the honest no-op: the mic is drawn,
-    // answers a tap, and says this build cannot dictate (spec 0022 AC-1).
+    // answers a tap, and says this build cannot dictate (spec 0023 AC-1).
     speechRecognizer: speechRecognizer ?? const UnsupportedSpeechRecognizer(),
   );
 }

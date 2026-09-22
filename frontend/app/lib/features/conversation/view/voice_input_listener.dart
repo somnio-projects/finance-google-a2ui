@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// A bloc cannot type into a `TextEditingController` and cannot show a
 /// snackbar, so the effects live here, over [child], and the bloc stays a
-/// state machine (spec frontend/0022).
+/// state machine (spec frontend/0023).
 class VoiceInputListener extends StatelessWidget {
   /// Wraps [child] with the composer's [controller] in scope.
   const VoiceInputListener({
@@ -33,7 +33,7 @@ class VoiceInputListener extends StatelessWidget {
       BlocListener<VoiceInputBloc, VoiceInputState>(
         // On the counter, not on the failure: two refusals of the same kind
         // are two equal states, and a listener keyed on the value would show
-        // one snackbar and swallow the second tap (spec 0022 OD-4, AC-7).
+        // one snackbar and swallow the second tap (spec 0023 OD-4, AC-7).
         listenWhen: (previous, current) => previous.notices != current.notices,
         // `failure` is non-null whenever `notices` advances — `noticing` is
         // the only transition that touches either, and it sets both.

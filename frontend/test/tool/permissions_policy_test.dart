@@ -1,7 +1,7 @@
 // The two `Permissions-Policy` headers this client is served under.
 //
 // The Assistant's composer dictates through the Web Speech API, which needs
-// the microphone the policy grants (spec frontend/0022 AC-9). The policy is
+// the microphone the policy grants (spec frontend/0023 AC-9). The policy is
 // written twice — once in `firebase.json` for Hosting and once in
 // `frontend/docker/nginx.conf.template` for the container — because Hosting
 // has no nginx, and spec frontend/0017 records what happens when only one of
@@ -34,7 +34,7 @@ String policyIn(String source) {
 }
 
 void main() {
-  group('Permissions-Policy (spec frontend/0022 AC-9)', () {
+  group('Permissions-Policy (spec frontend/0023 AC-9)', () {
     late String hosting;
     late String container;
 

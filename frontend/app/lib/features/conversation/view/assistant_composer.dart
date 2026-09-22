@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 /// The mic used to be drawn here with a snackbar saying it was not wired
 /// (0011 OD-5). It is wired now, and it owns its own states, so it is
 /// [AssistantMicButton] and this file no longer knows what it does
-/// (spec frontend/0022).
+/// (spec frontend/0023).
 class AssistantComposer extends StatelessWidget {
   /// Creates the composer.
   const AssistantComposer({
@@ -24,7 +24,7 @@ class AssistantComposer extends StatelessWidget {
   /// The design's placeholder.
   static const String hint = 'Ask about your portfolio…';
 
-  /// The field's text. Typed into, and dictated into (spec 0022 OD-1).
+  /// The field's text. Typed into, and dictated into (spec 0023 OD-1).
   final TextEditingController controller;
 
   /// Sends the field's text.

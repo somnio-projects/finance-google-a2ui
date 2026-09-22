@@ -25,7 +25,7 @@ final class SpeechHeard extends SpeechEvent {
   /// Whether the engine has committed to this reading.
   ///
   /// An interim transcript can still change; a final one cannot. Both are
-  /// shown, which is what makes dictation feel alive (spec 0022 AC-3).
+  /// shown, which is what makes dictation feel alive (spec 0023 AC-3).
   final bool isFinal;
 }
 
@@ -43,7 +43,7 @@ final class SpeechFailed extends SpeechEvent {
 /// The seam exists so that no bloc and no widget touches `dart:js_interop`:
 /// the implementation is chosen by a conditional import in `bootstrap.dart`
 /// and published to the tree, and every test drives a fake through this
-/// interface (spec frontend/0022 OD-2, ADR-L D-2).
+/// interface (spec frontend/0023 OD-2, ADR-L D-2).
 abstract class SpeechRecognizer {
   /// Allows implementations to declare `const` constructors.
   const SpeechRecognizer();
@@ -51,7 +51,7 @@ abstract class SpeechRecognizer {
   /// Whether this build can dictate at all.
   ///
   /// False is a **state the UI shows**, not an error it hides: the mic still
-  /// answers a tap and says why (spec 0022 AC-1).
+  /// answers a tap and says why (spec 0023 AC-1).
   bool get isSupported;
 
   /// Opens one session and reports it until the stream closes.
@@ -71,7 +71,7 @@ abstract class SpeechRecognizer {
 ///
 /// It reports one [SpeechFailed] and closes, so the caller's single code path
 /// works unchanged: an unsupported platform is a stated outcome rather than a
-/// branch every caller has to remember (spec 0022 AC-1).
+/// branch every caller has to remember (spec 0023 AC-1).
 class UnsupportedSpeechRecognizer extends SpeechRecognizer {
   /// Creates the honest no-op recognizer.
   const UnsupportedSpeechRecognizer();

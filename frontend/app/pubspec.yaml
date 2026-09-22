@@ -35,7 +35,7 @@ dependencies:
   http: ^1.6.0
   # The browser's own APIs, typed. Imported by app/lib/speech/speech_web.dart
   # and nowhere else — `speech_rules_test.dart` fails on a second importer
-  # (spec frontend/0022 AC-10). Already in the lock as a transitive of the
+  # (spec frontend/0023 AC-10). Already in the lock as a transitive of the
   # Flutter web tooling; declared here because this app now calls it.
   web: ^1.1.1
 

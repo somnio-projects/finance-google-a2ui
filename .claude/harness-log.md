@@ -4259,7 +4259,7 @@ What the run taught:
 
 ## 2026-09-22 — The mic works, and the honest states cost more than the API
 
-`feat/voice_input`, spec `frontend/0022`. The Assistant's microphone was drawn
+`feat/voice_input`, spec `frontend/0023`. The Assistant's microphone was drawn
 and said *"Voice input is not part of this preview yet."* (spec 0011 OD-5); it
 now dictates through the browser's Web Speech API. Calling the API is ~90
 lines. Everything else in the change is about the states that are not success.

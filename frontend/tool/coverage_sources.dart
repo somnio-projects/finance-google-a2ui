@@ -20,10 +20,12 @@ import 'lcov.dart';
 ///    it and lcov can never write a record for it — this is a property of
 ///    the target, not a test nobody wrote. What keeps it honest is that
 ///    everything decidable was moved off it: the error-code mapping is in
-///    `speech_failure.dart` and the state machine is in `VoiceInputBloc`,
-///    both at 100 %, and the file itself is compiled for real by
+///    `speech_failure.dart`, assembling the utterance from the engine's
+///    phrases is in `speech_transcript.dart`, and the state machine is in
+///    `VoiceInputBloc` — all three at 100 %. What remains is the crossing
+///    itself, and the file is compiled for real by
 ///    `flutter build web --release` in `frontend-ci`'s `build` job
-///    (spec `frontend/0022` OD-3).
+///    (spec `frontend/0023` OD-3).
 ///
 /// The list is **not** a place to put a file that is merely hard to test.
 /// Both members are boundaries to something a test cannot start.

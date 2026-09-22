@@ -2,7 +2,7 @@ import 'package:finance_app/speech/speech_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('speechFailureFor (spec frontend/0022 AC-6)', () {
+  group('speechFailureFor (spec frontend/0023 AC-6)', () {
     // Every code the Web Speech specification defines, so the table is a
     // statement about the API rather than about the ones we happened to hit.
     const codes = <String, SpeechFailure>{
