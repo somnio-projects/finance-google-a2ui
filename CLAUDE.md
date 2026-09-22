@@ -20,19 +20,24 @@ GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 ```bash
 cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
 APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build   # Postgres + backend on http://localhost:8000 (docs at /docs)
-APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose --profile frontend up --build   # …plus the A2UI client on http://localhost:3001
-docker compose --profile client up --build   # …plus the older client_flutter on http://localhost:3000
-cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
+docker compose up --build db backend            # just the API — skips the client's build
+docker compose -f client_flutter/docker-compose.yml up --build   # the OTHER app, its own stack
 ```
 
-**One compose project, `finance-a2ui`.** Every container in this repository —
-database, backend and both clients — lives under that name, so one
-`docker compose ls` shows the stack and one `docker compose down` takes it
-down. Each client sits behind its own profile so a backend-only `up` never
-pays for a Flutter SDK download; `COMPOSE_PROFILES=frontend,client` brings
-everything. The A2UI client's container reports its own build at
-`GET /release.json`, the same `local+<sha>` the backend reports at `/health`
-(spec `frontend/0017`).
+**One stack, one project: `finance-a2ui`.** `docker compose up` brings up
+Postgres, the backend on `:8000` and the A2UI client on `:3001` — everything
+this repository is about, under one heading in `docker ps` and in Docker
+Desktop, and one `docker compose down` takes it down. The client's container
+reports its own build at `GET /release.json`, the same `local+<sha>` the
+backend reports at `/health` (spec `frontend/0017`).
+
+There are **no profiles**. Both clients used to sit behind one, and that made
+`docker compose up` mean a different set of services depending on which flag
+you remembered. A backend developer who does not want to pay for a Flutter
+SDK download names the services instead — `docker compose up db backend` —
+which needs no profile to exist. `client_flutter/`, being a separate
+deployable with its own gate and pipeline, has its own compose file and comes
+up beside this stack as `client-flutter`, not inside it.
 
 **Always bring the stack up with `APP_RELEASE`.** `GET /health` reports it
 **verbatim** — `core/release.py` composes nothing — and it is the only thing

@@ -138,7 +138,11 @@ no mapping. Each has an owner. None of these is fixed by GGU-82's container PR.
 Hosting, TLS termination, WAF/Cloud Armor and the CDN in front of this origin
 are decided in `specs/client/0002-client-delivery.md` OD-1 and described, once
 decided, in `infra/`. Until then the client is reachable through
-`docker compose --profile client up` and nowhere else.
+`docker compose -f client_flutter/docker-compose.yml up` and nowhere else.
+(It was a `client` profile in the repository's root compose file until
+2026-09-22; that file is now the one stack for the A2UI client, and this app
+— a separate deployable — has its own, under the project name
+`client-flutter`. Spec `client/0002` AC-6 is restated against it.)
 
 Governance, incident response, data classification and vendor management are
 shared with the backend — `docs/compliance/`.
