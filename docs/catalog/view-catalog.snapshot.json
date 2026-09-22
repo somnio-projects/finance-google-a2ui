@@ -688,6 +688,7 @@
         "type": "object"
       },
       "payload_type": "ActivityTimelinePayload",
+      "prompt": "- activity.timeline.v1 — The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), kind (one of 'all', 'buy', 'sell', 'dividend', 'deposit'), limit (integer 1..200)",
       "summary": "The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.",
       "view": "activity.timeline.v1"
     },
@@ -2079,6 +2080,7 @@
         "type": "object"
       },
       "payload_type": "AttributionWaterfallPayload",
+      "prompt": "- attribution.waterfall.v1 — Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD')\n  use when: the user asks WHY a value changed and the answer decomposes into signed contributions that sum to a net delta — what drove the portfolio's result, profit and loss by position. The steps arrive largest move first; do not reorder them.\n  do not use for: a static breakdown of what is held now — `holdings.allocation.v1` answers that. Never write the figures yourself: render this view and copy the `display` strings it returns.",
       "summary": "Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.",
       "view": "attribution.waterfall.v1"
     },
@@ -2526,6 +2528,7 @@
         "type": "object"
       },
       "payload_type": "HoldingsAllocationPayload",
+      "prompt": "- holdings.allocation.v1 — Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.\n  options: top_n (integer 1..20), include_other (true or false), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), group_by (one of 'holding', 'asset_class', 'sector'), headline (true or false)",
       "summary": "Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.",
       "view": "holdings.allocation.v1"
     },
@@ -3449,6 +3452,7 @@
         "type": "object"
       },
       "payload_type": "HoldingsPositionsPayload",
+      "prompt": "- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD')",
       "summary": "The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.",
       "view": "holdings.positions.v1"
     },
@@ -3884,6 +3888,7 @@
         "type": "object"
       },
       "payload_type": "OrderTicketPayload",
+      "prompt": "- order.ticket.v1 — Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM'), side (one of 'buy', 'sell'), size (string matching ^[0-9]{1,9}(\\.[0-9]{1,8})?$), size_in (one of 'units', 'usd')",
       "summary": "Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.",
       "view": "order.ticket.v1"
     },
@@ -5385,6 +5390,7 @@
         "type": "object"
       },
       "payload_type": "PayoffCurvePayload",
+      "prompt": "- payoff.curve.v1 — Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM'), size (integer 1..1000000000), size_in (one of 'units', 'usd'), side (one of 'buy', 'sell'), range_pct (integer 5..90), steps (integer 1..25)",
       "summary": "Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.",
       "view": "payoff.curve.v1"
     },
@@ -6066,6 +6072,7 @@
         "type": "object"
       },
       "payload_type": "PortfolioSummaryPayload",
+      "prompt": "- portfolio.summary.v1 — The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), range (one of '1d', '1w', '1m', 'ytd', '1y', 'all')",
       "summary": "The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers.",
       "view": "portfolio.summary.v1"
     },
@@ -6633,6 +6640,7 @@
         "type": "object"
       },
       "payload_type": "ScenarioComparisonPayload",
+      "prompt": "- scenario.comparison.v1 — The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$, or omit it), quantity (number 0.0..1000000000000.0 or string matching ^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,8}0*$, or omit it), methods (list of up to 3 (one of 'FIFO', 'LIFO', 'HIFO'))\n  use when: the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison.\n  do not use for: a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.",
       "summary": "The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.",
       "view": "scenario.comparison.v1"
     },
@@ -7187,6 +7195,7 @@
         "type": "object"
       },
       "payload_type": "TaxLotsTablePayload",
+      "prompt": "- taxlots.table.v1 — Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$), quantity (string matching ^\\d{1,12}(\\.\\d{1,8})?$), lot_method (one of 'FIFO', 'LIFO', 'HIFO')\n  use when: the user asks about selling a position and the answer depends on WHICH lots go — the realised result always splits into its short-term and long-term halves, which is the point of the surface.\n  do not use for: comparing several lot-selection methods — `scenario.comparison.v1` puts those side by side. Never estimate a tax rate in prose: this view stops at the realised split, before any rate, fee or wash sale.",
       "summary": "Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.",
       "view": "taxlots.table.v1"
     }

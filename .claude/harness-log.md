@@ -3720,3 +3720,42 @@ What the run taught:
   stretch to.** The leg's 3 px rail needed `IntrinsicHeight`; the test font is
   also wide enough that a caption row overflowed at 390 until its note could
   ellipsise.
+## 2026-09-22 — the component catalog, as the gallery pages frame it
+
+`feat/catalog_gallery`, specs `frontend/0013` and `backend/0031`. `/catalog`
+is the gallery index — top bar, header, token legend, one live card per view
+the backend serves and this build renders — and `/catalog/<view-id>` is a
+detail page with the three zones the artboards draw: the example and the
+states a payload can produce, the served field inventory, the prompt
+fragment verbatim, and the Do / Don't pair or the sentence that says there
+is none. `GET /v1/views` now carries `fields` and `prompt` so both zones bind
+rather than transcribe.
+
+What the run taught:
+
+- **A drift check cannot tell you the gallery is transcribing.** The design
+  pages hand-write a `props` schema (`weightPct`, `onSliceTap`) and a title
+  per card that the backend never serves. Drawing them would have been a
+  second declaration of the contract with a green gate — the defect 0023
+  found once already. Every word on a card is now a served field or named
+  chrome, and the zone that would have been a copy prints the inventory.
+- **A rendering does not belong in a frozen digest.** Adding `fields` and
+  `prompt` to `catalog_entry` moved all nine `v1` digests on the first
+  regeneration, for a change nothing a client binds had undergone.
+  `DERIVED_KEYS` drops them before hashing; `CONTRACT.md` came back
+  byte-identical.
+- **An extension method cannot be mocked.** `fetchCatalog` was going to be
+  an extension on `ViewsRepository` to spare the budget; mocktail resolves
+  an extension statically, so every page test would have hit the real body
+  on a `Mock`. It is a method, and the cache key moved out instead.
+- **The design's pairs assume mock components.** Zone 1 draws its secondary
+  states side by side at ~290 px; the real tax-lot table overflowed by 30 px
+  there in the first run. A live card now takes the full column and only the
+  skeleton and absent notes pair (0013 OD-5) — the artboard's rhythm kept
+  where it can be, the component's width where it must be.
+- **A state you cannot produce is a sentence, not a payload.** Over-cash
+  validation, hold-vs-sell comparison, an empty lot table and a 2-scenario
+  variant are all drawn on the pages and none can come out of the contract;
+  each card says why and names its GGU gap rather than inventing the data.
+- **Flutter cannot round a non-uniform border.** The prompt panel's 3 px left
+  accent plus `borderRadius` threw in paint; it is a strip inside the clip.

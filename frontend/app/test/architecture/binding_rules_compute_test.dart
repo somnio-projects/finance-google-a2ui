@@ -53,10 +53,12 @@ const List<String> computationMechanisms = <String>[
 /// `offenders` helper offers; both are also files that touch no payload
 /// figure, which is why the coarseness costs nothing here.
 ///
-///  * `views_repository.dart` sorts **view ids and option pairs** to build a
+///  * `view_cache_key.dart` sorts **view ids and option pairs** to build a
 ///    stable cache key, so `?view=a&view=b` and `?view=b&view=a` are one
 ///    entry. It never sorts payload rows — N-10 is about the rows a component
-///    renders, and this file renders nothing.
+///    renders, and this file renders nothing. It used to be a method of
+///    `views_repository.dart`, which made the whole repository the carve-out;
+///    the key is now a file of its own, so the allowance is fifteen lines wide.
 ///  * `result_test.dart` exercises `Result.fold(onOk:, onErr:)`, the sealed
 ///    union's combinator. It is not a numeric fold.
 ///  * `band_scale.dart` rounds a **pixel** down to a band index, to answer
@@ -66,7 +68,7 @@ const List<String> computationMechanisms = <String>[
 ///    simply does not reach it. The figures a reader sees are `*.display`
 ///    strings that never enter this package (ADR-L D-13).
 const Set<String> computationAllowed = <String>{
-  'packages/finance_views_repository/lib/src/views_repository.dart',
+  'packages/finance_views_repository/lib/src/view_cache_key.dart',
   'packages/finance_core/test/src/result_test.dart',
   'packages/finance_charts/lib/src/band_scale.dart',
 };

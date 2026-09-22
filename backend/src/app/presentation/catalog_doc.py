@@ -20,13 +20,12 @@ from app.presentation.catalog_tables import (
     INDEX_HEADER,
     inputs_note,
     inventory_table,
-    option_inputs,
     options_table,
     table,
 )
 from app.presentation.contract import catalog_entry
-from app.presentation.inventory import InventoryField, inventory
-from app.presentation.published import component_of
+from app.presentation.inventory import InventoryField
+from app.presentation.published import component_of, inventory_of
 from app.presentation.registry import Projection
 
 #: Where the rendered document is checked in, relative to the repository root.
@@ -34,6 +33,12 @@ CONTRACT_PATH: Final[str] = "docs/catalog/CONTRACT.md"
 #: How much of the sha256 the document prints. Twelve hex characters is a
 #: fingerprint a human can compare by eye and still not collide by accident.
 DIGEST_LENGTH: Final[int] = 12
+#: Catalog keys that are *renderings* of facts the digest already covers —
+#: the field inventory is the payload schema walked, the prompt fragment is
+#: the summary, options and guidance joined. Hashing them too would move
+#: every frozen `v1` digest the day a rendering changed its wording, while
+#: nothing a client binds had moved (spec 0031 OD-2).
+DERIVED_KEYS: Final[tuple[str, ...]] = ("fields", "prompt")
 
 
 def digest(projection: Projection) -> str:
@@ -49,6 +54,8 @@ def digest(projection: Projection) -> str:
         moves, something frozen changed.
     """
     entry = dict(catalog_entry(projection))
+    for derived in DERIVED_KEYS:
+        del entry[derived]
     entry["payload_schema"] = projection.dto.model_json_schema()
     canonical = dumps(entry, sort_keys=True, default=str).encode()
     return sha256(canonical).hexdigest()[:DIGEST_LENGTH]
@@ -56,10 +63,7 @@ def digest(projection: Projection) -> str:
 
 def fields_of(projection: Projection) -> tuple[InventoryField, ...]:
     """Return the field inventory of one projection's payload."""
-    return inventory(
-        projection.dto.model_json_schema(),
-        inputs=option_inputs(projection.options.model_json_schema()),
-    )
+    return inventory_of(projection)
 
 
 def _section(projection: Projection) -> str:
@@ -131,6 +135,7 @@ def contract_document(projections: Sequence[Projection]) -> str:
 
 __all__ = [
     "CONTRACT_PATH",
+    "DERIVED_KEYS",
     "DIGEST_LENGTH",
     "contract_document",
     "digest",

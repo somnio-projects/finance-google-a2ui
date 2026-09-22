@@ -1,4 +1,4 @@
-import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
+import 'package:finance_app/features/catalog/view/catalog_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_app/router/app_router.dart';
@@ -7,16 +7,19 @@ import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../features/catalog/catalog_fixtures.dart';
 import '../helpers/auth_fakes.dart';
 import '../helpers/pump_app.dart';
 import 'app_router_harness.dart';
 
 void main() {
   group('buildRouter sign-in', () {
-    late ViewsRepository repository;
+    late MockViewsRepository repository;
 
     setUp(() {
       repository = MockViewsRepository();
+      when(() => repository.fetchCatalog())
+          .thenAnswer((_) async => Ok<ViewCatalog>(snapshotCatalog()));
       when(
         () => repository.fetchPortfolioViews(
           portfolioId: any(named: 'portfolioId'),
@@ -48,7 +51,7 @@ void main() {
         auth: fakeAuthRepository(),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(PortfolioViewsPage), findsOneWidget);
+      expect(find.byType(CatalogPage), findsOneWidget);
     });
   });
 }

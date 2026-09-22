@@ -22,8 +22,15 @@ abstract final class AppRoutes {
   /// The multi-leg draft order, outside the tabs for the same reason.
   static const String orderTicketV2 = '/order-ticket-v2';
 
-  /// The component catalog index — every registered component, one card each.
+  /// The component catalog index — every served view this build renders,
+  /// one live card each (spec frontend/0013).
   static const String catalog = '/catalog';
+
+  /// One component's catalog page; [catalogViewParameter] carries the id.
+  static const String catalogDetail = '/catalog/:$catalogViewParameter';
+
+  /// The path parameter that names the view on a detail page.
+  static const String catalogViewParameter = 'view';
 
   /// The sign-in screen, outside the shell: no tab bar for a stranger.
   static const String signIn = '/sign-in';
@@ -42,3 +49,9 @@ String askRoute(String question) => Uri(
   path: AppRoutes.conversation,
   queryParameters: <String, String>{AppRoutes.askParameter: question},
 ).toString();
+
+/// The detail page of [viewId] — how a gallery card opens its component.
+///
+/// The id is a catalog id the backend served, passed through untouched; it
+/// is never assembled here (N-6).
+String catalogDetailRoute(String viewId) => '${AppRoutes.catalog}/$viewId';

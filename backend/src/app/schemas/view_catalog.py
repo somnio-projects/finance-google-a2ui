@@ -14,6 +14,8 @@ from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.view_field import FieldDescriptor
+
 #: Bound on each guidance sentence. Mirrors `presentation.guidance.MAX_SENTENCE`
 #: — `schemas/` may not import `presentation`, so the two are compared by a
 #: test rather than shared through an import that would break the layering.
@@ -88,6 +90,23 @@ class ViewDescriptor(BaseModel):
         description="JSON schema of the options this projection declares.",
         examples=[{"properties": {"precision": {"type": "integer"}}}],
     )
+    fields: list[FieldDescriptor] = Field(
+        description=(
+            "Every path of the rendered payload with its type, presence, "
+            "binding, the state it drives and the option that sets it — the "
+            "field inventory the frozen contract prints (spec 0031)."
+        ),
+    )
+    prompt: str = Field(
+        max_length=2000,
+        description=(
+            "The lines the system prompt carries for this view, verbatim: its "
+            "purpose, its options with their bounds and, where design wrote "
+            "one, the do/don't pair. What the agent is taught, not a summary "
+            "of it (spec 0031)."
+        ),
+        examples=["- holdings.allocation.v1 — Allocation by holding.\n  options: …"],
+    )
     actions: list[dict[str, Any]] = Field(
         default_factory=list,
         description=(
@@ -113,4 +132,9 @@ class ViewDescriptor(BaseModel):
     )
 
 
-__all__ = ["GUIDANCE_SENTENCE_MAX", "GuidanceDescriptor", "ViewDescriptor"]
+__all__ = [
+    "GUIDANCE_SENTENCE_MAX",
+    "FieldDescriptor",
+    "GuidanceDescriptor",
+    "ViewDescriptor",
+]

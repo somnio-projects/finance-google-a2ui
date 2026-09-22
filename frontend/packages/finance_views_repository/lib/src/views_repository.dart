@@ -2,6 +2,8 @@ import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/src/payload_contract_exception.dart';
 import 'package:finance_views_repository/src/rendered_views.dart';
+import 'package:finance_views_repository/src/view_cache_key.dart';
+import 'package:finance_views_repository/src/view_catalog.dart';
 
 /// Reads rendered projections for a portfolio.
 ///
@@ -25,6 +27,7 @@ class ViewsRepository {
 
   final FinanceApiClient _apiClient;
   final Map<String, RenderedViews> _cache = <String, RenderedViews>{};
+  ViewCatalog? _catalog;
 
   /// Fetches [views] for [portfolioId], revalidating a cached copy when one
   /// is held.
@@ -47,7 +50,7 @@ class ViewsRepository {
       );
     }
     final path = '/v1/portfolios/$portfolioId/views';
-    final key = _cacheKey(path, views, options);
+    final key = viewCacheKey(path, views, options);
     final cached = _cache[key];
     final result = await _apiClient.getJson(
       path,
@@ -64,11 +67,47 @@ class ViewsRepository {
     };
   }
 
-  /// Forgets every cached envelope and its `ETag`.
+  /// Fetches the catalog of every view the backend can render.
+  ///
+  /// The catalog describes shapes, never portfolio data, but it is served
+  /// behind the same credential and revalidated the same way: a 304 resolves
+  /// to the cached catalog, which is a success and not an empty result.
+  Future<Result<ViewCatalog>> fetchCatalog() async {
+    final cached = _catalog;
+    final result = await _apiClient.getJson(
+      '/v1/views',
+      ifNoneMatch: cached?.etag,
+    );
+    return switch (result) {
+      Err<JsonResponse>(:final failure) => Err<ViewCatalog>(failure),
+      Ok<JsonResponse>(:final value) => _catalogOf(value, cached),
+    };
+  }
+
+  /// Forgets every cached envelope, the catalog, and their `ETag`s.
   ///
   /// Called on sign-out: a cached portfolio must not outlive the credential
   /// that was allowed to read it.
-  void clearCache() => _cache.clear();
+  void clearCache() {
+    _cache.clear();
+    _catalog = null;
+  }
+
+  Result<ViewCatalog> _catalogOf(JsonResponse response, ViewCatalog? cached) {
+    if (response.isNotModified) {
+      if (cached != null) return Ok<ViewCatalog>(cached);
+      return const Err<ViewCatalog>(
+        ContractFailure('<response>', 'a body, since nothing was cached'),
+      );
+    }
+    try {
+      final catalog = ViewCatalog.fromJson(response.body, etag: response.etag);
+      _catalog = catalog;
+      return Ok<ViewCatalog>(catalog);
+    } on PayloadContractException catch (error) {
+      return Err<ViewCatalog>(error.failure);
+    }
+  }
 
   Result<RenderedViews> _envelope(
     JsonResponse response,
@@ -97,21 +136,5 @@ class ViewsRepository {
     } on PayloadContractException catch (error) {
       return Err<RenderedViews>(error.failure);
     }
-  }
-
-  String _cacheKey(
-    String path,
-    List<String> views,
-    Map<String, String> options,
-  ) {
-    // Both halves sorted, so the same request written two ways is one entry:
-    // ?view=a&view=b and ?view=b&view=a name the same response.
-    final sortedViews = <String>[...views]..sort();
-    final pairs =
-        options.entries
-            .map((option) => '${option.key}=${option.value}')
-            .toList()
-          ..sort();
-    return '$path?${sortedViews.join(",")}&${pairs.join("&")}';
   }
 }
