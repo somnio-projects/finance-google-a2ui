@@ -32,7 +32,7 @@ jobs:
         run: make audit
       - name: SBOM (CycloneDX)
         run: uv tool run cyclonedx-py environment --output-format json --outfile sbom.json .venv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: backend/sbom.json
@@ -60,7 +60,7 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: trivy-sarif
