@@ -21,6 +21,7 @@ graph TD
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
     charts["charts/<br/>CustomPainters · palettes<br/><i>needs dart:ui, so it lives here</i>"]
     skel["skeleton/<br/>shimmer · pulse · caption · rows · switcher · the generic surface<br/><i>what a surface draws before its payload</i>"]
+    speech["speech/<br/>SpeechRecognizer seam · SpeechEvent · SpeechFailure<br/><i>the browser lives behind ONE file</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
@@ -33,6 +34,7 @@ graph TD
     geom["finance_charts<br/>scales · nice ticks · layouts<br/><i>(data, size) → paths</i>"]
   end
 
+  browser[["the browser<br/>Web Speech API (dictation)"]]
   backend[["backend<br/>GET /v1/portfolios/{id}/views"]]
   agent[["backend<br/>POST / — message/stream (SSE)"]]
 
@@ -54,6 +56,10 @@ graph TD
   host --> comp
   bloc --> repo
   bloc -->|"one turn → AgentEvent stream"| agentrepo
+  boot -.->|"conditional import: speech_stub.dart,<br/>or speech_web.dart on the web"| speech
+  page -->|"reads, to build VoiceInputBloc"| speech
+  bloc -->|"VoiceInputBloc: one dictation session"| speech
+  speech -.->|"speech_web.dart ONLY<br/>dart:js_interop · package:web"| browser
   agentrepo --> a2a
   a2a -->|"Bearer · X-A2A-Extensions<br/>Accept: text/event-stream"| agent
   repo --> api
@@ -87,6 +93,9 @@ graph TD
   %%   NumberFormat · intl · dart:math · toStringAsFixed · double.parse · DateTime.now()
   %%     — one exemption, by path: finance_views_repository/lib/src/raw_decimal.dart
   %%   finance_charts -> dart:ui  (which is why the painter is in app/, not here)
+  %%   anything but speech/speech_web.dart importing dart:js_interop or package:web
+  %%   anything but bootstrap.dart naming speech_stub.dart / speech_web.dart
+  %%     — speech_rules_test.dart, one allowance, its size asserted
 ```
 
 ## Reading it
@@ -102,4 +111,5 @@ graph TD
 - **One view bypasses `ComponentHost`, and the dashed edge says so.** `ViewComponent.build(context, payload)` has no slot for a callback, so a surface that must send something back cannot go through the host. `OrderTicketView` therefore builds `OrderTicketCard` itself and attaches `onOptionChanged` (GGU-61, spec `frontend/0006` OD-4) — the same shape `AttributionWaterfallCard.onSegmentTap` already has, with a host that actually uses it. Two things keep this from becoming the second rendering path the bullet above warns about: the **binding** still comes from `OrderTicketComponent.read`, so the component remains the single owner of that payload's shape, and the view repeats the host's contract handling — a `PayloadContractException` is caught and *shown*, naming the path, never thrown into a red screen. It is a second **caller**, not a second binding. If a third such surface appears, the callback belongs on the seam instead, and that is an ADR-L amendment rather than a third copy.
 - **Two backend nodes, two protocols, one credential.** `/v1/**` is REST with RFC 9457 problems; `POST /` is JSON-RPC that answers SSE and reports some failures at **HTTP 200** (ADR-J D-3). They share one `http.Client` and one token provider, which is why `A2aClient` sits beside `FinanceApiClient` rather than inside it.
 - **The router names no view id.** It used to carry a hardcoded one, so a registered component could be unreachable with a green gate; `PortfolioViewsPage` now asks the registry (GGU-79).
+- **The browser is a dependency, so it is behind a seam like any other.** Dictation (spec [frontend/0022](../../specs/frontend/0022-voice-input.md)) needs `SpeechRecognition`, which exists only on the web and only in some browsers. `app/lib/speech/` is the interface, the event union and the failure enum; `speech_web.dart` is the only file that imports `dart:js_interop` or `package:web`, and `bootstrap.dart` is the only file that names either implementation — through a conditional import, which is why the edge from `boot` is dashed like every other construction edge. Two consequences the picture is drawn to make obvious: `VoiceInputBloc` is driven by a fake in every test, and `speech_web.dart` is the one file `flutter test` cannot load, which is why it is a coverage exemption and why nothing that can be decided lives in it.
 - **Nothing is deployed.** There is no pipeline shipping this bundle yet — `specs/client/0002-client-delivery.md` owns that — so no edge crosses into Google Cloud here. See [02-containers](02-containers.md) for where it will attach.
