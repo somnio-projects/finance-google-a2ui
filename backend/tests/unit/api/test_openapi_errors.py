@@ -3,7 +3,7 @@
 `api.openapi_errors` folds FastAPI's `application/json` copy of a problem
 document into the `application/problem+json` the service really sends, and
 drops the 422 envelope FastAPI attaches to operations that validate nothing
-(spec 0035 OD-3).
+(spec 0038 OD-3).
 """
 
 from typing import Any

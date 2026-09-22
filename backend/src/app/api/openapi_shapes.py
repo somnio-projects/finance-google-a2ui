@@ -1,4 +1,4 @@
-"""Shape questions the OpenAPI audit asks of a document (spec 0035).
+"""Shape questions the OpenAPI audit asks of a document (spec 0038).
 
 Where an example may legitimately live, whether a component schema and each of
 its properties is described, and which tags the document declares. Pure

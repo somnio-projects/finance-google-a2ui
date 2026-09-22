@@ -3,7 +3,7 @@
 Split from `api.openapi_audit` under the 150-line budget. The two questions
 here are the ones that decide whether the document tells the truth about a
 route: a status the route can answer and does not name is a gap; a status it
-names and nothing in this service can produce is fiction (spec 0035 OD-1).
+names and nothing in this service can produce is fiction (spec 0038 OD-1).
 """
 
 from collections.abc import Iterator
@@ -111,7 +111,7 @@ def problem_shape_findings(responses: dict[str, Any], where: str) -> Iterator[Fi
     ``application/json`` with a schema and no example beside
     ``application/problem+json`` with an example and no schema, while
     `api.errors` only ever answers the second. Neither half was usable alone
-    (spec 0035 OD-3).
+    (spec 0038 OD-3).
 
     Args:
         responses: The operation's ``responses`` object.

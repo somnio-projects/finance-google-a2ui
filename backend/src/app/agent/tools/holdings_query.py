@@ -11,10 +11,18 @@ it is never quietly coerced into the default (spec 0011 OD-7).
 """
 
 from collections.abc import Mapping, Sequence
-from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.agent.tools.holdings_grouping import (
+    DEFAULT_GROUPING,
+    Grouping,
+)
+from app.agent.tools.holdings_schema import (
+    MAX_SYMBOLS,
+    MAX_TOP_N,
+    PARAMETERS,
+)
 from app.agent.tools.holdings_sort import (
     DEFAULT_SORT,
     SIZE_ORDERS,
@@ -22,52 +30,7 @@ from app.agent.tools.holdings_sort import (
     SortBy,
 )
 from app.domain.holdings import Holding
-from app.domain.symbols import (
-    MAX_TICKER,
-    TICKER_PATTERN,
-    Ticker,
-    normalize_symbol,
-)
-
-MAX_TOP_N: Final[int] = 20
-MAX_SYMBOLS: Final[int] = 20
-
-#: The JSON Schema the model chooses its arguments from. It mirrors
-#: ``HoldingsSummaryArguments``; the model reads this one, pydantic enforces
-#: the other, and ``test_the_schema_the_model_reads_carries_the_same_bounds``
-#: asserts the two agree rather than trusting this comment.
-PARAMETERS: Final[Mapping[str, object]] = {
-    "type": "object",
-    "properties": {
-        "sort_by": {
-            "type": "string",
-            "enum": list(SORTERS),
-            "description": (
-                "Order of the positions: 'weight' or 'value' for the largest "
-                "first, 'gainers' or 'losers' for the best or worst return on "
-                "what the position cost."
-            ),
-        },
-        "symbols": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "maxLength": MAX_TICKER,
-                "pattern": TICKER_PATTERN,
-            },
-            "maxItems": MAX_SYMBOLS,
-            "description": "Keep only these tickers. Omit for every position.",
-        },
-        "top_n": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": MAX_TOP_N,
-            "description": "Keep only the first N positions after sorting.",
-        },
-    },
-    "required": [],
-    "additionalProperties": False,
-}
+from app.domain.symbols import MAX_TICKER, TICKER_PATTERN, Ticker, normalize_symbol
 
 
 class HoldingsSummaryArguments(BaseModel):
@@ -85,6 +48,10 @@ class HoldingsSummaryArguments(BaseModel):
     )
     top_n: int | None = Field(
         default=None, ge=1, le=MAX_TOP_N, description="How many positions to keep."
+    )
+    group_by: Grouping = Field(
+        default=DEFAULT_GROUPING,
+        description="How the allocation chart beside the answer is sliced.",
     )
 
     def _filtered(self, rows: Sequence[Holding]) -> list[Holding]:
@@ -122,10 +89,15 @@ class HoldingsSummaryArguments(BaseModel):
         Returns:
             Options for ``holdings.allocation.v1``, clamped to the ``top_n``
             bound that projection declares so the intent is always valid
-            against it, or ``None`` when no chart fits.
+            against it, or ``None`` when no chart fits. ``group_by`` travels
+            with them, and until 2026-09-22 it did not: every chart rendered
+            at its default while the model narrated the grouping it wanted
+            (spec backend/0036 OD-3).
         """
         fits = self.symbols is None and self.sort_by in SIZE_ORDERS and shown > 0
-        return {"top_n": min(shown, MAX_TOP_N)} if fits else None
+        if not fits:
+            return None
+        return {"top_n": min(shown, MAX_TOP_N), "group_by": self.group_by}
 
 
 __all__ = [

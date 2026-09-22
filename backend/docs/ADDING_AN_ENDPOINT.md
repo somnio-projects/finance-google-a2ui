@@ -42,7 +42,7 @@ only place that mentions HTTP paths. Nothing else in `src/app` knows a URL.
    [`docs/ENDPOINTS.md`](ENDPOINTS.md) and commit it (never edit it by hand),
    plus the `docs/*.md` that describe the behaviour and `env.example` for new
    settings. There is no hand-written route list to update any more: the table
-   is rendered from the built application and diffed by the gate (spec 0035).
+   is rendered from the built application and diffed by the gate (spec 0038).
 10. **Gate** — `make gate` green (100 % branch coverage includes the new
     controller, service, repository and every error path), then
     `backend-reviewer`, then the PR with `Spec:` and `Test decision:` lines,
@@ -92,7 +92,7 @@ really answer — 401 where `PrincipalDep` is present, 404 where a feature gate
 is, 413 where there is a body, 422 where something is validated, 503 where a
 database session is opened — and **rejects any status nothing in this service
 produces**. Adding a 400 or a 409 to be safe is a failed gate now, not a
-harmless extra (spec 0035 OD-1).
+harmless extra (spec 0038 OD-1).
 
 Rules the reviewer checks on a controller:
 

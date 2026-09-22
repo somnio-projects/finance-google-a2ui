@@ -25,7 +25,7 @@ SessionsDep = Annotated[SessionService, Depends(get_session_service)]
 #: 404 covers both "no such session" and "the flag is off"; 422 the parameters.
 SESSION_RESPONSES = problem_responses(*AUTHENTICATED, 404, 422, 503)
 #: Only the route that takes a body can exceed the body limit, so the 413 is
-#: added there rather than to the shared set (spec 0035 OD-1).
+#: added there rather than to the shared set (spec 0038 OD-1).
 BODY_RESPONSES = {**SESSION_RESPONSES, **problem_responses(413)}
 
 

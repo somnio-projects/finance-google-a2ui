@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail when the OpenAPI document is incomplete or the endpoint table is stale.
 
-Spec 0035: `GET /openapi.json` is how the client is written, so it is gated
+Spec 0038: `GET /openapi.json` is how the client is written, so it is gated
 like code. The document is built exactly as the server builds it, every
 operation is audited against what its route can really do
 (``app.api.openapi_audit``), and the human-facing endpoint table is

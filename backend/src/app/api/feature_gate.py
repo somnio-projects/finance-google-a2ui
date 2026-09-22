@@ -12,7 +12,7 @@ executes nor advertises itself.
 The gate is an object rather than a closure so that a route can be *read* as
 well as run: ``api.route_facts`` walks each route's dependency tree and
 reports which flag guards it, and a closure keeps its key where nothing can
-see it (spec 0035 OD-3).
+see it (spec 0038 OD-3).
 """
 
 from typing import Annotated

@@ -7,7 +7,7 @@ statuses the route can really produce — whether it authenticates, whether it
 opens a database session, whether FastAPI validates anything, whether a
 feature flag guards it. `api.openapi_audit` compares the declaration with
 these facts, and `api.openapi_document` reads them to declare the bearer
-scheme on exactly the routes that enforce it (spec 0035 OD-1, OD-2).
+scheme on exactly the routes that enforce it (spec 0038 OD-1, OD-2).
 """
 
 from collections.abc import Iterator, Sequence

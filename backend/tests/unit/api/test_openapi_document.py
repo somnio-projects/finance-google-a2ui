@@ -1,4 +1,4 @@
-"""The document the service actually serves (spec 0035 OD-2).
+"""The document the service actually serves (spec 0038 OD-2).
 
 `/openapi.json` and `/docs` are part of the deliverable, so they are asserted
 like a route: they answer, they cover every operation the routers carry, and

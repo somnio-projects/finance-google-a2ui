@@ -119,6 +119,12 @@ locals {
     "artifactregistry.googleapis.com",
     "iamcredentials.googleapis.com",
     "sts.googleapis.com",
+    # The A2UI client is delivered to Hosting by `frontend-cd` (spec
+    # frontend/0017). `firebase.googleapis.com` is what makes the project a
+    # Firebase project at all — sign-in already depends on it — and
+    # `firebasehosting.googleapis.com` is what the deploy calls.
+    "firebase.googleapis.com",
+    "firebasehosting.googleapis.com",
   ]
 }
 

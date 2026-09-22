@@ -1,4 +1,4 @@
-"""Where an example may live, and what must carry a description (spec 0035).
+"""Where an example may live, and what must carry a description (spec 0038).
 
 `api.openapi_shapes` answers shape questions about the document dictionary.
 They are small and pure, so each is provoked with the smallest document that

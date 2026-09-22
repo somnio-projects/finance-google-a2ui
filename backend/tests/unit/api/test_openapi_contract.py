@@ -88,7 +88,7 @@ def test_every_parameter_is_described(app: FastAPI) -> None:
 
 def test_every_schema_property_is_described(app: FastAPI) -> None:
     schemas = app.openapi()["components"]["schemas"]
-    # FastAPI's 422 envelope was skipped by name; it is gone (spec 0035 OD-6).
+    # FastAPI's 422 envelope was skipped by name; it is gone (spec 0038 OD-6).
     assert not {"HTTPValidationError", "ValidationError"} & set(schemas)
     for name, schema in schemas.items():
         assert schema.get("description"), f"schema {name} has no description"

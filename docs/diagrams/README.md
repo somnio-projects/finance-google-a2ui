@@ -20,6 +20,7 @@ no tooling, and can never drift silently from the code that a screenshot would.
 | [10-branching.md](10-branching.md) | How work flows from a ticket to production | `docs/compliance/CHANGE_MANAGEMENT.md` |
 | [11-client-architecture.md](11-client-architecture.md) | What the Flutter client is made of and what each layer may reach | `.claude/rules/client/architecture.md`, ADR-I, ADR-K |
 | [12-frontend-layers.md](12-frontend-layers.md) | What may import what in the `frontend/` client | ADR-L, `frontend/app/test/architecture/layering_test.dart` |
+| [13-client-delivery.md](13-client-delivery.md) | How the A2UI client reaches a browser | `specs/frontend/0017`, `.github/workflows/frontend-cd.yaml`, `infra/scripts/tests/test_dev_environment.sh` |
 
 ## Rules
 

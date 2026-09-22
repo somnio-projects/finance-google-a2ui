@@ -1,4 +1,4 @@
-# 0035 — The OpenAPI document is complete, and a gate says so
+# 0038 — The OpenAPI document is complete, and a gate says so
 
 - **Area:** backend
 - **Status:** Implemented

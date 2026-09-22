@@ -6,7 +6,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 |---|---|---|
 | `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
 | `client_flutter/` | Flutter workspace (`app/`, `e2e_test/`) · genui 0.10.3 · Bloc — binds the backend's projections and transforms nothing | [`client_flutter/CLAUDE.md`](client_flutter/CLAUDE.md); project rules in `.claude/rules/client/`, generic ones in `.claude/rules/flutter/` |
-| `frontend/` | The A2UI client — Flutter 3.47.5 pub workspace (`app/` + four pure-Dart packages, one of them the chart geometry) · Bloc · go_router. Layering, the 150-line budget, the numbers rule and the component seam are all held by its gate (ADR-L) | [`frontend/CLAUDE.md`](frontend/CLAUDE.md) |
+| `frontend/` | The A2UI client — Flutter 3.47.5 pub workspace (`app/` + five pure-Dart packages, one of them the chart geometry) · Bloc · go_router. Layering, the 150-line budget, the numbers rule and the component seam are all held by its gate (ADR-L). Runs in the stack as a container and ships to Firebase Hosting through `frontend-cd` (spec `frontend/0017`) | [`frontend/CLAUDE.md`](frontend/CLAUDE.md) |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL, Secret Manager, Cloud Run, logging/alerts — one shape per `environment`, with HA/PITR/Cloud Armor derived **on outside `dev`** (`specs/infra/0001-dev-environment.md`). Validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |
 | `docs/` | `adr/` (decisions), `diagrams/` (Mermaid architecture diagrams), `catalog/` (the **generated** frozen component contract, as Markdown for the designer and JSON for the client test — `make catalog`, never hand-edited), `compliance/` (SOC 2 / ISO 27001), `DEV_HARNESS.md` | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
@@ -20,9 +20,24 @@ GitHub `somnio-projects/finance-google-a2ui`. Demo target 2026-09-28.
 ```bash
 cp backend/env.example backend/.env    # once per clone; env files live in each solution, never committed
 APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build   # Postgres + backend on http://localhost:8000 (docs at /docs)
-docker compose --profile client up --build   # …plus the web client on http://localhost:3000
-cd client_flutter/app && flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
+docker compose up --build db backend            # just the API — skips the client's build
+docker compose -f client_flutter/docker-compose.yml up --build   # the OTHER app, its own stack
 ```
+
+**One stack, one project: `finance-a2ui`.** `docker compose up` brings up
+Postgres, the backend on `:8000` and the A2UI client on `:3001` — everything
+this repository is about, under one heading in `docker ps` and in Docker
+Desktop, and one `docker compose down` takes it down. The client's container
+reports its own build at `GET /release.json`, the same `local+<sha>` the
+backend reports at `/health` (spec `frontend/0017`).
+
+There are **no profiles**. Both clients used to sit behind one, and that made
+`docker compose up` mean a different set of services depending on which flag
+you remembered. A backend developer who does not want to pay for a Flutter
+SDK download names the services instead — `docker compose up db backend` —
+which needs no profile to exist. `client_flutter/`, being a separate
+deployable with its own gate and pipeline, has its own compose file and comes
+up beside this stack as `client-flutter`, not inside it.
 
 **Always bring the stack up with `APP_RELEASE`.** `GET /health` reports it
 **verbatim** — `core/release.py` composes nothing — and it is the only thing
@@ -68,6 +83,7 @@ The template is in `.claude/rules/backend/sdd.md`, § *The manual run*.
 
 - **The backend shapes every payload; the client transforms nothing** — versioned projections with declared options, selected by the client (`?view=`) or by the agent (validated against the same registry), batched and cached. See `.claude/rules/backend/presentation.md` and `docs/adr/ADR-K-response-shaping.md`.
 - **Every endpoint is strictly RESTful and exhaustively documented in OpenAPI** (summary, description, operation_id, tags, response_model, every error response, examples, documented+bounded fields). See `.claude/rules/backend/api-design.md`.
+- **The client ships like the backend, to a different kind of target.** `frontend-cd.yaml` is a button too, calls `frontend-ci` **and** `repo-ci` as jobs so nothing is published without a green gate on that commit, compiles the bundle once with `frontend/tool/build_web.sh` — the same script the container uses, so the two cannot drift — deploys it to a Firebase Hosting **preview channel**, reads `/release.json` back off that URL, releases to live, and reads it again. Hosting has no traffic split, so a preview channel is the `--no-traffic` revision and `/release.json` is the `/health`. Rollback is Hosting's own release history and is deliberately not automated. See `specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md` and `docs/diagrams/13-client-delivery.md`.
 - **Delivery is started by a human and verified by the machine**: `backend-cd.yaml` has **no `push:` trigger** — merging deploys nothing. Someone presses *Run workflow* in the Actions tab and picks the branch, and the branch decides the target (`develop` → **dev**, `main` → production, still behind its required reviewer). The run then pushes the image by digest, deploys a Cloud Run revision with **no traffic**, probes `/readyz`, shifts traffic, checks `/health` reports the release, and **rolls back** otherwise. It calls the ship gate as a job and `needs:` it, so nothing is released without a green gate on that commit. The button only exists because the workflow is on `main` — GitHub reads `workflow_dispatch` from the default branch only. No service-account key: Workload Identity Federation only. The risky logic lives in `infra/scripts/deploy_cloud_run.sh` so it can be tested. See `specs/backend/0007-cd-pipeline.md`.
 - **Backend layering is enforced**: controllers only call services; services never import FastAPI/SQLAlchemy; repositories are the only SQLAlchemy users; `bootstrap.py` is the single composition root; files ≤150 lines. See `.claude/rules/backend/architecture.md`.
 - **`frontend/` layering is enforced the same way, by a test**: pure-Dart packages cannot import Flutter, blocs never touch the transport, `bootstrap.dart` is the single composition root, and `NumberFormat`/`dart:math`/`DateTime.now()` are absent from `lib/` — `app/test/architecture/layering_test.dart` fails on the mechanism. **Charts are primitives, not a library**: `fl_chart` and `graphic` format their own axis labels, which breaks the numbers invariant inside a dependency, so `packages/finance_charts` ports the arithmetic worth having from d3 and `app/lib/charts/` paints it (ADR-L D-13). **Adding a component edits no existing file**; the wiring is a generated, gated manifest. See ADR-L and `.claude/rules/frontend/`.

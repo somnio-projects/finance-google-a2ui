@@ -26,7 +26,7 @@ included — is read from `backend/.env`.
   application by `make openapi-docs` and diffed by `make gate`, so it cannot
   fall behind the router. These three lines used to be a hand-written list and
   were seven operations short of the service
-  ([spec 0035](../specs/backend/0035-the-openapi-document-is-complete.md)).
+  ([spec 0038](../specs/backend/0038-the-openapi-document-is-complete.md)).
 - Worth knowing before you open it: `GET /v1/views` is the projection catalog,
   `GET /v1/portfolios/current/views?view=<id>&view=<id>` renders up to four
   projections in one request ([ADR-K](../docs/adr/ADR-K-response-shaping.md),

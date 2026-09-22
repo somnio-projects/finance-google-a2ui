@@ -1,4 +1,4 @@
-"""What a route says about itself, read from its dependency tree (spec 0035).
+"""What a route says about itself, read from its dependency tree (spec 0038).
 
 `api.route_facts` is the audit's second source: the document is hand-declared
 in each controller, so it can only be checked against something that is not the

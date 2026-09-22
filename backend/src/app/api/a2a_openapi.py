@@ -74,7 +74,7 @@ RPC_ERROR_EXAMPLE: Final[dict[str, Any]] = {
 #: The schema is the envelope model's own, inline rather than a `$ref`: no
 #: route declares the model as a parameter, so nothing would put it in
 #: ``components``. An example with no schema beside it is a body a generated
-#: client cannot type (spec 0035 OD-5).
+#: client cannot type (spec 0038 OD-5).
 ENVELOPE_BODY: Final[dict[str, Any]] = {
     "required": True,
     "content": {

@@ -1,4 +1,4 @@
-"""The document the service serves, finished where FastAPI stops (spec 0035).
+"""The document the service serves, finished where FastAPI stops (spec 0038).
 
 FastAPI derives nearly all of `/openapi.json` from the routes. What it cannot
 derive here is the **bearer requirement**: authentication is a plain

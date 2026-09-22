@@ -15,7 +15,7 @@ from app.schemas.problem import ProblemDetails
 #: One sentence per status, for the client developer reading `/docs`. Only what
 #: this service answers: the error hierarchy, the body limit (413), validation
 #: (422), the catch-all (500). A 400 and a 409 used to be here with nothing
-#: behind them — `route_facts.answerable_statuses` derives the set now (0035).
+#: behind them — `route_facts.answerable_statuses` derives the set now (0038).
 PROBLEM_DESCRIPTIONS: Final[dict[int, str]] = {
     401: "Missing, expired or unverifiable bearer token (`auth/*` codes).",
     403: "Authenticated but not allowed — a required scope (or MFA) is absent.",

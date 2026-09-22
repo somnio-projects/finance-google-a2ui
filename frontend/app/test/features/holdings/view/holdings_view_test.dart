@@ -123,16 +123,16 @@ void main() {
       expect(find.text('offline'), findsOneWidget);
     });
 
-    testWidgets('spins while loading, and the quiet icons say so', (
-      tester,
-    ) async {
+    // The first paint is `HoldingsFirstRun`; that is AC-1 and it lives in
+    // holdings_loading_test.dart with the rest of 0018.
+    testWidgets('the quiet icons say they are not wired yet', (tester) async {
+      // In a Scaffold, because the icon answers with a SnackBar.
       await tester.pumpApp(
         const Scaffold(body: HoldingsPage()),
         viewsRepository: repository,
         componentRegistry: buildComponentRegistry(),
         surfaceSize: const Size(390, 2400),
       );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Search'));
       await tester.pump();

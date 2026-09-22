@@ -26,6 +26,8 @@ FAILED=0
 #   health_fail       /health never answers 200 after the shift
 #   release_mismatch  /health answers 200 but reports another release
 #   release_prefix    /health reports a release the expected one is a PREFIX of
+#   job_update_fails  `gcloud run jobs update` (the job's image) exits non-zero
+#   migrate_fails     `gcloud run jobs execute` exits non-zero
 make_stubs() {
   local scenario="$1"
   mkdir -p "${WORK}/bin"
@@ -36,6 +38,16 @@ echo "$*" >> "${CALL_LOG}"
 
 if [[ "$*" == *"run deploy"* ]]; then
   if [[ "${SCENARIO}" == "deploy_fails" ]]; then echo "deploy exploded" >&2; exit 1; fi
+  exit 0
+fi
+
+if [[ "$*" == *"jobs update"* ]]; then
+  if [[ "${SCENARIO}" == "job_update_fails" ]]; then echo "no such job" >&2; exit 1; fi
+  exit 0
+fi
+
+if [[ "$*" == *"jobs execute"* ]]; then
+  if [[ "${SCENARIO}" == "migrate_fails" ]]; then echo "alembic exploded" >&2; exit 1; fi
   exit 0
 fi
 
@@ -152,6 +164,13 @@ assert_contains "deploys the image"          "${calls}" "run deploy api --image=
 assert_contains "deploys without traffic"    "${calls}" "--no-traffic"
 assert_contains "injects the release"        "${calls}" "APP_RELEASE=0.1.0+a1b2c3d"
 assert_contains "checks the revision's Ready condition" "${calls}" "revisions describe api-00008-new"
+assert_contains "points the migrate job at the released image" "${calls}" \
+  "run jobs update api-migrate --image=us-central1-docker.pkg.dev/proj/finance/backend@sha256:abc"
+assert_contains "runs the migrate job"       "${calls}" "run jobs execute api-migrate"
+check "sets the job's image BEFORE running it" \
+  "$(awk '/run jobs update api-migrate/{u=NR} /run jobs execute api-migrate/{e=NR} END{print (u && e && u < e) ? "ok" : "no"}' "${WORK}/calls.log")"
+check "migrates BEFORE the traffic shift" \
+  "$(awk '/run jobs execute api-migrate/{m=NR} /update-traffic/{t=NR} END{print (m && t && m < t) ? "ok" : "no"}' "${WORK}/calls.log")"
 assert_contains "shifts traffic to the new revision"    "${calls}" "${SHIFT_NEW}"
 assert_not_contains "never touches the old revision"    "${calls}" "${SHIFT_OLD}"
 assert_contains "reports the deployed revision" "$(cat "${WORK}/out.txt")" "deployed api-00008-new"
@@ -229,6 +248,31 @@ if PATH="${WORK}/bin:${PATH}" SERVICE=api REGION=us-central1 PROJECT=proj \
    IMAGE=img RELEASE=rel \
    bash "${SCRIPT}" > "${WORK}/out.txt" 2>&1; then check "exits non-zero without PUBLIC_URL" no; else check "exits non-zero without PUBLIC_URL" ok; fi
 assert_contains "names the missing public url" "$(cat "${WORK}/out.txt")" "PUBLIC_URL"
+
+# --------------------------------------------------------------- case 10
+# The defect this closes (spec infra/0003): the job kept the image it was
+# created with, so it ran OLD code against a schema a newer revision had
+# already moved. Both halves of that are asserted — the update happens, and a
+# failure to set the image is a hard stop with traffic untouched.
+echo "case 10 · the migrate job cannot be pointed at the released image"
+make_stubs job_update_fails
+assert_exit_nonzero "exits non-zero"
+calls="$(cat "${WORK}/calls.log")"
+assert_not_contains "never runs the job on an unknown image" "${calls}" "run jobs execute"
+assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
+assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
+assert_contains "the reason names the schema" "$(cat "${WORK}/out.txt")" "migrations failed"
+
+# --------------------------------------------------------------- case 11
+echo "case 11 · the migration itself fails: the schema was not moved, so nothing serves"
+make_stubs migrate_fails
+assert_exit_nonzero "exits non-zero"
+calls="$(cat "${WORK}/calls.log")"
+assert_contains "the job was attempted on the released image" "${calls}" \
+  "run jobs update api-migrate --image=us-central1-docker.pkg.dev/proj/finance/backend@sha256:abc"
+assert_not_contains "the new revision never took traffic" "${calls}" "${SHIFT_NEW}"
+assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
+assert_contains "summary records the rollback" "$(cat "${WORK}/summary.md")" "Rolled back"
 
 echo
 echo "${PASSED} passed, ${FAILED} failed"

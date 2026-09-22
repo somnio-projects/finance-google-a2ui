@@ -65,17 +65,22 @@ class HoldingsBloc extends Bloc<HoldingsEvent, HoldingsState> {
     HoldingsGroupByChanged event,
     Emitter<HoldingsState> emit,
   ) async {
-    emit(state.copyWith(groupBy: event.groupBy));
+    // The card's figures belong to the *old* grouping until the answer lands,
+    // so the view is told to grey them rather than show them under the pill
+    // the person just tapped (spec frontend/0020 OD-3).
+    emit(state.copyWith(groupBy: event.groupBy, allocationLoading: true));
     final result = await _fetch(
       allocationView,
       allocationOptions(event.groupBy),
     );
     emit(switch (result) {
       Ok<RenderedViews>(:final value) => state.copyWith(
+        allocationLoading: false,
         allocation: () => value.views[allocationView],
       ),
       Err<RenderedViews>(:final failure) => state.copyWith(
         status: HoldingsStatus.failure,
+        allocationLoading: false,
         failure: () => failure,
       ),
     });

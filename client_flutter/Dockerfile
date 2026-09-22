@@ -86,7 +86,9 @@
 # offline, which is strictly better provenance than a community image digest —
 # it narrows gap G-8 in docs/SECURITY.md rather than restating it.
 #
-# WHICH version: 3.47.5, and the lock is what chose it — not the manifest.
+# WHICH version: whatever `client_flutter/.fvmrc` says — and the lock is what
+# chose it, not the manifest. The reasoning below is why the pin is a 3.47.x
+# and not the floor; the file, not this comment, is where the number lives.
 #
 # `flutter: ">=3.44.0"` in pubspec.lock is only a floor, and building against
 # the floor is not the same as building against the lock. 3.44.9 gets as far as
@@ -116,22 +118,43 @@ FROM --platform=linux/amd64 debian:12-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c8
 RUN apt-get update \
  && apt-get upgrade -y --no-install-recommends \
  && apt-get install -y --no-install-recommends \
-      ca-certificates curl git unzip xz-utils \
+      ca-certificates curl git jq unzip xz-utils \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-ARG FLUTTER_VERSION=3.47.5
-# From https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
-# — the `sha256` field of the 3.47.5 stable entry. Changing FLUTTER_VERSION
-# without changing this makes the build fail, which is the point.
-ARG FLUTTER_SHA256=2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb
+# The SDK version is READ from .fvmrc, never written here.
+#
+# This file used to carry `ARG FLUTTER_VERSION=3.47.5` while
+# `client_flutter/.fvmrc` pinned **3.47.3**, so the image shipped a bundle
+# compiled by a different SDK than the one `make gate` and `client-ci` prove
+# the app against — GGU-94's defect, rebuilt in a Dockerfile, where
+# `scripts/check_gate_pairs.sh` was not looking. Found on 2026-09-22 while
+# building the same stage for `frontend/`; the check now reads Dockerfiles too,
+# so this cannot come back silently.
+#
+# A checksum cannot be derived from a version, so docker/flutter-sdk-checksums.json
+# maps version → the SHA-256 Google publishes in releases_linux.json. That is
+# a lookup table keyed by the pin, not a second pin: bump `.fvmrc` without
+# adding the row and the build stops and names the row to add, rather than
+# fetching a tarball it cannot verify.
+COPY .fvmrc /tmp/pin/.fvmrc
+COPY docker/flutter-sdk-checksums.json /tmp/pin/checksums.json
 
-RUN curl -fsSL -o /tmp/flutter.tar.xz \
-      "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
- && echo "${FLUTTER_SHA256}  /tmp/flutter.tar.xz" | sha256sum -c - \
- && tar -xf /tmp/flutter.tar.xz -C /opt \
- && rm /tmp/flutter.tar.xz \
- && git config --global --add safe.directory /opt/flutter
+RUN set -eu; \
+    version="$(jq -r .flutter /tmp/pin/.fvmrc)"; \
+    sha="$(jq -r --arg v "$version" '.[$v] // empty' /tmp/pin/checksums.json)"; \
+    if [ -z "$sha" ]; then \
+      echo "Dockerfile: .fvmrc pins Flutter ${version}, and docker/flutter-sdk-checksums.json has no checksum for it." >&2; \
+      echo "Dockerfile: add the sha256 for that release from" >&2; \
+      echo "Dockerfile:   https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json" >&2; \
+      exit 1; \
+    fi; \
+    curl -fsSL -o /tmp/flutter.tar.xz \
+      "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz"; \
+    echo "${sha}  /tmp/flutter.tar.xz" | sha256sum -c -; \
+    tar -xf /tmp/flutter.tar.xz -C /opt; \
+    rm /tmp/flutter.tar.xz; \
+    git config --global --add safe.directory /opt/flutter
 
 ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
 

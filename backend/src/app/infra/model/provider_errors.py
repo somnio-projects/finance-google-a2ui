@@ -52,11 +52,28 @@ def is_retryable(exc: BaseException) -> bool:
 
     Returns:
         True for a transport failure or a retryable status; False for a
-        rejected request (a bad key retried three times is still a bad key)
-        and for a body that cannot be parsed.
+        rejected request (a bad key retried three times is still a bad key),
+        for a body that cannot be parsed, and for a **read** timeout.
+
+    A read timeout is the exception worth arguing. ``httpx.ReadTimeout`` is a
+    ``TransportError``, so the first version of this function retried it — and
+    that is the wrong reading of what it means. A connection refused or reset
+    is a provider that failed; a read timeout is a provider that **answered
+    too slowly**, and the second attempt asks the same slow model the same
+    question with the same budget. It does not repair anything; it multiplies
+    the wait by the attempt cap and turns one slow turn into a long failed
+    one.
+
+    MEASURED, dev, 2026-09-22: ``agent.turn outcome=model-unavailable
+    duration_ms=64416``, preceded by three ``model_provider_unreachable
+    error=ReadTimeout`` — 3 x the then-20s budget. The same questions answered
+    in 10-46s once the budget was raised. A ``ConnectTimeout`` stays
+    retryable: never reaching the host IS transient.
     """
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code in RETRYABLE_STATUS
+    if isinstance(exc, httpx.ReadTimeout):
+        return False
     return isinstance(exc, httpx.TransportError)
 
 

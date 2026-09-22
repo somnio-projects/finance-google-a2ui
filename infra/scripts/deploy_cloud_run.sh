@@ -169,6 +169,24 @@ migrate() {
   # revision keeps serving the schema it was written for.
   local job="$1"
   echo "running migrations with the released image"
+
+  # `gcloud run jobs execute` runs whatever image the JOB carries, and
+  # Terraform ignores that field on purpose (infra/run.tf) so this pipeline
+  # can own it. Nothing owned it: the job kept the image it was created with
+  # while the service moved on, and the comment above — "the job runs on the
+  # image being released" — was false for every deploy after the first.
+  #
+  # It stayed invisible because the service also carries `RUN_MIGRATIONS=true`
+  # and migrates at container start, so the schema did move; the job then hit
+  # a version its own (older) code had never heard of and failed with
+  # `Can't locate revision identified by '<rev>'`, which reads like a broken
+  # migration chain and is not one. That belt stays on (spec infra/0003 OD-2):
+  # removing it would boot the revision on the old schema, and the bootstrap
+  # of the admin registry runs at boot. Set the image, then run it.
+  if ! gcloud_run jobs update "${job}" --image="${IMAGE}"; then
+    return 1
+  fi
+
   if ! gcloud run jobs execute "${job}" \
     --region="${REGION}" --project="${PROJECT}" \
     --update-env-vars="APP_RELEASE=${RELEASE}" \

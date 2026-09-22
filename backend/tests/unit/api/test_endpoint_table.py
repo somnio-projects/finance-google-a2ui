@@ -1,7 +1,7 @@
 """The human-facing endpoint table, and that the checked-in one is current.
 
 `backend/docs/ENDPOINTS.md` is generated from the same document `/openapi.json`
-serves (spec 0035 OD-4). `make openapi-check` re-renders and diffs it; this
+serves (spec 0038 OD-4). `make openapi-check` re-renders and diffs it; this
 asserts the same property from inside the suite, so a stale table fails the
 tests too and not only the gate step.
 """

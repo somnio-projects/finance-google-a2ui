@@ -1,4 +1,4 @@
-"""The human-facing endpoint table, rendered from the document (spec 0035 OD-4).
+"""The human-facing endpoint table, rendered from the document (spec 0038 OD-4).
 
 `backend/README.md` used to carry a hand-written list of routes, and it had
 fallen behind the router by five operations. This renders the table from the

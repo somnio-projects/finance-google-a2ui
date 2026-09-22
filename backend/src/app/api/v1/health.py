@@ -49,7 +49,7 @@ HealthDep = Annotated[HealthService, Depends(get_health_service)]
     ),
     # No 429: the limiter exempts the probe paths by name
     # (`middleware/rate_limit.EXEMPT_PATHS`), so documenting one described a
-    # response no orchestrator can ever receive (spec 0035 OD-1).
+    # response no orchestrator can ever receive (spec 0038 OD-1).
     responses=problem_responses(500),
 )
 def health(service: HealthDep) -> HealthResponse:

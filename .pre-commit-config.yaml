@@ -117,7 +117,7 @@ repos:
         name: Prove every gate command appears verbatim in its workflow (check_gate_pairs.sh)
         entry: bash scripts/check_gate_pairs.sh
         language: system
-        files: ^(\.claude/ship-gate\.json|\.github/workflows/)
+        files: ^(\.claude/ship-gate\.json|\.github/workflows/|(frontend|client_flutter)/(Dockerfile|\.fvmrc)$)
         pass_filenames: false
 
       # Runs when the check, its suite, or the rule that defines the manual-run
@@ -155,7 +155,7 @@ repos:
         files: ^(backend/src/app/presentation/|backend/scripts/generate_catalog_contract\.py|docs/catalog/)
         pass_filenames: false
 
-      # `GET /openapi.json` is the client's contract (spec 0035). The audit
+      # `GET /openapi.json` is the client's contract (spec 0038). The audit
       # reads the routes, so it runs on any controller or schema change — and
       # on the generated table, which it re-renders and diffs. Command string
       # copied from backend/Makefile, .claude/ship-gate.json (`py.openapi`)
@@ -196,7 +196,7 @@ repos:
         name: Prove dev stays cheap and releases behind a green gate (test_dev_environment.sh)
         entry: bash infra/scripts/tests/test_dev_environment.sh
         language: system
-        files: ^(infra/|\.github/workflows/backend-c[di]\.yaml$)
+        files: ^(infra/|\.github/workflows/(backend|frontend)-cd?\.yaml$)
         pass_filenames: false
 
       # The rules index in CLAUDE.md sits inside the block /harness-init
@@ -258,6 +258,18 @@ repos:
         entry: bash -c 'cd frontend && bash tool/tests/test_check_toolchain.sh'
         language: system
         files: ^frontend/(tool/check_toolchain\.sh|tool/tests/test_check_toolchain\.sh|\.fvmrc)$
+        pass_filenames: false
+
+      # Also needs no SDK — it stubs curl — so it runs anywhere the delivery
+      # check or its suite moves. It is the frontend's half of the same rule
+      # `repo-manual-run` keeps for the backend: what the gate can run is the
+      # proof that the check rejects, because the check itself needs something
+      # only a deploy has.
+      - id: frontend-verify-release-test
+        name: Prove the delivery check rejects a stale release (test_verify_release.sh)
+        entry: bash -c 'cd frontend && bash tool/tests/test_verify_release.sh'
+        language: system
+        files: ^frontend/tool/(verify_release\.sh|tests/test_verify_release\.sh)$
         pass_filenames: false
 
       - id: frontend-format

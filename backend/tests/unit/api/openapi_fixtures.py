@@ -3,7 +3,7 @@
 The audit reads two things: facts about a route and an operation object. Both
 are plain data, so every rule can be provoked directly instead of by inventing
 a broken controller — which is what lets the suites prove the check *rejects*,
-not only that it passes on today's tree (spec 0035, Test decision).
+not only that it passes on today's tree (spec 0038, Test decision).
 """
 
 from typing import Any

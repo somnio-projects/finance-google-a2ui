@@ -3825,7 +3825,7 @@ What the run taught:
   secret scanner cannot read the ADR that says so (0002 OD-3).
 ## 2026-09-22 — the OpenAPI document, audited against the routes
 
-`docs/openapi_complete`, spec `backend/0035`. `/openapi.json` is what both
+`docs/openapi_complete`, spec `backend/0038`. `/openapi.json` is what both
 Flutter clients are written against, and nothing re-derived it. A check that
 reads each route's **dependency tree** and compares it with what the route's
 `responses=` claims found **51 findings over 23 operations** on `develop`: no
@@ -3864,3 +3864,245 @@ What the run taught:
 - **Fixing the document is not the same as fixing the service.** Nothing here
   changes a behaviour; the one runtime edit is a closure rewritten as an object.
   Every other change is the document being made to say what was already true.
+
+## 2026-09-22 — the migrate job had been running an old image all along
+
+`fix/the_migrate_job_runs_the_released_image`, spec `infra/0003`. A deploy to
+dev failed with `Can't locate revision identified by '0007'` — a message that
+reads like a broken Alembic chain and was a stale container image: the Cloud
+Run *job* kept the image it was created with while the service moved on, and
+`gcloud run jobs execute` runs whatever the job carries.
+
+What the run taught:
+
+- **An `ignore_changes` is a claim that something else owns the field.**
+  Terraform ignored the job's image so the pipeline could set it; the pipeline
+  never did. Nobody owned it and both files looked correct in isolation — the
+  same shape as the gate-pair defects in `ci-conventions.md` §5, one level out
+  from the repository.
+- **A comment that asserts behaviour is a test that never runs.** The script
+  said "the job runs on the image being released" and the suite had 44
+  assertions, none of them about the migrate step. The sentence had been false
+  since the second deploy.
+- **A second mechanism hid the first.** `RUN_MIGRATIONS=true` on the service
+  meant the schema moved anyway, at container boot, so the only symptom was
+  the job failing *afterwards* on a version its older code did not know. Left
+  in place deliberately (0003 OD-2): removing it reorders boot and migration,
+  and the admin bootstrap runs at boot.
+- **Diagnosis came from comparing two images, not from reading migrations.**
+  `gcloud run jobs describe … --format="value(…containers[0].image)"` against
+  the same field on the service is the one-line check; it belongs in the
+  runbook next time a migration "fails" on a chain that is provably contiguous.
+## 2026-09-22 — The client runs in the stack and ships itself
+
+`feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
+became a deployed web app under `infra/0002` and nothing owned it: no way to
+run it from the stack, a laptop for a pipeline, and Hosting serving the
+container's bundle with none of the container's headers — because the
+container did not exist yet either. This adds `frontend/Dockerfile`, a
+`frontend` service in the root compose project, and `frontend-cd`.
+
+What the run taught:
+
+- **Four checks of the same class, and the fourth was in a file the check
+  could not read.** `client_flutter/Dockerfile` carried
+  `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc` pinning **3.47.3**, so its
+  image shipped a bundle compiled by an SDK its gate never proved it against.
+  `scripts/check_gate_pairs.sh` greps *workflows* for `FLUTTER_VERSION:` and
+  checks a fixed list of *pin files*; a Dockerfile is neither. Found only by
+  writing the same builder stage for `frontend/` and asking where its version
+  would live. Rule 3 now reads Dockerfiles.
+- **A check a comment can satisfy is not a check.** Rule 3's first draft
+  asserted the Dockerfile "mentions `.fvmrc`". Mutating the file — removing
+  the pin from the build entirely — left it **green**, because one `echo` in
+  an error message still contained the string. It now requires a `COPY` of the
+  file. Both halves are mutation-tested, and the mutation is what found the
+  weakness, not review.
+- **A red gate is not evidence that it is red for your reason** has a mirror:
+  a *green* console is not evidence the policy is right. The container's CSP
+  looked correct and the app rendered; the console carried a violation per
+  fallback font, because CanvasKit `fetch()`es them from `fonts.gstatic.com`
+  and installs them through `FontFace` — so the directive is **`connect-src`,
+  not `font-src`**, which is the opposite of where anyone would look.
+  `client_flutter`'s template has the same gap.
+- **`Cross-Origin-Opener-Policy: same-origin` breaks `signInWithPopup`.** It
+  severs `window.opener`, which is the handle the promise resolves on: the
+  popup completes, closes, and the app waits forever.
+  `same-origin-allow-popups` is the value for any page that signs in through a
+  popup, and the container's copy of the header set inherited the wrong one.
+- **Two files that build the same artifact, and no machine check between
+  them.** The Dockerfile and `frontend-cd` both compile the bundle, and
+  neither is a ship-gate command, so `repo.gate-pairs` is structurally unable
+  to compare them. `frontend/tool/build_web.sh` is the answer: don't write the
+  flag list twice. It is the one §5 pair in this repository whose only defence
+  is the shape of the code.
+- **`/release.json` is GGU-93 moved to a thing with no process.** A static
+  bundle cannot be asked which build it is. The build writes the answer beside
+  it and the pipeline reads it back over HTTP — once off a preview channel
+  before anything is live, once off the live origin after. Two claims that look
+  like one until they disagree.
+- **`.claude/rules/ci-conventions.md` had unresolved conflict markers on
+  `develop` since `f4fa557` (PR #26).** Two regions, both sides wanted, the
+  merge simply never performed. The file that defines "change one, change its
+  pair" could not be edited around them. Two stale counts came out with them:
+  §5 said the gate "has three parts" and warned about "a fourth runner", with
+  five in the table. And `check-merge-conflict` **was already in
+  `.pre-commit-config.yaml` at that commit** — checked, not assumed — so the
+  hook did not fail to exist; it failed to run on whatever produced that
+  commit. This repository squash-merges, and a squash merge is performed by
+  GitHub, where no local hook exists. Why this one got through is not
+  established here, and the useful conclusion is narrower than a cause: a
+  pre-commit hook is evidence about a developer's laptop, never about what is
+  on `develop`. The check that would have caught it is one in `repo-ci`, which
+  runs on the pull request. Not added in this PR — `repo.spelling` already
+  walks every tracked file and could carry it — and named as the gap it is.
+
+## 2026-09-22 — Transition states: every wait has a shape
+
+**Spec:** `specs/frontend/0020-transition-states.md` · **Branch:**
+`feat/frontend_transition_states` · frontend only.
+
+The TL's report was that transitions between tabs, between toggles and while
+a backend call is in flight are abrupt. Reading spec 0015 first turned that
+into a map rather than an impression: the skeleton vocabulary it built
+(`SkeletonShimmer` · `SkeletonPulse` · `SkeletonCaption` · `SurfaceSkeleton` ·
+the per-component `skeleton()` override · `ComponentSkeletonHost`) was spent
+on **three** moments — Home's first paint, Home's range change, and a pending
+surface in the Assistant and the gallery — and **seven** others had nothing.
+
+**In code.** `SkeletonRows` and `SkeletonSwitcher` join the primitives.
+Holdings and Activity get first-run pages; the catalog index and detail get
+board-shaped ones; both order-ticket views now draw their **component's own**
+`skeleton()` instead of a spinner, which needed no new seam because the view
+already holds the component. `HoldingsState.allocationLoading` is the one new
+piece of state.
+
+**What the next person should know.**
+
+- **Two of the seven were a correctness bug, not a polish gap.** Holdings'
+  `By sector` and Activity's chips both left the *previous* option's figures
+  on screen under the *new* option's label for the length of the request.
+  A client showing a payload under a caption it does not belong to is the one
+  thing this showcase exists to demonstrate it never does. The rule that came
+  out of it — **skeleton exactly what the option governs, keep the rest** —
+  generalises 0015 OD-1's hero and is now 0020 OD-3.
+- **"A skeleton for a surface, a spinner for an action" is now a test, not a
+  sentence.** Six pages had drifted to a bare `CircularProgressIndicator`
+  before anyone named the rule, which is the signature of a rule nothing
+  enforces. `app/test/architecture/transition_rules_test.dart` allow-lists the
+  two real action spinners *by path* — the shape `binding_rules_test.dart`
+  uses for the geometry seam — and pins the allow set's size, so a seventh
+  page is a red gate. Mutation-checked three ways; the evidence is in the PR.
+- **A finder can pass for the wrong reason, and one did.** `holdings_view_test`
+  asserted `find.byType(CircularProgressIndicator), findsOneWidget` for the
+  loading state. After the change it **still passed** — because the card's
+  `SkeletonCaption` legitimately draws an 11 px ring. The test would have been
+  green either side of the change it was supposed to guard. It now asserts
+  `HoldingsFirstRun` by type, and the comment says why. This is `repo-ci`'s
+  *"a red gate is not evidence that it is red for your reason"* with the sign
+  flipped: **a green finder is not evidence it found your widget.**
+- **No new token, deliberately (OD-4).** Seven more placeholders and
+  `SkeletonTokens` grew by nothing, which is 0015 §2's claim holding up. The
+  cross-fade's 180 ms is a `static const` beside `SkeletonShimmer.period` and
+  the other two, not a token: a `ThemeExtension` entry would have carried the
+  same value in both palettes and created a *second* home for skeleton
+  durations — the drift §5 of `ci-conventions.md` has now recorded five times.
+- **The segment gets nothing, on purpose (OD-6).** `By position` /
+  `By asset class` issues no request. An affordance marks a wait; there is no
+  wait, and a placeholder gone in the frame it appeared reads as a flicker and
+  says something false about the app.
+- **`pumpApp` gained `reducedMotion:`.** Not only for the accessibility
+  assertion — a shimmer repeats for ever, so `pumpAndSettle` never returns
+  while one is on screen. Any future test that pumps a loading state needs it.
+- **The page skeletons got goldens; the component ones did not need them
+  (OD-8).** These four are composed from the page's own layout because no
+  artboard draws them, so a count proves how many blocks exist and nothing
+  about where they sit — and "the skeleton occupies the layout the content
+  will occupy" is the whole claim. That is `testing.md` §6's *layout that
+  reflowed*, exactly.
+
+**Harness:** `docs/diagrams/12-frontend-layers.md` — the `skeleton/` node
+enumerates its contents, so it names `rows` and `switcher` now;
+`.claude/rules/frontend/architecture.md` carries OD-1 as a standing rule.
+## 2026-09-22 — Eleven components, five the agent can reach
+
+`fix/agent_reach_over_the_catalog`, spec `backend/0037`. Found by asking the
+turn telemetry a question it could finally answer.
+
+What the run taught:
+
+- **A component can be complete and unreachable.** Written, registered,
+  100 %-covered, published to `/v1/views`, printed in the frozen contract,
+  bound by a Flutter widget — and impossible for the agent to compose,
+  because a render intent is attached by a *tool* and no tool names it.
+  Every gate was green over all eleven.
+- **The symptoms did not look like the cause.** "Show me my biggest winners
+  and losers" answering in prose looks like a prompt problem. "Compare
+  keeping NVDA against trimming it" drawing a tax-lot table looks like the
+  model choosing badly. Both were the same thing: the component for that
+  answer was unreachable, so the model reached for the nearest thing it
+  could actually get. **A model asked for something it cannot produce does
+  not fail — it substitutes**, and the substitute is plausible.
+- **This is GGU-79 one level up**, and the second time this repository has
+  found it. There, a component could be registered and not reachable from a
+  *route*; here, not reachable by the *agent*. Both times the seam was
+  sound and the thing past the seam was never compared with it. Worth
+  asking, the next time a registry is added: *who consumes this, and is
+  there a test that every entry reaches each consumer?*
+- **The check asserts classification, not reachability.** Demanding that
+  every view be agent-composable would be wrong — a view a screen requests
+  by `?view=` is not an answer. What must not exist is an *undeclared* gap,
+  so the registry splits three ways and a new view is red until its author
+  picks one. Same shape as `test_component_names.py`, which is red until
+  design has named the component.
+- **Reachability is read from the sources, not by running the tools.**
+  Discovering intents by exercising tools against a portfolio would make
+  the inventory depend on the seed: a tool that attaches its surface only
+  for a non-empty result would read as unreachable on an empty one, and the
+  check would change meaning when the seed changes.
+## 2026-09-22 — The assistant, measured against the real model
+
+`fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
+agent was reported as crashing. It was not crashing; it was doing four things
+wrong at once and reporting none of them.
+
+What the run taught:
+
+- **A badge that is chrome cannot tell you anything.** The header's
+  `Simulated` pill is hardcoded from the artboards and refers to the
+  simulated **portfolio**. It reads as a statement about the model, it says
+  `Gemini · A2UI` whatever the backend runs, and the first ten minutes of
+  this investigation went into a screenshot that could not have been
+  evidence either way.
+- **`ReadTimeout` is a `TransportError`, and that inheritance was a trap.**
+  "Retry transport errors" therefore retried a model that answered too
+  slowly, three times, turning one slow turn into a 64 s failure. The lesson
+  generalises: a retry predicate written against an exception *hierarchy*
+  inherits whatever the library decided to group, and the grouping is not
+  always the one your policy means.
+- **A prompt that asks for something the model cannot do gets prose.** The
+  catalog header told the model to "pick a view by id and fill its options".
+  Nothing in the tool surface lets it. So it wrote the JSON into its answer —
+  twice in three runs of one question — and once refused an option the
+  catalog declares. The model was not confused; the instruction was wrong.
+- **The option had been declared for weeks and nothing passed it.** A
+  projection can hold a perfectly good `group_by` enum while every caller
+  sends the default, and the only visible symptom is a chart that quietly
+  disagrees with the sentence above it. **A declared option with no caller is
+  a dead option**, and nothing in the gate says so — `make catalog` proves the
+  artefact is current, never that anything uses it.
+- **Telemetry that cannot answer the product's own question.** `agent.turn`
+  logged iterations and tool calls, and nothing about whether the turn
+  composed a surface. This showcase exists to demonstrate composed UI; the
+  one number that says whether it happened was the one number absent. That is
+  why the sector defect survived: no log could have shown it.
+- **`blocTest` with an `errors:` matcher can hide the assertion.** The
+  handler's exception ends `act`, so `verify` never runs and the suite passes
+  with the fix reverted. Caught by mutating, not by reading. A bloc must also
+  be **constructed inside** `runZonedGuarded` for its unhandled errors to
+  reach that handler — built outside, they go to the test framework's zone.
+- **A docstring that names the case it does not cover.** `AgentRepository`
+  said "every failure is an event … because a turn can fail after it has
+  already produced surfaces", and an error raised *on* the stream — that
+  exact case — escaped as an exception and froze the composer. When a comment
+  states a guarantee, the test to write is the one that matches its wording.

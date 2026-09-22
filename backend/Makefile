@@ -33,7 +33,7 @@ catalog:
 catalog-check:
 	$(UV) run python scripts/generate_catalog_contract.py --check
 
-# `GET /openapi.json` is how a client of this service is written (spec 0035),
+# `GET /openapi.json` is how a client of this service is written (spec 0038),
 # so it is gated like code: every operation is audited against what its route
 # can really answer — read from the route's dependency tree, never from a list
 # — and docs/ENDPOINTS.md is re-rendered from the same document and diffed.

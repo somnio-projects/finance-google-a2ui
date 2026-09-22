@@ -1,4 +1,4 @@
-"""Which statuses an operation owes, and which it may not claim (spec 0035 OD-1).
+"""Which statuses an operation owes, and which it may not claim (spec 0038 OD-1).
 
 Every rule is provoked directly: a check that has only ever been seen to pass
 has not been shown to reject, which is the defect `.claude/rules/ci-conventions.md`

@@ -103,7 +103,7 @@ def _configure_app(app: FastAPI, container: Container) -> None:
     register_error_handlers(app, container.reporter)
     app.include_router(api_router)
     # Last: the document builder reads the routes it has just been handed
-    # (spec 0035 OD-2). It is lazy, so nothing is built here.
+    # (spec 0038 OD-2). It is lazy, so nothing is built here.
     install_openapi(app)
 
 

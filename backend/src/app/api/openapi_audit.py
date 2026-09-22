@@ -4,7 +4,7 @@
 paragraph as code. Each rule reads the operation *and* the facts
 `api.route_facts` derived from the route's dependency tree, so a status is
 required because the route can produce it and forbidden because it cannot —
-not because a list somewhere says so (spec 0035 OD-1). The status rules live
+not because a list somewhere says so (spec 0038 OD-1). The status rules live
 in `api.openapi_statuses`; `scripts/check_openapi.py` runs the whole audit in
 the gate and prints every finding by name.
 """

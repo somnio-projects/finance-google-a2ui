@@ -1,7 +1,7 @@
 """Make every documented error response say what the service really answers.
 
 Split from `api.openapi_document` under the 150-line budget. Two corrections,
-both of them about a media type (spec 0035 OD-3):
+both of them about a media type (spec 0038 OD-3):
 
 * ``problem_responses`` passes ``model=ProblemDetails`` so the schema reaches
   ``components``, and FastAPI attaches that schema to *its* default media type.
