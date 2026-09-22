@@ -155,6 +155,18 @@ repos:
         files: ^(backend/src/app/presentation/|backend/scripts/generate_catalog_contract\.py|docs/catalog/)
         pass_filenames: false
 
+      # `GET /openapi.json` is the client's contract (spec 0035). The audit
+      # reads the routes, so it runs on any controller or schema change — and
+      # on the generated table, which it re-renders and diffs. Command string
+      # copied from backend/Makefile, .claude/ship-gate.json (`py.openapi`)
+      # and backend-ci.yaml, not paraphrased.
+      - id: backend-openapi
+        name: Audit the OpenAPI document and the endpoint table (check_openapi.py)
+        entry: bash -c 'cd backend && uv run python scripts/check_openapi.py'
+        language: system
+        files: ^backend/(src/app/(api|schemas)/|scripts/check_openapi\.py|docs/ENDPOINTS\.md)
+        pass_filenames: false
+
       - id: backend-quality
         name: Detect code smells (xenon, vulture, interrogate, deptry, pylint)
         entry: bash -c 'cd backend && make quality'

@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.agent.contracts import ToolContext
-from app.api.a2a_openapi import REQUEST_EXAMPLE, RPC_ERROR_EXAMPLE, STREAM_EXAMPLE
+from app.api.a2a_openapi import ENVELOPE_BODY, EVENT_STREAM, TURN_RESPONSE
 from app.api.deps import (
     PrincipalDep,
     RequestIdDep,
@@ -34,8 +34,6 @@ from app.services.a2a_service import A2aService
 from app.services.surface_action_service import SurfaceActionService
 
 router = APIRouter(tags=["a2a"])
-
-EVENT_STREAM = "text/event-stream"
 
 A2aDep = Annotated[A2aService, Depends(get_a2a_service)]
 ActionsDep = Annotated[SurfaceActionService, Depends(get_surface_action_service)]
@@ -60,30 +58,12 @@ ContextDep = Annotated[ToolContext, Depends(get_tool_context)]
         "404 `feature-disabled` before the body runs. Spec 0010 AC-2, AC-4."
     ),
     responses={
-        200: {
-            "content": {
-                EVENT_STREAM: {"example": STREAM_EXAMPLE},
-                "application/json": {"example": RPC_ERROR_EXAMPLE},
-            },
-            "description": (
-                "A stream of task events for `message/stream`, or a JSON-RPC "
-                "error object for an unknown or unsupported method. The event "
-                "order is `status-update(working)` → one `render-intent` per "
-                "surface, as each becomes ready → `message` carrying the "
-                "answer and the full `renderIntents` list → a terminal "
-                "`status-update`. A client may render each `render-intent` "
-                "immediately, or ignore them and use the terminal message: "
-                "both carry the same surfaces."
-            ),
-        },
-        **problem_responses(401, 404, 429, 500),
+        200: TURN_RESPONSE,
+        # 413: the body-limit middleware sees this body like any other.
+        # 503: the turn opens a database session through its tool context.
+        **problem_responses(401, 404, 413, 429, 500, 503),
     },
-    openapi_extra={
-        "requestBody": {
-            "required": True,
-            "content": {"application/json": {"example": REQUEST_EXAMPLE}},
-        }
-    },
+    openapi_extra={"requestBody": ENVELOPE_BODY},
 )
 async def call(
     request: Request,

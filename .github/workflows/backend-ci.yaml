@@ -80,6 +80,9 @@ jobs:
       - name: Verify the generated catalog artefacts are current (generate_catalog_contract.py)
         run: uv run python scripts/generate_catalog_contract.py --check
 
+      - name: Audit the OpenAPI document and the endpoint table (check_openapi.py)
+        run: uv run python scripts/check_openapi.py
+
       - name: Detect code smells (xenon, vulture, interrogate, deptry, pylint, codespell)
         run: make quality
 
@@ -214,7 +217,7 @@ jobs:
             echo ""
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
-            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract and its JSON snapshot, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
+            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract and its JSON snapshot, complete OpenAPI document and endpoint table, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
             echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
             echo "| Security | Semgrep, pip-audit — secret scanning is repo-ci's, on every pull request | ${{ needs.security.result }} |"
             echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"

@@ -47,7 +47,10 @@ HealthDep = Annotated[HealthService, Depends(get_health_service)]
         "so a database or model-provider blip cannot cause a restart loop. "
         "Unauthenticated by contract. Spec 0001 AC-1."
     ),
-    responses=problem_responses(429, 500),
+    # No 429: the limiter exempts the probe paths by name
+    # (`middleware/rate_limit.EXEMPT_PATHS`), so documenting one described a
+    # response no orchestrator can ever receive (spec 0035 OD-1).
+    responses=problem_responses(500),
 )
 def health(service: HealthDep) -> HealthResponse:
     """Return 200 while the process is alive. Never probes dependencies."""
@@ -70,7 +73,8 @@ def health(service: HealthDep) -> HealthResponse:
             "model": ReadinessResponse,
             "description": "At least one dependency is not ready (`degraded`).",
         },
-        **problem_responses(429, 500),
+        # Exempt from the rate limiter, exactly like `/health` above.
+        **problem_responses(500),
     },
 )
 async def readyz(service: HealthDep, response: Response) -> ReadinessResponse:

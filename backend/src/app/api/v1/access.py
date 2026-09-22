@@ -63,7 +63,7 @@ async def read_my_access(
         "answers 202 with no body whether or not the e-mail is already known, "
         "so it cannot be used to enumerate accounts. Spec 0027 AC-6."
     ),
-    responses=problem_responses(422, 429, 500, 503),
+    responses=problem_responses(413, 422, 429, 500, 503),
 )
 async def request_access(body: AccessRequest, service: UsersDep) -> Response:
     """Record an access request; never reveals whether it is new. Spec 0027 AC-6."""
@@ -84,7 +84,7 @@ async def request_access(body: AccessRequest, service: UsersDep) -> Response:
         "`feature-disabled`. An unknown or revoked e-mail answers 403 "
         "`not-provisioned`. Audited as `user.preview_sign_in`. Spec 0027 OD-3."
     ),
-    responses=problem_responses(403, 404, 422, 429, 500, 503),
+    responses=problem_responses(403, 404, 413, 422, 429, 500, 503),
 )
 async def create_preview_sign_in(
     body: PreviewSignIn, request_id: RequestIdDep, service: PreviewDep

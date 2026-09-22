@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget catalog catalog-check quality test test-unit test-integration audit gate run migrate purge-audit
+.PHONY: install lint format typecheck budget catalog catalog-check openapi-check openapi-docs quality test test-unit test-integration audit gate run migrate purge-audit
 
 install:
 	$(UV) sync --all-groups
@@ -32,6 +32,18 @@ catalog:
 
 catalog-check:
 	$(UV) run python scripts/generate_catalog_contract.py --check
+
+# `GET /openapi.json` is how a client of this service is written (spec 0035),
+# so it is gated like code: every operation is audited against what its route
+# can really answer — read from the route's dependency tree, never from a list
+# — and docs/ENDPOINTS.md is re-rendered from the same document and diffed.
+# `openapi-docs` regenerates that table; `openapi-check` fails the gate when a
+# route moved and the table did not.
+openapi-check:
+	$(UV) run python scripts/check_openapi.py
+
+openapi-docs:
+	$(UV) run python scripts/check_openapi.py --write
 
 test:
 	$(UV) run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml
@@ -65,7 +77,7 @@ quality:
 	$(UV) run pylint src/app tests
 	$(UV) run codespell src tests docs scripts
 
-gate: lint typecheck budget catalog-check quality test audit
+gate: lint typecheck budget catalog-check openapi-check quality test audit
 	@echo "ship gate green"
 
 run:

@@ -16,6 +16,12 @@ fails if the two drift.
 
 from typing import Any, Final
 
+from app.schemas.a2a import JsonRpcFailure, JsonRpcRequest
+
+#: The media type a turn streams back. Here rather than in `a2a.py` because
+#: both the route's handler and the response shape below need it.
+EVENT_STREAM: Final[str] = "text/event-stream"
+
 #: A `message/stream` call — the only method the surface implements today.
 REQUEST_EXAMPLE: Final[dict[str, Any]] = {
     "jsonrpc": "2.0",
@@ -64,4 +70,58 @@ RPC_ERROR_EXAMPLE: Final[dict[str, Any]] = {
     "error": {"code": -32601, "message": "Method not found"},
 }
 
-__all__ = ["REQUEST_EXAMPLE", "RPC_ERROR_EXAMPLE", "STREAM_EXAMPLE"]
+#: The body, spelled out because FastAPI derives nothing from a raw ``Request``.
+#: The schema is the envelope model's own, inline rather than a `$ref`: no
+#: route declares the model as a parameter, so nothing would put it in
+#: ``components``. An example with no schema beside it is a body a generated
+#: client cannot type (spec 0035 OD-5).
+ENVELOPE_BODY: Final[dict[str, Any]] = {
+    "required": True,
+    "content": {
+        "application/json": {
+            "schema": JsonRpcRequest.model_json_schema(),
+            "example": REQUEST_EXAMPLE,
+        }
+    },
+}
+
+#: The 200, which is two media types and no response model: an event stream
+#: for `message/stream`, or a JSON-RPC error object for anything refused.
+#: ``model`` is what puts `JsonRpcFailure` — and the error object it carries —
+#: into ``components.schemas``; the content map then names what is really
+#: answered. The stream itself is text, not JSON, so its schema is a string.
+TURN_RESPONSE: Final[dict[str, Any]] = {
+    "model": JsonRpcFailure,
+    "content": {
+        EVENT_STREAM: {
+            "schema": {
+                "type": "string",
+                "description": (
+                    "Server-sent events: one `data:` line per event, separated "
+                    "by a blank line. Each payload is one JSON object of the "
+                    "kinds in the example."
+                ),
+            },
+            "example": STREAM_EXAMPLE,
+        },
+        "application/json": {"example": RPC_ERROR_EXAMPLE},
+    },
+    "description": (
+        "A stream of task events for `message/stream`, or a JSON-RPC error "
+        "object for an unknown or unsupported method. The event order is "
+        "`status-update(working)` → one `render-intent` per surface, as each "
+        "becomes ready → `message` carrying the answer and the full "
+        "`renderIntents` list → a terminal `status-update`. A client may "
+        "render each `render-intent` immediately, or ignore them and use the "
+        "terminal message: both carry the same surfaces."
+    ),
+}
+
+__all__ = [
+    "ENVELOPE_BODY",
+    "EVENT_STREAM",
+    "REQUEST_EXAMPLE",
+    "RPC_ERROR_EXAMPLE",
+    "STREAM_EXAMPLE",
+    "TURN_RESPONSE",
+]

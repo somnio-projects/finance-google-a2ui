@@ -68,7 +68,7 @@ async def list_users(
         "`admin` scope; audited as `user.invited` with `target=<email>`. Answers "
         "201 with a `Location` header. Spec 0027 AC-3."
     ),
-    responses=ADMIN_RESPONSES,
+    responses={**ADMIN_RESPONSES, **problem_responses(413)},
 )
 async def invite_user(
     body: UserInvite,
@@ -95,7 +95,7 @@ async def invite_user(
         "the only latency (ADR-B D-12). Requires the `admin` scope; audited as "
         "`user.<status>` with `target=<email>`. Spec 0027 AC-5."
     ),
-    responses={**ADMIN_RESPONSES, **problem_responses(404)},
+    responses={**ADMIN_RESPONSES, **problem_responses(404, 413)},
 )
 async def set_user_status(
     email: EmailPath,

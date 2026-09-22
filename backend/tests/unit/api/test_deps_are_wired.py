@@ -54,7 +54,10 @@ def _declared(app: FastAPI) -> set[str]:
     while nodes:
         node = nodes.pop()
         if node.call is not None:
-            names.add(node.call.__name__)
+            # A dependency may be a callable *object* rather than a function —
+            # `api.feature_gate.FeatureGate` is one, so that a route can be read
+            # as well as run (spec 0035 OD-2). Those carry no `__name__`.
+            names.add(getattr(node.call, "__name__", type(node.call).__name__))
         nodes.extend(node.dependencies)
     return names
 

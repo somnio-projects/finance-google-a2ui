@@ -16,4 +16,7 @@
 #            title no longer cites the standard. Never "fix" this one.
 #   homestate  codespell reads the Bloc class `HomeState` (frontend/…/home)
 #            as the misspelling of "home state"; it is a type name.
-ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate
+#   dependant  FastAPI's own spelling: `fastapi.dependencies.models.Dependant`
+#            is the class backend/src/app/api/route_facts.py walks, so the
+#            word arrives with the import and cannot be spelled the other way.
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate,dependant

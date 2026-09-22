@@ -24,6 +24,9 @@ router = APIRouter(
 SessionsDep = Annotated[SessionService, Depends(get_session_service)]
 #: 404 covers both "no such session" and "the flag is off"; 422 the parameters.
 SESSION_RESPONSES = problem_responses(*AUTHENTICATED, 404, 422, 503)
+#: Only the route that takes a body can exceed the body limit, so the 413 is
+#: added there rather than to the shared set (spec 0035 OD-1).
+BODY_RESPONSES = {**SESSION_RESPONSES, **problem_responses(413)}
 
 
 @router.post(
@@ -38,7 +41,7 @@ SESSION_RESPONSES = problem_responses(*AUTHENTICATED, 404, 422, 503)
         "from the token, never from the body — there is no field for it. The "
         "creation is audited as `session.create`. Spec 0004 AC-1."
     ),
-    responses=SESSION_RESPONSES,
+    responses=BODY_RESPONSES,
 )
 async def create_session(
     body: SessionCreate,
