@@ -17,11 +17,10 @@ from collections.abc import Sequence
 from json import dumps
 from typing import Any, Final
 
-from app.presentation.catalog_doc import digest, fields_of
-from app.presentation.inventory import InventoryField
-from app.presentation.published import component_of, guidance_of
+from app.presentation.catalog_doc import digest
+from app.presentation.prompt import view_fragment
+from app.presentation.published import component_of, field_rows, guidance_of
 from app.presentation.registry import Projection
-from app.presentation.schema_facts import NONE
 
 #: Where the rendered snapshot is checked in, relative to the repository root.
 SNAPSHOT_PATH: Final[str] = "docs/catalog/view-catalog.snapshot.json"
@@ -33,28 +32,6 @@ SNAPSHOT_VERSION: Final[int] = 1
 FIX_COMMAND: Final[str] = "cd backend && make catalog"
 
 
-def _absent(cell: str) -> str | None:
-    """Return ``None`` where the Markdown table prints its em-dash placeholder.
-
-    The dash reads well in a table and is a trap in JSON: a client would have
-    to compare against a punctuation mark to learn that a field drives no state
-    and takes no input. Same fact, rendered for the reader of each artefact.
-    """
-    return None if cell == NONE else cell
-
-
-def _field(field: InventoryField) -> dict[str, str | None]:
-    """Describe one payload field, the same row the Markdown table prints."""
-    return {
-        "path": field.path,
-        "type": field.kind,
-        "presence": field.presence,
-        "binding": field.binding,
-        "state": _absent(field.state),
-        "input": _absent(field.interaction),
-    }
-
-
 def snapshot_entry(projection: Projection) -> dict[str, Any]:
     """Describe one projection for a machine rather than for a reader.
 
@@ -63,8 +40,9 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
 
     Returns:
         Its component type, view id, digest, serving endpoints, DTO field
-        paths, options schema, declared actions and rendered example — what a
-        client test needs to prove it binds the shape the backend serves.
+        paths, options schema, declared actions, prompt fragment and rendered
+        example — what a client test needs to prove it binds the shape the
+        backend serves.
     """
     example = dict(projection.example)
     return {
@@ -74,7 +52,7 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         "summary": projection.summary,
         "payload_type": projection.dto.__name__,
         "endpoints": list(projection.endpoints),
-        "fields": [_field(row) for row in fields_of(projection)],
+        "fields": field_rows(projection),
         "options_schema": projection.options.model_json_schema(),
         # Read off the rendered example, the same way `catalog_entry` does, so
         # a projection publishes its actions by rendering them and still edits
@@ -86,6 +64,9 @@ def snapshot_entry(projection: Projection) -> dict[str, Any]:
         # `null` where design has not written a do/don't pair yet, rather than
         # a sentence this backend invented for itself (`presentation.guidance`).
         "guidance": guidance_of(projection),
+        # The lines the system prompt carries for this view, verbatim, so the
+        # developer catalog shows what the model is taught (spec 0034).
+        "prompt": view_fragment(projection),
         "example": example,
     }
 

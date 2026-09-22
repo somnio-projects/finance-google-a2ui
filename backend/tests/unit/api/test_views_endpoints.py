@@ -113,6 +113,9 @@ def test_catalog_describes_every_registered_projection(
         assert entry["endpoints"] == list(projection.endpoints)
         assert entry["options_schema"]["properties"]
         assert entry["example"]["view"] == entry["id"]
+        # Spec 0034: the gallery binds the inventory and the prompt as served.
+        assert entry["fields"][0]["path"] == "view"
+        assert entry["prompt"].startswith(f"- {entry['id']} — ")
 
 
 def test_the_operation_documents_the_union_and_one_example_per_view(

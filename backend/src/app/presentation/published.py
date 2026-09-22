@@ -15,7 +15,10 @@ would be circular. One module downstream of both, four callers served.
 
 from typing import Any
 
+from app.presentation.catalog_tables import option_inputs
+from app.presentation.inventory import InventoryField, inventory
 from app.presentation.registry import Projection
+from app.presentation.schema_facts import NONE
 
 
 def component_of(projection: Projection) -> str:
@@ -54,4 +57,53 @@ def guidance_of(projection: Projection) -> dict[str, Any] | None:
     return projection.guidance.model_dump(mode="json")
 
 
-__all__ = ["component_of", "guidance_of"]
+def inventory_of(projection: Projection) -> tuple[InventoryField, ...]:
+    """Return the field inventory of one projection's payload.
+
+    Args:
+        projection: The registered projection to walk.
+
+    Returns:
+        One row per payload path, with the option-derived Input cell.
+    """
+    return inventory(
+        projection.dto.model_json_schema(),
+        inputs=option_inputs(projection.options.model_json_schema()),
+    )
+
+
+def _absent(cell: str) -> str | None:
+    """Return ``None`` where the Markdown table prints its em-dash placeholder.
+
+    The dash reads well in a table and is a trap in JSON: a client would have
+    to compare against a punctuation mark to learn that a field drives no
+    state and takes no input. Same fact, rendered for the reader of each
+    artefact.
+    """
+    return None if cell == NONE else cell
+
+
+def field_rows(projection: Projection) -> list[dict[str, str | None]]:
+    """Return the inventory as the rows `GET /v1/views` and the snapshot serve.
+
+    Args:
+        projection: The registered projection to describe.
+
+    Returns:
+        One object per payload path — the same row the Markdown table prints,
+        with ``None`` where the table prints a dash (spec 0021 AC-5).
+    """
+    return [
+        {
+            "path": field.path,
+            "type": field.kind,
+            "presence": field.presence,
+            "binding": field.binding,
+            "state": _absent(field.state),
+            "input": _absent(field.interaction),
+        }
+        for field in inventory_of(projection)
+    ]
+
+
+__all__ = ["component_of", "field_rows", "guidance_of", "inventory_of"]

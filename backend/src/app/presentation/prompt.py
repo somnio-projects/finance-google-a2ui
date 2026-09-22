@@ -53,6 +53,30 @@ def _guidance_lines(projection: Projection) -> list[str]:
     ]
 
 
+def view_fragment(projection: Projection) -> str:
+    """Render the lines the system prompt carries for one projection.
+
+    This is **the text the agent is actually taught** about a view, and the
+    catalog publishes it verbatim (``contract.catalog_entry``, spec 0034) so
+    the developer catalog's *Zone 3 · Prompt fragment* shows the sentence the
+    model reads rather than a paraphrase of it.
+
+    Args:
+        projection: The registered projection.
+
+    Returns:
+        Its id with its purpose, its declared options with their bounds, and
+        — where design has written one — the do/don't pair (spec 0023).
+    """
+    return "\n".join(
+        [
+            f"- {projection.id} — {projection.summary}",
+            _options_line(projection),
+            *_guidance_lines(projection),
+        ]
+    )
+
+
 def prompt_fragment(projections: Sequence[Projection]) -> str:
     """Render the registry as the catalog text the model is taught.
 
@@ -60,16 +84,11 @@ def prompt_fragment(projections: Sequence[Projection]) -> str:
         projections: Every registered projection.
 
     Returns:
-        The header, then per projection: id with its purpose, its declared
-        options with their bounds, and — where design has written one — the
-        do/don't pair that says when to reach for it (GGU-53, spec 0023).
+        The header, then ``view_fragment`` of every projection in order.
     """
-    lines = [PROMPT_HEADER]
-    for projection in projections:
-        lines.append(f"- {projection.id} — {projection.summary}")
-        lines.append(_options_line(projection))
-        lines.extend(_guidance_lines(projection))
-    return "\n".join(lines)
+    return "\n".join(
+        [PROMPT_HEADER, *(view_fragment(projection) for projection in projections)]
+    )
 
 
-__all__ = ["PROMPT_HEADER", "prompt_fragment"]
+__all__ = ["PROMPT_HEADER", "prompt_fragment", "view_fragment"]

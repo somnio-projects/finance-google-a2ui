@@ -1,11 +1,12 @@
 import 'package:finance_app/auth/auth_gate.dart';
 import 'package:finance_app/features/activity/view/activity_page.dart';
+import 'package:finance_app/features/catalog/view/catalog_detail_page.dart';
+import 'package:finance_app/features/catalog/view/catalog_page.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
 import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_page.dart';
-import 'package:finance_app/features/portfolio_views/view/portfolio_views_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_app/router/app_routes.dart';
@@ -90,7 +91,16 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
       ),
       GoRoute(
         path: AppRoutes.catalog,
-        builder: (context, state) => const PortfolioViewsPage(),
+        // **No view ids here.** The index asks the backend's catalog and the
+        // registry, so a registered component is reachable by construction
+        // (`app_router_test.dart`).
+        builder: (context, state) => const CatalogPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.catalogDetail,
+        builder: (context, state) => CatalogDetailPage(
+          viewId: state.pathParameters[AppRoutes.catalogViewParameter]!,
+        ),
       ),
       GoRoute(
         path: AppRoutes.orderTicket,

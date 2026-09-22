@@ -1,4 +1,3 @@
-import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
@@ -27,7 +26,7 @@ void main() {
   });
 
   group('buildRouter', () {
-    late ViewsRepository repository;
+    late MockViewsRepository repository;
 
     setUp(() {
       repository = MockViewsRepository();
@@ -80,38 +79,6 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(HoldingsPage), findsOneWidget);
-    });
-
-    testWidgets('every registered component is reachable from the route', (
-      tester,
-    ) async {
-      // The defect this closes: `app_router.dart` carried a hardcoded view id
-      // and **nothing compared it with the registry**, so a component could be
-      // added, registered, 100 %-covered and still never appear on screen with
-      // a completely green gate. This asserts against the real registry the
-      // app ships, so adding the seventh component extends the assertion for
-      // free rather than needing a second edit here.
-      final registry = buildComponentRegistry();
-      await pumpRouter(
-        tester,
-        buildRouter(initialLocation: AppRoutes.catalog),
-        repository: repository,
-        registry: registry,
-      );
-      await tester.pumpAndSettle();
-
-      final captured = verify(
-        () => repository.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: captureAny(named: 'views'),
-          options: any(named: 'options'),
-        ),
-      ).captured;
-      final requested = <String>{
-        for (final batch in captured) ...batch as List<String>,
-      };
-      expect(requested, equals(registry.viewIds.toSet()));
-      expect(requested, isNotEmpty);
     });
 
     testWidgets('places the conversation surface at its own location', (

@@ -10,14 +10,15 @@ Hand-writing either would reintroduce exactly the list this design removes.
 """
 
 import operator
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from datetime import datetime
 from functools import reduce
 from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, create_model
 
-from app.presentation.published import component_of, guidance_of
+from app.presentation.prompt import view_fragment
+from app.presentation.published import component_of, field_rows, guidance_of
 from app.presentation.registry import Projection
 
 
@@ -87,9 +88,9 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         projection: The registered projection to describe.
 
     Returns:
-        Its id, purpose, endpoints, options schema, actions, component,
-        guidance and a rendered example — built in one call, so the documented
-        catalog cannot drift from the served one.
+        Its id, purpose, endpoints, options schema, field inventory, actions,
+        component, guidance, prompt fragment and a rendered example — built in
+        one call, so the documented catalog cannot drift from the served one.
     """
     example = dict(projection.example)
     return {
@@ -97,13 +98,16 @@ def catalog_entry(projection: Projection) -> dict[str, Any]:
         "summary": projection.summary,
         "endpoints": list(projection.endpoints),
         "options_schema": projection.options.model_json_schema(),
-        # All three are read off the projection rather than from a new
+        # Everything below is read off the projection rather than from a new
         # Protocol member, so adding a chart still edits no shared file
         # (ADR-K D-15, spec 0022 AC-11) and this catalog names the component
-        # the A2UI surface really emits (GGU-53, spec 0023).
+        # the A2UI surface really emits (GGU-53, spec 0023). `fields` and
+        # `prompt` are what the developer catalog binds (spec 0034).
+        "fields": field_rows(projection),
         "actions": list(example.get("actions", ())),
         "component": component_of(projection),
         "guidance": guidance_of(projection),
+        "prompt": view_fragment(projection),
         "example": example,
     }
 
@@ -124,20 +128,14 @@ def response_examples(
     return {
         projection.id: {
             "summary": projection.summary,
-            "value": _example_body(projection, as_of=as_of, portfolio_id=portfolio_id),
+            # The rendered example, wrapped in the response envelope.
+            "value": {
+                "as_of": as_of,
+                "portfolio_id": portfolio_id,
+                "views": {projection.id: dict(projection.example)},
+            },
         }
         for projection in projections
-    }
-
-
-def _example_body(
-    projection: Projection, *, as_of: str, portfolio_id: str
-) -> Mapping[str, Any]:
-    """Wrap one projection's rendered example in the response envelope."""
-    return {
-        "as_of": as_of,
-        "portfolio_id": portfolio_id,
-        "views": {projection.id: dict(projection.example)},
     }
 
 
