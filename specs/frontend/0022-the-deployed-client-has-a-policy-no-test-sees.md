@@ -75,9 +75,41 @@ app serves perfectly well. The one artefact under test that carries the policy
   to one and forgotten in the other is a red gate rather than a container that
   works and a Hosting deploy that does not.
 
+- **OD-6 — the same policy had a second hole, and it is why the error said
+  nothing.** With the hashes in place, "Continue with Google" still failed —
+  and the snackbar read, in full, **"Error"**. The sign-in screen shows the
+  provider's sentence verbatim (`FirebaseIdentityProvider._attempt`), and
+  Firebase had given none, so the UI was being honest about an unhelpful
+  input rather than swallowing a good one.
+
+  The cause is the same directive: `firebase-auth.js` loads
+  `https://apis.google.com/js/api.js` into the **parent** document and frames
+  it for the popup handshake, and `script-src` named only gstatic. Confirmed
+  by reading the SDK bundle rather than by guessing — it references exactly
+  three hosts, `apis.google.com`, `www.google.com` and `www.gstatic.com`.
+
+  What was eliminated first, and is worth recording so the next person does
+  not re-walk it: Firebase's authorised domains include `finance-a2ui.web.app`
+  *and* the preview channel; the Google IdP is enabled; both origins send
+  `Cross-Origin-Opener-Policy: same-origin-allow-popups`, without which
+  `signInWithPopup` cannot post back; `/__/auth/iframe` and `/__/auth/handler`
+  both answer 200, so the SPA's catch-all rewrite is not shadowing them; and
+  **the backend logged no request at all** during the failures — only health
+  probes — which is what placed the fault entirely in the client.
+
+  In the container it joins the **conditional** the entrypoint already builds
+  for the Firebase auth domain, so a build with no Firebase config still
+  permits nothing it cannot reach. In `firebase.json` it is unconditional,
+  because that file describes one deployment that always has Firebase.
+
+  `frontend.csp` does **not** check this host. The check's subject is the
+  hashes of a generated snippet; a host list is a human decision that no
+  regeneration can derive. Naming it here is the record.
+
 ## 3. Acceptance criteria
 
 1. **AC-1** — `https://finance-a2ui.web.app` renders the sign-in screen with an empty console.
+2. **AC-1b** — "Continue with Google" reaches Google's account chooser rather than failing with a message-less error.
 2. **AC-2** — both `firebase.json` and `nginx.conf.template` authorise the four snippets.
 3. **AC-3** — removing any one hash from either file fails `make csp`, naming the file, the service, the shape and the string to add.
 4. **AC-4** — adding a FlutterFire web plugin without extending the service list fails the check.
