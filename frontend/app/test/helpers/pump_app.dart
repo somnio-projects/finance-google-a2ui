@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/theme/app_theme.dart';
+import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,7 @@ extension PumpApp on WidgetTester {
     ComponentRegistry? componentRegistry,
     Brightness brightness = Brightness.light,
     Size? surfaceSize,
+    ThemeModeController? themeMode,
   }) async {
     if (surfaceSize != null) {
       await binding.setSurfaceSize(surfaceSize);
@@ -49,10 +51,25 @@ extension PumpApp on WidgetTester {
             value: componentRegistry ?? ComponentRegistry(),
           ),
         ],
-        child: MaterialApp(
-          theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
-          home: widget,
-        ),
+        child: themeMode == null
+            ? MaterialApp(
+                theme: brightness == Brightness.dark
+                    ? AppTheme.dark
+                    : AppTheme.light,
+                home: widget,
+              )
+            : ThemeModeScope(
+                controller: themeMode,
+                child: ValueListenableBuilder<ThemeMode>(
+                  valueListenable: themeMode,
+                  builder: (context, mode, _) => MaterialApp(
+                    theme: AppTheme.light,
+                    darkTheme: AppTheme.dark,
+                    themeMode: mode,
+                    home: widget,
+                  ),
+                ),
+              ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/theme/app_theme.dart';
+import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class FinanceApp extends StatelessWidget {
     required this.agentRepository,
     required this.authRepository,
     required this.componentRegistry,
+    required this.themeMode,
     super.key,
   });
 
@@ -37,6 +39,9 @@ class FinanceApp extends StatelessWidget {
   /// The component registry `ComponentHost` resolves with `context.read`.
   final ComponentRegistry componentRegistry;
 
+  /// Which theme shows; the sign-in toggle and the session sheet set it.
+  final ThemeModeController themeMode;
+
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
@@ -46,12 +51,19 @@ class FinanceApp extends StatelessWidget {
         RepositoryProvider<AuthRepository>.value(value: authRepository),
         RepositoryProvider<ComponentRegistry>.value(value: componentRegistry),
       ],
-      child: MaterialApp.router(
-        title: 'Finance A2UI',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        routerConfig: router,
-        debugShowCheckedModeBanner: false,
+      child: ThemeModeScope(
+        controller: themeMode,
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeMode,
+          builder: (context, mode, _) => MaterialApp.router(
+            title: 'Finance A2UI',
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: mode,
+            routerConfig: router,
+            debugShowCheckedModeBanner: false,
+          ),
+        ),
       ),
     );
   }

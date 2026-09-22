@@ -8,6 +8,7 @@ import 'package:finance_app/auth/firebase_identity_provider.dart';
 import 'package:finance_app/components/component_manifest.g.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/router/app_router.dart';
+import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -69,6 +70,7 @@ Widget buildApp({
   required AgentRepository agentRepository,
   required AuthRepository authRepository,
   ComponentRegistry? componentRegistry,
+  ThemeModeController? themeMode,
   String? initialLocation,
   bool gated = true,
 }) {
@@ -81,6 +83,7 @@ Widget buildApp({
     agentRepository: agentRepository,
     authRepository: authRepository,
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
+    themeMode: themeMode ?? ThemeModeController(),
   );
 }
 

@@ -1,6 +1,7 @@
 import 'package:finance_app/app/finance_app.dart';
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
+import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,26 @@ void main() {
 
       final context = tester.element(find.byType(HomePage));
       expect(Theme.of(context).useMaterial3, isTrue);
+    });
+
+    testWidgets('shows the theme the controller names', (tester) async {
+      final controller = (ThemeModeController()..value = ThemeMode.dark);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        buildApp(
+          viewsRepository: repository,
+          agentRepository: _MockAgentRepository(),
+          authRepository: fakeAuthRepository(),
+          themeMode: controller,
+          gated: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final context = tester.element(find.byType(HomePage));
+      expect(Theme.of(context).brightness, Brightness.dark);
+      controller.value = ThemeMode.light;
+      await tester.pumpAndSettle();
+      expect(Theme.of(context).brightness, Brightness.light);
     });
 
     testWidgets('publishes the agent repository to the tree', (tester) async {

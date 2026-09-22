@@ -3603,3 +3603,28 @@ What the run taught:
   against the discovered registry, and every table row runs as a whole turn
   through `AgentService` with the real tools and the real projection registry
   — the day a tool or a prompt is renamed, the gate says so before a demo does.
+## 2026-09-21 — both themes, from inside the app
+
+`feat/theme_mode_selector`, spec `frontend/0010`. Every artboard is drawn
+twice and every token file already carried both palettes; only the device
+could pick. `ThemeModeController` (a `ValueNotifier<ThemeMode>`) and
+`ThemeModeScope` (an `InheritedNotifier`) now sit in `FinanceApp`, with a
+toggle in the sign-in screen's corner and an `Appearance · System | Light |
+Dark` row in the avatar's session sheet. Not persisted yet (OD-3): there is
+no per-device storage seam and one preference is not the reason to add one.
+
+What the run taught:
+
+- **A scope beats a provider when the reader is outside the shell.** The
+  sign-in page and the sheet are their own routes; an `InheritedNotifier`
+  reaches both from the root, and `maybeOf` lets a widget pumped alone draw
+  nothing rather than throw `ProviderNotFoundException` in fifty tests.
+- **The lint knows `ValueNotifier` already has a setter.** A `select(mode)`
+  method was flagged (`use_setters_to_change_properties`) and a
+  `super.value` parameter cannot match `ValueNotifier`'s private `_value`;
+  the answer was less code — no method, no initial parameter, `..value =` at
+  the call site.
+- **A fresh worktree analyzes nothing until `pub get` runs.** Two hundred
+  "package resolution" warnings and every import an error is not a broken
+  branch; it is a missing `.dart_tool`. The gate's `toolchain` step does not
+  catch this because the SDK is right; the first real step does.
