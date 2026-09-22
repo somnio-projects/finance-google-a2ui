@@ -3569,3 +3569,37 @@ What the run taught:
   footer "missing" at 440×956 were under Chrome's docked DevTools; in a
   viewport that fits the device they are where the artboards put them.
   Recorded in 0012 so the next reviewer checks the frame before filing.
+
+## 2026-09-22 — the simulated assistant, offline
+
+`feat/offline_demo_agent`, spec `backend/0033`. Every local stack runs without
+`GEMINI_API_KEY`, and the Assistant tab showed one sentence — *running without
+a model provider* — over tools that were all deterministic already. The
+factory now selects `ScriptedModelClient`: a table from the design's three
+questions, the four curated chips and the drill (keys composed by the actions'
+own `compose`) to the tool calls each runs and a server-written sentence whose
+holes are filled only by strings the tools returned. Anything else still gets
+the honest sentence; a real key switches the script off entirely.
+
+What the run taught:
+
+- **A model that cannot invent is a table.** The two things a model adds to
+  a scripted flow — choosing the call, phrasing the sentence — were written
+  down, and the numbers invariant became structural: a hole is filled by a
+  string leaf of a tool result or the whole sentence is replaced. `fill`
+  refuses an integer, a list and an absent path alike, so a `tool-failed` or a
+  `position-too-small` cannot leave a bracket or a guess in the answer.
+- **The seed already says the design's sentence.** Flow A over the seeded
+  portfolio is *up +$3,240.18 (0.68%) today* — the artboard's own figure
+  (spec 0025 §2) — so the one literal oracle in the suite is design's, not a
+  regeneration from the code it tests.
+- **Script what exists; write down what does not.** Flow B's comparison card
+  and Flow C's multi-leg ticket have no tool aiming at them, so the script
+  draws one tax-lot table and one payoff leg with no surface, and the spec
+  carries an *extended when* table instead of a render intent nobody
+  produced (0033 OD-5). The drill answers the default window and says so.
+- **Two declarations of a key, compared.** The chip keys are held against
+  `DECLARED_KEYS`, the drill keys against `MARKET_REFERENCE`, every tool name
+  against the discovered registry, and every table row runs as a whole turn
+  through `AgentService` with the real tools and the real projection registry
+  — the day a tool or a prompt is renamed, the gate says so before a demo does.

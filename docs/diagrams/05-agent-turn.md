@@ -38,7 +38,7 @@ sequenceDiagram
     participant S as SessionService (planned)
     participant H as AgentService
     participant L as TurnLoop
-    participant M as ModelClient (Gemini · Null)
+    participant M as ModelClient (Gemini · Scripted · Null)
     participant T as Tool registry
     participant P as Projection registry
 
@@ -105,6 +105,13 @@ sequenceDiagram
     %% only, so the turn answers in text rather than aiming an ill-fitting
     %% chart at a correct sentence.
     %% The model picks a view; it never invents a shape or a number.
+    %% M is chosen once, in infra/model/factory.py: a configured GEMINI_API_KEY
+    %% is Gemini; no key is the SCRIPTED client (spec 0033), which replays the
+    %% demo's flows from a table — the design's three questions, the four
+    %% curated chips and the drill — as tool calls first and a server-written
+    %% sentence second, its figures copied from the results fed back. A prompt
+    %% outside the table gets the null client's "no model provider" sentence.
+    %% There is no mixed mode (0033 OD-4). Null itself is now the test double.
     %% The "tool schemas" on the call to M are not the schemas the tools
     %% publish: infra/model/tool_schema.py translates them into the subset
     %% Gemini's `parameters` field parses (GGU-81) — $refs resolved, refused
