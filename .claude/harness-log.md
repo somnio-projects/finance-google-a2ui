@@ -4316,6 +4316,24 @@ survives — that part was never wrong. Two claims in the brief were checked and
 `generateContent` over REST; A2A/SSE is the *client → backend* leg), and
 `make token` prints a raw JWT, not a curl line.
 
+**`repo.manual-run` fired on a real pull request, and it was right.** The first
+push of #109 carried only the two *deployed* transcripts — the site and the dev
+API, both answering `0.1.0+44968fd`. `repo-ci` failed it: *"found: 44968fd — an
+ancestor, 1 commit(s) behind the head."* That is GGU-93's check doing on a live
+PR what its suite proves it does, and it is the first time it has rejected
+something other than a fixture. The fix was to **do the run**, not to reword the
+body: the local stack was brought up at the branch head and `/health` and
+`/release.json` both answered `local+42e2edd`.
+
+Two operational notes for whoever hits this next. First, the deployed
+transcripts were not wrong to be there — sdd.md §3 says paste them *as well*,
+never instead — they were wrong to be *alone*. Second, **editing a PR body does
+not un-fail the job**: `repo-ci` reads `github.event.pull_request.body` from the
+triggering event, so a `gh run rerun` re-reads the old body. Only a push
+produces a payload with the new one. The practical consequence is an ordering
+rule: **commit everything first, then run the stack at that final sha, then
+write the body** — otherwise each fix invalidates the identity it just added.
+
 **What the next person should know.** Two pre-existing failures surfaced
 while running `pre-commit run --all-files` and are **not** from this branch:
 
