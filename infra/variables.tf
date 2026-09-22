@@ -63,6 +63,12 @@ variable "auth_oidc_jwks_url" {
   type        = string
 }
 
+variable "auth_bootstrap_admins" {
+  description = "Comma-separated e-mails made active admins at boot (AUTH_BOOTSTRAP_ADMINS, spec backend/0027 OD-2). A registry with no admin can never gain one through the API, so a fresh environment names its first admins here."
+  type        = string
+  default     = ""
+}
+
 variable "cors_allowed_origins" {
   description = "Comma-separated browser origins allowed to call the API."
   type        = string

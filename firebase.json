@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "client_flutter/app/build/web",
+    "public": "frontend/app/build/web",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -14,7 +14,9 @@
     ]
   },
   "auth": {
-    "authorizedDomains": ["localhost"],
+    "authorizedDomains": [
+      "localhost"
+    ],
     "providers": {
       "emailPassword": true
     }
