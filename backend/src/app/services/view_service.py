@@ -11,10 +11,12 @@ rendering stays pure and unit-testable in ``app.presentation`` (ADR-K D-6).
 """
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any
 
 from app.core.errors import NotFoundError
 from app.core.principal import Principal
+from app.core.protocols import OwnerResolver
 from app.domain.portfolio import Portfolio
 from app.domain.provider import PortfolioProvider
 from app.presentation.contract import catalog_entry
@@ -35,11 +37,16 @@ class ViewService:
     """Resolve, validate and render the projections a caller asked for."""
 
     def __init__(
-        self, *, provider: PortfolioProvider, registry: ProjectionRegistry
+        self,
+        *,
+        provider: PortfolioProvider,
+        registry: ProjectionRegistry,
+        owners: OwnerResolver | None = None,
     ) -> None:
         """Create the service over the process provider and registry."""
         self._provider = provider
         self._registry = registry
+        self._owners = owners
 
     async def catalog(self) -> list[ViewDescriptor]:
         """Describe every registered projection for `/v1/views` (0005 AC-8)."""
@@ -94,7 +101,12 @@ class ViewService:
         if portfolio_id != CURRENT_PORTFOLIO:
             msg = f"portfolio {portfolio_id!r} does not exist"
             raise NotFoundError(msg)
-        return await self._provider.get(principal.subject)
+        portfolio = await self._provider.get(principal.subject)
+        # The owner is a fact about the portfolio the provider cannot know —
+        # it lives in the users registry — so the service sets it here, once,
+        # and every projection reads it like `as_of` (spec 0030 OD-3).
+        owner = await self._owners.owner_for(principal) if self._owners else None
+        return replace(portfolio, owner=owner) if owner else portfolio
 
     def render_one(
         self, portfolio: Portfolio, *, view: str, options: Mapping[str, Any]

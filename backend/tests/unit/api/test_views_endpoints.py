@@ -17,6 +17,7 @@ from app.helpers.clock import FixedClock
 from app.presentation.registry import REGISTRY
 from app.schemas.views import MAX_VIEWS
 from tests.catalog import SHIPPED_VIEWS
+from tests.unit.api.app_factory import NoUsers
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
@@ -134,5 +135,5 @@ def test_the_providers_build_both_services(app: FastAPI, clock: FixedClock) -> N
     """
     container: Container = app.state.container
     portfolio = InMemoryPortfolioProvider(clock=clock)
-    assert get_view_service(portfolio).surface  # the renderer is wired
-    assert get_render_intent_service(container, portfolio) is not None
+    assert get_view_service(portfolio, NoUsers()).surface  # the renderer is wired
+    assert get_render_intent_service(container, portfolio, NoUsers()) is not None

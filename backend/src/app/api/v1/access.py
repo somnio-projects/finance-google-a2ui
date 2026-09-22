@@ -13,8 +13,8 @@ from fastapi import APIRouter, Depends, Response, status
 from app.api.deps import (
     PrincipalDep,
     RequestIdDep,
+    UsersDep,
     get_preview_sign_in_service,
-    get_user_service,
 )
 from app.api.openapi import AUTHENTICATED, problem_responses
 from app.schemas.access import (
@@ -24,10 +24,8 @@ from app.schemas.access import (
     PreviewSignInResponse,
 )
 from app.services.preview_sign_in_service import PreviewSignInService
-from app.services.user_service import UserService
 
 router = APIRouter(prefix="/v1", tags=["identity"])
-UsersDep = Annotated[UserService, Depends(get_user_service)]
 PreviewDep = Annotated[PreviewSignInService, Depends(get_preview_sign_in_service)]
 
 

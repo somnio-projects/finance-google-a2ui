@@ -1,11 +1,12 @@
 """Spec 0026 — ``portfolio.summary.v1`` is the Home hero, served whole."""
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
 
-from app.domain.persona import DEMO_ACCOUNT
+from app.domain.persona import DEMO_ACCOUNT, PortfolioOwner
 from app.domain.portfolio import Portfolio
 from app.presentation.registry import REGISTRY
 from app.presentation.summary_options import PortfolioSummaryOptions
@@ -95,3 +96,18 @@ def test_only_declared_ranges_are_accepted() -> None:
 
 def test_the_view_is_registered_under_its_id() -> None:
     assert VIEW_ID in {projection.id for projection in REGISTRY.all()}
+
+
+def test_render_greets_the_owner_when_the_service_named_one(
+    portfolio: Portfolio,
+) -> None:
+    """Spec 0030 — the signed-in person, not the persona, when there is one."""
+    named = replace(
+        portfolio, owner=PortfolioOwner(name="Priya Natarajan", initial="P")
+    )
+
+    payload = render(named, PortfolioSummaryOptions())
+
+    assert (payload.account.name, payload.account.initial) == ("Priya Natarajan", "P")
+    # The badge is a compliance statement, not a name (0026 OD-1).
+    assert payload.badge == DEMO_ACCOUNT.badge

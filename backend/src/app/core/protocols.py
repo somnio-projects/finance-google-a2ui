@@ -10,6 +10,7 @@ from typing import Protocol
 
 from app.core.model import ModelMessage, ModelReply, ToolSpec
 from app.core.principal import Principal
+from app.domain.persona import PortfolioOwner
 
 
 class Clock(Protocol):
@@ -93,6 +94,15 @@ __all__ = [
     "Clock",
     "ErrorReporter",
     "ModelClient",
+    "OwnerResolver",
     "ReadinessProbe",
     "TokenVerifier",
 ]
+
+
+class OwnerResolver(Protocol):
+    """Names the signed-in caller for the shell's greeting (spec 0030)."""
+
+    async def owner_for(self, principal: Principal) -> PortfolioOwner | None:
+        """Return who ``principal`` is, or None when nothing knows a name."""
+        ...

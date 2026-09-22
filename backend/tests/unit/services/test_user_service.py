@@ -2,6 +2,7 @@
 
 import pytest
 
+from app.domain.persona import PortfolioOwner
 from app.helpers.clock import FixedClock
 from app.schemas.access import NOT_PROVISIONED_MESSAGE, WELCOME_MESSAGE
 from app.services.audit_service import AuditService
@@ -91,3 +92,24 @@ async def test_a_later_access_only_touches_the_row() -> None:
     access = await make(repo, audit).access_for(member(), request_id="r1")
     assert (access.provisioned, access.status, access.role) == (True, "active", "admin")
     assert audit.events == []
+
+
+async def test_owner_for_prefers_the_registry_name_then_the_e_mail() -> None:
+    """Spec 0030 — the shell greets the person the registry knows."""
+    repo, audit = FakeUserRepository(), FakeAuditRepository()
+    await repo.upsert(
+        email="person@example.test",
+        display_name="Priya Natarajan",
+        role="member",
+        status="active",
+        invited_by=None,
+    )
+    service = make(repo, audit)
+
+    named = await service.owner_for(member("person@example.test"))
+    by_email = await service.owner_for(member("stranger@example.test"))
+    anonymous = await service.owner_for(member(None))
+
+    assert named == PortfolioOwner(name="Priya Natarajan", initial="P")
+    assert by_email == PortfolioOwner(name="Stranger", initial="S")
+    assert anonymous is None

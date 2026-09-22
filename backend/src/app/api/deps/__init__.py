@@ -31,7 +31,7 @@ from app.api.deps.common import (
     get_session,
     get_session_service,
 )
-from app.api.deps.users import get_preview_sign_in_service, get_user_service
+from app.api.deps.users import UsersDep, get_preview_sign_in_service, get_user_service
 from app.api.deps.views import (
     get_render_intent_service,
     get_view_render_service,
@@ -44,6 +44,7 @@ __all__ = [
     "PrincipalDep",
     "RequestIdDep",
     "SessionDep",
+    "UsersDep",
     "get_a2a_service",
     "get_agent_card",
     "get_agent_service",

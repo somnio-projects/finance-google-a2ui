@@ -41,6 +41,15 @@ void main() {
           await tester.pumpAndSettle();
         }
         expect(find.byKey(HomeQuestionsRail.arrowKey), findsNothing);
+        // …and the way back appears on the left (spec frontend/0012).
+        expect(find.byKey(HomeQuestionsRail.backKey), findsOneWidget);
+        for (var taps = 0; taps < 6; taps++) {
+          if (find.byKey(HomeQuestionsRail.backKey).evaluate().isEmpty) break;
+          await tester.tap(find.byKey(HomeQuestionsRail.backKey));
+          await tester.pumpAndSettle();
+        }
+        expect(find.byKey(HomeQuestionsRail.backKey), findsNothing);
+        expect(find.byKey(HomeQuestionsRail.arrowKey), findsOneWidget);
       },
     );
 
@@ -56,6 +65,7 @@ void main() {
       );
       await tester.pump();
       expect(find.byKey(HomeQuestionsRail.arrowKey), findsNothing);
+      expect(find.byKey(HomeQuestionsRail.backKey), findsNothing);
     });
   });
 }

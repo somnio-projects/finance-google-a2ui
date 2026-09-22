@@ -54,7 +54,14 @@ def render(
     holdings = portfolio.holdings()
     return PortfolioSummaryPayload(
         greeting=figures.greeting_for(portfolio.as_of),
-        account=Account(name=DEMO_ACCOUNT.name, initial=DEMO_ACCOUNT.initial),
+        # The signed-in person when the service named one (spec 0030); the
+        # design's persona when a token carries no name to speak of.
+        account=Account(
+            name=portfolio.owner.name if portfolio.owner else DEMO_ACCOUNT.name,
+            initial=portfolio.owner.initial
+            if portfolio.owner
+            else DEMO_ACCOUNT.initial,
+        ),
         badge=DEMO_ACCOUNT.badge,
         total=Total(
             label=TITLE,

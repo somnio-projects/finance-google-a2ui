@@ -12,9 +12,11 @@ from fastapi import FastAPI
 from app.agent.registry import load_tools
 from app.api.container import AgentRuntime, Container
 from app.api.deps import get_portfolio_provider
+from app.api.deps.views import get_owner_resolver
 from app.bootstrap import create_app
 from app.core.config import Settings
 from app.core.principal import Principal
+from app.domain.persona import PortfolioOwner
 from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import FixedClock
 from app.infra.db.engine import DatabaseReadinessProbe, create_engine
@@ -26,6 +28,15 @@ from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 from app.services.prompt_service import build_system_prompt
 from tests.conftest import FakeReporter, FakeVerifier
+
+
+class NoUsers:
+    """The users registry as the view path sees it without a database: no one
+    is named, so the shell greets the persona (spec 0030 OD-2)."""
+
+    async def owner_for(self, principal: Principal) -> PortfolioOwner | None:
+        del principal
+        return None
 
 
 def make_app(
@@ -62,6 +73,7 @@ def make_app(
     app.dependency_overrides[get_portfolio_provider] = lambda: (
         InMemoryPortfolioProvider(clock=clock)
     )
+    app.dependency_overrides[get_owner_resolver] = NoUsers
     return app
 
 
