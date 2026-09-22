@@ -95,6 +95,7 @@ duplicated one are both visible at a glance.
 | [frontend/0019-the-turn-always-ends.md](frontend/0019-the-turn-always-ends.md) | In progress | *unassigned* |
 | [frontend/0021-three-defects-a-reader-found.md](frontend/0021-three-defects-a-reader-found.md) | In progress | *unassigned* |
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
+| [backend/0038-the-openapi-document-is-complete.md](backend/0038-the-openapi-document-is-complete.md) | Implemented | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |
 | [frontend/0018-the-tabs-search-and-filter-for-real.md](frontend/0018-the-tabs-search-and-filter-for-real.md) | Draft | *unassigned* |

@@ -17,6 +17,7 @@ from app.api.container import AgentRuntime, Container
 from app.api.errors import register_error_handlers
 from app.api.middleware.install import install_middleware
 from app.api.openapi import API_DESCRIPTION, TAGS_METADATA
+from app.api.openapi_document import install as install_openapi
 from app.api.router import api_router
 from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
@@ -101,6 +102,9 @@ def _configure_app(app: FastAPI, container: Container) -> None:
     install_middleware(app, container)
     register_error_handlers(app, container.reporter)
     app.include_router(api_router)
+    # Last: the document builder reads the routes it has just been handed
+    # (spec 0038 OD-2). It is lazy, so nothing is built here.
+    install_openapi(app)
 
 
 def create_app(

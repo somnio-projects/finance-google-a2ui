@@ -3823,6 +3823,47 @@ What the run taught:
   only, no secret material in the transcript.
 - **The public key is public and still stays out of git**, because the
   secret scanner cannot read the ADR that says so (0002 OD-3).
+## 2026-09-22 — the OpenAPI document, audited against the routes
+
+`docs/openapi_complete`, spec `backend/0038`. `/openapi.json` is what both
+Flutter clients are written against, and nothing re-derived it. A check that
+reads each route's **dependency tree** and compares it with what the route's
+`responses=` claims found **51 findings over 23 operations** on `develop`: no
+`securitySchemes` at all (so `/docs` had no *Authorize* button and a generated
+client sent no token on any of the 18 authenticated routes), eight bodies with
+no 413, two rate-limit-**exempt** probes documenting a 429, five operations
+carrying FastAPI's 422 with nothing to validate, a 400 nothing in this service
+raises, and the A2A body and 200 with examples and no schemas. All 51 are
+fixed in the routers; the check is `make openapi-check`, `py.openapi`, a
+backend-ci step and a pre-commit hook, from one command string.
+
+What the run taught:
+
+- **A rule and its subject are different questions, again.** The old
+  `test_openapi_contract.py` asserted the document against a hand-written
+  `PUBLIC` list — a second copy of the controllers, written by the same person
+  in the same sitting. It could never have found the 429 on `/health`, because
+  whoever wrote the list also wrote the 429. The second source has to be the
+  *machine's* view of the route, which is why `route_facts` walks the dependant
+  tree FastAPI itself resolves and `answerable_statuses()` reads the `AppError`
+  hierarchy instead of listing statuses.
+- **A closure hides the thing you later need to read.** `require_feature`
+  returned an inner function, so nothing could ask which flag guarded a route.
+  The same dependency as a small callable object (`FeatureGate`) costs nothing
+  and makes the flag readable — by the audit, and by the generated endpoint
+  table. One test had to stop assuming every dependency has a `__name__`.
+- **`model=` and the media type you actually answer are not the same place.**
+  `problem_responses(...)` passes `model=ProblemDetails`, and FastAPI attaches
+  that schema to *its* default `application/json` — so every error advertised
+  two shapes, one with the schema and no example and one with the example and
+  no schema, and the service only ever sends the second. Found while fixing
+  something else, then given its own rule so it cannot come back.
+- **The hand-written route list in `backend/README.md` was seven operations
+  short.** It is generated now (`backend/docs/ENDPOINTS.md`), the same answer
+  0019 gave for the catalog contract. A list of routes is a copy of the router.
+- **Fixing the document is not the same as fixing the service.** Nothing here
+  changes a behaviour; the one runtime edit is a closure rewritten as an object.
+  Every other change is the document being made to say what was already true.
 
 ## 2026-09-22 — the migrate job had been running an old image all along
 
