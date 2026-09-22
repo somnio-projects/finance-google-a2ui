@@ -2,6 +2,8 @@ import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/waterfall_chart.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_notes.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_tokens.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 
@@ -9,9 +11,10 @@ import 'package:flutter/material.dart';
 ///
 /// The chrome is the design's, measured: a 16 px radius, a 1 px hairline, and
 /// 18/16/18/14 padding. Selection is **local state** — tapping a band marks
-/// it and reveals its detail. Dispatching the catalog's
-/// `drill.attribution.v1` action back to the agent is GGU-79's seam, not
-/// this component's, so the callback is exposed and left unwired.
+/// it, swaps the header's pill for the bar's own *selected* caption and
+/// reveals its detail. Dispatching the catalog's `drill.attribution.v1`
+/// action back to the agent is the component's seam, not this card's, so the
+/// callback is exposed and the card does not know what it does.
 class AttributionWaterfallCard extends StatefulWidget {
   /// Creates the card.
   const AttributionWaterfallCard({
@@ -70,7 +73,10 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
           children: <Widget>[
             AttributionWaterfallHeader(
               title: widget.data.title,
-              annotations: widget.data.annotations,
+              net: widget.data.net,
+              selectedLabel: selected == null
+                  ? null
+                  : steps[selected].selectedLabel,
             ),
             const SizedBox(height: 14),
             WaterfallChart(
@@ -78,11 +84,16 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
               valueLabels: widget.data.valueDisplays,
               axisLabels: widget.data.axisLabels,
               selectedIndex: selected,
+              selectionColor: AttributionWaterfallTokens.of(context).selection,
               onSegmentTap: _handleTap,
             ),
             if (selected != null) ...<Widget>[
               const SizedBox(height: 12),
               AttributionWaterfallDetail(step: steps[selected]),
+            ],
+            if (widget.data.annotations.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              AttributionWaterfallNotes(annotations: widget.data.annotations),
             ],
           ],
         ),

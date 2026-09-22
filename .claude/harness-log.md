@@ -3628,3 +3628,40 @@ What the run taught:
   "package resolution" warnings and every import an error is not a broken
   branch; it is a missing `.dart_tool`. The gate's `toolchain` step does not
   catch this because the SDK is right; the first real step does.
+## 2026-09-22 — GGU-100: the waterfall's headline, and the card a tapped bar opens
+
+`feat/driver_detail`, specs `backend/0032` and `frontend/0014`.
+`attribution.waterfall.v1` gained `net` (a signed `Delta` fragment with its
+percentage and direction — the pill) and per-step `move` · `units` · `price`
+pairs with the written `detail` and `selected_label` lines. A new projection,
+`attribution.driver.v1` / `DriverDetail`, renders Flow A's D2 card from one
+domain function, `driver_detail`, and a new agent tool `driver_detail(symbol)`
+narrates from the same result and asks for the card — so the drill a bar
+sends now ends in a component instead of prose. The client binds all of it:
+pill, selected caption, dashed outline, detail line, and the new
+`attribution_driver/` component, wired through the regenerated manifest.
+
+What the run taught:
+
+- **A drift check cannot tell you the seed disagrees with the gallery.** The
+  design says NVDA contributed `+$2,980`, `92%` of a `+$3,240` day; the seed
+  says `+$4,370.40`, `134.88%` — because VOO detracted `-$2,295`. Both the
+  hero and the card read the same `day_change`, so the day total is the
+  design's to the cent and the share is not. The component test asserts the
+  design's `+$48.60` is **absent**, so nobody "corrects" it on the client.
+- **Half-even rounding is a literal in a test, or it is a surprise.**
+  `0.45725` prints `+45.72%`; the first oracle said `.73`. The test now
+  writes the raw value beside the display so the rule is visible.
+- **The agent layer imports core and domain only**, so the arithmetic the
+  tool and the projection share had to live in `domain/driver.py`, with the
+  caption *words* in presentation and `standing`/`rank` crossing the seam.
+  The boundary test is what decided the module's home.
+- **A third copy of the signed pair would have failed pylint's duplication
+  gate.** The helpers moved to `displays.py`; `summary_figures` delegates.
+- **A role the palette does not have is a parameter, not a new palette
+  field.** `ChartPalette` is at the budget; the chart takes `selectionColor`
+  and the card's own tokens file pins it to `barTotal` and
+  `HomeTokens.segmentSelected`.
+- **The rate limit dropped the harness's read state, not the files.** After
+  the interruption every `Edit` was refused until the file was `Read` again
+  in full; `git status` was the only thing that needed checking.

@@ -12,6 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.day_change import Trend
 from app.presentation.displays import (
     MoneyDisplay,
     PercentageDisplay,
@@ -42,6 +43,21 @@ class Total(Labelled):
     """A headline figure the widget shows on its own."""
 
     amount: MoneyDisplay = Field(description="The figure, exact and formatted.")
+
+
+class Delta(Labelled):
+    """A signed move under a label: how much, what share, which way (GGU-100).
+
+    The waterfall's headline pill, *Net +$3,240 (+0.68%)*. Both figures carry
+    their sign, so the client never prepends one (N-1); ``direction`` picks
+    the glyph and the colour.
+    """
+
+    amount: MoneyDisplay = Field(description="The move, signed and formatted.")
+    percent: PercentageDisplay = Field(description="The move as a signed ratio.")
+    direction: Trend = Field(
+        description="Sign of the move, so the widget colours it without maths."
+    )
 
 
 class Category(Labelled):
@@ -120,6 +136,7 @@ __all__ = [
     "Annotation",
     "Bucket",
     "Category",
+    "Delta",
     "Labelled",
     "MoneyDisplay",
     "PercentageDisplay",

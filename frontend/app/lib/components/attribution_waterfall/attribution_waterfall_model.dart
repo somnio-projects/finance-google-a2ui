@@ -1,9 +1,12 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_net.dart';
 import 'package:finance_charts/finance_charts.dart';
+
+export 'attribution_waterfall_net.dart';
 
 /// One step of an attribution walk, with everything the card draws.
 ///
-/// The geometry travels as a [WaterfallStep]; the two figures travel as the
+/// The geometry travels as a [WaterfallStep]; the figures travel as the
 /// backend's own `*.display` strings. Nothing here is a number that could be
 /// formatted, which is prohibition N-1 made structural rather than
 /// remembered — the same shape `HoldingsAllocationRow` uses.
@@ -14,6 +17,8 @@ class AttributionStep extends Equatable {
     required this.label,
     required this.valueDisplay,
     required this.cumulativeDisplay,
+    this.detail,
+    this.selectedLabel,
   });
 
   /// The geometry half: key, direction and running total.
@@ -29,6 +34,15 @@ class AttributionStep extends Equatable {
   /// The running total after this step, as `cumulative.display`.
   final String cumulativeDisplay;
 
+  /// The selected state's sentence, `buckets[].detail` — *+45.72% · 90 sh ·
+  /// $1,204.66* — written by the backend (GGU-100 AC-3). Null for the two
+  /// totals, which the contract gives no selected state.
+  final String? detail;
+
+  /// What the header says while this step is selected,
+  /// `buckets[].selected_label`. Null for the two totals.
+  final String? selectedLabel;
+
   /// The payload's `key`, which a drill-down action takes as its argument.
   String get key => step.key;
 
@@ -38,6 +52,8 @@ class AttributionStep extends Equatable {
     label,
     valueDisplay,
     cumulativeDisplay,
+    detail,
+    selectedLabel,
   ];
 }
 
@@ -66,12 +82,16 @@ class AttributionWaterfallData extends Equatable {
   /// Creates the model.
   const AttributionWaterfallData({
     required this.title,
+    required this.net,
     required this.steps,
     required this.annotations,
   });
 
   /// The payload's `title`.
   final String title;
+
+  /// The payload's `net`: the headline pill.
+  final AttributionNet net;
 
   /// The walk: the opening total, each contribution, the closing total — in
   /// the order the backend sent them (N-10).
@@ -94,5 +114,5 @@ class AttributionWaterfallData extends Equatable {
   List<String> get axisLabels => <String>[for (final step in steps) step.label];
 
   @override
-  List<Object?> get props => <Object?>[title, steps, annotations];
+  List<Object?> get props => <Object?>[title, net, steps, annotations];
 }

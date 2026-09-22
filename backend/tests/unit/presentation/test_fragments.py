@@ -10,10 +10,12 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from app.presentation.displays import signed_money, signed_percentage
 from app.presentation.fragments import (
     Annotation,
     Bucket,
     Category,
+    Delta,
     Series,
     SeriesPoint,
     Total,
@@ -77,6 +79,25 @@ def test_fragments_are_frozen() -> None:
     total = Total(label="Total", amount=money(Decimal("1")))
     with pytest.raises(ValidationError, match="frozen"):
         total.label = "other"
+
+
+def test_delta_carries_a_signed_move_and_its_direction() -> None:
+    """GGU-100 AC-1/AC-2 — the headline pill is one fragment, signs included."""
+    delta = Delta(
+        label="Net",
+        amount=signed_money(Decimal("3240.18")),
+        percent=signed_percentage(Decimal("0.006755")),
+        direction="up",
+    )
+    assert (delta.amount.display, delta.percent.display) == ("+$3,240.18", "+0.68%")
+    assert delta.direction == "up"
+    with pytest.raises(ValidationError, match="direction"):
+        Delta(
+            label="Net",
+            amount=signed_money(Decimal("0")),
+            percent=signed_percentage(Decimal("0")),
+            direction="sideways",  # pyright: ignore[reportArgumentType]
+        )
 
 
 def test_bucket_direction_is_bounded_to_up_or_down() -> None:

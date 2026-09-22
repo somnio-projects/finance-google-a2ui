@@ -140,7 +140,8 @@ Three of the four states design needs are facts about the schema. One is not:
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
 | [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `dcb1032a4438` | 21 | `kind`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `a4926e77dfef` | 32 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `13c7eae1516d` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `1f290bfc4970` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `279142f5554a` | 38 | read-only | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
@@ -646,11 +647,130 @@ _This surface sends nothing back: tapping it starts no turn._
 }
 ```
 
+## `attribution.driver.v1`
+
+> One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens.
+
+- **Frozen id:** `attribution.driver.v1` · **digest:** `13c7eae1516d`
+- **Component:** `DriverDetail`
+- **Payload type:** `DriverDetailPayload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** `symbol`
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `symbol` | enum AAPL / AGG / AMD / AVGO / BND / GLD / JNJ / MSFT / NVDA / PG / PYPL / TIP / TSLA / USD / VNQ / VOO / XOM | one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' | `"NVDA"` | The holding to describe, from the market reference. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'attribution.driver.v1' | default `"attribution.driver.v1"` | `constant` | — | — |
+| `symbol` | string ≤10 chars | required | `text` | — | input · one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM' |
+| `name` | string ≤64 chars | required | `text` | — | — |
+| `caption` | string ≤48 chars | required | `text` | — | — |
+| `contribution` | object | required | `container` | — | — |
+| `contribution.amount` | decimal | required | `raw` | — | — |
+| `contribution.display` | string ≤32 chars | required | `display` | — | — |
+| `trend` | enum up / down / flat | required | `enum` | variant | — |
+| `price_move` | object | required | `container` | — | — |
+| `price_move.label` | string ≤64 chars | required | `text` | — | — |
+| `price_move.percent` | object | required | `container` | — | — |
+| `price_move.percent.value` | decimal | required | `raw` | — | — |
+| `price_move.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `price_move.amount` | object | required | `container` | — | — |
+| `price_move.amount.amount` | decimal | required | `raw` | — | — |
+| `price_move.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `price_move.trend` | enum up / down / flat | required | `enum` | variant | — |
+| `shares` | object | required | `container` | — | — |
+| `shares.label` | string ≤64 chars | required | `text` | — | — |
+| `shares.units` | object | required | `container` | — | — |
+| `shares.units.units` | decimal | required | `raw` | — | — |
+| `shares.units.display` | string ≤32 chars | required | `display` | — | — |
+| `shares.price` | object | required | `container` | — | — |
+| `shares.price.amount` | decimal | required | `raw` | — | — |
+| `shares.price.display` | string ≤32 chars | required | `display` | — | — |
+| `shares.caption` | string ≤40 chars | required | `text` | — | — |
+| `day_share` | object | required | `container` | — | — |
+| `day_share.label` | string ≤64 chars | required | `text` | — | — |
+| `day_share.percent` | object | required | `container` | — | — |
+| `day_share.percent.value` | decimal | required | `raw` | — | — |
+| `day_share.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `day_share.total` | object | required | `container` | — | — |
+| `day_share.total.amount` | decimal | required | `raw` | — | — |
+| `day_share.total.display` | string ≤32 chars | required | `display` | — | — |
+| `day_share.caption` | string ≤40 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "attribution.driver.v1",
+  "symbol": "NVDA",
+  "name": "NVIDIA Corp",
+  "caption": "Top contributor today",
+  "contribution": {
+    "amount": "4370.400000",
+    "display": "+$4,370.40"
+  },
+  "trend": "up",
+  "price_move": {
+    "label": "Price move",
+    "percent": {
+      "value": "0.04200328691289680823458178358",
+      "display": "+4.20%"
+    },
+    "amount": {
+      "amount": "48.56",
+      "display": "+$48.56"
+    },
+    "trend": "up"
+  },
+  "shares": {
+    "label": "Shares",
+    "units": {
+      "units": "90.0000",
+      "display": "90"
+    },
+    "price": {
+      "amount": "1204.66",
+      "display": "$1,204.66"
+    },
+    "caption": "@ $1,204.66"
+  },
+  "day_share": {
+    "label": "Of day gain",
+    "percent": {
+      "value": "1.348813954780289983889783901",
+      "display": "134.88%"
+    },
+    "total": {
+      "amount": "3240.180000",
+      "display": "+$3,240.18"
+    },
+    "caption": "of +$3,240.18"
+  }
+}
+```
+
 ## `attribution.waterfall.v1`
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `a4926e77dfef`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `1f290bfc4970`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -681,6 +801,15 @@ _This surface sends nothing back: tapping it starts no turn._
 | `end.amount` | object | required | `container` | — | — |
 | `end.amount.amount` | decimal | required | `raw` | — | — |
 | `end.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `net` | object | required | `container` | — | — |
+| `net.label` | string ≤64 chars | required | `text` | — | — |
+| `net.amount` | object | required | `container` | — | — |
+| `net.amount.amount` | decimal | required | `raw` | — | — |
+| `net.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `net.percent` | object | required | `container` | — | — |
+| `net.percent.value` | decimal | required | `raw` | — | — |
+| `net.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `net.direction` | enum up / down / flat | required | `enum` | variant | — |
 | `buckets` | array | default `[]` | `container` | empty | — |
 | `buckets[].label` | string ≤64 chars | required | `text` | — | — |
 | `buckets[].key` | string ≤32 chars | required | `text` | — | — |
@@ -691,6 +820,17 @@ _This surface sends nothing back: tapping it starts no turn._
 | `buckets[].cumulative.amount` | decimal | required | `raw` | — | — |
 | `buckets[].cumulative.display` | string ≤32 chars | required | `display` | — | — |
 | `buckets[].direction` | enum up / down | required | `enum` | variant | — |
+| `buckets[].move` | object | required | `container` | — | — |
+| `buckets[].move.value` | decimal | required | `raw` | — | — |
+| `buckets[].move.display` | string ≤16 chars | required | `display` | — | — |
+| `buckets[].units` | object | required | `container` | — | — |
+| `buckets[].units.units` | decimal | required | `raw` | — | — |
+| `buckets[].units.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].price` | object | required | `container` | — | — |
+| `buckets[].price.amount` | decimal | required | `raw` | — | — |
+| `buckets[].price.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].detail` | string ≤64 chars | required | `text` | — | — |
+| `buckets[].selected_label` | string ≤48 chars | required | `text` | — | — |
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
@@ -733,6 +873,18 @@ _This surface sends nothing back: tapping it starts no turn._
       "display": "$482,915.20"
     }
   },
+  "net": {
+    "label": "Net",
+    "amount": {
+      "amount": "61204.050000",
+      "display": "+$61,204.05"
+    },
+    "percent": {
+      "value": "0.1451326340316114477883736297",
+      "display": "+14.51%"
+    },
+    "direction": "up"
+  },
   "buckets": [
     {
       "label": "NVIDIA Corp",
@@ -745,7 +897,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "455730.550000",
         "display": "$455,730.55"
       },
-      "direction": "up"
+      "direction": "up",
+      "move": {
+        "value": "0.45725",
+        "display": "+45.72%"
+      },
+      "units": {
+        "units": "90.0000",
+        "display": "90"
+      },
+      "price": {
+        "amount": "1204.66",
+        "display": "$1,204.66"
+      },
+      "detail": "+45.72% \u00b7 90 sh \u00b7 $1,204.66",
+      "selected_label": "NVDA selected"
     },
     {
       "label": "Apple Inc.",
@@ -758,7 +924,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "485064.550000",
         "display": "$485,064.55"
       },
-      "direction": "up"
+      "direction": "up",
+      "move": {
+        "value": "0.7221565731166912850812407681",
+        "display": "+72.22%"
+      },
+      "units": {
+        "units": "300.0000",
+        "display": "300"
+      },
+      "price": {
+        "amount": "233.18",
+        "display": "$233.18"
+      },
+      "detail": "+72.22% \u00b7 300 sh \u00b7 $233.18",
+      "selected_label": "AAPL selected"
     },
     {
       "label": "Microsoft Corp",
@@ -771,7 +951,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "498022.550000",
         "display": "$498,022.55"
       },
-      "direction": "up"
+      "direction": "up",
+      "move": {
+        "value": "0.3859764089121887287024901704",
+        "display": "+38.60%"
+      },
+      "units": {
+        "units": "110.0000",
+        "display": "110"
+      },
+      "price": {
+        "amount": "423.00",
+        "display": "$423.00"
+      },
+      "detail": "+38.60% \u00b7 110 sh \u00b7 $423.00",
+      "selected_label": "MSFT selected"
     },
     {
       "label": "Vanguard S&P 500 ETF",
@@ -784,7 +978,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "508724.050000",
         "display": "$508,724.05"
       },
-      "direction": "up"
+      "direction": "up",
+      "move": {
+        "value": "0.3131061924894304899278786372",
+        "display": "+31.31%"
+      },
+      "units": {
+        "units": "85.0000",
+        "display": "85"
+      },
+      "price": {
+        "amount": "528.00",
+        "display": "$528.00"
+      },
+      "detail": "+31.31% \u00b7 85 sh \u00b7 $528.00",
+      "selected_label": "VOO selected"
     },
     {
       "label": "SPDR Gold Shares",
@@ -797,7 +1005,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "498224.050000",
         "display": "$498,224.05"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.1750",
+        "display": "-17.50%"
+      },
+      "units": {
+        "units": "250.0000",
+        "display": "250"
+      },
+      "price": {
+        "amount": "198.00",
+        "display": "$198.00"
+      },
+      "detail": "-17.50% \u00b7 250 sh \u00b7 $198.00",
+      "selected_label": "GLD selected"
     },
     {
       "label": "PayPal Holdings",
@@ -810,7 +1032,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "492399.050000",
         "display": "$492,399.05"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.2629796839729119638826185102",
+        "display": "-26.30%"
+      },
+      "units": {
+        "units": "250.0000",
+        "display": "250"
+      },
+      "price": {
+        "amount": "65.30",
+        "display": "$65.30"
+      },
+      "detail": "-26.30% \u00b7 250 sh \u00b7 $65.30",
+      "selected_label": "PYPL selected"
     },
     {
       "label": "iShares Core US Aggregate Bond",
@@ -823,7 +1059,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "488199.050000",
         "display": "$488,199.05"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.09722222222222222222222222222",
+        "display": "-9.72%"
+      },
+      "units": {
+        "units": "400.0000",
+        "display": "400"
+      },
+      "price": {
+        "amount": "97.50",
+        "display": "$97.50"
+      },
+      "detail": "-9.72% \u00b7 400 sh \u00b7 $97.50",
+      "selected_label": "AGG selected"
     },
     {
       "label": "Vanguard Total Bond",
@@ -836,7 +1086,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "486525.050000",
         "display": "$486,525.05"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.03643724696356275303643724696",
+        "display": "-3.64%"
+      },
+      "units": {
+        "units": "620.0000",
+        "display": "620"
+      },
+      "price": {
+        "amount": "71.40",
+        "display": "$71.40"
+      },
+      "detail": "-3.64% \u00b7 620 sh \u00b7 $71.40",
+      "selected_label": "BND selected"
     },
     {
       "label": "Vanguard Real Estate",
@@ -849,7 +1113,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "485069.600000",
         "display": "$485,069.60"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.1469345601351985729039526805",
+        "display": "-14.69%"
+      },
+      "units": {
+        "units": "93.0000",
+        "display": "93"
+      },
+      "price": {
+        "amount": "90.86",
+        "display": "$90.86"
+      },
+      "detail": "-14.69% \u00b7 93 sh \u00b7 $90.86",
+      "selected_label": "VNQ selected"
     },
     {
       "label": "Exxon Mobil",
@@ -862,7 +1140,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "484058.200000",
         "display": "$484,058.20"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.1852380952380952380952380952",
+        "display": "-18.52%"
+      },
+      "units": {
+        "units": "130.0000",
+        "display": "130"
+      },
+      "price": {
+        "amount": "34.22",
+        "display": "$34.22"
+      },
+      "detail": "-18.52% \u00b7 130 sh \u00b7 $34.22",
+      "selected_label": "XOM selected"
     },
     {
       "label": "Johnson & Johnson",
@@ -875,7 +1167,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "483608.200000",
         "display": "$483,608.20"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.08823529411764705882352941176",
+        "display": "-8.82%"
+      },
+      "units": {
+        "units": "30.0000",
+        "display": "30"
+      },
+      "price": {
+        "amount": "155.00",
+        "display": "$155.00"
+      },
+      "detail": "-8.82% \u00b7 30 sh \u00b7 $155.00",
+      "selected_label": "JNJ selected"
     },
     {
       "label": "iShares TIPS Bond",
@@ -888,7 +1194,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "483215.200000",
         "display": "$483,215.20"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.09703703703703703703703703704",
+        "display": "-9.70%"
+      },
+      "units": {
+        "units": "30.0000",
+        "display": "30"
+      },
+      "price": {
+        "amount": "121.90",
+        "display": "$121.90"
+      },
+      "detail": "-9.70% \u00b7 30 sh \u00b7 $121.90",
+      "selected_label": "TIP selected"
     },
     {
       "label": "Procter & Gamble",
@@ -901,7 +1221,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "482915.200000",
         "display": "$482,915.20"
       },
-      "direction": "down"
+      "direction": "down",
+      "move": {
+        "value": "-0.06666666666666666666666666667",
+        "display": "-6.67%"
+      },
+      "units": {
+        "units": "25.0000",
+        "display": "25"
+      },
+      "price": {
+        "amount": "168.00",
+        "display": "$168.00"
+      },
+      "detail": "-6.67% \u00b7 25 sh \u00b7 $168.00",
+      "selected_label": "PG selected"
     },
     {
       "label": "Cash & sweep",
@@ -914,7 +1248,21 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "482915.200000",
         "display": "$482,915.20"
       },
-      "direction": "up"
+      "direction": "up",
+      "move": {
+        "value": "0.0000",
+        "display": "0.00%"
+      },
+      "units": {
+        "units": "38633.2200",
+        "display": "38633.22"
+      },
+      "price": {
+        "amount": "1.00",
+        "display": "$1.00"
+      },
+      "detail": "0.00% \u00b7 38633.22 sh \u00b7 $1.00",
+      "selected_label": "USD selected"
     }
   ],
   "annotations": [

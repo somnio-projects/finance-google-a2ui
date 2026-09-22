@@ -692,6 +692,419 @@
       "view": "activity.timeline.v1"
     },
     {
+      "actions": [],
+      "component": "DriverDetail",
+      "digest": "13c7eae1516d",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "caption": "Top contributor today",
+        "contribution": {
+          "amount": "4370.400000",
+          "display": "+$4,370.40"
+        },
+        "day_share": {
+          "caption": "of +$3,240.18",
+          "label": "Of day gain",
+          "percent": {
+            "display": "134.88%",
+            "value": "1.348813954780289983889783901"
+          },
+          "total": {
+            "amount": "3240.180000",
+            "display": "+$3,240.18"
+          }
+        },
+        "name": "NVIDIA Corp",
+        "price_move": {
+          "amount": {
+            "amount": "48.56",
+            "display": "+$48.56"
+          },
+          "label": "Price move",
+          "percent": {
+            "display": "+4.20%",
+            "value": "0.04200328691289680823458178358"
+          },
+          "trend": "up"
+        },
+        "shares": {
+          "caption": "@ $1,204.66",
+          "label": "Shares",
+          "price": {
+            "amount": "1204.66",
+            "display": "$1,204.66"
+          },
+          "units": {
+            "display": "90",
+            "units": "90.0000"
+          }
+        },
+        "symbol": "NVDA",
+        "trend": "up",
+        "view": "attribution.driver.v1"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": null,
+          "path": "view",
+          "presence": "default `\"attribution.driver.v1\"`",
+          "state": null,
+          "type": "const 'attribution.driver.v1'"
+        },
+        {
+          "binding": "text",
+          "input": "input · one of 'AAPL', 'AGG', 'AMD', 'AVGO', 'BND', 'GLD', 'JNJ', 'MSFT', 'NVDA', 'PG', 'PYPL', 'TIP', 'TSLA', 'USD', 'VNQ', 'VOO', 'XOM'",
+          "path": "symbol",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤10 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "name",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "caption",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "contribution",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "contribution.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "contribution.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "trend",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down / flat"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "price_move",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "price_move.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "price_move.percent",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "price_move.percent.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "price_move.percent.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "price_move.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "price_move.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "price_move.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "price_move.trend",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down / flat"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "shares",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "shares.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "shares.units",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "shares.units.units",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "shares.units.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "shares.price",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "shares.price.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "shares.price.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "shares.caption",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤40 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "day_share",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "day_share.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "day_share.percent",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "day_share.percent.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "day_share.percent.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "day_share.total",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "day_share.total.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "day_share.total.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "day_share.caption",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤40 chars"
+        }
+      ],
+      "guidance": null,
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "The display knobs, and the one thing this card is about: the symbol.\n\n``symbol`` is a payload field of the same name, so the contract reports\nit editable and it round-trips (presentation.md §4): re-rendering with\nanother symbol is how the same card describes another bar.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "symbol": {
+            "default": "NVDA",
+            "description": "The holding to describe, from the market reference.",
+            "enum": [
+              "AAPL",
+              "AGG",
+              "AMD",
+              "AVGO",
+              "BND",
+              "GLD",
+              "JNJ",
+              "MSFT",
+              "NVDA",
+              "PG",
+              "PYPL",
+              "TIP",
+              "TSLA",
+              "USD",
+              "VNQ",
+              "VOO",
+              "XOM"
+            ],
+            "examples": [
+              "NVDA"
+            ],
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "DriverDetailOptions",
+        "type": "object"
+      },
+      "payload_type": "DriverDetailPayload",
+      "summary": "One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens.",
+      "view": "attribution.driver.v1"
+    },
+    {
       "actions": [
         {
           "action": "drill.attribution.v1",
@@ -721,7 +1134,7 @@
         }
       ],
       "component": "AttributionWaterfall",
-      "digest": "a4926e77dfef",
+      "digest": "1f290bfc4970",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -779,9 +1192,23 @@
               "amount": "34019.400000",
               "display": "$34,019.40"
             },
+            "detail": "+45.72% · 90 sh · $1,204.66",
             "direction": "up",
             "key": "NVDA",
-            "label": "NVIDIA Corp"
+            "label": "NVIDIA Corp",
+            "move": {
+              "display": "+45.72%",
+              "value": "0.45725"
+            },
+            "price": {
+              "amount": "1204.66",
+              "display": "$1,204.66"
+            },
+            "selected_label": "NVDA selected",
+            "units": {
+              "display": "90",
+              "units": "90.0000"
+            }
           },
           {
             "cumulative": {
@@ -792,9 +1219,23 @@
               "amount": "29334.000000",
               "display": "$29,334.00"
             },
+            "detail": "+72.22% · 300 sh · $233.18",
             "direction": "up",
             "key": "AAPL",
-            "label": "Apple Inc."
+            "label": "Apple Inc.",
+            "move": {
+              "display": "+72.22%",
+              "value": "0.7221565731166912850812407681"
+            },
+            "price": {
+              "amount": "233.18",
+              "display": "$233.18"
+            },
+            "selected_label": "AAPL selected",
+            "units": {
+              "display": "300",
+              "units": "300.0000"
+            }
           },
           {
             "cumulative": {
@@ -805,9 +1246,23 @@
               "amount": "12958.000000",
               "display": "$12,958.00"
             },
+            "detail": "+38.60% · 110 sh · $423.00",
             "direction": "up",
             "key": "MSFT",
-            "label": "Microsoft Corp"
+            "label": "Microsoft Corp",
+            "move": {
+              "display": "+38.60%",
+              "value": "0.3859764089121887287024901704"
+            },
+            "price": {
+              "amount": "423.00",
+              "display": "$423.00"
+            },
+            "selected_label": "MSFT selected",
+            "units": {
+              "display": "110",
+              "units": "110.0000"
+            }
           },
           {
             "cumulative": {
@@ -818,9 +1273,23 @@
               "amount": "10701.500000",
               "display": "$10,701.50"
             },
+            "detail": "+31.31% · 85 sh · $528.00",
             "direction": "up",
             "key": "VOO",
-            "label": "Vanguard S&P 500 ETF"
+            "label": "Vanguard S&P 500 ETF",
+            "move": {
+              "display": "+31.31%",
+              "value": "0.3131061924894304899278786372"
+            },
+            "price": {
+              "amount": "528.00",
+              "display": "$528.00"
+            },
+            "selected_label": "VOO selected",
+            "units": {
+              "display": "85",
+              "units": "85.0000"
+            }
           },
           {
             "cumulative": {
@@ -831,9 +1300,23 @@
               "amount": "-10500.000000",
               "display": "-$10,500.00"
             },
+            "detail": "-17.50% · 250 sh · $198.00",
             "direction": "down",
             "key": "GLD",
-            "label": "SPDR Gold Shares"
+            "label": "SPDR Gold Shares",
+            "move": {
+              "display": "-17.50%",
+              "value": "-0.1750"
+            },
+            "price": {
+              "amount": "198.00",
+              "display": "$198.00"
+            },
+            "selected_label": "GLD selected",
+            "units": {
+              "display": "250",
+              "units": "250.0000"
+            }
           },
           {
             "cumulative": {
@@ -844,9 +1327,23 @@
               "amount": "-5825.000000",
               "display": "-$5,825.00"
             },
+            "detail": "-26.30% · 250 sh · $65.30",
             "direction": "down",
             "key": "PYPL",
-            "label": "PayPal Holdings"
+            "label": "PayPal Holdings",
+            "move": {
+              "display": "-26.30%",
+              "value": "-0.2629796839729119638826185102"
+            },
+            "price": {
+              "amount": "65.30",
+              "display": "$65.30"
+            },
+            "selected_label": "PYPL selected",
+            "units": {
+              "display": "250",
+              "units": "250.0000"
+            }
           },
           {
             "cumulative": {
@@ -857,9 +1354,23 @@
               "amount": "-4200.000000",
               "display": "-$4,200.00"
             },
+            "detail": "-9.72% · 400 sh · $97.50",
             "direction": "down",
             "key": "AGG",
-            "label": "iShares Core US Aggregate Bond"
+            "label": "iShares Core US Aggregate Bond",
+            "move": {
+              "display": "-9.72%",
+              "value": "-0.09722222222222222222222222222"
+            },
+            "price": {
+              "amount": "97.50",
+              "display": "$97.50"
+            },
+            "selected_label": "AGG selected",
+            "units": {
+              "display": "400",
+              "units": "400.0000"
+            }
           },
           {
             "cumulative": {
@@ -870,9 +1381,23 @@
               "amount": "-1674.000000",
               "display": "-$1,674.00"
             },
+            "detail": "-3.64% · 620 sh · $71.40",
             "direction": "down",
             "key": "BND",
-            "label": "Vanguard Total Bond"
+            "label": "Vanguard Total Bond",
+            "move": {
+              "display": "-3.64%",
+              "value": "-0.03643724696356275303643724696"
+            },
+            "price": {
+              "amount": "71.40",
+              "display": "$71.40"
+            },
+            "selected_label": "BND selected",
+            "units": {
+              "display": "620",
+              "units": "620.0000"
+            }
           },
           {
             "cumulative": {
@@ -883,9 +1408,23 @@
               "amount": "-1455.450000",
               "display": "-$1,455.45"
             },
+            "detail": "-14.69% · 93 sh · $90.86",
             "direction": "down",
             "key": "VNQ",
-            "label": "Vanguard Real Estate"
+            "label": "Vanguard Real Estate",
+            "move": {
+              "display": "-14.69%",
+              "value": "-0.1469345601351985729039526805"
+            },
+            "price": {
+              "amount": "90.86",
+              "display": "$90.86"
+            },
+            "selected_label": "VNQ selected",
+            "units": {
+              "display": "93",
+              "units": "93.0000"
+            }
           },
           {
             "cumulative": {
@@ -896,9 +1435,23 @@
               "amount": "-1011.400000",
               "display": "-$1,011.40"
             },
+            "detail": "-18.52% · 130 sh · $34.22",
             "direction": "down",
             "key": "XOM",
-            "label": "Exxon Mobil"
+            "label": "Exxon Mobil",
+            "move": {
+              "display": "-18.52%",
+              "value": "-0.1852380952380952380952380952"
+            },
+            "price": {
+              "amount": "34.22",
+              "display": "$34.22"
+            },
+            "selected_label": "XOM selected",
+            "units": {
+              "display": "130",
+              "units": "130.0000"
+            }
           },
           {
             "cumulative": {
@@ -909,9 +1462,23 @@
               "amount": "-450.000000",
               "display": "-$450.00"
             },
+            "detail": "-8.82% · 30 sh · $155.00",
             "direction": "down",
             "key": "JNJ",
-            "label": "Johnson & Johnson"
+            "label": "Johnson & Johnson",
+            "move": {
+              "display": "-8.82%",
+              "value": "-0.08823529411764705882352941176"
+            },
+            "price": {
+              "amount": "155.00",
+              "display": "$155.00"
+            },
+            "selected_label": "JNJ selected",
+            "units": {
+              "display": "30",
+              "units": "30.0000"
+            }
           },
           {
             "cumulative": {
@@ -922,9 +1489,23 @@
               "amount": "-393.000000",
               "display": "-$393.00"
             },
+            "detail": "-9.70% · 30 sh · $121.90",
             "direction": "down",
             "key": "TIP",
-            "label": "iShares TIPS Bond"
+            "label": "iShares TIPS Bond",
+            "move": {
+              "display": "-9.70%",
+              "value": "-0.09703703703703703703703703704"
+            },
+            "price": {
+              "amount": "121.90",
+              "display": "$121.90"
+            },
+            "selected_label": "TIP selected",
+            "units": {
+              "display": "30",
+              "units": "30.0000"
+            }
           },
           {
             "cumulative": {
@@ -935,9 +1516,23 @@
               "amount": "-300.000000",
               "display": "-$300.00"
             },
+            "detail": "-6.67% · 25 sh · $168.00",
             "direction": "down",
             "key": "PG",
-            "label": "Procter & Gamble"
+            "label": "Procter & Gamble",
+            "move": {
+              "display": "-6.67%",
+              "value": "-0.06666666666666666666666666667"
+            },
+            "price": {
+              "amount": "168.00",
+              "display": "$168.00"
+            },
+            "selected_label": "PG selected",
+            "units": {
+              "display": "25",
+              "units": "25.0000"
+            }
           },
           {
             "cumulative": {
@@ -948,9 +1543,23 @@
               "amount": "0.000000",
               "display": "$0.00"
             },
+            "detail": "0.00% · 38633.22 sh · $1.00",
             "direction": "up",
             "key": "USD",
-            "label": "Cash & sweep"
+            "label": "Cash & sweep",
+            "move": {
+              "display": "0.00%",
+              "value": "0.0000"
+            },
+            "price": {
+              "amount": "1.00",
+              "display": "$1.00"
+            },
+            "selected_label": "USD selected",
+            "units": {
+              "display": "38633.22",
+              "units": "38633.2200"
+            }
           }
         ],
         "end": {
@@ -959,6 +1568,18 @@
             "display": "$482,915.20"
           },
           "label": "Market value"
+        },
+        "net": {
+          "amount": {
+            "amount": "61204.050000",
+            "display": "+$61,204.05"
+          },
+          "direction": "up",
+          "label": "Net",
+          "percent": {
+            "display": "+14.51%",
+            "value": "0.1451326340316114477883736297"
+          }
         },
         "start": {
           "amount": {
@@ -1070,6 +1691,78 @@
         {
           "binding": "container",
           "input": null,
+          "path": "net",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "net.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "net.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "net.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "net.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "net.percent",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "net.percent.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "net.percent.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "net.direction",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down / flat"
+        },
+        {
+          "binding": "container",
+          "input": null,
           "path": "buckets",
           "presence": "default `[]`",
           "state": "empty",
@@ -1146,6 +1839,94 @@
           "presence": "required",
           "state": "variant",
           "type": "enum up / down"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].move",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].move.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].move.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].units",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].units.units",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].units.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].price",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].price.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].price.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].detail",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].selected_label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
         },
         {
           "binding": "container",

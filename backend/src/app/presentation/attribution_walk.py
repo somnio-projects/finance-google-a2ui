@@ -1,68 +1,93 @@
-"""Building the steps and the sentences of the attribution walk.
+"""Building the steps, the headline and the sentences of the attribution walk.
 
 Its own module for the reason ``order_sizing`` is one: the view is at the file
 budget, and this is the seam that was already there — *how the walk is built*
 apart from *what the projection is*. Pure, like everything in this layer.
+
+Typed against ``DisplayOptions``, the mixin every view's options model
+composes, rather than the view's own class: importing the view here would
+make this helper depend on the module that imports it.
 """
 
 from collections.abc import Sequence
 from decimal import Decimal
 from itertools import accumulate
-from typing import Final, Protocol
+from typing import Final
 
+from app.domain.day_change import change_ratio, trend_of
 from app.domain.holdings import Holding
-from app.presentation.displays import MoneyDisplay
-from app.presentation.fragments import Annotation, Bucket
+from app.presentation.attribution_payload import NET_LABEL, HoldingStep
+from app.presentation.displays import PercentageDisplay, signed_money, signed_percentage
+from app.presentation.fragments import Annotation, Delta
+from app.presentation.options import DisplayOptions
+from app.presentation.ticket_displays import price, quantity
 
 #: How many movers the chart names in words beside it.
 ANNOTATED: Final[int] = 2
 
 
-class Money(Protocol):
-    """The one thing these builders need from an options model.
+def move_of(
+    current: Decimal, base: Decimal, options: DisplayOptions
+) -> PercentageDisplay:
+    """The signed ratio of ``current`` against ``base``, under ``options``."""
+    return signed_percentage(
+        change_ratio(current, base), precision=options.precision, locale=options.locale
+    )
 
-    A Protocol rather than the concrete ``AttributionWaterfallOptions``:
-    importing the view would make this helper depend on the module that
-    imports it. ``Any`` would also compile, and would silently stop
-    checking ``options.money(...)`` under strict — the type the helpers
-    had before they were split out.
-    """
 
-    def money(self, value: Decimal) -> MoneyDisplay:
-        """Format ``value`` under this render's locale and precision."""
-        ...
+def net_of(*, start: Decimal, end: Decimal, options: DisplayOptions) -> Delta:
+    """The whole walk in one signed figure — the headline pill (GGU-100 AC-1)."""
+    delta = end - start
+    return Delta(
+        label=NET_LABEL,
+        amount=signed_money(delta, precision=options.precision, locale=options.locale),
+        percent=move_of(end, start, options),
+        direction=trend_of(delta),
+    )
+
+
+def step_of(row: Holding, total: Decimal, options: DisplayOptions) -> HoldingStep:
+    """Write one holding's step down, with what its selected state shows."""
+    move = move_of(row.market_value, row.cost_basis, options)
+    units = quantity(row.quantity, locale=options.locale)
+    unit_price = price(row.price, locale=options.locale)
+    return HoldingStep(
+        # The ticker, not the name: this is the value a tap sends back as
+        # the drill action's argument, and that argument accepts symbols.
+        # `test_waterfall_events.py` compares the two declarations.
+        key=row.symbol,
+        label=row.name,
+        delta=options.money(row.unrealized_pl),
+        cumulative=options.money(total),
+        direction="up" if row.unrealized_pl >= 0 else "down",
+        move=move,
+        units=units,
+        price=unit_price,
+        detail=f"{move.display} · {units.display} sh · {unit_price.display}",
+        selected_label=f"{row.symbol} selected",
+    )
 
 
 def buckets(
-    rows: Sequence[Holding], *, start: Decimal, options: Money
-) -> tuple[Bucket, ...]:
+    rows: Sequence[Holding], *, start: Decimal, options: DisplayOptions
+) -> tuple[HoldingStep, ...]:
     """Walk each holding's unrealised P/L, carrying the running total."""
     running = accumulate((row.unrealized_pl for row in rows), initial=start)
     next(running)  # the opening balance is the chart's start, not a step
     return tuple(
-        Bucket(
-            # The ticker, not the name: this is the value a tap sends back as
-            # the drill action's argument, and that argument accepts symbols.
-            # `test_waterfall_events.py` compares the two declarations.
-            key=row.symbol,
-            label=row.name,
-            delta=options.money(row.unrealized_pl),
-            cumulative=options.money(total),
-            direction="up" if row.unrealized_pl >= 0 else "down",
-        )
-        for row, total in zip(rows, running, strict=True)
+        step_of(row, total, options) for row, total in zip(rows, running, strict=True)
     )
 
 
 def notes(
-    rows: Sequence[Holding], net: Decimal, options: Money
+    rows: Sequence[Holding], net: Decimal, options: DisplayOptions
 ) -> tuple[Annotation, ...]:
     """Name the biggest movers and the net move, in words the widget shows."""
     movers = (
         Annotation(label=row.name, text=options.money(row.unrealized_pl).display)
         for row in rows[:ANNOTATED]
     )
-    return (*movers, Annotation(label="Net", text=options.money(net).display))
+    return (*movers, Annotation(label=NET_LABEL, text=options.money(net).display))
 
 
-__all__ = ["ANNOTATED", "Money", "buckets", "notes"]
+__all__ = ["ANNOTATED", "buckets", "move_of", "net_of", "notes", "step_of"]

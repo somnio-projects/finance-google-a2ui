@@ -10,11 +10,10 @@ two components under different names, and both halves were internally
 consistent, so both gates stayed green.
 
 `.claude/rules/backend/testing.md`: **a property that spans two declarations
-gets a test comparing them.** This one spans four.
-``DESIGN_CATALOG`` below is the design's half, transcribed **once**. It is a
-deliberate literal — the one thing in this suite that is not read from the
-registry — because the whole point is to compare the backend against something
-outside it. Transcribing it in a second place is what this test forbids.
+gets a test comparing them.** This one spans four. ``DESIGN_CATALOG`` below is
+the design's half, transcribed **once** — a deliberate literal, the one thing
+in this suite not read from the registry, because the whole point is to compare
+the backend against something outside it. A second transcription is forbidden.
 """
 
 import re
@@ -55,10 +54,11 @@ DESIGN_CATALOG: Final[dict[str, str]] = {
     "scenario.comparison.v1": "ScenarioComparison",
     # The one component every rendering already agreed on.
     "taxlots.table.v1": "TaxLotTable",
-    # The Home hero: a page in design, a projection here; named by us (0026).
+    # Pages and states in design, projections here; named by us (0026/0028/0032).
     "portfolio.summary.v1": "PortfolioSummary",
     "holdings.positions.v1": "PositionList",
     "activity.timeline.v1": "ActivityTimeline",
+    "attribution.driver.v1": "DriverDetail",
 }
 
 #: `- **Component:** \`X\`` in a component's own section of the contract.

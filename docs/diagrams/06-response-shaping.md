@@ -1,6 +1,6 @@
 # 06 — Response shaping: who chooses the payload
 
-Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0023](../../specs/backend/0023-catalog-serves-the-client.md).
+Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0023](../../specs/backend/0023-catalog-serves-the-client.md), [spec 0032](../../specs/backend/0032-attribution-headline-and-driver-detail.md).
 
 Solid = built. Dashed = planned, with the ticket that owns it.
 
@@ -16,7 +16,7 @@ flowchart TB
     sel["Selection rule<br/>(nobody chose → highest fitness)"]
     subgraph views["presentation/views/* — one module each"]
         v1["holdings.allocation.v1 · portfolio.summary.v1<br/>attribution.waterfall.v1<br/><i>fitness > 0 — selectable</i>"]
-        v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/>holdings.positions.v1 · activity.timeline.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
+        v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/>holdings.positions.v1 · activity.timeline.v1<br/>attribution.driver.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
         vn["…the next one: one new file"]
     end
     frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display<br/>every figure: display string + raw for geometry"]

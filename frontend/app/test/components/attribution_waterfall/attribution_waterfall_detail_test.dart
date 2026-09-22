@@ -1,6 +1,8 @@
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_pill.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_tokens.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,40 +10,49 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/pump_app.dart';
 
 void main() {
-  AttributionStep step(WaterfallStepKind kind) => AttributionStep(
-    step: WaterfallStep(key: 'k', kind: kind, level: 1),
-    label: 'Bitcoin',
-    valueDisplay: r'$10,230.00',
-    cumulativeDisplay: r'$67,155.00',
+  AttributionStep step(WaterfallStepKind kind, {String? detail}) =>
+      AttributionStep(
+        step: WaterfallStep(key: 'k', kind: kind, level: 1),
+        label: 'Bitcoin',
+        valueDisplay: r'$10,230.00',
+        cumulativeDisplay: r'$67,155.00',
+        detail: detail,
+      );
+  const net = AttributionNet(
+    label: 'Net',
+    amountDisplay: r'+$8,113.60',
+    percentDisplay: '+13.74%',
+    direction: NetDirection.up,
   );
 
   group(AttributionWaterfallHeader, () {
-    testWidgets('renders every annotation as one chip, label and text', (
-      tester,
-    ) async {
+    testWidgets('shows the title and the headline pill when nothing is '
+        'selected', (tester) async {
       await tester.pumpApp(
         const AttributionWaterfallHeader(
           title: 'Unrealised P/L attribution',
-          annotations: <AttributionAnnotation>[
-            AttributionAnnotation(label: 'Bitcoin', text: r'$10,230.00'),
-            AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
-          ],
+          net: net,
         ),
       );
       expect(find.text('Unrealised P/L attribution'), findsOneWidget);
-      expect(find.text(r'Bitcoin $10,230.00'), findsOneWidget);
-      expect(find.text(r'Net $8,113.60'), findsOneWidget);
+      expect(find.byType(AttributionWaterfallPill), findsOneWidget);
+      expect(find.text(r'▲ Net +$8,113.60 (+13.74%)'), findsOneWidget);
     });
 
-    testWidgets('renders a title with no annotations at all', (tester) async {
-      // `annotations` defaults to `[]` in the contract.
+    testWidgets('swaps the pill for the selected caption, verbatim', (
+      tester,
+    ) async {
+      // Flow A's D2 state: `NVDA selected` where the pill was (GGU-100 AC-3).
       await tester.pumpApp(
         const AttributionWaterfallHeader(
-          title: 'Nothing moved',
-          annotations: <AttributionAnnotation>[],
+          title: 'Unrealised P/L attribution',
+          net: net,
+          selectedLabel: 'NVDA selected',
         ),
       );
-      expect(find.text('Nothing moved'), findsOneWidget);
+      expect(find.byType(AttributionWaterfallPill), findsNothing);
+      final caption = tester.widget<Text>(find.text('NVDA selected'));
+      expect(caption.style?.color, AttributionWaterfallTokens.light.selection);
     });
   });
 
@@ -53,6 +64,21 @@ void main() {
       expect(find.text('Bitcoin'), findsOneWidget);
       expect(find.text(r'$10,230.00'), findsOneWidget);
       expect(find.text(r'$67,155.00'), findsOneWidget);
+    });
+
+    testWidgets('prints the written detail under the label, and nothing '
+        'for a total', (tester) async {
+      await tester.pumpApp(
+        AttributionWaterfallDetail(
+          step: step(WaterfallStepKind.gain, detail: r'+45.72% · 90 sh · $1'),
+        ),
+      );
+      final detail = tester.widget<Text>(find.text(r'+45.72% · 90 sh · $1'));
+      expect(detail.style?.color, AttributionWaterfallTokens.light.selection);
+      await tester.pumpApp(
+        AttributionWaterfallDetail(step: step(WaterfallStepKind.total)),
+      );
+      expect(find.textContaining(' sh · '), findsNothing);
     });
 
     testWidgets('marks a gain and a loss with their own colours', (
