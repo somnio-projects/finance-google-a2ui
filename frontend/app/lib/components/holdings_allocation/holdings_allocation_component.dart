@@ -1,6 +1,7 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_card.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_skeleton.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -30,6 +31,9 @@ class HoldingsAllocationComponent extends ViewComponent {
   @override
   Widget build(BuildContext context, ViewPayload payload) =>
       HoldingsAllocationCard(data: read(payload));
+
+  @override
+  Widget skeleton(BuildContext context) => const HoldingsAllocationSkeleton();
 
   /// Reads [payload] into the model the card draws.
   ///

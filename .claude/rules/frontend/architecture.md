@@ -75,6 +75,10 @@ A component is a **directory** under `app/lib/components/<name>/` containing
 
 - a `ViewComponent` subclass with the frozen `viewId` and its `a2uiComponent`;
 - `Widget build(BuildContext, ViewPayload)` that reads paths and renders;
+- optionally `Widget skeleton(BuildContext)` — the card drawn in its place
+  while the payload is on the way (spec frontend/0015 OD-3). The default is
+  the Assistant's generic surface; a component whose design page draws its
+  own skeleton overrides it in a `<name>_skeleton.dart` beside the binding;
 - exactly one `void register(ComponentRegistry registry)`, at the bottom.
 
 Then `make manifest`. That regenerates `component_manifest.g.dart`, which is

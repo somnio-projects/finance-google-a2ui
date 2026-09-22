@@ -160,7 +160,7 @@ the scales recompute. There is no breakpoint to keep in step with a design.
 ## Adding a component — the whole procedure
 
 1. `mkdir app/lib/components/<name>` and write `<name>_component.dart`: a `ViewComponent` subclass with the frozen `viewId`, plus `void register(ComponentRegistry)` at the bottom.
-2. Add its widget file(s) beside it and its tests under `app/test/components/<name>/`.
+2. Add its widget file(s) beside it and its tests under `app/test/components/<name>/`. If its design page draws a loading skeleton, override `skeleton(BuildContext)` in a `<name>_skeleton.dart` there too (spec frontend/0015 OD-3); otherwise the Assistant's generic surface stands in.
 3. `make manifest`, and commit the regenerated file.
 
 **No hand-written file is edited** — no registry list, no enum, no union, no

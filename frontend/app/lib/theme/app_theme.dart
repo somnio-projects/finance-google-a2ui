@@ -7,6 +7,7 @@ import 'package:finance_app/theme/catalog_palettes.dart';
 import 'package:finance_app/theme/holdings_tokens.dart';
 import 'package:finance_app/theme/home_palettes.dart';
 import 'package:finance_app/theme/login_palettes.dart';
+import 'package:finance_app/theme/skeleton_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// The app's Material 3 themes.
@@ -46,6 +47,7 @@ abstract final class AppTheme {
         holdingsTokensFor(brightness),
         activityTokensFor(brightness),
         assistantTokensFor(brightness),
+        skeletonTokensFor(brightness),
         // The developer catalog's measured chrome (spec frontend/0016 §2).
         catalogTokensFor(brightness),
         // Chart palettes stay separate: gain, loss and "a total" are semantic

@@ -1,4 +1,5 @@
 import 'package:finance_app/charts/sparkline_chart.dart';
+import 'package:finance_app/features/home/view/home_hero_loading.dart';
 import 'package:finance_app/features/home/view/home_range_selector.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -16,6 +17,7 @@ class HomeHero extends StatelessWidget {
     required this.payload,
     required this.range,
     required this.onRangeSelected,
+    this.loading = false,
     super.key,
   });
 
@@ -27,6 +29,10 @@ class HomeHero extends StatelessWidget {
 
   /// Called with the declared code of the range tapped.
   final ValueChanged<String> onRangeSelected;
+
+  /// Whether a range's figures are still on the way. The total stays; the
+  /// change and the sparkline give way to [HomeHeroLoading] (spec 0015 OD-1).
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -56,36 +62,40 @@ class HomeHero extends StatelessWidget {
           style: TextStyle(fontSize: 40, height: 1.05, color: tokens.text),
         ),
         const SizedBox(height: 6),
-        // One text, two spans: the period wraps under the change on a
-        // narrow phone instead of overflowing a row of two.
-        Text.rich(
-          TextSpan(
-            children: <InlineSpan>[
-              TextSpan(
-                text:
-                    '$glyph ${payload.text('change.amount.display')} '
-                    '(${payload.text('change.percent.display')})',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w500,
-                  color: tone,
+        if (loading)
+          const HomeHeroLoading()
+        else ...<Widget>[
+          // One text, two spans: the period wraps under the change on a
+          // narrow phone instead of overflowing a row of two.
+          Text.rich(
+            TextSpan(
+              children: <InlineSpan>[
+                TextSpan(
+                  text:
+                      '$glyph ${payload.text('change.amount.display')} '
+                      '(${payload.text('change.percent.display')})',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w500,
+                    color: tone,
+                  ),
                 ),
-              ),
-              TextSpan(
-                text: '  ${payload.text('change.period')}',
-                style: TextStyle(fontSize: 12.5, color: tokens.muted),
-              ),
-            ],
+                TextSpan(
+                  text: '  ${payload.text('change.period')}',
+                  style: TextStyle(fontSize: 12.5, color: tokens.muted),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        SparklineChart(
-          values: <double>[
-            for (final point in payload.rows('spark'))
-              point.geometry('value.amount'),
-          ],
-          color: tokens.gain,
-        ),
+          const SizedBox(height: 14),
+          SparklineChart(
+            values: <double>[
+              for (final point in payload.rows('spark'))
+                point.geometry('value.amount'),
+            ],
+            color: tokens.gain,
+          ),
+        ],
         const SizedBox(height: 16),
         HomeRangeSelector(selected: range, onSelected: onRangeSelected),
       ],

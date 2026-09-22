@@ -53,12 +53,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     HomeRangeChanged event,
     Emitter<HomeState> emit,
   ) async {
-    emit(state.copyWith(range: () => event.range));
+    // The total stays on screen and the hero says it is loading (0015 OD-1).
+    emit(
+      state.copyWith(
+        range: () => event.range,
+        status: () => HomeStatus.loading,
+      ),
+    );
     final result = await _fetch(summaryView, <String, String>{
       'range': event.range,
     });
     emit(switch (result) {
       Ok<RenderedViews>(:final value) => state.copyWith(
+        status: () => HomeStatus.success,
         summary: () => value.views[summaryView],
         failure: () => null,
       ),

@@ -1,9 +1,9 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/features/catalog/bloc/catalog_detail_bloc.dart';
 import 'package:finance_app/features/catalog/preview_states.dart';
 import 'package:finance_app/features/catalog/view/catalog_state_special.dart';
-import 'package:finance_app/features/conversation/view/assistant_skeleton.dart';
 import 'package:finance_app/theme/catalog_tokens.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -44,7 +44,7 @@ class CatalogStatePreview extends StatelessWidget {
       PreviewKind.loading => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SurfaceSkeleton(),
+          ComponentSkeletonHost(registry: registry, view: entry.id),
           if (render.state.note case final String words) ...<Widget>[
             const SizedBox(height: 10),
             Text(words, style: note),

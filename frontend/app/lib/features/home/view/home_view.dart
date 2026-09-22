@@ -1,5 +1,6 @@
 import 'package:finance_app/features/home/bloc/home_bloc.dart';
 import 'package:finance_app/features/home/view/home_allocation_card.dart';
+import 'package:finance_app/features/home/view/home_first_run.dart';
 import 'package:finance_app/features/home/view/home_header.dart';
 import 'package:finance_app/features/home/view/home_hero.dart';
 import 'package:finance_app/features/home/view/home_movers.dart';
@@ -35,9 +36,9 @@ class HomeView extends StatelessWidget {
             message: state.failure?.message ?? 'The request failed.',
           );
         }
-        if (summary == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        // Before the first payload the page is drawn as shimmer, in its own
+        // shape, rather than as a spinner (spec 0015 OD-2).
+        if (summary == null) return const HomeFirstRun();
         final allocation = state.allocation;
         return ColoredBox(
           color: tokens.page,
@@ -55,6 +56,7 @@ class HomeView extends StatelessWidget {
                 child: HomeHero(
                   payload: summary,
                   range: state.range,
+                  loading: state.status == HomeStatus.loading,
                   onRangeSelected: (range) =>
                       context.read<HomeBloc>().add(HomeRangeChanged(range)),
                 ),

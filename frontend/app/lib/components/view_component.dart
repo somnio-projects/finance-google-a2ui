@@ -1,3 +1,4 @@
+import 'package:finance_app/skeleton/surface_skeleton.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
 
@@ -36,4 +37,15 @@ abstract class ViewComponent {
   /// May throw [PayloadContractException] when the payload omits a field the
   /// component binds; the host catches it and shows the violation.
   Widget build(BuildContext context, ViewPayload payload);
+
+  /// The card drawn in this component's place while its payload is on the
+  /// way — the design's `Loading · skeleton` state (spec frontend/0015).
+  ///
+  /// The default is the Assistant's generic bars-and-pills surface. A
+  /// component whose catalog page draws its own skeleton overrides this with
+  /// that shape; the override lives beside the component, so a new skeleton
+  /// is one more file in the component's directory and no edit anywhere else
+  /// (ADR-L D-3). It takes no payload, because there is none yet: nothing a
+  /// skeleton draws may look like a figure (N-3).
+  Widget skeleton(BuildContext context) => const SurfaceSkeleton();
 }

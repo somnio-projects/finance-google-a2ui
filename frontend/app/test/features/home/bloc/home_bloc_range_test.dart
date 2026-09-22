@@ -48,9 +48,11 @@ void main() {
       build: build,
       act: (bloc) => bloc.add(const HomeRangeChanged('1w')),
       expect: () => <dynamic>[
-        const HomeState(range: '1w'),
+        // In flight: the hero says it is loading (spec 0015 OD-1).
+        const HomeState(range: '1w', status: HomeStatus.loading),
         isA<HomeState>()
             .having((s) => s.range, 'range', '1w')
+            .having((s) => s.status, 'status', HomeStatus.success)
             .having((s) => s.summary, 'summary', isNotNull),
       ],
       verify: (_) {
@@ -80,7 +82,7 @@ void main() {
       build: build,
       act: (bloc) => bloc.add(const HomeRangeChanged('1y')),
       expect: () => <dynamic>[
-        const HomeState(range: '1y'),
+        const HomeState(range: '1y', status: HomeStatus.loading),
         isA<HomeState>().having((s) => s.status, 'status', HomeStatus.failure),
       ],
     );

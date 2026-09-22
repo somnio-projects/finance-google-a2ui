@@ -3759,3 +3759,46 @@ What the run taught:
   each card says why and names its GGU gap rather than inventing the data.
 - **Flutter cannot round a non-uniform border.** The prompt panel's 3 px left
   accent plus `borderRadius` threw in paint; it is a strip inside the clip.
+## 2026-09-22 — loading states: the page arrives in its own shape
+
+`feat/first_run_states`, spec `frontend/0015`. Home before its first payload
+is `HomeFirstRun` — the page as shimmer, block for block — instead of a
+spinner; a range change keeps the total and shimmers the change and the
+sparkline (the artboard's `L2 · First-run hero`); and a surface being composed,
+in the transcript and on its gallery page, is drawn by **its own component's
+skeleton** through the same registry the payload will resolve through —
+`ViewComponent.skeleton()`, defaulting to the Assistant's generic surface, and
+`ComponentSkeletonHost` beside `ComponentHost`. Three components draw the
+skeleton their catalog page draws: the holdings ring with its hole and
+`get_holdings()…`, the payoff gridlines with the dashed line and `payoff()…`,
+the scenario table's columns.
+
+What the run taught:
+
+- **This work was done once already and lost.** A worktree under `/tmp` was
+  wiped with a session's scratch, taking an uncommitted branch with it. The
+  redo is smaller than the original — the gallery's `SurfaceSkeleton` and its
+  tokens had landed meanwhile — but the lesson is the plain one: a branch
+  that exists only in a worktree under a temp directory is not a branch.
+  Worktrees now live beside the repository, and work is pushed at the end of
+  every session.
+- **A repeating animation never settles, and neither does a suite that
+  `pumpAndSettle`s over it.** Every primitive reads
+  `MediaQuery.disableAnimations` and rests — the accessibility behaviour the
+  design owes anyway — and its tests `pump` a duration and assert the motion
+  (a quarter sweep, a breath, a quarter turn), never settle. The page suites
+  that settle do so after the payload replaces the skeleton, which is the
+  product's own sequence.
+- **`find.byType(FadeTransition)` finds the shell's fades too.** The pulse
+  and the ring are asserted as descendants of their own widget; a bare type
+  finder over a `MaterialApp` is "too many elements" waiting to happen.
+- **`.last` binds to the wrong finder when it is written inside
+  `matching:`.** `find.descendant(of: …, matching: find.byType(X).last)`
+  takes the last `X` in the whole tree and then asks whether it is a
+  descendant; the answer is usually no element. The `.last` goes on the
+  descendant finder.
+- **The artboard's caption names the range in the backend's words.**
+  `Loading last 30 days…` is `change.period`, which has not arrived when the
+  caption is on screen; the client says `Loading…` and nothing it made up
+  (N-9). The tool names on the catalog skeletons are chrome the way
+  `Composing UI…` is.
