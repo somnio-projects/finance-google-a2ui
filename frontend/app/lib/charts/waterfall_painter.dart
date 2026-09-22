@@ -20,7 +20,15 @@ class WaterfallPainter extends CustomPainter {
     required this.valueLabels,
     required this.textDirection,
     this.selectedIndex,
+    this.selectionColor,
   });
+
+  /// The selection outline's dash pattern: Flow A's D2 state draws the tapped
+  /// bar with `stroke-dasharray="3 2"` at 1.5 px, inset 4 px from the bar.
+  static const double selectionDash = 3;
+
+  /// See [selectionDash].
+  static const double selectionGap = 2;
 
   /// The corner radius of a bar's top edge, measured from the design.
   static const Radius barRadius = Radius.circular(4);
@@ -51,6 +59,9 @@ class WaterfallPainter extends CustomPainter {
   /// The step the reader has selected, if any.
   final int? selectedIndex;
 
+  /// The outline's colour; the palette's total mark when the caller has none.
+  final Color? selectionColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     _paintConnectors(canvas);
@@ -65,6 +76,7 @@ class WaterfallPainter extends CustomPainter {
       oldDelegate.layout != layout ||
       oldDelegate.palette != palette ||
       oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.selectionColor != selectionColor ||
       !listEquals(oldDelegate.valueLabels, valueLabels);
 
   void _paintBar(Canvas canvas, WaterfallBar bar) {
@@ -82,16 +94,21 @@ class WaterfallPainter extends CustomPainter {
     if (bar.index != selectedIndex) return;
     // Selection is an outline rather than a colour change: recolouring a bar
     // would collide with the gain/loss meaning the colour already carries.
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        rect.inflate(2),
-        topLeft: barRadius,
-        topRight: barRadius,
-      ),
+    // Dashed, as Flow A's D2 state draws it (GGU-100).
+    final outline = Path()
+      ..addRRect(
+        RRect.fromRectAndCorners(
+          rect.inflate(4),
+          topLeft: barRadius,
+          topRight: barRadius,
+        ),
+      );
+    canvas.drawPath(
+      dashedPath(outline, dash: selectionDash, gap: selectionGap),
       Paint()
-        ..color = palette.barTotal
+        ..color = selectionColor ?? palette.barTotal
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..strokeWidth = connectorWidth,
     );
   }
 

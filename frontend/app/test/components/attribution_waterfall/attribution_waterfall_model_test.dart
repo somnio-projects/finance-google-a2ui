@@ -8,6 +8,14 @@ void main() {
     label: 'Bitcoin',
     valueDisplay: r'$10,230.00',
     cumulativeDisplay: r'$67,155.00',
+    detail: r'+18.00% · 1.5 sh · $44,770.00',
+    selectedLabel: 'BTC selected',
+  );
+  const net = AttributionNet(
+    label: 'Net',
+    amountDisplay: r'+$8,113.60',
+    percentDisplay: '+13.74%',
+    direction: NetDirection.up,
   );
 
   group(AttributionStep, () {
@@ -15,22 +23,9 @@ void main() {
       expect(step.key, 'BTC');
     });
 
-    test('is equal to a step carrying the same geometry and figures', () {
-      expect(
-        step,
-        equals(
-          const AttributionStep(
-            step: WaterfallStep(
-              key: 'BTC',
-              kind: WaterfallStepKind.gain,
-              level: 67155,
-            ),
-            label: 'Bitcoin',
-            valueDisplay: r'$10,230.00',
-            cumulativeDisplay: r'$67,155.00',
-          ),
-        ),
-      );
+    test('carries the written detail and the selected caption', () {
+      expect(step.detail, r'+18.00% · 1.5 sh · $44,770.00');
+      expect(step.selectedLabel, 'BTC selected');
     });
 
     test('differs when a display string differs', () {
@@ -49,6 +44,26 @@ void main() {
               label: 'Bitcoin',
               valueDisplay: r'$10,230.01',
               cumulativeDisplay: r'$67,155.00',
+              detail: r'+18.00% · 1.5 sh · $44,770.00',
+              selectedLabel: 'BTC selected',
+            ),
+          ),
+        ),
+      );
+    });
+  });
+
+  group(AttributionNet, () {
+    test('differs when the direction differs', () {
+      expect(
+        net,
+        isNot(
+          equals(
+            const AttributionNet(
+              label: 'Net',
+              amountDisplay: r'+$8,113.60',
+              percentDisplay: '+13.74%',
+              direction: NetDirection.down,
             ),
           ),
         ),
@@ -74,6 +89,7 @@ void main() {
   group(AttributionWaterfallData, () {
     const data = AttributionWaterfallData(
       title: 'Unrealised P/L attribution',
+      net: net,
       steps: <AttributionStep>[step],
       annotations: <AttributionAnnotation>[
         AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
@@ -86,12 +102,13 @@ void main() {
       expect(data.axisLabels, <String>['Bitcoin']);
     });
 
-    test('is equal to a model over the same steps and notes', () {
+    test('is equal to a model over the same steps, net and notes', () {
       expect(
         data,
         equals(
           const AttributionWaterfallData(
             title: 'Unrealised P/L attribution',
+            net: net,
             steps: <AttributionStep>[step],
             annotations: <AttributionAnnotation>[
               AttributionAnnotation(label: 'Net', text: r'$8,113.60'),
@@ -109,6 +126,7 @@ void main() {
           equals(
             const AttributionWaterfallData(
               title: 'Unrealised P/L attribution',
+              net: net,
               steps: <AttributionStep>[step],
               annotations: <AttributionAnnotation>[],
             ),

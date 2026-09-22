@@ -9,6 +9,7 @@ from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import FixedClock
 from app.infra.model.null_client import NullModelClient
 from app.presentation.registry import REGISTRY
+from app.presentation.views import LOADED
 from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_service import AgentService
 from app.services.render_intent_service import RenderIntentService
@@ -36,6 +37,7 @@ def make_resolver(reporter: ErrorReporter) -> TurnRenderResolver:
     backend actually ships, so a test that invents a registry would prove
     nothing about the surfaces a real turn emits.
     """
+    assert LOADED, "the views package fills the registry; nothing else does"
     views = ViewService(
         provider=InMemoryPortfolioProvider(clock=FixedClock(FROZEN_NOW)),
         registry=REGISTRY,

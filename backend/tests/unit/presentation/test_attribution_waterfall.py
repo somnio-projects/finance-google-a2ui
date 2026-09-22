@@ -106,6 +106,8 @@ def test_surface_maps_the_payload_onto_the_waterfall(portfolio: Portfolio) -> No
     assert rendered.component == "AttributionWaterfall"
     assert rendered.view == VIEW_ID
     assert rendered.props["start"]["label"] == "Cost basis"
+    assert rendered.props["net"]["amount"]["display"] == "+$61,204.05"
+    assert rendered.props["steps"][0]["selected_label"] == "NVDA selected"
     assert len(rendered.props["steps"]) == 14
     assert rendered.props["notes"][-1] == "$61,204.05"  # net, written server-side
 

@@ -48,10 +48,16 @@ class Script:
             empty reply and spend the iteration bound repeating it.
         answer: The sentence said once every call has returned, with holes
             for the tool's own strings.
+        otherwise: What is said instead when a hole has no string to fill
+            it — a tool that answered but had nothing to show (a symbol the
+            portfolio does not hold). Defaults to the failure sentence; a
+            script sets it only when the empty answer has a meaning of its
+            own, and it carries no hole and no figure.
     """
 
     calls: tuple[ScriptedCall, ...]
     answer: str
+    otherwise: str = TOOLS_FAILED_MESSAGE
 
 
 def normalise(prompt: str) -> str:

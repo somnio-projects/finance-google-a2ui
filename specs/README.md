@@ -83,6 +83,8 @@ duplicated one are both visible at a glance.
 | [backend/0033-the-simulated-assistant-offline.md](backend/0033-the-simulated-assistant-offline.md) | In progress | *unassigned* |
 | [frontend/0008-sign-in.md](frontend/0008-sign-in.md) | In progress | *unassigned* |
 | [frontend/0010-appearance-selector.md](frontend/0010-appearance-selector.md) | In progress | *unassigned* |
+| [backend/0032-attribution-headline-and-driver-detail.md](backend/0032-attribution-headline-and-driver-detail.md) | In progress | GGU-100 (the waterfall fields); the drill-down card *unassigned* |
+| [frontend/0014-flow-a-drill-down.md](frontend/0014-flow-a-drill-down.md) | In progress | GGU-100 (the binding); the card *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft | GGU-82 |

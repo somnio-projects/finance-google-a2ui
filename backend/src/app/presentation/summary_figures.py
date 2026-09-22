@@ -1,8 +1,9 @@
 """The builders behind ``portfolio.summary.v1`` — each figure written once.
 
-Pure functions from domain facts to ADR-E pairs. The signed displays live
-here rather than in ``displays.py`` because a *signed* money is a fact about a
-change, not about an amount; nothing else in the catalog prints one.
+Pure functions from domain facts to ADR-E pairs. The signed pairs used to be
+built here, because nothing else in the catalog printed a change; the
+waterfall's headline does now (GGU-100), so they moved to ``displays.py`` and
+these two wrappers only read the precision and locale off the options.
 """
 
 from datetime import datetime
@@ -10,7 +11,6 @@ from decimal import Decimal
 from typing import Final
 
 from app.core.dates import date_display
-from app.core.signed_display import signed_money_display, signed_percentage_display
 from app.domain.day_change import (
     Mover,
     change_ratio,
@@ -21,6 +21,7 @@ from app.domain.day_change import (
 from app.domain.holdings import Holding
 from app.domain.portfolio import Portfolio
 from app.domain.portfolio_history import value_on, value_series
+from app.presentation import displays
 from app.presentation.displays import MoneyDisplay, PercentageDisplay, money
 from app.presentation.summary_options import (
     PERIOD_LABELS,
@@ -49,11 +50,8 @@ def greeting_for(as_of: datetime) -> str:
 
 def signed_money(value: Decimal, *, options: PortfolioSummaryOptions) -> MoneyDisplay:
     """Pair a signed amount with its ``+$…`` / ``-$…`` string."""
-    return MoneyDisplay(
-        amount=value,
-        display=signed_money_display(
-            value, precision=options.precision, locale=options.locale
-        ),
+    return displays.signed_money(
+        value, precision=options.precision, locale=options.locale
     )
 
 
@@ -61,12 +59,7 @@ def signed_percent(
     ratio: Decimal, *, precision: int, options: PortfolioSummaryOptions
 ) -> PercentageDisplay:
     """Pair a signed ratio with its ``+0.68%`` string."""
-    return PercentageDisplay(
-        value=ratio,
-        display=signed_percentage_display(
-            ratio, precision=precision, locale=options.locale
-        ),
-    )
+    return displays.signed_percentage(ratio, precision=precision, locale=options.locale)
 
 
 def change_over(

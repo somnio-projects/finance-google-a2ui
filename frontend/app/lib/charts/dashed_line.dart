@@ -24,3 +24,23 @@ void drawDashedLine(
     canvas.drawLine(Offset(x, from.dy), Offset(end, to.dy), paint);
   }
 }
+
+/// Returns [source] cut into [dash]-long pieces separated by [gap].
+///
+/// The outline of a selected waterfall bar is a rounded rectangle, which
+/// [drawDashedLine] cannot walk; this follows the path's own metrics instead,
+/// so the dash pattern turns the corners with it.
+Path dashedPath(Path source, {required double dash, required double gap}) {
+  final dashed = Path();
+  for (final metric in source.computeMetrics()) {
+    var distance = 0.0;
+    while (distance < metric.length) {
+      final end = distance + dash < metric.length
+          ? distance + dash
+          : metric.length;
+      dashed.addPath(metric.extractPath(distance, end), Offset.zero);
+      distance += dash + gap;
+    }
+  }
+  return dashed;
+}

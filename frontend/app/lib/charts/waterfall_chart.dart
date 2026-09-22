@@ -18,6 +18,7 @@ class WaterfallChart extends StatelessWidget {
     required this.axisLabels,
     this.onSegmentTap,
     this.selectedIndex,
+    this.selectionColor,
     super.key,
   });
 
@@ -50,9 +51,16 @@ class WaterfallChart extends StatelessWidget {
   /// The step drawn as selected, if any.
   final int? selectedIndex;
 
+  /// The colour of the selection: the dashed outline around the selected bar
+  /// and its axis label. Defaults to the palette's total mark, which is what
+  /// the catalog page rings a selected bar with in light; Flow A's D2 state
+  /// uses its own token and the card passes it in (GGU-100).
+  final Color? selectionColor;
+
   @override
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
+    final selection = selectionColor ?? palette.barTotal;
     return Column(
       // Shrink-wrapped: a chart is as tall as its plot, its rule and its
       // labels, and nothing more. Left greedy it would fill whatever it was
@@ -78,9 +86,7 @@ class WaterfallChart extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: ChartText.axis(
-                    index == selectedIndex
-                        ? palette.barTotal
-                        : palette.mutedLabel,
+                    index == selectedIndex ? selection : palette.mutedLabel,
                   ),
                 ),
               ),
@@ -96,12 +102,14 @@ class WaterfallChart extends StatelessWidget {
       width: constraints.maxWidth,
       height: constraints.maxHeight,
     );
+    final palette = ChartPalette.of(context);
     final painter = WaterfallPainter(
       layout: layout,
-      palette: ChartPalette.of(context),
+      palette: palette,
       valueLabels: valueLabels,
       textDirection: Directionality.of(context),
       selectedIndex: selectedIndex,
+      selectionColor: selectionColor ?? palette.barTotal,
     );
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

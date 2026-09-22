@@ -22,6 +22,7 @@ from app.core.display import (
     percentage_display,
 )
 from app.core.locales import DEFAULT_LOCALE
+from app.core.signed_display import signed_money_display, signed_percentage_display
 
 
 class MoneyDisplay(BaseModel):
@@ -96,4 +97,52 @@ def percentage(
     )
 
 
-__all__ = ["MoneyDisplay", "PercentageDisplay", "money", "percentage"]
+def signed_money(
+    value: Decimal, *, precision: int = MONEY_PRECISION, locale: str = DEFAULT_LOCALE
+) -> MoneyDisplay:
+    """Pair a signed amount with its ``+$…`` / ``-$…`` string — a *change*.
+
+    Args:
+        value: The exact move the domain computed.
+        precision: Decimal places to show.
+        locale: Which separators and currency placement to use.
+
+    Returns:
+        The pair a widget binds; unsigned when the move rounds flat.
+    """
+    return MoneyDisplay(
+        amount=value,
+        display=signed_money_display(value, precision=precision, locale=locale),
+    )
+
+
+def signed_percentage(
+    value: Decimal,
+    *,
+    precision: int = PERCENTAGE_PRECISION,
+    locale: str = DEFAULT_LOCALE,
+) -> PercentageDisplay:
+    """Pair a signed ratio with its ``+0.68%`` string.
+
+    Args:
+        value: The signed ratio the domain computed — ``0.0068``, not ``0.68``.
+        precision: Decimal places to show.
+        locale: Which separators to use.
+
+    Returns:
+        The pair a widget binds; unsigned when the move rounds flat.
+    """
+    return PercentageDisplay(
+        value=value,
+        display=signed_percentage_display(value, precision=precision, locale=locale),
+    )
+
+
+__all__ = [
+    "MoneyDisplay",
+    "PercentageDisplay",
+    "money",
+    "percentage",
+    "signed_money",
+    "signed_percentage",
+]

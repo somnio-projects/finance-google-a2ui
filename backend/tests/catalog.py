@@ -21,6 +21,7 @@ from typing import Final
 #: them — which is sorted, and asserted to be sorted.
 SHIPPED_VIEWS: Final[tuple[str, ...]] = (
     "activity.timeline.v1",
+    "attribution.driver.v1",
     "attribution.waterfall.v1",
     "holdings.allocation.v1",
     "holdings.positions.v1",
