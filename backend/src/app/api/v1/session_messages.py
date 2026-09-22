@@ -24,6 +24,8 @@ router = APIRouter(
 SessionsDep = Annotated[SessionService, Depends(get_session_service)]
 #: 404 covers "not the caller's session" and "the flag is off"; 422 the body.
 MESSAGE_RESPONSES = problem_responses(*AUTHENTICATED, 404, 422, 503)
+#: Only the append takes a body, so only it can exceed the body limit.
+BODY_RESPONSES = {**MESSAGE_RESPONSES, **problem_responses(413)}
 
 
 @router.post(
@@ -39,7 +41,7 @@ MESSAGE_RESPONSES = problem_responses(*AUTHENTICATED, 404, 422, 503)
         "characters; anything else answers 422. A session owned by another "
         "subject answers 404 and is not modified. Spec 0004 AC-5."
     ),
-    responses=MESSAGE_RESPONSES,
+    responses=BODY_RESPONSES,
 )
 async def append_session_message(
     session_id: SessionIdPath,

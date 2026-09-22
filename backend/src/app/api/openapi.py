@@ -12,17 +12,32 @@ from typing import Any, Final
 from app.core.errors import PROBLEM_TYPE_BASE
 from app.schemas.problem import ProblemDetails
 
-#: One sentence per status, written for the client developer reading `/docs`.
+#: One sentence per status, for the client developer reading `/docs`. Only what
+#: this service answers: the error hierarchy, the body limit (413), validation
+#: (422), the catch-all (500). A 400 and a 409 used to be here with nothing
+#: behind them — `route_facts.answerable_statuses` derives the set now (0038).
 PROBLEM_DESCRIPTIONS: Final[dict[int, str]] = {
-    400: "Malformed request (unreadable body or oversized payload).",
     401: "Missing, expired or unverifiable bearer token (`auth/*` codes).",
     403: "Authenticated but not allowed — a required scope (or MFA) is absent.",
     404: "Resource does not exist, or the endpoint is switched off by a feature flag.",
-    409: "The request conflicts with the current state of the resource.",
+    413: "The request body exceeds the configured maximum (`payload-too-large`).",
     422: "Well-formed request that failed validation (`malformed-request`).",
     429: "Rate limit exceeded for this client or token.",
     500: "Unexpected error; reported to telemetry and masked for the caller.",
     503: "A dependency (database, identity provider) is unavailable.",
+}
+
+#: The code each status carries in its ``type`` URI. Same keys as the
+#: descriptions, on purpose: one status, one sentence, one code.
+PROBLEM_CODES: Final[dict[int, str]] = {
+    401: "auth/missing-token",
+    403: "forbidden",
+    404: "feature-disabled",
+    413: "payload-too-large",
+    422: "malformed-request",
+    429: "rate-limited",
+    500: "internal",
+    503: "dependency-unavailable",
 }
 
 TAGS_METADATA: Final[list[dict[str, Any]]] = [
@@ -108,7 +123,7 @@ def problem_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
             "content": {
                 "application/problem+json": {
                     "example": {
-                        "type": f"{PROBLEM_TYPE_BASE}{_code(status)}",
+                        "type": f"{PROBLEM_TYPE_BASE}{PROBLEM_CODES[status]}",
                         "title": HTTPStatus(status).phrase,
                         "status": status,
                         "detail": PROBLEM_DESCRIPTIONS[status],
@@ -122,28 +137,13 @@ def problem_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
     }
 
 
-def _code(status: int) -> str:
-    """Map a status to the error code the API uses for it."""
-    codes = {
-        400: "malformed-request",
-        401: "auth/missing-token",
-        403: "forbidden",
-        404: "feature-disabled",
-        409: "conflict",
-        422: "malformed-request",
-        429: "rate-limited",
-        500: "internal",
-        503: "dependency-unavailable",
-    }
-    return codes[status]
-
-
 #: Statuses every authenticated route can answer with, in addition to its own.
 AUTHENTICATED: Final[tuple[int, ...]] = (401, 429, 500)
 
 __all__ = [
     "API_DESCRIPTION",
     "AUTHENTICATED",
+    "PROBLEM_CODES",
     "PROBLEM_DESCRIPTIONS",
     "TAGS_METADATA",
     "problem_responses",

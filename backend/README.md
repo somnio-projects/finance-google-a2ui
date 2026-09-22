@@ -21,13 +21,20 @@ Compose only sets the topology keys (`DATABASE_URL` → `db`, `PUBLIC_BASE_URL`,
 included — is read from `backend/.env`.
 
 - API: <http://localhost:8000> · OpenAPI: <http://localhost:8000/docs>
-- Liveness: `GET /health` · Readiness: `GET /readyz` · Who am I: `GET /v1/me`
-- Feature flags: `GET/PUT /v1/admin/feature-flags[/{key}]` (scope `admin`) — see [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md)
-- View catalog: `GET /v1/views` — every projection the backend can render, with its options schema and an example payload
-- Portfolio projections: `GET /v1/portfolios/current/views?view=<id>&view=<id>` — repeat `view` for up to four projections in one request; omit it and a documented selection rule picks one. See [ADR-K](../docs/adr/ADR-K-response-shaping.md) and [spec 0005](../specs/backend/0005-presentation-layer.md)
-- Conversation sessions: `POST/GET /v1/sessions`, `GET/DELETE /v1/sessions/{id}`,
-  `POST/GET /v1/sessions/{id}/messages` — owned by the token's subject, flag
-  `sessions.api` ([spec 0004](../specs/backend/0004-session-identity.md))
+- **Every route, with its auth, feature flag, purpose and spec:
+  [docs/ENDPOINTS.md](docs/ENDPOINTS.md)** — rendered from the built
+  application by `make openapi-docs` and diffed by `make gate`, so it cannot
+  fall behind the router. These three lines used to be a hand-written list and
+  were seven operations short of the service
+  ([spec 0038](../specs/backend/0038-the-openapi-document-is-complete.md)).
+- Worth knowing before you open it: `GET /v1/views` is the projection catalog,
+  `GET /v1/portfolios/current/views?view=<id>&view=<id>` renders up to four
+  projections in one request ([ADR-K](../docs/adr/ADR-K-response-shaping.md),
+  [spec 0005](../specs/backend/0005-presentation-layer.md)), and `POST /` is
+  the A2A JSON-RPC surface, the one place errors are not problem documents.
+- Feature flags switch endpoints off at runtime — see
+  [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md); the **Flag** column of the
+  table says which flag guards which route.
 
 Without Docker:
 
@@ -103,6 +110,7 @@ repositories are the only code that touches SQLAlchemy sessions.
 
 | Doc | What it answers |
 |---|---|
+| [docs/ENDPOINTS.md](docs/ENDPOINTS.md) | **Generated** — every operation `/openapi.json` serves, with its auth, flag, purpose and spec |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, dependency direction, patterns, how to add a feature |
 | [docs/ADDING_AN_ENDPOINT.md](docs/ADDING_AN_ENDPOINT.md) | Where routes live, the layer-by-layer recipe, controller template, tests per layer |
 | [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md) | Runtime endpoint switches: `require_feature`, admin API, kill-switch |

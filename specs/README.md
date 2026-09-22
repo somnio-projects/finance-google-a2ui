@@ -95,6 +95,7 @@ duplicated one are both visible at a glance.
 | [frontend/0019-the-turn-always-ends.md](frontend/0019-the-turn-always-ends.md) | In progress | *unassigned* |
 | [frontend/0021-three-defects-a-reader-found.md](frontend/0021-three-defects-a-reader-found.md) | In progress | *unassigned* |
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
+| [backend/0038-the-openapi-document-is-complete.md](backend/0038-the-openapi-document-is-complete.md) | Implemented | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |
