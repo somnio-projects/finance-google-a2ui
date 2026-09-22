@@ -3,9 +3,11 @@
 /// Split out of `HoldingsBloc` under the 150-line budget, along a seam worth
 /// having anyway: every key here is an option one of the two views
 /// **declares**, and keeping them together is what makes it obvious that
-/// `asset_class` and `query` never travel with the allocation card — it
-/// declares neither, and one flat option set per request means sending them
-/// together would 422 the lot (N-7).
+/// `asset_class` and `query` never travel with the allocation card. The read
+/// endpoint applies ONE flat option set to every view in a request, and the
+/// card declares neither, so sending them together would answer 422 for the
+/// whole request rather than ignoring them (N-7). That is why the tab issues
+/// two single-id reads instead of one.
 library;
 
 /// The `asset_class` value that means *no filter* — the chip the payload

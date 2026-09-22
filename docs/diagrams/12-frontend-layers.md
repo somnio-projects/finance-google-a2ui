@@ -20,7 +20,7 @@ graph TD
     comp["components/&lt;name&gt;/<br/>one directory per view id"]
     manifest["components/component_manifest.g.dart<br/><i>generated · gated by diff</i>"]
     charts["charts/<br/>CustomPainters · palettes<br/><i>needs dart:ui, so it lives here</i>"]
-    skel["skeleton/<br/>shimmer · pulse · caption · the generic surface<br/><i>what a component draws before its payload</i>"]
+    skel["skeleton/<br/>shimmer · pulse · caption · rows · switcher · the generic surface<br/><i>what a surface draws before its payload</i>"]
   end
 
   subgraph pure["packages — pure Dart, cannot import Flutter"]
@@ -64,8 +64,13 @@ graph TD
   comp --> repo
   comp --> charts
   comp --> skel
-  %% a component's skeleton() and the host's fallback both draw from here;
-  %% skeleton/ imports theme/ and nothing else (spec frontend/0015 OD-3)
+  view --> skel
+  %% a component's skeleton() and the host's fallback draw from here
+  %% (spec frontend/0015 OD-3) — and so does a _View, which composes the same
+  %% primitives into the page-shaped skeleton it shows before its first
+  %% payload and while an option it sent is in flight (spec frontend/0020).
+  %% skeleton/ imports theme/ and nothing else; it never imports a feature,
+  %% so this edge points one way like every other one here.
   charts --> geom
   comp --> geom
 

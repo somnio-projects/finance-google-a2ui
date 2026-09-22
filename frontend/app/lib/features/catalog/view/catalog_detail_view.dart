@@ -2,6 +2,7 @@ import 'package:finance_app/features/catalog/bloc/catalog_detail_bloc.dart';
 import 'package:finance_app/features/catalog/view/catalog_board.dart';
 import 'package:finance_app/features/catalog/view/catalog_detail_header.dart';
 import 'package:finance_app/features/catalog/view/catalog_guidance_cards.dart';
+import 'package:finance_app/features/catalog/view/catalog_loading.dart';
 import 'package:finance_app/features/catalog/view/catalog_preview_zone.dart';
 import 'package:finance_app/features/catalog/view/catalog_prompt_zone.dart';
 import 'package:finance_app/features/catalog/view/catalog_schema_zone.dart';
@@ -28,8 +29,9 @@ class CatalogDetailView extends StatelessWidget {
       backgroundColor: tokens.board,
       body: BlocBuilder<CatalogDetailBloc, CatalogDetailState>(
         builder: (context, state) => switch (state.status) {
-          CatalogDetailStatus.initial || CatalogDetailStatus.loading =>
-            const Center(child: CircularProgressIndicator()),
+          // The page in its own shape, not a spinner (spec 0020 AC-6).
+          CatalogDetailStatus.initial ||
+          CatalogDetailStatus.loading => const CatalogDetailLoading(),
           CatalogDetailStatus.failure => CatalogFailure(
             message: state.failure?.message ?? 'The request failed.',
           ),

@@ -56,7 +56,7 @@ def test_a_query_over_the_length_bound_is_rejected(views_client: TestClient) -> 
 
 @pytest.mark.parametrize(
     "query",
-    ["nv%da", "nv/da", "nv<da", "nv\\da", "nv;da", "nv\ndа"],
+    ["nv%da", "nv/da", "nv<da", "nv\\da", "nv;da", "nv\nda"],
     ids=["percent", "slash", "angle", "backslash", "semicolon", "newline"],
 )
 def test_a_query_outside_the_declared_alphabet_is_rejected(
@@ -87,9 +87,7 @@ def test_the_batch_entry_rejects_an_over_long_query(views_client: TestClient) ->
     response = views_client.post(
         BATCH,
         json={
-            "renders": [
-                {"view": ACTIVITY, "options": {"query": "a" * (MAX_QUERY + 1)}}
-            ]
+            "renders": [{"view": ACTIVITY, "options": {"query": "a" * (MAX_QUERY + 1)}}]
         },
         headers=AUTH,
     )

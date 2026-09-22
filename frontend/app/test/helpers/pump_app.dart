@@ -24,6 +24,12 @@ extension PumpApp on WidgetTester {
   /// is pumped at phone and at desktop width. The default 800×600 is small
   /// enough that a tall card overflows, and an overflow is a red test rather
   /// than a layout anybody wanted.
+  ///
+  /// [reducedMotion] sets `MediaQuery.disableAnimations` over the subject.
+  /// Two things need it: asserting the accessibility behaviour itself
+  /// (spec frontend/0015 OD-5, 0020 OD-7), and pumping a screen that has a
+  /// skeleton on it — a shimmer repeats for ever, so `pumpAndSettle` never
+  /// returns while one is animating.
   Future<void> pumpApp(
     Widget widget, {
     ViewsRepository? viewsRepository,
@@ -33,11 +39,13 @@ extension PumpApp on WidgetTester {
     Brightness brightness = Brightness.light,
     Size? surfaceSize,
     ThemeModeController? themeMode,
+    bool reducedMotion = false,
   }) async {
     if (surfaceSize != null) {
       await binding.setSurfaceSize(surfaceSize);
       addTearDown(() => binding.setSurfaceSize(null));
     }
+    final subject = reducedMotion ? _StillMotion(child: widget) : widget;
     return await pumpWidget(
       MultiRepositoryProvider(
         providers: <RepositoryProvider<dynamic>>[
@@ -56,7 +64,7 @@ extension PumpApp on WidgetTester {
                 theme: brightness == Brightness.dark
                     ? AppTheme.dark
                     : AppTheme.light,
-                home: widget,
+                home: subject,
               )
             : ThemeModeScope(
                 controller: themeMode,
@@ -66,11 +74,24 @@ extension PumpApp on WidgetTester {
                     theme: AppTheme.light,
                     darkTheme: AppTheme.dark,
                     themeMode: mode,
-                    home: widget,
+                    home: subject,
                   ),
                 ),
               ),
       ),
     );
   }
+}
+
+/// Turns every animation off over [child], the way the platform setting does.
+class _StillMotion extends StatelessWidget {
+  const _StillMotion({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => MediaQuery(
+    data: MediaQuery.of(context).copyWith(disableAnimations: true),
+    child: child,
+  );
 }

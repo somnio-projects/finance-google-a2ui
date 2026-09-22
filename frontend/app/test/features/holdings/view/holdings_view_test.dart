@@ -124,16 +124,18 @@ void main() {
       expect(find.text('offline'), findsOneWidget);
     });
 
-    testWidgets('spins while loading, then offers a real search', (
-      tester,
-    ) async {
+    // The first paint is `HoldingsFirstRun`; that is 0020 AC-1 and it lives
+    // in holdings_loading_test.dart. (That comment arrived saying "0018",
+    // written before the loading spec was renumbered to 0020 — 0018 is the
+    // search and filter this test is now about, so the number is corrected
+    // here rather than left pointing at the wrong spec.)
+    testWidgets('the app-bar icons are wired, not a snackbar', (tester) async {
       await tester.pumpApp(
         const Scaffold(body: HoldingsPage()),
         viewsRepository: repository,
         componentRegistry: buildComponentRegistry(),
         surfaceSize: const Size(390, 2400),
       );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Search Holdings'));
       await tester.pumpAndSettle();
