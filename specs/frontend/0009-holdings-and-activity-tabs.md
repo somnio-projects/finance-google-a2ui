@@ -24,7 +24,7 @@ in force: `group_by`, `kind`, and which of the two lists the Holdings tab shows.
 
 Read out of the rendered pages with `getComputedStyle`, light and dark. What
 `HomeTokens` (0026 §2) already carries — page, card, text, muted, gain, loss,
-the segmented pill, the ticker chip — is reused, not re-declared. The rest is
+the segmented pill, the ticker chip — is reused, not declared twice. The rest is
 `HoldingsTokens` and `ActivityTokens`, one `ThemeExtension` each, both
 registered in `AppTheme` beside the existing ones.
 
