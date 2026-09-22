@@ -88,6 +88,7 @@ duplicated one are both visible at a glance.
 | [backend/0032-attribution-headline-and-driver-detail.md](backend/0032-attribution-headline-and-driver-detail.md) | In progress | GGU-100 (the waterfall fields); the drill-down card *unassigned* |
 | [frontend/0014-flow-a-drill-down.md](frontend/0014-flow-a-drill-down.md) | In progress | GGU-100 (the binding); the card *unassigned* |
 | [backend/0034-the-catalog-serves-the-gallery.md](backend/0034-the-catalog-serves-the-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
+| [backend/0037-the-agent-reaches-the-catalog-or-says-why-not.md](backend/0037-the-agent-reaches-the-catalog-or-says-why-not.md) | In progress | *unassigned* |
 | [backend/0036-the-turn-is-fast-honest-and-observable.md](backend/0036-the-turn-is-fast-honest-and-observable.md) | In progress | *unassigned* |
 | [frontend/0016-component-catalog-gallery.md](frontend/0016-component-catalog-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
 | [frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md](frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md) | In progress | *unassigned* |
@@ -100,4 +101,5 @@ duplicated one are both visible at a glance.
 | [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
 | [infra/0002-firebase-sign-in-on-dev.md](infra/0002-firebase-sign-in-on-dev.md) | In progress | *unassigned* |
+| [infra/0003-the-migrate-job-runs-the-released-image.md](infra/0003-the-migrate-job-runs-the-released-image.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |

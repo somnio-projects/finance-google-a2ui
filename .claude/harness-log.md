@@ -3824,6 +3824,34 @@ What the run taught:
 - **The public key is public and still stays out of git**, because the
   secret scanner cannot read the ADR that says so (0002 OD-3).
 
+## 2026-09-22 — the migrate job had been running an old image all along
+
+`fix/the_migrate_job_runs_the_released_image`, spec `infra/0003`. A deploy to
+dev failed with `Can't locate revision identified by '0007'` — a message that
+reads like a broken Alembic chain and was a stale container image: the Cloud
+Run *job* kept the image it was created with while the service moved on, and
+`gcloud run jobs execute` runs whatever the job carries.
+
+What the run taught:
+
+- **An `ignore_changes` is a claim that something else owns the field.**
+  Terraform ignored the job's image so the pipeline could set it; the pipeline
+  never did. Nobody owned it and both files looked correct in isolation — the
+  same shape as the gate-pair defects in `ci-conventions.md` §5, one level out
+  from the repository.
+- **A comment that asserts behaviour is a test that never runs.** The script
+  said "the job runs on the image being released" and the suite had 44
+  assertions, none of them about the migrate step. The sentence had been false
+  since the second deploy.
+- **A second mechanism hid the first.** `RUN_MIGRATIONS=true` on the service
+  meant the schema moved anyway, at container boot, so the only symptom was
+  the job failing *afterwards* on a version its older code did not know. Left
+  in place deliberately (0003 OD-2): removing it reorders boot and migration,
+  and the admin bootstrap runs at boot.
+- **Diagnosis came from comparing two images, not from reading migrations.**
+  `gcloud run jobs describe … --format="value(…containers[0].image)"` against
+  the same field on the service is the one-line check; it belongs in the
+  runbook next time a migration "fails" on a chain that is provably contiguous.
 ## 2026-09-22 — The client runs in the stack and ships itself
 
 `feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
@@ -3955,6 +3983,42 @@ piece of state.
 **Harness:** `docs/diagrams/12-frontend-layers.md` — the `skeleton/` node
 enumerates its contents, so it names `rows` and `switcher` now;
 `.claude/rules/frontend/architecture.md` carries OD-1 as a standing rule.
+## 2026-09-22 — Eleven components, five the agent can reach
+
+`fix/agent_reach_over_the_catalog`, spec `backend/0037`. Found by asking the
+turn telemetry a question it could finally answer.
+
+What the run taught:
+
+- **A component can be complete and unreachable.** Written, registered,
+  100 %-covered, published to `/v1/views`, printed in the frozen contract,
+  bound by a Flutter widget — and impossible for the agent to compose,
+  because a render intent is attached by a *tool* and no tool names it.
+  Every gate was green over all eleven.
+- **The symptoms did not look like the cause.** "Show me my biggest winners
+  and losers" answering in prose looks like a prompt problem. "Compare
+  keeping NVDA against trimming it" drawing a tax-lot table looks like the
+  model choosing badly. Both were the same thing: the component for that
+  answer was unreachable, so the model reached for the nearest thing it
+  could actually get. **A model asked for something it cannot produce does
+  not fail — it substitutes**, and the substitute is plausible.
+- **This is GGU-79 one level up**, and the second time this repository has
+  found it. There, a component could be registered and not reachable from a
+  *route*; here, not reachable by the *agent*. Both times the seam was
+  sound and the thing past the seam was never compared with it. Worth
+  asking, the next time a registry is added: *who consumes this, and is
+  there a test that every entry reaches each consumer?*
+- **The check asserts classification, not reachability.** Demanding that
+  every view be agent-composable would be wrong — a view a screen requests
+  by `?view=` is not an answer. What must not exist is an *undeclared* gap,
+  so the registry splits three ways and a new view is red until its author
+  picks one. Same shape as `test_component_names.py`, which is red until
+  design has named the component.
+- **Reachability is read from the sources, not by running the tools.**
+  Discovering intents by exercising tools against a portfolio would make
+  the inventory depend on the seed: a tool that attaches its surface only
+  for a non-empty result would read as unreachable on an empty one, and the
+  check would change meaning when the seed changes.
 ## 2026-09-22 — The assistant, measured against the real model
 
 `fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
