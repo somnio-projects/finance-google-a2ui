@@ -3824,6 +3824,34 @@ What the run taught:
 - **The public key is public and still stays out of git**, because the
   secret scanner cannot read the ADR that says so (0002 OD-3).
 
+## 2026-09-22 — the migrate job had been running an old image all along
+
+`fix/the_migrate_job_runs_the_released_image`, spec `infra/0003`. A deploy to
+dev failed with `Can't locate revision identified by '0007'` — a message that
+reads like a broken Alembic chain and was a stale container image: the Cloud
+Run *job* kept the image it was created with while the service moved on, and
+`gcloud run jobs execute` runs whatever the job carries.
+
+What the run taught:
+
+- **An `ignore_changes` is a claim that something else owns the field.**
+  Terraform ignored the job's image so the pipeline could set it; the pipeline
+  never did. Nobody owned it and both files looked correct in isolation — the
+  same shape as the gate-pair defects in `ci-conventions.md` §5, one level out
+  from the repository.
+- **A comment that asserts behaviour is a test that never runs.** The script
+  said "the job runs on the image being released" and the suite had 44
+  assertions, none of them about the migrate step. The sentence had been false
+  since the second deploy.
+- **A second mechanism hid the first.** `RUN_MIGRATIONS=true` on the service
+  meant the schema moved anyway, at container boot, so the only symptom was
+  the job failing *afterwards* on a version its older code did not know. Left
+  in place deliberately (0003 OD-2): removing it reorders boot and migration,
+  and the admin bootstrap runs at boot.
+- **Diagnosis came from comparing two images, not from reading migrations.**
+  `gcloud run jobs describe … --format="value(…containers[0].image)"` against
+  the same field on the service is the one-line check; it belongs in the
+  runbook next time a migration "fails" on a chain that is provably contiguous.
 ## 2026-09-22 — The client runs in the stack and ships itself
 
 `feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
