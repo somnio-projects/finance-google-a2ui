@@ -2,6 +2,7 @@ import 'package:finance_app/features/activity/bloc/activity_bloc.dart';
 import 'package:finance_app/features/activity/view/activity_chips.dart';
 import 'package:finance_app/features/activity/view/activity_entry_tile.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
+import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,15 @@ class ActivityView extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
-              TabAppBar(title: timeline.text('title')),
+              TabAppBar(
+                title: timeline.text('title'),
+                // Search only: the `kind` chips below already are this
+                // tab's filter (spec frontend/0018 OD-2).
+                search: TabSearch(
+                  query: state.query,
+                  onChanged: (query) => bloc.add(ActivityQueryChanged(query)),
+                ),
+              ),
               ColoredBox(
                 color: tokens.header,
                 child: Padding(
@@ -74,6 +83,8 @@ class ActivityView extends StatelessWidget {
                   ],
                 ),
               ),
+              if (timeline.rows('groups').isEmpty)
+                TabEmpty(message: timeline.text('empty')),
               for (final group in timeline.rows('groups')) ...<Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),

@@ -1,6 +1,6 @@
 # 06 — Response shaping: who chooses the payload
 
-Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0023](../../specs/backend/0023-catalog-serves-the-client.md), [spec 0032](../../specs/backend/0032-attribution-headline-and-driver-detail.md).
+Source of truth: [ADR-K](../adr/ADR-K-response-shaping.md), [`.claude/rules/backend/presentation.md`](../../.claude/rules/backend/presentation.md), [spec 0005](../../specs/backend/0005-presentation-layer.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0023](../../specs/backend/0023-catalog-serves-the-client.md), [spec 0032](../../specs/backend/0032-attribution-headline-and-driver-detail.md), [spec 0035](../../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md).
 
 Solid = built. Dashed = planned, with the ticket that owns it.
 
@@ -19,6 +19,7 @@ flowchart TB
         v2["taxlots.table.v1 · scenario.comparison.v1<br/>payoff.curve.v1 · order.ticket.v1<br/>order.ticket.v2<br/>holdings.positions.v1 · activity.timeline.v1<br/>attribution.driver.v1<br/><i>fitness = 0 — asked for by id, never volunteered</i>"]
         vn["…the next one: one new file"]
     end
+    filt["search.py · positions_filter.py<br/>query · kind · asset_class<br/><i>the rows a list keeps, decided HERE</i>"]
     frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display<br/>every figure: display string + raw for geometry"]
     decl["actions/declared.py<br/>SurfaceActionRef, derived from the<br/>action's own args schema"]
     pub["published.py<br/>component_of · guidance_of<br/><i>derived once, read by all four renderings</i>"]
@@ -36,6 +37,7 @@ flowchart TB
     reg -- "unknown / out of range / undeclared" --> rej
     reg -- "no preference" --> sel --> views
     reg --> views
+    views --> filt --> out
     views --> frag
     views --> decl --> out
     views --> out
@@ -60,6 +62,18 @@ flowchart TB
     %% The batch is a RESOURCE, not an RPC call: POST creates it, 201 returns
     %% it inline, and EVERY entry carries its own status, so one bad view
     %% never sinks the others (ADR-K D-18).
+    %% A FILTER IS AN OPTION (spec 0035). `kind`, `asset_class` and the free
+    %% text `query` narrow the rows server-side; the client sends them as
+    %% query parameters and renders what comes back, in the order it came
+    %% (N-10). It must never filter a list it already holds — and note that
+    %% binding_rules_compute_test.dart needles .sort/.fold/.reduce but NOT
+    %% .where, so that one is the reviewer's, not the machine's.
+    %% A filter that keeps nothing answers 200 with an EMPTY list and the
+    %% projection's own `empty` sentence — never a 404, and never a sentence
+    %% the device composed (N-9).
+    %% What a filter does NOT touch is the header: holdings.positions.v1
+    %% keeps `total`, `gain` and every `weight` as facts about the WHOLE
+    %% portfolio while `positions` is narrowed (spec 0035 OD-4).
     %% The client's rejection is a 422/404; inside a batch it is that entry's
     %% problem document; the model's is a recorded fallback (ADR-K D-12).
     %% ETag covers the two GET reads only: a POST batch is not revalidated.
@@ -88,6 +102,9 @@ flowchart TB
 |---|---|
 | Registry, Protocol | `backend/src/app/presentation/registry.py`, `spec.py` |
 | Options and their bounds | `presentation/options.py` (`extra="forbid"`) |
+| The shared search option and its matcher | `presentation/search.py` (domain fields only — spec 0035 OD-6) |
+| The Holdings class filter | `presentation/positions_filter.py` |
+| The same knobs as query parameters | `schemas/view_options.py` (chart knobs) · `view_options_tabs.py` (screen knobs) |
 | Fragments, `*Display` pairs | `presentation/fragments.py`, `displays.py`, `formatting.py` |
 | Selection rule | `presentation/selection.py` (ranks each view's own `fitness`) |
 | Serving endpoints, named once | `presentation/endpoints.py` |

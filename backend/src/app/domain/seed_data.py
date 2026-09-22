@@ -1,4 +1,9 @@
-"""The curated demo portfolio, as data (spec 0003 OD-2).
+"""The curated demo portfolio's **open lots**, as data (spec 0003 OD-2).
+
+The ledger that produced them lives in ``seed_ledger.py``: the two tables
+outgrew one module when spec 0035 took the ledger to 48 rows, and they are
+split along the seam that was already there — what is *held* against what
+*happened*.
 
 Code-defined rather than a JSON fixture: a file that never changes at runtime
 does not deserve its own loader, its own validation path and its own failure
@@ -42,20 +47,6 @@ class LotRow:
     cost_basis: str
 
 
-@dataclass(frozen=True, slots=True)
-class TransactionRow:
-    """One curated ledger row, positioned relative to ``as_of``."""
-
-    transaction_id: str
-    days_before: int
-    kind: str
-    symbol: str
-    quantity: str
-    price: str
-    amount: str
-    memo: str | None = None
-
-
 SEEDED_LOTS: Final[tuple[LotRow, ...]] = (
     # The design's seven, in its order. quantity x market price = the market
     # value it draws; quantity x cost_basis-per-unit = the average cost it
@@ -87,61 +78,4 @@ SEEDED_LOTS: Final[tuple[LotRow, ...]] = (
     LotRow("lot-usd-01", "USD", 800, "38633.2200", "38633.22"),
 )
 
-SEEDED_TRANSACTIONS: Final[tuple[TransactionRow, ...]] = (
-    TransactionRow("txn-0001", 800, "buy", "AAPL", "200.0000", "155.40", "31080.00"),
-    TransactionRow("txn-0016", 300, "buy", "AAPL", "100.0000", "95.40", "9540.00"),
-    TransactionRow("txn-0002", 700, "buy", "JNJ", "30.0000", "170.00", "5100.00"),
-    TransactionRow("txn-0003", 660, "buy", "PG", "25.0000", "180.00", "4500.00"),
-    TransactionRow("txn-0004", 610, "buy", "MSFT", "110.0000", "305.20", "33572.00"),
-    TransactionRow("txn-0005", 540, "buy", "VOO", "105.0000", "402.10", "42220.50"),
-    TransactionRow("txn-0006", 520, "buy", "AGG", "400.0000", "108.00", "43200.00"),
-    TransactionRow("txn-0007", 480, "buy", "XOM", "130.0000", "42.00", "5460.00"),
-    TransactionRow("txn-0008", 460, "buy", "TIP", "30.0000", "135.00", "4050.00"),
-    TransactionRow("txn-0009", 430, "buy", "BND", "620.0000", "74.10", "45942.00"),
-    TransactionRow("txn-0010", 390, "buy", "GLD", "250.0000", "240.00", "60000.00"),
-    TransactionRow("txn-0011", 367, "buy", "NVDA", "60.0000", "760.00", "45600.00"),
-    TransactionRow("txn-0012", 363, "buy", "NVDA", "30.0000", "960.00", "28800.00"),
-    TransactionRow("txn-0013", 350, "buy", "VNQ", "93.0000", "106.51", "9905.43"),
-    # txn-0014 and txn-0015 share a date on purpose: they are what proves the
-    # same-date tiebreak in ``Portfolio.transactions`` is stable (AC-4).
-    TransactionRow("txn-0014", 210, "buy", "PYPL", "250.0000", "88.60", "22150.00"),
-    TransactionRow("txn-0015", 210, "sell", "VOO", "20.0000", "489.00", "9780.00"),
-    # Income and funding (spec 0028): what the Activity tab groups under
-    # TODAY / THIS WEEK / the month. Dividends carry the per-share amount as
-    # the price and the shares as the quantity; deposits are dollars at one.
-    # None of them moves a lot — cash is the seeded balance, not a running sum.
-    TransactionRow(
-        "txn-0017", 0, "dividend", "VOO", "85.0000", "1.62", "137.70", "qualified"
-    ),
-    TransactionRow(
-        "txn-0018",
-        2,
-        "deposit",
-        "USD",
-        "5000.0000",
-        "1.00",
-        "5000.00",
-        "Bank transfer · Chase ••4021",
-    ),
-    TransactionRow(
-        "txn-0019", 9, "dividend", "MSFT", "110.0000", "0.83", "91.30", "qualified"
-    ),
-    TransactionRow(
-        "txn-0020",
-        14,
-        "deposit",
-        "USD",
-        "2500.0000",
-        "1.00",
-        "2500.00",
-        "Payroll · Recurring",
-    ),
-    TransactionRow(
-        "txn-0021", 40, "dividend", "AAPL", "300.0000", "0.25", "75.00", "qualified"
-    ),
-    TransactionRow(
-        "txn-0022", 75, "dividend", "JNJ", "30.0000", "1.24", "37.20", "qualified"
-    ),
-)
-
-__all__ = ["SEEDED_LOTS", "SEEDED_TRANSACTIONS", "LotRow", "TransactionRow"]
+__all__ = ["SEEDED_LOTS", "LotRow"]

@@ -12,6 +12,7 @@ from typing import Final, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.day_change import Trend
+from app.domain.taxonomy import ASSET_CLASS_LABELS, AssetClass
 from app.presentation.displays import MoneyDisplay, PercentageDisplay
 from app.presentation.fragments import ProjectionDto, Total
 from app.presentation.summary_payload import Change, Question
@@ -22,11 +23,43 @@ TOTAL_LABEL: Final[str] = "Total value"
 GAIN_PERIOD: Final[str] = "all-time unrealized"
 ASK_LABEL: Final[str] = "Ask the assistant about this"
 CASH_DETAIL: Final[str] = "Settlement fund"
+EMPTY: Final[str] = "No holdings match this filter."
+AssetFilter = Literal["all", "equities", "bonds", "alternatives", "cash"]
+ALL_CLASSES: Final[AssetFilter] = "all"
 SUMMARY: Final[str] = (
     "The Holdings tab: total value with the all-time gain, then one row per "
     "position — shares and average cost, value, unrealised result, today's "
     "move, price and weight — each with the question that hands it to the "
     "assistant."
+)
+
+
+class ClassFilter(BaseModel):
+    """One chip of the Holdings filter sheet.
+
+    Deliberately not shared with ``activity_payload.Filter``: the two carry
+    the same two field names and **different** closed key enums, and a single
+    loose ``key: str`` fragment would lose both schemas to gain one class.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    key: AssetFilter = Field(description="The `asset_class` option it sets.")
+    label: str = Field(max_length=16, description="The chip's words (N-9).")
+
+
+#: The chips, in the donut's order, with cash last where it always sits.
+CLASS_FILTERS: Final[tuple[ClassFilter, ...]] = (
+    ClassFilter(key=ALL_CLASSES, label="All"),
+    *(
+        ClassFilter(key=member.value, label=ASSET_CLASS_LABELS[member])
+        for member in (
+            AssetClass.EQUITIES,
+            AssetClass.BONDS,
+            AssetClass.ALTERNATIVES,
+            AssetClass.CASH,
+        )
+    ),
 )
 
 
@@ -67,19 +100,42 @@ class HoldingsPositionsPayload(ProjectionDto):
     ask_label: str = Field(
         default=ASK_LABEL, max_length=48, description="The hand-off's caption."
     )
+    asset_class: AssetFilter = Field(
+        default=ALL_CLASSES, description="The class filter this render honoured."
+    )
+    query: str | None = Field(
+        default=None,
+        max_length=24,
+        description="The search this render honoured; absent when unfiltered.",
+    )
+    # Required rather than defaulted, unlike Activity's: the catalog prints
+    # a defaulted field's default inside `FieldDescriptor.presence`, which is
+    # bounded at 200 characters, and five class chips serialise to 204.
+    # Passing them from `render` says the same thing and fits.
+    filters: tuple[ClassFilter, ...] = Field(
+        max_length=8, description="The chips, in order."
+    )
+    empty: str = Field(
+        default=EMPTY, max_length=48, description="Shown when nothing matched."
+    )
     positions: tuple[Position, ...] = Field(
         max_length=64, description="The rows, in the requested order."
     )
 
 
 __all__ = [
+    "ALL_CLASSES",
     "ASK_LABEL",
     "CASH_DETAIL",
+    "CLASS_FILTERS",
+    "EMPTY",
     "GAIN_PERIOD",
     "SUMMARY",
     "TITLE",
     "TOTAL_LABEL",
     "VIEW_ID",
+    "AssetFilter",
+    "ClassFilter",
     "HoldingsPositionsPayload",
     "Position",
 ]

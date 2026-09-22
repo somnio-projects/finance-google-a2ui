@@ -115,7 +115,7 @@ class DraftOrderTool:
                 undeclared argument or an amount of nothing.
         """
         options = DraftOrderArguments.model_validate(dict(arguments))
-        portfolio = await context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.owner)
         requests = basket_legs(options.basket, Decimal(options.amount))
         impact = draft_impact(portfolio, requests, options.side)
         shifts = weight_shifts(portfolio, impact.legs, options.side)

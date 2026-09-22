@@ -22,7 +22,7 @@ from app.domain.seed import seed_portfolio
 from app.repositories.portfolio_repository import PortfolioRepository
 from tests.conftest import FROZEN_NOW
 
-SUBJECT = "subject-error"
+OWNER = "error@example.test"
 
 
 class BrokenSession:
@@ -72,7 +72,7 @@ def _driver_error() -> OperationalError:
 
 async def test_a_read_failure_becomes_a_named_dependency_error() -> None:
     with pytest.raises(DependencyUnavailableError, match="database read failed"):
-        await _repository(_driver_error()).find(subject=SUBJECT)
+        await _repository(_driver_error()).find(owner=OWNER)
 
 
 async def test_a_read_failure_is_chained_not_swallowed() -> None:
@@ -80,7 +80,7 @@ async def test_a_read_failure_is_chained_not_swallowed() -> None:
     original = _driver_error()
 
     with pytest.raises(DependencyUnavailableError) as caught:
-        await _repository(original).find(subject=SUBJECT)
+        await _repository(original).find(owner=OWNER)
 
     assert caught.value.__cause__ is original
 
@@ -88,20 +88,20 @@ async def test_a_read_failure_is_chained_not_swallowed() -> None:
 async def test_an_os_error_while_reading_is_handled_like_a_driver_error() -> None:
     """A socket that dies mid-statement is not a `SQLAlchemyError`."""
     with pytest.raises(DependencyUnavailableError, match="database read failed"):
-        await _repository(OSError("connection reset")).find(subject=SUBJECT)
+        await _repository(OSError("connection reset")).find(owner=OWNER)
 
 
 async def test_a_write_failure_becomes_a_named_dependency_error() -> None:
     with pytest.raises(DependencyUnavailableError, match="database read failed"):
         await _repository(_driver_error()).replace(
-            subject=SUBJECT, portfolio=seed_portfolio(as_of=FROZEN_NOW)
+            owner=OWNER, portfolio=seed_portfolio(as_of=FROZEN_NOW)
         )
 
 
 class ConflictingSession(BrokenSession):
     """Reads fine, then loses the race on the insert.
 
-    Modelled on what actually happens: `replace` looks the subject up first
+    Modelled on what actually happens: `replace` looks the owner up first
     and finds nothing, and only the INSERT collides. An earlier version of
     this test raised from `execute`, so the conflict was caught by the *read*
     handler and translated — the test passed for the wrong reason until it
@@ -122,7 +122,7 @@ class ConflictingSession(BrokenSession):
         return _Empty()
 
     async def flush(self) -> None:
-        """Collide the way `uq_portfolios_subject` makes a loser collide."""
+        """Collide the way `uq_portfolios_owner_email` makes a loser collide."""
         self.flushed = True
         raise IntegrityError("INSERT", (), Exception("duplicate key"))
 
@@ -138,6 +138,6 @@ async def test_an_integrity_error_passes_through_untranslated() -> None:
 
     with pytest.raises(IntegrityError):
         await repository.replace(
-            subject=SUBJECT, portfolio=seed_portfolio(as_of=FROZEN_NOW)
+            owner=OWNER, portfolio=seed_portfolio(as_of=FROZEN_NOW)
         )
     assert session.flushed

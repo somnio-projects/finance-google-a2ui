@@ -35,6 +35,12 @@ variable "backend_image" {
   type        = string
 }
 
+variable "seed_portfolio_owners" {
+  description = "Demo audience for the `seed-portfolios` Cloud Run job (spec backend/0035): the e-mail addresses that are given the curated portfolio when a human runs it. It is an argument list rather than an environment variable so `gcloud run jobs execute --args=a@x,b@y` can override it for a one-off. Nothing runs this job automatically."
+  type        = list(string)
+  default     = ["lbertuzzi@somniosoftware.com"]
+}
+
 variable "domain" {
   description = "Public hostname served by the HTTPS load balancer (managed certificate). Required for staging and production; must be empty for dev, which has no load balancer and is reached on Cloud Run's own run.app URL."
   type        = string

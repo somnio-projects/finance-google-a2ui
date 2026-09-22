@@ -25,3 +25,21 @@ final class ActivityKindChanged extends ActivityEvent {
   @override
   List<Object?> get props => <Object?>[kind];
 }
+
+/// The search box was edited — or closed, which sends an empty string.
+final class ActivityQueryChanged extends ActivityEvent {
+  /// Creates the event.
+  const ActivityQueryChanged(this.query);
+
+  /// The declared `query` option's value; empty means no search.
+  final String query;
+
+  @override
+  List<Object?> get props => <Object?>[query];
+}
+
+/// The debounce elapsed: fetch with whatever is now in state.
+final class ActivityReloaded extends ActivityEvent {
+  /// Creates the event.
+  const ActivityReloaded();
+}

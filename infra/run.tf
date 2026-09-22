@@ -298,3 +298,73 @@ resource "google_cloud_scheduler_job" "purge_audit_monthly" {
     }
   }
 }
+
+# The demo audience (spec `backend/0035` §4.1). A **human-run** job, on
+# purpose: `deploy_cloud_run.sh` does not execute it and no scheduler points
+# at it, because deciding who gets a portfolio is not something a deploy
+# should do on its own. `var.seed_portfolio_owners` is the list this
+# environment is created with; `gcloud run jobs execute ... --args=...`
+# overrides it for a one-off, which is the whole reason the addresses are
+# `args` and not an environment variable.
+#
+# The job is safe to re-run: an owner who already has a portfolio is skipped
+# unless `--reset` is passed (`app/jobs/seed_portfolios.py`).
+resource "google_cloud_run_v2_job" "seed_portfolios" {
+  name                = "${local.name}-seed-portfolios"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # seeding twice is safe; a blind retry still tells nobody
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["python", "-m", "app.jobs.seed_portfolios"]
+        args    = var.seed_portfolio_owners
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
+}

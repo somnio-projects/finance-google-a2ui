@@ -1,5 +1,6 @@
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/holdings/bloc/holdings_bloc.dart';
+import 'package:finance_app/features/holdings/bloc/holdings_options.dart';
 import 'package:finance_app/features/holdings/view/holdings_page.dart';
 import 'package:finance_app/features/holdings/view/position_tile.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
@@ -99,7 +100,7 @@ void main() {
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[HoldingsBloc.allocationView],
-          options: HoldingsBloc.allocationOptions('sector'),
+          options: allocationOptionsFor('sector'),
         ),
       ).called(1);
     });
@@ -123,7 +124,7 @@ void main() {
       expect(find.text('offline'), findsOneWidget);
     });
 
-    testWidgets('spins while loading, and the quiet icons say so', (
+    testWidgets('spins while loading, then offers a real search', (
       tester,
     ) async {
       await tester.pumpApp(
@@ -134,12 +135,11 @@ void main() {
       );
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Search'));
-      await tester.pump();
-      expect(
-        find.text('Search is not part of this preview yet.'),
-        findsOneWidget,
-      );
+      await tester.tap(find.byTooltip('Search Holdings'));
+      await tester.pumpAndSettle();
+      // The stub that said the icon did nothing is gone (spec 0018 AC-1).
+      expect(find.textContaining('not part of this preview'), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
     });
   });
 }

@@ -30,6 +30,8 @@ class HoldingsState extends Equatable {
   const HoldingsState({
     this.status = HoldingsStatus.initial,
     this.groupBy = 'asset_class',
+    this.assetClass = everyAssetClass,
+    this.query = '',
     this.list = HoldingsList.positions,
     this.positions,
     this.allocation,
@@ -41,6 +43,12 @@ class HoldingsState extends Equatable {
 
   /// The card's grouping — a declared option value.
   final String groupBy;
+
+  /// The class filter in force — a declared option value.
+  final String assetClass;
+
+  /// The search in force — the declared `query` option; empty means none.
+  final String query;
 
   /// Which list is shown.
   final HoldingsList list;
@@ -58,6 +66,8 @@ class HoldingsState extends Equatable {
   HoldingsState copyWith({
     HoldingsStatus? status,
     String? groupBy,
+    String? assetClass,
+    String? query,
     HoldingsList? list,
     ViewPayload? Function()? positions,
     ViewPayload? Function()? allocation,
@@ -65,6 +75,8 @@ class HoldingsState extends Equatable {
   }) => HoldingsState(
     status: status ?? this.status,
     groupBy: groupBy ?? this.groupBy,
+    assetClass: assetClass ?? this.assetClass,
+    query: query ?? this.query,
     list: list ?? this.list,
     positions: positions == null ? this.positions : positions(),
     allocation: allocation == null ? this.allocation : allocation(),
@@ -75,6 +87,8 @@ class HoldingsState extends Equatable {
   List<Object?> get props => <Object?>[
     status,
     groupBy,
+    assetClass,
+    query,
     list,
     positions,
     allocation,

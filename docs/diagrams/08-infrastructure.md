@@ -19,6 +19,8 @@ flowchart TB
             subgraph runtime["Cloud Run"]
                 svc["backend service · uid 10001<br/>exactly 1 instance, every environment<br/>prod: LB-only ingress · dev: open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
                 job["purge job<br/>audit_events retention"]
+                mig["migrate job<br/>alembic upgrade head<br/><i>run by the deploy, before the traffic shift</i>"]
+                seed["seed-portfolios job<br/>the demo audience<br/><i>run by a HUMAN, never by the deploy</i>"]
             end
             sql[("Cloud SQL PostgreSQL 16<br/>PRIVATE IP · TLS only — both environments<br/>prod: REGIONAL HA · PITR · 30 backups<br/>dev: ZONAL · no PITR · 2 backups · destroyable")]
         end
@@ -46,11 +48,16 @@ flowchart TB
     svc -. "dev only: direct VPC egress" .-> sql
     sched --> job --> conn
     job -. "dev only: direct VPC egress" .-> sql
+    mig --> conn
+    seed --> conn
     svc -. "secretAccessor" .-> sm
     job -. "secretAccessor" .-> sm
     svc --> obs
     sa -.->|"identity of"| svc
     sa -.->|"identity of"| job
+    sa -.->|"identity of"| mig
+    sa -.->|"identity of"| seed
+    dsa -->|"execute, then wait"| mig
 
     %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,delivery}.tf
     %% trivy config: 0 misconfigurations. Apply is GGU-29.
@@ -61,6 +68,16 @@ flowchart TB
     %% are identical in every environment: dev gives up durability, not privacy.
     %% The deployer can publish an image and create a revision. It cannot read
     %% a secret, reach the database, or act as any other identity.
+    %% THREE jobs, three triggers, and the third one is the point: the purge
+    %% is a monthly Scheduler, the migration is executed by the deploy before
+    %% traffic moves, and `seed-portfolios` (spec backend/0035 §4.1) is run by
+    %% a person — `gcloud run jobs execute … --args=a@x,b@y`. Nothing schedules
+    %% it and `deploy_cloud_run.sh` never mentions it, which
+    %% infra/scripts/tests/test_dev_environment.sh asserts in both directions:
+    %% deciding who gets a portfolio is not a thing a deploy should do on its
+    %% own, and a deploy that quietly reseeded an account mid-rehearsal would
+    %% be data loss with a green checkmark. Its audience is `args`, not an env
+    %% var, precisely so one execution can override it.
     %% ONE instance is not a cost choice: the rate limiter and the feature-flag
     %% cache count in process memory, so the documented per-principal limit only
     %% holds while one process serves the traffic (ADR-F D-9, GGU-83). Raising

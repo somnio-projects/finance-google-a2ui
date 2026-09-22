@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget catalog catalog-check quality test test-unit test-integration audit gate run migrate purge-audit
+.PHONY: install lint format typecheck budget catalog catalog-check quality test test-unit test-integration audit gate run migrate purge-audit seed
 
 install:
 	$(UV) sync --all-groups
@@ -48,6 +48,13 @@ AUDIT_REQ ?= $(or $(TMPDIR),/tmp)/finance-a2ui-requirements.txt
 audit:
 	$(UV) export --frozen --no-dev --no-emit-project --format requirements-txt -o $(AUDIT_REQ)
 	$(UV) tool run --with "pip<26" pip-audit --strict --progress-spinner off --disable-pip -r $(AUDIT_REQ)
+
+# Give one or more owners the curated demo portfolio (spec 0035 §4.1). Needs
+# DATABASE_URL. Safe to re-run: an owner who has one is skipped unless RESET=1.
+#   make seed OWNERS="lbertuzzi@somniosoftware.com demo@somnio.dev"
+#   make seed OWNERS="demo@somnio.dev" RESET=1
+seed:
+	$(UV) run python -m app.jobs.seed_portfolios $(if $(RESET),--reset,) $(OWNERS)
 
 # Retention job (docs/compliance/DATA_RETENTION.md): deletes audit_events older than
 # AUDIT_RETENTION_DAYS. Needs DATABASE_URL; run monthly (Cloud Scheduler in prod).

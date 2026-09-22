@@ -51,8 +51,8 @@ def get_agent_service(
 
 
 def get_tool_context(portfolio: PortfolioDep, principal: PrincipalDep) -> ToolContext:
-    """Provide the subject-scoped context every tool of a turn receives."""
-    return ToolContext(subject=principal.subject, portfolios=portfolio)
+    """Provide the owner-scoped context every tool of a turn receives."""
+    return ToolContext(owner=principal.owner_key, portfolios=portfolio)
 
 
 def get_surface_action_service(

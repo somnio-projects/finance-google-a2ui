@@ -1,8 +1,9 @@
-"""Subject-scoped access to the persisted portfolio (spec 0020).
+"""Owner-scoped access to the persisted portfolio (spec 0020, 0035).
 
-Every query is scoped by ``subject``. A portfolio belonging to somebody else
-comes back as ``None`` — never as a row the caller is then trusted to reject
-(ADR-A D-2, the same rule ``SessionRepository`` follows).
+Every query is scoped by ``owner`` — the caller's verified e-mail, lower-cased
+(``Principal.owner_key``). A portfolio belonging to somebody else comes back as
+``None`` — never as a row the caller is then trusted to reject (ADR-A D-2, the
+same rule ``SessionRepository`` follows).
 
 This module is the only place that knows the portfolio has rows at all. It
 converts between the ORM and the pure domain aggregate in both directions, so
@@ -30,27 +31,27 @@ from app.repositories.portfolio_rows import (
 
 
 class PortfolioRepository(BaseRepository[Portfolio]):
-    """Read and replace one subject's portfolio."""
+    """Read and replace one owner's portfolio."""
 
     model = Portfolio
 
-    async def find(self, *, subject: str) -> PortfolioAggregate | None:
-        """Return ``subject``'s portfolio, or ``None`` when it has none.
+    async def find(self, *, owner: str) -> PortfolioAggregate | None:
+        """Return ``owner``'s portfolio, or ``None`` when they have none.
 
         Positions are **rebuilt** from the lots rather than read: the domain
         derives them and ``Portfolio.validate`` proves the derivation, so a
         stored copy could only ever disagree with its own lots (spec 0020 §3).
 
         Args:
-            subject: The verified ``sub`` of the caller's token.
+            owner: The caller's ownership key (``Principal.owner_key``).
 
         Returns:
-            The aggregate, or ``None`` when no row belongs to this subject.
+            The aggregate, or ``None`` when no row belongs to this owner.
 
         Raises:
             DependencyUnavailableError: If the database cannot be read.
         """
-        row = await self._row_for(subject)
+        row = await self._row_for(owner)
         if row is None:
             return None
         lots = await self._lots_of(row)
@@ -64,20 +65,20 @@ class PortfolioRepository(BaseRepository[Portfolio]):
         portfolio.validate()
         return portfolio
 
-    async def replace(self, *, subject: str, portfolio: PortfolioAggregate) -> None:
-        """Store ``portfolio`` as ``subject``'s, replacing anything there.
+    async def replace(self, *, owner: str, portfolio: PortfolioAggregate) -> None:
+        """Store ``portfolio`` as ``owner``'s, replacing anything there.
 
         Args:
-            subject: The verified ``sub`` of the caller's token.
+            owner: The caller's ownership key (``Principal.owner_key``).
             portfolio: The aggregate to persist.
 
         Raises:
             DependencyUnavailableError: If the database cannot be written.
-            IntegrityError: If another writer created this subject's portfolio
+            IntegrityError: If another writer created this owner's portfolio
                 first. The caller re-reads rather than retrying the write —
-                that is the race `uq_portfolios_subject` exists to decide.
+                that is the race `uq_portfolios_owner_email` exists to decide.
         """
-        existing = await self._row_for(subject)
+        existing = await self._row_for(owner)
         try:
             # A SAVEPOINT, not a bare write. PostgreSQL aborts the whole
             # transaction on an integrity violation, so a caller that loses the
@@ -87,7 +88,7 @@ class PortfolioRepository(BaseRepository[Portfolio]):
             # block rolls back only itself and leaves the outer transaction,
             # owned by `session_scope`, usable for that re-read.
             async with self._session.begin_nested():
-                row = existing or Portfolio(subject=subject, as_of=portfolio.as_of)
+                row = existing or Portfolio(owner_email=owner, as_of=portfolio.as_of)
                 row.as_of = portfolio.as_of
                 self._session.add(row)
                 await self._session.flush()
@@ -102,11 +103,11 @@ class PortfolioRepository(BaseRepository[Portfolio]):
         except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database write failed") from exc
 
-    async def _row_for(self, subject: str) -> Portfolio | None:
-        """Return the portfolio row owned by ``subject``, scoped by it."""
+    async def _row_for(self, owner: str) -> Portfolio | None:
+        """Return the portfolio row owned by ``owner``, scoped by it."""
         try:
             result = await self._session.execute(
-                select(Portfolio).where(Portfolio.subject == subject)
+                select(Portfolio).where(Portfolio.owner_email == owner)
             )
         except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc

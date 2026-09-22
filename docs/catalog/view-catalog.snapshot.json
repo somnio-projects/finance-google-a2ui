@@ -6,12 +6,13 @@
     {
       "actions": [],
       "component": "ActivityTimeline",
-      "digest": "dcb1032a4438",
+      "digest": "d98c8952178c",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
       ],
       "example": {
+        "empty": "No activity matches this filter.",
         "filters": [
           {
             "key": "all",
@@ -110,6 +111,44 @@
             "entries": [
               {
                 "amount": {
+                  "amount": "10480.00",
+                  "display": "$10,480.00"
+                },
+                "badge": "Sell",
+                "detail": "40 sh @ $262.00 · Dec 26",
+                "key": "txn-0029",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "880.000000",
+                    "display": "+$880"
+                  },
+                  "text": "+$880 realized",
+                  "trend": "up"
+                },
+                "term": {
+                  "label": "LT gain",
+                  "term": "long"
+                },
+                "title": "Sold 40 GLD",
+                "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "130.20",
+                  "display": "+$130.20"
+                },
+                "badge": "Dividend",
+                "detail": "$0.21/sh · 620 sh · qualified",
+                "key": "txn-0030",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — BND",
+                "tone": "up"
+              },
+              {
+                "amount": {
                   "amount": "75.00",
                   "display": "+$75.00"
                 },
@@ -121,12 +160,92 @@
                 "term": null,
                 "title": "Dividend — AAPL",
                 "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "2500.00",
+                  "display": "+$2,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Recurring · Dec 2",
+                "key": "txn-0042",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Payroll",
+                "tone": "up"
               }
             ],
             "label": "DECEMBER 2025"
           },
           {
             "entries": [
+              {
+                "amount": {
+                  "amount": "25.25",
+                  "display": "+$25.25"
+                },
+                "badge": "Dividend",
+                "detail": "$1.01/sh · 25 sh · qualified",
+                "key": "txn-0031",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — PG",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "14550.00",
+                  "display": "$14,550.00"
+                },
+                "badge": "Sell",
+                "detail": "50 sh @ $291.00 · Nov 16",
+                "key": "txn-0028",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "2550.000000",
+                    "display": "+$2,550"
+                  },
+                  "text": "+$2,550 realized",
+                  "trend": "up"
+                },
+                "term": {
+                  "label": "ST gain",
+                  "term": "short"
+                },
+                "title": "Sold 50 TSLA",
+                "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "128.70",
+                  "display": "+$128.70"
+                },
+                "badge": "Dividend",
+                "detail": "$0.99/sh · 130 sh · qualified",
+                "key": "txn-0032",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — XOM",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "2500.00",
+                  "display": "+$2,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Recurring · Nov 2",
+                "key": "txn-0043",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Payroll",
+                "tone": "up"
+              },
               {
                 "amount": {
                   "amount": "37.20",
@@ -148,16 +267,262 @@
             "entries": [
               {
                 "amount": {
-                  "amount": "-22150.00",
-                  "display": "-$22,150.00"
+                  "amount": "131.75",
+                  "display": "+$131.75"
+                },
+                "badge": "Dividend",
+                "detail": "$1.55/sh · 85 sh · qualified",
+                "key": "txn-0033",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — VOO",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "1925.00",
+                  "display": "$1,925.00"
+                },
+                "badge": "Sell",
+                "detail": "50 sh @ $38.50 · Oct 12",
+                "key": "txn-0027",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "-175.000000",
+                    "display": "-$175"
+                  },
+                  "text": "-$175 realized",
+                  "trend": "down"
+                },
+                "term": {
+                  "label": "LT loss",
+                  "term": "long"
+                },
+                "title": "Sold 50 XOM",
+                "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "86.90",
+                  "display": "+$86.90"
+                },
+                "badge": "Dividend",
+                "detail": "$0.79/sh · 110 sh · qualified",
+                "key": "txn-0034",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — MSFT",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "2500.00",
+                  "display": "+$2,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Recurring · Oct 3",
+                "key": "txn-0044",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Payroll",
+                "tone": "up"
+              }
+            ],
+            "label": "OCTOBER 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "3560.00",
+                  "display": "$3,560.00"
+                },
+                "badge": "Sell",
+                "detail": "50 sh @ $71.20 · Sep 17",
+                "key": "txn-0026",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "-870.000000",
+                    "display": "-$870"
+                  },
+                  "text": "-$870 realized",
+                  "trend": "down"
+                },
+                "term": {
+                  "label": "ST loss",
+                  "term": "short"
+                },
+                "title": "Sold 50 PYPL",
+                "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "130.20",
+                  "display": "+$130.20"
+                },
+                "badge": "Dividend",
+                "detail": "$0.21/sh · 620 sh · qualified",
+                "key": "txn-0035",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — BND",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "75.00",
+                  "display": "+$75.00"
+                },
+                "badge": "Dividend",
+                "detail": "$0.25/sh · 300 sh · qualified",
+                "key": "txn-0036",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — AAPL",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "2500.00",
+                  "display": "+$2,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Recurring · Sep 3",
+                "key": "txn-0045",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Payroll",
+                "tone": "up"
+              }
+            ],
+            "label": "SEPTEMBER 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "3200.00",
+                  "display": "+$3,200.00"
+                },
+                "badge": "Deposit",
+                "detail": "Wells ••7788 · Aug 3",
+                "key": "txn-0046",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Bank transfer",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "35.70",
+                  "display": "+$35.70"
+                },
+                "badge": "Dividend",
+                "detail": "$1.19/sh · 30 sh · qualified",
+                "key": "txn-0037",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — JNJ",
+                "tone": "up"
+              }
+            ],
+            "label": "AUGUST 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "10375.00",
+                  "display": "$10,375.00"
+                },
+                "badge": "Sell",
+                "detail": "25 sh @ $415.00 · Jul 31",
+                "key": "txn-0025",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "2745.000000",
+                    "display": "+$2,745"
+                  },
+                  "text": "+$2,745 realized",
+                  "trend": "up"
+                },
+                "term": {
+                  "label": "LT gain",
+                  "term": "long"
+                },
+                "title": "Sold 25 MSFT",
+                "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "126.65",
+                  "display": "+$126.65"
+                },
+                "badge": "Dividend",
+                "detail": "$1.49/sh · 85 sh · qualified",
+                "key": "txn-0038",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — VOO",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "101.25",
+                  "display": "+$101.25"
+                },
+                "badge": "Dividend",
+                "detail": "$0.75/sh · 135 sh · qualified",
+                "key": "txn-0039",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — MSFT",
+                "tone": "up"
+              },
+              {
+                "amount": {
+                  "amount": "2500.00",
+                  "display": "+$2,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Recurring · Jul 4",
+                "key": "txn-0047",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Payroll",
+                "tone": "up"
+              }
+            ],
+            "label": "JULY 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "-26580.00",
+                  "display": "-$26,580.00"
                 },
                 "badge": "Buy",
-                "detail": "250 sh @ $88.60 · Jun 19",
+                "detail": "300 sh @ $88.60 · Jun 19",
                 "key": "txn-0014",
                 "kind": "buy",
                 "realized": null,
                 "term": null,
-                "title": "Bought 250 PYPL",
+                "title": "Bought 300 PYPL",
                 "tone": "flat"
               },
               {
@@ -183,9 +548,61 @@
                 },
                 "title": "Sold 20 VOO",
                 "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "72.00",
+                  "display": "+$72.00"
+                },
+                "badge": "Dividend",
+                "detail": "$0.24/sh · 300 sh · qualified",
+                "key": "txn-0040",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — AAPL",
+                "tone": "up"
               }
             ],
             "label": "JUNE 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "7500.00",
+                  "display": "+$7,500.00"
+                },
+                "badge": "Deposit",
+                "detail": "Annual · May 20",
+                "key": "txn-0048",
+                "kind": "deposit",
+                "realized": null,
+                "term": null,
+                "title": "Deposit — Bonus",
+                "tone": "up"
+              }
+            ],
+            "label": "MAY 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "151.20",
+                  "display": "+$151.20"
+                },
+                "badge": "Dividend",
+                "detail": "$1.44/sh · 105 sh · qualified",
+                "key": "txn-0041",
+                "kind": "dividend",
+                "realized": null,
+                "term": null,
+                "title": "Dividend — VOO",
+                "tone": "up"
+              }
+            ],
+            "label": "APRIL 2025"
           },
           {
             "entries": [
@@ -202,9 +619,52 @@
                 "term": null,
                 "title": "Bought 100 AAPL",
                 "tone": "flat"
+              },
+              {
+                "amount": {
+                  "amount": "1920.00",
+                  "display": "$1,920.00"
+                },
+                "badge": "Sell",
+                "detail": "15 sh @ $128.00 · Mar 21",
+                "key": "txn-0024",
+                "kind": "sell",
+                "realized": {
+                  "amount": {
+                    "amount": "-105.000000",
+                    "display": "-$105"
+                  },
+                  "text": "-$105 realized",
+                  "trend": "down"
+                },
+                "term": {
+                  "label": "ST loss",
+                  "term": "short"
+                },
+                "title": "Sold 15 TIP",
+                "tone": "flat"
               }
             ],
             "label": "MARCH 2025"
+          },
+          {
+            "entries": [
+              {
+                "amount": {
+                  "amount": "-12000.00",
+                  "display": "-$12,000.00"
+                },
+                "badge": "Buy",
+                "detail": "50 sh @ $240.00 · Feb 19",
+                "key": "txn-0023",
+                "kind": "buy",
+                "realized": null,
+                "term": null,
+                "title": "Bought 50 TSLA",
+                "tone": "flat"
+              }
+            ],
+            "label": "FEBRUARY 2025"
           },
           {
             "entries": [
@@ -257,16 +717,16 @@
             "entries": [
               {
                 "amount": {
-                  "amount": "-60000.00",
-                  "display": "-$60,000.00"
+                  "amount": "-69600.00",
+                  "display": "-$69,600.00"
                 },
                 "badge": "Buy",
-                "detail": "250 sh @ $240.00 · Dec 21",
+                "detail": "290 sh @ $240.00 · Dec 21",
                 "key": "txn-0010",
                 "kind": "buy",
                 "realized": null,
                 "term": null,
-                "title": "Bought 250 GLD",
+                "title": "Bought 290 GLD",
                 "tone": "flat"
               }
             ],
@@ -295,16 +755,16 @@
             "entries": [
               {
                 "amount": {
-                  "amount": "-4050.00",
-                  "display": "-$4,050.00"
+                  "amount": "-6075.00",
+                  "display": "-$6,075.00"
                 },
                 "badge": "Buy",
-                "detail": "30 sh @ $135.00 · Oct 12",
+                "detail": "45 sh @ $135.00 · Oct 12",
                 "key": "txn-0008",
                 "kind": "buy",
                 "realized": null,
                 "term": null,
-                "title": "Bought 30 TIP",
+                "title": "Bought 45 TIP",
                 "tone": "flat"
               }
             ],
@@ -314,16 +774,16 @@
             "entries": [
               {
                 "amount": {
-                  "amount": "-5460.00",
-                  "display": "-$5,460.00"
+                  "amount": "-7560.00",
+                  "display": "-$7,560.00"
                 },
                 "badge": "Buy",
-                "detail": "130 sh @ $42.00 · Sep 22",
+                "detail": "180 sh @ $42.00 · Sep 22",
                 "key": "txn-0007",
                 "kind": "buy",
                 "realized": null,
                 "term": null,
-                "title": "Bought 130 XOM",
+                "title": "Bought 180 XOM",
                 "tone": "flat"
               }
             ],
@@ -371,16 +831,16 @@
             "entries": [
               {
                 "amount": {
-                  "amount": "-33572.00",
-                  "display": "-$33,572.00"
+                  "amount": "-41202.00",
+                  "display": "-$41,202.00"
                 },
                 "badge": "Buy",
-                "detail": "110 sh @ $305.20 · May 15",
+                "detail": "135 sh @ $305.20 · May 15",
                 "key": "txn-0004",
                 "kind": "buy",
                 "realized": null,
                 "term": null,
-                "title": "Bought 110 MSFT",
+                "title": "Bought 135 MSFT",
                 "tone": "flat"
               }
             ],
@@ -446,6 +906,7 @@
         ],
         "kind": "all",
         "note": "Simulated activity — resets each session.",
+        "query": null,
         "title": "Activity",
         "view": "activity.timeline.v1"
       },
@@ -483,6 +944,14 @@
           "type": "enum all / buy / sell / dividend / deposit"
         },
         {
+          "binding": "text",
+          "input": "input · string of up to 24 characters, or omit it",
+          "path": "query",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤24 chars"
+        },
+        {
           "binding": "container",
           "input": null,
           "path": "filters",
@@ -505,6 +974,14 @@
           "presence": "required",
           "state": null,
           "type": "string ≤16 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "empty",
+          "presence": "default `\"No activity matches this filter.\"`",
+          "state": null,
+          "type": "string ≤48 chars"
         },
         {
           "binding": "container",
@@ -622,7 +1099,7 @@
       "guidance": null,
       "options_schema": {
         "additionalProperties": false,
-        "description": "The display knobs, which kinds to show, and how many rows at most.",
+        "description": "The display knobs, which kinds to show, what to search, how many.",
         "properties": {
           "currency": {
             "const": "USD",
@@ -682,13 +1159,30 @@
             "minimum": 0,
             "title": "Precision",
             "type": "integer"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Narrow the rows to those whose symbol or description contains this text, case-insensitively. Blank or omitted is no filter.",
+            "examples": [
+              "nvda"
+            ],
+            "title": "Query"
           }
         },
         "title": "ActivityOptions",
         "type": "object"
       },
       "payload_type": "ActivityTimelinePayload",
-      "prompt": "- activity.timeline.v1 — The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), kind (one of 'all', 'buy', 'sell', 'dividend', 'deposit'), limit (integer 1..200)",
+      "prompt": "- activity.timeline.v1 — The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.\n  options: query (string of up to 24 characters, or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), kind (one of 'all', 'buy', 'sell', 'dividend', 'deposit'), limit (integer 1..200)",
       "summary": "The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.",
       "view": "activity.timeline.v1"
     },
@@ -2536,13 +3030,37 @@
     {
       "actions": [],
       "component": "PositionList",
-      "digest": "279142f5554a",
+      "digest": "f27ee09d178b",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
       ],
       "example": {
         "ask_label": "Ask the assistant about this",
+        "asset_class": "all",
+        "empty": "No holdings match this filter.",
+        "filters": [
+          {
+            "key": "all",
+            "label": "All"
+          },
+          {
+            "key": "equities",
+            "label": "Equities"
+          },
+          {
+            "key": "bonds",
+            "label": "Bonds"
+          },
+          {
+            "key": "alternatives",
+            "label": "Alternatives"
+          },
+          {
+            "key": "cash",
+            "label": "Cash"
+          }
+        ],
         "gain": {
           "amount": {
             "amount": "61204.050000",
@@ -3078,6 +3596,7 @@
             }
           }
         ],
+        "query": null,
         "title": "Holdings",
         "total": {
           "amount": {
@@ -3222,6 +3741,54 @@
           "input": null,
           "path": "ask_label",
           "presence": "default `\"Ask the assistant about this\"`",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "input · one of 'all', 'equities', 'bonds', 'alternatives', 'cash'",
+          "path": "asset_class",
+          "presence": "default `\"all\"`",
+          "state": "variant",
+          "type": "enum all / equities / bonds / alternatives / cash"
+        },
+        {
+          "binding": "text",
+          "input": "input · string of up to 24 characters, or omit it",
+          "path": "query",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤24 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "filters",
+          "presence": "required",
+          "state": "empty",
+          "type": "array ≤8 items"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "filters[].key",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum all / equities / bonds / alternatives / cash"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "filters[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "empty",
+          "presence": "default `\"No holdings match this filter.\"`",
           "state": null,
           "type": "string ≤48 chars"
         },
@@ -3397,8 +3964,24 @@
       "guidance": null,
       "options_schema": {
         "additionalProperties": false,
-        "description": "What may be asked of the list: the display knobs and the row order.",
+        "description": "The display knobs, the row order, and the two filters (spec 0035).",
         "properties": {
+          "asset_class": {
+            "default": "all",
+            "description": "Keep only this asset class; `all` keeps every row.",
+            "enum": [
+              "all",
+              "equities",
+              "bonds",
+              "alternatives",
+              "cash"
+            ],
+            "examples": [
+              "bonds"
+            ],
+            "title": "Asset Class",
+            "type": "string"
+          },
           "currency": {
             "const": "USD",
             "default": "USD",
@@ -3434,6 +4017,23 @@
             "title": "Precision",
             "type": "integer"
           },
+          "query": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Narrow the rows to those whose symbol or description contains this text, case-insensitively. Blank or omitted is no filter.",
+            "examples": [
+              "nvda"
+            ],
+            "title": "Query"
+          },
           "sort": {
             "default": "value_desc",
             "description": "Row order: by value descending, ascending, or by label.",
@@ -3453,7 +4053,7 @@
         "type": "object"
       },
       "payload_type": "HoldingsPositionsPayload",
-      "prompt": "- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD')",
+      "prompt": "- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: query (string of up to 24 characters, or omit it), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), asset_class (one of 'all', 'equities', 'bonds', 'alternatives', 'cash')",
       "summary": "The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.",
       "view": "holdings.positions.v1"
     },

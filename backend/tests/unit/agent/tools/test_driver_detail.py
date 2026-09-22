@@ -55,7 +55,7 @@ async def test_the_tool_and_the_card_read_one_computation(
 ) -> None:
     """What the model says and what the card shows come from the same domain result."""
     outcome = await tool.run({"symbol": "voo"}, tool_context)
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     detail = driver_detail(portfolio, "VOO")
 
     assert detail is not None

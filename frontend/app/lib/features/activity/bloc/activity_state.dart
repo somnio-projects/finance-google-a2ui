@@ -21,6 +21,7 @@ class ActivityState extends Equatable {
   const ActivityState({
     this.status = ActivityStatus.initial,
     this.kind = 'all',
+    this.query = '',
     this.timeline,
     this.failure,
   });
@@ -30,6 +31,9 @@ class ActivityState extends Equatable {
 
   /// The filter in force — a declared option value.
   final String kind;
+
+  /// The search in force — the declared `query` option; empty means none.
+  final String query;
 
   /// `activity.timeline.v1`, once loaded.
   final ViewPayload? timeline;
@@ -41,15 +45,17 @@ class ActivityState extends Equatable {
   ActivityState copyWith({
     ActivityStatus? status,
     String? kind,
+    String? query,
     ViewPayload? Function()? timeline,
     AppFailure? Function()? failure,
   }) => ActivityState(
     status: status ?? this.status,
     kind: kind ?? this.kind,
+    query: query ?? this.query,
     timeline: timeline == null ? this.timeline : timeline(),
     failure: failure == null ? this.failure : failure(),
   );
 
   @override
-  List<Object?> get props => <Object?>[status, kind, timeline, failure];
+  List<Object?> get props => <Object?>[status, kind, query, timeline, failure];
 }

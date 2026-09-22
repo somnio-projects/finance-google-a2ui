@@ -51,7 +51,9 @@ BADGES: Final[dict[str, str]] = {
     "dividend": "Dividend",
     "deposit": "Deposit",
 }
-TERM_BADGES: Final[dict[str, str]] = {"short": "ST gain", "long": "LT gain"}
+#: What the tab says when the filters keep nothing — server-written like
+#: every other word here, so the client composes no sentence of its own (N-9).
+EMPTY: Final[str] = "No activity matches this filter."
 
 
 class TermBadge(BaseModel):
@@ -111,8 +113,16 @@ class ActivityTimelinePayload(ProjectionDto):
     title: str = Field(default=TITLE, max_length=32, description="The tab's title.")
     note: str = Field(default=NOTE, max_length=64, description="The simulation note.")
     kind: Kind = Field(description="The filter this render honoured.")
+    query: str | None = Field(
+        default=None,
+        max_length=24,
+        description="The search this render honoured; absent when unfiltered.",
+    )
     filters: tuple[Filter, ...] = Field(
         default=FILTERS, max_length=8, description="The chips, in order."
+    )
+    empty: str = Field(
+        default=EMPTY, max_length=48, description="Shown when nothing matched."
     )
     groups: tuple[ActivityGroup, ...] = Field(
         max_length=64, description="The dated sections, newest first."
@@ -121,10 +131,10 @@ class ActivityTimelinePayload(ProjectionDto):
 
 __all__ = [
     "BADGES",
+    "EMPTY",
     "FILTERS",
     "NOTE",
     "SUMMARY",
-    "TERM_BADGES",
     "TITLE",
     "VIEW_ID",
     "ActivityEntry",

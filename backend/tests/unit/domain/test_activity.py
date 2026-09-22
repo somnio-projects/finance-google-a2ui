@@ -24,8 +24,12 @@ def _row(
     )
 
 
-def test_the_seeded_sale_realised_a_short_term_gain(portfolio: Portfolio) -> None:
-    sale = next(row for row in portfolio.ledger if row.kind is TransactionType.SELL)
+def test_the_seeded_voo_sale_realised_a_short_term_gain(portfolio: Portfolio) -> None:
+    sale = next(
+        row
+        for row in portfolio.ledger
+        if row.kind is TransactionType.SELL and row.transaction_id == "txn-0015"
+    )
     realized = realized_of(sale, portfolio.ledger)
     assert realized is not None
     # 20 VOO sold at $489 against the $402.10 they were bought at, 330 days on.

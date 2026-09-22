@@ -105,7 +105,7 @@ class DriverDetailTool:
         """
         options = DriverDetailArguments.model_validate(dict(arguments))
         symbol = normalize_symbol(options.symbol)
-        portfolio = await context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.owner)
         detail = driver_detail(portfolio, symbol)
         if detail is None:
             return ToolOutcome(data={"symbol": symbol, "held": False})

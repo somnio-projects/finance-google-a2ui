@@ -139,11 +139,11 @@ Three of the four states design needs are facts about the schema. One is not:
 
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
-| [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `dcb1032a4438` | 21 | `kind`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
+| [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `d98c8952178c` | 23 | `kind`, `query`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
 | [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `13c7eae1516d` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `1f290bfc4970` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
-| [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `279142f5554a` | 38 | read-only | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
+| [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `f27ee09d178b` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `e6c713d6a144` | 64 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `7066577b5390` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
@@ -155,16 +155,17 @@ Three of the four states design needs are facts about the schema. One is not:
 
 > The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.
 
-- **Frozen id:** `activity.timeline.v1` · **digest:** `dcb1032a4438`
+- **Frozen id:** `activity.timeline.v1` · **digest:** `d98c8952178c`
 - **Component:** `ActivityTimeline`
 - **Payload type:** `ActivityTimelinePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
-- **Editable fields:** `kind`, `groups[].entries[].kind`
+- **Editable fields:** `kind`, `query`, `groups[].entries[].kind`
 
 ### Options
 
 | Option | Type / format | Accepts | Default | Description |
 |---|---|---|---|---|
+| `query` | string ≤24 chars | string of up to 24 characters, or omit it | `null` | Narrow the rows to those whose symbol or description contains this text, case-insensitively. Blank or omitted is no filter. |
 | `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
@@ -179,9 +180,11 @@ Three of the four states design needs are facts about the schema. One is not:
 | `title` | string ≤32 chars | default `"Activity"` | `text` | — | — |
 | `note` | string ≤64 chars | default `"Simulated activity \u2014 resets each session."` | `text` | — | — |
 | `kind` | enum all / buy / sell / dividend / deposit | required | `enum` | variant | input · one of 'all', 'buy', 'sell', 'dividend', 'deposit' |
+| `query` | string ≤24 chars | default `null` | `text` | null | input · string of up to 24 characters, or omit it |
 | `filters` | array ≤8 items | default `[{"key": "all", "label": "All"}, {"key": "buy", "label": "Buys"}, {"key": "sell", "label": "Sells"}, {"key": "dividend", "label": "Dividends"}, {"key": "deposit", "label": "Deposits"}]` | `container` | empty | — |
 | `filters[].key` | enum all / buy / sell / dividend / deposit | required | `enum` | variant | — |
 | `filters[].label` | string ≤16 chars | required | `text` | — | — |
+| `empty` | string ≤48 chars | default `"No activity matches this filter."` | `text` | — | — |
 | `groups` | array ≤64 items | required | `container` | empty | — |
 | `groups[].label` | string ≤24 chars | required | `text` | — | — |
 | `groups[].entries` | array ≤200 items | required | `container` | empty | — |
@@ -213,6 +216,7 @@ _This surface sends nothing back: tapping it starts no turn._
   "title": "Activity",
   "note": "Simulated activity \u2014 resets each session.",
   "kind": "all",
+  "query": null,
   "filters": [
     {
       "key": "all",
@@ -235,6 +239,7 @@ _This surface sends nothing back: tapping it starts no turn._
       "label": "Deposits"
     }
   ],
+  "empty": "No activity matches this filter.",
   "groups": [
     {
       "label": "TODAY",
@@ -311,6 +316,44 @@ _This surface sends nothing back: tapping it starts no turn._
       "label": "DECEMBER 2025",
       "entries": [
         {
+          "key": "txn-0029",
+          "kind": "sell",
+          "title": "Sold 40 GLD",
+          "detail": "40 sh @ $262.00 \u00b7 Dec 26",
+          "amount": {
+            "amount": "10480.00",
+            "display": "$10,480.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "880.000000",
+              "display": "+$880"
+            },
+            "text": "+$880 realized",
+            "trend": "up"
+          },
+          "term": {
+            "term": "long",
+            "label": "LT gain"
+          }
+        },
+        {
+          "key": "txn-0030",
+          "kind": "dividend",
+          "title": "Dividend \u2014 BND",
+          "detail": "$0.21/sh \u00b7 620 sh \u00b7 qualified",
+          "amount": {
+            "amount": "130.20",
+            "display": "+$130.20"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
           "key": "txn-0021",
           "kind": "dividend",
           "title": "Dividend \u2014 AAPL",
@@ -323,12 +366,92 @@ _This surface sends nothing back: tapping it starts no turn._
           "badge": "Dividend",
           "realized": null,
           "term": null
+        },
+        {
+          "key": "txn-0042",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Dec 2",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
         }
       ]
     },
     {
       "label": "NOVEMBER 2025",
       "entries": [
+        {
+          "key": "txn-0031",
+          "kind": "dividend",
+          "title": "Dividend \u2014 PG",
+          "detail": "$1.01/sh \u00b7 25 sh \u00b7 qualified",
+          "amount": {
+            "amount": "25.25",
+            "display": "+$25.25"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0028",
+          "kind": "sell",
+          "title": "Sold 50 TSLA",
+          "detail": "50 sh @ $291.00 \u00b7 Nov 16",
+          "amount": {
+            "amount": "14550.00",
+            "display": "$14,550.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "2550.000000",
+              "display": "+$2,550"
+            },
+            "text": "+$2,550 realized",
+            "trend": "up"
+          },
+          "term": {
+            "term": "short",
+            "label": "ST gain"
+          }
+        },
+        {
+          "key": "txn-0032",
+          "kind": "dividend",
+          "title": "Dividend \u2014 XOM",
+          "detail": "$0.99/sh \u00b7 130 sh \u00b7 qualified",
+          "amount": {
+            "amount": "128.70",
+            "display": "+$128.70"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0043",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Nov 2",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        },
         {
           "key": "txn-0022",
           "kind": "dividend",
@@ -346,16 +469,262 @@ _This surface sends nothing back: tapping it starts no turn._
       ]
     },
     {
+      "label": "OCTOBER 2025",
+      "entries": [
+        {
+          "key": "txn-0033",
+          "kind": "dividend",
+          "title": "Dividend \u2014 VOO",
+          "detail": "$1.55/sh \u00b7 85 sh \u00b7 qualified",
+          "amount": {
+            "amount": "131.75",
+            "display": "+$131.75"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0027",
+          "kind": "sell",
+          "title": "Sold 50 XOM",
+          "detail": "50 sh @ $38.50 \u00b7 Oct 12",
+          "amount": {
+            "amount": "1925.00",
+            "display": "$1,925.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "-175.000000",
+              "display": "-$175"
+            },
+            "text": "-$175 realized",
+            "trend": "down"
+          },
+          "term": {
+            "term": "long",
+            "label": "LT loss"
+          }
+        },
+        {
+          "key": "txn-0034",
+          "kind": "dividend",
+          "title": "Dividend \u2014 MSFT",
+          "detail": "$0.79/sh \u00b7 110 sh \u00b7 qualified",
+          "amount": {
+            "amount": "86.90",
+            "display": "+$86.90"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0044",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Oct 3",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "SEPTEMBER 2025",
+      "entries": [
+        {
+          "key": "txn-0026",
+          "kind": "sell",
+          "title": "Sold 50 PYPL",
+          "detail": "50 sh @ $71.20 \u00b7 Sep 17",
+          "amount": {
+            "amount": "3560.00",
+            "display": "$3,560.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "-870.000000",
+              "display": "-$870"
+            },
+            "text": "-$870 realized",
+            "trend": "down"
+          },
+          "term": {
+            "term": "short",
+            "label": "ST loss"
+          }
+        },
+        {
+          "key": "txn-0035",
+          "kind": "dividend",
+          "title": "Dividend \u2014 BND",
+          "detail": "$0.21/sh \u00b7 620 sh \u00b7 qualified",
+          "amount": {
+            "amount": "130.20",
+            "display": "+$130.20"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0036",
+          "kind": "dividend",
+          "title": "Dividend \u2014 AAPL",
+          "detail": "$0.25/sh \u00b7 300 sh \u00b7 qualified",
+          "amount": {
+            "amount": "75.00",
+            "display": "+$75.00"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0045",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Sep 3",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "AUGUST 2025",
+      "entries": [
+        {
+          "key": "txn-0046",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Bank transfer",
+          "detail": "Wells \u2022\u20227788 \u00b7 Aug 3",
+          "amount": {
+            "amount": "3200.00",
+            "display": "+$3,200.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0037",
+          "kind": "dividend",
+          "title": "Dividend \u2014 JNJ",
+          "detail": "$1.19/sh \u00b7 30 sh \u00b7 qualified",
+          "amount": {
+            "amount": "35.70",
+            "display": "+$35.70"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "JULY 2025",
+      "entries": [
+        {
+          "key": "txn-0025",
+          "kind": "sell",
+          "title": "Sold 25 MSFT",
+          "detail": "25 sh @ $415.00 \u00b7 Jul 31",
+          "amount": {
+            "amount": "10375.00",
+            "display": "$10,375.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "2745.000000",
+              "display": "+$2,745"
+            },
+            "text": "+$2,745 realized",
+            "trend": "up"
+          },
+          "term": {
+            "term": "long",
+            "label": "LT gain"
+          }
+        },
+        {
+          "key": "txn-0038",
+          "kind": "dividend",
+          "title": "Dividend \u2014 VOO",
+          "detail": "$1.49/sh \u00b7 85 sh \u00b7 qualified",
+          "amount": {
+            "amount": "126.65",
+            "display": "+$126.65"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0039",
+          "kind": "dividend",
+          "title": "Dividend \u2014 MSFT",
+          "detail": "$0.75/sh \u00b7 135 sh \u00b7 qualified",
+          "amount": {
+            "amount": "101.25",
+            "display": "+$101.25"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0047",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Payroll",
+          "detail": "Recurring \u00b7 Jul 4",
+          "amount": {
+            "amount": "2500.00",
+            "display": "+$2,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
       "label": "JUNE 2025",
       "entries": [
         {
           "key": "txn-0014",
           "kind": "buy",
-          "title": "Bought 250 PYPL",
-          "detail": "250 sh @ $88.60 \u00b7 Jun 19",
+          "title": "Bought 300 PYPL",
+          "detail": "300 sh @ $88.60 \u00b7 Jun 19",
           "amount": {
-            "amount": "-22150.00",
-            "display": "-$22,150.00"
+            "amount": "-26580.00",
+            "display": "-$26,580.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -385,6 +754,58 @@ _This surface sends nothing back: tapping it starts no turn._
             "term": "short",
             "label": "ST gain"
           }
+        },
+        {
+          "key": "txn-0040",
+          "kind": "dividend",
+          "title": "Dividend \u2014 AAPL",
+          "detail": "$0.24/sh \u00b7 300 sh \u00b7 qualified",
+          "amount": {
+            "amount": "72.00",
+            "display": "+$72.00"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "MAY 2025",
+      "entries": [
+        {
+          "key": "txn-0048",
+          "kind": "deposit",
+          "title": "Deposit \u2014 Bonus",
+          "detail": "Annual \u00b7 May 20",
+          "amount": {
+            "amount": "7500.00",
+            "display": "+$7,500.00"
+          },
+          "tone": "up",
+          "badge": "Deposit",
+          "realized": null,
+          "term": null
+        }
+      ]
+    },
+    {
+      "label": "APRIL 2025",
+      "entries": [
+        {
+          "key": "txn-0041",
+          "kind": "dividend",
+          "title": "Dividend \u2014 VOO",
+          "detail": "$1.44/sh \u00b7 105 sh \u00b7 qualified",
+          "amount": {
+            "amount": "151.20",
+            "display": "+$151.20"
+          },
+          "tone": "up",
+          "badge": "Dividend",
+          "realized": null,
+          "term": null
         }
       ]
     },
@@ -399,6 +820,49 @@ _This surface sends nothing back: tapping it starts no turn._
           "amount": {
             "amount": "-9540.00",
             "display": "-$9,540.00"
+          },
+          "tone": "flat",
+          "badge": "Buy",
+          "realized": null,
+          "term": null
+        },
+        {
+          "key": "txn-0024",
+          "kind": "sell",
+          "title": "Sold 15 TIP",
+          "detail": "15 sh @ $128.00 \u00b7 Mar 21",
+          "amount": {
+            "amount": "1920.00",
+            "display": "$1,920.00"
+          },
+          "tone": "flat",
+          "badge": "Sell",
+          "realized": {
+            "amount": {
+              "amount": "-105.000000",
+              "display": "-$105"
+            },
+            "text": "-$105 realized",
+            "trend": "down"
+          },
+          "term": {
+            "term": "short",
+            "label": "ST loss"
+          }
+        }
+      ]
+    },
+    {
+      "label": "FEBRUARY 2025",
+      "entries": [
+        {
+          "key": "txn-0023",
+          "kind": "buy",
+          "title": "Bought 50 TSLA",
+          "detail": "50 sh @ $240.00 \u00b7 Feb 19",
+          "amount": {
+            "amount": "-12000.00",
+            "display": "-$12,000.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -460,11 +924,11 @@ _This surface sends nothing back: tapping it starts no turn._
         {
           "key": "txn-0010",
           "kind": "buy",
-          "title": "Bought 250 GLD",
-          "detail": "250 sh @ $240.00 \u00b7 Dec 21",
+          "title": "Bought 290 GLD",
+          "detail": "290 sh @ $240.00 \u00b7 Dec 21",
           "amount": {
-            "amount": "-60000.00",
-            "display": "-$60,000.00"
+            "amount": "-69600.00",
+            "display": "-$69,600.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -498,11 +962,11 @@ _This surface sends nothing back: tapping it starts no turn._
         {
           "key": "txn-0008",
           "kind": "buy",
-          "title": "Bought 30 TIP",
-          "detail": "30 sh @ $135.00 \u00b7 Oct 12",
+          "title": "Bought 45 TIP",
+          "detail": "45 sh @ $135.00 \u00b7 Oct 12",
           "amount": {
-            "amount": "-4050.00",
-            "display": "-$4,050.00"
+            "amount": "-6075.00",
+            "display": "-$6,075.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -517,11 +981,11 @@ _This surface sends nothing back: tapping it starts no turn._
         {
           "key": "txn-0007",
           "kind": "buy",
-          "title": "Bought 130 XOM",
-          "detail": "130 sh @ $42.00 \u00b7 Sep 22",
+          "title": "Bought 180 XOM",
+          "detail": "180 sh @ $42.00 \u00b7 Sep 22",
           "amount": {
-            "amount": "-5460.00",
-            "display": "-$5,460.00"
+            "amount": "-7560.00",
+            "display": "-$7,560.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -574,11 +1038,11 @@ _This surface sends nothing back: tapping it starts no turn._
         {
           "key": "txn-0004",
           "kind": "buy",
-          "title": "Bought 110 MSFT",
-          "detail": "110 sh @ $305.20 \u00b7 May 15",
+          "title": "Bought 135 MSFT",
+          "detail": "135 sh @ $305.20 \u00b7 May 15",
           "amount": {
-            "amount": "-33572.00",
-            "display": "-$33,572.00"
+            "amount": "-41202.00",
+            "display": "-$41,202.00"
           },
           "tone": "flat",
           "badge": "Buy",
@@ -1513,20 +1977,22 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.
 
-- **Frozen id:** `holdings.positions.v1` · **digest:** `279142f5554a`
+- **Frozen id:** `holdings.positions.v1` · **digest:** `f27ee09d178b`
 - **Component:** `PositionList`
 - **Payload type:** `HoldingsPositionsPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
-- **Editable fields:** read-only
+- **Editable fields:** `asset_class`, `query`
 
 ### Options
 
 | Option | Type / format | Accepts | Default | Description |
 |---|---|---|---|---|
+| `query` | string ≤24 chars | string of up to 24 characters, or omit it | `null` | Narrow the rows to those whose symbol or description contains this text, case-insensitively. Blank or omitted is no filter. |
 | `sort` | enum value_desc / value_asc / label | one of 'value_desc', 'value_asc', 'label' | `"value_desc"` | Row order: by value descending, ascending, or by label. |
 | `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
 | `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
 | `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `asset_class` | enum all / equities / bonds / alternatives / cash | one of 'all', 'equities', 'bonds', 'alternatives', 'cash' | `"all"` | Keep only this asset class; `all` keeps every row. |
 
 ### Field inventory
 
@@ -1549,6 +2015,12 @@ _This surface sends nothing back: tapping it starts no turn._
 | `gain.trend` | enum up / down / flat | required | `enum` | variant | — |
 | `gain.period` | string ≤24 chars | required | `text` | — | — |
 | `ask_label` | string ≤48 chars | default `"Ask the assistant about this"` | `text` | — | — |
+| `asset_class` | enum all / equities / bonds / alternatives / cash | default `"all"` | `enum` | variant | input · one of 'all', 'equities', 'bonds', 'alternatives', 'cash' |
+| `query` | string ≤24 chars | default `null` | `text` | null | input · string of up to 24 characters, or omit it |
+| `filters` | array ≤8 items | required | `container` | empty | — |
+| `filters[].key` | enum all / equities / bonds / alternatives / cash | required | `enum` | variant | — |
+| `filters[].label` | string ≤16 chars | required | `text` | — | — |
+| `empty` | string ≤48 chars | default `"No holdings match this filter."` | `text` | — | — |
 | `positions` | array ≤64 items | required | `container` | empty | — |
 | `positions[].symbol` | string ≤10 chars | required | `text` | — | — |
 | `positions[].name` | string ≤64 chars | required | `text` | — | — |
@@ -1605,6 +2077,31 @@ _This surface sends nothing back: tapping it starts no turn._
     "period": "all-time unrealized"
   },
   "ask_label": "Ask the assistant about this",
+  "asset_class": "all",
+  "query": null,
+  "filters": [
+    {
+      "key": "all",
+      "label": "All"
+    },
+    {
+      "key": "equities",
+      "label": "Equities"
+    },
+    {
+      "key": "bonds",
+      "label": "Bonds"
+    },
+    {
+      "key": "alternatives",
+      "label": "Alternatives"
+    },
+    {
+      "key": "cash",
+      "label": "Cash"
+    }
+  ],
+  "empty": "No holdings match this filter.",
   "positions": [
     {
       "symbol": "NVDA",
