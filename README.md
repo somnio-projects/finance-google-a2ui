@@ -105,8 +105,11 @@ Two variables are worth knowing before you start:
   to verify real ID tokens from Firebase, Google or any other issuer through
   its JWKS endpoint. Switching is a configuration change, not a code change.
 - `GEMINI_API_KEY` — optional. Leave it unset and the agent uses a
-  deterministic null client that needs no network, which is how the whole test
-  suite runs. Set it and the same code path talks to Gemini.
+  deterministic **scripted** client that needs no network: the demo's three
+  questions, the curated chips and a tapped bar replay their tool calls with a
+  server-written sentence, and anything else answers that no provider is
+  configured (spec `backend/0033`). Set it and the same code path talks to
+  Gemini. The test suite uses a null client that records what it was sent.
 
 ## Run the Flutter client
 
