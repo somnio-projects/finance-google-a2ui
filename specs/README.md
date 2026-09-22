@@ -80,6 +80,7 @@ duplicated one are both visible at a glance.
 | [frontend/0011-the-assistant-as-designed.md](frontend/0011-the-assistant-as-designed.md) | In progress | *unassigned* |
 | [backend/0030-the-greeting-names-the-caller.md](backend/0030-the-greeting-names-the-caller.md) | In progress | *unassigned* |
 | [frontend/0012-details-the-review-found.md](frontend/0012-details-the-review-found.md) | In progress | *unassigned* |
+| [backend/0033-the-simulated-assistant-offline.md](backend/0033-the-simulated-assistant-offline.md) | In progress | *unassigned* |
 | [frontend/0008-sign-in.md](frontend/0008-sign-in.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | Draft | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | Draft | GGU-82 |

@@ -33,12 +33,12 @@ against the spec that proposed it.
 
 | Question | Answer | Evidence |
 |---|---|---|
-| Is it in use? | **Yes.** It has been live since specs `backend/0006`/`0009`/`0010` merged. An unset `GEMINI_API_KEY` falls back to `NullModelClient`, so absence of a key is not absence of the vendor | `backend/src/app/infra/model/gemini_client.py`, `bootstrap.py` |
+| Is it in use? | **Yes.** It has been live since specs `backend/0006`/`0009`/`0010` merged. An unset `GEMINI_API_KEY` falls back to the deterministic `ScriptedModelClient`, so absence of a key is not absence of the vendor | `backend/src/app/infra/model/gemini_client.py`, `bootstrap.py` |
 | What data class reaches it? | **Confidential** — `messages.content` is user free text, now classified in [DATA_CLASSIFICATION.md](DATA_CLASSIFICATION.md) §2 | `models/conversation_message.py` |
 | Does it receive identifiers? | **No.** The prompt carries the question and tool results; the `sub`, the email claim and the token never enter the payload | `infra/model/payload.py`, `services/prompt_service.py` |
 | Is the key protected? | **Yes.** `SecretStr`, `get_secret_value()` called in exactly one function, on the way into a header — asserted by a boundary test over the parsed source | `gemini_client.py` |
 | Region | US | `gemini_base_url` default |
-| Exit path | Unset `GEMINI_API_KEY`; the agent degrades to `NullModelClient` rather than failing. The `agent.a2a` flag switches the surface off outright | `api/a2a.py`, `infra/model/null_client.py` |
+| Exit path | Unset `GEMINI_API_KEY`; the agent degrades to the scripted `ScriptedModelClient` rather than failing. The `agent.a2a` flag switches the surface off outright | `api/a2a.py`, `infra/model/scripted_client.py` |
 
 **Open gap (G-VEN-1) — the paid-tier training exclusion is not verified ·
 Owner: eng. management · Due 2026-10-31.**

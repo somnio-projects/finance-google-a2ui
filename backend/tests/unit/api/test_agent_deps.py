@@ -3,7 +3,8 @@
 GGU-3 adds the controller and GGU-46 the history; the providers exist now so
 both land as a controller rather than as a second wiring path. A turn is run
 through them end to end: with no ``GEMINI_API_KEY`` the container holds the
-null client, so the service answers deterministically and opens no socket.
+scripted client (spec 0033), so a prompt outside its table gets the honest
+unconfigured sentence, deterministically, and no socket is opened.
 """
 
 from fastapi import FastAPI
