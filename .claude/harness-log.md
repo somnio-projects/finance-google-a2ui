@@ -3924,3 +3924,49 @@ What the run taught:
   the inventory depend on the seed: a tool that attaches its surface only
   for a non-empty result would read as unreachable on an empty one, and the
   check would change meaning when the seed changes.
+## 2026-09-22 — The assistant, measured against the real model
+
+`fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
+agent was reported as crashing. It was not crashing; it was doing four things
+wrong at once and reporting none of them.
+
+What the run taught:
+
+- **A badge that is chrome cannot tell you anything.** The header's
+  `Simulated` pill is hardcoded from the artboards and refers to the
+  simulated **portfolio**. It reads as a statement about the model, it says
+  `Gemini · A2UI` whatever the backend runs, and the first ten minutes of
+  this investigation went into a screenshot that could not have been
+  evidence either way.
+- **`ReadTimeout` is a `TransportError`, and that inheritance was a trap.**
+  "Retry transport errors" therefore retried a model that answered too
+  slowly, three times, turning one slow turn into a 64 s failure. The lesson
+  generalises: a retry predicate written against an exception *hierarchy*
+  inherits whatever the library decided to group, and the grouping is not
+  always the one your policy means.
+- **A prompt that asks for something the model cannot do gets prose.** The
+  catalog header told the model to "pick a view by id and fill its options".
+  Nothing in the tool surface lets it. So it wrote the JSON into its answer —
+  twice in three runs of one question — and once refused an option the
+  catalog declares. The model was not confused; the instruction was wrong.
+- **The option had been declared for weeks and nothing passed it.** A
+  projection can hold a perfectly good `group_by` enum while every caller
+  sends the default, and the only visible symptom is a chart that quietly
+  disagrees with the sentence above it. **A declared option with no caller is
+  a dead option**, and nothing in the gate says so — `make catalog` proves the
+  artefact is current, never that anything uses it.
+- **Telemetry that cannot answer the product's own question.** `agent.turn`
+  logged iterations and tool calls, and nothing about whether the turn
+  composed a surface. This showcase exists to demonstrate composed UI; the
+  one number that says whether it happened was the one number absent. That is
+  why the sector defect survived: no log could have shown it.
+- **`blocTest` with an `errors:` matcher can hide the assertion.** The
+  handler's exception ends `act`, so `verify` never runs and the suite passes
+  with the fix reverted. Caught by mutating, not by reading. A bloc must also
+  be **constructed inside** `runZonedGuarded` for its unhandled errors to
+  reach that handler — built outside, they go to the test framework's zone.
+- **A docstring that names the case it does not cover.** `AgentRepository`
+  said "every failure is an event … because a turn can fail after it has
+  already produced surfaces", and an error raised *on* the stream — that
+  exact case — escaped as an exception and froze the composer. When a comment
+  states a guarantee, the test to write is the one that matches its wording.
