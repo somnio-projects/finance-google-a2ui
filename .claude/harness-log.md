@@ -3887,3 +3887,71 @@ What the run taught:
   on `develop`. The check that would have caught it is one in `repo-ci`, which
   runs on the pull request. Not added in this PR — `repo.spelling` already
   walks every tracked file and could carry it — and named as the gap it is.
+
+## 2026-09-22 — Transition states: every wait has a shape
+
+**Spec:** `specs/frontend/0020-transition-states.md` · **Branch:**
+`feat/frontend_transition_states` · frontend only.
+
+The TL's report was that transitions between tabs, between toggles and while
+a backend call is in flight are abrupt. Reading spec 0015 first turned that
+into a map rather than an impression: the skeleton vocabulary it built
+(`SkeletonShimmer` · `SkeletonPulse` · `SkeletonCaption` · `SurfaceSkeleton` ·
+the per-component `skeleton()` override · `ComponentSkeletonHost`) was spent
+on **three** moments — Home's first paint, Home's range change, and a pending
+surface in the Assistant and the gallery — and **seven** others had nothing.
+
+**In code.** `SkeletonRows` and `SkeletonSwitcher` join the primitives.
+Holdings and Activity get first-run pages; the catalog index and detail get
+board-shaped ones; both order-ticket views now draw their **component's own**
+`skeleton()` instead of a spinner, which needed no new seam because the view
+already holds the component. `HoldingsState.allocationLoading` is the one new
+piece of state.
+
+**What the next person should know.**
+
+- **Two of the seven were a correctness bug, not a polish gap.** Holdings'
+  `By sector` and Activity's chips both left the *previous* option's figures
+  on screen under the *new* option's label for the length of the request.
+  A client showing a payload under a caption it does not belong to is the one
+  thing this showcase exists to demonstrate it never does. The rule that came
+  out of it — **skeleton exactly what the option governs, keep the rest** —
+  generalises 0015 OD-1's hero and is now 0020 OD-3.
+- **"A skeleton for a surface, a spinner for an action" is now a test, not a
+  sentence.** Six pages had drifted to a bare `CircularProgressIndicator`
+  before anyone named the rule, which is the signature of a rule nothing
+  enforces. `app/test/architecture/transition_rules_test.dart` allow-lists the
+  two real action spinners *by path* — the shape `binding_rules_test.dart`
+  uses for the geometry seam — and pins the allow set's size, so a seventh
+  page is a red gate. Mutation-checked three ways; the evidence is in the PR.
+- **A finder can pass for the wrong reason, and one did.** `holdings_view_test`
+  asserted `find.byType(CircularProgressIndicator), findsOneWidget` for the
+  loading state. After the change it **still passed** — because the card's
+  `SkeletonCaption` legitimately draws an 11 px ring. The test would have been
+  green either side of the change it was supposed to guard. It now asserts
+  `HoldingsFirstRun` by type, and the comment says why. This is `repo-ci`'s
+  *"a red gate is not evidence that it is red for your reason"* with the sign
+  flipped: **a green finder is not evidence it found your widget.**
+- **No new token, deliberately (OD-4).** Seven more placeholders and
+  `SkeletonTokens` grew by nothing, which is 0015 §2's claim holding up. The
+  cross-fade's 180 ms is a `static const` beside `SkeletonShimmer.period` and
+  the other two, not a token: a `ThemeExtension` entry would have carried the
+  same value in both palettes and created a *second* home for skeleton
+  durations — the drift §5 of `ci-conventions.md` has now recorded five times.
+- **The segment gets nothing, on purpose (OD-6).** `By position` /
+  `By asset class` issues no request. An affordance marks a wait; there is no
+  wait, and a placeholder gone in the frame it appeared reads as a flicker and
+  says something false about the app.
+- **`pumpApp` gained `reducedMotion:`.** Not only for the accessibility
+  assertion — a shimmer repeats for ever, so `pumpAndSettle` never returns
+  while one is on screen. Any future test that pumps a loading state needs it.
+- **The page skeletons got goldens; the component ones did not need them
+  (OD-8).** These four are composed from the page's own layout because no
+  artboard draws them, so a count proves how many blocks exist and nothing
+  about where they sit — and "the skeleton occupies the layout the content
+  will occupy" is the whole claim. That is `testing.md` §6's *layout that
+  reflowed*, exactly.
+
+**Harness:** `docs/diagrams/12-frontend-layers.md` — the `skeleton/` node
+enumerates its contents, so it names `rows` and `switcher` now;
+`.claude/rules/frontend/architecture.md` carries OD-1 as a standing rule.

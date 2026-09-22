@@ -1,5 +1,6 @@
 import 'package:finance_app/features/activity/bloc/activity_bloc.dart';
 import 'package:finance_app/features/activity/view/activity_entry_tile.dart';
+import 'package:finance_app/features/activity/view/activity_first_run.dart';
 import 'package:finance_app/features/activity/view/activity_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -80,9 +81,12 @@ void main() {
       expect(find.text('offline'), findsOneWidget);
     });
 
-    testWidgets('spins while loading', (tester) async {
+    testWidgets('draws its own shape before the first payload', (tester) async {
       await tester.pumpApp(const ActivityPage(), viewsRepository: repository);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // A surface, not an action: the tab's shape in shimmer rather than a
+      // Material spinner in a void (spec 0020 OD-1, AC-4).
+      expect(find.byType(ActivityFirstRun), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       await tester.pumpAndSettle();
     });
   });
