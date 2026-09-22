@@ -22,6 +22,7 @@ class CsvParsing:
         "cors_allowed_origins",
         "trusted_hosts",
         "feature_flags_force_disabled",
+        "auth_bootstrap_admins",
         mode="before",
     )
     @classmethod

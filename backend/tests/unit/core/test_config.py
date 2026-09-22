@@ -107,3 +107,9 @@ def test_provisioning_settings_default_to_closed() -> None:
     assert settings.auth_bootstrap_admins == []
     assert settings.auth_preview_sign_in_enabled is False
     assert settings.auth_preview_token_ttl_seconds == 28_800
+
+
+def test_bootstrap_admins_are_read_as_a_csv_from_the_environment() -> None:
+    # The local stack hands the list over as one string; a JSON list it is not.
+    settings = make_settings(auth_bootstrap_admins="demo@somnio.dev, root@x.test")
+    assert settings.auth_bootstrap_admins == ["demo@somnio.dev", "root@x.test"]
