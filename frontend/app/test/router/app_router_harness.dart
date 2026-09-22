@@ -35,11 +35,14 @@ Future<void> pumpRouter(
   required ViewsRepository repository,
   ComponentRegistry? registry,
   AuthRepository? auth,
+  AgentRepository? agent,
 }) => tester.pumpWidget(
   MultiRepositoryProvider(
     providers: <RepositoryProvider<dynamic>>[
       RepositoryProvider<ViewsRepository>.value(value: repository),
-      RepositoryProvider<AgentRepository>.value(value: MockAgentRepository()),
+      RepositoryProvider<AgentRepository>.value(
+        value: agent ?? MockAgentRepository(),
+      ),
       if (auth != null) RepositoryProvider<AuthRepository>.value(value: auth),
       RepositoryProvider<ComponentRegistry>.value(
         value: registry ?? ComponentRegistry(),

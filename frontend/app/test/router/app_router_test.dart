@@ -43,13 +43,31 @@ void main() {
 
     test('declares every tab and the order ticket', () {
       final router = buildRouter();
+      // Walks CHILDREN too, and composes the location, because a nested
+      // `GoRoute` carries a relative path: the catalog is a child of Home
+      // so the tab bar stays on screen inside it (spec frontend/0021 OD-3),
+      // and `route.path` alone reports `catalog`, not `/catalog`. Before
+      // this walk existed the inventory would have gone quietly silent on
+      // any route that moved under another.
+      Iterable<String> locations(RouteBase route, String parent) sync* {
+        var here = parent;
+        if (route is GoRoute) {
+          here = route.path.startsWith('/')
+              ? route.path
+              : '${parent == '/' ? '' : parent}/${route.path}';
+          yield here;
+        }
+        final children = route is StatefulShellRoute
+            ? <RouteBase>[for (final b in route.branches) ...b.routes]
+            : route.routes;
+        for (final child in children) {
+          yield* locations(child, here);
+        }
+      }
+
       final paths = <String>{
         for (final route in router.configuration.routes)
-          if (route is GoRoute) route.path,
-        for (final route in router.configuration.routes)
-          if (route is StatefulShellRoute)
-            for (final branch in route.branches)
-              for (final leaf in branch.routes.whereType<GoRoute>()) leaf.path,
+          ...locations(route, '/'),
       };
       expect(
         paths,
