@@ -105,6 +105,7 @@ duplicated one are both visible at a glance.
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |
 | [frontend/0018-the-tabs-search-and-filter-for-real.md](frontend/0018-the-tabs-search-and-filter-for-real.md) | Draft | *unassigned* |
+| [frontend/0023-voice-input.md](frontend/0023-voice-input.md) | In progress | *unassigned* |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |

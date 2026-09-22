@@ -6,6 +6,7 @@
 library;
 
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -46,6 +47,12 @@ Future<void> pumpRouter(
       if (auth != null) RepositoryProvider<AuthRepository>.value(value: auth),
       RepositoryProvider<ComponentRegistry>.value(
         value: registry ?? ComponentRegistry(),
+      ),
+      // The Assistant's mic resolves this on every route that reaches it.
+      // Unconditional and unsupported: a router test is not about voice, and
+      // the VM really has no engine (spec frontend/0023 OD-2).
+      RepositoryProvider<SpeechRecognizer>.value(
+        value: const UnsupportedSpeechRecognizer(),
       ),
     ],
     child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),

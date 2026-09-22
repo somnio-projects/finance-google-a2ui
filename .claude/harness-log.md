@@ -4347,3 +4347,70 @@ while running `pre-commit run --all-files` and are **not** from this branch:
 - The `ruff` pre-commit hook reports `F811` in
   `backend/tests/unit/agent/tools/test_holdings_arguments.py` while
   `cd backend && make gate` is green.
+
+## 2026-09-22 — The mic works, and the honest states cost more than the API
+
+`feat/voice_input`, spec `frontend/0023`. The Assistant's microphone was drawn
+and said *"Voice input is not part of this preview yet."* (spec 0011 OD-5); it
+now dictates through the browser's Web Speech API. Calling the API is ~90
+lines. Everything else in the change is about the states that are not success.
+
+What the run taught:
+
+- **A platform API a test cannot start is an architecture problem before it
+  is a feature.** `dart:js_interop` does not compile for the VM, so *any*
+  file that imports it is invisible to `flutter test` — not untested,
+  unloadable. The whole shape of this feature follows from that: an interface
+  in `app/lib/speech/`, the error-code mapping in pure Dart beside it, the
+  state machine in a bloc, and one file left holding construction and four
+  callbacks. That file is the second coverage exemption this app has, after
+  `main.dart`, and the exemption was **mutation-checked**: removing it fails
+  the gate with `no coverage record — no test loads it`, which is the proof
+  that it is load-bearing rather than decoration.
+- **A conditional import belongs in the composition root, not in a barrel.**
+  The obvious shape is `speech_platform.dart` holding one conditional
+  `export`. That file has no executable line, lcov writes no record for it,
+  and the coverage gate then has to excuse a file that does nothing — a
+  second hole to buy a tidier import. Putting the `if (dart.library.js_interop)`
+  in `bootstrap.dart` costs one line and no exemption, and it is where ADR-L
+  D-2 already says the choice lives.
+- **A `const` event with no fields cannot be covered, and the two lints that
+  demand it are a pair.** `prefer_const_constructors` forces `const` at every
+  call site, which canonicalises the object at compile time so the
+  constructor never runs; `prefer_const_constructors_in_immutables` forces
+  the constructor to *be* `const` because `Equatable` is `@immutable`.
+  Together they make a field-less event file unreachable for the 100 %
+  contract. `VoiceInputEvent` is therefore neither — recorded as a deviation
+  from ADR-L D-7 in the file itself, with the argument that survives the
+  coverage accident: **two taps are two events**, and value-equal events say
+  the opposite.
+- **A snackbar is not a state change, and `BlocListener` will tell you so
+  the second time.** Two denied permissions in a row produce two *equal*
+  states, so a listener keyed on the failure shows one notice and swallows
+  the second tap — spec `frontend/0021` OD-2 rebuilt one layer in, by the
+  person who had just read it. The state carries a `notices` counter and the
+  listener keys on that. The widget test lets the first snackbar time out
+  before tapping again, which is the only way it can fail for the right
+  reason.
+- **The feature needed a header change in two files and a CSP change in
+  none.** `Permissions-Policy: microphone=()` denies the microphone to the
+  origin itself, so the feature would have worked on `flutter run` and failed
+  on Hosting. CSP has no directive for capture — `media-src` is about URLs
+  `<audio>` loads — so widening it "because audio" would have been a change
+  nobody could justify from a violation report. The two policy files are now
+  compared by `frontend/test/tool/permissions_policy_test.dart`, inside
+  `make test`: neither file is a ship-gate command, so `repo.gate-pairs`
+  cannot see the pair, and spec 0017's "change one, change the other" was
+  until now a sentence.
+- **The recognition language was a one-attribute fix in HTML, not a constant
+  in Dart.** `SpeechRecognition.lang` defaults to `<html lang>`; the bundle
+  declared none, so a Spanish-locale browser would have dictated Spanish at
+  an English agent. Adding `lang="en"` is standards-correct, is what a screen
+  reader reads anyway, and keeps a locale out of `AppConfig`.
+
+Harness changes: `tool/coverage_sources.dart` gains its second exemption (with
+the reason in the file); `app/test/architecture/speech_rules_test.dart` is a
+new structural suite, mutation-checked four ways; `docs/diagrams/12` gains the
+seam and the browser node; `frontend/CLAUDE.md` and `frontend/SECURITY.md`
+gain the rule and the residual-risk row (G-9 — dictated audio is processed by
+the browser vendor's service, which no flag in the page changes).

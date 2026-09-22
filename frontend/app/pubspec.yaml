@@ -33,6 +33,11 @@ dependencies:
   # Imported by bootstrap.dart alone, to construct the one http.Client the
   # composition root owns. No other file in app/ may import it.
   http: ^1.6.0
+  # The browser's own APIs, typed. Imported by app/lib/speech/speech_web.dart
+  # and nowhere else — `speech_rules_test.dart` fails on a second importer
+  # (spec frontend/0023 AC-10). Already in the lock as a transitive of the
+  # Flutter web tooling; declared here because this app now calls it.
+  web: ^1.1.1
 
 dev_dependencies:
   bloc_test: ^10.0.0

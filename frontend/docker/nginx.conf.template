@@ -149,7 +149,15 @@ http {
         # what it keeps is the popup this page opened itself.
         add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
 
-        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
+        # `microphone=(self)` and every other feature off. The Assistant's
+        # composer dictates through the Web Speech API (spec frontend/0023),
+        # and a policy of `microphone=()` denies it before the browser ever
+        # asks the person — so the feature would work on `flutter run` and
+        # fail on the deployed origin. This value and `firebase.json`'s are
+        # one decision: change one, change the other, in the same commit
+        # (spec frontend/0017; `frontend/test/tool/permissions_policy_test.dart`
+        # is what makes that a red suite instead of a good intention).
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()" always;
 
         add_header Cache-Control $client_cache_control always;
 
