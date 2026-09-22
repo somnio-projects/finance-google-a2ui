@@ -69,10 +69,31 @@ final class AgentSurfaceReady extends AgentEvent {
   List<Object?> get props => <Object?>[index, view, options];
 }
 
+/// One follow-up the turn recommends: a registered key and the words the
+/// backend wrote for it (spec backend/0029). The client shows [label] and
+/// sends [key] back through `ask.suggested.v1`; it never sends the words.
+final class Suggestion extends Equatable {
+  /// Creates the suggestion.
+  const Suggestion({required this.key, required this.label});
+
+  /// The registered suggestion key.
+  final String key;
+
+  /// The chip's words, verbatim.
+  final String label;
+
+  @override
+  List<Object?> get props => <Object?>[key, label];
+}
+
 /// The assistant's answer, with every surface of the turn repeated.
 final class AgentAnswered extends AgentEvent {
   /// Creates the event.
-  const AgentAnswered({required this.text, required this.views});
+  const AgentAnswered({
+    required this.text,
+    required this.views,
+    this.suggestions = const <Suggestion>[],
+  });
 
   /// The answer text, shown verbatim. The backend writes it; the client
   /// never rewrites or reformats it.
@@ -83,8 +104,11 @@ final class AgentAnswered extends AgentEvent {
   /// them still receives everything.
   final List<String> views;
 
+  /// The follow-ups the turn recommends, in the backend's order (N-10).
+  final List<Suggestion> suggestions;
+
   @override
-  List<Object?> get props => <Object?>[text, views];
+  List<Object?> get props => <Object?>[text, views, suggestions];
 }
 
 /// The turn reached a terminal state.

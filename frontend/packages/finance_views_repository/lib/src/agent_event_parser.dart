@@ -50,6 +50,7 @@ AgentEvent? _answer(Map<String, dynamic> event) {
   final parts = event['parts'];
   final intents = event['renderIntents'];
   if (parts is! List) return null;
+  final suggestions = event['suggestions'];
   return AgentAnswered(
     text: _text(parts),
     views: <String>[
@@ -57,6 +58,19 @@ AgentEvent? _answer(Map<String, dynamic> event) {
         for (final intent in intents)
           if (intent is Map<String, dynamic> && intent['view'] is String)
             intent['view'] as String,
+    ],
+    // A chip needs both halves: the key to send and the words to show. One
+    // without the other is dropped rather than half-drawn.
+    suggestions: <Suggestion>[
+      if (suggestions is List)
+        for (final chip in suggestions)
+          if (chip is Map<String, dynamic> &&
+              chip['key'] is String &&
+              chip['label'] is String)
+            Suggestion(
+              key: chip['key'] as String,
+              label: chip['label'] as String,
+            ),
     ],
   );
 }

@@ -73,7 +73,7 @@ sequenceDiagram
     end
 
     L->>H: TurnCompleted{message, render_intents, counters}
-    A->>C: message (answer + every renderIntent)
+    A->>C: message (answer + every renderIntent + suggestions)
     A->>C: status-update{completed | input_required}
     A-->>S: append assistant message (planned — GGU-46)
 
@@ -86,6 +86,10 @@ sequenceDiagram
     %% substituted, the metric is recorded, the conversation still shows a chart.
     %% The `message` event repeats every intent on purpose: a client that
     %% ignores `render-intent` still sees the full list (spec 0010 AC-2).
+    %% `suggestions` are the curated chips the client may tap next (spec 0029):
+    %% keys with labels, chosen by the adapter from the table minus the prompt
+    %% just run — never by the model, which cannot invent a chip (0022 OD-1).
+    %% A tapped chip or bar comes back as the data part at the top.
     %% A turn emits exactly one agent.turn metric and one log line:
     %% model, outcome, duration, counters — never prompt, result or subject.
     %% The incremental events add NO log line: the shape of a conversation

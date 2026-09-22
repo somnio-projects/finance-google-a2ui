@@ -29,6 +29,24 @@ void main() {
       );
     });
 
+    test('reads the recommended chips, and drops a half-formed one', () {
+      final event = parseAgentEvent(<String, dynamic>{
+        'kind': 'message',
+        'parts': <Map<String, dynamic>>[
+          <String, dynamic>{'kind': 'text', 'text': 'up'},
+        ],
+        'renderIntents': <Map<String, dynamic>>[],
+        'suggestions': <dynamic>[
+          <String, dynamic>{'key': 'tax-lots', 'label': 'Tax lots'},
+          <String, dynamic>{'key': 'allocation'},
+          'not a chip',
+        ],
+      });
+      expect((event! as AgentAnswered).suggestions, const <Suggestion>[
+        Suggestion(key: 'tax-lots', label: 'Tax lots'),
+      ]);
+    });
+
     test('joins several text parts in order, verbatim', () {
       final event = parseAgentEvent(<String, dynamic>{
         'kind': 'message',

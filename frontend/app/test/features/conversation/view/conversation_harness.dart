@@ -25,6 +25,7 @@ void scriptTurn(AgentRepository agent, List<AgentEvent> events) {
   when(
     () => agent.startTurn(
       text: any(named: 'text'),
+      action: any(named: 'action'),
       messageId: any(named: 'messageId'),
       contextId: any(named: 'contextId'),
     ),
@@ -58,6 +59,6 @@ Future<void> pumpConversation(
 /// Types [text] into the composer and sends it.
 Future<void> ask(WidgetTester tester, String text) async {
   await tester.enterText(find.byType(TextField), text);
-  await tester.tap(find.byIcon(Icons.send));
+  await tester.tap(find.byTooltip('Send'));
   await tester.pumpAndSettle();
 }

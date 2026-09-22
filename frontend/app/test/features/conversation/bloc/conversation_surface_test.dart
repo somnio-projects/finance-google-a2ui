@@ -9,8 +9,11 @@ import 'conversation_harness.dart';
 /// Runs one turn and returns the entries it produced.
 Future<List<ConversationEntry>> entriesAfterTurn(ConversationBloc bloc) async {
   bloc.add(const ConversationMessageSent('what moved?'));
+  // Past the skeleton: the slot is filled once the entry is no longer pending.
   await bloc.stream.firstWhere(
-    (state) => state.entries.length > 1 || state.failure != null,
+    (state) =>
+        (state.entries.length > 1 && state.entries.last is! SurfacePending) ||
+        state.failure != null,
   );
   final entries = bloc.state.entries;
   await bloc.close();

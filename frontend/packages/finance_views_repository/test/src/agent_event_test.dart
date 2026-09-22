@@ -45,6 +45,7 @@ void main() {
         equals(<Object?>[
           'up',
           <String>['a.b.v1'],
+          <Suggestion>[],
         ]),
       );
     });
@@ -53,6 +54,17 @@ void main() {
       expect(
         const AgentFailed(code: 'x', message: 'y').props,
         equals(<Object?>['x', 'y']),
+      );
+    });
+
+    test('a suggestion is equal by its key and its label', () {
+      expect(
+        const Suggestion(key: 'tax-lots', label: 'Tax lots'),
+        const Suggestion(key: 'tax-lots', label: 'Tax lots'),
+      );
+      expect(
+        const Suggestion(key: 'tax-lots', label: 'Tax lots').props,
+        <Object?>['tax-lots', 'Tax lots'],
       );
     });
   });

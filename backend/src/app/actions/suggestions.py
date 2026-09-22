@@ -63,10 +63,28 @@ def suggestion_prompt(key: str) -> str:
     return SUGGESTIONS[key][1]
 
 
+def suggestion_chips(keys: tuple[str, ...]) -> list[dict[str, str]]:
+    """Return ``{key, label}`` pairs for ``keys``: what the wire carries (0029)."""
+    return [{"key": key, "label": suggestion_label(key)} for key in keys]
+
+
+def recommended(prompt: str) -> tuple[str, ...]:
+    """Return the keys a turn that ran ``prompt`` should offer next (spec 0029).
+
+    Every curated key, in table order, except the one whose registered prompt
+    *is* this turn's prompt: a chip never re-asks what was just asked. There is
+    no model in this choice on purpose (0029 OD-1) — the table is the whole
+    universe, so the only decision left is "not the same one again".
+    """
+    return tuple(key for key, (_, text) in SUGGESTIONS.items() if text != prompt)
+
+
 __all__ = [
     "DECLARED_KEYS",
     "SUGGESTIONS",
     "SuggestionKey",
+    "recommended",
+    "suggestion_chips",
     "suggestion_label",
     "suggestion_prompt",
 ]

@@ -46,7 +46,8 @@ STREAM_EXAMPLE: Final[str] = (
     '"role":"agent","parts":[{"kind":"text","text":"Your portfolio is up '
     '2.4% this month, driven by NVDA."}],'
     '"renderIntents":[{"view":"attribution.waterfall.v1",'
-    '"options":{"window":"30d"}}]}\n'
+    '"options":{"window":"30d"}}],'
+    '"suggestions":[{"key":"biggest-drivers","label":"Biggest drivers"}]}\n'
     "\n"
     'data: {"kind":"status-update","taskId":"7b1e...","contextId":"c2f1...",'
     '"status":{"state":"completed"},"final":true}\n'

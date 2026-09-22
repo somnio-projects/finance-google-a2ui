@@ -12,6 +12,7 @@ export 'src/agent_event_parser.dart';
 export 'src/agent_repository.dart';
 export 'src/payload_contract_exception.dart';
 export 'src/rendered_views.dart';
+export 'src/surface_action_request.dart';
 export 'src/view_chunks.dart';
 export 'src/view_payload.dart';
 export 'src/views_batch.dart';

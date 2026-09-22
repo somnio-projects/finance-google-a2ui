@@ -24,6 +24,7 @@ trusted on its own.
 
 from collections.abc import AsyncIterator
 
+from app.actions.suggestions import recommended
 from app.agent.contracts import ToolContext, TurnResult
 from app.agent.events import SurfaceReady
 from app.core.errors import AppError
@@ -114,7 +115,15 @@ class A2aService:
             else:
                 results.append(event.result)
         result = results[-1]
-        yield sse(answer(task_id, context_id, result.message, result.render_intents))
+        yield sse(
+            answer(
+                task_id,
+                context_id,
+                result.message,
+                result.render_intents,
+                suggestions=recommended(prompt),
+            )
+        )
         terminal = INPUT_REQUIRED if result.render_intents else COMPLETED
         yield sse(status(task_id, context_id, terminal))
 

@@ -1,10 +1,15 @@
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
+import 'package:finance_app/features/conversation/view/assistant_chips.dart';
+import 'package:finance_app/features/conversation/view/assistant_composer.dart';
+import 'package:finance_app/features/conversation/view/assistant_header.dart';
 import 'package:finance_app/features/conversation/view/conversation_transcript.dart';
-import 'package:finance_app/theme/app_spacing.dart';
+import 'package:finance_app/theme/home_tokens.dart';
+import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The conversation surface: the user types, the turn runs, surfaces appear.
+/// The Assistant tab as the three flows frame it (spec frontend/0011):
+/// header · transcript · follow-up chips · composer. Reads bloc state only.
 class ConversationView extends StatefulWidget {
   /// Creates the view.
   const ConversationView({super.key});
@@ -31,94 +36,66 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = HomeTokens.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Ask the agent')),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: BlocBuilder<ConversationBloc, ConversationState>(
-              builder: (context, state) =>
-                  ConversationTranscript(entries: state.entries),
-            ),
-          ),
-          const _TurnStatus(),
-          _Composer(controller: _controller, onSend: _send),
-        ],
+      backgroundColor: tokens.page,
+      body: BlocBuilder<ConversationBloc, ConversationState>(
+        builder: (context, state) {
+          final running = state.status == ConversationStatus.running;
+          return Column(
+            children: <Widget>[
+              const AssistantHeader(),
+              Expanded(
+                child: ConversationTranscript(
+                  entries: state.entries,
+                  streaming: running,
+                ),
+              ),
+              if (state.status == ConversationStatus.failed)
+                _Failure(failure: state.failure),
+              SuggestionChips(
+                suggestions: state.suggestions,
+                onTap: (chip) => context.read<ConversationBloc>().add(
+                  ConversationSuggestionTapped(chip),
+                ),
+              ),
+              AssistantComposer(
+                controller: _controller,
+                onSend: _send,
+                enabled: !running,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-/// Shows that a turn is running, or why the last one failed.
-class _TurnStatus extends StatelessWidget {
-  const _TurnStatus();
+/// Why the last turn failed: the backend's own safe code and detail, shown
+/// verbatim — never a library message and never a stack trace.
+class _Failure extends StatelessWidget {
+  const _Failure({required this.failure});
+
+  final AgentFailed? failure;
 
   @override
   Widget build(BuildContext context) {
-    final spacing = AppSpacing.of(context);
-    final theme = Theme.of(context);
-    return BlocBuilder<ConversationBloc, ConversationState>(
-      builder: (context, state) => switch (state.status) {
-        ConversationStatus.idle => const SizedBox.shrink(),
-        ConversationStatus.running => Padding(
-          padding: EdgeInsets.symmetric(horizontal: spacing.md),
-          child: const LinearProgressIndicator(),
-        ),
-        // The backend's own safe code and detail, shown verbatim — never a
-        // library message and never a stack trace.
-        ConversationStatus.failed => Padding(
-          padding: EdgeInsets.all(spacing.md),
-          child: Column(
-            children: <Widget>[
-              Text(
-                state.failure?.message ?? 'The turn failed.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              Text(
-                state.failure?.code ?? 'unknown',
-                style: theme.textTheme.labelSmall,
-              ),
-            ],
+    final tokens = HomeTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 4, 15, 10),
+      child: Column(
+        children: <Widget>[
+          Text(
+            failure?.message ?? 'The turn failed.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: tokens.loss),
           ),
-        ),
-      },
-    );
-  }
-}
-
-class _Composer extends StatelessWidget {
-  const _Composer({required this.controller, required this.onSend});
-
-  final TextEditingController controller;
-  final VoidCallback onSend;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = AppSpacing.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(spacing.md),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: TextField(
-                controller: controller,
-                onSubmitted: (_) => onSend(),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'What moved my portfolio this month?',
-                ),
-              ),
-            ),
-            SizedBox(width: spacing.sm),
-            IconButton.filled(
-              onPressed: onSend,
-              icon: const Icon(Icons.send),
-              tooltip: 'Send',
-            ),
-          ],
-        ),
+          Text(
+            failure?.code ?? 'unknown',
+            style: TextStyle(fontSize: 11, color: tokens.muted),
+          ),
+        ],
       ),
     );
   }

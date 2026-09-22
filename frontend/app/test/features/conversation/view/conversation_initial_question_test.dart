@@ -44,6 +44,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: question,
+          action: any(named: 'action'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -61,6 +62,7 @@ void main() {
       verifyNever(
         () => agent.startTurn(
           text: any(named: 'text'),
+          action: any(named: 'action'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),

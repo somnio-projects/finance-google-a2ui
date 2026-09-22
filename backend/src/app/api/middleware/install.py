@@ -37,7 +37,16 @@ def install_middleware(app: FastAPI, container: Container) -> None:
         allow_origins=settings.cors_allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        # `X-A2A-Extensions` is the header the A2UI client declares its
+        # extension in on every turn; without it here the browser's preflight
+        # to `/` was a 400 and the Assistant could not reach the agent at all
+        # (spec 0029 §2). curl never sends a preflight, which is how it hid.
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Request-ID",
+            "X-A2A-Extensions",
+        ],
     )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
