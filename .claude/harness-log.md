@@ -4446,3 +4446,79 @@ new structural suite, mutation-checked four ways; `docs/diagrams/12` gains the
 seam and the browser node; `frontend/CLAUDE.md` and `frontend/SECURITY.md`
 gain the rule and the residual-risk row (G-9 — dictated audio is processed by
 the browser vendor's service, which no flag in the page changes).
+
+## 2026-09-22 — A manual for the client, and a screenshot that can be retaken
+
+**Spec.** None; a TL request — *"un manual de instrucciones con screenshots y
+business level … bien específico para el uso de la app en inglés y español en
+pdf"*. Audience: the client and the Google demo. No code, no architecture, no
+API. The two decisions were handed down and not re-asked: branding is the
+app's own, and the level is business.
+
+**Code.** None. `docs/manual/` is new: two HTML sources, one shared
+stylesheet, seven screenshots, two PDFs and two scripts. The one change
+outside it is `scripts/check_spelling.sh`, which now excludes `*.pdf`, and
+`.codespellrc`, which gains seven Spanish words.
+
+**A PDF is a generated artefact, so it is gated the way this repository gates
+generated artefacts — by being regenerable.** `.claude/rules/ci-conventions.md`
+§4 says anything the build produces is checked in *and* re-renderable. The
+manual is checked in as HTML plus `tool/build_pdf.sh`, and the pictures are
+checked in as PNGs plus `tool/capture_screenshots.mjs`. Neither is in the ship
+gate — there is nothing to diff, because a PDF is not byte-reproducible across
+Chrome versions and a screenshot is not reproducible at all once the app
+changes — so the honest form is a documented command, not a check that would
+be red for the wrong reason. Naming that limit is the point; a drift check
+that cannot work is worse than an instruction that can be followed.
+
+**The renderer was chosen by looking, not by preference.** `pandoc`,
+`weasyprint` and `prince` are all absent on this machine and none could be
+installed without a network round trip. Chrome is present because the Flutter
+web client needs it, so headless Chrome prints the A4. Headless Chrome also
+does not always exit after `--print-to-pdf`, and stock macOS has no `timeout`,
+so the script backgrounds Chrome and polls the file until it stops growing.
+
+**The screenshots are scripted because the alternative is a folder nobody can
+refresh.** `capture_screenshots.mjs` talks the DevTools protocol over Node's
+built-in `WebSocket` — no Playwright, no Puppeteer, nothing to install — and
+signs in, walks the four tabs and asks the assistant one question at 375×812
+and 2×. Two details it encodes rather than leaving to the operator: it parks
+the pointer off the content before every capture, because the first run caught
+a hover state and put a carousel arrow over a chip; and it waits long enough
+after sending for a real model turn to finish.
+
+**A manual is allowed to be no more optimistic than the product.** The
+portfolio is simulated and the app says so on screen in three places, so
+section 2 of both languages says so too and the cover says it a fourth time.
+The lead also named two assistant defects being fixed — a chart showing an
+all-time figure beside a sentence about today, and a follow-up chip that did
+not reach the view it named. Neither is documented and neither is
+screenshotted: the assistant capture is *"How is my portfolio allocated?"*,
+whose answer is an allocation component labelled `all-time`, correct end to
+end. `docs/manual/README.md` records the rule for next time — if a capture run
+produces a wrong answer, retake it; do not ship it with a caption explaining it
+away.
+
+**The Spanish is a second original, not a translation, and that has a cost the
+tooling noticed.** Seven Spanish words are English words one letter off, so
+`repo.spelling` went red on `responde`, `componentes`, `momento`,
+`alternativos`, `cliente`, `vender` and `ser`. They are in `.codespellrc` with
+the reason, in the style of the existing entries — the file already carries
+`hace` for the same reason, which is the precedent that made this obvious
+rather than a judgement call.
+
+**And `repo.spelling` found one real thing: it was reading the PDFs.** codespell
+decoded `user-manual.es.pdf` as iso-8859-1 and reported 36 findings out of font
+tables and stream dictionaries, each with a confident suggestion. The check now
+excludes `*.pdf` for the same reason it already excludes `*.lock` — the prose
+those files were rendered from is in the list, so nothing is lost. Worth
+recording because it is §5's second question in miniature: the command was
+right and its *subject* had quietly grown a kind of file it cannot read.
+
+**Branding, with no template to use.** There is no Somnio document template, so
+`manual.css` copies every colour from `frontend/app/lib/theme/app_colors.dart`,
+`login_tokens.dart` and `charts/chart_tokens.dart` — files that are themselves
+measured from the design rather than generated — with a comment beside each
+naming its home, and the cover mark is the sign-in hero's mark rebuilt in CSS.
+The Flutter default icon in `web/icons/` is deliberately not used: it is
+Flutter's logo, not this product's.
