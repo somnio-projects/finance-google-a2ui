@@ -292,12 +292,95 @@ assert "it runs the seed module, not the app" \
   'command = \["python", "-m", "app.jobs.seed_portfolios"\]' "${RUNTF}"
 assert "its audience is an overridable argument list" \
   '^        args    = var.seed_portfolio_owners$' "${RUNTF}"
-if grep -q "seed_portfolios\|seed-portfolios" "${SCRIPT}"; then
-  echo "  FAIL  the deploy must not run the seed job — it is a human's command"
+# Comment lines are stripped first. This used to grep the whole file, which
+# was fine while nothing in the script had a reason to mention the seed job by
+# name — and became a false positive the moment spec infra/0004 gave it one
+# (the header explains which jobs the deploy pins but never executes). The
+# subject of this assertion is the script's CODE; prose that explains the rule
+# is not a violation of it.
+SCRIPT_CODE="$(grep -vE '^[[:space:]]*#' "${SCRIPT}")"
+if grep -q "seed_portfolios\|seed-portfolios" <<< "${SCRIPT_CODE}"; then
+  echo "  FAIL  the deploy must not name the seed job — it is a human's command"
   FAILED=$((FAILED + 1))
 else
-  check "the deploy never seeds on its own" ok
+  check "the deploy never names the seed job, so it cannot seed on its own" ok
 fi
+
+# The sharper half of the same claim, and the one that survives a rename: the
+# script executes exactly ONE job, and it is the migration. Pinning every
+# job's image (spec infra/0004) deliberately did not become executing them.
+EXECUTES="$(grep -cF 'gcloud run jobs execute' <<< "${SCRIPT_CODE}" || true)"
+if [[ "${EXECUTES}" == "1" ]]; then
+  check "the deploy executes exactly one job" ok
+else
+  echo "  FAIL  the deploy executes ${EXECUTES} job(s); it must execute only the migration"
+  FAILED=$((FAILED + 1))
+fi
+assert "and the one it executes is the migration" \
+  'if ! migrate "\$\{MIGRATE_JOB\}"; then' "${SCRIPT}"
+
+# ---------------------------------------------------------------------------
+# Which build a job runs (spec infra/0004).
+#
+# `gcloud run jobs execute` — and Cloud Scheduler, and a human — run whatever
+# image the JOB carries. `deploy_cloud_run.sh` sets that image for every job
+# labelled `image-owner=delivery`, and Terraform must not take it back. Two
+# halves, and both were missing for two of the three jobs on 2026-09-22:
+# `seed-portfolios` answered `No module named app.jobs.seed_portfolios` from
+# an image older than its own entry point, and `purge-audit` was still on the
+# floating `:latest` tag with a scheduler pointed at it.
+#
+# This is a loop over the jobs FOUND IN run.tf rather than a list of three
+# names, for the same reason the deploy discovers them by label: a fourth job
+# must be red here until somebody decides, not silently exempt.
+echo
+echo "every Cloud Run job follows the deploy, and terraform does not fight it"
+
+assert "the opt-in label is declared once" \
+  '^  delivery_owned_labels = merge\(local\.labels, \{ "image-owner" = "delivery" \}\)$' "${RUNTF}"
+assert "the deploy discovers jobs by that label" \
+  'jobs list --filter="metadata\.labels\.image-owner=delivery"' "${SCRIPT}"
+assert "an empty list is a failure, not a no-op" \
+  'no Cloud Run job carries image-owner=delivery' "${SCRIPT}"
+
+JOBS="$(grep -Eo '^resource "google_cloud_run_v2_job" "[a-z_]+"' "${RUNTF}" \
+  | sed -E 's/.*"([a-z_]+)"$/\1/')"
+JOB_COUNT="$(printf '%s\n' "${JOBS}" | grep -c . || true)"
+
+# Anti-vacuity: a loop over nothing passes every assertion inside it. Three
+# jobs exist today (migrate, purge-audit, seed-portfolios); fewer than three
+# means this grep stopped matching run.tf, not that the jobs went away.
+if [[ "${JOB_COUNT:-0}" -lt 3 ]]; then
+  echo "  FAIL  only ${JOB_COUNT} Cloud Run job(s) found in run.tf — the pattern is wrong"
+  FAILED=$((FAILED + 1))
+else
+  check "every Cloud Run job in run.tf was read (${JOB_COUNT})" ok
+fi
+
+while read -r job; do
+  [[ -n "${job}" ]] || continue
+  block="$(awk -v j="${job}" '
+    $0 == "resource \"google_cloud_run_v2_job\" \"" j "\" {" { inside = 1 }
+    inside { print }
+    inside && $0 == "}" { exit }
+  ' "${RUNTF}")"
+
+  if grep -qF 'labels              = local.delivery_owned_labels' <<< "${block}"; then
+    check "${job}: opts into the deploy's ownership of its image" ok
+  else
+    echo "  FAIL  ${job}: no \`labels = local.delivery_owned_labels\` — the deploy will never see it,"
+    echo "        and it will run whatever var.backend_image pointed at when it was created"
+    FAILED=$((FAILED + 1))
+  fi
+
+  if grep -qF 'ignore_changes = [template[0].template[0].containers[0].image]' <<< "${block}"; then
+    check "${job}: terraform apply does not revert the released digest" ok
+  else
+    echo "  FAIL  ${job}: no \`ignore_changes\` on its image — an apply after a deploy"
+    echo "        re-points it at var.backend_image and reopens the drift"
+    FAILED=$((FAILED + 1))
+  fi
+done <<< "${JOBS}"
 
 # The ordering assertion, and the only one that really matters: migrations
 # must come BEFORE the traffic shift. A line-number comparison is crude, but
