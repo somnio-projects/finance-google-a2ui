@@ -74,7 +74,7 @@ application data. Changes to this list are announced in `CHANGELOG.md`.
 
 ## 4. Supply-chain controls (A.5.21)
 
-Pinned lockfiles (`backend/uv.lock`, `client_flutter/pubspec.lock`),
+Pinned lockfiles (`backend/uv.lock`, `frontend/pubspec.lock`),
 pip-audit + Trivy + Dependabot, SBOM (CycloneDX) generated weekly by the
 scheduled scan and stored as a CI artifact, pinned GitHub Actions by major
 version, base images pinned by tag and scanned.

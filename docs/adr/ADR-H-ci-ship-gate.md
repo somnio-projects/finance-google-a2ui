@@ -1,6 +1,6 @@
 # ADR-H — CI and ship-gate contract
 
-- **Status:** **Proposed** — ratify alongside GGU-45's output
+- **Status:** **Proposed** — ratify alongside GGU-45's output. **D-2 and D-6 struck 2026-09-22** (spec [`repo/0002`](../../specs/repo/0002-retire-the-client-flutter-app.md)): both named `client_flutter/`, the app they gated was retired, and a struck ruling is kept so a citation by number still resolves.
 - **Gates:** GGU-45
 
 ## Context
@@ -18,11 +18,11 @@ the app and asserts nothing. Any "tests green" claim before that file is replace
 ## Decision
 
 - **D-1** Python gate, run in the backend package: `ruff check .` · `ruff format --check .` · `basedpyright` · `pytest --cov --cov-branch`. The checker choice is **basedpyright**, recorded in `pyproject.toml`.
-- **D-2** Flutter gate, run in `client_flutter/`: `dart format --output=none --set-exit-if-changed .` · `dart analyze --fatal-infos --fatal-warnings` · `flutter test` · `flutter build web`.
+- ~~**D-2**~~ Flutter gate, run in `client_flutter/`: `dart format --output=none --set-exit-if-changed .` · `dart analyze --fatal-infos --fatal-warnings` · `flutter test` · `flutter build web`. **Superseded 2026-09-22 (spec `repo/0002`):** that app was retired and its gate part removed from `.claude/ship-gate.json`. The Flutter gate this repository runs is `frontend.*` — `cd frontend && make gate` — and it is stricter (a toolchain preflight, a 150-line budget, a generated-manifest check and 100 % line coverage per file). The shape of the ruling stands; only its subject moved.
 - **D-3** Coverage `fail_under` starts at **50-60** and ratchets to the rule's 80 by the end of Epic 1. Starting at 80 blocks PR1 on a repo with zero tests. The interim value and the ratchet schedule are recorded here so the deviation is a decision, not an oversight.
 - **D-4** iOS/Android builds are **not** in the PR gate (deferred to GGU-27). **GGU-1 AC6 is amended to web-only** — as originally written, GGU-1 could never be marked Done under this gate.
 - **D-5** A secret scan is a required step (see [ADR-G](ADR-G-secret-handling.md) D-5).
-- **D-6** `client_flutter/e2e_test/` is **excluded** from the PR gate — it needs a real API key, a live backend and long timeouts. It gets an opt-in workflow. Note it is **broken at `410bb9d`**: its harness spawns the backend from a path that does not exist.
+- ~~**D-6**~~ `client_flutter/e2e_test/` is **excluded** from the PR gate — it needs a real API key, a live backend and long timeouts. It gets an opt-in workflow. Note it is **broken at `410bb9d`**: its harness spawns the backend from a path that does not exist. **Moot 2026-09-22 (spec `repo/0002`):** that suite was deleted with its app and the opt-in workflow was never written. It stayed broken for the whole of its life, which is the argument for the ruling rather than against it: a suite outside the gate is a suite nobody finds out about.
 - **D-7** The existing backend does not pass ruff/basedpyright strict today (deprecated `Optional`/`Dict` imports, f-strings in logging calls, missing docstrings). GGU-45 MUST either fix these or land a **time-boxed, itemized** per-rule ignore list with a burn-down ticket. It MUST NOT lower the rule set.
 - **D-8** Coverage is reviewed **per-file**, not as a single percentage. The network-bound validate/retry and part-parsing paths will sit near 0%; a headline 70% with those at zero is worse than an honest 45%.
 - **D-9** The TL commits `.claude/ship-gate.json`. GGU-45 produces it for sign-off.

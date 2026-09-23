@@ -1,5 +1,0 @@
-{
-  "_note": "SHA-256 of the Linux stable SDK tarball, as Google publishes it in https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json. This is a lookup table keyed by the pin, NOT a second pin: client_flutter/.fvmrc alone decides which version is built, and Dockerfile reads it. A version with no row here stops the build and names the row to add, rather than fetching an SDK it cannot verify. 3.47.5 is kept although .fvmrc pins 3.47.3: this Dockerfile hardcoded 3.47.5 until repo.gate-pairs learned to read Dockerfiles, and a row that lets the previous image rebuild is worth its two lines.",
-  "3.47.3": "988665565cad9091db1baa54bf6d3868bb40e29719592f3c3a164deefd4208e1",
-  "3.47.5": "2132e990f236f8d22e7c6314b29a191a95b10d7cbcfec9b4e2e303d996652cbb"
-}

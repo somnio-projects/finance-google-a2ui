@@ -208,7 +208,7 @@ management:
  # Verify all dependencies are resolved
  echo "Verifying dependency resolution..."
  fvm flutter pub deps > /dev/null 2>&1
- 
+
  # Run build_runner where applicable
 if grep -q "build_runner" pubspec.yaml 2>/dev/null; then
   echo "Running build_runner at root..."

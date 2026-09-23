@@ -1,7 +1,18 @@
 # ADR-I — Client routing and auth gating
 
-- **Status:** Accepted (TL, 2026-09-18)
-- **Gates:** GGU-1, GGU-2
+- **Status:** **Superseded by [ADR-L](ADR-L-client-architecture.md) (2026-09-22).** Kept for history; never deleted.
+- **Gates:** GGU-1, GGU-2 — both against `client_flutter/`, which no longer exists
+
+> **Why it is superseded and not deleted.** This ADR governed `client_flutter/`,
+> the older of two Flutter apps, which was retired on 2026-09-22 (spec
+> [`repo/0002`](../../specs/repo/0002-retire-the-client-flutter-app.md)). Its
+> subject is gone, so it binds nothing today — but ADR-L D-5 is written as an
+> *amendment to D-1*, and a citation by number has to resolve. **D-3 is the
+> ruling that outlived the app**: ADR-L D-5 restates it verbatim for
+> `frontend/` — the auth gate is one `redirect`, never a check inside a
+> feature. D-1, D-2 and D-4 are history: `frontend/` adopted `go_router` from
+> its first screen, which is the amendment D-4 asked for rather than the
+> rediscovery it warned against.
 
 ## Context
 

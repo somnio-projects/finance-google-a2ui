@@ -1,9 +1,25 @@
 # 0002 — Client delivery: how the web client is built, hardened, served and deployed
 
 - **Area:** client
-- **Status:** Draft
+- **Status:** **Superseded by [repo/0002](../repo/0002-retire-the-client-flutter-app.md)** (2026-09-22)
 - **Ticket:** GGU-82 · **Related specs / ADRs:** `specs/client/0001-client-foundation.md`, `specs/backend/0007-cd-pipeline.md`, `specs/infra/0001-dev-environment.md`, [ADR-F](../../docs/adr/ADR-F-google-cloud-platform.md), [ADR-K](../../docs/adr/ADR-K-response-shaping.md)
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-20
+
+> **Superseded 2026-09-22 — the app this spec describes no longer exists.**
+> `client_flutter/` was retired in full (directory, gate part, workflow, rules,
+> compose file) by
+> [`repo/0002`](../repo/0002-retire-the-client-flutter-app.md). This spec is
+> kept in place, not deleted: `specs/README.md` says a replaced spec is marked
+> `Superseded by NNNN` and stays, so every PR, ADR and rule that cites it by
+> number still resolves. Nothing in it binds today.
+>
+> **What replaced it.** Client delivery is
+> [`frontend/0017`](../frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md):
+> the A2UI client runs in the one local stack and ships itself to Firebase
+> Hosting through `frontend-cd`. **OD-1 of this spec — where the client is
+> hosted — is answered there**, and the answer arrived for a different app than
+> the one asking. That open decision is the reason this spec's container was
+> built, hardened and then deployed nowhere for two days short of a month.
 
 ## 1. Problem
 

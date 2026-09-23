@@ -18,6 +18,14 @@
 # sentence: a per-stack list is a list somebody has to remember to extend, and
 # for these two nobody did.
 #
+# `client_flutter/` was retired on 2026-09-22 (spec `repo/0002`) and its
+# entry point went with it. The history above stays because it is the argument
+# for this check's scope, and the assertion below now names
+# `frontend/docker/entrypoint.sh` — the surviving app's entry point, which does
+# the same CSP substitution and is the file the assertion exists to reach. The
+# named list moved with the repository rather than quietly emptying: an
+# assertion over a file that no longer exists passes for the wrong reason.
+#
 # The scope is discovered, not enumerated: `git ls-files` for the `*.sh`
 # extension, plus any tracked file whose first line is a `sh`/`bash` shebang,
 # so an extensionless script cannot slip in unlinted. A hand-maintained file
@@ -69,9 +77,28 @@ fi
 
 # The two scripts this check was written to reach, asserted by name: "shellcheck
 # ran and was happy" is the same sentence whether it opened them or not.
-for required in "client_flutter/docker/entrypoint.sh" "backend/docker/entrypoint.sh"; do
-  # The tree is allowed to lose a file; it is not allowed to skip one.
-  [ -f "$required" ] || continue
+#
+# The list is REQUIRED to exist. This used to open with
+# `[ -f "$required" ] || continue`, commented "the tree is allowed to lose a
+# file; it is not allowed to skip one" — which sounds right and made the whole
+# assertion vacuous the moment a name went stale. Measured on 2026-09-22 while
+# retiring `client_flutter/` (spec `repo/0002`): `git mv`-ing an entry point
+# out from under the list left this check **green**, reporting the same
+# "19 scripts linted" it reports when the file is there. That is the shape
+# ci-conventions §5 warns about one level down — the two halves agreed, and the
+# check's subject had quietly emptied.
+#
+# So a name that no longer resolves is a failure, and the fix is to edit this
+# list in the pull request that moves the file. That is the whole cost, and it
+# is paid by the person who already has both files open.
+for required in "frontend/docker/entrypoint.sh" "backend/docker/entrypoint.sh"; do
+  if [ ! -f "$required" ]; then
+    echo "repo.shell-lint: ${required} is named here but is not in the tree" >&2
+    echo "  if it moved or was deleted, update this list in the same commit —" >&2
+    echo "  an assertion over a file that does not exist passes for the wrong" >&2
+    echo "  reason, which is how this check lost its teeth once already." >&2
+    exit 1
+  fi
   # A here-string, not `printf ... | grep -qx`. `grep -q` exits at the first
   # match and `pipefail` then reports the SIGPIPE'd printf as a failed test —
   # so the assertion fails on a list that does contain the file. It is latent

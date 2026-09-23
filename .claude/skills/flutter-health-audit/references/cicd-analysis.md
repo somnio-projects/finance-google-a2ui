@@ -152,7 +152,7 @@ PER-APP VERIFICATION CHECKLIST (for each app in apps/):
 - Package-specific workflows (if packages/ exists):
   MANDATORY VERIFICATION: Check ONLY workflow files for packages
   (no dependabot/cspell/PR template).
-  
+
   * For each package in packages/ directory:
     - Verify .github/workflows/<package_name>.yaml or
       .github/workflows/<package_name>.yml exists
@@ -166,7 +166,7 @@ PER-APP VERIFICATION CHECKLIST (for each app in apps/):
 - Nested packages workflows (if apps/<app_name>/packages/ exists):
   MANDATORY VERIFICATION: Check ONLY workflow files for nested
   packages (no dependabot/cspell/PR template).
-  
+
   * For each app in apps/ directory:
     * For each nested package in apps/<app_name>/packages/ directory:
       - Verify .github/workflows/<app_name>_<package_name>.yaml or
@@ -181,7 +181,7 @@ PER-APP VERIFICATION CHECKLIST (for each app in apps/):
 - Shared packages workflows (if apps/packages/ exists):
   MANDATORY VERIFICATION: Check ONLY workflow files for shared
   packages (no dependabot/cspell/PR template).
-  
+
   * For each shared package in apps/packages/ directory:
     - Verify .github/workflows/shared_<package_name>.yaml or
       .github/workflows/shared_<package_name>.yml exists

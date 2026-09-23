@@ -33,8 +33,8 @@ review and the ship gate cite them by number.
 | [ADR-K](ADR-K-response-shaping.md) | Response shaping: server-side projections, not client transformation | Accepted | GGU-49, GGU-16–21, GGU-36–39, GGU-41 |
 | [ADR-F](ADR-F-persistence-and-session-lifetime.md) | In-memory persistence and session lifetime | Accepted · **D-4 superseded by D-7/D-8/D-9 (Proposed, 2026-09-20)** | GGU-5, GGU-3, GGU-29 |
 | [ADR-G](ADR-G-secret-handling.md) | Secret handling in a public repository | Accepted | GGU-3, GGU-12 |
-| [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed | GGU-45 |
-| [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating (`client_flutter/` only; amended for `frontend/` by ADR-L D-5) | Accepted | GGU-1, GGU-2 |
+| [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed · **D-2 and D-6 struck (2026-09-22)** — they named `client_flutter/`, retired by spec `repo/0002` | GGU-45 |
+| [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating (`client_flutter/` only) | **Superseded by ADR-L** (2026-09-22) — the app it governed was retired (spec `repo/0002`); D-3 survives, restated by ADR-L D-5 | GGU-1, GGU-2 |
 | [ADR-L](ADR-L-client-architecture.md) | The `frontend/` client architecture | Proposed | GGU-91 |
 
 Letters are provisional identifiers from the refinement pass. Renumber to `ADR-0001…` on first

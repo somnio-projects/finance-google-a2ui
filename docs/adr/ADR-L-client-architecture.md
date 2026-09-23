@@ -2,7 +2,7 @@
 
 - **Status:** **Proposed** — awaiting TL ratification. Amended by GGU-55 (D-13, D-14, D-15).
 - **Gates:** GGU-91 and every later `frontend/` ticket; the charting rulings gate GGU-55/57/59/61/63/65
-- **Scope:** `frontend/` only. `client_flutter/` is a separate app and keeps its own decisions, including [ADR-I](ADR-I-client-routing.md).
+- **Scope:** `frontend/`, which since 2026-09-22 is the only Flutter app in this repository. It used to read "`frontend/` only; `client_flutter/` is a separate app and keeps its own decisions, including [ADR-I](ADR-I-client-routing.md)" — that app was retired (spec [`repo/0002`](../../specs/repo/0002-retire-the-client-flutter-app.md)) and ADR-I is **superseded by this record**, so D-5 below is no longer an amendment across two live apps but the surviving form of ADR-I D-1 and D-3.
 - **Related:** [ADR-K](ADR-K-response-shaping.md) (the payloads this client binds), [ADR-E](ADR-E-money-representation.md) (money), [ADR-I](ADR-I-client-routing.md) (amended for this app by D-5), [ADR-B](ADR-B-auth-credential-contract.md) (the credential this client will carry), `specs/frontend/0001-frontend-skeleton.md`, `specs/client/0003-client-backend-contract.md`
 
 ## Context

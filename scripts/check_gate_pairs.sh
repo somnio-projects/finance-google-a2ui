@@ -94,15 +94,19 @@ echo "repo.gate-pairs: ${checked} gate command(s) found verbatim in ${workflow_d
 # beside the `.fvmrc` that was already tracked — the same defect, one file over,
 # and it took two reviewers to see it. That is exactly the point at which this
 # repository stops asking reviewers to be careful and writes the check.
-# Two Flutter apps now ship from this repository, each with its own SDK, so
-# "one pin" means one per app — not one per repository. `frontend/` is on
-# 3.47.5 and `client_flutter/` on 3.47.3, and that is a fact about two
-# deployables, not a drift. What is still forbidden is a SECOND home for the
-# same app's pin, in either direction (GGU-1 added `client-ci.yaml` carrying
-# `FLUTTER_VERSION: "3.47.3"` beside an already-tracked `client_flutter/.fvmrc`,
-# with a comment reading "Bump both together or the two disagree silently" —
-# the GGU-94 defect, rebuilt in the second app).
-pin_apps="frontend client_flutter"
+#
+# `pin_apps` is a LIST rather than the single word `frontend`, because this
+# repository shipped two Flutter apps for a while and the rule is one pin per
+# APP, not one per repository. `client_flutter/` was retired on 2026-09-22
+# (spec `repo/0002`) and left the list with it; the loop shape stays, so a
+# second app arriving is one word here instead of a rewrite. What is forbidden
+# is a SECOND home for the same app's pin, in either direction — GGU-1 added
+# `client-ci.yaml` carrying `FLUTTER_VERSION: "3.47.3"` beside an
+# already-tracked `client_flutter/.fvmrc`, with a comment reading "Bump both
+# together or the two disagree silently", which is the GGU-94 defect rebuilt in
+# the second app. Rule 1 below is repository-wide for that reason and does not
+# need the app to still exist to keep catching it.
+pin_apps="frontend"
 pin_failed=0
 
 for app in $pin_apps; do
@@ -148,7 +152,9 @@ done
 #    so the image shipped a bundle compiled by an SDK the gate never proved
 #    the app against, and both halves looked fine on their own. Rules 1 and 2
 #    above could not see it: it is not a workflow, and a Dockerfile is not a
-#    pin file.
+#    pin file. That app has since been retired (spec `repo/0002`) and the
+#    Dockerfile went with it; the rule stays because it is about Dockerfiles,
+#    not about that one, and `frontend/Dockerfile` is held to it today.
 #
 #    Two assertions, because either alone is satisfiable by the wrong file: the
 #    Dockerfile must not carry a version, AND it must be shown to read the one

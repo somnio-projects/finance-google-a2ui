@@ -6,9 +6,15 @@
 # happily blank every nginx variable in this file ($uri, $host, $status, …)
 # and the result would still start.
 #
-# This is client_flutter/docker/nginx.conf.template with two headers changed,
-# both because this app signs in through Firebase and that one does not. The
-# differences are argued in Decision 2 of ../Dockerfile and marked below.
+# This began as client_flutter/docker/nginx.conf.template with two headers
+# changed, both because this app signs in through Firebase and that one did
+# not. The differences are argued in Decision 2 of ../Dockerfile and marked
+# below.
+#
+# **`client_flutter/` no longer exists.** It was retired on 2026-09-22
+# (spec `specs/repo/0002-retire-the-client-flutter-app.md`). The comparisons
+# below are kept in the past tense because they record *why* these choices
+# are what they are; read them in the Git history, not in the tree.
 #
 # The root filesystem is read-only, so every path nginx wants to write to is
 # moved under /tmp, which the container mounts as tmpfs.
