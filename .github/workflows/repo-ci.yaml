@@ -29,6 +29,13 @@
 # `client_flutter/docker/entrypoint.sh`, which substitutes a validated origin
 # into the CSP `connect-src` directive.
 #
+# `client_flutter/` was retired on 2026-09-22 (spec `repo/0002`) and the
+# measurements above name files this repository no longer ships. They are kept
+# verbatim because they are the *evidence* for this workflow's scope, not a
+# description of the tree: the next scoped-check argument should have to answer
+# them. `frontend/**` is now the only client directory, and a `frontend/`-only
+# pull request is exactly the shape that used to start nothing.
+#
 # The general rule, now in ci-conventions §5: a check whose subject is "any
 # file in this repository" cannot be correct in a scoped workflow. Per-stack
 # copies are worse than one repository-wide job — they multiply the command

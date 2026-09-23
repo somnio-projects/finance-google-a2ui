@@ -160,7 +160,7 @@ void main() {
 
     group('EventWithData', () {
       const data = 'test-data';
-      
+
       test('supports value equality', () {
         expect(
           EventWithData(data),

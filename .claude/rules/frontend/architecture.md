@@ -16,8 +16,10 @@ synced from `somnio-ai-tools` and is never edited here. Where the two differ,
 the deviation is argued in ADR-L and repeated in `frontend/CLAUDE.md` — it is
 never silent.
 
-> Applies to `frontend/` only. `client_flutter/` is a different app with
-> different decisions.
+> Applies to `frontend/`, which since 2026-09-22 is the only Flutter app in
+> this repository. It used to say "`client_flutter/` is a different app with
+> different decisions"; that app was retired (spec `repo/0002`) and its four
+> rules under `.claude/rules/client/` went with it.
 
 ## 1. The layers, and what each may import
 

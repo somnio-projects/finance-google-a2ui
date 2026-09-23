@@ -1,9 +1,25 @@
 # 0001 — Client foundation (Flutter A2UI client)
 
 - **Area:** client
-- **Status:** Draft
+- **Status:** **Superseded by [repo/0002](../repo/0002-retire-the-client-flutter-app.md)** (2026-09-22)
 - **Ticket:** GGU-82 · **Related specs / ADRs:** [ADR-B](../../docs/adr/ADR-B-auth-credential-contract.md), [ADR-D](../../docs/adr/ADR-D-a2ui-streaming-transport.md), [ADR-I](../../docs/adr/ADR-I-client-routing.md), [ADR-J](../../docs/adr/ADR-J-rest-api-and-a2a-surface.md), [ADR-K](../../docs/adr/ADR-K-response-shaping.md); [backend/0005](../backend/0005-presentation-layer.md), [backend/0010](../backend/0010-a2a-surface.md), [backend/0019](../backend/0019-frozen-catalog-contract.md)
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-20
+
+> **Superseded 2026-09-22 — the app this spec describes no longer exists.**
+> `client_flutter/` was retired in full (directory, gate part, workflow, rules,
+> compose file) by
+> [`repo/0002`](../repo/0002-retire-the-client-flutter-app.md). This spec is
+> kept in place, not deleted: `specs/README.md` says a replaced spec is marked
+> `Superseded by NNNN` and stays, so every PR, ADR and rule that cites it by
+> number still resolves. Nothing in it binds today.
+>
+> **What it is replaced by, and what it is not.** The A2UI client this
+> repository ships is `frontend/`, specified from
+> [`frontend/0001`](../frontend/0001-frontend-skeleton.md) onwards and governed
+> by [ADR-L](../../docs/adr/ADR-L-client-architecture.md). That is a different
+> app written from scratch, not a continuation of this one — this spec's
+> premise was *adapting* Google's restaurant-finder sample, and the project
+> chose to rewrite instead.
 
 ## 1. Problem
 

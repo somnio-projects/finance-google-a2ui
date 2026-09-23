@@ -46,9 +46,9 @@ ruvector.db-*
 # Environment variables
 
 # AI harness per-directory provenance files.
-# The manifests at the repo and client_flutter roots are tracked
-# deliberately; these rules only keep the harness from adding new ones in
-# every package directory it happens to touch.
+# The manifest at the repository root is tracked deliberately; these rules
+# only keep the harness from adding new ones in every package directory it
+# happens to touch.
 **/.claude/proven-config.json
 **/.claude/.proven-config-version
 

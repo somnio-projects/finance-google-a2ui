@@ -6,7 +6,6 @@ The deployable pieces. Source of truth: [ADR-F](../adr/ADR-F-persistence-and-ses
 flowchart LR
     client["Browser<br/>(runs a Flutter web bundle)"]
     a2ui["A2UI client<br/>nginx · uid 101 · read-only FS<br/>config compiled in + /release.json"]
-    web["client_flutter container<br/>nginx · uid 101 · read-only FS<br/>serves the bundle + /config.json"]
     host["Firebase Hosting<br/>finance-a2ui.web.app<br/>the A2UI client's deployable"]
     subgraph edge["Edge (planned — infra/edge.tf)"]
         lb["HTTPS Load Balancer<br/>managed cert · TLS 1.2+"]
@@ -25,11 +24,9 @@ flowchart LR
     obs["Cloud Logging / Monitoring<br/>90-day retention · alerts"]
     sched["Cloud Scheduler<br/>monthly"]
 
-    client -- "GET / · the bundle, then /config.json" --> web
     client -- "GET / · the bundle + /release.json" --> a2ui
     client -- "GET / · the released bundle" --> host
     a2ui -- "same bytes, same build script<br/>(frontend/tool/build_web.sh)" --> host
-    web -. "hosting undecided — Cloud Run, bucket+CDN or Firebase<br/>(spec client/0002 OD-1)" .-> edge
     client -- "GET /.well-known/agent-card.json (public)" --> lb
     client -- "POST / · JSON-RPC message/stream · SSE" --> lb
     client -- "GET /v1/** · REST · bearer" --> lb
@@ -48,20 +45,18 @@ flowchart LR
     %% JSON-RPC over SSE, and answers JSON-RPC error objects. The agent card is
     %% the only public route besides the health probes — a client cannot hold a
     %% token before it has read it.
-    %% TWO clients, one repository, no shared code (GGU-91). `client_flutter` is
-    %% the older one: built and hardened (GGU-82, spec client/0002) but deployed
-    %% nowhere — where it is hosted is OD-1, still open, which is why its only
-    %% outgoing edge is dashed. The A2UI client is the one this repository is
-    %% about, and it IS deployed: Firebase Hosting, by `frontend-cd`
+    %% ONE client. This diagram carried a second one, `client_flutter`, built
+    %% and hardened (GGU-82, spec client/0002) but deployed nowhere — its only
+    %% outgoing edge was dashed because where it would be hosted was never
+    %% decided. It was retired on 2026-09-22 (spec repo/0002) and both its node
+    %% and that dashed edge are gone with it: a diagram draws reality.
+    %% The A2UI client IS deployed: Firebase Hosting, by `frontend-cd`
     %% (spec frontend/0017).
     %% The A2UI container is NOT that deployable — Hosting serves a bundle, not
     %% an image. It is the local stack's copy of the same bytes, compiled by the
     %% same `frontend/tool/build_web.sh`, which is why the edge between them is
     %% solid: it is a "built by" relation, not a network call.
-    %% Neither container holds a credential; the browser, not the container, is
+    %% The container holds no credential; the browser, not the container, is
     %% what talks to the backend. Locally `docker compose up` is db + backend +
     %% the A2UI client on :3001, all under the one project `finance-a2ui`.
-    %% client_flutter is NOT in that stack: it has its own compose file and
-    %% comes up beside it as `client-flutter`, which is the honest shape for a
-    %% separate deployable.
 ```

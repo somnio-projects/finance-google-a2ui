@@ -19,7 +19,7 @@ sequenceDiagram
 
     C->>RID: GET /v1/... + Bearer token
     RID->>RID: mint/echo X-Request-ID, bind to logs
-    RID->>SEC: 
+    RID->>SEC:
     SEC->>TH: adds CSP, nosniff, HSTS (prod)
     TH->>BL: host + origin allow-lists
     BL->>RL: 413 if body too large
