@@ -42,8 +42,10 @@ class HomeView extends StatelessWidget {
         final allocation = state.allocation;
         return ColoredBox(
           color: tokens.page,
-          child: ListView(
-            padding: EdgeInsets.zero,
+          // The header is the Column's child and the list is the Expanded
+          // one, so scrolling moves the content under a header that does
+          // not move (spec frontend/0024).
+          child: Column(
             children: <Widget>[
               HomeHeader(
                 payload: summary,
@@ -51,28 +53,46 @@ class HomeView extends StatelessWidget {
                     ? null
                     : () => showSessionSheet(context, onSignOut: onSignOut!),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                child: HomeHero(
-                  payload: summary,
-                  range: state.range,
-                  loading: state.status == HomeStatus.loading,
-                  onRangeSelected: (range) =>
-                      context.read<HomeBloc>().add(HomeRangeChanged(range)),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                      child: HomeHero(
+                        payload: summary,
+                        range: state.range,
+                        loading: state.status == HomeStatus.loading,
+                        onRangeSelected: (range) => context
+                            .read<HomeBloc>()
+                            .add(HomeRangeChanged(range)),
+                      ),
+                    ),
+                    if (allocation != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          gutter,
+                          18,
+                          gutter,
+                          0,
+                        ),
+                        child: HomeAllocationCard(payload: allocation),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 22),
+                      child: HomeQuestions(payload: summary),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        gutter,
+                        22,
+                        gutter,
+                        24,
+                      ),
+                      child: HomeMovers(payload: summary),
+                    ),
+                  ],
                 ),
-              ),
-              if (allocation != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(gutter, 18, gutter, 0),
-                  child: HomeAllocationCard(payload: allocation),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 22),
-                child: HomeQuestions(payload: summary),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(gutter, 22, gutter, 24),
-                child: HomeMovers(payload: summary),
               ),
             ],
           ),

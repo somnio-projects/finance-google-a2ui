@@ -1,3 +1,4 @@
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/theme/assistant_tokens.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class AssistantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = HomeTokens.of(context);
     final assistant = AssistantTokens.of(context);
-    return ColoredBox(
+    return PinnedHeader(
       color: tokens.header,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),

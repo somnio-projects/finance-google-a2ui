@@ -1,5 +1,6 @@
 import 'package:finance_app/features/home/view/home_hero_loading.dart';
 import 'package:finance_app/features/home/view/home_view.dart';
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/skeleton/skeleton_shimmer.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +21,12 @@ class HomeFirstRun extends StatelessWidget {
     final tokens = HomeTokens.of(context);
     return ColoredBox(
       color: tokens.page,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      // Pinned, exactly as the loaded page pins it: a skeleton whose layout
+      // differs from the page it stands in for is the wrong shape
+      // (spec frontend/0024 OD-6).
+      child: Column(
         children: <Widget>[
-          ColoredBox(
+          PinnedHeader(
             color: tokens.header,
             child: const Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 14),
@@ -52,48 +55,55 @@ class HomeFirstRun extends StatelessWidget {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 18, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                SkeletonShimmer(width: 110, height: 12.5, radius: 5),
-                SizedBox(height: 8),
-                SkeletonShimmer(width: 230, height: 40, radius: 8),
-                SizedBox(height: 12),
-                HomeHeroLoading(),
-                SizedBox(height: 16),
-                SkeletonShimmer(height: 38, radius: 20),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: const <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, 18, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SkeletonShimmer(width: 110, height: 12.5, radius: 5),
+                      SizedBox(height: 8),
+                      SkeletonShimmer(width: 230, height: 40, radius: 8),
+                      SizedBox(height: 12),
+                      HomeHeroLoading(),
+                      SizedBox(height: 16),
+                      SkeletonShimmer(height: 38, radius: 20),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HomeView.gutter,
+                    18,
+                    HomeView.gutter,
+                    0,
+                  ),
+                  child: SkeletonShimmer(height: 236, radius: 16),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HomeView.gutter,
+                    22,
+                    HomeView.gutter,
+                    0,
+                  ),
+                  child: SkeletonShimmer(height: 44, radius: 22),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HomeView.gutter,
+                    22,
+                    HomeView.gutter,
+                    24,
+                  ),
+                  child: SkeletonShimmer(height: 168, radius: 16),
+                ),
               ],
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HomeView.gutter,
-              18,
-              HomeView.gutter,
-              0,
-            ),
-            child: SkeletonShimmer(height: 236, radius: 16),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HomeView.gutter,
-              22,
-              HomeView.gutter,
-              0,
-            ),
-            child: SkeletonShimmer(height: 44, radius: 22),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HomeView.gutter,
-              22,
-              HomeView.gutter,
-              24,
-            ),
-            child: SkeletonShimmer(height: 168, radius: 16),
           ),
         ],
       ),

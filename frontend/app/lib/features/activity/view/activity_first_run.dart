@@ -1,4 +1,5 @@
 import 'package:finance_app/features/activity/view/activity_chips.dart';
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/skeleton/skeleton_rows.dart';
 import 'package:finance_app/skeleton/skeleton_shimmer.dart';
 import 'package:finance_app/theme/home_tokens.dart';
@@ -29,10 +30,11 @@ class ActivityFirstRun extends StatelessWidget {
     final tokens = HomeTokens.of(context);
     return ColoredBox(
       color: tokens.page,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      // Pinned, title and chips together, exactly as the loaded tab pins
+      // them (spec frontend/0024 OD-5, OD-6).
+      child: Column(
         children: <Widget>[
-          ColoredBox(
+          PinnedHeader(
             color: tokens.header,
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,17 +50,24 @@ class ActivityFirstRun extends StatelessWidget {
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 6),
-            child: SkeletonShimmer(width: 210, height: 11, radius: 5),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: SkeletonRows(
-              count: rowCount,
-              height: rowHeight,
-              gap: 8,
-              radius: 12,
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: const <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, 12, 20, 6),
+                  child: SkeletonShimmer(width: 210, height: 11, radius: 5),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  child: SkeletonRows(
+                    count: rowCount,
+                    height: rowHeight,
+                    gap: 8,
+                    radius: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

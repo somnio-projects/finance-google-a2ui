@@ -2,6 +2,7 @@ import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/component_skeleton_host.dart';
 import 'package:finance_app/features/holdings/bloc/holdings_bloc.dart';
 import 'package:finance_app/features/holdings/view/holdings_view.dart';
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/skeleton/skeleton_rows.dart';
 import 'package:finance_app/skeleton/skeleton_shimmer.dart';
 import 'package:finance_app/theme/home_tokens.dart';
@@ -34,42 +35,49 @@ class HoldingsFirstRun extends StatelessWidget {
     final tokens = HomeTokens.of(context);
     return ColoredBox(
       color: tokens.page,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      // Pinned, exactly as the loaded tab pins it (spec frontend/0024 OD-6).
+      child: Column(
         children: <Widget>[
-          ColoredBox(
+          PinnedHeader(
             color: tokens.header,
             child: const Padding(
               padding: EdgeInsets.fromLTRB(20, 12, 20, 14),
               child: SkeletonShimmer(width: 150, height: 24, radius: 6),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HoldingsView.gutter,
-              6,
-              HoldingsView.gutter,
-              0,
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: const <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HoldingsView.gutter,
+                    6,
+                    HoldingsView.gutter,
+                    0,
+                  ),
+                  child: _CardSkeleton(),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HoldingsView.gutter,
+                    16,
+                    HoldingsView.gutter,
+                    4,
+                  ),
+                  child: SkeletonShimmer(height: 38, radius: 20),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    HoldingsView.gutter,
+                    8,
+                    HoldingsView.gutter,
+                    24,
+                  ),
+                  child: SkeletonRows(count: rowCount, height: rowHeight),
+                ),
+              ],
             ),
-            child: _CardSkeleton(),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HoldingsView.gutter,
-              16,
-              HoldingsView.gutter,
-              4,
-            ),
-            child: SkeletonShimmer(height: 38, radius: 20),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              HoldingsView.gutter,
-              8,
-              HoldingsView.gutter,
-              24,
-            ),
-            child: SkeletonRows(count: rowCount, height: rowHeight),
           ),
         ],
       ),
