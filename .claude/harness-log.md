@@ -4447,6 +4447,43 @@ seam and the browser node; `frontend/CLAUDE.md` and `frontend/SECURITY.md`
 gain the rule and the residual-risk row (G-9 — dictated audio is processed by
 the browser vendor's service, which no flag in the page changes).
 
+## 2026-09-23 — The surface answers the question that was asked
+
+**Spec:** [`backend/0039`](../specs/backend/0039-the-surface-answers-the-question-that-was-asked.md).
+Branch `fix/the_answer_and_the_surface_agree`, cut from `develop` at `5cb9a40`.
+
+The TL read three turns on the deployed app and said the conversation made no
+sense. It did not, and the model was not the reason: `compute_attribution`
+computed a move over a **window** and attached `attribution.waterfall.v1`,
+which walks **unrealised P/L from cost basis**. The chart and the sentence
+were each correct about a different quantity — and in one turn the chart
+named NVIDIA the biggest contributor directly above a sentence naming it the
+biggest detractor.
+
+**What this says about the harness.** `domain/attribution.py` opens by saying
+the two are different questions. The domain knew; the presentation layer only
+ever had one of them, and nothing compared a tool's *computation* with the
+surface it attaches. There is still no machine check for that pairing — the
+new `test_catalog_reach.py` entry proves a view is reachable, not that it
+answers the tool that reaches it. Worth writing if this recurs.
+
+**Three checks caught things on the way, which is the part to keep:**
+`test_package_boundaries.py` refused an import from `presentation` into
+`app.agent` (the window set is now declared twice and compared by a test);
+`test_catalog_reach.py` caught that the all-time walk had become unreachable
+and made it a declared ruling instead of a silent loss; and the 150-line
+budget forced two shared inventories — the reach classification and the
+design-name literal — out of their test files into data modules, which is the
+seam `tests/catalog.py` already drew.
+
+**One defect met in passing.** `CatalogSnapshot.entryFor(component)` used
+`firstWhere`, so the moment two views shared a component name it would have
+handed a test the wrong example **and passed**. It throws now, and
+`entryForView(viewId)` is how to ask.
+
+**Next person:** spec 0039 OD-8 names what is still broken in that
+conversation — "Tax lots" reaching the sale simulator, and no turn referring
+to the previous one. A green gate here is not a fixed conversation.
 ## 2026-09-22 — The header stays put, and no test had ever scrolled
 
 `fix/header_stays_put`, spec `frontend/0024`. The TL: *"en el scroll el header

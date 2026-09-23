@@ -24,8 +24,16 @@ ViewCatalog snapshotCatalog({String? etag = '"c1"'}) => ViewCatalog.fromJson(
 );
 
 /// The served entry whose A2UI component is [component].
+///
+/// Throws when two views share that component, which is legitimate — see
+/// `CatalogSnapshot.entryFor`. Ask by view id with [snapshotEntryForView].
 CatalogEntry snapshotEntry(String component) => CatalogEntry.fromJson(
   servedEntry(CatalogSnapshot.load().entryFor(component)),
+);
+
+/// The served entry of one view id, whichever component draws it.
+CatalogEntry snapshotEntryForView(String viewId) => CatalogEntry.fromJson(
+  servedEntry(CatalogSnapshot.load().entryForView(viewId)),
 );
 
 /// Stubs `fetchCatalog` to answer [result], the snapshot by default.

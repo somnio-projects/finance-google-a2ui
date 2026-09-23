@@ -90,6 +90,7 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "currency": "currency=USD",
         "fields": "fields=buckets",
         "range": "range=1d",
+        "window": "window=7d",
         "group_by": "group_by=asset_class",
         "headline": "headline=false",
         "kind": "kind=dividend",

@@ -35,7 +35,7 @@ void main() {
     setUp(() {
       data = const AttributionWaterfallComponent().read(
         ViewPayload.fromJson(
-          CatalogSnapshot.load().exampleFor('AttributionWaterfall'),
+          CatalogSnapshot.load().exampleForView('attribution.waterfall.v1'),
         ),
       );
     });

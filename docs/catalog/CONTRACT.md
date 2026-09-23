@@ -142,6 +142,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `d98c8952178c` | 23 | `kind`, `query`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
 | [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `13c7eae1516d` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `1f290bfc4970` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `49051420b629` | 47 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `fa2cf78e5248` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `f27ee09d178b` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `d0daddcb8960` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
@@ -1770,6 +1771,517 @@ _This surface sends nothing back: tapping it starts no turn._
         "XOM"
       ],
       "pattern": null
+    }
+  ]
+}
+```
+
+## `attribution.window.v1`
+
+> The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.
+
+- **Frozen id:** `attribution.window.v1` · **digest:** `49051420b629`
+- **Component:** `AttributionWaterfall`
+- **Payload type:** `AttributionWindowPayload`
+- **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
+- **Editable fields:** `window`
+
+### Options
+
+| Option | Type / format | Accepts | Default | Description |
+|---|---|---|---|---|
+| `fields` | array ≤8 items | list of up to 8 (text), or omit it | `null` | Sections to render; omit for all of them. A section this view does not offer is rejected, never ignored. |
+| `locale` | enum en-US / es-AR / de-DE | one of 'en-US', 'es-AR', 'de-DE' | `"en-US"` | Formatting locale for every rendered string. |
+| `precision` | integer 0..8 | integer 0..8 | `2` | Decimal places for every figure this view renders. |
+| `currency` | const 'USD' | only 'USD' | `"USD"` | Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted. |
+| `window` | string | string matching ^(1d\|7d\|30d)$ | `"1d"` | How far back the walk looks. A closed set, not a free-form period: an unknown value is a 422, never a best-effort guess. |
+
+### Field inventory
+
+| Field | Type / format | Presence | Binding | State | Input |
+|---|---|---|---|---|---|
+| `view` | const 'attribution.window.v1' | default `"attribution.window.v1"` | `constant` | — | — |
+| `title` | string ≤120 chars | required | `text` | — | — |
+| `window` | enum 1d / 7d / 30d | required | `enum` | variant | input · string matching ^(1d\|7d\|30d)$ |
+| `period` | string ≤40 chars | required | `text` | — | — |
+| `start` | object | required | `container` | — | — |
+| `start.label` | string ≤64 chars | required | `text` | — | — |
+| `start.amount` | object | required | `container` | — | — |
+| `start.amount.amount` | decimal | required | `raw` | — | — |
+| `start.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `end` | object | required | `container` | — | — |
+| `end.label` | string ≤64 chars | required | `text` | — | — |
+| `end.amount` | object | required | `container` | — | — |
+| `end.amount.amount` | decimal | required | `raw` | — | — |
+| `end.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `net` | object | required | `container` | — | — |
+| `net.label` | string ≤64 chars | required | `text` | — | — |
+| `net.amount` | object | required | `container` | — | — |
+| `net.amount.amount` | decimal | required | `raw` | — | — |
+| `net.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `net.percent` | object | required | `container` | — | — |
+| `net.percent.value` | decimal | required | `raw` | — | — |
+| `net.percent.display` | string ≤16 chars | required | `display` | — | — |
+| `net.direction` | enum up / down / flat | required | `enum` | variant | — |
+| `buckets` | array | default `[]` | `container` | empty | — |
+| `buckets[].label` | string ≤64 chars | required | `text` | — | — |
+| `buckets[].key` | string ≤32 chars | required | `text` | — | — |
+| `buckets[].delta` | object | required | `container` | — | — |
+| `buckets[].delta.amount` | decimal | required | `raw` | — | — |
+| `buckets[].delta.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].cumulative` | object | required | `container` | — | — |
+| `buckets[].cumulative.amount` | decimal | required | `raw` | — | — |
+| `buckets[].cumulative.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].direction` | enum up / down | required | `enum` | variant | — |
+| `buckets[].move` | object | required | `container` | — | — |
+| `buckets[].move.value` | decimal | required | `raw` | — | — |
+| `buckets[].move.display` | string ≤16 chars | required | `display` | — | — |
+| `buckets[].opened` | object | required | `container` | — | — |
+| `buckets[].opened.amount` | decimal | required | `raw` | — | — |
+| `buckets[].opened.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].closed` | object | required | `container` | — | — |
+| `buckets[].closed.amount` | decimal | required | `raw` | — | — |
+| `buckets[].closed.display` | string ≤32 chars | required | `display` | — | — |
+| `buckets[].detail` | string ≤64 chars | required | `text` | — | — |
+| `buckets[].selected_label` | string ≤48 chars | required | `text` | — | — |
+| `annotations` | array | default `[]` | `container` | empty | — |
+| `annotations[].label` | string ≤64 chars | required | `text` | — | — |
+| `annotations[].text` | string ≤200 chars | required | `text` | — | — |
+
+### When the agent picks this
+
+_No design page for this component yet, so the catalog teaches the model only this view's summary and its options. It is not guidance this backend may invent._
+
+### Actions
+
+_This surface sends nothing back: tapping it starts no turn._
+
+### Example payload
+
+```json
+{
+  "view": "attribution.window.v1",
+  "title": "What moved your portfolio today",
+  "window": "1d",
+  "period": "today",
+  "start": {
+    "label": "Window open",
+    "amount": {
+      "amount": "479675.020000",
+      "display": "$479,675.02"
+    }
+  },
+  "end": {
+    "label": "Now",
+    "amount": {
+      "amount": "482915.200000",
+      "display": "$482,915.20"
+    }
+  },
+  "net": {
+    "label": "Net",
+    "amount": {
+      "amount": "3240.180000",
+      "display": "+$3,240.18"
+    },
+    "percent": {
+      "value": "0.006754948381510465147841136276",
+      "display": "+0.68%"
+    },
+    "direction": "up"
+  },
+  "buckets": [
+    {
+      "label": "NVIDIA Corp",
+      "key": "NVDA",
+      "delta": {
+        "amount": "4370.400000",
+        "display": "+$4,370.40"
+      },
+      "cumulative": {
+        "amount": "484045.420000",
+        "display": "$484,045.42"
+      },
+      "direction": "up",
+      "move": {
+        "value": "0.04200328691289680823458178358",
+        "display": "+4.20%"
+      },
+      "opened": {
+        "amount": "104049.000000",
+        "display": "$104,049.00"
+      },
+      "closed": {
+        "amount": "108419.400000",
+        "display": "$108,419.40"
+      },
+      "detail": "+4.20% \u00b7 $104,049.00 \u2192 $108,419.40",
+      "selected_label": "NVDA selected"
+    },
+    {
+      "label": "Vanguard S&P 500 ETF",
+      "key": "VOO",
+      "delta": {
+        "amount": "-2295.000000",
+        "display": "-$2,295.00"
+      },
+      "cumulative": {
+        "amount": "481750.420000",
+        "display": "$481,750.42"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.04864864864864864864864864865",
+        "display": "-4.86%"
+      },
+      "opened": {
+        "amount": "47175.000000",
+        "display": "$47,175.00"
+      },
+      "closed": {
+        "amount": "44880.000000",
+        "display": "$44,880.00"
+      },
+      "detail": "-4.86% \u00b7 $47,175.00 \u2192 $44,880.00",
+      "selected_label": "VOO selected"
+    },
+    {
+      "label": "Apple Inc.",
+      "key": "AAPL",
+      "delta": {
+        "amount": "762.000000",
+        "display": "+$762.00"
+      },
+      "cumulative": {
+        "amount": "482512.420000",
+        "display": "$482,512.42"
+      },
+      "direction": "up",
+      "move": {
+        "value": "0.01101283385362469649670482137",
+        "display": "+1.10%"
+      },
+      "opened": {
+        "amount": "69192.000000",
+        "display": "$69,192.00"
+      },
+      "closed": {
+        "amount": "69954.000000",
+        "display": "$69,954.00"
+      },
+      "detail": "+1.10% \u00b7 $69,192.00 \u2192 $69,954.00",
+      "selected_label": "AAPL selected"
+    },
+    {
+      "label": "SPDR Gold Shares",
+      "key": "GLD",
+      "delta": {
+        "amount": "675.000000",
+        "display": "+$675.00"
+      },
+      "cumulative": {
+        "amount": "483187.420000",
+        "display": "$483,187.42"
+      },
+      "direction": "up",
+      "move": {
+        "value": "0.01382488479262672811059907834",
+        "display": "+1.38%"
+      },
+      "opened": {
+        "amount": "48825.000000",
+        "display": "$48,825.00"
+      },
+      "closed": {
+        "amount": "49500.000000",
+        "display": "$49,500.00"
+      },
+      "detail": "+1.38% \u00b7 $48,825.00 \u2192 $49,500.00",
+      "selected_label": "GLD selected"
+    },
+    {
+      "label": "Vanguard Real Estate",
+      "key": "VNQ",
+      "delta": {
+        "amount": "126.480000",
+        "display": "+$126.48"
+      },
+      "cumulative": {
+        "amount": "483313.900000",
+        "display": "$483,313.90"
+      },
+      "direction": "up",
+      "move": {
+        "value": "0.01519553072625698324022346369",
+        "display": "+1.52%"
+      },
+      "opened": {
+        "amount": "8323.500000",
+        "display": "$8,323.50"
+      },
+      "closed": {
+        "amount": "8449.980000",
+        "display": "$8,449.98"
+      },
+      "detail": "+1.52% \u00b7 $8,323.50 \u2192 $8,449.98",
+      "selected_label": "VNQ selected"
+    },
+    {
+      "label": "Vanguard Total Bond",
+      "key": "BND",
+      "delta": {
+        "amount": "-93.000000",
+        "display": "-$93.00"
+      },
+      "cumulative": {
+        "amount": "483220.900000",
+        "display": "$483,220.90"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.002096436058700209643605870021",
+        "display": "-0.21%"
+      },
+      "opened": {
+        "amount": "44361.000000",
+        "display": "$44,361.00"
+      },
+      "closed": {
+        "amount": "44268.000000",
+        "display": "$44,268.00"
+      },
+      "detail": "-0.21% \u00b7 $44,361.00 \u2192 $44,268.00",
+      "selected_label": "BND selected"
+    },
+    {
+      "label": "iShares Core US Aggregate Bond",
+      "key": "AGG",
+      "delta": {
+        "amount": "-80.000000",
+        "display": "-$80.00"
+      },
+      "cumulative": {
+        "amount": "483140.900000",
+        "display": "$483,140.90"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.002047082906857727737973387922",
+        "display": "-0.20%"
+      },
+      "opened": {
+        "amount": "39080.000000",
+        "display": "$39,080.00"
+      },
+      "closed": {
+        "amount": "39000.000000",
+        "display": "$39,000.00"
+      },
+      "detail": "-0.20% \u00b7 $39,080.00 \u2192 $39,000.00",
+      "selected_label": "AGG selected"
+    },
+    {
+      "label": "PayPal Holdings",
+      "key": "PYPL",
+      "delta": {
+        "amount": "-62.500000",
+        "display": "-$62.50"
+      },
+      "cumulative": {
+        "amount": "483078.400000",
+        "display": "$483,078.40"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.003813882532418001525553012967",
+        "display": "-0.38%"
+      },
+      "opened": {
+        "amount": "16387.500000",
+        "display": "$16,387.50"
+      },
+      "closed": {
+        "amount": "16325.000000",
+        "display": "$16,325.00"
+      },
+      "detail": "-0.38% \u00b7 $16,387.50 \u2192 $16,325.00",
+      "selected_label": "PYPL selected"
+    },
+    {
+      "label": "Johnson & Johnson",
+      "key": "JNJ",
+      "delta": {
+        "amount": "-46.500000",
+        "display": "-$46.50"
+      },
+      "cumulative": {
+        "amount": "483031.900000",
+        "display": "$483,031.90"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.009900990099009900990099009901",
+        "display": "-0.99%"
+      },
+      "opened": {
+        "amount": "4696.500000",
+        "display": "$4,696.50"
+      },
+      "closed": {
+        "amount": "4650.000000",
+        "display": "$4,650.00"
+      },
+      "detail": "-0.99% \u00b7 $4,696.50 \u2192 $4,650.00",
+      "selected_label": "JNJ selected"
+    },
+    {
+      "label": "Exxon Mobil",
+      "key": "XOM",
+      "delta": {
+        "amount": "-45.500000",
+        "display": "-$45.50"
+      },
+      "cumulative": {
+        "amount": "482986.400000",
+        "display": "$482,986.40"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.01012438530517789991321955453",
+        "display": "-1.01%"
+      },
+      "opened": {
+        "amount": "4494.100000",
+        "display": "$4,494.10"
+      },
+      "closed": {
+        "amount": "4448.600000",
+        "display": "$4,448.60"
+      },
+      "detail": "-1.01% \u00b7 $4,494.10 \u2192 $4,448.60",
+      "selected_label": "XOM selected"
+    },
+    {
+      "label": "Procter & Gamble",
+      "key": "PG",
+      "delta": {
+        "amount": "-42.500000",
+        "display": "-$42.50"
+      },
+      "cumulative": {
+        "amount": "482943.900000",
+        "display": "$482,943.90"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.01001767825574543311726576311",
+        "display": "-1.00%"
+      },
+      "opened": {
+        "amount": "4242.500000",
+        "display": "$4,242.50"
+      },
+      "closed": {
+        "amount": "4200.000000",
+        "display": "$4,200.00"
+      },
+      "detail": "-1.00% \u00b7 $4,242.50 \u2192 $4,200.00",
+      "selected_label": "PG selected"
+    },
+    {
+      "label": "Microsoft Corp",
+      "key": "MSFT",
+      "delta": {
+        "amount": "-24.200000",
+        "display": "-$24.20"
+      },
+      "cumulative": {
+        "amount": "482919.700000",
+        "display": "$482,919.70"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.0005198242049052502244695430273",
+        "display": "-0.05%"
+      },
+      "opened": {
+        "amount": "46554.200000",
+        "display": "$46,554.20"
+      },
+      "closed": {
+        "amount": "46530.000000",
+        "display": "$46,530.00"
+      },
+      "detail": "-0.05% \u00b7 $46,554.20 \u2192 $46,530.00",
+      "selected_label": "MSFT selected"
+    },
+    {
+      "label": "iShares TIPS Bond",
+      "key": "TIP",
+      "delta": {
+        "amount": "-4.500000",
+        "display": "-$4.50"
+      },
+      "cumulative": {
+        "amount": "482915.200000",
+        "display": "$482,915.20"
+      },
+      "direction": "down",
+      "move": {
+        "value": "-0.001229004506349856616140925850",
+        "display": "-0.12%"
+      },
+      "opened": {
+        "amount": "3661.500000",
+        "display": "$3,661.50"
+      },
+      "closed": {
+        "amount": "3657.000000",
+        "display": "$3,657.00"
+      },
+      "detail": "-0.12% \u00b7 $3,661.50 \u2192 $3,657.00",
+      "selected_label": "TIP selected"
+    },
+    {
+      "label": "Cash & sweep",
+      "key": "USD",
+      "delta": {
+        "amount": "0.000000",
+        "display": "$0.00"
+      },
+      "cumulative": {
+        "amount": "482915.200000",
+        "display": "$482,915.20"
+      },
+      "direction": "up",
+      "move": {
+        "value": "0",
+        "display": "0.00%"
+      },
+      "opened": {
+        "amount": "38633.220000",
+        "display": "$38,633.22"
+      },
+      "closed": {
+        "amount": "38633.220000",
+        "display": "$38,633.22"
+      },
+      "detail": "0.00% \u00b7 $38,633.22 \u2192 $38,633.22",
+      "selected_label": "USD selected"
+    }
+  ],
+  "annotations": [
+    {
+      "label": "NVIDIA Corp",
+      "text": "+$4,370.40"
+    },
+    {
+      "label": "Vanguard S&P 500 ETF",
+      "text": "-$2,295.00"
+    },
+    {
+      "label": "Net",
+      "text": "+$3,240.18 today"
     }
   ]
 }

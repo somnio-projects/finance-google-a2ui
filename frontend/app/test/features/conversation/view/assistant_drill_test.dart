@@ -15,7 +15,9 @@ void main() {
       '(frontend/0011 OD-4)', (tester) async {
     final agent = MockAgentRepository();
     final views = MockViewsRepository();
-    final waterfall = CatalogSnapshot.load().exampleFor('AttributionWaterfall');
+    final waterfall = CatalogSnapshot.load().exampleForView(
+      'attribution.waterfall.v1',
+    );
     when(
       () => views.fetchPortfolioViews(
         portfolioId: any(named: 'portfolioId'),

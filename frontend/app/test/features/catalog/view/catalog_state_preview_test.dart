@@ -16,7 +16,7 @@ import '../catalog_fixtures.dart';
 
 void main() {
   final holdings = snapshotEntry('HoldingsSummary');
-  final waterfall = snapshotEntry('AttributionWaterfall');
+  final waterfall = snapshotEntryForView('attribution.waterfall.v1');
   const options = PreviewState(
     label: 'x',
     kind: PreviewKind.options,

@@ -10,7 +10,7 @@ import '../../../helpers/pump_app.dart';
 import '../catalog_fixtures.dart';
 
 void main() {
-  final waterfall = snapshotEntry('AttributionWaterfall');
+  final waterfall = snapshotEntryForView('attribution.waterfall.v1');
   final ticket = snapshotEntry('OrderTicket');
 
   String richText(WidgetTester tester, Finder finder) =>

@@ -57,7 +57,9 @@ void main() {
     testWidgets('selects nothing when the backend sent no buckets', (
       tester,
     ) async {
-      final example = CatalogSnapshot.load().exampleFor('AttributionWaterfall');
+      final example = CatalogSnapshot.load().exampleForView(
+        'attribution.waterfall.v1',
+      );
       final empty = ViewPayload.fromJson(<String, dynamic>{
         ...example,
         'buckets': const <Object?>[],

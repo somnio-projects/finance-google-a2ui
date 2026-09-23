@@ -11,6 +11,8 @@ import 'package:finance_app/components/attribution_driver/attribution_driver_com
     as attribution_driver;
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart'
     as attribution_waterfall;
+import 'package:finance_app/components/attribution_window/attribution_window_component.dart'
+    as attribution_window;
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_component.dart'
     as holdings_allocation;
 import 'package:finance_app/components/order_ticket/order_ticket_component.dart'
@@ -28,6 +30,7 @@ import 'package:finance_app/components/taxlots_table/taxlots_table_component.dar
 void registerCatalogComponents(ComponentRegistry registry) {
   attribution_driver.register(registry);
   attribution_waterfall.register(registry);
+  attribution_window.register(registry);
   holdings_allocation.register(registry);
   order_ticket.register(registry);
   order_ticket_v2.register(registry);

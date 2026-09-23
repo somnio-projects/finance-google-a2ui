@@ -16,7 +16,9 @@ void main() {
     late Map<String, dynamic> example;
 
     setUp(() {
-      example = CatalogSnapshot.load().exampleFor('AttributionWaterfall');
+      example = CatalogSnapshot.load().exampleForView(
+        'attribution.waterfall.v1',
+      );
     });
 
     test('serves the view id the generated catalog publishes', () {

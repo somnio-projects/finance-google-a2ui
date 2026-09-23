@@ -52,6 +52,14 @@ class ProjectionOptions(TabOptions):
     budget put the seam.
     """
 
+    window: Literal["1d", "7d", "30d"] | None = Field(
+        default=None,
+        description=(
+            "How far back an attribution walk looks. A closed set, not a "
+            "free-form period: an unknown value is a 422, never a guess."
+        ),
+        examples=["1d"],
+    )
     symbol: Annotated[str, Field(pattern=TICKER_PATTERN)] | None = Field(
         default=None,
         description=(
