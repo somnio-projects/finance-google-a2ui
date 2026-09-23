@@ -31,7 +31,7 @@ variable "backend_release" {
 }
 
 variable "backend_image" {
-  description = "Fully qualified backend image (built by CI from backend/Dockerfile), e.g. us-central1-docker.pkg.dev/<project>/finance-a2ui/backend:<sha>."
+  description = "BOOTSTRAP image for the Cloud Run service and every Cloud Run job (built by CI from backend/Dockerfile), e.g. us-central1-docker.pkg.dev/<project>/finance-a2ui/backend:<sha>. It is read at CREATE time only: every resource that uses it declares `ignore_changes` on its image, because `deploy_cloud_run.sh` owns which build runs and Terraform owns the shape (spec infra/0004). A mutable tag here is therefore harmless after the first apply and a trap before it — dev names `:latest`, and until 2026-09-22 two jobs really did run whatever that happened to point at."
   type        = string
 }
 

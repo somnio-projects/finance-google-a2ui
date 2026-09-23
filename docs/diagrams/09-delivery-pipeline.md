@@ -23,7 +23,7 @@ flowchart LR
     subgraph cd["backend-cd — the button only"]
         gate["Gate · backend-ci AND repo-ci called as jobs<br/>publish and deploy need: both"]
         pub["Image · build, push by digest to Artifact Registry"]
-        dep["Deploy · revision with no traffic → /readyz → shift 100%"]
+        dep["Deploy · revision with no traffic → /readyz<br/>→ pin EVERY Cloud Run job to the digest → migrate → shift 100%"]
         ver["Verify · /health reports the released identifier"]
         rb["Rollback · traffic back to the previous revision, run fails"]
     end

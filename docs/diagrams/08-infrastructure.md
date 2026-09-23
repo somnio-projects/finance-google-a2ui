@@ -18,7 +18,7 @@ flowchart TB
             conn["Serverless VPC connector<br/>(production only — dev uses<br/>Cloud Run direct VPC egress)"]
             subgraph runtime["Cloud Run"]
                 svc["backend service · uid 10001<br/>exactly 1 instance, every environment<br/>prod: LB-only ingress · dev: open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
-                job["purge job<br/>audit_events retention"]
+                job["purge job<br/>audit_events retention<br/><i>run monthly by Scheduler</i>"]
                 mig["migrate job<br/>alembic upgrade head<br/><i>run by the deploy, before the traffic shift</i>"]
                 seed["seed-portfolios job<br/>the demo audience<br/><i>run by a HUMAN, never by the deploy</i>"]
             end
@@ -72,12 +72,19 @@ flowchart TB
     %% is a monthly Scheduler, the migration is executed by the deploy before
     %% traffic moves, and `seed-portfolios` (spec backend/0035 §4.1) is run by
     %% a person — `gcloud run jobs execute … --args=a@x,b@y`. Nothing schedules
-    %% it and `deploy_cloud_run.sh` never mentions it, which
-    %% infra/scripts/tests/test_dev_environment.sh asserts in both directions:
-    %% deciding who gets a portfolio is not a thing a deploy should do on its
-    %% own, and a deploy that quietly reseeded an account mid-rehearsal would
-    %% be data loss with a green checkmark. Its audience is `args`, not an env
-    %% var, precisely so one execution can override it.
+    %% it and `deploy_cloud_run.sh` never NAMES it, which
+    %% infra/scripts/tests/test_dev_environment.sh asserts over the script's
+    %% code: deciding who gets a portfolio is not a thing a deploy should do on
+    %% its own, and a deploy that quietly reseeded an account mid-rehearsal
+    %% would be data loss with a green checkmark. Its audience is `args`, not
+    %% an env var, precisely so one execution can override it.
+    %% WHO RUNS a job and WHICH BUILD it runs are different questions, and
+    %% conflating them cost two of these three jobs their image (spec
+    %% infra/0004). All three now carry `image-owner=delivery`, and the deploy
+    %% points every labelled job at the digest it just released — including the
+    %% two it never executes. Terraform keeps the shape and ignores the image;
+    %% without that an apply would put `var.backend_image` back, which on dev
+    %% is the floating `:latest` tag.
     %% ONE instance is not a cost choice: the rate limiter and the feature-flag
     %% cache count in process memory, so the documented per-principal limit only
     %% holds while one process serves the traffic (ADR-F D-9, GGU-83). Raising

@@ -4522,3 +4522,66 @@ measured from the design rather than generated — with a comment beside each
 naming its home, and the cover mark is the sign-in hero's mark rebuilt in CSS.
 The Flutter default icon in `web/icons/` is deliberately not used: it is
 Flutter's logo, not this product's.
+## 2026-09-22 — Every Cloud Run job runs the build that was released
+
+`fix/cd_owns_every_job_image` · spec `infra/0004` · widens `infra/0003`.
+
+Spec 0003 fixed the migrate job's image **by name**, four days ago. Seeding
+the demo audience the same evening answered `No module named
+app.jobs.seed_portfolios` from an image older than that module, and the fix
+for that was a `gcloud run jobs update` typed into a terminal. Reading the
+other two jobs afterwards:
+
+| job | image it would have run |
+|---|---|
+| `migrate` | the release — 0003 works |
+| `seed-portfolios` | the hand-fix, **already one release stale** |
+| `purge-audit` | `backend:latest`, a floating tag nothing had ever moved |
+
+Three things this taught, none of them about Cloud Run.
+
+**A fix by name is a fix for one instance of a class.** 0003 was correct,
+mutation-checked, and closed the ticket. It also encoded the defect's shape as
+a proper noun, so the second and third instances were invisible to it — and
+the third was the *scheduled* one, deleting `audit_events` rows monthly under
+code nobody chose. When the fix is `jobs update <name>`, ask what the class is
+before writing the name.
+
+**The comment arguing against the fix was the best evidence for it.**
+`infra/run.tf` carried a paragraph explaining why `seed_portfolios`
+deliberately had no `ignore_changes`: freezing it at the applied image would
+make a human run stale code months later. The hazard was real, the conclusion
+backwards — without an owner it floated on a mutable tag instead, which is the
+same sentence with no floor. It is kept in the file above the new reasoning.
+A confident comment against a change is a place to look, not a place to stop.
+
+**Derivation is safe when it reads a declaration.** The choice was a list of
+job names in the pipeline (a third thing to remember), a name prefix
+(derives from whatever happens to be deployed — the way a deploy touches
+something nobody meant), or a label Terraform sets on each job. The label is
+the only one that is both: adding a job is one line in the block you already
+have open, and the set stays closed. It also kept
+`test_dev_environment.sh`'s existing assertion — *the deploy never names the
+seed job* — literally true, which an enumeration would have forced us to
+delete. When a new shape lets an old assertion survive, that is a signal.
+
+Two things bit while writing it, both worth keeping:
+
+- **`gcloud … --filter` on a label nothing carries exits 0 with a warning.**
+  A deploy reading that as "nothing to pin" is green having pinned nothing —
+  the defect wearing the fix's clothes. Empty list = hard failure naming
+  `terraform apply`; list without the migrate job = hard failure too, because
+  a non-empty list is not a correct list.
+- **The assertion "the deploy must not mention the seed job" started failing
+  on my own comments.** Its subject was the script's *code*; it was grepping
+  prose. Sharpened to strip comment lines, and joined by the claim it was
+  really making: the script executes exactly **one** job.
+
+Evidence that could be gathered read-only, and the line where it stopped:
+`terraform plan` on dev **before** the change showed
+`~ image = "…@sha256:854327a4…" -> "…:latest"` — an apply would have undone
+the hand-fix. After it, no job's image is in the plan at all. What could not
+be gathered is a deploy, so the whole change is stubbed `gcloud`, static greps
+and a plan; the `Verification` block says so in those words rather than
+implying a run. It also records the precondition: the label is not in the
+cloud until dev is applied, and until then the deploy fails **by design**.

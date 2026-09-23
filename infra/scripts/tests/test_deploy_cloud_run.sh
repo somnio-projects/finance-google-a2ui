@@ -28,6 +28,8 @@ FAILED=0
 #   release_prefix    /health reports a release the expected one is a PREFIX of
 #   job_update_fails  `gcloud run jobs update` (the job's image) exits non-zero
 #   migrate_fails     `gcloud run jobs execute` exits non-zero
+#   no_delivery_jobs  `gcloud run jobs list` finds nothing carrying the label
+#   jobs_without_migrate  the list comes back, but without the migrate job
 make_stubs() {
   local scenario="$1"
   mkdir -p "${WORK}/bin"
@@ -38,6 +40,18 @@ echo "$*" >> "${CALL_LOG}"
 
 if [[ "$*" == *"run deploy"* ]]; then
   if [[ "${SCENARIO}" == "deploy_fails" ]]; then echo "deploy exploded" >&2; exit 1; fi
+  exit 0
+fi
+
+# The delivery-owned job list, discovered by label (spec infra/0004). Three
+# jobs, of which only the migration is ever executed — the other two are the
+# ones a name-by-name pipeline forgot.
+if [[ "$*" == *"jobs list"* ]]; then
+  case "${SCENARIO}" in
+    no_delivery_jobs)     : ;;
+    jobs_without_migrate) printf 'api-purge-audit\napi-seed-portfolios\n' ;;
+    *)                    printf 'api-migrate\napi-purge-audit\napi-seed-portfolios\n' ;;
+  esac
   exit 0
 fi
 
@@ -164,11 +178,24 @@ assert_contains "deploys the image"          "${calls}" "run deploy api --image=
 assert_contains "deploys without traffic"    "${calls}" "--no-traffic"
 assert_contains "injects the release"        "${calls}" "APP_RELEASE=0.1.0+a1b2c3d"
 assert_contains "checks the revision's Ready condition" "${calls}" "revisions describe api-00008-new"
+assert_contains "discovers the jobs by label, naming none of them" "${calls}" \
+  "jobs list --filter=metadata.labels.image-owner=delivery"
 assert_contains "points the migrate job at the released image" "${calls}" \
   "run jobs update api-migrate --image=us-central1-docker.pkg.dev/proj/finance/backend@sha256:abc"
+# The two jobs #98 left behind. `purge-audit` runs monthly on a schedule and
+# `seed-portfolios` by hand, so nothing in this run ever executes them — which
+# is precisely why nothing was keeping their image current either.
+assert_contains "points the purge-audit job at the released image" "${calls}" \
+  "run jobs update api-purge-audit --image=us-central1-docker.pkg.dev/proj/finance/backend@sha256:abc"
+assert_contains "points the seed job at the released image" "${calls}" \
+  "run jobs update api-seed-portfolios --image=us-central1-docker.pkg.dev/proj/finance/backend@sha256:abc"
+assert_not_contains "still never executes the purge job" "${calls}" "jobs execute api-purge-audit"
+assert_not_contains "still never seeds on its own"       "${calls}" "jobs execute api-seed-portfolios"
 assert_contains "runs the migrate job"       "${calls}" "run jobs execute api-migrate"
 check "sets the job's image BEFORE running it" \
   "$(awk '/run jobs update api-migrate/{u=NR} /run jobs execute api-migrate/{e=NR} END{print (u && e && u < e) ? "ok" : "no"}' "${WORK}/calls.log")"
+check "pins every job BEFORE the traffic shift" \
+  "$(awk '/run jobs update api-seed-portfolios/{p=NR} /update-traffic/{t=NR} END{print (p && t && p < t) ? "ok" : "no"}' "${WORK}/calls.log")"
 check "migrates BEFORE the traffic shift" \
   "$(awk '/run jobs execute api-migrate/{m=NR} /update-traffic/{t=NR} END{print (m && t && m < t) ? "ok" : "no"}' "${WORK}/calls.log")"
 assert_contains "shifts traffic to the new revision"    "${calls}" "${SHIFT_NEW}"
@@ -250,18 +277,19 @@ if PATH="${WORK}/bin:${PATH}" SERVICE=api REGION=us-central1 PROJECT=proj \
 assert_contains "names the missing public url" "$(cat "${WORK}/out.txt")" "PUBLIC_URL"
 
 # --------------------------------------------------------------- case 10
-# The defect this closes (spec infra/0003): the job kept the image it was
-# created with, so it ran OLD code against a schema a newer revision had
-# already moved. Both halves of that are asserted — the update happens, and a
-# failure to set the image is a hard stop with traffic untouched.
-echo "case 10 · the migrate job cannot be pointed at the released image"
+# The defect this closes (spec infra/0003, widened by infra/0004): a job kept
+# the image it was created with, so it ran OLD code against a schema a newer
+# revision had already moved. Both halves are asserted — the update happens,
+# and a failure to set it is a hard stop with traffic untouched.
+echo "case 10 · a job cannot be pointed at the released image"
 make_stubs job_update_fails
 assert_exit_nonzero "exits non-zero"
 calls="$(cat "${WORK}/calls.log")"
 assert_not_contains "never runs the job on an unknown image" "${calls}" "run jobs execute"
 assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
 assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
-assert_contains "the reason names the schema" "$(cat "${WORK}/out.txt")" "migrations failed"
+assert_contains "the reason names the images, not the schema" "$(cat "${WORK}/out.txt")" \
+  "could not point every Cloud Run job at the released image"
 
 # --------------------------------------------------------------- case 11
 echo "case 11 · the migration itself fails: the schema was not moved, so nothing serves"
@@ -273,6 +301,39 @@ assert_contains "the job was attempted on the released image" "${calls}" \
 assert_not_contains "the new revision never took traffic" "${calls}" "${SHIFT_NEW}"
 assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
 assert_contains "summary records the rollback" "$(cat "${WORK}/summary.md")" "Rolled back"
+
+# --------------------------------------------------------------- case 12
+# Anti-vacuity, and the reason this check is not a count of `jobs update`
+# calls. `gcloud run jobs list --filter=…image-owner=delivery` answers with a
+# WARNING and exit 0 when nothing carries the label — measured against the
+# live project on 2026-09-22, before the label was applied. A deploy that read
+# that as "no jobs to pin" would be green while pinning nothing, which is the
+# defect of spec infra/0004 wearing the fix's clothes.
+echo "case 12 · nothing carries the label: the deploy fails and says how to fix it"
+make_stubs no_delivery_jobs
+assert_exit_nonzero "exits non-zero"
+calls="$(cat "${WORK}/calls.log")"
+assert_not_contains "no job was updated"   "${calls}" "run jobs update"
+assert_not_contains "no job was executed"  "${calls}" "run jobs execute"
+assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
+assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
+out="$(cat "${WORK}/out.txt")"
+assert_contains "the reason names the label"  "${out}" "image-owner=delivery"
+assert_contains "and names the command that fixes it" "${out}" "terraform apply"
+
+# --------------------------------------------------------------- case 13
+# A non-empty list is not a correct list. If the migration — the one job this
+# script also executes — is missing from it, the filter is answering about
+# something else and the run must stop rather than migrate blind.
+echo "case 13 · a list without the migrate job is a wrong list, not a short one"
+make_stubs jobs_without_migrate
+assert_exit_nonzero "exits non-zero"
+calls="$(cat "${WORK}/calls.log")"
+assert_not_contains "no job was updated"   "${calls}" "run jobs update"
+assert_not_contains "no migration was run" "${calls}" "run jobs execute"
+assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
+assert_contains "the reason names the missing job" "$(cat "${WORK}/out.txt")" \
+  "api-migrate is not in the delivery-owned job list"
 
 echo
 echo "${PASSED} passed, ${FAILED} failed"
