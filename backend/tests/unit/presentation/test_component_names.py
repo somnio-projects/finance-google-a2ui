@@ -25,41 +25,7 @@ from app.presentation.contract import catalog_entry
 from app.presentation.published import component_of
 from app.presentation.registry import REGISTRY
 from tests.unit.presentation.conftest import committed
-
-#: The design catalog's own naming; the evidence per page is transcribed in
-#: `docs/catalog/design/README.md`, so this literal can be re-verified without
-#: the exported HTML that is not in the repository.
-#:
-#: **How a name was chosen when the design disagreed with itself**, recorded in
-#: spec 0023 §3: a component is named by its **own A2UI schema block** (Zone 2
-#: of its detail page), which is the literal the client would read off a
-#: payload. The gallery badge and the index card do not always agree, and they
-#: are decoration. Where no detail page was exported the gallery card was the
-#: only declaration and therefore won — a **fallback**, not a tie-break, so it
-#: loses the day the page arrives. It did: the last three pages were exported
-#: on 2026-09-21 and two adopted names moved (GGU-101, GGU-103; spec 0024).
-#: A name seen on *another* component's page is never authoritative — what
-#: renamed `HoldingsSummary` is its **own** Zone 2 block (spec 0024).
-DESIGN_CATALOG: Final[dict[str, str]] = {
-    # Zone 2 + breadcrumb + fragment; badge and index card say `WaterfallChart`.
-    "attribution.waterfall.v1": "AttributionWaterfall",
-    # Page now exported: Zone 2 + breadcrumb + badge. Index: `AllocationSummary`.
-    "holdings.allocation.v1": "HoldingsSummary",
-    # Page now exported and it changed nothing: every rendering agrees.
-    "order.ticket.v1": "OrderTicket",
-    "order.ticket.v2": "MultiLegOrderTicket",  # v1 holds the name (0031 OD-1)
-    # Page now exported: Zone 2 + breadcrumb + badge. Index: `PayoffChart`.
-    "payoff.curve.v1": "RiskPayoffChart",
-    # Zone 2 + breadcrumb + fragment; the index card says `ComparisonCard`.
-    "scenario.comparison.v1": "ScenarioComparison",
-    # The one component every rendering already agreed on.
-    "taxlots.table.v1": "TaxLotTable",
-    # Pages and states in design, projections here; named by us (0026/0028/0032).
-    "portfolio.summary.v1": "PortfolioSummary",
-    "holdings.positions.v1": "PositionList",
-    "activity.timeline.v1": "ActivityTimeline",
-    "attribution.driver.v1": "DriverDetail",
-}
+from tests.unit.presentation.design_catalog import DESIGN_CATALOG
 
 #: `- **Component:** \`X\`` in a component's own section of the contract.
 SECTION_COMPONENT: Final[re.Pattern[str]] = re.compile(

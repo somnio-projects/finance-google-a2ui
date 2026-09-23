@@ -43,13 +43,41 @@ class CatalogSnapshot {
   /// Throws when no view claims that name, which is the failure GGU-53 went
   /// looking for: four of six component names were wrong, and a client that
   /// registered the old one would have shown a placeholder with a green gate.
-  Map<String, dynamic> entryFor(String component) => views.firstWhere(
-    (view) => view['component'] == component,
+  Map<String, dynamic> entryFor(String component) {
+    final claimed = views.where((view) => view['component'] == component);
+    if (claimed.isEmpty) {
+      throw StateError(
+        'no catalog view is served by "$component"; the snapshot has '
+        '${views.map((v) => v['component']).join(', ')}',
+      );
+    }
+    // Two views may legitimately share one component — `AttributionWaterfall`
+    // draws both the all-time walk and the window walk (spec `backend/0039`).
+    // Answering "the first one" would hand a test the wrong example and it
+    // would still pass, which is the class of silent wrongness GGU-53 was
+    // about. Ask by view id instead.
+    if (claimed.length > 1) {
+      throw StateError(
+        '"$component" serves ${claimed.length} views '
+        '(${claimed.map((v) => v['view']).join(', ')}); '
+        'use entryForView or exampleForView with the view id you mean',
+      );
+    }
+    return claimed.first;
+  }
+
+  /// The catalog entry of one view id, whichever component draws it.
+  Map<String, dynamic> entryForView(String viewId) => views.firstWhere(
+    (view) => view['view'] == viewId,
     orElse: () => throw StateError(
-      'no catalog view is served by "$component"; the snapshot has '
-      '${views.map((v) => v['component']).join(', ')}',
+      'no catalog view has the id "$viewId"; the snapshot has '
+      '${views.map((v) => v['view']).join(', ')}',
     ),
   );
+
+  /// The rendered example the backend publishes for [viewId].
+  Map<String, dynamic> exampleForView(String viewId) =>
+      entryForView(viewId)['example']! as Map<String, dynamic>;
 
   /// The frozen view id [component] renders.
   String viewIdFor(String component) => exampleFor(component)['view'] as String;

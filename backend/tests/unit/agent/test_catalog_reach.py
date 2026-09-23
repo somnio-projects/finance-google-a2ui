@@ -30,56 +30,16 @@ is red until design has named it.
 
 import re
 from pathlib import Path
-from typing import Final
 
 from app.presentation.registry import REGISTRY
 from app.presentation.views import LOADED
+from tests.unit.agent.catalog_reach_data import CLIENT_ONLY, DECLARED_GAPS
 
 #: Views the agent must NOT be expected to compose, each with the reason.
 #:
 #: A view earns a line here by being something a *screen* asks for, not
 #: something an *answer* is. Anything else is a gap, and gaps go in the table
 #: below where they have an owner.
-CLIENT_ONLY: Final[dict[str, str]] = {
-    "portfolio.summary.v1": (
-        "The Home hero. The shell requests it by `?view=` on load; an agent "
-        "turn that re-drew the header the user is already looking at would be "
-        "noise, not an answer."
-    ),
-    "order.ticket.v1": (
-        "Superseded by `order.ticket.v2` (spec 0031), which IS reachable. The "
-        "v1 projection stays registered because `/v1` is a contract and a "
-        "client may still request it; nothing new should produce it."
-    ),
-}
-
-#: Views the agent SHOULD be able to compose and cannot yet, each with the
-#: spec that owns closing it. A line here is a promise, not a shrug — and it
-#: is visible in a test run rather than buried in a backlog.
-DECLARED_GAPS: Final[dict[str, str]] = {
-    "activity.timeline.v1": (
-        "No tool reads the ledger. Asked what was earned in dividends this "
-        "year the agent answers that the data is not available, while the "
-        "Activity tab now shows sixteen — spec backend/0035 quadrupled them, "
-        "widening the gap rather than closing it, and recorded it as OD-11."
-    ),
-    "holdings.positions.v1": (
-        "`get_holdings_summary` sorts by `gainers`/`losers` but attaches no "
-        "surface for them — `holdings.allocation.v1` is suppressed for a "
-        "return-ordered answer (spec 0011 OD-1) and nothing takes its place. "
-        "Spec backend/0035 gave this view `query` and `asset_class`, which "
-        "the TABS send; it attached no tool, so the gap stands. Unowned."
-    ),
-    "scenario.comparison.v1": (
-        "`simulate_sale` computes one scenario and attaches the tax-lot "
-        "table; comparing keep-against-trim is exactly this component and no "
-        "tool asks for it. Unowned — the next agent feature should take it."
-    ),
-    "payoff.curve.v1": (
-        "No tool produces an option payoff. Unowned; the demo script does not "
-        "reach it either, so it is the least urgent of the four."
-    ),
-}
 
 
 def _registered() -> set[str]:
@@ -143,7 +103,10 @@ def test_the_agent_reaches_the_views_the_demo_depends_on() -> None:
     """
     assert _reachable() == {
         "attribution.driver.v1",
-        "attribution.waterfall.v1",
+        # Was `attribution.waterfall.v1` until spec `backend/0039`. The swap
+        # is the fix, not a loss of reach: `compute_attribution` computes a
+        # window and now attaches the surface that draws one.
+        "attribution.window.v1",
         "holdings.allocation.v1",
         "order.ticket.v2",
         "taxlots.table.v1",

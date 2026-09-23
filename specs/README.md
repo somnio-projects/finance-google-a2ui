@@ -102,6 +102,7 @@ duplicated one are both visible at a glance.
 | [frontend/0021-three-defects-a-reader-found.md](frontend/0021-three-defects-a-reader-found.md) | In progress | *unassigned* |
 | [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
 | [backend/0038-the-openapi-document-is-complete.md](backend/0038-the-openapi-document-is-complete.md) | Implemented | *unassigned* |
+| [backend/0039-the-surface-answers-the-question-that-was-asked.md](backend/0039-the-surface-answers-the-question-that-was-asked.md) | In progress | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md](frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md) | In progress | *unassigned* |
 | [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |

@@ -38,17 +38,32 @@ void main() {
     });
 
     test('a component and its catalog entry agree on the A2UI name', () {
+      // Resolved by **view id**, not by component name. Two views may share
+      // a component — `AttributionWaterfall` draws the all-time walk and the
+      // window walk (spec `backend/0039`) — and asking the snapshot by name
+      // would silently answer with whichever comes first, which is the class
+      // of quiet wrongness this suite exists to catch.
       for (final viewId in registry.viewIds) {
         final component = registry.lookup(viewId)!;
         expect(
-          snapshot.viewIdFor(component.a2uiComponent),
-          equals(viewId),
+          snapshot.entryForView(viewId)['component'] as String,
+          equals(component.a2uiComponent),
           reason:
               '${component.runtimeType} claims A2UI component '
-              '"${component.a2uiComponent}", which the catalog serves under a '
-              'different view id',
+              '"${component.a2uiComponent}", which is not the name the '
+              'catalog serves "$viewId" under',
         );
       }
+    });
+
+    test('asking the snapshot by a shared component name is refused', () {
+      // The guard itself, measured: `AttributionWaterfall` now serves two
+      // views, and a caller that asks by name gets an error instead of the
+      // wrong example.
+      expect(
+        () => snapshot.entryFor('AttributionWaterfall'),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('the snapshot names the components the design pages name', () {
@@ -57,7 +72,7 @@ void main() {
       // this is the client's own declaration of what design named, the
       // counterpart of the backend's `test_component_names.py`.
       expect(
-        snapshot.viewIdFor('AttributionWaterfall'),
+        snapshot.entryForView('attribution.waterfall.v1')['view'] as String,
         'attribution.waterfall.v1',
       );
       expect(snapshot.viewIdFor('HoldingsSummary'), 'holdings.allocation.v1');

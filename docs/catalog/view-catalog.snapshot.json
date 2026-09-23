@@ -2581,6 +2581,901 @@
     },
     {
       "actions": [],
+      "component": "AttributionWaterfall",
+      "digest": "49051420b629",
+      "endpoints": [
+        "GET /v1/portfolios/{portfolio_id}/views",
+        "POST /v1/view-renders"
+      ],
+      "example": {
+        "annotations": [
+          {
+            "label": "NVIDIA Corp",
+            "text": "+$4,370.40"
+          },
+          {
+            "label": "Vanguard S&P 500 ETF",
+            "text": "-$2,295.00"
+          },
+          {
+            "label": "Net",
+            "text": "+$3,240.18 today"
+          }
+        ],
+        "buckets": [
+          {
+            "closed": {
+              "amount": "108419.400000",
+              "display": "$108,419.40"
+            },
+            "cumulative": {
+              "amount": "484045.420000",
+              "display": "$484,045.42"
+            },
+            "delta": {
+              "amount": "4370.400000",
+              "display": "+$4,370.40"
+            },
+            "detail": "+4.20% · $104,049.00 → $108,419.40",
+            "direction": "up",
+            "key": "NVDA",
+            "label": "NVIDIA Corp",
+            "move": {
+              "display": "+4.20%",
+              "value": "0.04200328691289680823458178358"
+            },
+            "opened": {
+              "amount": "104049.000000",
+              "display": "$104,049.00"
+            },
+            "selected_label": "NVDA selected"
+          },
+          {
+            "closed": {
+              "amount": "44880.000000",
+              "display": "$44,880.00"
+            },
+            "cumulative": {
+              "amount": "481750.420000",
+              "display": "$481,750.42"
+            },
+            "delta": {
+              "amount": "-2295.000000",
+              "display": "-$2,295.00"
+            },
+            "detail": "-4.86% · $47,175.00 → $44,880.00",
+            "direction": "down",
+            "key": "VOO",
+            "label": "Vanguard S&P 500 ETF",
+            "move": {
+              "display": "-4.86%",
+              "value": "-0.04864864864864864864864864865"
+            },
+            "opened": {
+              "amount": "47175.000000",
+              "display": "$47,175.00"
+            },
+            "selected_label": "VOO selected"
+          },
+          {
+            "closed": {
+              "amount": "69954.000000",
+              "display": "$69,954.00"
+            },
+            "cumulative": {
+              "amount": "482512.420000",
+              "display": "$482,512.42"
+            },
+            "delta": {
+              "amount": "762.000000",
+              "display": "+$762.00"
+            },
+            "detail": "+1.10% · $69,192.00 → $69,954.00",
+            "direction": "up",
+            "key": "AAPL",
+            "label": "Apple Inc.",
+            "move": {
+              "display": "+1.10%",
+              "value": "0.01101283385362469649670482137"
+            },
+            "opened": {
+              "amount": "69192.000000",
+              "display": "$69,192.00"
+            },
+            "selected_label": "AAPL selected"
+          },
+          {
+            "closed": {
+              "amount": "49500.000000",
+              "display": "$49,500.00"
+            },
+            "cumulative": {
+              "amount": "483187.420000",
+              "display": "$483,187.42"
+            },
+            "delta": {
+              "amount": "675.000000",
+              "display": "+$675.00"
+            },
+            "detail": "+1.38% · $48,825.00 → $49,500.00",
+            "direction": "up",
+            "key": "GLD",
+            "label": "SPDR Gold Shares",
+            "move": {
+              "display": "+1.38%",
+              "value": "0.01382488479262672811059907834"
+            },
+            "opened": {
+              "amount": "48825.000000",
+              "display": "$48,825.00"
+            },
+            "selected_label": "GLD selected"
+          },
+          {
+            "closed": {
+              "amount": "8449.980000",
+              "display": "$8,449.98"
+            },
+            "cumulative": {
+              "amount": "483313.900000",
+              "display": "$483,313.90"
+            },
+            "delta": {
+              "amount": "126.480000",
+              "display": "+$126.48"
+            },
+            "detail": "+1.52% · $8,323.50 → $8,449.98",
+            "direction": "up",
+            "key": "VNQ",
+            "label": "Vanguard Real Estate",
+            "move": {
+              "display": "+1.52%",
+              "value": "0.01519553072625698324022346369"
+            },
+            "opened": {
+              "amount": "8323.500000",
+              "display": "$8,323.50"
+            },
+            "selected_label": "VNQ selected"
+          },
+          {
+            "closed": {
+              "amount": "44268.000000",
+              "display": "$44,268.00"
+            },
+            "cumulative": {
+              "amount": "483220.900000",
+              "display": "$483,220.90"
+            },
+            "delta": {
+              "amount": "-93.000000",
+              "display": "-$93.00"
+            },
+            "detail": "-0.21% · $44,361.00 → $44,268.00",
+            "direction": "down",
+            "key": "BND",
+            "label": "Vanguard Total Bond",
+            "move": {
+              "display": "-0.21%",
+              "value": "-0.002096436058700209643605870021"
+            },
+            "opened": {
+              "amount": "44361.000000",
+              "display": "$44,361.00"
+            },
+            "selected_label": "BND selected"
+          },
+          {
+            "closed": {
+              "amount": "39000.000000",
+              "display": "$39,000.00"
+            },
+            "cumulative": {
+              "amount": "483140.900000",
+              "display": "$483,140.90"
+            },
+            "delta": {
+              "amount": "-80.000000",
+              "display": "-$80.00"
+            },
+            "detail": "-0.20% · $39,080.00 → $39,000.00",
+            "direction": "down",
+            "key": "AGG",
+            "label": "iShares Core US Aggregate Bond",
+            "move": {
+              "display": "-0.20%",
+              "value": "-0.002047082906857727737973387922"
+            },
+            "opened": {
+              "amount": "39080.000000",
+              "display": "$39,080.00"
+            },
+            "selected_label": "AGG selected"
+          },
+          {
+            "closed": {
+              "amount": "16325.000000",
+              "display": "$16,325.00"
+            },
+            "cumulative": {
+              "amount": "483078.400000",
+              "display": "$483,078.40"
+            },
+            "delta": {
+              "amount": "-62.500000",
+              "display": "-$62.50"
+            },
+            "detail": "-0.38% · $16,387.50 → $16,325.00",
+            "direction": "down",
+            "key": "PYPL",
+            "label": "PayPal Holdings",
+            "move": {
+              "display": "-0.38%",
+              "value": "-0.003813882532418001525553012967"
+            },
+            "opened": {
+              "amount": "16387.500000",
+              "display": "$16,387.50"
+            },
+            "selected_label": "PYPL selected"
+          },
+          {
+            "closed": {
+              "amount": "4650.000000",
+              "display": "$4,650.00"
+            },
+            "cumulative": {
+              "amount": "483031.900000",
+              "display": "$483,031.90"
+            },
+            "delta": {
+              "amount": "-46.500000",
+              "display": "-$46.50"
+            },
+            "detail": "-0.99% · $4,696.50 → $4,650.00",
+            "direction": "down",
+            "key": "JNJ",
+            "label": "Johnson & Johnson",
+            "move": {
+              "display": "-0.99%",
+              "value": "-0.009900990099009900990099009901"
+            },
+            "opened": {
+              "amount": "4696.500000",
+              "display": "$4,696.50"
+            },
+            "selected_label": "JNJ selected"
+          },
+          {
+            "closed": {
+              "amount": "4448.600000",
+              "display": "$4,448.60"
+            },
+            "cumulative": {
+              "amount": "482986.400000",
+              "display": "$482,986.40"
+            },
+            "delta": {
+              "amount": "-45.500000",
+              "display": "-$45.50"
+            },
+            "detail": "-1.01% · $4,494.10 → $4,448.60",
+            "direction": "down",
+            "key": "XOM",
+            "label": "Exxon Mobil",
+            "move": {
+              "display": "-1.01%",
+              "value": "-0.01012438530517789991321955453"
+            },
+            "opened": {
+              "amount": "4494.100000",
+              "display": "$4,494.10"
+            },
+            "selected_label": "XOM selected"
+          },
+          {
+            "closed": {
+              "amount": "4200.000000",
+              "display": "$4,200.00"
+            },
+            "cumulative": {
+              "amount": "482943.900000",
+              "display": "$482,943.90"
+            },
+            "delta": {
+              "amount": "-42.500000",
+              "display": "-$42.50"
+            },
+            "detail": "-1.00% · $4,242.50 → $4,200.00",
+            "direction": "down",
+            "key": "PG",
+            "label": "Procter & Gamble",
+            "move": {
+              "display": "-1.00%",
+              "value": "-0.01001767825574543311726576311"
+            },
+            "opened": {
+              "amount": "4242.500000",
+              "display": "$4,242.50"
+            },
+            "selected_label": "PG selected"
+          },
+          {
+            "closed": {
+              "amount": "46530.000000",
+              "display": "$46,530.00"
+            },
+            "cumulative": {
+              "amount": "482919.700000",
+              "display": "$482,919.70"
+            },
+            "delta": {
+              "amount": "-24.200000",
+              "display": "-$24.20"
+            },
+            "detail": "-0.05% · $46,554.20 → $46,530.00",
+            "direction": "down",
+            "key": "MSFT",
+            "label": "Microsoft Corp",
+            "move": {
+              "display": "-0.05%",
+              "value": "-0.0005198242049052502244695430273"
+            },
+            "opened": {
+              "amount": "46554.200000",
+              "display": "$46,554.20"
+            },
+            "selected_label": "MSFT selected"
+          },
+          {
+            "closed": {
+              "amount": "3657.000000",
+              "display": "$3,657.00"
+            },
+            "cumulative": {
+              "amount": "482915.200000",
+              "display": "$482,915.20"
+            },
+            "delta": {
+              "amount": "-4.500000",
+              "display": "-$4.50"
+            },
+            "detail": "-0.12% · $3,661.50 → $3,657.00",
+            "direction": "down",
+            "key": "TIP",
+            "label": "iShares TIPS Bond",
+            "move": {
+              "display": "-0.12%",
+              "value": "-0.001229004506349856616140925850"
+            },
+            "opened": {
+              "amount": "3661.500000",
+              "display": "$3,661.50"
+            },
+            "selected_label": "TIP selected"
+          },
+          {
+            "closed": {
+              "amount": "38633.220000",
+              "display": "$38,633.22"
+            },
+            "cumulative": {
+              "amount": "482915.200000",
+              "display": "$482,915.20"
+            },
+            "delta": {
+              "amount": "0.000000",
+              "display": "$0.00"
+            },
+            "detail": "0.00% · $38,633.22 → $38,633.22",
+            "direction": "up",
+            "key": "USD",
+            "label": "Cash & sweep",
+            "move": {
+              "display": "0.00%",
+              "value": "0"
+            },
+            "opened": {
+              "amount": "38633.220000",
+              "display": "$38,633.22"
+            },
+            "selected_label": "USD selected"
+          }
+        ],
+        "end": {
+          "amount": {
+            "amount": "482915.200000",
+            "display": "$482,915.20"
+          },
+          "label": "Now"
+        },
+        "net": {
+          "amount": {
+            "amount": "3240.180000",
+            "display": "+$3,240.18"
+          },
+          "direction": "up",
+          "label": "Net",
+          "percent": {
+            "display": "+0.68%",
+            "value": "0.006754948381510465147841136276"
+          }
+        },
+        "period": "today",
+        "start": {
+          "amount": {
+            "amount": "479675.020000",
+            "display": "$479,675.02"
+          },
+          "label": "Window open"
+        },
+        "title": "What moved your portfolio today",
+        "view": "attribution.window.v1",
+        "window": "1d"
+      },
+      "fields": [
+        {
+          "binding": "constant",
+          "input": null,
+          "path": "view",
+          "presence": "default `\"attribution.window.v1\"`",
+          "state": null,
+          "type": "const 'attribution.window.v1'"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "title",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤120 chars"
+        },
+        {
+          "binding": "enum",
+          "input": "input · string matching ^(1d|7d|30d)$",
+          "path": "window",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum 1d / 7d / 30d"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "period",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤40 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "start",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "start.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "start.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "start.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "start.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "end",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "end.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "end.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "end.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "end.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "net",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "net.label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "net.amount",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "net.amount.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "net.amount.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "net.percent",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "net.percent.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "net.percent.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "net.direction",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down / flat"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].delta",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].delta.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].delta.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].cumulative",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].cumulative.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].cumulative.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "buckets[].direction",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].move",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].move.value",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].move.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].opened",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].opened.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].opened.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "buckets[].closed",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "buckets[].closed.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "buckets[].closed.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].detail",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "buckets[].selected_label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "annotations",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "annotations[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "annotations[].text",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤200 chars"
+        }
+      ],
+      "guidance": null,
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Declared knobs of ``attribution.window.v1``; nothing else is accepted.",
+        "properties": {
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "description": "Currency of every figure. The portfolio is denominated in USD and the backend invents no exchange rate, so anything else is rejected rather than silently converted.",
+            "examples": [
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sections to render; omit for all of them. A section this view does not offer is rejected, never ignored.",
+            "examples": [
+              [
+                "buckets"
+              ]
+            ],
+            "title": "Fields"
+          },
+          "locale": {
+            "default": "en-US",
+            "description": "Formatting locale for every rendered string.",
+            "enum": [
+              "en-US",
+              "es-AR",
+              "de-DE"
+            ],
+            "examples": [
+              "en-US"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "precision": {
+            "default": 2,
+            "description": "Decimal places for every figure this view renders.",
+            "examples": [
+              2
+            ],
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Precision",
+            "type": "integer"
+          },
+          "window": {
+            "default": "1d",
+            "description": "How far back the walk looks. A closed set, not a free-form period: an unknown value is a 422, never a best-effort guess.",
+            "examples": [
+              "1d",
+              "7d",
+              "30d"
+            ],
+            "pattern": "^(1d|7d|30d)$",
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "title": "AttributionWindowOptions",
+        "type": "object"
+      },
+      "payload_type": "AttributionWindowPayload",
+      "prompt": "- attribution.window.v1 — The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), window (string matching ^(1d|7d|30d)$)",
+      "summary": "The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.",
+      "view": "attribution.window.v1"
+    },
+    {
+      "actions": [],
       "component": "HoldingsSummary",
       "digest": "fa2cf78e5248",
       "endpoints": [

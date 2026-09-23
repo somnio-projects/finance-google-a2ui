@@ -27,7 +27,7 @@ from tests.unit.services.agent_doubles import TEST_PROMPT, make_resolver
 #: Which projection each tool draws with — the tool's own declaration, held
 #: here as the second copy so a tool that stops drawing fails this file.
 SURFACE_OF: Mapping[str, str | None] = {
-    "compute_attribution": "attribution.waterfall.v1",
+    "compute_attribution": "attribution.window.v1",
     "get_holdings_summary": "holdings.allocation.v1",
     "simulate_sale": "taxlots.table.v1",
     "draft_order": "order.ticket.v2",
@@ -103,7 +103,7 @@ async def test_flow_a_says_the_designs_sentence_with_the_seeds_figures(
 
     assert result.message == FLOW_A_OPENING
     assert [intent.view for intent in result.render_intents] == [
-        "attribution.waterfall.v1"
+        "attribution.window.v1"
     ]
 
 
