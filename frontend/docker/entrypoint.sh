@@ -53,7 +53,11 @@ if [ -n "${APP_FIREBASE_AUTH_DOMAIN:-}" ]; then
         echo "entrypoint: APP_FIREBASE_AUTH_DOMAIN is not a bare host: ${APP_FIREBASE_AUTH_DOMAIN}" >&2
         exit 1
     fi
-    frame_src=" https://${APP_FIREBASE_AUTH_DOMAIN}"
+    # ...and apis.google.com, which `firebase-auth.js` loads `js/api.js`
+    # from and frames for its sign-in popup handshake. Omitting it is not a
+    # hypothetical: Hosting's policy did, and "Continue with Google" failed
+    # with a message reading only "Error" (spec frontend/0022 OD-6).
+    frame_src=" https://${APP_FIREBASE_AUTH_DOMAIN} https://apis.google.com"
     # The Firebase JS SDK talks to these two, and only these two, for
     # sign-in and for refreshing an ID token. Named explicitly rather than
     # as *.googleapis.com, which would also admit every other Google API.
