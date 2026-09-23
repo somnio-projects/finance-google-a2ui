@@ -204,7 +204,7 @@ to what a header *contains*.
 | 4 | the same suite, `::is never a descendant of the scrollable it sits over` — the mechanism, so a regression names itself |
 | 5 | the same suite, `::keeps its controls usable after Holdings has scrolled` |
 | 6, 7 | `app/test/features/shell/pinned_header_test.dart` — a `MediaQuery` with `padding: EdgeInsets.only(top: 44)`; the child's top edge, the band's height and painted colour, the border; and a short surface at 375 × 400 whose `maxScrollExtent` is 0 |
-| 8 | `app/test/skeleton/transition_goldens_test.dart`, unchanged and not regenerated |
+| 8 | `first_run_header_test.dart` — each skeleton pumped alone (they need no bloc) and its `PinnedHeader` asserted **outside** the `Viewport`. Written after review: `headerSurfaces()` lists only the six *loaded* surfaces and the goldens are shot at offset 0, so nothing here could have gone red. **Measured:** `HomeFirstRun`'s `Column` changed to a `ListView` turns it red; restored, green |
 | all | `cd frontend && make gate` |
 
 **Reproduced first.** The suite was written against `develop` at `5cb9a40`

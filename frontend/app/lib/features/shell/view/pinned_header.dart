@@ -59,9 +59,14 @@ class PinnedHeader extends StatelessWidget {
     // the catalog's bar by the rule's 1 px and moved every row under it up
     // by one. A rule that is drawn occupies space.
     //
-    // Top, left and right: a pinned header can meet a notch on three
-    // edges. Never the bottom — it is not against the bezel, and the tab
-    // bar owns that edge.
-    child: SafeArea(bottom: false, child: child),
+    // The **top** only. A pinned header can meet a notch there and the tab
+    // bar owns the bottom, but left and right are wrong for these two
+    // consumers: both are centred width caps (`AppShell.maxWidth` 430,
+    // `CatalogBoard.maxWidth` 1024), so on a landscape notched phone wide
+    // enough that the column does not touch the bezel, a horizontal inset
+    // pads the band and not the rows under it — and the header stops
+    // aligning with its own content. A window-edge inset belongs to a
+    // surface that spans the window; neither of these does.
+    child: SafeArea(bottom: false, left: false, right: false, child: child),
   );
 }
