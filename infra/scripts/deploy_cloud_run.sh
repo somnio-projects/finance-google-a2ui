@@ -77,9 +77,18 @@ gcloud_run() {
 # enumerated: a list of job names in this file is a list somebody has to
 # remember to extend, and the one time it mattered nobody did — `seed-portfolios`
 # was left running a floating tag for its whole life (spec infra/0004).
+# The delivery-owned jobs, or a diagnosis of why the question could not be
+# answered.
+#
+# `2>/dev/null || true` used to be here, and it turned a **permission denial**
+# into an empty list — so the caller reported "no job carries the label" and
+# told the operator to run `terraform apply`, which had already run and was
+# not the problem. The first real deploy after spec `infra/0004` failed
+# exactly that way. An error that answers the wrong question is worse than no
+# check: keep stderr, and let the caller tell the two apart.
 delivery_jobs() {
   gcloud_run jobs list --filter="metadata.labels.image-owner=delivery" \
-    --format='value(metadata.name)' 2>/dev/null || true
+    --format='value(metadata.name)'
 }
 
 serving_revision() {
@@ -175,8 +184,20 @@ rollback() {
 # quietly updated nothing is the defect this closes, one level up. Same
 # anti-vacuity idiom as scripts/check_shell.sh.
 point_jobs_at_image() {
-  local jobs job found
-  jobs="$(delivery_jobs)"
+  local jobs job found listing status
+  listing="$(delivery_jobs 2>&1)"
+  status=$?
+
+  # Asking and being refused is not the same as asking and being told none.
+  if [[ ${status} -ne 0 ]]; then
+    echo "::error::could not list Cloud Run jobs in ${PROJECT}/${REGION}" >&2
+    echo "  gcloud said: ${listing}" >&2
+    echo "  a denial here is an IAM gap, not a missing label: the deployer" >&2
+    echo "  needs run.jobs.list (roles/run.viewer) and run.developer on each" >&2
+    echo "  delivery-owned job — infra/delivery.tf" >&2
+    return 1
+  fi
+  jobs="${listing}"
 
   if [[ -z "${jobs//[[:space:]]/}" ]]; then
     echo "::error::no Cloud Run job carries image-owner=delivery in ${PROJECT}/${REGION}" >&2

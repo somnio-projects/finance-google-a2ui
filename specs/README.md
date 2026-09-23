@@ -117,5 +117,6 @@ duplicated one are both visible at a glance.
 | [infra/0002-firebase-sign-in-on-dev.md](infra/0002-firebase-sign-in-on-dev.md) | In progress | *unassigned* |
 | [infra/0003-the-migrate-job-runs-the-released-image.md](infra/0003-the-migrate-job-runs-the-released-image.md) | In progress | *unassigned* |
 | [infra/0004-cd-owns-every-job-image.md](infra/0004-cd-owns-every-job-image.md) | In progress | *unassigned* |
+| [infra/0005-the-deployer-can-reach-the-jobs-it-owns.md](infra/0005-the-deployer-can-reach-the-jobs-it-owns.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
 | [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |

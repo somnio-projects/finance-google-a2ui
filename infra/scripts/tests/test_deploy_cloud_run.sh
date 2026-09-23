@@ -29,6 +29,9 @@ FAILED=0
 #   job_update_fails  `gcloud run jobs update` (the job's image) exits non-zero
 #   migrate_fails     `gcloud run jobs execute` exits non-zero
 #   no_delivery_jobs  `gcloud run jobs list` finds nothing carrying the label
+#   jobs_list_denied  the deployer may not list jobs at all — a DIFFERENT
+#                     answer from "none carry the label", and the one the
+#                     first real deploy actually hit
 #   jobs_without_migrate  the list comes back, but without the migrate job
 make_stubs() {
   local scenario="$1"
@@ -49,6 +52,10 @@ fi
 if [[ "$*" == *"jobs list"* ]]; then
   case "${SCENARIO}" in
     no_delivery_jobs)     : ;;
+    jobs_list_denied)
+      echo "ERROR: (gcloud.run.jobs.list) PERMISSION_DENIED: Permission 'run.jobs.list' denied" >&2
+      exit 1
+      ;;
     jobs_without_migrate) printf 'api-purge-audit\napi-seed-portfolios\n' ;;
     *)                    printf 'api-migrate\napi-purge-audit\napi-seed-portfolios\n' ;;
   esac
@@ -334,6 +341,31 @@ assert_not_contains "no migration was run" "${calls}" "run jobs execute"
 assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
 assert_contains "the reason names the missing job" "$(cat "${WORK}/out.txt")" \
   "api-migrate is not in the delivery-owned job list"
+
+# --------------------------------------------------------------- case 14
+# The failure the FIRST REAL DEPLOY after spec infra/0004 hit, which this
+# suite could not have: it stubs `gcloud`, so it never meets an IAM decision.
+# The deployer held `run.developer` on the service and on `migrate` only, so
+# `jobs list` was refused — and `2>/dev/null || true` turned that refusal into
+# an empty list. The run then reported "no Cloud Run job carries
+# image-owner=delivery" and told the operator to run `terraform apply`, which
+# had already run. Terraform was not the problem; the grant was.
+#
+# An error that answers the wrong question sends the reader somewhere else,
+# which is worse than no check at all. The two cases must read differently.
+echo "case 14 · a denial is diagnosed as a denial, not as a missing label"
+make_stubs jobs_list_denied
+assert_exit_nonzero "exits non-zero"
+calls="$(cat "${WORK}/calls.log")"
+assert_not_contains "no job was updated"   "${calls}" "run jobs update"
+assert_not_contains "no job was executed"  "${calls}" "run jobs execute"
+assert_not_contains "nothing took traffic" "${calls}" "${SHIFT_NEW}"
+assert_contains "traffic restored to the previous revision" "${calls}" "${SHIFT_OLD}"
+out="$(cat "${WORK}/out.txt")"
+assert_contains "it quotes what gcloud said"        "${out}" "PERMISSION_DENIED"
+assert_contains "it names the permission needed"    "${out}" "run.jobs.list"
+assert_contains "it points at the IAM file"         "${out}" "infra/delivery.tf"
+assert_not_contains "it does NOT blame terraform"   "${out}" "terraform apply"
 
 echo
 echo "${PASSED} passed, ${FAILED} failed"

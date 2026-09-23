@@ -4676,3 +4676,29 @@ be gathered is a deploy, so the whole change is stubbed `gcloud`, static greps
 and a plan; the `Verification` block says so in those words rather than
 implying a run. It also records the precondition: the label is not in the
 cloud until dev is applied, and until then the deploy fails **by design**.
+
+## 2026-09-23 — The deployer can reach the jobs it owns
+
+**Spec:** [`infra/0005`](../specs/infra/0005-the-deployer-can-reach-the-jobs-it-owns.md).
+Branch `fix/the_deployer_can_reach_the_jobs_it_owns`.
+
+The first real deploy after `infra/0004` failed, and its error sent the
+operator to the wrong place: *"no Cloud Run job carries image-owner=delivery …
+run `terraform apply`"*. Terraform had run; the labels were on all three jobs.
+The deployer simply could not **list** them — its `run.developer` was scoped to
+the service and the migrate job, from when the migration was the only job the
+pipeline touched — and `2>/dev/null || true` had turned that refusal into an
+empty result.
+
+**The lesson is about the suite, not the grant.** `infra/0004` shipped 68
+assertions and every one passed; none could have caught this, because the suite
+stubs `gcloud` and therefore never meets an IAM decision. That is still the
+right design — a delivery-script suite must not need a cloud — so the coverage
+had to go in two places that are individually insufficient: a stubbed denial
+for the script, and a Terraform assertion that every job in `run.tf` has a
+binding in `delivery.tf` for the grant. **When a change widens what a pipeline
+touches, the permission is part of the change.**
+
+**Next person:** a guard that cannot tell "refused" from "none" will always
+report the wrong cause, and the wrong cause is worse than no guard — it costs a
+deploy and then an investigation of the thing that was fine.
