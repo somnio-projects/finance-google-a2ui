@@ -39,6 +39,17 @@ locals {
     # secret's value is set out of band by the security owner (secrets.tf).
     GEMINI_API_KEY = google_secret_manager_secret.external["GEMINI_API_KEY"].secret_id
   }
+
+  # The declaration that `deploy_cloud_run.sh` reads. Every Cloud Run job below
+  # carries it, and the deploy lists jobs by this label and points each one at
+  # the digest it just released — so adding a fourth job means adding this line
+  # and nothing else. There is no list of job names in the pipeline to forget.
+  #
+  # A label rather than a name prefix on purpose (spec infra/0004 OD-1): a
+  # prefix derives the set from whatever happens to be deployed, which is how a
+  # job nobody meant to touch gets updated. This derives it from a declaration
+  # that lives in the same resource block as the job it opts in.
+  delivery_owned_labels = merge(local.labels, { "image-owner" = "delivery" })
 }
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -170,7 +181,7 @@ resource "google_cloud_run_v2_job" "migrate" {
   name                = "${local.name}-migrate"
   location            = var.region
   deletion_protection = false
-  labels              = local.labels
+  labels              = local.delivery_owned_labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
 
   template {
@@ -227,11 +238,21 @@ resource "google_cloud_run_v2_job" "migrate" {
 
 # Monthly audit-trail retention purge (DATA_RETENTION.md §2) — same image,
 # same secrets, no HTTP surface.
+#
+# Cloud Scheduler runs this one, unattended, at 03:00 on the 1st. That is what
+# made it the worst of the three to leave on `var.backend_image`: measured on
+# 2026-09-22, this job was still carrying the **floating tag**
+# `…/backend:latest`, resolving to a digest (`sha256:03073e2a…`) that was
+# neither the running service's nor anything a pipeline had pushed. A monthly
+# job deleting rows from `audit_events` with code nobody chose is a compliance
+# statement that is not true. It carries `local.delivery_owned_labels` like the
+# other two, so the deploy pins it to the released digest even though it never
+# executes it (spec infra/0004).
 resource "google_cloud_run_v2_job" "purge_audit" {
   name                = "${local.name}-purge-audit"
   location            = var.region
   deletion_protection = false
-  labels              = local.labels
+  labels              = local.delivery_owned_labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
 
   template {
@@ -280,6 +301,14 @@ resource "google_cloud_run_v2_job" "purge_audit" {
       }
     }
   }
+
+  # The deploy owns the image; Terraform must not take it back. Without this,
+  # the next `terraform apply` after a release re-points the job at
+  # `var.backend_image` — which is the floating tag above — and the drift the
+  # deploy just closed reopens with no deploy involved.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
 }
 
 resource "google_cloud_scheduler_job" "purge_audit_monthly" {
@@ -310,19 +339,33 @@ resource "google_cloud_scheduler_job" "purge_audit_monthly" {
 # The job is safe to re-run: an owner who already has a portfolio is skipped
 # unless `--reset` is passed (`app/jobs/seed_portfolios.py`).
 #
-# **No `ignore_changes` on the image, unlike `migrate`.** That block exists
-# there because `deploy_cloud_run.sh` runs `gcloud run jobs update --image=`
-# on the migration and Terraform must not fight the deploy. Nothing updates
-# this job's image — `infra/scripts/tests/test_dev_environment.sh` asserts
-# the deploy script never mentions it — so the same block would freeze it at
-# whatever was applied first, and a human executing it months later would
-# seed an old ledger into a migrated database. That is #98's defect, in the
-# one job whose whole purpose is to be run by hand long after a deploy.
+# **The deploy pins this job's image; it still never runs it.** Those are two
+# separate claims and only the second one is about seeding. This block used to
+# reason the opposite way: no `ignore_changes`, so that Terraform rather than
+# the pipeline would keep the image current, "because nothing updates this
+# job's image". What Terraform actually kept it at was `var.backend_image` —
+# the floating tag — and on 2026-09-22 a human run of it answered
+#
+#     No module named app.jobs.seed_portfolios
+#
+# from an image that predated the commit adding that entry point. Freezing at
+# the applied image and floating on a mutable tag are the same defect wearing
+# different clothes: in both, the build that runs is not the build that was
+# released. The fix is an owner, which `migrate` already had — so this job
+# carries `local.delivery_owned_labels` and the deploy points it at the
+# released digest, and `ignore_changes` below keeps `terraform apply` from
+# reverting that (spec infra/0004).
+#
+# `infra/scripts/tests/test_dev_environment.sh` still asserts the deploy script
+# never names this job, and that assertion is now doing more work than it was:
+# the deploy reaches it through the label, so there is nothing for a pipeline
+# author to accidentally `execute`. Deciding who gets a portfolio stays a
+# human's command.
 resource "google_cloud_run_v2_job" "seed_portfolios" {
   name                = "${local.name}-seed-portfolios"
   location            = var.region
   deletion_protection = false
-  labels              = local.labels
+  labels              = local.delivery_owned_labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
 
   template {
@@ -371,5 +414,16 @@ resource "google_cloud_run_v2_job" "seed_portfolios" {
         }
       }
     }
+  }
+
+  # The deploy owns the image; Terraform must not take it back. Measured
+  # before this block existed, `terraform plan` on dev read:
+  #
+  #   ~ image = "…/backend@sha256:854327a4…" -> "…/backend:latest"
+  #
+  # i.e. an apply would have undone a hand-fix applied hours earlier and
+  # re-armed the trap. See spec infra/0004 §4.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
   }
 }
