@@ -202,6 +202,7 @@ CVE scan of the Dart dependency graph — are listed with their owners in
 | `docs/diagrams/` | Mermaid diagrams — one question each | [`docs/diagrams/README.md`](docs/diagrams/README.md) |
 | `docs/catalog/` | The **generated** frozen component contract | [`docs/catalog/CONTRACT.md`](docs/catalog/CONTRACT.md) |
 | `docs/compliance/` | SOC 2 / ISO 27001 policies and evidence | [`docs/compliance/README.md`](docs/compliance/README.md) |
+| `docs/manual/` | The **user manual** for the app, English and Spanish, with screenshots — written for a first-time viewer, not a developer | [`docs/manual/README.md`](docs/manual/README.md) |
 | `scripts/` | Repository-wide gates: spelling, shell lint, gate pairs, the manual-run check | — |
 
 ## Verify it

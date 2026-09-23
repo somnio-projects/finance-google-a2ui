@@ -4501,3 +4501,141 @@ home for the band (colour, rule, inset); `app/test/features/shell/` gains the
 first scroll-geometry suite in the repository, in three files (two harnesses,
 split by whether a surface is driven from a stubbed repository or a stubbed
 bloc, and the suite itself).
+## 2026-09-22 — A manual for the client, and a screenshot that can be retaken
+
+**Spec.** None; a TL request — *"un manual de instrucciones con screenshots y
+business level … bien específico para el uso de la app en inglés y español en
+pdf"*. Audience: the client and the Google demo. No code, no architecture, no
+API. The two decisions were handed down and not re-asked: branding is the
+app's own, and the level is business.
+
+**Code.** None. `docs/manual/` is new: two HTML sources, one shared
+stylesheet, seven screenshots, two PDFs and two scripts. The one change
+outside it is `scripts/check_spelling.sh`, which now excludes `*.pdf`, and
+`.codespellrc`, which gains seven Spanish words.
+
+**A PDF is a generated artefact, so it is gated the way this repository gates
+generated artefacts — by being regenerable.** `.claude/rules/ci-conventions.md`
+§4 says anything the build produces is checked in *and* re-renderable. The
+manual is checked in as HTML plus `tool/build_pdf.sh`, and the pictures are
+checked in as PNGs plus `tool/capture_screenshots.mjs`. Neither is in the ship
+gate — there is nothing to diff, because a PDF is not byte-reproducible across
+Chrome versions and a screenshot is not reproducible at all once the app
+changes — so the honest form is a documented command, not a check that would
+be red for the wrong reason. Naming that limit is the point; a drift check
+that cannot work is worse than an instruction that can be followed.
+
+**The renderer was chosen by looking, not by preference.** `pandoc`,
+`weasyprint` and `prince` are all absent on this machine and none could be
+installed without a network round trip. Chrome is present because the Flutter
+web client needs it, so headless Chrome prints the A4. Headless Chrome also
+does not always exit after `--print-to-pdf`, and stock macOS has no `timeout`,
+so the script backgrounds Chrome and polls the file until it stops growing.
+
+**The screenshots are scripted because the alternative is a folder nobody can
+refresh.** `capture_screenshots.mjs` talks the DevTools protocol over Node's
+built-in `WebSocket` — no Playwright, no Puppeteer, nothing to install — and
+signs in, walks the four tabs and asks the assistant one question at 375×812
+and 2×. Two details it encodes rather than leaving to the operator: it parks
+the pointer off the content before every capture, because the first run caught
+a hover state and put a carousel arrow over a chip; and it waits long enough
+after sending for a real model turn to finish.
+
+**A manual is allowed to be no more optimistic than the product.** The
+portfolio is simulated and the app says so on screen in three places, so
+section 2 of both languages says so too and the cover says it a fourth time.
+The lead also named two assistant defects being fixed — a chart showing an
+all-time figure beside a sentence about today, and a follow-up chip that did
+not reach the view it named. Neither is documented and neither is
+screenshotted: the assistant capture is *"How is my portfolio allocated?"*,
+whose answer is an allocation component labelled `all-time`, correct end to
+end. `docs/manual/README.md` records the rule for next time — if a capture run
+produces a wrong answer, retake it; do not ship it with a caption explaining it
+away.
+
+**The Spanish is a second original, not a translation, and that has a cost the
+tooling noticed.** Seven Spanish words are English words one letter off, so
+`repo.spelling` went red on `responde`, `componentes`, `momento`,
+`alternativos`, `cliente`, `vender` and `ser`. They are in `.codespellrc` with
+the reason, in the style of the existing entries — the file already carries
+`hace` for the same reason, which is the precedent that made this obvious
+rather than a judgement call.
+
+**And `repo.spelling` found one real thing: it was reading the PDFs.** codespell
+decoded `user-manual.es.pdf` as iso-8859-1 and reported 36 findings out of font
+tables and stream dictionaries, each with a confident suggestion. The check now
+excludes `*.pdf` for the same reason it already excludes `*.lock` — the prose
+those files were rendered from is in the list, so nothing is lost. Worth
+recording because it is §5's second question in miniature: the command was
+right and its *subject* had quietly grown a kind of file it cannot read.
+
+**Branding, with no template to use.** There is no Somnio document template, so
+`manual.css` copies every colour from `frontend/app/lib/theme/app_colors.dart`,
+`login_tokens.dart` and `charts/chart_tokens.dart` — files that are themselves
+measured from the design rather than generated — with a comment beside each
+naming its home, and the cover mark is the sign-in hero's mark rebuilt in CSS.
+The Flutter default icon in `web/icons/` is deliberately not used: it is
+Flutter's logo, not this product's.
+## 2026-09-22 — Every Cloud Run job runs the build that was released
+
+`fix/cd_owns_every_job_image` · spec `infra/0004` · widens `infra/0003`.
+
+Spec 0003 fixed the migrate job's image **by name**, four days ago. Seeding
+the demo audience the same evening answered `No module named
+app.jobs.seed_portfolios` from an image older than that module, and the fix
+for that was a `gcloud run jobs update` typed into a terminal. Reading the
+other two jobs afterwards:
+
+| job | image it would have run |
+|---|---|
+| `migrate` | the release — 0003 works |
+| `seed-portfolios` | the hand-fix, **already one release stale** |
+| `purge-audit` | `backend:latest`, a floating tag nothing had ever moved |
+
+Three things this taught, none of them about Cloud Run.
+
+**A fix by name is a fix for one instance of a class.** 0003 was correct,
+mutation-checked, and closed the ticket. It also encoded the defect's shape as
+a proper noun, so the second and third instances were invisible to it — and
+the third was the *scheduled* one, deleting `audit_events` rows monthly under
+code nobody chose. When the fix is `jobs update <name>`, ask what the class is
+before writing the name.
+
+**The comment arguing against the fix was the best evidence for it.**
+`infra/run.tf` carried a paragraph explaining why `seed_portfolios`
+deliberately had no `ignore_changes`: freezing it at the applied image would
+make a human run stale code months later. The hazard was real, the conclusion
+backwards — without an owner it floated on a mutable tag instead, which is the
+same sentence with no floor. It is kept in the file above the new reasoning.
+A confident comment against a change is a place to look, not a place to stop.
+
+**Derivation is safe when it reads a declaration.** The choice was a list of
+job names in the pipeline (a third thing to remember), a name prefix
+(derives from whatever happens to be deployed — the way a deploy touches
+something nobody meant), or a label Terraform sets on each job. The label is
+the only one that is both: adding a job is one line in the block you already
+have open, and the set stays closed. It also kept
+`test_dev_environment.sh`'s existing assertion — *the deploy never names the
+seed job* — literally true, which an enumeration would have forced us to
+delete. When a new shape lets an old assertion survive, that is a signal.
+
+Two things bit while writing it, both worth keeping:
+
+- **`gcloud … --filter` on a label nothing carries exits 0 with a warning.**
+  A deploy reading that as "nothing to pin" is green having pinned nothing —
+  the defect wearing the fix's clothes. Empty list = hard failure naming
+  `terraform apply`; list without the migrate job = hard failure too, because
+  a non-empty list is not a correct list.
+- **The assertion "the deploy must not mention the seed job" started failing
+  on my own comments.** Its subject was the script's *code*; it was grepping
+  prose. Sharpened to strip comment lines, and joined by the claim it was
+  really making: the script executes exactly **one** job.
+
+Evidence that could be gathered read-only, and the line where it stopped:
+`terraform plan` on dev **before** the change showed
+`~ image = "…@sha256:854327a4…" -> "…:latest"` — an apply would have undone
+the hand-fix. After it, no job's image is in the plan at all. What could not
+be gathered is a deploy, so the whole change is stubbed `gcloud`, static greps
+and a plan; the `Verification` block says so in those words rather than
+implying a run. It also records the precondition: the label is not in the
+cloud until dev is applied, and until then the deploy fails **by design**.
