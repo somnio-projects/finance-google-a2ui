@@ -61,8 +61,8 @@ class _Index extends StatelessWidget {
         if (registry.lookup(entry.id) == null) entry.id,
     ];
     return CatalogBoard(
+      header: const CatalogTopBar(),
       children: <Widget>[
-        const CatalogTopBar(),
         Padding(
           padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
           child: Column(

@@ -38,8 +38,12 @@ class ActivityView extends StatelessWidget {
         final bloc = context.read<ActivityBloc>();
         return ColoredBox(
           color: tokens.page,
-          child: ListView(
-            padding: EdgeInsets.zero,
+          // Both bands are the Column's children and the sections are the
+          // Expanded one. The chips go **with** the title: they share the
+          // header colour and `ActivityFirstRun` already draws the two
+          // inside one box, so pinning half would split a continuous band
+          // across the scroll boundary (spec frontend/0024 OD-5).
+          child: Column(
             children: <Widget>[
               TabAppBar(
                 title: timeline.text('title'),
@@ -61,21 +65,28 @@ class ActivityView extends StatelessWidget {
                   ),
                 ),
               ),
-              _Note(payload: timeline),
-              SkeletonSwitcher(
-                loading: state.status == ActivityStatus.loading,
-                skeleton: const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: SkeletonRows(
-                    count: ActivityFirstRun.rowCount,
-                    height: ActivityFirstRun.rowHeight,
-                    gap: 8,
-                    radius: 12,
-                  ),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    _Note(payload: timeline),
+                    SkeletonSwitcher(
+                      loading: state.status == ActivityStatus.loading,
+                      skeleton: const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: SkeletonRows(
+                          count: ActivityFirstRun.rowCount,
+                          height: ActivityFirstRun.rowHeight,
+                          gap: 8,
+                          radius: 12,
+                        ),
+                      ),
+                      child: ActivitySections(payload: timeline),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                child: ActivitySections(payload: timeline),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         );

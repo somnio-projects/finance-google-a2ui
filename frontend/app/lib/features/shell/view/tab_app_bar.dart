@@ -1,3 +1,4 @@
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class _TabAppBarState extends State<TabAppBar> {
   @override
   Widget build(BuildContext context) {
     final tokens = HomeTokens.of(context);
-    return ColoredBox(
+    return PinnedHeader(
       color: tokens.header,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 6, 12, 4),

@@ -63,8 +63,11 @@ class HoldingsView extends StatelessWidget {
         final allocation = state.allocation;
         return ColoredBox(
           color: tokens.page,
-          child: ListView(
-            padding: EdgeInsets.zero,
+          // The bar is the Column's child and the list is the Expanded one:
+          // the search and filter controls a reader reaches for while
+          // scrolling a long list used to be the first things the list hid
+          // (spec frontend/0024).
+          child: Column(
             children: <Widget>[
               TabAppBar(
                 title: positions.text('title'),
@@ -75,45 +78,62 @@ class HoldingsView extends StatelessWidget {
                 onFilter: () =>
                     unawaited(_openFilter(context, bloc, state, positions)),
               ),
-              if (allocation != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(gutter, 6, gutter, 0),
-                  child: HoldingsHeaderCard(
-                    positions: positions,
-                    allocation: allocation,
-                    groupBy: state.groupBy,
-                    loading: state.allocationLoading,
-                    onGroupBy: (value) =>
-                        bloc.add(HoldingsGroupByChanged(value)),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(gutter, 16, gutter, 4),
-                child: HoldingsSegment(
-                  selected: state.list,
-                  onSelected: (list) => bloc.add(HoldingsListChanged(list)),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 24),
-                child: switch (state.list) {
-                  // `asset_class` and `query` DO govern this list, so an
-                  // empty one is the payload's own sentence (0018 OD-6);
-                  // `group_by` does not, so a regrouping leaves it alone
-                  // (spec 0020 OD-3).
-                  HoldingsList.positions
-                      when positions.rows('positions').isEmpty =>
-                    TabEmpty(message: positions.text('empty')),
-                  HoldingsList.positions => PositionList(payload: positions),
-                  HoldingsList.classes => SkeletonSwitcher(
-                    loading: state.allocationLoading,
-                    skeleton: const SkeletonRows(
-                      count: HoldingsFirstRun.rowCount,
-                      height: HoldingsFirstRun.rowHeight,
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    if (allocation != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          gutter,
+                          6,
+                          gutter,
+                          0,
+                        ),
+                        child: HoldingsHeaderCard(
+                          positions: positions,
+                          allocation: allocation,
+                          groupBy: state.groupBy,
+                          loading: state.allocationLoading,
+                          onGroupBy: (value) =>
+                              bloc.add(HoldingsGroupByChanged(value)),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(gutter, 16, gutter, 4),
+                      child: HoldingsSegment(
+                        selected: state.list,
+                        onSelected: (list) =>
+                            bloc.add(HoldingsListChanged(list)),
+                      ),
                     ),
-                    child: HoldingsClassRows(payload: allocation ?? positions),
-                  ),
-                },
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 24),
+                      child: switch (state.list) {
+                        // `asset_class` and `query` DO govern this list, so an
+                        // empty one is the payload's own sentence (0018 OD-6);
+                        // `group_by` does not, so a regrouping leaves it alone
+                        // (spec 0020 OD-3).
+                        HoldingsList.positions
+                            when positions.rows('positions').isEmpty =>
+                          TabEmpty(message: positions.text('empty')),
+                        HoldingsList.positions => PositionList(
+                          payload: positions,
+                        ),
+                        HoldingsList.classes => SkeletonSwitcher(
+                          loading: state.allocationLoading,
+                          skeleton: const SkeletonRows(
+                            count: HoldingsFirstRun.rowCount,
+                            height: HoldingsFirstRun.rowHeight,
+                          ),
+                          child: HoldingsClassRows(
+                            payload: allocation ?? positions,
+                          ),
+                        ),
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -1,3 +1,4 @@
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = HomeTokens.of(context);
-    return ColoredBox(
+    return PinnedHeader(
       color: tokens.header,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
