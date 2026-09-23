@@ -54,8 +54,8 @@ class _Detail extends StatelessWidget {
     final schema = CatalogSchemaZone(entry: entry);
     final prompt = CatalogPromptZone(entry: entry);
     return CatalogBoard(
+      header: CatalogTopBar(component: entry.component),
       children: <Widget>[
-        CatalogTopBar(component: entry.component),
         Padding(
           padding: const EdgeInsets.fromLTRB(32, 30, 32, 34),
           child: Column(

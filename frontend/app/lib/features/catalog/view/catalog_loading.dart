@@ -28,8 +28,8 @@ class CatalogIndexLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CatalogBoard(
+    header: const CatalogTopBar(),
     children: <Widget>[
-      const CatalogTopBar(),
       Padding(
         padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
         child: Column(
@@ -104,8 +104,8 @@ class CatalogDetailLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CatalogBoard(
+    header: const CatalogTopBar(),
     children: <Widget>[
-      const CatalogTopBar(),
       Padding(
         padding: const EdgeInsets.fromLTRB(32, 30, 32, 34),
         child: Column(

@@ -5,14 +5,23 @@ import 'package:flutter/material.dart';
 ///
 /// Centred and capped at the design's width; narrower viewports get the same
 /// column at their own width, so a phone reads the catalog one card deep.
+///
+/// [header] is held **outside** the scrollable, so the top bar — and with it
+/// the back control 0021 OD-3 put there — stays on screen while the board
+/// scrolls (spec frontend/0024). It is pinned *inside* the width cap, so on
+/// a desktop viewport the bar stays the width of the board it belongs to
+/// rather than bleeding across the window.
 class CatalogBoard extends StatelessWidget {
-  /// Creates the board around [children].
-  const CatalogBoard({required this.children, super.key});
+  /// Creates the board with [header] pinned over [children].
+  const CatalogBoard({required this.header, required this.children, super.key});
 
   /// The design's artboard width.
   static const double maxWidth = 1024;
 
-  /// The rows of the page, top to bottom.
+  /// The page's top bar, which does not scroll.
+  final Widget header;
+
+  /// The rows of the page under it, top to bottom.
   final List<Widget> children;
 
   @override
@@ -23,7 +32,14 @@ class CatalogBoard extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: maxWidth),
-          child: ListView(padding: EdgeInsets.zero, children: children),
+          child: Column(
+            children: <Widget>[
+              header,
+              Expanded(
+                child: ListView(padding: EdgeInsets.zero, children: children),
+              ),
+            ],
+          ),
         ),
       ),
     );

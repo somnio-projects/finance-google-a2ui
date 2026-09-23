@@ -4446,3 +4446,58 @@ new structural suite, mutation-checked four ways; `docs/diagrams/12` gains the
 seam and the browser node; `frontend/CLAUDE.md` and `frontend/SECURITY.md`
 gain the rule and the residual-risk row (G-9 — dictated audio is processed by
 the browser vendor's service, which no flag in the page changes).
+
+## 2026-09-22 — The header stays put, and no test had ever scrolled
+
+`fix/header_stays_put`, spec `frontend/0024`. The TL: *"en el scroll el header
+no se queda fijo y deberia de todas las paginas"*. Five surfaces put their
+header inside the `ListView`; the Assistant did not, and had never moved.
+
+What the run taught:
+
+- **A whole class of defect can be invisible because of one missing verb.**
+  `grep -rl "drag\|fling\|scrollUntilVisible\|ensureVisible" app/test`
+  returned nothing: 901 tests, not one of which scrolled. Every surface was
+  asserted at offset 0, and the four page-shaped goldens are shot there too
+  — the one offset at which a pinned header and a scrolling one are the same
+  picture. The suite that fixes this asserts the scroll position advanced
+  *and* the header's rect did not; without the first half it would pass on a
+  surface that cannot scroll at all.
+- **The fix was to copy the one screen that was already right.** The
+  Assistant is `Column` + `Expanded`; the other five were
+  `ListView(children: [header, …])`. Reaching for `SliverPersistentHeader`
+  would have meant a `minExtent`/`maxExtent` constant per surface, and
+  `TabAppBar` has none — it swaps its title row for a search field. A
+  hard-coded extent that disagrees with the content is the same defect with
+  a different cause.
+- **Two goldens caught two mistakes the geometry test could not, in the
+  order §6 of the testing rule predicts.** A `Column`'s cross axis is
+  `center`, so the first band took its child's width: invisible on every
+  loaded header (their child is a `Row`) and 4.36 % of the raster on a
+  *skeleton* header, whose child is a 150-point shimmer. Then `DecoratedBox`
+  replaced `Container` and the catalog bar lost 1 px, because `Container`
+  adds a border's thickness to its padding and `DecoratedBox` paints the
+  border and reserves nothing — 1.11 % of the raster, bbox `(0, 53, 1024,
+  815)`, which is "everything below the bar". **A rule that is drawn
+  occupies space.**
+- **A tolerant golden comparator hides drift as well as noise, and the only
+  way to know which is to set it to zero.** Two catalog goldens have been
+  0.80 % stale on `develop` since 0021 added the back control; the 1.5 %
+  threshold absorbed it. Found by temporarily setting the fraction to 0 on
+  an unmodified tree — worth doing whenever a golden starts failing for a
+  change that should not have touched it, because the number you are handed
+  ("1.91 %") is the sum of your change and everything already owed. Reported
+  rather than regenerated: a golden refreshed for somebody else's reason,
+  inside an unrelated diff, is how the next one goes stale unnoticed.
+- **Pinning the header is what made the top safe-area inset real.** All four
+  existing `SafeArea`s in this app are bottom edges. A header that scrolls
+  meets the notch at offset 0 and then leaves; one that never moves is under
+  it for the session. The inset belongs *inside* the decoration — the shape
+  `ShellTabBar` already uses — or the strip it opens shows the page through
+  the band.
+
+Harness changes: `app/lib/features/shell/view/pinned_header.dart` is the one
+home for the band (colour, rule, inset); `app/test/features/shell/` gains the
+first scroll-geometry suite in the repository, in three files (two harnesses,
+split by whether a surface is driven from a stubbed repository or a stubbed
+bloc, and the suite itself).

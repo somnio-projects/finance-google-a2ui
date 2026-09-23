@@ -1,4 +1,5 @@
 import 'package:finance_app/features/catalog/view/catalog_back_control.dart';
+import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/router/app_routes.dart';
 import 'package:finance_app/theme/assistant_tokens.dart';
 import 'package:finance_app/theme/catalog_tokens.dart';
@@ -49,70 +50,72 @@ class CatalogTopBar extends StatelessWidget {
       fontFamily: 'monospace',
       color: component == null ? tokens.muted : tokens.quiet,
     );
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-      decoration: BoxDecoration(
-        color: tokens.topBar,
-        border: Border(bottom: BorderSide(color: tokens.topBarBorder)),
-      ),
-      child: Row(
-        children: <Widget>[
-          CatalogBackControl(
-            label: component == null ? backToApp : backToIndex,
-            destination: component == null ? AppRoutes.home : AppRoutes.catalog,
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: AssistantTokens.of(context).avatar,
-              ),
+    return PinnedHeader(
+      color: tokens.topBar,
+      border: Border(bottom: BorderSide(color: tokens.topBarBorder)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+        child: Row(
+          children: <Widget>[
+            CatalogBackControl(
+              label: component == null ? backToApp : backToIndex,
+              destination: component == null
+                  ? AppRoutes.home
+                  : AppRoutes.catalog,
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: tokens.text,
-              ),
-            ),
-          ),
-          // Flexible, and the title above is `Expanded`: the crumb is the
-          // part that gives way on a narrow bar. It was fixed-width text and
-          // the bar overflowed by 57 px the moment the back control was
-          // added beside it — the row had no slack and nothing in it was
-          // allowed to shrink.
-          Flexible(
-            child: GestureDetector(
-              onTap: component == null
-                  ? null
-                  : () => context.go(AppRoutes.catalog),
-              child: Text.rich(
-                TextSpan(
-                  text: component == null ? crumb : '$crumb / ',
-                  children: <InlineSpan>[
-                    if (component case final String name)
-                      TextSpan(
-                        text: name,
-                        style: TextStyle(color: tokens.accent),
-                      ),
-                  ],
+            const SizedBox(width: 10),
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: AssistantTokens.of(context).avatar,
                 ),
-                style: crumbStyle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.text,
+                ),
+              ),
+            ),
+            // Flexible, and the title above is `Expanded`: the crumb is the
+            // part that gives way on a narrow bar. It was fixed-width text and
+            // the bar overflowed by 57 px the moment the back control was
+            // added beside it — the row had no slack and nothing in it was
+            // allowed to shrink.
+            Flexible(
+              child: GestureDetector(
+                onTap: component == null
+                    ? null
+                    : () => context.go(AppRoutes.catalog),
+                child: Text.rich(
+                  TextSpan(
+                    text: component == null ? crumb : '$crumb / ',
+                    children: <InlineSpan>[
+                      if (component case final String name)
+                        TextSpan(
+                          text: name,
+                          style: TextStyle(color: tokens.accent),
+                        ),
+                    ],
+                  ),
+                  style: crumbStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
