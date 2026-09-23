@@ -7,6 +7,7 @@ library;
 
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +44,7 @@ Future<void> pumpConversation(
   WidgetTester tester, {
   required AgentRepository agent,
   required ViewsRepository views,
+  SpeechRecognizer? speech,
 }) {
   tester.view.physicalSize = const Size(1200, 3000);
   tester.view.devicePixelRatio = 1;
@@ -53,6 +55,8 @@ Future<void> pumpConversation(
     viewsRepository: views,
     agentRepository: agent,
     componentRegistry: buildComponentRegistry(),
+    // Left out, the Assistant gets the engine the VM really has: none.
+    speechRecognizer: speech,
   );
 }
 

@@ -1,4 +1,5 @@
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
 import 'package:finance_app/theme/theme_mode_scope.dart';
 import 'package:finance_auth/finance_auth.dart';
@@ -25,6 +26,10 @@ extension PumpApp on WidgetTester {
   /// enough that a tall card overflows, and an overflow is a red test rather
   /// than a layout anybody wanted.
   ///
+  /// [speechRecognizer] is the dictation engine the Assistant's mic drives.
+  /// Left out, it is `UnsupportedSpeechRecognizer` — the state a test that is
+  /// not about voice should see, because that is what the VM really is.
+  ///
   /// [reducedMotion] sets `MediaQuery.disableAnimations` over the subject.
   /// Two things need it: asserting the accessibility behaviour itself
   /// (spec frontend/0015 OD-5, 0020 OD-7), and pumping a screen that has a
@@ -36,6 +41,7 @@ extension PumpApp on WidgetTester {
     AgentRepository? agentRepository,
     AuthRepository? authRepository,
     ComponentRegistry? componentRegistry,
+    SpeechRecognizer? speechRecognizer,
     Brightness brightness = Brightness.light,
     Size? surfaceSize,
     ThemeModeController? themeMode,
@@ -57,6 +63,12 @@ extension PumpApp on WidgetTester {
             RepositoryProvider<AuthRepository>.value(value: authRepository),
           RepositoryProvider<ComponentRegistry>.value(
             value: componentRegistry ?? ComponentRegistry(),
+          ),
+          // Always provided, never optional: the composer's mic resolves it
+          // on every Assistant pump, and the default is the honest no-op
+          // rather than an engine no test could drive (spec 0022 OD-2).
+          RepositoryProvider<SpeechRecognizer>.value(
+            value: speechRecognizer ?? const UnsupportedSpeechRecognizer(),
           ),
         ],
         child: themeMode == null

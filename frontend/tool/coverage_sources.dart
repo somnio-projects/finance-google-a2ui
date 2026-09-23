@@ -14,7 +14,21 @@ import 'lcov.dart';
 ///  * `lib/main.dart` is `runApp(bootstrap())` and nothing else. Executing it
 ///    in a test starts the real app, which builds a real `http.Client` and
 ///    opens a socket to the configured backend; everything worth asserting
-///    lives in `bootstrap.dart`, which is at 100 %.
+///    lives in `bootstrap.dart`, which is at 100 %;
+///  * `lib/speech/speech_web.dart` imports `dart:js_interop`, which **cannot
+///    be compiled for the Dart VM**. `flutter test` can therefore never load
+///    it and lcov can never write a record for it — this is a property of
+///    the target, not a test nobody wrote. What keeps it honest is that
+///    everything decidable was moved off it: the error-code mapping is in
+///    `speech_failure.dart`, assembling the utterance from the engine's
+///    phrases is in `speech_transcript.dart`, and the state machine is in
+///    `VoiceInputBloc` — all three at 100 %. What remains is the crossing
+///    itself, and the file is compiled for real by
+///    `flutter build web --release` in `frontend-ci`'s `build` job
+///    (spec `frontend/0023` OD-3).
+///
+/// The list is **not** a place to put a file that is merely hard to test.
+/// Both members are boundaries to something a test cannot start.
 ///
 /// **Always call this on a [coverageKey], never on a raw `SF:` path.**
 /// `flutter test` writes package-relative records (`lib/main.dart`), which do
@@ -25,7 +39,8 @@ import 'lcov.dart';
 bool isExempt(String path) =>
     path.endsWith('.g.dart') ||
     path.endsWith('.freezed.dart') ||
-    path.endsWith('/lib/main.dart');
+    path.endsWith('/lib/main.dart') ||
+    path.endsWith('/lib/speech/speech_web.dart');
 
 /// Whether [file] contains anything that could be executed.
 ///

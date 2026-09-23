@@ -3,6 +3,7 @@ import 'package:finance_app/features/conversation/view/assistant_chips.dart';
 import 'package:finance_app/features/conversation/view/assistant_composer.dart';
 import 'package:finance_app/features/conversation/view/assistant_header.dart';
 import 'package:finance_app/features/conversation/view/conversation_transcript.dart';
+import 'package:finance_app/features/conversation/view/voice_input_listener.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -59,10 +60,17 @@ class _ConversationViewState extends State<ConversationView> {
                   ConversationSuggestionTapped(chip),
                 ),
               ),
-              AssistantComposer(
+              // Dictation fills the field this composer already owns; it
+              // never sends (spec frontend/0023 OD-1), so the wrapper is a
+              // listener over the same controller rather than a second
+              // path into the agent.
+              VoiceInputListener(
                 controller: _controller,
-                onSend: _send,
-                enabled: !running,
+                child: AssistantComposer(
+                  controller: _controller,
+                  onSend: _send,
+                  enabled: !running,
+                ),
               ),
             ],
           );
