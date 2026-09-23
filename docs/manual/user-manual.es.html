@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<!--
+  El manual de usuario en castellano. Es el manual escrito en castellano, no
+  una traducción literal del inglés: los dos dicen lo mismo y ninguno es copia
+  del otro. Se regenera con `bash docs/manual/tool/build_pdf.sh`
+  (ver docs/manual/README.md).
+
+  Las capturas salen de docs/manual/assets/, tomadas contra una instancia real
+  por docs/manual/tool/capture_screenshots.mjs. Nunca se pega una imagen a
+  mano: una captura que nadie puede volver a sacar es el principio de un manual
+  que describe una app que ya no existe.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Portfolio companion — Manual de uso</title>
+<link rel="stylesheet" href="manual.css">
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark"></div>
+  <h1>Portfolio&nbsp;companion</h1>
+  <p class="lede">Manual de uso de la demostración A2UI de finanzas: un asistente que
+  responde preguntas sobre una cartera componiendo interfaz, no párrafos.</p>
+  <dl>
+    <dt>Para quién</dt><dd>Cualquiera que abra la aplicación por primera vez</dd>
+    <dt>Desarrollado por</dt><dd>Somnio Software, junto a Google</dd>
+    <dt>Versión mostrada</dt><dd><code>local+5cb9a40</code></dd>
+    <dt>Capturas tomadas</dt><dd>22 de septiembre de 2026</dd>
+    <dt>Datos de la cartera</dt><dd><strong>Simulados.</strong> Sin precios reales, sin bróker, sin dinero</dd>
+  </dl>
+</div>
+
+<!-- ============================================================ 1 -->
+<section>
+  <p class="kicker">Parte uno · La idea</p>
+  <h2><span class="num">1</span> Qué es esta aplicación</h2>
+
+  <p>Uno hace una pregunta normal sobre una cartera — <em>«¿cómo está repartida mi
+  plata?»</em>, <em>«¿qué se movió hoy?»</em>, <em>«¿qué lotes me convendría vender?»</em>
+  — y la mayoría de los asistentes contesta con un párrafo. Queda entonces confiar en
+  un número que no se puede inspeccionar, metido en una frase que no se puede tocar.</p>
+
+  <p>Esta aplicación responde de otra manera: devuelve <strong>la interfaz misma</strong>.
+  Una dona con la distribución de la cartera, una tabla de lotes, un desglose de qué
+  movió el total. Los mismos componentes con los que está hecho el resto de la app,
+  armados en el momento según lo que se preguntó.</p>
+
+  <p>Eso es lo que significa «A2UI» acá: un agente que habla en interfaz. Es una
+  aplicación de referencia que funciona, de código abierto bajo licencia Apache 2.0, y
+  las cuatro pantallas de este manual son el producto completo.</p>
+
+  <div class="callout">
+    <h3>Dos cosas que conviene saber antes de empezar</h3>
+    <p><strong>El asistente elige, no inventa.</strong> Toma componentes de un conjunto
+    fijo y publicado, y los completa. No puede dibujar algo que la aplicación no sepa
+    dibujar, y por eso nunca aparece una respuesta rota o improvisada.</p>
+    <p><strong>El asistente nunca hace las cuentas.</strong> Cada cifra de la pantalla la
+    calcula el sistema y se la entrega al asistente ya escrita. El asistente decide
+    <em>qué mostrar</em>; los números salen de código que está testeado. Un modelo de
+    lenguaje no tiene permitido sumar nada.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section>
+  <h2><span class="num">2</span> Antes que nada: la cartera es simulada</h2>
+
+  <p>Todas las cifras de esta aplicación salen de una receta fija y repetible. Es una
+  cartera convincente, y no es una cartera real.</p>
+
+  <table>
+    <tr><th>Lo que se ve</th><th>Lo que realmente es</th></tr>
+    <tr><td>Precios y movimientos de mercado</td><td>Simulados. No hay conexión a un mercado ni licencia de datos financieros detrás de esta app.</td></tr>
+    <tr><td>Saldos, posiciones, lotes fiscales</td><td>Simulados. Se generan a partir de una semilla fija, así que la demostración muestra siempre las mismas cifras.</td></tr>
+    <tr><td>Movimientos: dividendos, depósitos, ventas</td><td>Simulados, y se reinician en cada sesión.</td></tr>
+    <tr><td>Comprar o vender algo</td><td>No existe. No hay conexión con ningún bróker ni forma alguna de mover dinero.</td></tr>
+    <tr><td>El asistente, los componentes, la aplicación</td><td><strong>Reales</strong>, y desplegados. Lo que se está evaluando es la interacción, y esa parte es genuina.</td></tr>
+  </table>
+
+  <p>La aplicación lo dice en pantalla en lugar de dejarlo en una nota al pie. Al lado
+  del nombre, en Inicio, hay una etiqueta <strong>Simulated portfolio</strong>; la lista
+  de movimientos está encabezada por <em>«Simulated activity — resets each session»</em>;
+  y el asistente lleva su propia etiqueta <strong>Simulated</strong>.</p>
+
+  <div class="callout warn">
+    <h3>No es asesoramiento financiero</h3>
+    <p>Nada de lo que muestra esta aplicación es una recomendación, y nada de lo que
+    muestra se puede ejecutar. Es una demostración de cómo un asistente y una interfaz
+    pueden trabajar juntos, usando plata inventada.</p>
+  </div>
+
+  <p>La decisión es deliberada. Una cartera fija hace que la demostración se comporte
+  igual para todo el mundo, y hace que una captura de este manual se pueda verificar
+  contra la aplicación en vivo en lugar de quedar vieja porque el mercado se movió
+  durante la noche.</p>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="newpage">
+  <p class="kicker">Parte dos · Recorrido</p>
+  <h2><span class="num">3</span> Ingresar</h2>
+
+  <div class="side">
+    <figure>
+      <img src="assets/01-sign-in.png" alt="Pantalla de ingreso: Portfolio companion, un botón de Google y un campo de correo.">
+    </figure>
+    <div class="body">
+      <p>Hay dos caminos de entrada, y la app es honesta sobre cuál está disponible.</p>
+      <p><strong>Continue with Google</strong> es la vía habitual en un entorno alojado.</p>
+      <p><strong>Continue with email</strong> pide una dirección de correo y entra
+      directo. Es el camino a usar en una instalación local o de demostración, donde no
+      hay proyecto de Google configurado: la app lo aclara en lugar de ofrecer un botón
+      que no va a funcionar.</p>
+      <p>El acceso es por invitación durante la vista previa, y
+      <strong>Request access</strong>, debajo de los botones, es la forma de pedirlo.</p>
+      <p>Cada cartera pertenece a la dirección con la que se ingresó, así que dos
+      personas en la misma demostración no ven las cifras de la otra.</p>
+    </div>
+  </div>
+
+  <h3>Qué aparece al entrar</h3>
+  <p>Al ingresar se abre una aplicación de cuatro pestañas. La barra inferior es toda
+  la navegación que hay.</p>
+
+  <table>
+    <tr><th>Pestaña</th><th>La pregunta que responde</th></tr>
+    <tr><td>Home</td><td>¿Cómo vengo hoy, en una sola pantalla?</td></tr>
+    <tr><td>Holdings</td><td>¿Qué tengo exactamente, y cómo está agrupado?</td></tr>
+    <tr><td>Activity</td><td>¿Qué pasó últimamente con esta cartera?</td></tr>
+    <tr><td>Assistant</td><td>Cualquier cosa que se pueda poner en palabras.</td></tr>
+  </table>
+
+  <p>El botón redondo con una luna o un sol, arriba a la derecha de la primera
+  pantalla, cambia toda la aplicación entre modo claro y oscuro. En este manual todas
+  las pantallas están en modo claro; el oscuro es la misma disposición con una paleta
+  que el equipo de diseño definió aparte.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section>
+  <h2><span class="num">4</span> Home — el vistazo diario</h2>
+
+  <p>Home está pensada para leerse en unos cinco segundos y no volver. Abre con la
+  cifra que casi todo el mundo busca primero, y todo lo que viene abajo le da contexto
+  a esa cifra.</p>
+
+  <div class="shots">
+    <figure>
+      <img src="assets/02-home-top.png" alt="Home: valor total de la cartera, variación del día, minigráfico, selector de período y la dona de distribución.">
+      <figcaption>La parte de arriba de Home. Al lado del nombre, la etiqueta <strong>Simulated portfolio</strong>.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/03-home-suggested-questions.png" alt="Home, más abajo: el desglose por clase de activo, las preguntas sugeridas y los mayores movimientos del día.">
+      <figcaption>Más abajo: las preguntas sugeridas y los mayores movimientos del día.</figcaption>
+    </figure>
+  </div>
+
+  <table>
+    <tr><th>Elemento</th><th>Qué indica</th></tr>
+    <tr><td>Total portfolio value</td><td>Todo sumado, con la variación del día debajo, en verde o en rojo.</td></tr>
+    <tr><td>El minigráfico</td><td>La forma del período, dibujada chica. Es una imagen de la tendencia, no un gráfico del que se lean valores.</td></tr>
+    <tr><td>1D · 1W · 1M · YTD · 1Y · All</td><td>El período que describen la línea y la variación de arriba. Al tocar uno, se actualizan las dos cosas.</td></tr>
+    <tr><td>Holdings &amp; allocation</td><td>El reparto por clase de activo — acciones, bonos, efectivo, alternativos — como anillo y después como lista, con el valor y la variación de cada clase.</td></tr>
+    <tr><td>Suggested questions</td><td>Atajos. Al tocar uno, esa pregunta viaja al asistente, así nunca hay que arrancar desde un campo vacío.</td></tr>
+    <tr><td>Top movers today</td><td>Las pocas posiciones que explican la mayor parte del movimiento del día.</td></tr>
+  </table>
+
+  <p>El código de color es el mismo en toda la aplicación y conviene aprenderlo una
+  vez: <span class="gain">verde con un triángulo hacia arriba</span> es ganancia,
+  <span class="loss">rojo con un triángulo hacia abajo</span> es pérdida, y un guion
+  gris significa que no se movió nada.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section>
+  <h2><span class="num">5</span> Holdings — qué se tiene realmente</h2>
+
+  <p>Home dice cuánto. Holdings dice qué, y permite mirar la misma plata de dos
+  maneras distintas sin salir de la pantalla.</p>
+
+  <div class="shots">
+    <figure>
+      <img src="assets/04-holdings.png" alt="Pestaña Holdings: valor total, selector por clase de activo o por sector, el anillo de distribución y el desglose.">
+      <figcaption>La mitad de arriba agrupa la cartera. El selector sobre el anillo alterna entre clase de activo y sector.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/05-holdings-positions.png" alt="La lista de posiciones de Holdings, con la primera desplegada mostrando variación del día, precio y peso.">
+      <figcaption>La mitad de abajo lista las posiciones. Al tocar una, se despliega ahí mismo.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Cómo se lee una posición</h3>
+  <p>Cada fila trae el símbolo, el nombre, cuántas acciones hay y a qué precio promedio
+  se compraron; después, cuánto vale hoy esa posición y cuánto ganó o perdió desde la
+  compra. El borde de color de la izquierda repite eso mismo de un vistazo.</p>
+
+  <p>Al tocar una fila se despliega con tres datos más: la variación del día, el precio
+  actual y qué proporción de la cartera representa esa única posición. Ese último
+  número, <strong>Weight</strong>, suele ser el que la gente estaba buscando.</p>
+
+  <p>Dentro de la fila desplegada está <strong>Ask the assistant about this</strong>, que
+  lleva la posición directamente al asistente, ya planteada como pregunta, sin tener
+  que describir lo que uno está mirando.</p>
+
+  <table>
+    <tr><th>Control</th><th>Qué hace</th></tr>
+    <tr><td>By asset class / By sector</td><td>Reagrupa el anillo y el desglose de arriba. La misma plata, cortada de dos maneras.</td></tr>
+    <tr><td>By position / By asset class</td><td>Reagrupa la lista de abajo en posiciones individuales o en bloques.</td></tr>
+    <tr><td>Buscar</td><td>Encuentra una tenencia por símbolo o por nombre.</td></tr>
+    <tr><td>Filtrar</td><td>Reduce la lista a un subconjunto de lo que se tiene.</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ 6 -->
+<section>
+  <h2><span class="num">6</span> Activity — qué viene pasando</h2>
+
+  <div class="side">
+    <figure>
+      <img src="assets/06-activity.png" alt="Pestaña Activity: filtros arriba y después dividendos, depósitos y una venta agrupados por fecha.">
+    </figure>
+    <div class="body">
+      <p>Activity es el diario de la cartera: cada dividendo, depósito, compra y venta,
+      del más nuevo al más viejo.</p>
+      <p>Los movimientos se agrupan bajo títulos simples — <strong>Today</strong>,
+      <strong>This week</strong> y después por mes — en lugar de una pared de fechas, así
+      el pasado reciente se lee de corrido.</p>
+      <p>Cada movimiento dice qué pasó, y la segunda línea trae el detalle que lo hace
+      verificable: el importe por acción y la cantidad en un dividendo, la cuenta y el
+      día en un depósito, el precio y la ganancia realizada en una venta.</p>
+      <p>Los botones de arriba filtran la lista: <strong>All</strong>,
+      <strong>Buys</strong>, <strong>Sells</strong>, <strong>Dividends</strong>,
+      <strong>Deposits</strong>. La lupa la busca.</p>
+      <p>La línea ámbar debajo de los filtros es la aplicación siendo franca:
+      <em>«Simulated activity — resets each session»</em>. Nada de esto ocurrió, y nada
+      de lo que se haga acá puede hacer que ocurra.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section>
+  <h2><span class="num">7</span> Assistant — el sentido de todo esto</h2>
+
+  <p>Las tres primeras pestañas son una buena aplicación de cartera. La cuarta es la
+  razón por la que esta existe.</p>
+
+  <div class="side">
+    <figure>
+      <img src="assets/07-assistant-answer.png" alt="El asistente responde la pregunta «How is my portfolio allocated?» con un componente de distribución y preguntas de seguimiento.">
+      <figcaption>Una pregunta, respondida con un componente — no con un párrafo que describe uno.</figcaption>
+    </figure>
+    <div class="body">
+      <h3>Cómo se usa</h3>
+      <p>Se escribe la pregunta en el campo de abajo y se envía. O se toca el
+      <strong>micrófono</strong> y se dicta; y si el navegador no permite dictar, la app
+      lo avisa en lugar de no hacer nada en silencio.</p>
+      <p>También se puede llegar acá desde otro lado: una pregunta sugerida en Home, o
+      <strong>Ask the assistant about this</strong> en una posición, abren esta pestaña
+      con la pregunta ya escrita.</p>
+
+      <h3>Qué devuelve</h3>
+      <p>La pregunta aparece como un globo. Debajo, el asistente responde con un
+      <strong>componente vivo</strong>: en el ejemplo, el anillo de distribución y su
+      desglose, el mismo que usan Home y Holdings, con las cifras de esta cartera.</p>
+      <p>Más abajo quedan las <strong>preguntas de seguimiento</strong>. Son el asistente
+      ofreciendo lo que uno probablemente iba a preguntar después, para que una
+      conversación sean tres toques y no tres frases.</p>
+    </div>
+  </div>
+
+  <h3>Qué probar en una demostración</h3>
+  <ul>
+    <li><em>«How is my portfolio allocated?»</em> — devuelve el componente de distribución.</li>
+    <li><em>«What do I hold?»</em> — devuelve las posiciones.</li>
+    <li><em>«What are my biggest drivers?»</em> — devuelve un desglose de qué movió el total.</li>
+    <li><em>«Show me my tax lots.»</em> — devuelve la tabla de lotes fiscales.</li>
+  </ul>
+
+  <p>Las dos etiquetas del encabezado vale la pena señalarlas durante una demostración.
+  <strong>Gemini · A2UI</strong> dice quién está respondiendo: el modelo Gemini de
+  Google, hablando a través del protocolo A2UI. <strong>Simulated</strong> vuelve a
+  recordar que las cifras de abajo son inventadas.</p>
+
+  <div class="callout">
+    <h3>Qué es lo que el asistente no está haciendo</h3>
+    <p>No está escribiendo HTML ni diseñando una pantalla sobre la marcha. Elige un
+    componente de un catálogo publicado y completa las opciones que ese componente
+    declara. Lo que esté fuera del catálogo, sencillamente no lo puede producir, y por
+    eso una respuesta nunca llega deformada.</p>
+    <p>Tampoco está calculando. Cada importe y cada porcentaje del componente de arriba
+    los resolvió el sistema y se los pasó ya formateados. El asistente los copia; no
+    tiene permitido calcular ninguno.</p>
+  </div>
+
+  <p>Esto es una vista previa temprana de una interacción genuinamente nueva, y se
+  comporta como tal. Una respuesta tarda unos segundos en armarse, y una pregunta muy
+  alejada del tema de la cartera se responde con menos solidez que una que esté
+  adentro. Manteniéndose cerca de los cuatro temas de arriba, la demostración es
+  confiable.</p>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="newpage">
+  <p class="kicker">Parte tres · Por qué importa</p>
+  <h2><span class="num">8</span> El valor de la idea</h2>
+
+  <p>Dejando la cartera de lado por un momento, lo que se está demostrando es una
+  manera de construir software donde el asistente y la interfaz son la misma cosa.</p>
+
+  <table>
+    <tr><th>Qué cambia</th><th>Por qué vale algo</th></tr>
+    <tr><td><strong>Una respuesta que se usa</strong></td>
+        <td>Un párrafo sobre la distribución de la cartera es algo para leer. Un componente de distribución vivo es algo para tocar, ordenar y seguir usando. La respuesta es un punto de partida y no uno de llegada.</td></tr>
+    <tr><td><strong>Una respuesta que se verifica</strong></td>
+        <td>Como las cifras salen del sistema y no del modelo, el número de la respuesta del asistente es el mismo que muestra la pestaña Holdings. No hay dos versiones de la verdad.</td></tr>
+    <tr><td><strong>Una respuesta que no puede venir rota</strong></td>
+        <td>El asistente sólo puede componer con un catálogo de componentes que ya existen y ya están probados. El caso en que un modelo inventa una pantalla rota queda eliminado por construcción, no por escribir buenas instrucciones.</td></tr>
+    <tr><td><strong>Un producto que crece en un solo lugar</strong></td>
+        <td>Un gráfico nuevo se agrega una vez, en el servidor, y el asistente puede usarlo enseguida. No hay un segundo trabajo en cada cliente para ponerse al día.</td></tr>
+    <tr><td><strong>Una interfaz que se adapta a la pregunta</strong></td>
+        <td>Nadie tiene que adivinar, en la etapa de diseño, cuál de cien preguntas merece su propia pantalla. La pantalla se arma cuando se hace la pregunta.</td></tr>
+  </table>
+
+  <p>Para quien tenga curiosidad técnica, la aplicación trae su propia prueba de esto:
+  una galería interna, a la que se llega con el botón <strong>Catalog</strong> de la
+  tarjeta de distribución, que lista todos los componentes que esta versión sabe
+  dibujar. Esa lista se genera desde el propio registro del servidor: es el contrato
+  entre el que elige el asistente, mostrado en vivo.</p>
+</section>
+
+<!-- ============================================================ 9 -->
+<section>
+  <h2><span class="num">9</span> Límites, dichos sin vueltas</h2>
+
+  <p>Una demostración convence más cuando aclara lo que no hace.</p>
+
+  <ul>
+    <li><strong>No hay datos de mercado en vivo.</strong> Ni conexión a un mercado ni licencia de datos financieros. Los precios se generan.</li>
+    <li><strong>No hay bróker, ni órdenes, ni transferencias.</strong> No existe un camino desde esta aplicación hasta la plata de nadie, y acá no va a existir.</li>
+    <li><strong>No hay asesoramiento.</strong> Nada de lo que aparece en pantalla es una recomendación de hacer nada.</li>
+    <li><strong>No es una cuenta real.</strong> Ingresar crea una cartera de demostración para esa dirección de correo. No está conectada a nada de lo que uno tenga.</li>
+    <li><strong>Es una vista previa temprana.</strong> El asistente es la parte más nueva del producto y la que más se está moviendo. Lo que devuelve hay que tomarlo como una demostración de la interacción, no como un conjunto de funciones terminado.</li>
+  </ul>
+
+  <h3>Referencia rápida</h3>
+  <table>
+    <tr><th>Si se quiere…</th><th>Ir a</th></tr>
+    <tr><td>Ver el total y el movimiento del día</td><td>Home, arriba de todo</td></tr>
+    <tr><td>Cambiar el período del gráfico</td><td>Home — la fila 1D / 1W / 1M / YTD / 1Y / All</td></tr>
+    <tr><td>Ver el reparto por clase de activo o por sector</td><td>Holdings — el selector sobre el anillo</td></tr>
+    <tr><td>Encontrar una tenencia</td><td>Holdings — la lupa</td></tr>
+    <tr><td>Ver cuánto pesa una posición en la cartera</td><td>Holdings — tocar la fila para desplegarla</td></tr>
+    <tr><td>Revisar un dividendo o un depósito</td><td>Activity — filtrar por Dividends o Deposits</td></tr>
+    <tr><td>Preguntar cualquier cosa</td><td>Assistant — escribirlo, o tocar el micrófono</td></tr>
+    <tr><td>Preguntar por la tenencia que se está mirando</td><td>Holdings — <em>Ask the assistant about this</em></td></tr>
+    <tr><td>Pasar a modo oscuro</td><td>El botón con la luna, en la pantalla de ingreso</td></tr>
+  </table>
+
+  <p class="end">Portfolio companion — manual de uso · Somnio Software junto a Google ·
+  Capturas tomadas de la versión <code>local+5cb9a40</code> el 22 de septiembre de 2026 ·
+  Código abierto, Apache 2.0 · La cartera que se muestra es simulada.</p>
+</section>
+
+</body>
+</html>

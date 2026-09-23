@@ -23,4 +23,17 @@
 #            was reported in them — "no hace nada" is the report, and a
 #            paraphrase in English would be a second-hand account of the
 #            only evidence a UI defect had. codespell reads it as "have".
-ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate,dependant,hace
+#
+# The rest are Spanish, and they all arrive from one file:
+# docs/manual/user-manual.es.html, the Spanish user manual. It is not a
+# translation of the English one but the manual written in Spanish, so its
+# prose is scanned like any other tracked file and codespell reads each of
+# these as an English word one letter off. None is a typo in either language:
+#   responde       "responds" — codespell suggests the English verb
+#   componentes    "components"
+#   momento        read as "memento"
+#   alternativos   "alternatives" — the asset class the app labels Alternatives
+#   cliente        "client"
+#   vender         "to sell" — read as "vendor"
+#   ser            "to be" — read as "set"
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate,dependant,hace,responde,componentes,momento,alternativos,cliente,vender,ser
