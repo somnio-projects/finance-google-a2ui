@@ -5,7 +5,18 @@ import 'package:flutter/material.dart';
 
 /// The Assistant's header, measured off the artboards (spec frontend/0011
 /// §2): gradient avatar, `Assistant`, the `Gemini · A2UI` pill and the
-/// `Simulated` badge. The words are the product's, not a payload's.
+/// `Simulated portfolio` badge. The words are the product's, not a
+/// payload's.
+///
+/// **The badge says "portfolio", and the word is load-bearing.** It read
+/// `Simulated` alone, sitting beside the pill that names the model — so it
+/// said, to anyone reading left to right, that the *assistant* was
+/// simulated. It is not: the turn above it is a real Gemini call against
+/// real tools. What is simulated is the portfolio, which is what Home's
+/// badge says in full, and Home's comes from the backend
+/// (`summary_payload.badge`). This one stays a client string because this
+/// header binds no payload (spec frontend/0011 §2 rules that deliberately),
+/// so matching the backend's wording is the whole of the fix.
 class AssistantHeader extends StatelessWidget {
   /// Creates the header.
   const AssistantHeader({super.key});
@@ -74,7 +85,7 @@ class AssistantHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'Simulated',
+                    'Simulated portfolio',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,

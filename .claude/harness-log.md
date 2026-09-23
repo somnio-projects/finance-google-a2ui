@@ -4702,3 +4702,23 @@ touches, the permission is part of the change.**
 **Next person:** a guard that cannot tell "refused" from "none" will always
 report the wrong cause, and the wrong cause is worse than no guard — it costs a
 deploy and then an investigation of the thing that was fine.
+
+## 2026-09-23 — The badge says what is simulated
+
+Branch `fix/the_badge_says_what_is_simulated`, cut from `develop` at `b7eca00`.
+
+The TL, on the deployed app: *"todavía dice simulated en AI assistant."* The
+badge read `Simulated`, alone, beside the pill naming the model — so read left
+to right it said the **assistant** was simulated. It is not: the turn is a real
+Gemini call against real tools. What is simulated is the portfolio.
+
+Home has said so correctly all along — `Simulated portfolio`, and **its** words
+come from the backend (`summary_payload.badge`). The Assistant's header binds no
+payload, which spec `frontend/0011` §2 rules deliberately, so the fix is not to
+introduce a binding: it is to match the wording the backend already publishes.
+
+**Worth carrying forward:** the two badges were never compared, because one is a
+payload field and the other is chrome. A shorter version of a server-written
+phrase is not a shorter phrase — it is a different claim. The nearest existing
+guard is `test_component_names.py`'s idea: where the same fact is written twice,
+something should compare the two.

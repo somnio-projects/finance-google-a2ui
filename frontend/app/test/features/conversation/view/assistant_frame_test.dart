@@ -34,7 +34,11 @@ void main() {
       await pumpConversation(tester, agent: agent, views: views);
       expect(find.text('Assistant'), findsOneWidget);
       expect(find.text('Gemini · A2UI'), findsOneWidget);
-      expect(find.text('Simulated'), findsOneWidget);
+      // "portfolio", not bare "Simulated": next to the model pill, the
+      // short form said the assistant was simulated, which is false — the
+      // turn is a real Gemini call. It is the data that is seeded.
+      expect(find.text('Simulated portfolio'), findsOneWidget);
+      expect(find.text('Simulated'), findsNothing);
       expect(find.text(AssistantComposer.hint), findsOneWidget);
     });
 
