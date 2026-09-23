@@ -269,6 +269,7 @@ echo "the schema moves before anything serves the new image"
 
 SCRIPT="${ROOT}/infra/scripts/deploy_cloud_run.sh"
 RUNTF="${ROOT}/infra/run.tf"
+DELIVERYTF="${ROOT}/infra/delivery.tf"
 
 # Until 2026-09-20 nothing ran migrations at all — not the pipeline, not
 # Terraform, not the container — and `/readyz` hid it by proving the
@@ -380,7 +381,25 @@ while read -r job; do
     echo "        re-points it at var.backend_image and reopens the drift"
     FAILED=$((FAILED + 1))
   fi
+
+  # The third half, learned from the first real deploy (spec infra/0005). A
+  # job can carry the label, be discovered, and still be unreachable: the
+  # deployer needs `run.developer` on it to set its image. It held that on
+  # `migrate` alone, so the deploy failed at the guard — reporting a missing
+  # label, which was not the problem.
+  if grep -qF "google_cloud_run_v2_job.${job}.name" "${DELIVERYTF}"; then
+    check "${job}: the deployer is granted run.developer on it" ok
+  else
+    echo "  FAIL  ${job}: no IAM binding in delivery.tf — the deploy discovers it"
+    echo "        by label and is then refused when it tries to set its image"
+    FAILED=$((FAILED + 1))
+  fi
 done <<< "${JOBS}"
+
+assert "the deployer may list jobs at all (a project-level permission)" \
+  'role    = "roles/run.viewer"' "${DELIVERYTF}"
+assert "a refused listing is diagnosed as a denial, not a missing label" \
+  'a denial here is an IAM gap, not a missing label' "${SCRIPT}"
 
 # The ordering assertion, and the only one that really matters: migrations
 # must come BEFORE the traffic shift. A line-number comparison is crude, but
