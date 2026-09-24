@@ -56,3 +56,32 @@ final class ConversationRetried extends ConversationEvent {
   @override
   List<Object?> get props => const <Object?>[];
 }
+
+/// A person changed one declared option of a surface in the transcript
+/// (GGU-113): re-render that surface with the option changed.
+///
+/// [slot] is the entry's index — entries are only ever appended, so an index
+/// names the same surface for the life of the transcript. The option and its
+/// value travel **verbatim**: the component read them from the payload's own
+/// `inputs[]`, and the backend validates them against the same registry that
+/// declared them (ADR-K D-3).
+final class ConversationSurfaceEdited extends ConversationEvent {
+  /// Creates the event.
+  const ConversationSurfaceEdited({
+    required this.slot,
+    required this.option,
+    required this.value,
+  });
+
+  /// Which entry of the transcript.
+  final int slot;
+
+  /// The declared option's name.
+  final String option;
+
+  /// Its new value, as the control produced it.
+  final String value;
+
+  @override
+  List<Object?> get props => <Object?>[slot, option, value];
+}

@@ -18,6 +18,19 @@ void main() {
     });
   });
 
+  group(ConversationSurfaceEdited, () {
+    test('is equal by slot, option and value', () {
+      expect(
+        const ConversationSurfaceEdited(
+          slot: 1,
+          option: 'size',
+          value: '3',
+        ).props,
+        equals(<Object?>[1, 'size', '3']),
+      );
+    });
+  });
+
   group(ConversationRetried, () {
     test('carries nothing: what it repeats is read from the state', () {
       expect(const ConversationRetried().props, isEmpty);

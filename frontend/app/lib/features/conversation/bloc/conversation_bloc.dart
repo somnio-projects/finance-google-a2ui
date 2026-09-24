@@ -2,11 +2,13 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_entry.dart';
 import 'package:finance_app/features/conversation/bloc/surface_fetch.dart';
+import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 
 export 'package:finance_app/features/conversation/bloc/conversation_entry.dart';
 
 part 'conversation_apply.dart';
+part 'conversation_edit.dart';
 part 'conversation_event.dart';
 part 'conversation_state.dart';
 
@@ -33,6 +35,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     on<ConversationSuggestionTapped>(_onSuggestionTapped);
     on<ConversationActionSent>(_onActionSent);
     on<ConversationRetried>(_onRetried);
+    on<ConversationSurfaceEdited>(_onSurfaceEdited);
   }
 
   /// The portfolio a surface is rendered for. `current` resolves to the
@@ -41,6 +44,11 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
 
   final AgentRepository _agentRepository;
   final ViewsRepository _viewsRepository;
+
+  /// The options of the edit in flight, per slot, compared by identity when
+  /// an answer lands so a slow re-render cannot overwrite a newer edit.
+  final Map<int, Map<String, String>> _editsInFlight =
+      <int, Map<String, String>>{};
 
   Future<void> _onMessageSent(
     ConversationMessageSent event,

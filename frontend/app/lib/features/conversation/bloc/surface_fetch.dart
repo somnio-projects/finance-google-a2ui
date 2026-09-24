@@ -25,7 +25,7 @@ Future<ConversationEntry> fetchSurfaceEntry(
         view: intent.view,
         message: 'The response carried no payload for this view.',
       ),
-      final payload => AgentSurface(payload),
+      final payload => AgentSurface(payload, options: intent.options),
     },
     Err<RenderedViews>(:final failure) => SurfaceUnavailable(
       view: intent.view,

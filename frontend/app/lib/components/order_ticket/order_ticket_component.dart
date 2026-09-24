@@ -2,6 +2,7 @@ import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_card.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_figure.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_model.dart';
+import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -20,10 +21,12 @@ import 'package:flutter/widgets.dart';
 ///
 /// An edit is not an event this component handles. It re-requests the same
 /// view with the changed option (ADR-K D-11), which is the host's job: the
-/// card exposes a callback and [build] passes none, exactly as
-/// `AttributionWaterfallCard` does with `onSegmentTap`. Without a host that
-/// can re-request, the ticket renders read-only rather than offering a
-/// control it cannot honour (spec 0006 AC-10).
+/// card exposes a callback and [build] hands it whatever `SurfaceEdits` scope
+/// is above it — the Assistant's transcript provides one per surface
+/// (GGU-113), the standalone page attaches its own bloc. Without either, the
+/// ticket renders read-only rather than offering a control it cannot honour
+/// (spec 0006 AC-10). Until GGU-113 the transcript provided nothing, so every
+/// ticket the agent returned was a confirmation screen for its own guess.
 class OrderTicketComponent extends ViewComponent {
   /// Creates the component.
   const OrderTicketComponent();
@@ -47,8 +50,15 @@ class OrderTicketComponent extends ViewComponent {
   String get a2uiComponent => 'OrderTicket';
 
   @override
-  Widget build(BuildContext context, ViewPayload payload) =>
-      OrderTicketCard(data: read(payload));
+  Widget build(BuildContext context, ViewPayload payload) {
+    final edits = SurfaceEdits.maybeOf(context);
+    return OrderTicketCard(
+      data: read(payload),
+      onOptionChanged: edits?.onOptionChanged,
+      pendingOption: edits?.pendingOption,
+      rejection: edits?.rejection,
+    );
+  }
 
   /// Reads [payload] into the model the card renders.
   ///
