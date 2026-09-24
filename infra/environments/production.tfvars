@@ -8,4 +8,4 @@ auth_oidc_jwks_url   = "https://www.googleapis.com/service_accounts/v1/jwk/secur
 cors_allowed_origins = "https://finance-a2ui.web.app"
 alert_email          = "lbertuzzi@somniosoftware.com"
 min_instances        = 1
-max_instances        = 4
+max_instances        = 1 # pinned by GGU-83: the rate limiter counts per process (backend/0001 OD-2)

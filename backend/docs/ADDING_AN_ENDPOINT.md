@@ -38,8 +38,11 @@ only place that mentions HTTP paths. Nothing else in `src/app` knows a URL.
    `Container`.
 7. **Controller** — `api/v1/<domain>.py` (template below).
 8. **Register** — `api/router.py`: `api_router.include_router(<domain>.router)`.
-9. **Docs** — `README.md` endpoint list, `docs/*.md` that describe the
-   behaviour, `env.example` for new settings.
+9. **Docs** — `make openapi-docs` to regenerate
+   [`docs/ENDPOINTS.md`](ENDPOINTS.md) and commit it (never edit it by hand),
+   plus the `docs/*.md` that describe the behaviour and `env.example` for new
+   settings. There is no hand-written route list to update any more: the table
+   is rendered from the built application and diffed by the gate (spec 0038).
 10. **Gate** — `make gate` green (100 % branch coverage includes the new
     controller, service, repository and every error path), then
     `backend-reviewer`, then the PR with `Spec:` and `Test decision:` lines,
@@ -82,6 +85,14 @@ __all__ = ["router"]
 The operation must also carry `operation_id`, `description` and a full
 `responses=` map built with `app.api.openapi.problem_responses(...)` — see
 `.claude/rules/backend/api-design.md` for the complete contract.
+
+`make openapi-check` (part of `make gate`) proves that map against the route
+itself: it reads the dependency tree and requires the statuses the route can
+really answer — 401 where `PrincipalDep` is present, 404 where a feature gate
+is, 413 where there is a body, 422 where something is validated, 503 where a
+database session is opened — and **rejects any status nothing in this service
+produces**. Adding a 400 or a 409 to be safe is a failed gate now, not a
+harmless extra (spec 0038 OD-1).
 
 Rules the reviewer checks on a controller:
 

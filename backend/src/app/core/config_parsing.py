@@ -10,7 +10,15 @@ bases, so `Settings` gains these by inheriting, and nothing here can add a
 field by accident.
 """
 
+from typing import Annotated
+
 from pydantic import field_validator
+from pydantic_settings import NoDecode
+
+#: A comma-separated environment value, decoded by `CsvParsing` rather than
+#: by pydantic's JSON decoder. Here rather than in `config.py` so the auth
+#: mixin can use it without importing the model that composes it.
+CsvList = Annotated[list[str], NoDecode]
 
 WILDCARD = "*"
 
@@ -22,6 +30,7 @@ class CsvParsing:
         "cors_allowed_origins",
         "trusted_hosts",
         "feature_flags_force_disabled",
+        "auth_bootstrap_admins",
         mode="before",
     )
     @classmethod

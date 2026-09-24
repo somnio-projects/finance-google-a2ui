@@ -18,8 +18,8 @@ EN_US = "en-US"
 
 def make_curve(*, entry: str, range_pct: int = 30, steps: int = 12, side: str = "buy"):
     return payoff_curve(
-        symbol="SOL",
-        name="Solana",
+        symbol="VOO",
+        name="Vanguard S&P 500 ETF",
         entry_price=Decimal(entry),
         quantity=Decimal(10),
         side=side,  # type: ignore[arg-type]
@@ -62,7 +62,7 @@ def test_price_places_is_the_finest_of_the_quote_and_the_grid(
 
 
 @pytest.mark.parametrize(
-    "entry", ["152.40", "0.1273", "4.2150"], ids=["cents", "doge", "dot"]
+    "entry", ["152.40", "0.1273", "4.2150"], ids=["cents", "xom", "tip"]
 )
 def test_a_coarse_grid_quotes_the_entry_exactly_as_price_display_would(
     entry: str,

@@ -4,7 +4,7 @@ Every number asserted here is a literal: the render is pure and the portfolio
 is seeded at a frozen ``as_of``, so a changed string means the payload a widget
 binds changed, which is a contract change.
 
-The seeded BTC position is the point — 0.42 units at 367 days (long) and 0.18
+The seeded NVDA position is the point — 0.42 units at 367 days (long) and 0.18
 at 363 days (short) — so the default 0.5-unit sale crosses the boundary and the
 short/long split has both halves to show.
 """
@@ -31,14 +31,13 @@ from app.presentation.views.taxlots_table import (
 def test_render_walks_the_lots_the_sale_consumes(portfolio: Portfolio) -> None:
     payload = render(portfolio, TaxLotsTableOptions())
     assert payload.view == VIEW_ID
-    assert payload.subtitle == "Sell 0.5 BTC under FIFO"
-    assert payload.price.amount.display == "$64,250.00"
-    assert payload.proceeds.amount.display == "$32,125.00"
-    assert payload.cost_basis.amount.display == "$22,620.00"
-    assert payload.realized.amount.display == "+$9,505.00"
+    assert payload.subtitle == "Sell 75 NVDA under FIFO"
+    assert payload.proceeds.amount.display == "$90,349.50"
+    assert payload.cost_basis.amount.display == "$60,000.00"
+    assert payload.realized.amount.display == "+$30,349.50"
     assert [(row.label, row.term, row.fully_sold) for row in payload.lots] == [
-        ("lot-btc-01", LotTerm.LONG, True),
-        ("lot-btc-02", LotTerm.SHORT, False),
+        ("lot-nvda-01", LotTerm.LONG, True),
+        ("lot-nvda-02", LotTerm.SHORT, False),
     ]
 
 
@@ -51,9 +50,9 @@ def test_render_is_pure_over_the_same_portfolio(portfolio: Portfolio) -> None:
 @pytest.mark.parametrize(
     ("method", "first_lot", "realized"),
     [
-        ("FIFO", "lot-btc-01", "+$9,505.00"),
-        ("LIFO", "lot-btc-02", "+$8,105.00"),
-        ("HIFO", "lot-btc-02", "+$8,105.00"),
+        ("FIFO", "lot-nvda-01", "+$30,349.50"),
+        ("LIFO", "lot-nvda-02", "+$27,349.50"),
+        ("HIFO", "lot-nvda-02", "+$27,349.50"),
     ],
     ids=["FIFO", "LIFO", "HIFO"],
 )
@@ -68,24 +67,29 @@ def test_render_honours_the_lot_method(
 
 
 @pytest.mark.parametrize(
-    ("sections", "has_lots", "has_remaining"),
-    [(["lots"], True, False), (["remaining"], False, True)],
-    ids=["lots-only", "remaining-only"],
+    ("sections", "has_lots"),
+    [(["lots"], True), ([], False)],
+    ids=["lots-selected", "nothing-selected"],
 )
 def test_render_trims_unselected_sections(
-    portfolio: Portfolio, sections: list[str], has_lots: bool, has_remaining: bool
+    portfolio: Portfolio, sections: list[str], has_lots: bool
 ) -> None:
-    """`fields` trims the table and the remainder — never the split (AC-6)."""
+    """`fields` trims the table — never the split or the totals (AC-6)."""
     payload = render(portfolio, TaxLotsTableOptions(fields=tuple(sections)))
     assert bool(payload.lots) is has_lots
-    assert bool(payload.remaining) is has_remaining
     assert len(payload.by_term) == len(LotTerm)
-    assert payload.realized.amount.display == "+$9,505.00"
+    assert payload.realized.amount.display == "+$30,349.50"
 
 
-def test_render_rejects_an_unknown_section(portfolio: Portfolio) -> None:
-    with pytest.raises(ValidationFailedError, match="by_term"):
-        render(portfolio, TaxLotsTableOptions(fields=("by_term",)))
+@pytest.mark.parametrize(
+    "section",
+    ["by_term", "remaining"],
+    ids=["never-offered", "withdrawn-by-0024"],
+)
+def test_render_rejects_an_unknown_section(portfolio: Portfolio, section: str) -> None:
+    """`remaining` is now as unknown as a section that never existed (§7)."""
+    with pytest.raises(ValidationFailedError, match=section):
+        render(portfolio, TaxLotsTableOptions(fields=(section,)))
 
 
 @pytest.mark.parametrize(
@@ -103,7 +107,7 @@ def test_options_reject_what_they_do_not_declare(bad: dict[str, object]) -> None
     ("scenario", "expected", "message"),
     [
         ({"symbol": "ZZZ"}, SymbolNotFoundError, "ZZZ"),
-        ({"quantity": "99"}, PositionTooSmallError, "BTC"),
+        ({"quantity": "99"}, PositionTooSmallError, "NVDA"),
         ({"quantity": "0"}, SaleQuantityError, "positive"),
     ],
     ids=["unknown-symbol", "over-sell", "zero-quantity"],
@@ -120,8 +124,8 @@ def test_a_scenario_the_data_cannot_satisfy_raises(
 
 
 def test_a_lowercase_ticker_is_normalised_by_the_domain(portfolio: Portfolio) -> None:
-    payload = render(portfolio, TaxLotsTableOptions(symbol="btc"))
-    assert payload.subtitle == "Sell 0.5 BTC under FIFO"
+    payload = render(portfolio, TaxLotsTableOptions(symbol="nvda"))
+    assert payload.subtitle == "Sell 75 NVDA under FIFO"
 
 
 def test_fitness_never_selects_this_view(

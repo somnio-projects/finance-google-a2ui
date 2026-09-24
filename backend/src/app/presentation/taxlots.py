@@ -9,16 +9,22 @@ They live beside ``fragments.py`` rather than inside it because no second
 projection needs a tax lot yet (ADR-K D-16): the tenth chart reuses the shared
 vocabulary, and a primitive is promoted into it when a **second** view asks
 for one, not in anticipation.
+
+**What is no longer here** (spec 0024 §7): the ``price`` total and the
+``remaining[]`` notes. Both were served, neither drawn — no design slot, and
+PR #71 binds neither. A field nothing binds is a field nobody maintains, so it
+is wrong before anyone notices. ``cost_basis`` and ``proceeds`` stayed: their
+*labels* are two of the table's column captions, which the component binds.
 """
 
 from datetime import date
+from decimal import Decimal
 from typing import Final, Literal
 
 from pydantic import Field
 
 from app.domain.terms import LotTerm
 from app.presentation.fragments import (
-    Annotation,
     Labelled,
     MoneyDisplay,
     ProjectionDto,
@@ -44,13 +50,31 @@ class TaxLotRow(Labelled):
     """
 
     acquired_on: date = Field(description="The day the lot was bought (UTC).")
+    acquired_on_display: str = Field(
+        max_length=32,
+        description=(
+            "The same day, written for a reader under the view's `locale`. "
+            "The pair, not the raw date alone: re-spelling `2025-01-13` in "
+            "the client is formatting, so without this the ISO string reached "
+            "the screen (spec 0024 §7, GGU-99 gap 1)."
+        ),
+        examples=["01/13/2025"],
+    )
     term: LotTerm = Field(
         description="Short or long at the portfolio's `as_of`, from the lot itself.",
         examples=["long"],
     )
-    units: str = Field(
+    units: Decimal = Field(
+        description="Units taken from this lot — exact, for geometry, never printed.",
+        examples=["0.42"],
+    )
+    units_display: str = Field(
         max_length=32,
-        description="Units taken from this lot, pre-formatted (spec 0015 OD-9).",
+        description=(
+            "Those units, pre-formatted (spec 0015 OD-9). The printable half "
+            "of the pair the Shares column binds; `units` is the raw figure "
+            "N-4 reserves for a chart (GGU-99 gap 2)."
+        ),
         examples=["0.42"],
     )
     cost_basis: MoneyDisplay = Field(description="What those units cost, pro rata.")
@@ -99,11 +123,14 @@ class TaxLotsTablePayload(ProjectionDto):
         max_length=200,
         description="The scenario in words, written here so the client states no "
         "figure of its own.",
-        examples=["Sell 0.5 BTC under FIFO"],
+        examples=["Sell 0.5 NVDA under FIFO"],
     )
-    price: Total = Field(description="Unit price the sale is costed at (OD-5).")
-    proceeds: Total = Field(description="What the sale raises.")
-    cost_basis: Total = Field(description="What the consumed units cost.")
+    proceeds: Total = Field(
+        description="What the sale raises; its `label` captions that column."
+    )
+    cost_basis: Total = Field(
+        description="What the units cost; its `label` captions that column."
+    )
     realized: Total = Field(description="`proceeds - cost_basis`, signed.")
     by_term: tuple[TermTotal, ...] = Field(
         description="The short/long split: one entry per term, always, in term "
@@ -111,11 +138,6 @@ class TaxLotsTablePayload(ProjectionDto):
     )
     lots: tuple[TaxLotRow, ...] = Field(
         default=(), description="One row per consumed lot, in consumption order."
-    )
-    remaining: tuple[Annotation, ...] = Field(
-        default=(),
-        description="What the position looks like after the sale, as labelled "
-        "figures the widget prints.",
     )
 
 

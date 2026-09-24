@@ -92,12 +92,12 @@ def test_a_negative_window_is_a_programming_error(portfolio: Portfolio) -> None:
 
 def test_a_symbol_filter_attributes_only_those_holdings(portfolio: Portfolio) -> None:
     """AC-5 — and the filtered waterfall still closes against its own total."""
-    result = attribute_window(portfolio, window=WINDOW, symbols=frozenset({"BTC"}))
+    result = attribute_window(portfolio, window=WINDOW, symbols=frozenset({"NVDA"}))
 
-    assert [row.symbol for row in result.contributions] == ["BTC"]
+    assert [row.symbol for row in result.contributions] == ["NVDA"]
     assert result.closes()
     assert result.end_value == next(
-        row.market_value for row in portfolio.holdings() if row.symbol == "BTC"
+        row.market_value for row in portfolio.holdings() if row.symbol == "NVDA"
     )
 
 

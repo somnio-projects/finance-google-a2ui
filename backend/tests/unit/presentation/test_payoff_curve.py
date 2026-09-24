@@ -19,7 +19,7 @@ from app.presentation.views.payoff_curve import (
     surface,
 )
 
-ENTRY_SOL = "$152.40"
+ENTRY_SOL = "$528.00"
 
 
 def options(**overrides: object) -> PayoffCurveOptions:
@@ -38,7 +38,7 @@ def test_the_entry_price_is_a_grid_point_where_nothing_is_made_or_lost(
     points = payload.series[0].points
 
     assert payload.view == VIEW_ID
-    assert payload.title == "Payoff across a price range: buy Solana"
+    assert payload.title == "Payoff across a price range: buy Vanguard S&P 500 ETF"
     assert len(points) == 25
     assert points[12].label == ENTRY_SOL
     assert points[12].value.amount == Decimal(0)
@@ -60,19 +60,20 @@ def test_a_buy_rises_with_the_price_and_a_sell_is_its_mirror(
 
 def test_a_dollar_order_is_sized_at_the_entry_price(portfolio: Portfolio) -> None:
     """The quotient is left unrounded; the figure the reader sees closes."""
-    payload = render(portfolio, options(size=500, size_in="usd"))
+    payload = render(portfolio, options(size=750, size_in="usd"))
     notional = payload.totals[2]
 
-    assert notional.amount.display == "$500.00"
-    assert notional.amount.amount != Decimal(500)
-    assert profits(payload)[0] == Decimal("-150.0000000000000000000000000")
+    assert notional.amount.display == "$750.00"
+    assert notional.amount.amount != Decimal(750)
+    assert profits(payload)[0] != Decimal(-225)
+    assert profits(payload)[0].quantize(Decimal("0.01")) == Decimal("-225.00")
 
 
 def test_a_size_in_units_is_priced_as_given(portfolio: Portfolio) -> None:
-    payload = render(portfolio, options(symbol="ETH", size=2, size_in="units"))
+    payload = render(portfolio, options(symbol="AAPL", size=2, size_in="units"))
     shown = [row.amount.display for row in payload.totals]
 
-    assert shown == ["$3,180.50", "$3,180.50", "$6,361.00"]
+    assert shown == ["$233.18", "$233.18", "$466.36"]
 
 
 def test_the_break_even_is_the_entry_price_for_a_fee_free_order(
@@ -138,11 +139,12 @@ def test_the_surface_binds_the_line_the_markers_and_the_disclosure(
 
     drawn = surface(payload)
 
-    assert drawn.component == "LineChart"
+    assert drawn.component == "RiskPayoffChart"
     assert drawn.view == VIEW_ID
     assert drawn.props["lines"][0]["points"][1]["label"] == ENTRY_SOL
-    assert [mark["label"] for mark in drawn.props["markers"]][:2] == [
-        "Entry",
-        "Break-even",
-    ]
+    # `markers` is the keyed block; the labelled sentences it used to hold
+    # now travel as `annotations`, which is what they are (spec 0024 §4).
+    assert drawn.props["markers"]["break_even"]["at"]["display"] == ENTRY_SOL
+    notes = [note["label"] for note in drawn.props["annotations"]]
+    assert notes[:2] == ["Entry", "Break-even"]
     assert drawn.props["disclosure"] == DISCLOSURE

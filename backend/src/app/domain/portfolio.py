@@ -27,6 +27,7 @@ from app.domain.invariants import (
 from app.domain.lots import TaxLot
 from app.domain.market import price_of
 from app.domain.money import ZERO
+from app.domain.persona import PortfolioOwner
 from app.domain.prices import PricePoint
 from app.domain.symbols import normalize_symbol
 from app.domain.transactions import Transaction
@@ -40,6 +41,9 @@ class Portfolio:
     positions: tuple[Holding, ...]
     lots: tuple[TaxLot, ...]
     ledger: tuple[Transaction, ...]
+    #: Who is signed in, when the service knows; the shell greets them by it
+    #: and falls back to the design's persona otherwise (spec 0030).
+    owner: PortfolioOwner | None = None
 
     def holdings(self) -> list[Holding]:
         """Return every holding in a stable order (seed order, never a set)."""

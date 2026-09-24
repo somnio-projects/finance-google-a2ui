@@ -27,11 +27,19 @@ anything: you read, run cheap deterministic checks, and report.
    without new `pragma: no cover` or `omit`; tests assert behaviour, not just
    execute lines; unit tests use fakes only; names/`ids=`/`match=` conventions.
    For auth/rate-limit/error-masking changes, ask for the mutation check.
-6. **SDD pass** (`.claude/rules/backend/sdd.md`): the PR cites a spec with
+6. **Manual-run pass** (`.claude/rules/backend/sdd.md`, "The manual run"): do
+   not read the transcript for plausibility — run the check.
+   `gh pr view <n> --json body -q .body > /tmp/body.md` then
+   `bash scripts/check_manual_run.sh /tmp/body.md`. A non-zero exit is a
+   **blocker**, quoted verbatim: a manual run whose build is stale, foreign,
+   unknown or unnamed is not evidence about this branch. Also check the
+   `Verification` block names what was **not** run, with its reason and
+   consequence.
+7. **SDD pass** (`.claude/rules/backend/sdd.md`): the PR cites a spec with
    numbered ACs; the spec matches the contract shipped; `.claude/harness-log.md`
    has an entry for this iteration; docs under `backend/docs/` updated when
    behaviour they describe changed.
-7. **Delivery pass**: branch `type/short_description` (or
+8. **Delivery pass**: branch `type/short_description` (or
    `type/GGU-n_short_description`), Conventional Commit titles, English, no AI
    attribution in commits or PR body.
 

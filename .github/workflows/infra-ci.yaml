@@ -6,9 +6,17 @@
 #   step name = "<Verb> <object> (<tool>)"
 name: infra-ci
 
-# The delivery-scripts job asserts properties that span infra/ and the two
-# backend workflows (what dev is, and that a release waits for a green gate),
-# so a change to either side has to start this run.
+# The delivery-scripts job asserts properties that span infra/, the two backend
+# workflows (what dev is, and that a release waits for a green gate), the
+# harness rules index and the declared rate limit, so a change to any of those
+# sides has to start this run.
+# CLAUDE.md and .claude/rules/** are named for the same reason backend-ci names
+# docs/catalog/**: the rules index is rewritten by a tool outside this
+# repository, so the edit that drops a row must start the run that rejects it.
+# The three backend paths below are named for the rate limit: the documented
+# limit, the configured default and the sample environment are compared against
+# the Terraform instance ceiling, so the edit that breaks the pair must start
+# the run that rejects it (GGU-83).
 # (Actions does not expand YAML anchors, so the two lists are spelled out.)
 on:
   pull_request:
@@ -17,6 +25,18 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      # `test_dev_environment.sh` asserts the client's delivery shape too now
+      # (spec frontend/0017): a called gate, the `needs:` edges, the preview
+      # channel and the post-release identity check. A change to either file
+      # has to start the suite that holds them.
+      - ".github/workflows/frontend-cd.yaml"
+      - ".github/workflows/frontend-ci.yaml"
+      - "CLAUDE.md"
+      - ".claude/rules/**"
+      - "backend/docs/SECURITY.md"
+      - "backend/src/app/core/config.py"
+      - "backend/env.example"
+      - "docs/diagrams/08-infrastructure.md"
   push:
     branches: [main, develop]
     paths:
@@ -24,6 +44,18 @@ on:
       - ".github/workflows/infra-ci.yaml"
       - ".github/workflows/backend-cd.yaml"
       - ".github/workflows/backend-ci.yaml"
+      # `test_dev_environment.sh` asserts the client's delivery shape too now
+      # (spec frontend/0017): a called gate, the `needs:` edges, the preview
+      # channel and the post-release identity check. A change to either file
+      # has to start the suite that holds them.
+      - ".github/workflows/frontend-cd.yaml"
+      - ".github/workflows/frontend-ci.yaml"
+      - "CLAUDE.md"
+      - ".claude/rules/**"
+      - "backend/docs/SECURITY.md"
+      - "backend/src/app/core/config.py"
+      - "backend/env.example"
+      - "docs/diagrams/08-infrastructure.md"
 
 permissions:
   contents: read
@@ -42,10 +74,10 @@ jobs:
         working-directory: infra
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Terraform (hashicorp/setup-terraform)
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.9.8"
 
@@ -73,11 +105,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Lint the delivery shell scripts (shellcheck)
-        run: shellcheck infra/scripts/deploy_cloud_run.sh infra/scripts/tests/*.sh
-
+      # Shell linting moved to `repo-ci.yaml`, which has no `paths:` filter and
+      # lints every tracked script rather than two globs under `infra/scripts/`.
+      # The two globs missed both container entry points, and both were red the
+      # first time a gate opened them. This job keeps the behavioural tests; the
+      # lint that used to sit here is `repo.shell-lint` and is a superset of it.
+      # See ci-conventions §5.
       - name: Prove the deploy verifies and rolls back (test_deploy_cloud_run.sh)
         run: bash infra/scripts/tests/test_deploy_cloud_run.sh
 
@@ -86,6 +121,12 @@ jobs:
 
       - name: Prove dev stays cheap by derivation and releases only behind a green gate (test_dev_environment.sh)
         run: bash infra/scripts/tests/test_dev_environment.sh
+
+      - name: Prove every rule file is listed and every row exists (test_rules_index.sh)
+        run: bash infra/scripts/tests/test_rules_index.sh
+
+      - name: Prove the documented rate limit is the one the instance count can deliver (test_rate_limit_ceiling.sh)
+        run: bash infra/scripts/tests/test_rate_limit_ceiling.sh
 
   report:
     name: "Report · infrastructure gate summary"
@@ -102,7 +143,7 @@ jobs:
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
             echo "| Terraform | formatting, validity, no CRITICAL/HIGH misconfiguration | ${{ needs.terraform.result }} |"
-            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate | ${{ needs.delivery-scripts.result }} |"
+            echo "| Delivery | deploy verifies before traffic and rolls back; no service-account key; provider pinned to this repository; dev cheap by derivation and released only behind a green gate; every rule file carries a row in the CLAUDE.md index and every row a file; the documented per-principal rate limit matches the configured default and the instance count it depends on | ${{ needs.delivery-scripts.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail the run when any gate failed (bash)

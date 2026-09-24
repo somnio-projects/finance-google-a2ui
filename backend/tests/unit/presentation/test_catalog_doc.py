@@ -8,16 +8,32 @@ after the document was rendered makes ``contract_drift`` non-empty and names
 the change (AC-7).
 """
 
+from app.presentation.catalog_artifacts import FIX_COMMAND
 from app.presentation.catalog_doc import (
     CONTRACT_PATH,
     DIGEST_LENGTH,
     contract_document,
-    contract_drift,
     digest,
     fields_of,
 )
+from app.presentation.catalog_drift import contract_drift
 from app.presentation.registry import REGISTRY
 from app.presentation.spec import ProjectionSpec
+from tests.unit.presentation.conftest import committed
+
+
+def test_contract_matches_the_registry() -> None:
+    """The twin of the snapshot's gate: the committed Markdown is current.
+
+    Without it the double gate is asymmetric — the JSON is checked from inside
+    the suite and the Markdown only by the script, so a generator that stopped
+    reporting one artefact would let a stale `CONTRACT.md` through every check.
+    """
+    generated = contract_document(REGISTRY.all())
+
+    assert committed(CONTRACT_PATH) == generated, (
+        f"{CONTRACT_PATH} is stale — a projection moved. Regenerate it: {FIX_COMMAND}"
+    )
 
 
 def test_the_document_covers_every_registered_projection() -> None:
@@ -46,7 +62,7 @@ def test_the_document_prints_the_inventory_and_the_example_of_each_projection() 
 
 
 def test_a_read_only_projection_says_so_rather_than_leaving_the_cell_blank() -> None:
-    document = contract_document([REGISTRY.get("holdings.allocation.v1")])
+    document = contract_document([REGISTRY.get("attribution.waterfall.v1")])
 
     assert "**Editable fields:** read-only" in document
 

@@ -22,13 +22,13 @@ from pydantic import Field
 
 from app.domain.orders import order_quantity
 from app.domain.payoff import MIN_STEPS, Side
+from app.domain.symbols import Symbol
 from app.presentation import options as opt
 
 #: The curated market reference as a closed option domain: an unknown ticker
 #: is a 422 from this model rather than a ``SymbolNotFoundError`` raised from
 #: inside a presenter, and the generated prompt fragment lists the eight the
 #: model may ask for (spec 0016 OD-3).
-Symbol = Literal["ADA", "AVAX", "BTC", "DOGE", "DOT", "ETH", "LINK", "SOL"]
 SizeUnit = Literal["units", "usd"]
 
 MAX_SIZE: Final[int] = 1_000_000_000
@@ -41,7 +41,7 @@ class PayoffCurveOptions(opt.DisplayOptions, opt.FieldSelection):
     """Declared knobs of ``payoff.curve.v1``; nothing else is accepted."""
 
     symbol: Symbol = Field(
-        default="SOL", description="Asset the order is for.", examples=["SOL"]
+        default="VOO", description="Asset the order is for.", examples=["VOO"]
     )
     size: int = Field(
         default=500,

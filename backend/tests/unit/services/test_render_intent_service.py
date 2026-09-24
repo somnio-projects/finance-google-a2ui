@@ -38,8 +38,8 @@ async def test_accepted_intent_renders_the_requested_view(
     )
     assert result.view == WATERFALL
     assert result.rejection is None
-    assert result.surface.component == "WaterfallChart"
-    assert result.payload.model_dump()["start"]["amount"]["display"] == "$56,925"
+    assert result.surface.component == "AttributionWaterfall"
+    assert result.payload.model_dump()["start"]["amount"]["display"] == "$421,711"
     assert reporter.metrics == []
 
 
@@ -65,7 +65,7 @@ async def test_a_rejected_intent_falls_back_and_is_reported(
     assert result.view == ALLOCATION
     assert result.rejection is not None
     assert re.search(reason, result.rejection), result.rejection
-    assert result.surface.component == "DonutChart"
+    assert result.surface.component == "HoldingsSummary"
     assert reporter.metrics == [(REJECTED_METRIC, {"view": intent.view})]
 
 

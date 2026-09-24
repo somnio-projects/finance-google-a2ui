@@ -15,6 +15,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.a2a_message import ClientMessage, StreamParams
+from app.schemas.a2a_parts import ActionData, DataPart, MessagePart, TextPart
+
 JSONRPC_VERSION = "2.0"
 #: JSON-RPC reserved codes, plus the one application code this surface uses.
 METHOD_NOT_FOUND = -32601
@@ -24,60 +27,6 @@ UNSUPPORTED_OPERATION = -32004
 #: anything it does not declare; this only stops an unbounded dictionary
 #: reaching that model.
 MAX_PARAMS = 32
-
-
-class MessagePart(BaseModel):
-    """One part of a client message. Only text parts are understood."""
-
-    model_config = ConfigDict(frozen=True, extra="ignore")
-
-    kind: Literal["text"] = Field(
-        default="text", description="Part discriminator; only `text` is handled."
-    )
-    text: str = Field(
-        max_length=4000,
-        description="What the user typed.",
-        examples=["why did I move?"],
-    )
-
-
-class ClientMessage(BaseModel):
-    """The message the client sends in a `message/stream` call."""
-
-    model_config = ConfigDict(frozen=True, extra="ignore")
-
-    role: Literal["user"] = Field(default="user", description="Always `user`.")
-    parts: tuple[MessagePart, ...] = Field(
-        min_length=1, max_length=16, description="Message parts, in order."
-    )
-    message_id: str | None = Field(
-        default=None,
-        alias="messageId",
-        max_length=128,
-        description="Client-generated id, echoed back for correlation.",
-    )
-    context_id: str | None = Field(
-        default=None,
-        alias="contextId",
-        max_length=128,
-        description=(
-            "Conversation the client believes this belongs to. **Never trusted "
-            "on its own** — it is resolved against the authenticated subject, "
-            "or treated as unknown (ADR-J D-4, ADR-A)."
-        ),
-    )
-
-    def text(self) -> str:
-        """Return the message's text parts joined into one prompt."""
-        return " ".join(part.text for part in self.parts).strip()
-
-
-class StreamParams(BaseModel):
-    """Parameters of `message/stream`."""
-
-    model_config = ConfigDict(frozen=True, extra="ignore")
-
-    message: ClientMessage = Field(description="What the user sent.")
 
 
 class JsonRpcRequest(BaseModel):
@@ -141,10 +90,13 @@ __all__ = [
     "MAX_PARAMS",
     "METHOD_NOT_FOUND",
     "UNSUPPORTED_OPERATION",
+    "ActionData",
     "ClientMessage",
+    "DataPart",
     "JsonRpcError",
     "JsonRpcFailure",
     "JsonRpcRequest",
     "MessagePart",
     "StreamParams",
+    "TextPart",
 ]

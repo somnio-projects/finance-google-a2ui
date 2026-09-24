@@ -9,22 +9,23 @@ reads no file, and the script under ``backend/scripts/`` touches the disk.
 """
 
 from collections.abc import Sequence
-from difflib import unified_diff
 from hashlib import sha256
 from json import dumps
 from typing import Final
 
+from app.presentation.catalog_actions import actions_table
+from app.presentation.catalog_guidance import guidance_note
 from app.presentation.catalog_preamble import PREAMBLE
 from app.presentation.catalog_tables import (
     INDEX_HEADER,
     inputs_note,
     inventory_table,
-    option_inputs,
     options_table,
     table,
 )
 from app.presentation.contract import catalog_entry
-from app.presentation.inventory import InventoryField, inventory
+from app.presentation.inventory import InventoryField
+from app.presentation.published import component_of, inventory_of
 from app.presentation.registry import Projection
 
 #: Where the rendered document is checked in, relative to the repository root.
@@ -32,6 +33,12 @@ CONTRACT_PATH: Final[str] = "docs/catalog/CONTRACT.md"
 #: How much of the sha256 the document prints. Twelve hex characters is a
 #: fingerprint a human can compare by eye and still not collide by accident.
 DIGEST_LENGTH: Final[int] = 12
+#: Catalog keys that are *renderings* of facts the digest already covers —
+#: the field inventory is the payload schema walked, the prompt fragment is
+#: the summary, options and guidance joined. Hashing them too would move
+#: every frozen `v1` digest the day a rendering changed its wording, while
+#: nothing a client binds had moved (spec 0034 OD-2).
+DERIVED_KEYS: Final[tuple[str, ...]] = ("fields", "prompt")
 
 
 def digest(projection: Projection) -> str:
@@ -47,6 +54,8 @@ def digest(projection: Projection) -> str:
         moves, something frozen changed.
     """
     entry = dict(catalog_entry(projection))
+    for derived in DERIVED_KEYS:
+        del entry[derived]
     entry["payload_schema"] = projection.dto.model_json_schema()
     canonical = dumps(entry, sort_keys=True, default=str).encode()
     return sha256(canonical).hexdigest()[:DIGEST_LENGTH]
@@ -54,10 +63,7 @@ def digest(projection: Projection) -> str:
 
 def fields_of(projection: Projection) -> tuple[InventoryField, ...]:
     """Return the field inventory of one projection's payload."""
-    return inventory(
-        projection.dto.model_json_schema(),
-        inputs=option_inputs(projection.options.model_json_schema()),
-    )
+    return inventory_of(projection)
 
 
 def _section(projection: Projection) -> str:
@@ -67,6 +73,11 @@ def _section(projection: Projection) -> str:
         f"> {projection.summary}\n\n"
         f"- **Frozen id:** `{projection.id}` · "
         f"**digest:** `{digest(projection)}`\n"
+        # The component was the one fact this document did not carry, while
+        # the snapshot and the A2UI surface both did — so design could not
+        # check the name it had drawn against the name the client would
+        # register (GGU-53, spec 0023 AC-2).
+        f"- **Component:** `{component_of(projection)}`\n"
         f"- **Payload type:** `{projection.dto.__name__}`\n"
         f"- **Served by:** "
         + " · ".join(f"`{name}`" for name in projection.endpoints)
@@ -80,6 +91,10 @@ def _section(projection: Projection) -> str:
             options_table(projection.options.model_json_schema()),
             "### Field inventory",
             inventory_table(fields),
+            "### When the agent picks this",
+            guidance_note(projection.guidance),
+            "### Actions",
+            actions_table(list(catalog_entry(projection)["actions"])),
             "### Example payload",
             "```json\n" + dumps(dict(projection.example), indent=2) + "\n```",
         )
@@ -94,6 +109,7 @@ def _index(projections: Sequence[Projection]) -> str:
         rows.append(
             (
                 f"[`{projection.id}`](#{projection.id.replace('.', '')})",
+                f"`{component_of(projection)}`",
                 f"`{digest(projection)}`",
                 str(len(fields)),
                 inputs_note(fields),
@@ -117,31 +133,11 @@ def contract_document(projections: Sequence[Projection]) -> str:
     return "\n\n".join(parts) + "\n"
 
 
-def contract_drift(*, checked_in: str, generated: str) -> str:
-    """Return a unified diff of the two, empty when the file is current.
-
-    Args:
-        checked_in: What ``docs/catalog/CONTRACT.md`` holds today.
-        generated: What the registry says it should hold.
-
-    Returns:
-        A diff a developer can read, or ``""`` when nothing drifted.
-    """
-    return "".join(
-        unified_diff(
-            checked_in.splitlines(keepends=True),
-            generated.splitlines(keepends=True),
-            fromfile=CONTRACT_PATH,
-            tofile="generated from the registry",
-        )
-    )
-
-
 __all__ = [
     "CONTRACT_PATH",
+    "DERIVED_KEYS",
     "DIGEST_LENGTH",
     "contract_document",
-    "contract_drift",
     "digest",
     "fields_of",
 ]

@@ -64,16 +64,66 @@ Registering once publishes the projection to: the **OpenAPI** document, the
 **`GET /v1/views` catalog** (id, serving endpoints, options schema, example),
 the **prompt fragments** that teach the model the catalog (generated, never
 hand-copied), the **A2UI surface** adapter for the genui client, and the
-**frozen design contract** [`docs/catalog/CONTRACT.md`](../../../docs/catalog/CONTRACT.md)
-— the field inventory design binds to (GGU-41, spec `backend/0019`), also
-generated. `genui`, `genui_a2a` and `a2ui_core` are alpha: keeping the A2UI
-mapping in one adapter per projection is what makes a library bump a contained
-change.
+**frozen design contract** — the field inventory design binds to (GGU-41, spec
+`backend/0019`), also generated. `genui`, `genui_a2a` and `a2ui_core` are
+alpha: keeping the A2UI mapping in one adapter per projection is what makes a
+library bump a contained change.
 
-The contract is **gated**: `make gate` re-renders it and diffs it, so a
-projection cannot change without the document changing in the same commit.
-After touching a projection, run `cd backend && make catalog` and commit the
-result. Two conventions it reads:
+The contract is published in **two renderings, from one render pass**
+(`presentation/catalog_artifacts.py`):
+
+| Artefact | For | Carries |
+|---|---|---|
+| [`docs/catalog/CONTRACT.md`](../../../docs/catalog/CONTRACT.md) | the designer | options, field inventory, example, digest |
+| [`docs/catalog/view-catalog.snapshot.json`](../../../docs/catalog/view-catalog.snapshot.json) | the Flutter catalog test (GGU-53, spec `backend/0021`) | **component type**, view id, field paths, options schema, example, digest |
+
+A third rendering is one entry in `ARTIFACTS` plus its renderer — never a
+second script and never a second gate step.
+
+Both are **gated**: `make gate` re-renders them and diffs them, so a projection
+cannot change without the artefacts changing in the same commit. After touching
+a projection, run `cd backend && make catalog` and commit the result. The
+component name in the snapshot is read from the projection's own A2UI adapter
+and is what the client registers against, verbatim — rename it and the gate
+fails on both the snapshot and the suite.
+
+**A drift check cannot tell you the generator is wrong.** Each artefact is
+re-rendered and diffed against *its own* generator, so both can be green while
+both disagree with design — which is exactly what GGU-53 found: four of six
+component names were wrong, and the Markdown contract did not print the
+component name at all. Re-rendering proves an artefact is *current*, never that
+it is *right*. Only a second, independent declaration can do that, which is why
+`test_component_names.py` holds design's six names as a literal and compares
+them against the adapter, the snapshot, the Markdown and `/v1/views`.
+
+**A design page's guidance is prompt text, so audit it before transcribing
+it.** A Zone 3 fragment is generated into the catalog the model reads, so a
+sentence in it that tells a reader to work a figure out is the
+numbers-from-tools invariant broken in the one place built to teach the model
+the rules. Read every fragment against that question before it ships, and
+record the ones you decline rather than dropping them silently — spec 0024 §5
+is the worked example: the `OrderTicket` page says the component *"recomputes
+weights, cash and shares live as parameters change"*, which is exactly what
+`effect: "recalculate"` does **not** mean. A fragment is design-owned prose,
+and this is the one thing it is not free to say.
+
+**A gallery-card name is provisional.** Where a component's detail page was
+never exported, its gallery card is the only declaration it has and therefore
+wins — as a *fallback*, not a tie-break. When the page arrives, the name is
+decided again from its own Zone 2 block, and it may move: two of three did on
+2026-09-21 (spec 0024 §2). The day a page lands is the day to revisit
+`docs/catalog/design/README.md`, not the day somebody notices the client
+registering a widget under a name design never wrote.
+
+**Before removing a field nothing appears to bind, read the clients.** A field
+nobody binds is a field nobody maintains, so it goes — but "nothing binds it"
+is a claim about code that exists, including open pull requests. `price` and
+`remaining[]` left `taxlots.table.v1` under spec 0024 §7; `cost_basis` and
+`proceeds` stayed, because the component binds their **labels** as column
+captions (a Dart constant there would not follow the `locale` option). A
+`label` is a binding.
+
+Two conventions the contract reads:
 
 - **Pre-formatted** is derived from the ADR-E pair (a string beside a figure),
   not from the `display` name — keep shipping pairs and it classifies itself.
@@ -104,6 +154,8 @@ budget is a defect like a failing test.
 - [ ] `render()` pure and unit-tested, including every option branch and the empty/edge data cases.
 - [ ] A2UI adapter + its test.
 - [ ] `register(...)` called from the module; nothing else edited.
+- [ ] **The component name comes from the design catalog**, and the new view is added to `DESIGN_CATALOG` in `tests/unit/presentation/test_component_names.py`. That file is red until you do, on purpose (spec 0023, superseding 0019/0021's "never assert the list"): it is the only inventory in the suite not read from the registry, because it is design's half of the contract rather than a copy of ours. A component nobody has named is a component the client cannot register.
+- [ ] Guidance (`use_when` / `avoid_when`) **if design has written a page for it**, in `<view>_guidance.py`. If not, leave it unset — the contract prints that the page does not exist, and a sentence invented here would be indistinguishable from one a designer approved.
 - [ ] Appears in `/v1/views`, in OpenAPI with an example, and in the generated prompt fragments.
-- [ ] `cd backend && make catalog` run and `docs/catalog/CONTRACT.md` committed — the gate fails on a stale contract.
+- [ ] `cd backend && make catalog` run and **both** `docs/catalog/CONTRACT.md` and `docs/catalog/view-catalog.snapshot.json` committed — the gate fails on a stale artefact, twice.
 - [ ] Spec updated (`specs/backend/NNNN-*.md`) and the decision recorded if anything in ADR-K changed.

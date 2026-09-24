@@ -38,8 +38,8 @@ async def test_a_successful_simulation_asks_for_the_tax_lot_table(
     assert outcome.render is not None
     assert outcome.render.view == VIEW
     assert dict(outcome.render.options) == {
-        "symbol": "BTC",
-        "quantity": "0.5",
+        "symbol": "NVDA",
+        "quantity": "75",
         "lot_method": "FIFO",
     }
 
@@ -70,8 +70,8 @@ async def test_the_intents_options_validate_against_the_projections_own_model(
 
     assert isinstance(options, TaxLotsTableOptions)
     assert (options.symbol, options.quantity, options.lot_method) == (
-        "BTC",
-        "0.5",
+        "NVDA",
+        "75",
         "HIFO",
     )
 
@@ -85,7 +85,7 @@ async def test_the_rendered_table_names_what_the_answer_names(
     intent that dropped `lot_method` would still render a plausible table,
     and only this comparison would notice.
     """
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     outcome = await tool.run({**HALF_A_BITCOIN, "lot_method": "HIFO"}, tool_context)
 
     assert outcome.render is not None
@@ -97,7 +97,7 @@ async def test_the_rendered_table_names_what_the_answer_names(
     assert isinstance(payload, TaxLotsTablePayload)
     summary = block(outcome.data["summary"])
     assert payload.realized.amount.display == summary["realizedPlDisplay"]
-    assert payload.subtitle == "Sell 0.5 BTC under HIFO"
+    assert payload.subtitle == "Sell 75 NVDA under HIFO"
     assert [row.label for row in payload.lots] == [
         row["lotId"] for row in lots(outcome.data["lots"])
     ]
@@ -108,9 +108,9 @@ async def test_a_dollar_sized_ask_travels_as_the_units_it_resolved_to(
 ) -> None:
     """The model never divides: the tool resolved the size, the view gets units.
 
-    `$10,000` of BTC is 0.15564202 units — eight decimal places, which is the
-    case `str(Decimal)` would have rendered in scientific notation for a small
-    enough size and the view's size pattern would then have rejected.
+    `$10,000` of NVDA is 8.30109741 shares — eight decimal places, which is
+    the case `str(Decimal)` would have rendered in scientific notation for a
+    small enough size and the view's size pattern would then have rejected.
     """
     outcome = await tool.run(TEN_THOUSAND_DOLLARS, tool_context)
 
@@ -121,8 +121,8 @@ async def test_a_dollar_sized_ask_travels_as_the_units_it_resolved_to(
     assert isinstance(options, TaxLotsTableOptions)
     assert options.quantity == block(outcome.data["summary"])["quantityDisplay"]
 
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     payload = projection.render(portfolio, options)
 
     assert isinstance(payload, TaxLotsTablePayload)
-    assert payload.subtitle == "Sell 0.15564202 BTC under FIFO"
+    assert payload.subtitle == "Sell 8.30109741 NVDA under FIFO"

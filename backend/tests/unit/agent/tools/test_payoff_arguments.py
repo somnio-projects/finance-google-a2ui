@@ -15,7 +15,7 @@ from app.agent.registry import load_tools
 from app.agent.tools.payoff import NAME, PayoffTool
 from app.core.model import ToolSpec
 from app.domain.errors import SymbolNotFoundError
-from tests.unit.agent.tools.payoff_fixtures import SOL, tool
+from tests.unit.agent.tools.payoff_fixtures import VOO, tool
 
 __all__ = ["tool"]
 
@@ -74,19 +74,19 @@ async def test_an_unknown_ticker_is_refused_not_guessed(
 @pytest.mark.parametrize(
     ("arguments", "complaint"),
     [
-        ({"symbol": SOL, "size": "0"}, "greater than zero"),
-        ({"symbol": SOL, "size": "-5"}, "should match pattern"),
-        ({"symbol": SOL, "size": "a lot"}, "should match pattern"),
-        ({"symbol": SOL}, "Field required"),
+        ({"symbol": VOO, "size": "0"}, "greater than zero"),
+        ({"symbol": VOO, "size": "-5"}, "should match pattern"),
+        ({"symbol": VOO, "size": "a lot"}, "should match pattern"),
+        ({"symbol": VOO}, "Field required"),
         ({"symbol": "S", "size": "1"}, "should match pattern"),
         ({"symbol": "S" * 5000, "size": "1"}, "at most 10 characters"),
-        ({"symbol": SOL, "size": "1", "steps": 26}, "less than or equal to 25"),
-        ({"symbol": SOL, "size": "1", "steps": 0}, "greater than or equal to 1"),
-        ({"symbol": SOL, "size": "1", "range_pct": 99}, "less than or equal to 90"),
-        ({"symbol": SOL, "size": "1", "range_pct": 4}, "greater than or equal to 5"),
-        ({"symbol": SOL, "size": "1", "side": "hold"}, "'buy' or 'sell'"),
+        ({"symbol": VOO, "size": "1", "steps": 26}, "less than or equal to 25"),
+        ({"symbol": VOO, "size": "1", "steps": 0}, "greater than or equal to 1"),
+        ({"symbol": VOO, "size": "1", "range_pct": 99}, "less than or equal to 90"),
+        ({"symbol": VOO, "size": "1", "range_pct": 4}, "greater than or equal to 5"),
+        ({"symbol": VOO, "size": "1", "side": "hold"}, "'buy' or 'sell'"),
         (
-            {"symbol": SOL, "size": "1", "amount_usd": "500"},
+            {"symbol": VOO, "size": "1", "amount_usd": "500"},
             "Extra inputs are not permitted",
         ),
     ],

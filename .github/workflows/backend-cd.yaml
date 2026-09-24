@@ -23,10 +23,12 @@
 # `gh workflow run` answers "not found on the default branch". Releasing
 # `develop` into `main` is what makes the button real.
 #
-# Nothing is built or deployed until the full backend gate has passed ON THIS
-# COMMIT. `backend-ci.yaml` is called as the `ci` job below and `publish` and
-# `deploy` declare `needs: [ci]`, so a red quality, test, security or image job
-# leaves them skipped and the run red. This is a real dependency inside one
+# Nothing is built or deployed until the full gate has passed ON THIS COMMIT.
+# `backend-ci.yaml` is called as the `ci` job below, `repo-ci.yaml` as the
+# `repo` job (it owns secret scanning for every stack), and `publish` and
+# `deploy` declare `needs: [ci, repo]`, so a red quality, test, security,
+# secrets, shell or image job leaves them skipped and the run red. This is a
+# real dependency inside one
 # run, not a `workflow_run` trigger that fires on completion and then has to
 # remember to inspect `conclusion` — the ordering is enforced by Actions
 # itself, and `infra/scripts/tests/test_dev_environment.sh` fails the build if
@@ -68,6 +70,17 @@ jobs:
   ci:
     name: "Gate · the full backend ship gate on the commit being released"
     uses: ./.github/workflows/backend-ci.yaml
+    permissions:
+      contents: read
+
+  # The repository-wide half of the gate, called for the same reason `ci` is.
+  # Secret scanning used to sit inside `backend-ci` and therefore inside `ci`;
+  # it moved to `repo-ci` so that a client-only pull request is also scanned.
+  # Without this job the move would have quietly taken gitleaks off the path to
+  # production, which is the opposite of the finding it was closing.
+  repo:
+    name: "Gate · the repository-wide checks on the commit being released"
+    uses: ./.github/workflows/repo-ci.yaml
     permissions:
       contents: read
 
@@ -147,7 +160,7 @@ jobs:
     name: "Image · build and push it to Artifact Registry by digest"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [ci, settings]
+    needs: [ci, repo, settings]
     permissions:
       contents: read
       id-token: write # mint the federated token; nothing else is granted
@@ -156,7 +169,7 @@ jobs:
       release: ${{ steps.release.outputs.release }}
     steps:
       - name: Check out the commit being released (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Derive the release identifier from the version and the commit (bash)
         id: release
@@ -166,23 +179,23 @@ jobs:
           echo "release=${version}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ needs.settings.outputs.provider }}
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Allow Docker to push to Artifact Registry (gcloud auth configure-docker)
         run: gcloud auth configure-docker "${{ needs.settings.outputs.region }}-docker.pkg.dev" --quiet
 
       - name: Set up BuildKit (docker/setup-buildx-action)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and push the runtime image (docker/build-push-action)
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: true
@@ -203,7 +216,7 @@ jobs:
     name: "Deploy · release the digest and verify it before traffic"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [ci, settings, publish]
+    needs: [ci, repo, settings, publish]
     permissions:
       contents: write # create the release tag after a production deploy
       id-token: write
@@ -213,16 +226,16 @@ jobs:
       name: ${{ needs.settings.outputs.environment }}
     steps:
       - name: Check out the deploy scripts (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ needs.settings.outputs.provider }}
           service_account: ${{ needs.settings.outputs.deployer }}
 
       - name: Install the gcloud CLI (google-github-actions/setup-gcloud)
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Deploy without traffic, verify readiness, then shift (deploy_cloud_run.sh)
         env:
@@ -258,7 +271,7 @@ jobs:
     name: "Report · what was released and where"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [ci, settings, publish, deploy]
+    needs: [ci, repo, settings, publish, deploy]
     if: always()
     steps:
       - name: Write the release record to the run summary (GITHUB_STEP_SUMMARY)

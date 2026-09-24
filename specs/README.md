@@ -14,8 +14,19 @@ specs/
 ├── backend/           NNNN-<feature>.md — FastAPI service (backend/)
 ├── infra/             NNNN-<topic>.md   — Google Cloud infrastructure (infra/) and the delivery pipeline
 ├── repo/              NNNN-<topic>.md   — repository-level work: licensing, docs, hygiene
-└── client/            NNNN-<feature>.md — Flutter client (client_flutter/), when it adopts SDD
+├── client/            NNNN-<topic>.md   — CLOSED. See below
+└── frontend/          NNNN-<feature>.md — the A2UI client (frontend/)
 ```
+
+One area per solution folder, so `frontend/`'s specs are found where its code
+is.
+
+**`client/` is a closed area: no new spec goes there.** It held the specs for
+`client_flutter/`, the older of two Flutter apps, which was retired on
+2026-09-22 by [`repo/0002`](repo/0002-retire-the-client-flutter-app.md).
+`0001` and `0002` are `Superseded` and kept in place; `0003-client-backend-contract.md`
+is **still live** — its subject is the backend's contract rather than that
+app, and `frontend/` binds it. A new client spec goes in `frontend/`.
 
 Numbers are per area, zero-padded, never reused. The filename is stable once
 merged; a replaced spec is marked `Superseded by NNNN` and kept.
@@ -38,27 +49,77 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 
 ## Index
 
+One row per file, ordered by area then number — so a missing spec and a
+duplicated one are both visible at a glance.
+
 | Spec | Status | Ticket |
 |---|---|---|
 | [backend/0001-backend-foundation.md](backend/0001-backend-foundation.md) | Implemented | GGU-3 / GGU-45 / GGU-46 (re-baselined) |
 | [backend/0002-feature-flags.md](backend/0002-feature-flags.md) | Implemented | — (TL request 2026-09-18) |
 | [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |
+| [backend/0004-session-identity.md](backend/0004-session-identity.md) | Draft | GGU-46 |
 | [backend/0005-presentation-layer.md](backend/0005-presentation-layer.md) | Implemented | GGU-49 |
 | [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |
+| [backend/0007-cd-pipeline.md](backend/0007-cd-pipeline.md) | Approved | GGU-48 |
 | [backend/0008-attribution-tool.md](backend/0008-attribution-tool.md) | Implemented | GGU-36 |
 | [backend/0009-prompt-fragments.md](backend/0009-prompt-fragments.md) | Implemented | GGU-14 |
 | [backend/0010-a2a-surface.md](backend/0010-a2a-surface.md) | Implemented | GGU-3 |
-| [backend/0012-delivery-followups.md](backend/0012-delivery-followups.md) | Implemented | — (ADR-K D-18/D-19/D-20 follow-ups) |
 | [backend/0011-holdings-tool.md](backend/0011-holdings-tool.md) | Implemented | GGU-39 |
+| [backend/0012-delivery-followups.md](backend/0012-delivery-followups.md) | Implemented | — (ADR-K D-18/D-19/D-20 follow-ups) |
 | [backend/0013-simulate-sale-tool.md](backend/0013-simulate-sale-tool.md) | Implemented | GGU-37 |
 | [backend/0014-payoff-tool.md](backend/0014-payoff-tool.md) | Implemented | GGU-38 (re-baselined) |
-| [backend/0019-frozen-catalog-contract.md](backend/0019-frozen-catalog-contract.md) | Implemented | GGU-41 (re-baselined) |
 | [backend/0015-tax-lot-table-projection.md](backend/0015-tax-lot-table-projection.md) | Implemented | GGU-41 |
 | [backend/0016-payoff-curve-projection.md](backend/0016-payoff-curve-projection.md) | Implemented | GGU-41 |
 | [backend/0017-scenario-comparison-projection.md](backend/0017-scenario-comparison-projection.md) | Implemented | GGU-41 |
 | [backend/0018-order-ticket-projection.md](backend/0018-order-ticket-projection.md) | Draft | GGU-41 |
-| [backend/0013-simulate-sale-tool.md](backend/0013-simulate-sale-tool.md) | Implemented | GGU-37 |
+| [backend/0019-frozen-catalog-contract.md](backend/0019-frozen-catalog-contract.md) | Implemented | GGU-41 (re-baselined) |
+| [backend/0020-portfolio-persistence.md](backend/0020-portfolio-persistence.md) | Approved | GGU-29 follow-up |
+| [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Implemented | GGU-78 |
+| [backend/0023-catalog-serves-the-client.md](backend/0023-catalog-serves-the-client.md) | Implemented | GGU-53 |
+| [backend/0024-contract-serves-the-designs.md](backend/0024-contract-serves-the-designs.md) | Implemented | GGU-99 (closes GGU-101/103/104 in part) |
+| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | Implemented | *unassigned* (PR #81) |
+| [backend/0026-the-home-shell.md](backend/0026-the-home-shell.md) | Implemented | *unassigned* (PR #81) |
+| [backend/0027-user-provisioning.md](backend/0027-user-provisioning.md) | In progress | *unassigned* |
+| [backend/0028-holdings-and-activity.md](backend/0028-holdings-and-activity.md) | In progress | *unassigned* |
+| [frontend/0009-holdings-and-activity-tabs.md](frontend/0009-holdings-and-activity-tabs.md) | In progress | *unassigned* |
+| [backend/0029-the-turn-recommends-its-chips.md](backend/0029-the-turn-recommends-its-chips.md) | In progress | *unassigned* |
+| [frontend/0011-the-assistant-as-designed.md](frontend/0011-the-assistant-as-designed.md) | In progress | *unassigned* |
+| [backend/0030-the-greeting-names-the-caller.md](backend/0030-the-greeting-names-the-caller.md) | In progress | *unassigned* |
+| [backend/0031-order-ticket-v2.md](backend/0031-order-ticket-v2.md) | In progress | GGU-108 |
+| [frontend/0012-details-the-review-found.md](frontend/0012-details-the-review-found.md) | In progress | *unassigned* |
+| [backend/0033-the-simulated-assistant-offline.md](backend/0033-the-simulated-assistant-offline.md) | In progress | *unassigned* |
+| [frontend/0013-order-ticket-v2.md](frontend/0013-order-ticket-v2.md) | In progress | GGU-108 |
+| [frontend/0008-sign-in.md](frontend/0008-sign-in.md) | In progress | *unassigned* |
+| [frontend/0010-appearance-selector.md](frontend/0010-appearance-selector.md) | In progress | *unassigned* |
+| [backend/0032-attribution-headline-and-driver-detail.md](backend/0032-attribution-headline-and-driver-detail.md) | In progress | GGU-100 (the waterfall fields); the drill-down card *unassigned* |
+| [frontend/0014-flow-a-drill-down.md](frontend/0014-flow-a-drill-down.md) | In progress | GGU-100 (the binding); the card *unassigned* |
+| [backend/0034-the-catalog-serves-the-gallery.md](backend/0034-the-catalog-serves-the-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
+| [backend/0037-the-agent-reaches-the-catalog-or-says-why-not.md](backend/0037-the-agent-reaches-the-catalog-or-says-why-not.md) | In progress | *unassigned* |
+| [backend/0036-the-turn-is-fast-honest-and-observable.md](backend/0036-the-turn-is-fast-honest-and-observable.md) | In progress | *unassigned* |
+| [frontend/0016-component-catalog-gallery.md](frontend/0016-component-catalog-gallery.md) | In progress | *unassigned* (GGU-101..104 named as gaps) |
+| [frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md](frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md) | In progress | *unassigned* |
+| [frontend/0019-the-turn-always-ends.md](frontend/0019-the-turn-always-ends.md) | In progress | *unassigned* |
+| [frontend/0021-three-defects-a-reader-found.md](frontend/0021-three-defects-a-reader-found.md) | In progress | *unassigned* |
+| [frontend/0015-loading-states.md](frontend/0015-loading-states.md) | In progress | *unassigned* |
+| [backend/0038-the-openapi-document-is-complete.md](backend/0038-the-openapi-document-is-complete.md) | Implemented | *unassigned* |
+| [backend/0039-the-surface-answers-the-question-that-was-asked.md](backend/0039-the-surface-answers-the-question-that-was-asked.md) | In progress | *unassigned* |
+| [backend/0040-sso-enrols-itself.md](backend/0040-sso-enrols-itself.md) | In progress | *unassigned* |
+| [backend/0041-a-job-provisions-the-demo-audience.md](backend/0041-a-job-provisions-the-demo-audience.md) | In progress | *unassigned* |
+| [backend/0042-asking-for-access-is-not-a-worse-state.md](backend/0042-asking-for-access-is-not-a-worse-state.md) | In progress | *unassigned* |
+| [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
+| [frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md](frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md) | In progress | *unassigned* |
+| [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |
+| [frontend/0018-the-tabs-search-and-filter-for-real.md](frontend/0018-the-tabs-search-and-filter-for-real.md) | Draft | *unassigned* |
+| [frontend/0023-voice-input.md](frontend/0023-voice-input.md) | In progress | *unassigned* |
+| [frontend/0024-the-header-stays-put.md](frontend/0024-the-header-stays-put.md) | In progress | *unassigned* (TL request 2026-09-22) |
+| [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
+| [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
+| [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |
+| [frontend/0001-frontend-skeleton.md](frontend/0001-frontend-skeleton.md) | Implemented | GGU-91 |
 | [infra/0001-dev-environment.md](infra/0001-dev-environment.md) | Draft | GGU-29 |
+| [infra/0002-firebase-sign-in-on-dev.md](infra/0002-firebase-sign-in-on-dev.md) | In progress | *unassigned* |
+| [infra/0003-the-migrate-job-runs-the-released-image.md](infra/0003-the-migrate-job-runs-the-released-image.md) | In progress | *unassigned* |
+| [infra/0004-cd-owns-every-job-image.md](infra/0004-cd-owns-every-job-image.md) | In progress | *unassigned* |
+| [infra/0005-the-deployer-can-reach-the-jobs-it-owns.md](infra/0005-the-deployer-can-reach-the-jobs-it-owns.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
-| [backend/0003-portfolio-domain.md](backend/0003-portfolio-domain.md) | Implemented | GGU-5 |
-| [backend/0006-agent-host.md](backend/0006-agent-host.md) | Implemented | GGU-47 |
+| [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |

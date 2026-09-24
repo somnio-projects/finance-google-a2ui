@@ -1,0 +1,39 @@
+# Word-list exceptions for `repo.spelling`. The file list is decided by
+# scripts/check_spelling.sh, not here — see that script's header for why a
+# bare `codespell .` could not scan `.claude/` and `.github/` at all.
+#
+[codespell]
+# `skip` intentionally absent: the scan is an explicit file list, so there is
+# no directory walk left to prune.
+# Each of these is a deliberate exception, not a silenced nuisance:
+#   bloc     the state-management library the Flutter rules mandate
+#   blocs    its plural, which appears in prose about the client
+#   pres     the Mermaid node id for `presentation/*` in the layers diagram;
+#            renaming it would break the diagram, not fix a typo
+#   re-use   ISO 27001 Annex A control A.7.14 is titled "Secure disposal or
+#            re-use of equipment". The Statement of Applicability quotes it
+#            verbatim, and a compliance document that paraphrases a control
+#            title no longer cites the standard. Never "fix" this one.
+#   homestate  codespell reads the Bloc class `HomeState` (frontend/…/home)
+#            as the misspelling of "home state"; it is a type name.
+#   dependant  FastAPI's own spelling: `fastapi.dependencies.models.Dependant`
+#            is the class backend/src/app/api/route_facts.py walks, so the
+#            word arrives with the import and cannot be spelled the other way.
+#   hace     Spanish. Specs quote the TL's own words verbatim when a defect
+#            was reported in them — "no hace nada" is the report, and a
+#            paraphrase in English would be a second-hand account of the
+#            only evidence a UI defect had. codespell reads it as "have".
+#
+# The rest are Spanish, and they all arrive from one file:
+# docs/manual/user-manual.es.html, the Spanish user manual. It is not a
+# translation of the English one but the manual written in Spanish, so its
+# prose is scanned like any other tracked file and codespell reads each of
+# these as an English word one letter off. None is a typo in either language:
+#   responde       "responds" — codespell suggests the English verb
+#   componentes    "components"
+#   momento        read as "memento"
+#   alternativos   "alternatives" — the asset class the app labels Alternatives
+#   cliente        "client"
+#   vender         "to sell" — read as "vendor"
+#   ser            "to be" — read as "set"
+ignore-words-list = assertIn,asend,bloc,blocs,crate,ist,nd,te,som,ba,fo,requestor,socio,pres,re-use,homestate,dependant,hace,responde,componentes,momento,alternativos,cliente,vender,ser

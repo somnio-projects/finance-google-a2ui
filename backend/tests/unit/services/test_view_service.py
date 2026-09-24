@@ -58,7 +58,7 @@ async def test_render_applies_the_shared_options_to_every_view(
         default=ALLOCATION,
     )
     dumped = response.views[ALLOCATION].model_dump()
-    assert dumped["total"]["amount"]["display"] == "$65,039"
+    assert dumped["total"]["amount"]["display"] == "$482,915"
 
 
 async def test_render_uses_the_selection_rule_when_no_view_is_named(
@@ -134,4 +134,4 @@ async def test_surface_goes_through_the_view_own_adapter(
 ) -> None:
     portfolio = await service.portfolio(principal)
     payload = service.render_one(portfolio, view=ALLOCATION, options={})
-    assert service.surface(ALLOCATION, payload).component == "DonutChart"
+    assert service.surface(ALLOCATION, payload).component == "HoldingsSummary"

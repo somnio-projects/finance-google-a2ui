@@ -7,17 +7,17 @@ them — the rule is enforced, not aspirational.
 
 The projection half of the contract (ADR-K: one example per registered view,
 an options schema, a discriminator literal) is asserted in
-``test_openapi_projections.py`` — same gate, split out to stay inside the
+``test_openapi_projections.py``, and the `problem_responses` builder in
+``test_openapi_helpers.py`` — same gate, split out to stay inside the
 150-line budget.
 """
 
 from typing import Any
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA, problem_responses
+from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA
 
 #: Routes FastAPI generates for the documentation itself.
 GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
@@ -26,7 +26,17 @@ GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
 #: path here is a security decision: it needs a note in the feature spec and
 #: the reviewer's sign-off, which is why the list is spelled out rather than
 #: inferred from whether a route happens to declare a 401.
-PUBLIC = {"/health", "/readyz", "/.well-known/agent-card.json"}
+PUBLIC = {
+    "/health",
+    "/readyz",
+    "/.well-known/agent-card.json",
+    # Spec 0027: a person who cannot sign in yet has no token to present.
+    "/v1/access-requests",
+    "/v1/preview-sign-ins",
+    # Spec 0043: the same reason, for the one question the sign-in screen has
+    # to ask *before* it can ask anything else — which door this is.
+    "/v1/sign-in-policy",
+}
 
 
 def _operations(app: FastAPI) -> list[tuple[str, str, dict[str, Any]]]:
@@ -55,7 +65,7 @@ def test_every_operation_documents_its_error_responses(app: FastAPI) -> None:
     for path, method, operation in _operations(app):
         where = f"{method.upper()} {path}"
         statuses = {int(code) for code in operation["responses"] if code.isdigit()}
-        assert statuses & {200, 201, 204}, f"{where} documents no success response"
+        assert statuses & {200, 201, 202, 204}, f"{where} documents no success response"
         errors = {status for status in statuses if status >= 400}
         assert errors, f"{where} documents no error response"
         assert errors <= set(PROBLEM_DESCRIPTIONS), (
@@ -81,30 +91,15 @@ def test_every_parameter_is_described(app: FastAPI) -> None:
 
 def test_every_schema_property_is_described(app: FastAPI) -> None:
     schemas = app.openapi()["components"]["schemas"]
+    # FastAPI's 422 envelope was skipped by name; it is gone (spec 0038 OD-6).
+    assert not {"HTTPValidationError", "ValidationError"} & set(schemas)
     for name, schema in schemas.items():
-        if name.startswith(("HTTPValidationError", "ValidationError")):
-            continue  # FastAPI's built-in 422 envelope
         assert schema.get("description"), f"schema {name} has no description"
         for field, spec in schema.get("properties", {}).items():
             described = spec.get("description") or any(
                 option.get("description") for option in spec.get("anyOf", [])
             )
             assert described, f"{name}.{field} has no description"
-
-
-def test_problem_responses_are_built_from_one_place() -> None:
-    built = problem_responses(401, 503)
-    assert set(built) == {401, 503}
-    assert built[401]["description"] == PROBLEM_DESCRIPTIONS[401]
-    assert built[401]["model"].__name__ == "ProblemDetails"
-    example = built[503]["content"]["application/problem+json"]["example"]
-    assert example["type"] == "https://errors.finance-a2ui/dependency-unavailable"
-    assert example["status"] == 503
-
-
-def test_problem_responses_rejects_an_undocumented_status() -> None:
-    with pytest.raises(KeyError, match="418"):
-        problem_responses(418)
 
 
 def test_document_describes_the_service_and_its_tags(app: FastAPI) -> None:

@@ -5,6 +5,7 @@ migrated database exactly as in production, so this is what proves the routes
 are reachable with nothing overridden.
 """
 
+import re
 import uuid
 
 from fastapi.testclient import TestClient
@@ -70,9 +71,17 @@ def test_the_tax_lot_table_is_served_over_http(integration_client: TestClient) -
     )
     assert response.status_code == 200
     payload = response.json()["views"][TAX_LOTS]
-    assert payload["subtitle"] == "Sell 0.5 BTC under FIFO"
+    assert payload["subtitle"] == "Sell 75 NVDA under FIFO"
     assert [half["term"] for half in payload["by_term"]] == ["short", "long"]
-    assert payload["price"]["amount"]["display"] == "$64,250.00"
+    assert payload["proceeds"]["amount"]["display"] == "$90,349.50"
+    # Over the wire, end to end: no ISO date and no bare unit count reaches a
+    # widget, and neither `price` nor `remaining` is served (spec 0024 §7).
+    # The date is relative to a live `as_of`, so the shape is the assertion —
+    # the point is that it is not the ISO string beside it.
+    assert re.fullmatch(r"\d{2}/\d{2}/\d{4}", payload["lots"][0]["acquired_on_display"])
+    assert payload["lots"][0]["units_display"] == "60"
+    assert "price" not in payload
+    assert "remaining" not in payload
 
 
 def test_the_views_routes_require_a_token(integration_client: TestClient) -> None:

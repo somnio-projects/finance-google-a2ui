@@ -18,6 +18,7 @@ from app.core.errors import ConfigurationError
 from app.domain.portfolio import Portfolio
 from app.presentation.errors import UnknownViewError
 from app.presentation.fragments import ProjectionDto
+from app.presentation.guidance import Guidance
 from app.presentation.surfaces import Surface
 
 
@@ -67,6 +68,11 @@ class Projection(Protocol):
     @property
     def fitness(self) -> Callable[[Portfolio], int]:
         """How well the projection suits the data; ``0`` = never auto-selected."""
+        ...
+
+    @property
+    def guidance(self) -> Guidance | None:
+        """When to pick this view, and when another; ``None`` until design says."""
         ...
 
 

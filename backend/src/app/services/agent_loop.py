@@ -19,6 +19,7 @@ from app.agent.prompt import ITERATION_LIMIT_MESSAGE
 from app.agent.registry import ToolRegistry
 from app.core.model import MessageRole, ModelMessage, ToolCall
 from app.core.protocols import ErrorReporter, ModelClient
+from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_tools import execute_tool
 
 
@@ -51,6 +52,7 @@ class TurnLoop:
         model: ModelClient,
         tools: ToolRegistry,
         reporter: ErrorReporter,
+        renders: TurnRenderResolver,
         system_prompt: str,
         max_iterations: int,
     ) -> None:
@@ -58,6 +60,7 @@ class TurnLoop:
         self._model = model
         self._tools = tools
         self._reporter = reporter
+        self._renders = renders
         self._system_prompt = system_prompt
         self._max_iterations = max_iterations
 
@@ -125,6 +128,7 @@ class TurnLoop:
                     context,
                     tools=self._tools,
                     reporter=self._reporter,
+                    renders=self._renders,
                     state=state,
                 )
             )

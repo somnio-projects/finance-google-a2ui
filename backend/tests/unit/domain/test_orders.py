@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from app.domain.orders import order_notional, order_quantity
 
-ENTRY = Decimal("152.40")
+ENTRY = Decimal("34.22")
 
 
 def test_a_dollar_amount_buys_exactly_what_it_pays_for() -> None:
@@ -32,7 +32,7 @@ def test_the_units_a_dollar_amount_buys_are_worth_that_amount_again() -> None:
 
 def test_an_order_is_worth_its_units_times_the_price_it_is_struck_at() -> None:
     """Spec 0018 AC-4 — the ticket's other figure, stated by the domain."""
-    assert order_notional(Decimal("0.25"), ENTRY) == Decimal("38.1000")
+    assert order_notional(Decimal("0.25"), ENTRY) == Decimal("8.5550")
 
 
 def test_an_order_for_no_units_is_worth_nothing_rather_than_failing() -> None:

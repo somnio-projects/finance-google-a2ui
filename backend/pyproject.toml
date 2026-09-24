@@ -152,7 +152,9 @@ DEP002 = ["asyncpg", "uvicorn", "alembic"]
 
 [tool.codespell]
 skip = "./.venv,./uv.lock,./reports,./htmlcov,./.git"
-ignore-words-list = "assertIn,asend,crate,ist,nd,te,som"
+# `dependant` is FastAPI's own spelling: `fastapi.dependencies.models.Dependant`
+# is the class `api/route_facts.py` walks, so the word arrives with the import.
+ignore-words-list = "assertIn,asend,crate,ist,nd,te,som,dependant"
 
 [tool.pylint.main]
 # Only the checks ruff/basedpyright do not cover: duplication and design smells.

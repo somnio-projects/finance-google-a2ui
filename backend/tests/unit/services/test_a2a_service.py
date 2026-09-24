@@ -34,12 +34,15 @@ def _message(text: str = "why did I move?") -> ClientMessage:
 
 
 async def _collect(
-    service: A2aService, context: ToolContext
+    service: A2aService, context: ToolContext, *, text: str = "why did I move?"
 ) -> list[dict[str, object]]:
     return [
         json.loads(chunk.removeprefix("data: ").strip())
         async for chunk in service.stream(
-            message=_message(), task_id="task-1", context=context
+            message=_message(text),
+            prompt=_message(text).text(),
+            task_id="task-1",
+            context=context,
         )
     ]
 
@@ -93,7 +96,10 @@ async def test_a_failing_turn_reports_inside_the_stream(
     events = [
         json.loads(chunk.removeprefix("data: ").strip())
         async for chunk in service.stream(
-            message=_message(), task_id="t", context=tool_context
+            message=_message(),
+            prompt=_message().text(),
+            task_id="t",
+            context=tool_context,
         )
     ]
 
@@ -122,7 +128,10 @@ async def test_an_unexpected_failure_still_ends_the_stream(
     events = [
         json.loads(chunk.removeprefix("data: ").strip())
         async for chunk in service.stream(
-            message=_message(), task_id="t", context=tool_context
+            message=_message(),
+            prompt=_message().text(),
+            task_id="t",
+            context=tool_context,
         )
     ]
 

@@ -27,18 +27,18 @@ class FakeRepository:
         self.conflict = conflict
         self.writes = 0
 
-    async def find(self, *, subject: str) -> Portfolio | None:
-        """Return what this subject has, if anything."""
-        del subject
+    async def find(self, *, owner: str) -> Portfolio | None:
+        """Return what this owner has, if anything."""
+        del owner
         return self.stored
 
-    async def replace(self, *, subject: str, portfolio: Portfolio) -> None:
+    async def replace(self, *, owner: str, portfolio: Portfolio) -> None:
         """Record the write, or lose the race when a conflict was armed."""
-        del subject
+        del owner
         self.writes += 1
         if self.conflict is not None:
             self.stored = self.conflict
-            raise IntegrityError("insert", (), Exception("duplicate subject"))
+            raise IntegrityError("insert", (), Exception("duplicate owner"))
         self.stored = portfolio
 
 

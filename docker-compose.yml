@@ -1,8 +1,28 @@
 # Local stack for the finance-a2ui showcase (run from the repo root).
 #   cp backend/env.example backend/.env   -> once; per-solution env files, never committed
-#   docker compose up --build             -> Postgres + backend (:8000, hot reload)
+#   docker compose up --build             -> Postgres + backend (:8000) + the
+#                                            A2UI client (:3001), one stack
+#   docker compose up --build db backend  -> just the API, skipping the client's
+#                                            build (see below)
 #   docker compose up db                  -> only the database (for `make test`, TEST_DATABASE_URL)
-# The Flutter client is not part of the stack yet (frontend work has not started).
+#
+# ONE PROJECT, `finance-a2ui` (the `name:` below), and one default set of
+# services. Everything this repository ships locally comes up under that one
+# heading in `docker ps` and in Docker Desktop, and one `docker compose down`
+# takes it down.
+#
+# The A2UI client used to sit behind a `frontend` profile, and the older
+# `client_flutter` behind a `client` one. Both are gone:
+#
+#   - `client_flutter` was retired on 2026-09-22 (spec `repo/0002`): the
+#     directory, its gate, its workflow and its own compose file are all
+#     deleted. `frontend/` is the only Flutter app this repository ships.
+#   - the `frontend` profile is gone because a profile is a thing to forget.
+#     The client is the app this repository is about; it belongs in the
+#     default `up`. The cost argument that justified the profile — a backend
+#     developer should not pay for a Flutter SDK download — is answered by
+#     naming the services instead: `docker compose up db backend` skips it
+#     entirely, and needs no profile to exist.
 #
 # Env policy: this file only carries the *topology* (hostnames, ports, origins
 # the services need to reach each other). Credentials and tunables live in each
@@ -40,8 +60,35 @@ services:
     environment:                      # topology only — overrides the same keys in .env
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/finance
       PUBLIC_BASE_URL: http://localhost:8000
-      APP_RELEASE: local          # production gets <version>+<sha> from backend-cd; /health reports it
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      # `/health` reports this VERBATIM — `core/release.py` composes nothing —
+      # and it is the only thing that says which build answered a manual run
+      # (GGU-93). It used to be the literal `local`, so the local stack could
+      # not name its own commit, and a manual run from a tree six commits
+      # behind `develop` was pasted into a pull request and read exactly like a
+      # correct one. Bring the stack up as
+      #
+      #     APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose up --build
+      #
+      # and `/health` answers `local+<sha>`. The `local+` prefix is required:
+      # a bare sha has no `+`, and `scripts/check_manual_run.sh` reads the part
+      # after the `+`, so it would see no identity at all. Forgetting the
+      # variable leaves `local`, which that check also rejects — a visible
+      # failure rather than a plausible one. Deployed revisions get
+      # `<version>+<short sha>`, composed by infra/scripts/deploy_cloud_run.sh
+      # (spec backend/0007 AC-5).
+      APP_RELEASE: ${APP_RELEASE:-local}
+      # :3001 is this file's `frontend`. :5173 and :3000 are a
+      # `flutter run -d chrome` from a laptop, whose port depends on how it
+      # was started; both stay so a developer running the client outside the
+      # stack is not silently blocked by CORS.
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:5173
+      # The local stack has no Firebase, so the sign-in screen's e-mail path
+      # is answered by the preview sign-in (spec 0027 OD-3) and the demo
+      # account is provisioned at boot. Both are honoured only under the
+      # `jwt` provider this stack runs; Terraform sets neither, so dev and
+      # production (oidc) answer 404 for the route.
+      AUTH_PREVIEW_SIGN_IN_ENABLED: ${AUTH_PREVIEW_SIGN_IN_ENABLED:-true}
+      AUTH_BOOTSTRAP_ADMINS: ${AUTH_BOOTSTRAP_ADMINS:-demo@somnio.dev}
       UVICORN_EXTRA_ARGS: --reload --reload-dir /app/src
     volumes:
       - ./backend/src:/app/src:ro       # hot reload; image keeps its own deps
@@ -56,6 +103,45 @@ services:
       timeout: 3s
       retries: 5
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # The *browser's* view of the API, not the compose network's:
+        # this value is compiled into the bundle and `http://backend:8000`
+        # does not resolve in a browser.
+        BACKEND_BASE_URL: http://localhost:8000
+        # `local+<sha>`, exactly as the backend's APP_RELEASE (GGU-93): the
+        # bundle serves it at /release.json, so a screenshot of this client
+        # can be traced to the commit that built it. Bring the stack up as
+        #   APP_RELEASE="local+$(git rev-parse --short HEAD)" docker compose …
+        # and both halves of the stack report the same identity.
+        APP_RELEASE: ${APP_RELEASE:-local}
+        # No Firebase here, on purpose. This stack has no Firebase project,
+        # so the Google button says it is not configured rather than
+        # pretending, and the e-mail path is the backend's preview sign-in
+        # with `demo@somnio.dev` (spec backend/0027 OD-3, provisioned by
+        # AUTH_BOOTSTRAP_ADMINS above). To exercise the real Firebase path
+        # locally, pass the five public values from
+        # frontend/app/config/firebase.json as build args — they are public
+        # by design (ADR-B D-10), but they name a deployed environment, so
+        # they are not defaulted here.
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3001:8080"                   # 3001 is in the backend's CORS allow-list above
+    read_only: true
+    tmpfs:
+      - /tmp                          # the entrypoint renders nginx.conf there
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
 
 volumes:
   db-data:

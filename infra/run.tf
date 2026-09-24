@@ -24,6 +24,8 @@ locals {
     AUTH_ISSUER               = var.auth_issuer
     AUTH_AUDIENCE             = var.auth_audience
     AUTH_OIDC_JWKS_URL        = var.auth_oidc_jwks_url
+    AUTH_BOOTSTRAP_ADMINS     = var.auth_bootstrap_admins
+    AUTH_OPEN_ENROLMENT       = tostring(var.auth_open_enrolment)
     AUTH_ADMIN_REQUIRE_MFA    = "true"
     AUDIT_RETENTION_DAYS      = "400"
     RUN_MIGRATIONS            = "true"
@@ -34,7 +36,21 @@ locals {
     DATABASE_URL    = google_secret_manager_secret.database_url.secret_id
     AUTH_JWT_SECRET = google_secret_manager_secret.auth_jwt_secret.secret_id
     SENTRY_DSN      = google_secret_manager_secret.external["SENTRY_DSN"].secret_id
+    # Unset in the container = the scripted assistant (spec backend/0033); the
+    # secret's value is set out of band by the security owner (secrets.tf).
+    GEMINI_API_KEY = google_secret_manager_secret.external["GEMINI_API_KEY"].secret_id
   }
+
+  # The declaration that `deploy_cloud_run.sh` reads. Every Cloud Run job below
+  # carries it, and the deploy lists jobs by this label and points each one at
+  # the digest it just released — so adding a fourth job means adding this line
+  # and nothing else. There is no list of job names in the pipeline to forget.
+  #
+  # A label rather than a name prefix on purpose (spec infra/0004 OD-1): a
+  # prefix derives the set from whatever happens to be deployed, which is how a
+  # job nobody meant to touch gets updated. This derives it from a declaration
+  # that lives in the same resource block as the job it opts in.
+  delivery_owned_labels = merge(local.labels, { "image-owner" = "delivery" })
 }
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -166,7 +182,7 @@ resource "google_cloud_run_v2_job" "migrate" {
   name                = "${local.name}-migrate"
   location            = var.region
   deletion_protection = false
-  labels              = local.labels
+  labels              = local.delivery_owned_labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
 
   template {
@@ -223,11 +239,21 @@ resource "google_cloud_run_v2_job" "migrate" {
 
 # Monthly audit-trail retention purge (DATA_RETENTION.md §2) — same image,
 # same secrets, no HTTP surface.
+#
+# Cloud Scheduler runs this one, unattended, at 03:00 on the 1st. That is what
+# made it the worst of the three to leave on `var.backend_image`: measured on
+# 2026-09-22, this job was still carrying the **floating tag**
+# `…/backend:latest`, resolving to a digest (`sha256:03073e2a…`) that was
+# neither the running service's nor anything a pipeline had pushed. A monthly
+# job deleting rows from `audit_events` with code nobody chose is a compliance
+# statement that is not true. It carries `local.delivery_owned_labels` like the
+# other two, so the deploy pins it to the released digest even though it never
+# executes it (spec infra/0004).
 resource "google_cloud_run_v2_job" "purge_audit" {
   name                = "${local.name}-purge-audit"
   location            = var.region
   deletion_protection = false
-  labels              = local.labels
+  labels              = local.delivery_owned_labels
   depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
 
   template {
@@ -276,6 +302,14 @@ resource "google_cloud_run_v2_job" "purge_audit" {
       }
     }
   }
+
+  # The deploy owns the image; Terraform must not take it back. Without this,
+  # the next `terraform apply` after a release re-points the job at
+  # `var.backend_image` — which is the floating tag above — and the drift the
+  # deploy just closed reopens with no deploy involved.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
 }
 
 resource "google_cloud_scheduler_job" "purge_audit_monthly" {
@@ -292,5 +326,188 @@ resource "google_cloud_scheduler_job" "purge_audit_monthly" {
     oauth_token {
       service_account_email = google_service_account.scheduler.email
     }
+  }
+}
+
+# The demo audience (spec `backend/0035` §4.1). A **human-run** job, on
+# purpose: `deploy_cloud_run.sh` does not execute it and no scheduler points
+# at it, because deciding who gets a portfolio is not something a deploy
+# should do on its own. `var.seed_portfolio_owners` is the list this
+# environment is created with; `gcloud run jobs execute ... --args=...`
+# overrides it for a one-off, which is the whole reason the addresses are
+# `args` and not an environment variable.
+#
+# The job is safe to re-run: an owner who already has a portfolio is skipped
+# unless `--reset` is passed (`app/jobs/seed_portfolios.py`).
+#
+# **The deploy pins this job's image; it still never runs it.** Those are two
+# separate claims and only the second one is about seeding. This block used to
+# reason the opposite way: no `ignore_changes`, so that Terraform rather than
+# the pipeline would keep the image current, "because nothing updates this
+# job's image". What Terraform actually kept it at was `var.backend_image` —
+# the floating tag — and on 2026-09-22 a human run of it answered
+#
+#     No module named app.jobs.seed_portfolios
+#
+# from an image that predated the commit adding that entry point. Freezing at
+# the applied image and floating on a mutable tag are the same defect wearing
+# different clothes: in both, the build that runs is not the build that was
+# released. The fix is an owner, which `migrate` already had — so this job
+# carries `local.delivery_owned_labels` and the deploy points it at the
+# released digest, and `ignore_changes` below keeps `terraform apply` from
+# reverting that (spec infra/0004).
+#
+# `infra/scripts/tests/test_dev_environment.sh` still asserts the deploy script
+# never names this job, and that assertion is now doing more work than it was:
+# the deploy reaches it through the label, so there is nothing for a pipeline
+# author to accidentally `execute`. Deciding who gets a portfolio stays a
+# human's command.
+resource "google_cloud_run_v2_job" "seed_portfolios" {
+  name                = "${local.name}-seed-portfolios"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.delivery_owned_labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # seeding twice is safe; a blind retry still tells nobody
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["python", "-m", "app.jobs.seed_portfolios"]
+        args    = var.seed_portfolio_owners
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # The deploy owns the image; Terraform must not take it back. Measured
+  # before this block existed, `terraform plan` on dev read:
+  #
+  #   ~ image = "…/backend@sha256:854327a4…" -> "…/backend:latest"
+  #
+  # i.e. an apply would have undone a hand-fix applied hours earlier and
+  # re-armed the trap. See spec infra/0004 §4.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
+}
+
+# Put named people in the provisioning registry before they sign in.
+#
+# `AUTH_OPEN_ENROLMENT` already admits an unknown verified identity on its
+# first sign-in (spec backend/0040), so nobody needs this to get in. What it
+# adds is the row **beforehand**: a demo audience somebody decided on rather
+# than a side effect of who happened to open the app, and a way to open an
+# environment with enrolment off to named people.
+#
+# Members, never admins — the first admins come from AUTH_BOOTSTRAP_ADMINS and
+# nothing else creates one. An existing row is never touched, whatever its
+# status, so a run cannot undo an offboarding (spec backend/0041).
+#
+# `var.provisioned_users` is EMPTY by default and an argument-less run fails
+# loudly, for the same reason the seed job's list is: an address in an
+# open-source repository is somebody's name. It is normally overridden per run
+# with `gcloud run jobs execute --args=a@x,b@y`.
+resource "google_cloud_run_v2_job" "provision_users" {
+  name                = "${local.name}-provision-users"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.delivery_owned_labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # the job is idempotent; a blind retry still tells nobody
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["python", "-m", "app.jobs.provision_users"]
+        args    = var.provisioned_users
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # The deploy owns the image; Terraform must not take it back. Measured
+  # before this block existed, `terraform plan` on dev read:
+  #
+  #   ~ image = "…/backend@sha256:854327a4…" -> "…/backend:latest"
+  #
+  # i.e. an apply would have undone a hand-fix applied hours earlier and
+  # re-armed the trap. See spec infra/0004 §4.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
   }
 }

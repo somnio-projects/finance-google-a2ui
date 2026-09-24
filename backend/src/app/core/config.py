@@ -7,12 +7,18 @@ implicit insecure defaults). Variables are documented in ``env.example``.
 
 from datetime import timedelta
 from functools import lru_cache
-from typing import Annotated, Literal
+from typing import Literal
 
 from pydantic import Field, PostgresDsn, SecretStr, model_validator
-from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.core.config_parsing import WILDCARD, CsvParsing, OptionalCredentialParsing
+from app.core.config_auth import AuthProviderName, AuthSettings
+from app.core.config_parsing import (
+    WILDCARD,
+    CsvList,
+    CsvParsing,
+    OptionalCredentialParsing,
+)
 
 # Must stay in step with `infra/variables.tf`'s `environment` validation: that
 # list is what a deployment can be called, this is what the process will accept
@@ -23,14 +29,12 @@ from app.core.config_parsing import WILDCARD, CsvParsing, OptionalCredentialPars
 # each side is internally consistent, and nothing was reading both.
 # `local` and `test` are extra here on purpose — they never reach Terraform.
 Environment = Literal["local", "test", "dev", "staging", "production"]
-AuthProviderName = Literal["jwt", "oidc"]
 # ``NoDecode``: pydantic-settings would otherwise JSON-decode list fields from
 # the environment; we accept plain comma-separated values
 # (see ``app.core.config_parsing``).
-CsvList = Annotated[list[str], NoDecode]
 
 
-class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
+class Settings(AuthSettings, CsvParsing, OptionalCredentialParsing, BaseSettings):
     """Typed view over the process environment.
 
     Attributes are grouped by concern; see ``env.example`` for documentation
@@ -77,16 +81,6 @@ class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
     feature_flags_cache_ttl_seconds: int = Field(default=15, ge=0, le=3600)
     feature_flags_force_disabled: CsvList = Field(default_factory=list)
 
-    # --- authentication ----------------------------------------------------
-    auth_provider: AuthProviderName = "jwt"
-    auth_audience: str
-    auth_issuer: str
-    auth_jwt_secret: SecretStr | None = None
-    auth_oidc_jwks_url: str | None = None
-    auth_leeway_seconds: int = Field(default=30, ge=0, le=300)
-    # None = decide by environment (required in production, optional elsewhere)
-    auth_admin_require_mfa: bool | None = None
-
     # --- agent host (spec 0006) -------------------------------------------
     # Unset key = NullModelClient, exactly as an unset SENTRY_DSN means the
     # null reporter: call sites never branch on configuration.
@@ -97,12 +91,24 @@ class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
         min_length=1,
         max_length=255,
     )
-    gemini_timeout_seconds: float = Field(default=20.0, ge=1.0, le=120.0)
+    gemini_timeout_seconds: float = Field(default=60.0, ge=1.0, le=120.0)  # 0036
     gemini_max_attempts: int = Field(default=3, ge=1, le=5)
     agent_max_tool_iterations: int = Field(default=4, ge=1, le=10)
 
     # --- data retention (docs/compliance/DATA_RETENTION.md) --------------
     audit_retention_days: int = Field(default=400, ge=30, le=3650)
+
+    @property
+    def admin_mfa_required(self) -> bool:
+        """Whether ``admin``-scoped operations must present an MFA ``amr``."""
+        if self.auth_admin_require_mfa is None:
+            return self.is_production
+        return self.auth_admin_require_mfa
+
+    @property
+    def audit_retention(self) -> timedelta:
+        """``audit_retention_days`` as a ``timedelta``."""
+        return timedelta(days=self.audit_retention_days)
 
     # --- observability -----------------------------------------------------
     sentry_dsn: SecretStr | None = None
@@ -115,18 +121,6 @@ class Settings(CsvParsing, OptionalCredentialParsing, BaseSettings):
             msg = "TRUSTED_HOSTS must be an explicit list when ENVIRONMENT=production"
             raise ValueError(msg)
         return self
-
-    @property
-    def audit_retention(self) -> timedelta:
-        """``audit_retention_days`` as a ``timedelta``."""
-        return timedelta(days=self.audit_retention_days)
-
-    @property
-    def admin_mfa_required(self) -> bool:
-        """Whether ``admin``-scoped operations must present an MFA ``amr``."""
-        if self.auth_admin_require_mfa is None:
-            return self.is_production
-        return self.auth_admin_require_mfa
 
     @property
     def is_production(self) -> bool:

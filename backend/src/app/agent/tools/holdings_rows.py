@@ -20,6 +20,8 @@ from app.core.display import (
     percentage_display,
     price_display,
     quantity_display,
+)
+from app.core.signed_display import (
     signed_money_display,
 )
 from app.core.trend import trend_of

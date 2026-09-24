@@ -247,7 +247,7 @@ MULTI-APP ANALYSIS:
 for app_dir in apps/*/; do
   app_name=$(basename "$app_dir")
   echo "Coverage analysis for app: $app_name"
-  
+
   # App coverage
   if [ -f "coverage/apps/$app_name/lcov.info" ]; then
     echo "App $app_name coverage:"
@@ -257,7 +257,7 @@ for app_dir in apps/*/; do
   else
     echo "No coverage data found for app $app_name"
   fi
-  
+
   # App-specific packages coverage
   if [ -d "coverage/apps/$app_name/packages/" ]; then
     echo "App-specific packages coverage for $app_name:"

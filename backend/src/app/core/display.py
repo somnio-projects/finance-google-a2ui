@@ -46,26 +46,6 @@ def money_display(
     return sign + LOCALE_FORMATS[locale][2].format(amount=digits)
 
 
-def signed_money_display(
-    value: Decimal, *, precision: int = MONEY_PRECISION, locale: str = DEFAULT_LOCALE
-) -> str:
-    """Return ``value`` as money with an explicit sign for gains and losses.
-
-    Args:
-        value: The exact amount, typically a profit or a loss.
-        precision: Decimal places to show.
-        locale: One of ``LOCALE_FORMATS``.
-
-    Returns:
-        ``"+$1,234.56"`` or ``"-$1,234.56"``; unsigned when it rounds flat,
-        because ``"+$0.00"`` would claim a gain that is not there.
-    """
-    rendered = money_display(value, precision=precision, locale=locale)
-    if quantize(value, precision=precision) > 0:
-        return f"+{rendered}"
-    return rendered
-
-
 def price_display(value: Decimal, *, locale: str = DEFAULT_LOCALE) -> str:
     """Return a unit price at the precision it is actually quoted to.
 
@@ -145,5 +125,4 @@ __all__ = [
     "percentage_display",
     "price_display",
     "quantity_display",
-    "signed_money_display",
 ]

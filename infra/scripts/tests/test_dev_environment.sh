@@ -135,8 +135,16 @@ CI="${ROOT}/.github/workflows/backend-ci.yaml"
 assert "the ship gate is called as a job of the delivery run" \
   'uses: \./\.github/workflows/backend-ci\.yaml' "${CD}"
 assert "the ship gate accepts being called" '^  workflow_call:' "${CI}"
-assert "the image build waits for the gate" '^    needs: \[ci, settings\]$' "${CD}"
-assert "the deploy waits for the gate" '^    needs: \[ci, settings, publish\]$' "${CD}"
+# The repository-wide gate is called too. Secret scanning moved out of
+# backend-ci into repo-ci so that a client-only pull request is scanned; without
+# this edge that move would have taken gitleaks off the path to production,
+# which is the reverse of the finding it closed.
+assert "the repository-wide gate is called as a job of the delivery run" \
+  'uses: \./\.github/workflows/repo-ci\.yaml' "${CD}"
+assert "the repository-wide gate accepts being called" \
+  '^  workflow_call:' "${ROOT}/.github/workflows/repo-ci.yaml"
+assert "the image build waits for both gates" '^    needs: \[ci, repo, settings\]$' "${CD}"
+assert "the deploy waits for both gates" '^    needs: \[ci, repo, settings, publish\]$' "${CD}"
 assert "a non-main ref releases dev" '^            environment=dev$' "${CD}"
 refute "staging is no longer a deploy target" '^            environment=staging$' "${CD}"
 assert "main still releases production" '^            environment=production$' "${CD}"
@@ -147,6 +155,55 @@ assert "production still deploys behind its Environment approval" \
 # was cancelled, or was skipped because the gate went red.
 assert "a run with any failed, cancelled or skipped job is red" \
   "contains\(needs\.\*\.result, 'skipped'\)" "${CD}"
+
+echo
+echo "the client ships the same way, and only behind a green gate"
+
+# Two deployables, one delivery shape. The A2UI client goes to Firebase
+# Hosting rather than Cloud Run (spec frontend/0017), and every property that
+# makes the backend's pipeline safe is a property of THIS one or it is not
+# safe: a called gate rather than a completion trigger, `needs:` edges, an
+# Environment for the production approval, a run that cannot end green while a
+# job it depends on was skipped, and a button rather than a push.
+FCD="${ROOT}/.github/workflows/frontend-cd.yaml"
+FCI="${ROOT}/.github/workflows/frontend-ci.yaml"
+
+assert "the frontend gate is called as a job of the client's delivery run" \
+  'uses: \./\.github/workflows/frontend-ci\.yaml' "${FCD}"
+assert "the frontend gate accepts being called" '^  workflow_call:' "${FCI}"
+assert "the repository-wide gate is called by the client's delivery run too" \
+  'uses: \./\.github/workflows/repo-ci\.yaml' "${FCD}"
+assert "the bundle build waits for both gates" \
+  '^    needs: \[ci, repo, settings\]$' "${FCD}"
+assert "the client deploy waits for both gates and the bundle" \
+  '^    needs: \[ci, repo, settings, publish\]$' "${FCD}"
+assert "a non-main ref publishes the client to dev" '^            environment=dev$' "${FCD}"
+assert "main publishes the client to production" \
+  '^            environment=production$' "${FCD}"
+assert "the client deploy is behind its Environment approval" \
+  'name: \$\{\{ needs.settings.outputs.environment \}\}' "${FCD}"
+assert "a client run with any failed, cancelled or skipped job is red" \
+  "contains\(needs\.\*\.result, 'skipped'\)" "${FCD}"
+refute "no push trigger — merging to develop publishes no client" '^  push:$' "${FCD}"
+assert "the client deploy is a button" '^  workflow_dispatch:$' "${FCD}"
+
+# Hosting has no --no-traffic revision, so the equivalent is a preview
+# channel: a complete deploy of the same bytes at an address no user is sent
+# to. Losing either half — the preview, or reading /release.json back off the
+# live origin afterwards — turns "the deploy step exited 0" back into the only
+# evidence, which is the gap GGU-93 closed for the backend.
+assert "the client is proven on a preview channel before it goes live" \
+  'firebase hosting:channel:deploy' "${FCD}"
+assert "the live origin is asked which build it serves" \
+  './frontend/tool/verify_release.sh' "${FCD}"
+assert "the bundle carries the identity that check reads" \
+  'build/web/release.json' "${ROOT}/frontend/tool/build_web.sh"
+
+# One compile, one set of bytes. Re-compiling in the deploy job would mean the
+# artifact the run verified is not the artifact it released — the identity
+# argument backend-cd makes by deploying an image BY DIGEST.
+assert "the deploy job takes the bytes the publish job built" \
+  'actions/download-artifact' "${FCD}"
 
 echo
 echo "delivery is manual, and the PR gate still covers what the push gate used to"
@@ -212,6 +269,7 @@ echo "the schema moves before anything serves the new image"
 
 SCRIPT="${ROOT}/infra/scripts/deploy_cloud_run.sh"
 RUNTF="${ROOT}/infra/run.tf"
+DELIVERYTF="${ROOT}/infra/delivery.tf"
 
 # Until 2026-09-20 nothing ran migrations at all — not the pipeline, not
 # Terraform, not the container — and `/readyz` hid it by proving the
@@ -225,11 +283,130 @@ assert "the deploy runs migrations" 'if ! migrate ' "${SCRIPT}"
 assert "a failed migration rolls back" \
   'migrations failed; the schema was not moved' "${SCRIPT}"
 
+# The seed job (spec backend/0035). Two claims, and the second is the one
+# worth a check: it exists, and **nothing runs it for you**. A deploy that
+# quietly reseeded somebody's portfolio would be a data-loss surprise, so
+# the absence from `deploy_cloud_run.sh` is asserted rather than assumed.
+assert "a portfolio seed job exists" \
+  '^resource "google_cloud_run_v2_job" "seed_portfolios"' "${RUNTF}"
+assert "it runs the seed module, not the app" \
+  'command = \["python", "-m", "app.jobs.seed_portfolios"\]' "${RUNTF}"
+assert "its audience is an overridable argument list" \
+  '^        args    = var.seed_portfolio_owners$' "${RUNTF}"
+# Comment lines are stripped first. This used to grep the whole file, which
+# was fine while nothing in the script had a reason to mention the seed job by
+# name — and became a false positive the moment spec infra/0004 gave it one
+# (the header explains which jobs the deploy pins but never executes). The
+# subject of this assertion is the script's CODE; prose that explains the rule
+# is not a violation of it.
+SCRIPT_CODE="$(grep -vE '^[[:space:]]*#' "${SCRIPT}")"
+if grep -q "seed_portfolios\|seed-portfolios" <<< "${SCRIPT_CODE}"; then
+  echo "  FAIL  the deploy must not name the seed job — it is a human's command"
+  FAILED=$((FAILED + 1))
+else
+  check "the deploy never names the seed job, so it cannot seed on its own" ok
+fi
+
+# The sharper half of the same claim, and the one that survives a rename: the
+# script executes exactly ONE job, and it is the migration. Pinning every
+# job's image (spec infra/0004) deliberately did not become executing them.
+EXECUTES="$(grep -cF 'gcloud run jobs execute' <<< "${SCRIPT_CODE}" || true)"
+if [[ "${EXECUTES}" == "1" ]]; then
+  check "the deploy executes exactly one job" ok
+else
+  echo "  FAIL  the deploy executes ${EXECUTES} job(s); it must execute only the migration"
+  FAILED=$((FAILED + 1))
+fi
+assert "and the one it executes is the migration" \
+  'if ! migrate "\$\{MIGRATE_JOB\}"; then' "${SCRIPT}"
+
+# ---------------------------------------------------------------------------
+# Which build a job runs (spec infra/0004).
+#
+# `gcloud run jobs execute` — and Cloud Scheduler, and a human — run whatever
+# image the JOB carries. `deploy_cloud_run.sh` sets that image for every job
+# labelled `image-owner=delivery`, and Terraform must not take it back. Two
+# halves, and both were missing for two of the three jobs on 2026-09-22:
+# `seed-portfolios` answered `No module named app.jobs.seed_portfolios` from
+# an image older than its own entry point, and `purge-audit` was still on the
+# floating `:latest` tag with a scheduler pointed at it.
+#
+# This is a loop over the jobs FOUND IN run.tf rather than a list of three
+# names, for the same reason the deploy discovers them by label: a fourth job
+# must be red here until somebody decides, not silently exempt.
+echo
+echo "every Cloud Run job follows the deploy, and terraform does not fight it"
+
+assert "the opt-in label is declared once" \
+  '^  delivery_owned_labels = merge\(local\.labels, \{ "image-owner" = "delivery" \}\)$' "${RUNTF}"
+assert "the deploy discovers jobs by that label" \
+  'jobs list --filter="metadata\.labels\.image-owner=delivery"' "${SCRIPT}"
+assert "an empty list is a failure, not a no-op" \
+  'no Cloud Run job carries image-owner=delivery' "${SCRIPT}"
+
+JOBS="$(grep -Eo '^resource "google_cloud_run_v2_job" "[a-z_]+"' "${RUNTF}" \
+  | sed -E 's/.*"([a-z_]+)"$/\1/')"
+JOB_COUNT="$(printf '%s\n' "${JOBS}" | grep -c . || true)"
+
+# Anti-vacuity: a loop over nothing passes every assertion inside it. Three
+# jobs exist today (migrate, purge-audit, seed-portfolios); fewer than three
+# means this grep stopped matching run.tf, not that the jobs went away.
+if [[ "${JOB_COUNT:-0}" -lt 3 ]]; then
+  echo "  FAIL  only ${JOB_COUNT} Cloud Run job(s) found in run.tf — the pattern is wrong"
+  FAILED=$((FAILED + 1))
+else
+  check "every Cloud Run job in run.tf was read (${JOB_COUNT})" ok
+fi
+
+while read -r job; do
+  [[ -n "${job}" ]] || continue
+  block="$(awk -v j="${job}" '
+    $0 == "resource \"google_cloud_run_v2_job\" \"" j "\" {" { inside = 1 }
+    inside { print }
+    inside && $0 == "}" { exit }
+  ' "${RUNTF}")"
+
+  if grep -qF 'labels              = local.delivery_owned_labels' <<< "${block}"; then
+    check "${job}: opts into the deploy's ownership of its image" ok
+  else
+    echo "  FAIL  ${job}: no \`labels = local.delivery_owned_labels\` — the deploy will never see it,"
+    echo "        and it will run whatever var.backend_image pointed at when it was created"
+    FAILED=$((FAILED + 1))
+  fi
+
+  if grep -qF 'ignore_changes = [template[0].template[0].containers[0].image]' <<< "${block}"; then
+    check "${job}: terraform apply does not revert the released digest" ok
+  else
+    echo "  FAIL  ${job}: no \`ignore_changes\` on its image — an apply after a deploy"
+    echo "        re-points it at var.backend_image and reopens the drift"
+    FAILED=$((FAILED + 1))
+  fi
+
+  # The third half, learned from the first real deploy (spec infra/0005). A
+  # job can carry the label, be discovered, and still be unreachable: the
+  # deployer needs `run.developer` on it to set its image. It held that on
+  # `migrate` alone, so the deploy failed at the guard — reporting a missing
+  # label, which was not the problem.
+  if grep -qF "google_cloud_run_v2_job.${job}.name" "${DELIVERYTF}"; then
+    check "${job}: the deployer is granted run.developer on it" ok
+  else
+    echo "  FAIL  ${job}: no IAM binding in delivery.tf — the deploy discovers it"
+    echo "        by label and is then refused when it tries to set its image"
+    FAILED=$((FAILED + 1))
+  fi
+done <<< "${JOBS}"
+
+assert "the deployer may list jobs at all (a project-level permission)" \
+  'role    = "roles/run.viewer"' "${DELIVERYTF}"
+assert "a refused listing is diagnosed as a denial, not a missing label" \
+  'a denial here is an IAM gap, not a missing label' "${SCRIPT}"
+
 # The ordering assertion, and the only one that really matters: migrations
 # must come BEFORE the traffic shift. A line-number comparison is crude, but
 # it is exactly the property — after the shift, requests meet a schema the
 # running code does not expect.
 migrate_line="$(grep -nF 'if ! migrate "' "${SCRIPT}" | head -1 | cut -d: -f1)"
+# shellcheck disable=SC2016  # the literal `${revision}` is what we search for
 shift_line="$(grep -nF 'shift_traffic "${revision}"' "${SCRIPT}" | tail -1 | cut -d: -f1)"
 if [[ -n "${migrate_line}" && -n "${shift_line}" && "${migrate_line}" -lt "${shift_line}" ]]; then
   echo "  PASS  migrations run before the traffic shift (${migrate_line} < ${shift_line})"

@@ -26,7 +26,7 @@ async def test_run_answers_with_a_total_and_one_row_per_holding(
     rows = outcome.data["contributions"]
     assert isinstance(rows, list)
 
-    expected = (await tool_context.portfolios.get(tool_context.subject)).holdings()
+    expected = (await tool_context.portfolios.get(tool_context.owner)).holdings()
     assert len(rows) == len(expected)
     assert outcome.data["window"] == "7d"
 
@@ -70,7 +70,7 @@ async def test_the_rows_are_ordered_biggest_mover_first(
     assert isinstance(rows, list)
 
     expected = attribute_window(
-        await tool_context.portfolios.get(tool_context.subject),
+        await tool_context.portfolios.get(tool_context.owner),
         window=timedelta(days=7),
     )
 
@@ -92,11 +92,11 @@ async def test_each_supported_window_is_honoured(
 async def test_a_symbol_filter_narrows_the_answer(
     tool: ComputeAttributionTool, tool_context: ToolContext
 ) -> None:
-    outcome = await tool.run({"symbols": ["BTC"]}, tool_context)
+    outcome = await tool.run({"symbols": ["NVDA"]}, tool_context)
     rows = outcome.data["contributions"]
     assert isinstance(rows, list)
 
-    assert [row["symbol"] for row in rows if isinstance(row, dict)] == ["BTC"]
+    assert [row["symbol"] for row in rows if isinstance(row, dict)] == ["NVDA"]
 
 
 @pytest.mark.parametrize(
@@ -105,7 +105,7 @@ async def test_a_symbol_filter_narrows_the_answer(
         {"window": "1y"},
         {"window": 7},
         {"unknown": True},
-        {"symbols": "BTC"},
+        {"symbols": "NVDA"},
     ],
     ids=["unsupported_window", "wrong_type", "undeclared_argument", "not_a_list"],
 )

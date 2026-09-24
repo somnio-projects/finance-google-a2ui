@@ -21,7 +21,7 @@ from tests.unit.agent.tools.holdings_fixtures import tool as tool
 
 
 @pytest.mark.parametrize(
-    "asked", [["btc"], [" BTC "], ["BTC"]], ids=["lowercase", "padded", "canonical"]
+    "asked", [["nvda"], [" NVDA "], ["NVDA"]], ids=["lowercase", "padded", "canonical"]
 )
 async def test_the_symbols_filter_normalises_what_it_was_asked_for(
     tool: HoldingsSummaryTool, tool_context: ToolContext, asked: list[str]
@@ -29,7 +29,7 @@ async def test_the_symbols_filter_normalises_what_it_was_asked_for(
     """One ask, however the model spelled it (spec 0003 AC-4)."""
     outcome = await tool.run({"symbols": asked}, tool_context)
 
-    assert symbols_of(outcome.data["holdings"]) == ["BTC"]
+    assert symbols_of(outcome.data["holdings"]) == ["NVDA"]
 
 
 async def test_an_unknown_symbol_matches_nothing_rather_than_failing(

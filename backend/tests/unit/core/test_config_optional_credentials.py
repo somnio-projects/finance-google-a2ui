@@ -56,18 +56,20 @@ def test_settings_a_non_string_value_is_passed_through() -> None:
     assert settings.gemini_api_key.get_secret_value() == "already-parsed"
 
 
-def test_the_factories_take_the_null_path_on_a_blank_mount() -> None:
+def test_the_factories_take_the_unconfigured_path_on_a_blank_mount() -> None:
     """The reason the collapse matters, asserted end to end.
 
     Without the validator both factories take their configured branch with an
-    empty credential; this is the assertion that would have gone red.
+    empty credential; this is the assertion that would have gone red. The
+    model's unconfigured path is the scripted demo since spec 0033 — still
+    no key, no socket.
     """
     from app.infra.model.factory import build_model_client
     from app.infra.telemetry.factory import build_error_reporter
 
     settings = make_settings(gemini_api_key="", sentry_dsn="")
 
-    assert type(build_model_client(settings)).__name__ == "NullModelClient"
+    assert type(build_model_client(settings)).__name__ == "ScriptedModelClient"
     reporter = build_error_reporter(settings, release="test")
     assert type(reporter).__name__ == "NullErrorReporter"
 

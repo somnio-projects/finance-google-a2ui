@@ -29,6 +29,30 @@ check() {
 
 echo "infra credential model"
 
+# 3. Every resource `deploy_cloud_run.sh` acts on is granted to the deployer.
+#
+# The failure this prevents actually happened (2026-09-21): the deployer held
+# `roles/run.developer` on the Cloud Run **service** and nothing on the
+# migration **job**, so `gcloud run jobs execute` answered
+#
+#   PERMISSION_DENIED: Permission 'run.jobs.get' denied on resource
+#   'namespaces/.../jobs/finance-a2ui-dev-migrate'
+#
+# The pipeline behaved correctly — it refused to shift traffic and rolled back
+# — but no deploy could ever have succeeded, and nothing said so until someone
+# pressed the button. Terraform was valid the whole time: a grant that is
+# absent is not a syntax error.
+for resource in service job; do
+  if grep -rn "google_cloud_run_v2_${resource}_iam_member" "${INFRA}" --include='*.tf' \
+       | grep -q 'deployer'; then
+    check "the deployer is granted on the Cloud Run ${resource} it deploys" ok
+  else
+    echo "    deploy_cloud_run.sh acts on a Cloud Run ${resource}, and no" >&2
+    echo "    google_cloud_run_v2_${resource}_iam_member grants the deployer on one." >&2
+    check "the deployer is granted on the Cloud Run ${resource} it deploys" no
+  fi
+done
+
 if grep -rn 'resource "google_service_account_key"' "${INFRA}" --include='*.tf' >/dev/null 2>&1; then
   echo "    a service-account key resource was found:" >&2
   grep -rn 'resource "google_service_account_key"' "${INFRA}" --include='*.tf' >&2

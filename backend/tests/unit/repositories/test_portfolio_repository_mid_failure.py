@@ -20,7 +20,7 @@ from app.models.portfolio import Portfolio
 from app.repositories.portfolio_repository import PortfolioRepository
 from tests.conftest import FROZEN_NOW
 
-SUBJECT = "subject-mid"
+OWNER = "mid@example.test"
 
 
 def _driver_error() -> OperationalError:
@@ -96,7 +96,7 @@ async def test_a_write_that_fails_after_the_lookup_is_named_a_write_failure() ->
 
     with pytest.raises(DependencyUnavailableError, match="database write failed"):
         await repository.replace(
-            subject=SUBJECT, portfolio=seed_portfolio(as_of=FROZEN_NOW)
+            owner=OWNER, portfolio=seed_portfolio(as_of=FROZEN_NOW)
         )
     assert session.calls > 1
 
@@ -108,9 +108,9 @@ async def test_a_failure_reading_the_children_is_reported_not_returned_empty() -
     it — a wrong answer that no test downstream could distinguish from a
     genuinely empty one.
     """
-    row = Portfolio(subject=SUBJECT, as_of=FROZEN_NOW)
+    row = Portfolio(owner_email=OWNER, as_of=FROZEN_NOW)
     session = FailsAfter(ok=1, row=row)
     repository = PortfolioRepository(session)  # pyright: ignore[reportArgumentType]
 
     with pytest.raises(DependencyUnavailableError, match="database read failed"):
-        await repository.find(subject=SUBJECT)
+        await repository.find(owner=OWNER)

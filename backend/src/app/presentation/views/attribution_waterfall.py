@@ -1,85 +1,50 @@
 """``attribution.waterfall.v1`` — unrealised P/L, walked (spec 0005 AC-5).
 
-One module holds everything this chart is: id, options model, DTO, pure
-``render``, A2UI adapter, fitness and its ``register(...)`` call — the same
-shape as every other view, so the next one is a copy (ADR-K D-15).
+This module is the projection: options model, pure ``render``, A2UI adapter,
+fitness and its ``register(...)`` call. The DTO lives in
+``presentation.attribution_payload`` and the builders in
+``presentation.attribution_walk`` — split under the 150-line budget along the
+seam ``positions_payload`` / ``positions_rows`` already drew (GGU-100).
 """
 
-from collections.abc import Sequence
-from decimal import Decimal
-from itertools import accumulate
-from typing import Final, Literal
+from typing import Final
 
-from pydantic import Field
-
-from app.domain.holdings import Holding
+from app.actions.capability import SHIPPED_ENABLED
+from app.actions.declared import SurfaceActionRef, declared_action
+from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.domain.portfolio import Portfolio
 from app.presentation import options as opt
+from app.presentation.attribution_payload import (
+    SECTIONS,
+    SUMMARY,
+    TITLE,
+    VIEW_ID,
+    AttributionWaterfallPayload,
+)
+from app.presentation.attribution_walk import buckets, net_of, notes
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
-from app.presentation.fragments import Annotation, Bucket, ProjectionDto, Total
+from app.presentation.fragments import Total
 from app.presentation.registry import register
 from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
+from app.presentation.waterfall_guidance import GUIDANCE
 
-VIEW_ID: Final[str] = "attribution.waterfall.v1"
-TITLE: Final[str] = "Unrealised P/L attribution"
-SUMMARY: Final[str] = (
-    "Unrealised profit and loss walked from cost basis to market value, one "
-    "bucket per holding, biggest move first."
+#: The one action this surface offers (GGU-31, spec 0022 §3.4). Derived from
+#: the action's own arguments schema, so the published bound *is* the enforced
+#: one — never a second copy written down beside it.
+DRILL_REF: Final[SurfaceActionRef] = declared_action(DRILL)
+
+#: What this surface actually publishes. Empty while the capability ships off:
+#: a declaration reaches the catalogue design and the client bind to, and
+#: advertising an affordance that answers -32601 is worse than advertising
+#: none (``app.actions.capability``).
+DECLARED_ACTIONS: Final[tuple[SurfaceActionRef, ...]] = (
+    (DRILL_REF,) if SHIPPED_ENABLED else ()
 )
-SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
-ANNOTATED: Final[int] = 2
 
 
 class AttributionWaterfallOptions(opt.DisplayOptions, opt.FieldSelection):
     """Declared knobs of ``attribution.waterfall.v1``; nothing else is accepted."""
-
-
-class AttributionWaterfallPayload(ProjectionDto):
-    """The walk from what the portfolio cost to what it is worth today."""
-
-    view: Literal["attribution.waterfall.v1"] = Field(
-        default=VIEW_ID, description="Projection discriminator.", examples=[VIEW_ID]
-    )
-    title: str = Field(
-        max_length=120, description="Title the widget shows.", examples=[TITLE]
-    )
-    start: Total = Field(description="Where the walk starts: total cost basis.")
-    end: Total = Field(description="Where the walk ends: total market value.")
-    buckets: tuple[Bucket, ...] = Field(
-        default=(), description="One step per holding, biggest absolute move first."
-    )
-    annotations: tuple[Annotation, ...] = Field(
-        default=(), description="Sentences shown beside the chart, written here."
-    )
-
-
-def _buckets(
-    rows: Sequence[Holding], *, start: Decimal, options: AttributionWaterfallOptions
-) -> tuple[Bucket, ...]:
-    """Walk each holding's unrealised P/L, carrying the running total."""
-    running = accumulate((row.unrealized_pl for row in rows), initial=start)
-    next(running)  # the opening balance is the chart's start, not a step
-    return tuple(
-        Bucket(
-            label=row.name,
-            delta=options.money(row.unrealized_pl),
-            cumulative=options.money(total),
-            direction="up" if row.unrealized_pl >= 0 else "down",
-        )
-        for row, total in zip(rows, running, strict=True)
-    )
-
-
-def _notes(
-    rows: Sequence[Holding], net: Decimal, options: AttributionWaterfallOptions
-) -> tuple[Annotation, ...]:
-    """Name the biggest movers and the net move, in words the widget shows."""
-    movers = (
-        Annotation(label=row.name, text=options.money(row.unrealized_pl).display)
-        for row in rows[:ANNOTATED]
-    )
-    return (*movers, Annotation(label="Net", text=options.money(net).display))
 
 
 def render(
@@ -98,29 +63,34 @@ def render(
     rows = sorted(portfolio.holdings(), key=lambda h: (-abs(h.unrealized_pl), h.symbol))
     cost = portfolio.total_cost_basis()
     value = portfolio.total_market_value()
-    walk = _buckets(rows, start=cost, options=options) if "buckets" in sections else ()
+    walk = buckets(rows, start=cost, options=options) if "buckets" in sections else ()
     net = portfolio.total_unrealized_pl()
-    notes = _notes(rows, net, options) if "annotations" in sections else ()
+    said = notes(rows, net, options) if "annotations" in sections else ()
     return AttributionWaterfallPayload(
         title=TITLE,
         start=Total(label="Cost basis", amount=options.money(cost)),
         end=Total(label="Market value", amount=options.money(value)),
+        net=net_of(start=cost, end=value, options=options),
         buckets=walk,
-        annotations=notes,
+        annotations=said,
+        actions=DECLARED_ACTIONS,
     )
 
 
 def surface(payload: AttributionWaterfallPayload) -> Surface:
     """Map the payload onto the A2UI waterfall the genui client instantiates."""
     return Surface(
-        component="WaterfallChart",
+        component="AttributionWaterfall",
         view=payload.view,
         title=payload.title,
         props={
             "start": payload.start.model_dump(mode="json"),
             "end": payload.end.model_dump(mode="json"),
+            "net": payload.net.model_dump(mode="json"),
+            # Each step carries the `key` a tap sends as the drill argument.
             "steps": [step.model_dump(mode="json") for step in payload.buckets],
             "notes": [note.text for note in payload.annotations],
+            "actions": [ref.model_dump(mode="json") for ref in payload.actions],
         },
     )
 
@@ -140,7 +110,18 @@ PROJECTION: Final = register(
         render=render,
         surface=surface,
         fitness=fitness,
+        guidance=GUIDANCE,
     )
 )
 
-__all__ = ["ANNOTATED", "PROJECTION", "SECTIONS", "VIEW_ID", "render", "surface"]
+__all__ = [
+    "DECLARED_ACTIONS",
+    "DRILL_REF",
+    "PROJECTION",
+    "SECTIONS",
+    "VIEW_ID",
+    "AttributionWaterfallOptions",
+    "AttributionWaterfallPayload",
+    "render",
+    "surface",
+]

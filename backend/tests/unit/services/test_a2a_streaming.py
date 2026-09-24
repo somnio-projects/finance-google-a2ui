@@ -35,7 +35,10 @@ async def _events(context: ToolContext) -> list[dict[str, Any]]:
     return [
         json.loads(chunk.removeprefix("data: ").strip())
         async for chunk in A2aService(agent=service).stream(
-            message=_message(), task_id="task-1", context=context
+            message=_message(),
+            prompt=_message().text(),
+            task_id="task-1",
+            context=context,
         )
     ]
 

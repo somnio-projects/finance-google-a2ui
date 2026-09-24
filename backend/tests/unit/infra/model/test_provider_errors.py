@@ -1,0 +1,105 @@
+"""GGU-90 AC-4 — the provider's own words, kept server-side; and retry triage.
+
+Spec 0006 AC-3 keeps provider text away from the caller, and ``test_gemini_
+client.py`` still proves that. These tests prove the other half: that the text
+is not thrown away either. Both 400s that broke every agent turn were
+diagnosable in one line of the response body, and that line went nowhere.
+"""
+
+import httpx
+import pytest
+import structlog
+
+from app.infra.model.provider_errors import (
+    MAX_DETAIL_CHARS,
+    is_retryable,
+    log_provider_failure,
+)
+
+PROVIDER_TEXT = "Role 'function' is not supported. Please use a valid role: USER."
+
+
+def status_error(status: int = 400, text: str = PROVIDER_TEXT) -> httpx.HTTPStatusError:
+    """Build the failure a rejected request raises."""
+    request = httpx.Request("POST", "https://provider.test/v1beta/models/m:g")
+    response = httpx.Response(status, text=text, request=request)
+    return httpx.HTTPStatusError("rejected", request=request, response=response)
+
+
+def test_a_rejection_is_logged_with_the_status_and_the_providers_own_words() -> None:
+    with structlog.testing.capture_logs() as logs:
+        log_provider_failure(status_error())
+
+    assert logs == [
+        {
+            "event": "model_provider_rejected",
+            "log_level": "warning",
+            "status": 400,
+            "detail": PROVIDER_TEXT,
+        }
+    ]
+
+
+def test_a_very_long_rejection_is_truncated_rather_than_logged_whole() -> None:
+    with structlog.testing.capture_logs() as logs:
+        log_provider_failure(status_error(text="x" * (MAX_DETAIL_CHARS + 50)))
+
+    assert logs[0]["detail"] == "x" * MAX_DETAIL_CHARS
+
+
+def test_a_transport_failure_is_logged_by_type_without_the_url_it_names() -> None:
+    request = httpx.Request("POST", "https://provider.test/v1beta/models/m:g")
+
+    with structlog.testing.capture_logs() as logs:
+        log_provider_failure(httpx.ConnectTimeout("timed out", request=request))
+
+    assert logs == [
+        {
+            "event": "model_provider_unreachable",
+            "log_level": "warning",
+            "error": "ConnectTimeout",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("exc", "expected"),
+    [
+        (httpx.ConnectError("down"), True),
+        (ValueError("not json"), False),
+        (status_error(status=503), True),
+        (status_error(status=400), False),
+        (httpx.ReadTimeout("slow"), False),
+        (httpx.ConnectTimeout("no route"), True),
+    ],
+    ids=[
+        "transport_error_is_retryable",
+        "parse_error_is_not",
+        "server_error_is_retryable",
+        "rejected_request_is_not",
+        "read_timeout_is_not",
+        "connect_timeout_is_retryable",
+    ],
+)
+def test_is_retryable_classifies_a_failed_attempt(
+    exc: Exception, expected: bool
+) -> None:
+    assert is_retryable(exc) is expected
+
+
+def test_a_read_timeout_is_not_retried_although_it_is_a_transport_error() -> None:
+    """0036 OD-1 — the distinction the first version of this rule missed.
+
+    ``ReadTimeout`` subclasses ``TransportError``, so "retry transport
+    errors" retried it, and three attempts against a slow model is three
+    times the wait for the same answer. MEASURED on dev, 2026-09-22:
+    ``agent.turn outcome=model-unavailable duration_ms=64416`` after three
+    ``ReadTimeout`` at the then-20s budget, for questions that answered in
+    10-46s once the budget was raised.
+
+    Asserted as a pair with its sibling rather than alone: the rule is not
+    "timeouts are not retried" — never reaching the host still is.
+    """
+    assert isinstance(httpx.ReadTimeout("slow"), httpx.TransportError)
+    assert is_retryable(httpx.ReadTimeout("slow")) is False
+    assert is_retryable(httpx.ConnectTimeout("no route")) is True

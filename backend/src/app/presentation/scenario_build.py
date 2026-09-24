@@ -12,7 +12,8 @@ OD-7, ADR-K D-15/D-16).
 
 from decimal import Decimal
 
-from app.core.display import price_display, quantity_display, signed_money_display
+from app.core.display import price_display, quantity_display
+from app.core.signed_display import signed_money_display
 from app.domain.lot_selection import LotMethod
 from app.domain.money import ZERO
 from app.domain.sale_results import SaleSimulation

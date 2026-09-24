@@ -10,9 +10,11 @@ from app.core.display import (
     percentage_display,
     price_display,
     quantity_display,
-    signed_money_display,
 )
 from app.core.locales import quantize
+from app.core.signed_display import (
+    signed_money_display,
+)
 
 
 @pytest.mark.parametrize(
@@ -94,7 +96,7 @@ def test_percentage_display_renders_a_ratio_as_a_percentage(
     [
         (Decimal("64250.00"), "$64,250.00"),
         (Decimal("11.85"), "$11.85"),
-        (Decimal("0.1273"), "$0.1273"),
+        (Decimal("34.22"), "$34.22"),
         (Decimal("4.2150"), "$4.2150"),
     ],
     ids=[
@@ -114,15 +116,15 @@ def test_price_display_carries_the_precision_the_price_is_quoted_to(
 def test_a_sub_cent_price_would_not_tie_out_if_it_were_flattened() -> None:
     """The bug this exists to prevent, written as the arithmetic itself.
 
-    Twelve thousand DOGE at $0.1273 is $1,527.60. Rounded to cents first, the
-    same multiplication reads $1,560.00 — a $32.40 gap between two figures in
-    one payload block.
+    Twelve thousand shares at $34.2275 are $410,730.00. Rounded to cents first,
+    the same multiplication reads $410,760.00 — a $30.00 gap between two
+    figures in one payload block.
     """
-    price = Decimal("0.1273")
+    price = Decimal("34.2275")
     units = Decimal(12000)
 
-    assert money_display(units * price) == "$1,527.60"
-    assert price_display(price) == "$0.1273"
+    assert money_display(units * price) == "$410,730.00"
+    assert price_display(price) == "$34.2275"
     assert money_display(units * quantize(price, precision=MONEY_PRECISION)) != (
         money_display(units * price)
     )

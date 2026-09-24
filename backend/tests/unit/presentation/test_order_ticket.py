@@ -39,10 +39,14 @@ def test_render_prices_the_default_order_from_the_market_reference(
     payload = render(portfolio, OrderTicketOptions())
 
     assert payload.view == VIEW_ID
-    assert (payload.symbol, payload.name, payload.side) == ("BTC", "Bitcoin", "buy")
+    assert (payload.symbol, payload.name, payload.side) == (
+        "NVDA",
+        "NVIDIA Corp",
+        "buy",
+    )
     assert payload.quantity.display == "1"
-    assert payload.entry_price.display == "$64,250.00"
-    assert payload.notional.amount.display == "$64,250.00"
+    assert payload.entry_price.display == "$1,204.66"
+    assert payload.notional.amount.display == "$1,204.66"
 
 
 def test_a_dollar_size_is_divided_by_the_price_here_not_by_the_model(
@@ -50,11 +54,11 @@ def test_a_dollar_size_is_divided_by_the_price_here_not_by_the_model(
 ) -> None:
     """AC-3 — `size_in="usd"` states the units, and the notional closes on it."""
     payload = render(
-        portfolio, OrderTicketOptions(symbol="DOGE", size="500", size_in="usd")
+        portfolio, OrderTicketOptions(symbol="XOM", size="500", size_in="usd")
     )
 
-    assert payload.quantity.display == "3927.72977219"
-    assert payload.entry_price.display == "$0.1273"
+    assert payload.quantity.display == "14.6113384"
+    assert payload.entry_price.display == "$34.22"
     assert payload.notional.amount.display == "$500.00"
 
 
@@ -63,7 +67,7 @@ def test_the_three_figures_printed_together_multiply_back_to_one_another(
 ) -> None:
     """AC-4 — a reader multiplies across the row, so the row must survive it."""
     payload = render(
-        portfolio, OrderTicketOptions(symbol="DOGE", size="500", size_in="usd")
+        portfolio, OrderTicketOptions(symbol="XOM", size="500", size_in="usd")
     )
     shown_units = Decimal(payload.quantity.display)
     shown_price = Decimal(payload.entry_price.display.removeprefix("$"))
@@ -86,22 +90,22 @@ def test_render_formats_every_figure_under_the_requested_locale(
 ) -> None:
     """AC-7 — locale and precision are declared options like any other."""
     payload = render(
-        portfolio, OrderTicketOptions(symbol="ETH", locale="de-DE", precision=4)
+        portfolio, OrderTicketOptions(symbol="AAPL", locale="de-DE", precision=4)
     )
 
-    assert payload.notional.amount.display == "3.180,5000 $"
+    assert payload.notional.amount.display == "233,1800 $"
 
 
 def test_the_inputs_are_the_declared_options_with_their_current_values(
     portfolio: Portfolio,
 ) -> None:
     """AC-5 — editing is re-rendering, so the payload names the options."""
-    payload = render(portfolio, OrderTicketOptions(symbol="SOL", side="sell"))
+    payload = render(portfolio, OrderTicketOptions(symbol="VOO", side="sell"))
 
     assert [field.option for field in payload.inputs] == list(LABELS)
     assert [field.label for field in payload.inputs] == list(LABELS.values())
     by_option = {field.option: field for field in payload.inputs}
-    assert by_option["symbol"].value == "SOL"
+    assert by_option["symbol"].value == "VOO"
     assert by_option["side"].value == "sell"
     assert by_option["side"].choices == ("buy", "sell")
     assert by_option["size"].control == "text"
@@ -128,7 +132,7 @@ def test_surface_maps_the_payload_onto_the_ticket_component(
     emitted = surface(payload)
 
     assert (emitted.component, emitted.view) == ("OrderTicket", VIEW_ID)
-    assert emitted.props["entryPrice"]["display"] == "$64,250.00"
+    assert emitted.props["entryPrice"]["display"] == "$1,204.66"
     assert [field["option"] for field in emitted.props["inputs"]] == list(LABELS)
 
 

@@ -12,6 +12,10 @@
 #      passes (infra/run.tf)
 #   2. assert that revision's Ready condition is True — explicitly, because a
 #      deploy that "succeeded" without a ready revision must not take traffic
+#   2b. point EVERY Cloud Run job labelled `image-owner=delivery` at the same
+#      image, then run the migration — a job the deploy never executes
+#      (`purge-audit`, monthly on a schedule; `seed-portfolios`, by hand) is
+#      still on the released build when somebody or something does run it
 #   3. only then shift 100 % of traffic to it
 #   4. verify PUBLIC_URL/health reports exactly the release we deployed
 #   5. on any failure, put traffic back on the revision that was serving before
@@ -46,6 +50,13 @@ set -Eeuo pipefail
 READY_RETRIES="${READY_RETRIES:-10}"
 READY_DELAY_SECONDS="${READY_DELAY_SECONDS:-6}"
 
+# The one job this script also EXECUTES. Derived from the service name exactly
+# as Terraform derives both from `local.name` (infra/run.tf). Every other job
+# is discovered by label — see delivery_jobs() — and this one is discovered the
+# same way; the name is kept only so the execute call and the anti-vacuity
+# check below can name it.
+MIGRATE_JOB="${SERVICE:+${SERVICE%-api}-migrate}"
+
 die() {
   echo "::error::$*" >&2
   exit 1
@@ -59,6 +70,25 @@ require_env() {
 
 gcloud_run() {
   gcloud run "$@" --project="${PROJECT}" --region="${REGION}" --quiet
+}
+
+# Every Cloud Run job this environment owns, read from the label Terraform
+# puts on it (`image-owner=delivery`, infra/run.tf). Derived, never
+# enumerated: a list of job names in this file is a list somebody has to
+# remember to extend, and the one time it mattered nobody did — `seed-portfolios`
+# was left running a floating tag for its whole life (spec infra/0004).
+# The delivery-owned jobs, or a diagnosis of why the question could not be
+# answered.
+#
+# `2>/dev/null || true` used to be here, and it turned a **permission denial**
+# into an empty list — so the caller reported "no job carries the label" and
+# told the operator to run `terraform apply`, which had already run and was
+# not the problem. The first real deploy after spec `infra/0004` failed
+# exactly that way. An error that answers the wrong question is worse than no
+# check: keep stderr, and let the caller tell the two apart.
+delivery_jobs() {
+  gcloud_run jobs list --filter="metadata.labels.image-owner=delivery" \
+    --format='value(metadata.name)'
 }
 
 serving_revision() {
@@ -143,6 +173,55 @@ rollback() {
   exit 1
 }
 
+# Points every delivery-owned job at the image being released, BEFORE any of
+# them runs and before traffic moves. `gcloud run jobs execute` runs whatever
+# image the job carries, and Terraform ignores that field on all of them so
+# this pipeline can own it — this function is the owner.
+#
+# An empty list is a FAILURE, not a no-op. It is exactly what a missing label
+# looks like (measured: `gcloud run jobs list --filter=…image-owner=delivery`
+# answers with a warning and exit 0 when nothing carries it), and a deploy that
+# quietly updated nothing is the defect this closes, one level up. Same
+# anti-vacuity idiom as scripts/check_shell.sh.
+point_jobs_at_image() {
+  local jobs job found listing status
+  listing="$(delivery_jobs 2>&1)"
+  status=$?
+
+  # Asking and being refused is not the same as asking and being told none.
+  if [[ ${status} -ne 0 ]]; then
+    echo "::error::could not list Cloud Run jobs in ${PROJECT}/${REGION}" >&2
+    echo "  gcloud said: ${listing}" >&2
+    echo "  a denial here is an IAM gap, not a missing label: the deployer" >&2
+    echo "  needs run.jobs.list (roles/run.viewer) and run.developer on each" >&2
+    echo "  delivery-owned job — infra/delivery.tf" >&2
+    return 1
+  fi
+  jobs="${listing}"
+
+  if [[ -z "${jobs//[[:space:]]/}" ]]; then
+    echo "::error::no Cloud Run job carries image-owner=delivery in ${PROJECT}/${REGION}" >&2
+    echo "  run \`terraform apply\` for this environment: the label is set in infra/run.tf" >&2
+    return 1
+  fi
+
+  # The migration is the one job this script also EXECUTES, so its absence
+  # means the filter is answering about the wrong thing — a silently partial
+  # list, which is the failure mode a bare count would miss.
+  if ! grep -qx "${MIGRATE_JOB}" <<< "${jobs}"; then
+    echo "::error::${MIGRATE_JOB} is not in the delivery-owned job list:" >&2
+    while read -r found; do echo "  ${found}" >&2; done <<< "${jobs}"
+    return 1
+  fi
+
+  while read -r job; do
+    [[ -n "${job}" ]] || continue
+    echo "pointing ${job} at the released image"
+    gcloud_run jobs update "${job}" --image="${IMAGE}" || return 1
+  done <<< "${jobs}"
+  return 0
+}
+
 main() {
   require_env SERVICE REGION PROJECT
 
@@ -169,6 +248,24 @@ migrate() {
   # revision keeps serving the schema it was written for.
   local job="$1"
   echo "running migrations with the released image"
+
+  # `gcloud run jobs execute` runs whatever image the JOB carries, and
+  # Terraform ignores that field on purpose (infra/run.tf) so this pipeline
+  # can own it. Nothing owned it: the job kept the image it was created with
+  # while the service moved on, and the comment above — "the job runs on the
+  # image being released" — was false for every deploy after the first.
+  #
+  # It stayed invisible because the service also carries `RUN_MIGRATIONS=true`
+  # and migrates at container start, so the schema did move; the job then hit
+  # a version its own (older) code had never heard of and failed with
+  # `Can't locate revision identified by '<rev>'`, which reads like a broken
+  # migration chain and is not one. That belt stays on (spec infra/0003 OD-2):
+  # removing it would boot the revision on the old schema, and the bootstrap
+  # of the admin registry runs at boot.
+  #
+  # Setting the image is no longer done here. `point_jobs_at_image` above does
+  # it for EVERY delivery-owned job, because doing it in the step that happens
+  # to execute one of them is how the other two were missed (spec infra/0004).
   if ! gcloud run jobs execute "${job}" \
     --region="${REGION}" --project="${PROJECT}" \
     --update-env-vars="APP_RELEASE=${RELEASE}" \
@@ -205,9 +302,18 @@ migrate() {
       "revision ${revision} did not become Ready (startup probe on /readyz)"
   fi
 
+  # Every job first, then the schema, then traffic. Pinning the images before
+  # the migration means the migration itself is covered by it, and a job this
+  # script never executes (`purge-audit` runs monthly on a schedule,
+  # `seed-portfolios` by hand) is still on the released build afterwards.
+  if ! point_jobs_at_image; then
+    rollback "${previous}" "${revision}" \
+      "could not point every Cloud Run job at the released image"
+  fi
+
   # Schema first, then traffic. See `migrate` above for why this order is the
   # one that cannot serve a half-applied schema.
-  if ! migrate "${SERVICE%-api}-migrate"; then
+  if ! migrate "${MIGRATE_JOB}"; then
     rollback "${previous}" "${revision}" "migrations failed; the schema was not moved"
   fi
 
