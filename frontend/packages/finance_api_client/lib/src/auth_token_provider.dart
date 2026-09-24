@@ -16,3 +16,11 @@ typedef AuthTokenProvider = Future<String?> Function();
 ///
 /// Used by the health probe and by tests that assert the unauthenticated path.
 Future<String?> anonymousToken() async => null;
+
+/// The sentence a failed credential read is reported with.
+///
+/// Shared by both transports so the two cannot describe one event in two
+/// ways. It says nothing about *why* — the identity SDK's own text is the
+/// library's, not ours to show (N-14) — and it is a `TransportFailure` in
+/// both, because a request that never left is what a caller has to handle.
+const String credentialUnavailable = 'the session could not be read';

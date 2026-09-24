@@ -4878,3 +4878,57 @@ discussed and not built), the wire field is already an enumeration and the
 client already refuses a value it does not know rather than guessing which of
 the two it resembles. Add it to `Enrolment`, to `SignInPolicy`, and decide
 what the screen says — that last part is design's, not yours.
+
+## 2026-09-24 — Failures have a way out
+
+**Spec:** [`frontend/0025`](../specs/frontend/0025-failures-have-a-way-out.md) ·
+**Tickets:** GGU-110, GGU-111, GGU-112 — the three bugs from Guillermo's QA pass
+on the deployed preview, at `0.1.0+a8ad309`.
+
+Three reports, one defect: a failure with no state to land in and nothing to
+do next. The Holdings skeleton that "never resolves", the Assistant printing
+`model provider unavailable` in red, and `/#/home` answering with go_router's
+raw error widget.
+
+**What changed.** Both transports bound every request (20 s, one constant) and
+read the credential *inside* the guard, so an identity SDK that throws is a
+`TransportFailure` and not an exception out of a bloc handler. `TabFailure`
+carries *Try again* and re-issues the tab's own first event; Home stopped
+drawing its own failure and uses it. The Assistant's failure card chooses its
+sentence by `code`, keeps the last answer's chips, and retries the last turn
+with no second bubble. Unknown locations get a themed `NotFoundPage`;
+`AppRoutes.aliases` redirects the guessable synonyms as routes, so the auth
+gate still runs first.
+
+**Three things worth carrying forward:**
+
+- **A reporter's diagnosis is evidence about the symptom, not the cause.** The
+  ticket read the skeleton's `get_holdings()…` caption as a model call and the
+  `POST / → 503` beside it as its failure. Holdings issues two `GET`s and no
+  `POST`; the 503s were the Assistant's. Recorded in the spec (OD-1) so nobody
+  chases it again — and the hang paths that *were* there (no timeout, an
+  unguarded token read) are closed regardless.
+- **A Flutter web reproduction is only evidence while the tab is visible.** A
+  local repro in a Chrome driven from behind this window reproduced the report
+  perfectly — skeleton for 10–45 s after both `GET`s answered, dead tab bar —
+  and was an artefact: `document.visibilityState` was `hidden`, the browser had
+  stopped `requestAnimationFrame`, and the only frames were the ones a
+  screenshot forced. Timestamped probes put the entire gap between `emit` and
+  the next frame, which is what pointed at the browser rather than the code.
+  Spec §6 keeps the record; the freeze itself stays unreproduced, and the spec
+  says so rather than claiming it.
+- **Copy by `code`, never by `detail`, and never invented.** The contract
+  already said a client branches on `code`. The failure card does exactly that
+  for the two codes it knows and shows the backend's detail for any other —
+  a sentence written for a failure nobody has met would be a guess in the tone
+  of a fact. `.claude/rules/frontend/architecture.md` §4 records the exception.
+
+**Answered in the ticket:** GGU-111 AC-3 — the 503 is GGU-90's masked provider
+error one layer up (`gemini_client.py` → `DependencyUnavailableError`, reason
+in the server's warning log per GGU-90 AC-4), not a distinct path. The backend
+is right to mask it; the client was wrong to show the mask as copy.
+
+**Next person:** if a fourth failure code starts reaching the screen often
+enough to deserve a sentence, add one `case` to `turnFailureNotice` and a test
+asserting the raw code does not render. Do not widen `TabFailure` to take a
+sentence of its own: the tab's message is the backend's, and that is the rule.

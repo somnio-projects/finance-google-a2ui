@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
+import 'package:finance_app/features/conversation/view/turn_failure_card.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
@@ -61,9 +62,10 @@ void main() {
       expect(find.textContaining('65038.6'), findsNothing);
     });
 
-    testWidgets('shows the backend safe code and detail on failure', (
+    testWidgets('shows a sentence on failure, never the backend code', (
       tester,
     ) async {
+      // GGU-111: the code and detail used to be printed as they arrived.
       scriptTurn(agent, const <AgentEvent>[
         AgentTurnEnded(AgentTurnState.failed),
         AgentFailed(
@@ -74,8 +76,9 @@ void main() {
       await pumpConversation(tester, agent: agent, views: views);
       await ask(tester, 'what moved?');
 
-      expect(find.text('model provider unavailable'), findsOneWidget);
-      expect(find.text('dependency-unavailable'), findsOneWidget);
+      expect(find.byType(TurnFailureCard), findsOneWidget);
+      expect(find.text('model provider unavailable'), findsNothing);
+      expect(find.text('dependency-unavailable'), findsNothing);
     });
 
     testWidgets('shows an answer with no surface as text alone', (

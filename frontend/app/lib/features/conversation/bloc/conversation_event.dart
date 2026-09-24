@@ -44,3 +44,15 @@ final class ConversationActionSent extends ConversationEvent {
   @override
   List<Object?> get props => <Object?>[request.action, request.args];
 }
+
+/// *Try again* on a failed turn: send what the last turn sent (GGU-111).
+///
+/// Field-less and `const`, like the other events; the request it repeats is
+/// read from the state, so nothing here can disagree with the transcript.
+final class ConversationRetried extends ConversationEvent {
+  /// Creates the event.
+  const ConversationRetried();
+
+  @override
+  List<Object?> get props => const <Object?>[];
+}
