@@ -20,4 +20,4 @@ auth_bootstrap_admins = "lbertuzzi@somniosoftware.com"
 # is written and audited; a revoked account still stays revoked. Production
 # and staging leave this at its `false` default.
 auth_open_enrolment = true
-alert_email           = "lbertuzzi@somniosoftware.com"
+alert_email         = "lbertuzzi@somniosoftware.com"
