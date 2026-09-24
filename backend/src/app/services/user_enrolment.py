@@ -14,6 +14,7 @@ with a wait somebody has to be told about.
 from typing import Final
 
 from app.core.principal import Principal
+from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.access import ENROLLED_MESSAGE, AccessResponse
 from app.services.audit_service import AuditService
@@ -21,6 +22,18 @@ from app.services.audit_service import AuditService
 #: What the registry records as the inviter, so an audit reader can tell a
 #: self-enrolled account from one an admin invited.
 SELF_ENROLMENT: Final[str] = "self-enrolment"
+
+#: The statuses open enrolment may admit. `None` is nobody the registry has
+#: seen. `requested` is somebody who ASKED — and with enrolment open there is
+#: no admin left to wait for, so leaving them refused made *asking* the worse
+#: move (spec 0042). **`revoked` is absent and must stay absent**: an
+#: offboarding somebody performed is not undone by signing in again.
+ENROLLABLE: Final[frozenset[str | None]] = frozenset({None, "requested"})
+
+
+def enrollable(row: User | None) -> bool:
+    """Whether open enrolment may admit the registry's answer for this caller."""
+    return (row.status if row else None) in ENROLLABLE
 
 
 async def enrol(
@@ -65,4 +78,4 @@ async def enrol(
     )
 
 
-__all__ = ["SELF_ENROLMENT", "enrol"]
+__all__ = ["ENROLLABLE", "SELF_ENROLMENT", "enrol", "enrollable"]

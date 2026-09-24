@@ -4788,3 +4788,40 @@ ruling.
 red on the third until `delivery.tf` gained it — which is exactly the failure
 that cost a deploy two days ago (spec `infra/0005`), caught this time before
 anything shipped.
+
+## 2026-09-24 — Asking for access is not a worse state
+
+**Spec:** [`backend/0042`](../specs/backend/0042-asking-for-access-is-not-a-worse-state.md),
+which **corrects** `backend/0040` OD-2 and `backend/0041` OD-2. Branch
+`fix/asking_for_access_is_not_a_worse_state`.
+
+A colleague still could not sign in after open enrolment shipped *and* after
+the provisioning job ran over every dev account. The cause is two rules I wrote
+two days apart, each defensible alone:
+
+* open enrolment admits only when there is **no row**, so `revoked` cannot be
+  undone by signing in again;
+* the provisioning job never touches an existing row, for the same reason.
+
+`POST /v1/access-requests` — the **Request access** link the sign-in screen
+offers directly under the button that just refused you — writes a `requested`
+row. After that, neither path moves the person. **Clicking the link the screen
+recommends made them permanently worse off than doing nothing**, and the dev
+logs show two people did exactly that.
+
+**The lesson is about the shape of the reasoning, not the code.** Both rules
+were derived from the same true premise — *a state somebody deliberately set
+must not be undone automatically* — and `requested` is not such a state. It is
+a question. Once enrolment was open there was no longer anyone to answer it,
+so the refusal had no remaining purpose and an active cost. A rule that was
+right under one configuration became wrong under the next, silently, because
+nothing tied it to the switch.
+
+**What would have caught it:** a test over the *interaction*, not the parts.
+Every case in 0040 and 0041 passed. The missing assertion is now in
+`test_self_enrolment_refusals.py`: the same `requested` row under both switch
+positions, which is the only shape that makes the dependency visible.
+
+**Next person:** `ENROLLABLE` is a named frozen set for this reason. If you add
+a status, ask what happens to somebody in it under **both** switch positions
+before deciding, and write the pair down.

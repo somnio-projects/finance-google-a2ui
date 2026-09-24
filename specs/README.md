@@ -105,6 +105,7 @@ duplicated one are both visible at a glance.
 | [backend/0039-the-surface-answers-the-question-that-was-asked.md](backend/0039-the-surface-answers-the-question-that-was-asked.md) | In progress | *unassigned* |
 | [backend/0040-sso-enrols-itself.md](backend/0040-sso-enrols-itself.md) | In progress | *unassigned* |
 | [backend/0041-a-job-provisions-the-demo-audience.md](backend/0041-a-job-provisions-the-demo-audience.md) | In progress | *unassigned* |
+| [backend/0042-asking-for-access-is-not-a-worse-state.md](backend/0042-asking-for-access-is-not-a-worse-state.md) | In progress | *unassigned* |
 | [frontend/0020-transition-states.md](frontend/0020-transition-states.md) | In progress | *unassigned* |
 | [frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md](frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md) | In progress | *unassigned* |
 | [backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md](backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md) | Draft | *unassigned* |

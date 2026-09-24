@@ -17,10 +17,16 @@ way to type it.
 ``AUTH_BOOTSTRAP_ADMINS`` and nothing else creates one (spec 0027 OD-2). This
 job is the audience, not the operators.
 
-**An existing row is never touched**, whatever its status. That is the same
-ruling enrolment makes and for the same reason: a ``revoked`` account is an
-offboarding somebody performed, and a job run must not undo it. Re-running is
-therefore safe and a list that overlaps a previous run costs nothing.
+**A ``revoked`` row is never touched**, and that is the ruling: an
+offboarding somebody performed is not undone by a job run. Everything else the
+operator names is made active, which includes the one state that used to trap
+people — ``requested``. Somebody who clicked *Request access* had a row, so
+neither this job nor open enrolment would touch them, and asking for access
+left them **worse off than not asking** (spec 0042). An operator naming an
+address *is* the decision that request was waiting for.
+
+Re-running is still safe: an already-active account is left alone and the run
+reports it as untouched.
 
 **The addresses are not logged** (`security.md`: e-mails are PII). The job
 reports counts; the operator passed the list and already has it.
@@ -46,6 +52,11 @@ log: structlog.stdlib.BoundLogger = get_logger(__name__)
 #: row this job wrote from one an admin invited or one that enrolled itself.
 PROVISION_JOB: str = "provision-users-job"
 
+#: The statuses this job will write over. `requested` is in it because a
+#: request is what the operator is answering; `revoked`, `active` and
+#: `invited` are not — the first is a decision, the other two are already in.
+PROMOTABLE: frozenset[str] = frozenset({"requested"})
+
 
 async def provision_into(
     repository: UserRepository, *, emails: Sequence[str]
@@ -64,7 +75,8 @@ async def provision_into(
     """
     added = untouched = 0
     for email in emails:
-        if await repository.find_by_email(email) is not None:
+        row = await repository.find_by_email(email)
+        if row is not None and row.status not in PROMOTABLE:
             untouched += 1
             continue
         await repository.upsert(

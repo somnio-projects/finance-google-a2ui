@@ -35,7 +35,7 @@ async def test_an_unknown_address_is_added_as_an_active_member() -> None:
     assert row.invited_by == PROVISION_JOB
 
 
-@pytest.mark.parametrize("status", ["active", "invited", "requested", "revoked"])
+@pytest.mark.parametrize("status", ["active", "invited", "revoked"])
 async def test_an_existing_row_is_left_exactly_as_it_was(status: str) -> None:
     repo = FakeUserRepository()
     await repo.upsert(
@@ -50,6 +50,36 @@ async def test_an_existing_row_is_left_exactly_as_it_was(status: str) -> None:
     # Role, status and the record of who invited them all survive.
     assert (row.role, row.status, row.invited_by) == ("admin", status, "admin")
     assert row.display_name == "Kept"
+
+
+async def test_a_request_is_answered_rather_than_left_where_it_was() -> None:
+    """The trap this closes: asking for access used to make things worse.
+
+    `POST /v1/access-requests` writes a `requested` row. Once it existed,
+    open enrolment skipped the caller (a row was there) and this job skipped
+    them too (an existing row was never touched), so the person who clicked
+    *Request access* was stuck in the one state neither path would move.
+    Two people were, on dev, before this (spec 0042).
+    """
+    repo = FakeUserRepository()
+    await repo.upsert(
+        email=NEW,
+        display_name=None,
+        role="member",
+        status="requested",
+        invited_by=None,
+    )
+
+    added, untouched = await provision_into(repo, emails=[NEW])  # type: ignore[arg-type]
+    row = await repo.find_by_email(NEW)
+
+    assert (added, untouched) == (1, 0)
+    assert row is not None
+    assert (row.role, row.status, row.invited_by) == (
+        "member",
+        "active",
+        PROVISION_JOB,
+    )
 
 
 async def test_re_running_the_same_list_changes_nothing_the_second_time() -> None:
