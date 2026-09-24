@@ -4757,3 +4757,34 @@ written.
 the A2UI preview."* On dev that is now false. It is chrome with no signal
 behind it — `/v1/me/access` only answers after sign-in — so fixing it is a
 contract change, named in spec 0040 §5 rather than left to be discovered.
+
+## 2026-09-24 — A job provisions the demo audience
+
+**Spec:** [`backend/0041`](../specs/backend/0041-a-job-provisions-the-demo-audience.md).
+Branch `feat/a_job_provisions_the_demo_audience`.
+
+Five accounts in Firebase Auth on dev, one in the provisioning registry. Open
+enrolment (spec 0040) means none of them is stuck — each gets a row on their
+first sign-in — but there was **no way to write the row beforehand**, and a
+demo audience decided in advance is a different thing from whoever happened to
+open the app.
+
+**Why a job rather than one of the three faster levers.** The admin API needs
+an `admin` scope and dev sets `AUTH_ADMIN_REQUIRE_MFA=true`, so a minted token
+cannot carry the `amr` it wants; Cloud SQL is on a private VPC; and
+`AUTH_BOOTSTRAP_ADMINS` would have worked while making every demo viewer an
+**admin**. The third was the tempting one, and it is the reason to write this
+down: the fast lever granted more than the task needed.
+
+**Where it deliberately differs from `seed_portfolios`, which it otherwise
+copies:** there is no `--reset`. Replacing a portfolio is reversible and harms
+nobody; replacing an account's status would undo an offboarding somebody
+performed. Two jobs, one shape, one difference — and the difference is the
+ruling.
+
+**A gate paid off immediately.** `test_dev_environment.sh` loops over every
+`google_cloud_run_v2_job` found in `run.tf` and requires the delivery label,
+`ignore_changes` on the image, **and** a deployer IAM binding. The new job was
+red on the third until `delivery.tf` gained it — which is exactly the failure
+that cost a deploy two days ago (spec `infra/0005`), caught this time before
+anything shipped.

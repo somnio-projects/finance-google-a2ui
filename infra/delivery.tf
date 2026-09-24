@@ -138,6 +138,7 @@ resource "google_cloud_run_v2_job_iam_member" "deployer_owns_delivery_jobs" {
     migrate         = google_cloud_run_v2_job.migrate.name
     purge_audit     = google_cloud_run_v2_job.purge_audit.name
     seed_portfolios = google_cloud_run_v2_job.seed_portfolios.name
+    provision_users = google_cloud_run_v2_job.provision_users.name
   }
 
   name     = each.value

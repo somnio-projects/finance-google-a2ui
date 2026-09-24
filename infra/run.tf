@@ -428,3 +428,86 @@ resource "google_cloud_run_v2_job" "seed_portfolios" {
     ignore_changes = [template[0].template[0].containers[0].image]
   }
 }
+
+# Put named people in the provisioning registry before they sign in.
+#
+# `AUTH_OPEN_ENROLMENT` already admits an unknown verified identity on its
+# first sign-in (spec backend/0040), so nobody needs this to get in. What it
+# adds is the row **beforehand**: a demo audience somebody decided on rather
+# than a side effect of who happened to open the app, and a way to open an
+# environment with enrolment off to named people.
+#
+# Members, never admins — the first admins come from AUTH_BOOTSTRAP_ADMINS and
+# nothing else creates one. An existing row is never touched, whatever its
+# status, so a run cannot undo an offboarding (spec backend/0041).
+#
+# `var.provisioned_users` is EMPTY by default and an argument-less run fails
+# loudly, for the same reason the seed job's list is: an address in an
+# open-source repository is somebody's name. It is normally overridden per run
+# with `gcloud run jobs execute --args=a@x,b@y`.
+resource "google_cloud_run_v2_job" "provision_users" {
+  name                = "${local.name}-provision-users"
+  location            = var.region
+  deletion_protection = false
+  labels              = local.delivery_owned_labels
+  depends_on          = [google_secret_manager_secret_iam_member.backend_accessor]
+
+  template {
+    template {
+      service_account = google_service_account.backend.email
+      max_retries     = 0 # the job is idempotent; a blind retry still tells nobody
+      timeout         = "600s"
+
+      vpc_access {
+        connector = one(google_vpc_access_connector.run[*].id)
+        egress    = "PRIVATE_RANGES_ONLY"
+
+        dynamic "network_interfaces" {
+          for_each = local.ephemeral ? [1] : []
+          content {
+            network    = google_compute_network.vpc.id
+            subnetwork = google_compute_subnetwork.connector.id
+          }
+        }
+      }
+
+      containers {
+        image   = var.backend_image
+        command = ["python", "-m", "app.jobs.provision_users"]
+        args    = var.provisioned_users
+
+        dynamic "env" {
+          for_each = { for k, v in local.backend_env : k => v if k != "RUN_MIGRATIONS" }
+          content {
+            name  = env.key
+            value = env.value
+          }
+        }
+
+        dynamic "env" {
+          for_each = local.backend_secret_env
+          content {
+            name = env.key
+            value_source {
+              secret_key_ref {
+                secret  = env.value
+                version = "latest"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # The deploy owns the image; Terraform must not take it back. Measured
+  # before this block existed, `terraform plan` on dev read:
+  #
+  #   ~ image = "…/backend@sha256:854327a4…" -> "…/backend:latest"
+  #
+  # i.e. an apply would have undone a hand-fix applied hours earlier and
+  # re-armed the trap. See spec infra/0004 §4.
+  lifecycle {
+    ignore_changes = [template[0].template[0].containers[0].image]
+  }
+}
