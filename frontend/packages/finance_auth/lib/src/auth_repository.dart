@@ -6,6 +6,7 @@ import 'package:finance_auth/src/auth_session.dart';
 import 'package:finance_auth/src/auth_state.dart';
 import 'package:finance_auth/src/email_sign_in_outcome.dart';
 import 'package:finance_auth/src/identity_provider.dart';
+import 'package:finance_auth/src/sign_in_policy.dart';
 import 'package:finance_core/finance_core.dart';
 
 /// Joins *who* (the identity provider) with *whether* (the registry).
@@ -91,6 +92,9 @@ class AuthRepository {
   /// The *Request access* link.
   Future<Result<void>> requestAccess(String email) =>
       _access.requestAccess(email);
+
+  /// Which door this deployment has (spec backend/0043).
+  Future<Result<SignInPolicy>> signInPolicy() => _access.signInPolicy();
 
   /// Ends the session everywhere.
   Future<void> signOut() async {

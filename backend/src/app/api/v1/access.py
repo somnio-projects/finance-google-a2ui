@@ -1,9 +1,11 @@
-"""Access controllers (spec 0027): may this caller in, and how does one ask.
+"""Access controllers: may this caller in, which door is it, and how to ask.
 
-Two of the three routes are **unauthenticated by contract**, like the health
+Three of the four routes are **unauthenticated by contract**, like the health
 probes (ADR-B D-3): a person who cannot sign in yet has no bearer token to
-present. Both are bounded — the request body is one e-mail, the answer never
-says whether the e-mail is known, and the rate limit applies per client.
+present. All three are bounded — the request body is one e-mail, the answer
+never says whether the e-mail is known, and the rate limit applies per client.
+The fourth of them, `sign-in-policy`, takes no input at all and answers the
+same enumerated value to everybody (spec 0043 OD-2).
 """
 
 from typing import Annotated
@@ -11,6 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 
 from app.api.deps import (
+    ContainerDep,
     PrincipalDep,
     RequestIdDep,
     UsersDep,
@@ -23,6 +26,7 @@ from app.schemas.access import (
     PreviewSignIn,
     PreviewSignInResponse,
 )
+from app.schemas.sign_in_policy import SignInPolicy
 from app.services.preview_sign_in_service import PreviewSignInService
 
 router = APIRouter(prefix="/v1", tags=["identity"])
@@ -49,6 +53,27 @@ async def read_my_access(
 ) -> AccessResponse:
     """Return the caller's provisioning state. Spec 0027 AC-1."""
     return await service.access_for(principal, request_id=request_id)
+
+
+@router.get(
+    "/sign-in-policy",
+    response_model=SignInPolicy,
+    operation_id="read_sign_in_policy",
+    summary="Say whether this deployment enrols strangers",
+    description=(
+        "Answers `open` when a verified identity the registry has never seen "
+        "is admitted and enrolled on its first call, and `invite-only` when "
+        "only an `invited` or `active` account may in. Unauthenticated by "
+        "contract — the screen asks this *before* anybody has a token, which "
+        "is the one moment it cannot ask `GET /v1/me/access`. Takes no input, "
+        "reads no table, and answers the same value to every caller. "
+        "Spec 0043 AC-1."
+    ),
+    responses=problem_responses(429, 500, 503),
+)
+async def read_sign_in_policy(container: ContainerDep) -> SignInPolicy:
+    """Name the door this deployment has. Spec 0043 AC-1, AC-2."""
+    return SignInPolicy.of(open_enrolment=container.settings.auth_open_enrolment)
 
 
 @router.post(

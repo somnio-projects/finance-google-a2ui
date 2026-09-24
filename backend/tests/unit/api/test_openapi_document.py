@@ -28,7 +28,7 @@ def test_the_document_covers_every_operation_the_routers_carry(
         (path, method) for path, item in served["paths"].items() for method in item
     ]
     assert len(operations) == len(route_facts(app))
-    assert len(operations) == 23, "a route was added or removed — update the spec"
+    assert len(operations) == 24, "a route was added or removed — update the spec"
 
 
 def test_the_bearer_scheme_is_declared_and_required_where_it_is_enforced(

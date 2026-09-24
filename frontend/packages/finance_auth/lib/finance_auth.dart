@@ -14,3 +14,4 @@ export 'src/auth_session.dart';
 export 'src/auth_state.dart';
 export 'src/email_sign_in_outcome.dart';
 export 'src/identity_provider.dart';
+export 'src/sign_in_policy.dart';

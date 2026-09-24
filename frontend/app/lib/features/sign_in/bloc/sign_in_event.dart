@@ -64,3 +64,15 @@ final class SignInProvisioning extends SignInEvent {
   /// Creates the event.
   const SignInProvisioning();
 }
+
+/// Ask the backend which door this deployment has (spec backend/0043).
+///
+/// Added by the page when it builds the bloc, not by a tap: the screen needs
+/// the answer to draw itself, and it needs it once (0043 OD-6). Deliberately
+/// **not** added by the bloc's own constructor — a bloc that posts itself an
+/// event on construction emits a state into every `blocTest` sequence that
+/// has nothing to do with it, and the tests then encode the noise.
+final class SignInPolicyRequested extends SignInEvent {
+  /// Creates the event.
+  const SignInPolicyRequested();
+}

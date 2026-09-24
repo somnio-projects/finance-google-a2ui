@@ -23,6 +23,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInEmailSubmitted>(_onEmail);
     on<SignInLinkCompleted>(_onLink);
     on<SignInAccessRequested>(_onAccessRequested);
+    on<SignInPolicyRequested>(_onPolicy);
     on<SignInMessageDismissed>(
       (event, emit) => emit(state.copyWith(message: () => null)),
     );
@@ -118,28 +119,18 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     }
   }
 
-  /// A sign-in came back: the repository's state says whether it admitted.
-  void _settle(Result<void> result, Emitter<SignInState> emit) {
-    if (result case Err<void>(:final failure)) {
-      emit(
-        state.copyWith(
-          status: SignInStatus.idle,
-          message: () => failure.message,
-        ),
-      );
-      return;
+  Future<void> _onPolicy(
+    SignInPolicyRequested event,
+    Emitter<SignInState> emit,
+  ) async {
+    // A failed read leaves the policy unknown on purpose: the screen then
+    // claims nothing, rather than claiming the door it could not see.
+    if (await _auth.signInPolicy() case Ok<SignInPolicy>(:final value)) {
+      emit(state.copyWith(policy: value));
     }
-    final auth = _auth.state;
-    if (auth.status == AuthStatus.notProvisioned) {
-      // The design's third state: the backend's own sentence, verbatim.
-      emit(
-        state.copyWith(
-          status: SignInStatus.idle,
-          message: () => auth.decision?.message,
-        ),
-      );
-      return;
-    }
-    emit(state.copyWith(status: SignInStatus.idle));
   }
+
+  /// A sign-in came back: the repository's state says whether it admitted.
+  void _settle(Result<void> result, Emitter<SignInState> emit) =>
+      emit(state.settled(result, _auth.state));
 }

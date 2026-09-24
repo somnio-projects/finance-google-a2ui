@@ -7,17 +7,17 @@ them — the rule is enforced, not aspirational.
 
 The projection half of the contract (ADR-K: one example per registered view,
 an options schema, a discriminator literal) is asserted in
-``test_openapi_projections.py`` — same gate, split out to stay inside the
+``test_openapi_projections.py``, and the `problem_responses` builder in
+``test_openapi_helpers.py`` — same gate, split out to stay inside the
 150-line budget.
 """
 
 from typing import Any
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA, problem_responses
+from app.api.openapi import PROBLEM_DESCRIPTIONS, TAGS_METADATA
 
 #: Routes FastAPI generates for the documentation itself.
 GENERATED = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
@@ -33,6 +33,9 @@ PUBLIC = {
     # Spec 0027: a person who cannot sign in yet has no token to present.
     "/v1/access-requests",
     "/v1/preview-sign-ins",
+    # Spec 0043: the same reason, for the one question the sign-in screen has
+    # to ask *before* it can ask anything else — which door this is.
+    "/v1/sign-in-policy",
 }
 
 
@@ -97,21 +100,6 @@ def test_every_schema_property_is_described(app: FastAPI) -> None:
                 option.get("description") for option in spec.get("anyOf", [])
             )
             assert described, f"{name}.{field} has no description"
-
-
-def test_problem_responses_are_built_from_one_place() -> None:
-    built = problem_responses(401, 503)
-    assert set(built) == {401, 503}
-    assert built[401]["description"] == PROBLEM_DESCRIPTIONS[401]
-    assert built[401]["model"].__name__ == "ProblemDetails"
-    example = built[503]["content"]["application/problem+json"]["example"]
-    assert example["type"] == "https://errors.finance-a2ui/dependency-unavailable"
-    assert example["status"] == 503
-
-
-def test_problem_responses_rejects_an_undocumented_status() -> None:
-    with pytest.raises(KeyError, match="418"):
-        problem_responses(418)
 
 
 def test_document_describes_the_service_and_its_tags(app: FastAPI) -> None:

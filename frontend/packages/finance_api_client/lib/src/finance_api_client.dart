@@ -44,17 +44,24 @@ class FinanceApiClient {
   /// in one request. [ifNoneMatch] is an `ETag` from a previous response,
   /// passed back verbatim; a 304 comes back as a successful [JsonResponse]
   /// with no body.
+  ///
+  /// [authenticated] is false for a route a person reaches *before* they have
+  /// a token — the same allowance [postJson] already makes, for the same
+  /// reason (spec backend/0043): no `Authorization` header is sent, and a 401
+  /// there is an answer rather than the end of a session.
   Future<Result<JsonResponse>> getJson(
     String path, {
     Map<String, List<String>> query = const <String, List<String>>{},
     String? ifNoneMatch,
+    bool authenticated = true,
   }) async {
     final uri = _resolve(path, query);
-    final headers = await _headers(ifNoneMatch);
+    final headers = await _headers(ifNoneMatch, authenticated: authenticated);
     try {
       final response = await _httpClient.get(uri, headers: headers);
       return decodeJsonResponse(
         response,
+        authenticated: authenticated,
         onUnauthenticated: _onUnauthenticated,
       );
     } on http.ClientException {
@@ -72,9 +79,9 @@ class FinanceApiClient {
 
   /// `POST`s [body] as JSON to [path] and decodes the answer like [getJson].
   ///
-  /// [authenticated] is false for the two routes a person reaches *before*
-  /// they have a token (spec backend/0027): no `Authorization` header is
-  /// sent, and a 401 there is an answer, not the end of a session.
+  /// [authenticated] is false for the routes a person reaches *before* they
+  /// have a token (spec backend/0027): no `Authorization` header is sent, and
+  /// a 401 there is an answer, not the end of a session.
   Future<Result<JsonResponse>> postJson(
     String path, {
     Object? body,

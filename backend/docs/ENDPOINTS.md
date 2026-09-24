@@ -19,6 +19,7 @@ in production.
 | `GET` | `/health` | public | — | Report process liveness | 0001 |
 | `GET` | `/readyz` | public | — | Report readiness of every dependency | 0001 |
 | `GET` | `/v1/me/access` | bearer | — | Say whether the caller may use the preview | 0027 |
+| `GET` | `/v1/sign-in-policy` | public | — | Say whether this deployment enrols strangers | 0043 |
 | `POST` | `/v1/access-requests` | public | — | Ask to be invited | 0027 |
 | `POST` | `/v1/preview-sign-ins` | public | — | Sign in with a provisioned e-mail (local stacks only) | 0027 |
 | `GET` | `/v1/admin/feature-flags` | bearer | — | List every persisted feature flag | 0002 |

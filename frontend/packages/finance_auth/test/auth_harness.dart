@@ -69,7 +69,7 @@ class ScriptedIdentity implements IdentityProvider {
   Future<void> signOut() async => calls.add('signOut');
 }
 
-/// A backend answering the three provisioning routes from a script.
+/// A backend answering the provisioning routes from a script.
 class FakeBackend {
   FakeBackend({this.provisioned = true, this.previewToken = 'minted'});
 
@@ -77,6 +77,9 @@ class FakeBackend {
   String? previewToken;
   int accessStatus = 200;
   int requestStatus = 202;
+
+  /// The wire value `/v1/sign-in-policy` answers with; null answers 503.
+  String? enrolment = SignInPolicy.inviteOnlyValue;
   final List<http.Request> requests = <http.Request>[];
 
   late final FinanceApiClient client = FinanceApiClient(
@@ -107,6 +110,9 @@ class FakeBackend {
         }, status: 201);
       case '/v1/access-requests':
         return http.Response('', requestStatus);
+      case '/v1/sign-in-policy':
+        if (enrolment == null) return http.Response('', 503);
+        return _json(<String, dynamic>{'enrolment': enrolment});
     }
     return http.Response('', 404);
   }

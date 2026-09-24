@@ -61,6 +61,29 @@ void main() {
     );
 
     test(
+      'an unauthenticated get carries no bearer and does not sign out',
+      () async {
+        // `GET /v1/sign-in-policy` is asked before anybody has a token
+        // (spec backend/0043), so the read path needs the same allowance the
+        // post path already had — including the half that matters more: a
+        // 401 there must not end a session that never started.
+        var signedOut = 0;
+        final harness = ClientHarness(
+          (_) async => _problem(401, 'auth/missing-token'),
+          tokenProvider: () async => 't0k3n',
+          onUnauthenticated: () => signedOut++,
+        );
+        final result = await harness.client.getJson(
+          '/v1/sign-in-policy',
+          authenticated: false,
+        );
+        expect(harness.only.headers.containsKey('authorization'), isFalse);
+        expect(result.failureOrNull, isA<ProblemFailure>());
+        expect(signedOut, equals(0));
+      },
+    );
+
+    test(
       'a 401 on an authenticated call tells the session it is over',
       () async {
         var signedOut = 0;
