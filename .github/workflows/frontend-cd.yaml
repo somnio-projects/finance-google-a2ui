@@ -292,7 +292,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Take the bytes the gate verified (actions/download-artifact)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: frontend-bundle-${{ github.sha }}
           path: frontend/app/build/web
