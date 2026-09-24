@@ -6,6 +6,7 @@ import 'package:finance_app/features/home/view/home_hero.dart';
 import 'package:finance_app/features/home/view/home_movers.dart';
 import 'package:finance_app/features/home/view/home_questions.dart';
 import 'package:finance_app/features/shell/view/session_sheet.dart';
+import 'package:finance_app/features/shell/view/tab_failure.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,8 +33,11 @@ class HomeView extends StatelessWidget {
       builder: (context, state) {
         final summary = state.summary;
         if (state.status == HomeStatus.failure) {
-          return _Failure(
+          // The same failure state as the other tabs, with the same way out
+          // (GGU-110 AC-1); this file used to draw its own, without one.
+          return TabFailure(
             message: state.failure?.message ?? 'The request failed.',
+            onRetry: () => context.read<HomeBloc>().add(const HomeRequested()),
           );
         }
         // Before the first payload the page is drawn as shimmer, in its own
@@ -100,19 +104,4 @@ class HomeView extends StatelessWidget {
       },
     );
   }
-}
-
-class _Failure extends StatelessWidget {
-  const _Failure({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      // Shown verbatim: the backend's own safe `detail`, never a stack trace.
-      child: Text(message, textAlign: TextAlign.center),
-    ),
-  );
 }

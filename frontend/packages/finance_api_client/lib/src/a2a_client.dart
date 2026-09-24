@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:finance_api_client/src/a2a_envelope.dart';
 import 'package:finance_api_client/src/auth_token_provider.dart';
 import 'package:finance_api_client/src/event_stream.dart';
+import 'package:finance_api_client/src/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,9 +21,13 @@ class A2aClient {
     required Uri baseUrl,
     required http.Client httpClient,
     required AuthTokenProvider tokenProvider,
+    this.timeout = FinanceApiClient.defaultTimeout,
   }) : _baseUrl = baseUrl,
        _httpClient = httpClient,
        _tokenProvider = tokenProvider;
+
+  /// How long the open may take — headers back, not the stream (GGU-110).
+  final Duration timeout;
 
   /// The A2UI extension this client negotiates, echoed on every turn.
   ///
@@ -68,11 +73,19 @@ class A2aClient {
             'kind': 'data',
             'data': <String, dynamic>{'action': action, 'args': actionArgs},
           };
+    final String? token;
+    try {
+      token = await _tokenProvider();
+    } on Object {
+      return const Err<Stream<Map<String, dynamic>>>(
+        TransportFailure(credentialUnavailable),
+      );
+    }
     final request = http.Request('POST', _baseUrl.resolve('/'))
-      ..headers.addAll(await _headers())
+      ..headers.addAll(_headers(token))
       ..body = jsonEncode(a2aEnvelope(part, messageId, contextId, requestId));
     try {
-      final response = await _httpClient.send(request);
+      final response = await _httpClient.send(request).timeout(timeout);
       return await _interpret(response);
     } on http.ClientException {
       // Never `error.message`: on BrowserClient it carries the target URL,
@@ -127,15 +140,11 @@ class A2aClient {
     return 'the agent refused the request';
   }
 
-  Future<Map<String, String>> _headers() async {
-    final headers = <String, String>{
-      'content-type': 'application/json',
-      'accept': 'text/event-stream',
-      'x-a2a-extensions': a2uiExtension,
-    };
-    final token = await _tokenProvider();
+  Map<String, String> _headers(String? token) => <String, String>{
+    'content-type': 'application/json',
+    'accept': 'text/event-stream',
+    'x-a2a-extensions': a2uiExtension,
     // The credential lives in this header and nowhere else (N-14).
-    if (token != null) headers['authorization'] = 'Bearer $token';
-    return headers;
-  }
+    if (token != null) 'authorization': 'Bearer $token',
+  };
 }

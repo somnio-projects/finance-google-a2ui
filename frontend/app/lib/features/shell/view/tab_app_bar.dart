@@ -91,23 +91,6 @@ class _TabAppBarState extends State<TabAppBar> {
   }
 }
 
-/// The tab's failure state: the backend's sentence, centred.
-class TabFailure extends StatelessWidget {
-  /// Creates the state.
-  const TabFailure({required this.message, super.key});
-
-  /// The failure's words, verbatim.
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(message, textAlign: TextAlign.center),
-    ),
-  );
-}
-
 /// What a tab shows instead of its list when a filter kept nothing.
 ///
 /// The sentence is the **payload's** (`empty`), never one composed here:

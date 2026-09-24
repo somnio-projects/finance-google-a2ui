@@ -99,12 +99,4 @@ void main() {
       expect(find.text('No holdings match this.'), findsOneWidget);
     });
   });
-
-  group(TabFailure, () {
-    testWidgets('prints the backend sentence', (tester) async {
-      await tester.pumpApp(const Scaffold(body: TabFailure(message: 'oh no')));
-
-      expect(find.text('oh no'), findsOneWidget);
-    });
-  });
 }

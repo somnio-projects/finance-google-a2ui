@@ -17,4 +17,10 @@ void main() {
       );
     });
   });
+
+  group(ConversationRetried, () {
+    test('carries nothing: what it repeats is read from the state', () {
+      expect(const ConversationRetried().props, isEmpty);
+    });
+  });
 }
