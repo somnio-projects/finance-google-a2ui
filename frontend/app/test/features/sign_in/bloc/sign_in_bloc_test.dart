@@ -39,6 +39,9 @@ void main() {
       act: (bloc) => bloc.add(const SignInGoogleRequested()),
       expect: () => const <SignInState>[
         SignInState(status: SignInStatus.busy),
+        // The backend has not answered yet, and on a first sign-in it may be
+        // enrolling this identity (spec backend/0040). The screen says so.
+        SignInState(status: SignInStatus.provisioning),
         SignInState(),
       ],
     );
@@ -67,6 +70,9 @@ void main() {
       act: (bloc) => bloc.add(const SignInGoogleRequested()),
       expect: () => const <SignInState>[
         SignInState(status: SignInStatus.busy),
+        // The backend has not answered yet; on a first sign-in it may be
+        // enrolling this identity (spec backend/0040).
+        SignInState(status: SignInStatus.provisioning),
         SignInState(message: "This account isn't provisioned for the preview."),
       ],
     );

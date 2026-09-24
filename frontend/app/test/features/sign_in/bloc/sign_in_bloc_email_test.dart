@@ -18,6 +18,12 @@ void main() {
       act: (bloc) => bloc.add(const SignInEmailSubmitted('demo@somnio.dev')),
       expect: () => const <SignInState>[
         SignInState(status: SignInStatus.busy, email: 'demo@somnio.dev'),
+        // The backend has not answered yet; on a first sign-in it may be
+        // enrolling this identity (spec backend/0040).
+        SignInState(
+          status: SignInStatus.provisioning,
+          email: 'demo@somnio.dev',
+        ),
         SignInState(email: 'demo@somnio.dev'),
       ],
     );
@@ -58,6 +64,12 @@ void main() {
       ),
       expect: () => const <SignInState>[
         SignInState(status: SignInStatus.busy, email: 'demo@somnio.dev'),
+        // The backend has not answered yet; on a first sign-in it may be
+        // enrolling this identity (spec backend/0040).
+        SignInState(
+          status: SignInStatus.provisioning,
+          email: 'demo@somnio.dev',
+        ),
         SignInState(email: 'demo@somnio.dev'),
       ],
     );

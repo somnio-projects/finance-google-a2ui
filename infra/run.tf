@@ -25,6 +25,7 @@ locals {
     AUTH_AUDIENCE             = var.auth_audience
     AUTH_OIDC_JWKS_URL        = var.auth_oidc_jwks_url
     AUTH_BOOTSTRAP_ADMINS     = var.auth_bootstrap_admins
+    AUTH_OPEN_ENROLMENT       = tostring(var.auth_open_enrolment)
     AUTH_ADMIN_REQUIRE_MFA    = "true"
     AUDIT_RETENTION_DAYS      = "400"
     RUN_MIGRATIONS            = "true"

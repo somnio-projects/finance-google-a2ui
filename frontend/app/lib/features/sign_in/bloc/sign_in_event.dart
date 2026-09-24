@@ -58,3 +58,9 @@ final class SignInMessageDismissed extends SignInEvent {
   /// Creates the event.
   const SignInMessageDismissed();
 }
+
+/// The backend is deciding, and may be enrolling this identity.
+final class SignInProvisioning extends SignInEvent {
+  /// Creates the event.
+  const SignInProvisioning();
+}

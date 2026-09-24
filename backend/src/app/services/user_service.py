@@ -22,6 +22,7 @@ from app.schemas.access import (
 )
 from app.schemas.users import UserInvite, UserResponse
 from app.services.audit_service import AuditService
+from app.services.user_enrolment import enrol
 
 ADMIN_SCOPE: Final[str] = "admin"
 
@@ -36,12 +37,14 @@ class UserService:
         audit: AuditService,
         clock: Clock,
         require_mfa: bool = False,
+        open_enrolment: bool = False,
     ) -> None:
         """Bind the request-scoped repository, the audit trail and the clock."""
         self._repository = repository
         self._audit = audit
         self._clock = clock
         self._require_mfa = require_mfa
+        self._open_enrolment = open_enrolment
 
     async def access_for(
         self, principal: Principal, *, request_id: str
@@ -49,6 +52,10 @@ class UserService:
         """Say whether ``principal`` may use the preview; activate an invitee."""
         email = principal.email.lower() if principal.email else None
         row = await self._repository.find_by_email(email) if email else None
+        if row is None and email and self._open_enrolment:
+            return await enrol(
+                self._repository, self._audit, principal, email, request_id=request_id
+            )
         if row is None or row.status not in PROVISIONED:
             return AccessResponse(
                 email=email,

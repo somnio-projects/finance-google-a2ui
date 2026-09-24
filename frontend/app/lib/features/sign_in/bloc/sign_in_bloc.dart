@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:finance_auth/finance_auth.dart';
@@ -24,10 +26,25 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInMessageDismissed>(
       (event, emit) => emit(state.copyWith(message: () => null)),
     );
+    on<SignInProvisioning>(
+      (event, emit) => emit(state.copyWith(status: SignInStatus.provisioning)),
+    );
+    // The window between "the provider vouched" and "the registry answered"
+    // is the repository's to report; the screen only says so.
+    _watch = _auth.changes
+        .where((auth) => auth.status == AuthStatus.provisioning)
+        .listen((_) => add(const SignInProvisioning()));
   }
 
   final AuthRepository _auth;
   final Uri _continueUrl;
+  late final StreamSubscription<AuthState> _watch;
+
+  @override
+  Future<void> close() async {
+    await _watch.cancel();
+    await super.close();
+  }
 
   /// Whether the e-mail button sends a link (a provider exists) or signs in.
   bool get usesEmailLink => _auth.usesEmailLink;

@@ -115,7 +115,12 @@ class AuthRepository {
   }
 
   Future<Result<void>> _admit(AuthSession session) async {
-    _state = AuthState(session: session);
+    // Emitted, not just assigned. The provider has vouched for them and the
+    // registry has not answered yet — and on a first sign-in it may be
+    // writing a row before it can (spec `backend/0040`). This window used to
+    // be invisible, so the screen showed the sign-in form as though nothing
+    // had happened.
+    _emit(AuthState(status: AuthStatus.provisioning, session: session));
     switch (await _access.access()) {
       case Err<AccessDecision>(:final failure):
         _emit(const AuthState(status: AuthStatus.signedOut));

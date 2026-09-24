@@ -15,6 +15,10 @@ from app.schemas.users import Email, UserRole, UserStatus
 PROVISIONED: Final[frozenset[str]] = frozenset({"invited", "active"})
 NOT_PROVISIONED_MESSAGE: Final[str] = "This account isn't provisioned for the preview."
 WELCOME_MESSAGE: Final[str] = "Welcome back."
+#: The first time an account enrols itself. Distinct from WELCOME_MESSAGE
+#: because "Welcome back" to somebody who has never been here is a small lie,
+#: and this sentence is shown verbatim (N-9).
+ENROLLED_MESSAGE: Final[str] = "Your account is ready."
 
 
 class AccessResponse(BaseModel):
