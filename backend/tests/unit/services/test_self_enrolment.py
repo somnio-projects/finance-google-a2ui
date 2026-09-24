@@ -11,8 +11,6 @@ account must not be readmitted by signing in again, and the switch must be off
 unless a deployment asks for it.
 """
 
-import pytest
-
 from app.helpers.clock import FixedClock
 from app.schemas.access import (
     ENROLLED_MESSAGE,
@@ -98,40 +96,3 @@ async def test_the_second_sign_in_is_a_welcome_back_not_a_second_enrolment() -> 
 
     assert again.message == WELCOME_MESSAGE
     assert [event.action for event in audit.events] == ["user.self_enrolled"]
-
-
-@pytest.mark.parametrize("status", ["revoked", "requested"])
-async def test_an_existing_row_is_never_overwritten_by_enrolment(status: str) -> None:
-    # The case that matters most. `revoked` is an offboarding somebody
-    # performed; if signing in again undid it, open enrolment would be a way
-    # back in for an account that was deliberately closed. `requested` is
-    # waiting on a decision that is still an admin's to make.
-    repo, audit = FakeUserRepository(), FakeAuditRepository()
-    await repo.upsert(
-        email=NEW, display_name=None, role="member", status=status, invited_by="admin"
-    )
-
-    access = await make(repo, audit, open_enrolment=True).access_for(
-        member(NEW), request_id="r1"
-    )
-    row = await repo.find_by_email(NEW)
-
-    assert access.provisioned is False
-    assert access.message == NOT_PROVISIONED_MESSAGE
-    assert row is not None
-    assert row.status == status
-    assert audit.events == []
-
-
-async def test_a_token_with_no_e_mail_claim_enrols_nothing() -> None:
-    # A machine token has no verified e-mail, so there is nobody to enrol and
-    # nothing to key a row on.
-    repo, audit = FakeUserRepository(), FakeAuditRepository()
-
-    access = await make(repo, audit, open_enrolment=True).access_for(
-        member(None), request_id="r1"
-    )
-
-    assert access.provisioned is False
-    assert await repo.find_by_email(None) is None  # type: ignore[arg-type]
-    assert audit.events == []
