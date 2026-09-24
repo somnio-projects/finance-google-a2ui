@@ -13,8 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'workspace_sources.dart';
 
-/// The two places a spinner is the *right* affordance: a control the person
-/// just operated whose effect is in flight (0020 OD-1).
+/// The three places a spinner is the *right* affordance: a control the
+/// person just operated whose effect is in flight (0020 OD-1).
 ///
 /// Allowed by path, the way `binding_rules_test.dart` allows the geometry
 /// seam. Both are attached to a control, neither is a page's whole body.
@@ -23,6 +23,13 @@ const Set<String> actionSpinners = <String>{
   'app/lib/features/sign_in/view/sign_in_email_form.dart',
   // A ticket field being re-rendered by the backend (spec 0006 AC-7).
   'app/lib/components/order_ticket/order_ticket_busy_dot.dart',
+  // The same control, one step later: the credential was accepted and the
+  // registry has not answered — and on a first sign-in it is enrolling this
+  // identity (spec backend/0040). There is no page to skeleton here; the
+  // sign-in form has no payload and is still on screen, disabled. A spinner
+  // beside the buttons the person just pressed is the affordance 0020 OD-1
+  // describes, not the page-shaped wait it forbids.
+  'app/lib/features/sign_in/view/sign_in_provisioning_note.dart',
 };
 
 /// The 0015 primitives, the only files allowed to drive an animation.
@@ -65,10 +72,16 @@ void main() {
       );
     });
 
-    test('the two action spinners are the only exemption, and both exist', () {
-      // The size of the hole is the thing worth pinning: a third entry is a
-      // third hole, and an entry that outlives its file is one nobody sees.
-      expect(actionSpinners, hasLength(2));
+    test('the three action spinners are the only exemption, and all exist', () {
+      // The size of the hole is the thing worth pinning: a fourth entry is a
+      // fourth hole, and an entry that outlives its file is one nobody sees.
+      //
+      // It went from two to three on 2026-09-23, deliberately and with the
+      // count edited in the same commit as the entry — which is what this
+      // assertion exists to force. The third is the sign-in screen's
+      // provisioning note: the same control one step later, with no page to
+      // skeleton behind it (spec backend/0040).
+      expect(actionSpinners, hasLength(3));
       final paths = sources.under('app/lib').keys;
       for (final spinner in actionSpinners) {
         expect(paths, contains(spinner));

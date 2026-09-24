@@ -15,4 +15,9 @@ auth_oidc_jwks_url = "https://www.googleapis.com/service_accounts/v1/jwk/securet
 # Flutter dev server, and the local static preview.
 cors_allowed_origins  = "https://finance-a2ui.web.app,https://finance-a2ui.firebaseapp.com,http://localhost:8080,http://localhost:5173"
 auth_bootstrap_admins = "lbertuzzi@somniosoftware.com"
+# The preview is open on dev: anyone who can sign in with Google gets an
+# account (spec backend/0040). Not a shortcut around the registry — the row
+# is written and audited; a revoked account still stays revoked. Production
+# and staging leave this at its `false` default.
+auth_open_enrolment = true
 alert_email           = "lbertuzzi@somniosoftware.com"

@@ -22,6 +22,7 @@ def get_user_service(
         audit=audit,
         clock=container.clock,
         require_mfa=container.settings.admin_mfa_required,
+        open_enrolment=container.settings.auth_open_enrolment,
     )
 
 

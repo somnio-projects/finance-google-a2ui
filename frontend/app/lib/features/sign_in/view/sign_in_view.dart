@@ -3,6 +3,7 @@ import 'package:finance_app/features/sign_in/view/sign_in_email_form.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_footer.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_hero.dart';
+import 'package:finance_app/features/sign_in/view/sign_in_provisioning_note.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_snack.dart';
 import 'package:finance_app/theme/login_tokens.dart';
 import 'package:finance_app/theme/theme_toggle_button.dart';
@@ -97,6 +98,7 @@ class _Body extends StatelessWidget {
                           : SignInLinkCompleted(email: email, link: link),
                     ),
                   ),
+                  if (state.isProvisioning) const SignInProvisioningNote(),
                   const SizedBox(height: 24),
                   SignInInviteLine(
                     onRequestAccess: (email) =>

@@ -10,6 +10,14 @@ enum AuthStatus {
   /// Nobody is signed in.
   signedOut,
 
+  /// The provider vouched for them and the backend has not answered yet.
+  ///
+  /// It is a **state**, not a gap: the registry may be enrolling this
+  /// identity for the first time (spec `backend/0040`), and a person who
+  /// just signed in and sees nothing assumes it failed. The sign-in screen
+  /// says what is happening while this holds.
+  provisioning,
+
   /// Signed in and invited: the shell may open.
   signedIn,
 

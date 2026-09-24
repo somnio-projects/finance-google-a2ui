@@ -69,6 +69,12 @@ variable "auth_oidc_jwks_url" {
   type        = string
 }
 
+variable "auth_open_enrolment" {
+  description = "Whether a verified SSO identity with no registry row enrols itself as an active member (AUTH_OPEN_ENROLMENT, spec backend/0040). FALSE by default and deliberately so: the sign-in screen says access is invite-only, and an environment that sets this true is saying the opposite. `revoked` and `requested` accounts are never enrolled either way — only the absence of a row."
+  type        = bool
+  default     = false
+}
+
 variable "auth_bootstrap_admins" {
   description = "Comma-separated e-mails made active admins at boot (AUTH_BOOTSTRAP_ADMINS, spec backend/0027 OD-2). A registry with no admin can never gain one through the API, so a fresh environment names its first admins here."
   type        = string

@@ -4722,3 +4722,38 @@ payload field and the other is chrome. A shorter version of a server-written
 phrase is not a shorter phrase — it is a different claim. The nearest existing
 guard is `test_component_names.py`'s idea: where the same fact is written twice,
 something should compare the two.
+
+## 2026-09-23 — SSO enrols itself, and the screen says so
+
+**Spec:** [`backend/0040`](../specs/backend/0040-sso-enrols-itself.md).
+Branch `feat/sso_enrols_itself`.
+
+The TL could not sign in with two of their own Google accounts: only the one
+in `AUTH_BOOTSTRAP_ADMINS` was provisioned. The instruction was *"que pueda
+loguear con SSO libremente"* and then *"el aprovisionamiento debería hacerse
+de manera automática"*. So the registry is **not** bypassed — it fills itself
+in, audited, which keeps every later decision reading one table.
+
+**The ruling worth remembering is the refusal, not the admission.** `revoked`
+and `requested` rows are never enrolled: an offboarding somebody performed
+must not be undone by signing in again. Only the *absence* of a row enrols.
+
+**A background job was asked for and argued out of, with a number.** The
+concern was that provisioning could block the API. Measured on the seeded
+stack with a brand-new identity: the first read — which also seeds sixteen
+lots and forty-eight transactions — answers in **105 ms**, the second in 7 ms.
+A queue would have replaced a hundred milliseconds nobody notices with a wait
+somebody has to be told about. The measurement is in the spec so the next
+person can compare rather than re-argue.
+
+**Two gates did their job and are worth naming.** The 150-line budget forced
+`config.py` into an `AuthSettings` mixin and enrolment out of `UserService` —
+both seams that were already implied. And `transition_rules_test.dart` pins
+the *size* of the spinner allow-list, so adding a third entry failed until the
+count was edited in the same commit; that is the assertion working exactly as
+written.
+
+**Next person:** the sign-in screen still says *"Access is invite-only during
+the A2UI preview."* On dev that is now false. It is chrome with no signal
+behind it — `/v1/me/access` only answers after sign-in — so fixing it is a
+contract change, named in spec 0040 §5 rather than left to be discovered.
