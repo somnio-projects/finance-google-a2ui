@@ -1,72 +1,36 @@
 /// Doubles for the auth seam, so a widget test can sign in without Firebase
 /// or a backend: a scripted identity provider and an in-memory access
 /// answer behind the real [AuthRepository].
+///
+/// [FakeIdentity] lives in `fake_identity.dart` and is re-exported here, so
+/// the split that keeps both files inside the 150-line budget costs no test
+/// an extra import.
 library;
 
 import 'dart:convert';
 
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_auth/finance_auth.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// An identity provider whose answers are set by the test.
-class FakeIdentity implements IdentityProvider {
-  FakeIdentity({this.isConfigured = false, this.restored});
+import 'fake_identity.dart';
 
-  @override
-  final bool isConfigured;
-  String? restored;
-  Result<AuthSession> google = const Err<AuthSession>(
-    TransportFailure(googleNotConfigured),
-  );
-  Result<void> link = const Ok<void>(null);
-  Result<AuthSession> linked = const Ok<AuthSession>(
-    AuthSession(token: 'linked', provider: 'firebase', email: 'a@b.test'),
-  );
-  final List<String> calls = <String>[];
-
-  @override
-  Future<String?> currentToken() async => restored;
-
-  @override
-  Future<Result<AuthSession>> signInWithGoogle() async {
-    calls.add('google');
-    return google;
-  }
-
-  @override
-  Future<Result<void>> sendEmailLink(
-    String email, {
-    required Uri continueUrl,
-  }) async {
-    calls.add('link:$email');
-    return link;
-  }
-
-  @override
-  bool isEmailLink(Uri link) => link.queryParameters['mode'] == 'signIn';
-
-  @override
-  Future<Result<AuthSession>> signInWithEmailLink(
-    String email,
-    Uri link,
-  ) async {
-    calls.add('linked:$email');
-    return linked;
-  }
-
-  @override
-  Future<void> signOut() async => calls.add('signOut');
-}
+export 'fake_identity.dart';
 
 /// Builds an [AuthRepository] over [identity] and a fake backend that admits
 /// [provisionedEmails] and mints a preview token for them.
+///
+/// [policy] is what `GET /v1/sign-in-policy` answers. It defaults to
+/// `inviteOnly` because that is the registry this fake actually simulates —
+/// it admits [provisionedEmails] and refuses everyone else. Pass `null` to
+/// make the read **fail**, which is the third case the screen has to handle
+/// (spec backend/0043 OD-5).
 AuthRepository fakeAuthRepository({
   FakeIdentity? identity,
   Set<String> provisionedEmails = const <String>{'demo@somnio.dev'},
   void Function()? onSignedOut,
+  SignInPolicy? policy = SignInPolicy.inviteOnly,
 }) {
   String? current;
   final client = FinanceApiClient(
@@ -116,6 +80,13 @@ AuthRepository fakeAuthRepository({
           }, status: 201);
         case '/v1/access-requests':
           return http.Response('', 202);
+        case '/v1/sign-in-policy':
+          if (policy == null) return http.Response('', 503);
+          return _json(<String, dynamic>{
+            'enrolment': policy == SignInPolicy.open
+                ? SignInPolicy.openValue
+                : SignInPolicy.inviteOnlyValue,
+          });
       }
       return http.Response('', 404);
     }),

@@ -61,7 +61,10 @@ admin) should have been untouched.
   still waits for an admin. The switch is what decides; this spec did not
   quietly open a deployment that had not opted in.
 
-- **OD-5 — what this does not fix.** The sign-in screen still offers *Request
+- **OD-5 — what this does not fix.** *(Fixed on 2026-09-24 by
+  [0043](0043-the-screen-can-ask-which-door-this-is.md): the deployment now
+  names its door and the screen shows this line only where it is true.)* The
+  sign-in screen still offers *Request
   access* on an open deployment, where it now does nothing useful: the next
   sign-in would have admitted the person anyway. That link, and the
   *"invite-only"* sentence above it, are both client chrome with no signal

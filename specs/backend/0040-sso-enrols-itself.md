@@ -96,6 +96,12 @@ and somebody who had just signed in saw the button they had pressed.
 
 ## 5. Out of scope, and one thing that is now wrong
 
+> **Closed on 2026-09-24 by [0043](0043-the-screen-can-ask-which-door-this-is.md)**,
+> which took the first of the two options named below. Left as written,
+> because what it says about *why* the screen could not know is still the
+> reasoning, and because it took two specs recording the same gap before it
+> was worth fixing — which is itself the record.
+
 **The sign-in screen still reads *"Access is invite-only during the A2UI
 preview."*** With `AUTH_OPEN_ENROLMENT=true` that sentence is false. It is
 client chrome with no signal behind it, and giving it one is a contract

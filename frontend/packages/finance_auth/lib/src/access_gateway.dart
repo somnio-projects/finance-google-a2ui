@@ -1,9 +1,10 @@
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_auth/src/access_decision.dart';
 import 'package:finance_auth/src/auth_session.dart';
+import 'package:finance_auth/src/sign_in_policy.dart';
 import 'package:finance_core/finance_core.dart';
 
-/// The three provisioning routes of spec backend/0027, as calls.
+/// The provisioning routes of specs backend/0027 and 0043, as calls.
 class AccessGateway {
   /// Creates the gateway over the one HTTP client.
   const AccessGateway({required FinanceApiClient apiClient})
@@ -17,6 +18,16 @@ class AccessGateway {
         Err<JsonResponse>(:final failure) => Err<AccessDecision>(failure),
         Ok<JsonResponse>(:final value) => AccessDecision.fromJson(value.body),
       };
+
+  /// `GET /v1/sign-in-policy` — which door this deployment has.
+  ///
+  /// Unauthenticated: it is asked before anybody has a token, which is the
+  /// whole point of it (spec backend/0043 OD-2).
+  Future<Result<SignInPolicy>> signInPolicy() async => switch (await _apiClient
+      .getJson('/v1/sign-in-policy', authenticated: false)) {
+    Err<JsonResponse>(:final failure) => Err<SignInPolicy>(failure),
+    Ok<JsonResponse>(:final value) => SignInPolicy.fromJson(value.body),
+  };
 
   /// `POST /v1/preview-sign-ins` — the local stack's e-mail sign-in.
   Future<Result<AuthSession>> previewSignIn(String email) async =>

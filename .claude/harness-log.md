@@ -4825,3 +4825,56 @@ positions, which is the only shape that makes the dependency visible.
 **Next person:** `ENROLLABLE` is a named frozen set for this reason. If you add
 a status, ask what happens to somebody in it under **both** switch positions
 before deciding, and write the pair down.
+
+---
+
+## 2026-09-24 — the screen could not see the door it was describing
+
+**Spec:** [`backend/0043`](../specs/backend/0043-the-screen-can-ask-which-door-this-is.md) ·
+**Closes:** `0040` §5 and `0042` OD-5, which recorded this same gap nine days apart.
+
+`https://finance-a2ui.web.app` told every visitor *"Access is invite-only
+during the A2UI preview"* over a **Request access** link, while the dev
+deployment ran `AUTH_OPEN_ENROLMENT=true` and admitted anybody Google vouched
+for. Both halves of that line were false, and the second one had already
+produced the defect the entry above is about.
+
+**Nobody missed this.** It was written down twice, in two specs, by the person
+who shipped the switch — with a correct reason for not fixing it on the spot:
+`GET /v1/me/access` is read *after* sign-in, so the screen genuinely could not
+know. What neither entry did was make the gap cost anything. A recorded
+untruth reads exactly like a fixed one from outside the repository.
+
+**What changed.** `GET /v1/sign-in-policy`, public by contract like the two
+routes beside it, answering one enumerated value and no subject data. The
+client asks once when the sign-in page builds its bloc, and shows the design's
+invite line **only** where the backend said `invite-only`.
+
+**Three decisions worth carrying forward:**
+
+- **A build-time flag was refused.** `AUTH_OPEN_ENROLMENT` is already the one
+  thing that decides; a `--dart-define` beside it is a second declaration of
+  one fact, compiled before the service is configured. This repository has
+  five checks against exactly that shape (`ci-conventions.md` §5) and did not
+  need a sixth. **A deployment's behaviour is reported by the deployment.**
+- **Unknown is silent, not invite-only.** A failed policy read shows no claim.
+  Defaulting to the sentence would print the untruth precisely when the
+  backend is unreachable — when it is least verifiable. The cost is named in
+  the spec (OD-5): a closed deployment with a failing read loses its
+  *Request access* link. A degraded screen beats a confident false one.
+- **The open door says nothing, on purpose.** A true replacement sentence was
+  written and discarded: the copy on that screen is design's, and design has
+  not written one for a door that did not exist when the page was drawn. Same
+  ruling `presentation.md` makes about catalog guidance, applied to chrome.
+
+**Harness:** `.claude/rules/backend/security.md`'s public-route sentence named
+five routes and there were seven — `/v1/access-requests` and
+`/v1/preview-sign-ins` had been public since spec 0027 and the rule had never
+been walked. It now names all of them and this one. The authority is still
+`test_openapi_contract.py::PUBLIC`; the rule points at it.
+
+**Next person:** if you add a third door (domain-restricted enrolment was
+discussed and not built), the wire field is already an enumeration and the
+client already refuses a value it does not know rather than guessing which of
+the two it resembles. Add it to `Enrolment`, to `SignInPolicy`, and decide
+what the screen says — that last part is design's, not yours.

@@ -23,10 +23,13 @@ class SignInPage extends StatelessWidget {
     final auth = context.read<AuthRepository>();
     final opened = link ?? Uri.base;
     return BlocProvider<SignInBloc>(
+      // The policy is asked here, once, because the screen may not draw a
+      // claim about the door until the backend has named it (spec
+      // backend/0043 OD-6).
       create: (_) => SignInBloc(
         authRepository: auth,
         continueUrl: opened.replace(path: AppRoutes.signIn, query: ''),
-      ),
+      )..add(const SignInPolicyRequested()),
       child: SignInView(emailLink: auth.isEmailLink(opened) ? opened : null),
     );
   }

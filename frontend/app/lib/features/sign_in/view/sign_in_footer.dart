@@ -4,6 +4,13 @@ import 'package:flutter/material.dart';
 
 /// `Access is invite-only during the A2UI preview.` and the link that
 /// opens the request sheet.
+///
+/// **Shown only where it is true.** The deployment says which door it has
+/// (`GET /v1/sign-in-policy`, spec backend/0043); this widget is built only
+/// when the answer was `invite-only`, and the screen draws nothing in its
+/// place otherwise. An open deployment telling visitors it is invite-only is
+/// the untruth that spec exists to remove, and design has not written a
+/// sentence for the open door (0043 OD-4) — so there is none to put here.
 class SignInInviteLine extends StatelessWidget {
   /// Creates the line.
   const SignInInviteLine({

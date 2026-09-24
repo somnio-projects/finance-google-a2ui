@@ -25,6 +25,9 @@ void main() {
         brightness: brightness,
         surfaceSize: const Size(390, 844),
       );
+      // The sign-in policy is read when the page builds its bloc, and the
+      // invite line only exists once it answers (spec backend/0043).
+      await tester.pumpAndSettle();
       return repository;
     }
 

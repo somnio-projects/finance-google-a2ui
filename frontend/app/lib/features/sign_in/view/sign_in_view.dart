@@ -99,12 +99,17 @@ class _Body extends StatelessWidget {
                     ),
                   ),
                   if (state.isProvisioning) const SignInProvisioningNote(),
-                  const SizedBox(height: 24),
-                  SignInInviteLine(
-                    onRequestAccess: (email) =>
-                        bloc.add(SignInAccessRequested(email)),
-                    requested: state.status == SignInStatus.requested,
-                  ),
+                  // Nothing here on an open deployment, and nothing while the
+                  // policy is unknown — including the gap above it, so the
+                  // screen does not reserve room for a claim it is not making.
+                  if (state.offersInvite) ...<Widget>[
+                    const SizedBox(height: 24),
+                    SignInInviteLine(
+                      onRequestAccess: (email) =>
+                          bloc.add(SignInAccessRequested(email)),
+                      requested: state.status == SignInStatus.requested,
+                    ),
+                  ],
                 ],
               ),
               const Padding(
