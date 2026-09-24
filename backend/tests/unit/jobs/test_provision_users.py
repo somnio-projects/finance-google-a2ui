@@ -11,11 +11,14 @@ would expect a provisioning run to do that.
 
 import pytest
 
+from app.core.errors import DependencyUnavailableError
+from app.jobs import provision_users
 from app.jobs.provision_arguments import parse_args
 from app.jobs.provision_users import PROVISION_JOB, provision_into
 from tests.unit.services.user_doubles import FakeUserRepository
 
 NEW = "stranger@example.test"
+UNREACHABLE_DSN = "postgresql+asyncpg://app:app@127.0.0.1:1/finance"
 
 
 async def test_an_unknown_address_is_added_as_an_active_member() -> None:
@@ -85,3 +88,28 @@ def test_there_is_no_reset_flag_and_that_is_the_point() -> None:
     # A flag that overwrote an existing row would undo an offboarding.
     with pytest.raises(SystemExit):
         parse_args(["a@x.test", "--reset"])
+
+
+async def test_main_reports_a_database_it_cannot_reach(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A job that cannot write says so; it must not exit zero having done nothing.
+
+    The entry point, which the loop above never reaches: settings from the
+    environment, a container built from them, and the dispose in the
+    `finally`. The same shape `test_seed_portfolios.py` uses, for the same
+    reason — a Cloud Run job's only report is its exit code.
+    """
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("DATABASE_URL", UNREACHABLE_DSN)
+    monkeypatch.setenv("AUTH_ISSUER", "https://i")
+    monkeypatch.setenv("AUTH_AUDIENCE", "a")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "x" * 48)
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+    try:
+        with pytest.raises(DependencyUnavailableError, match="failed"):
+            await provision_users.main(["a@x.test"])
+    finally:
+        get_settings.cache_clear()
