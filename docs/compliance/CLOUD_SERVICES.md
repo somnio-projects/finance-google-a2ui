@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | TL backend · **Version** 1.0 — 2026-09-19 · **Next review** when the deploy epic (GGU-29) lands, then annually |
+| **Owner** | TL backend · **Version** 1.1 — 2026-09-21 · **Next review** when the deploy epic (GGU-29) lands, then annually |
 | **Maps to** | SOC 2 CC6.6, CC6.7, CC7.2 · ISO/IEC 27001 A.5.23, A.8.15, A.8.16, A.8.20–A.8.23 |
 
 ## 1. Approved services
@@ -15,7 +15,7 @@
 | Google Cloud Logging / Monitoring | logs, uptime checks, alerts | Internal | `us-central1` | IaC in `infra/` (apply pending GGU-29) |
 | Google Cloud Armor | WAF in front of the load balancer | — | global | IaC in `infra/` — **staging/production only; not created in `dev`** (apply pending GGU-29) |
 | Firebase Auth / Google Identity | OIDC identity provider | user identity (`sub`, email in token) | global | in use for Epic 0 |
-| Google Gemini API | model backing the A2UI agent (future spec) | prompts (Confidential by default), **never** user credentials | US | planned |
+| Google Gemini API | model backing the A2UI agent — **live** (specs `backend/0006`, `0009`, `0010`) | prompts: the user's question and pre-formatted tool results (Confidential); **never** user credentials or identifiers | US | **in use**; paid-tier training exclusion **not yet verified** — gap G-VEN-1 ([VENDOR_MANAGEMENT.md](VENDOR_MANAGEMENT.md) §2a), due 2026-10-31 |
 | Sentry (SaaS) | error telemetry | Internal (no PII, no bodies) | US | in use when `SENTRY_DSN` set |
 | GitHub (Actions, Dependabot, advisories) | source, CI, scanning | Public code, CI secrets (Restricted) | US | in use |
 | Docker Hub / GHCR | base images | — | — | in use |
@@ -42,7 +42,7 @@ Reasoning: [specs/infra/0001-dev-environment.md](../../specs/infra/0001-dev-envi
 | **Edge** | **none** — Cloud Run ingress is open and its `run.app` URL is the endpoint. No WAF, no edge rate limit, no adaptive DDoS, no edge access log, no TLS policy of our choosing | ingress "internal and Cloud Load Balancing"; Cloud Armor with the OWASP preconfigured rule set and per-IP rate limiting ahead of the app-layer limiter; managed certificate; TLS 1.2+ `MODERN` |
 | **Identity** | identical | one Cloud Run service account with `cloudsql.client` + per-secret `secretmanager.secretAccessor` + `logging.logWriter` only; no human `owner`; humans `viewer` with time-boxed break-glass ([ACCESS_CONTROL.md](ACCESS_CONTROL.md) §4) |
 | **Secrets** | identical | Secret Manager, one secret per setting, versioned, **90-day rotation**; injected as env vars |
-| **Redundancy** | **none** — zonal database, Cloud Run scales to zero | Cloud SQL HA (regional), Cloud Run min-instances ≥ 1, multi-zone; uptime check on `/readyz` |
+| **Redundancy** | **none** — zonal database, Cloud Run scales to zero | Cloud SQL HA (regional standby) **only**. Cloud Run runs **exactly one instance** (`min = max = 1`, GGU-83): no compute standby, no failover, no published throughput ceiling — see [BUSINESS_CONTINUITY_PLAN.md](BUSINESS_CONTINUITY_PLAN.md) §5a. Uptime check on `/readyz` |
 | **Backups** | daily, **2 retained, no PITR** | automated daily + PITR, 30 retained ([BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md)) |
 
 The application-layer controls — bearer-token auth on every non-health route,
@@ -92,4 +92,5 @@ IR plan; every SEV-1/2 alert creates an incident issue.
 ## 6. Egress allow-list (what the backend talks to)
 
 PostgreSQL (private), the OIDC issuer's JWKS URL (`AUTH_OIDC_JWKS_URL`),
-Sentry ingest, Gemini API (future). Anything else is a finding.
+Sentry ingest, and the **Gemini API** (`GEMINI_BASE_URL`, live since spec
+`backend/0006` — no longer "future"). Anything else is a finding.

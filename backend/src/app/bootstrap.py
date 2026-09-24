@@ -17,6 +17,7 @@ from app.api.container import AgentRuntime, Container
 from app.api.errors import register_error_handlers
 from app.api.middleware.install import install_middleware
 from app.api.openapi import API_DESCRIPTION, TAGS_METADATA
+from app.api.openapi_document import install as install_openapi
 from app.api.router import api_router
 from app.auth.registry import build_token_verifier
 from app.core.config import Settings, get_settings
@@ -33,6 +34,7 @@ from app.services.agent_card_service import build_agent_card
 from app.services.feature_flag_cache import FeatureFlagCache
 from app.services.health_service import HealthService
 from app.services.prompt_service import build_system_prompt
+from app.services.user_bootstrap import provision_admins
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
@@ -83,6 +85,10 @@ def _build_lifespan(
     async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
         """Log startup, yield control, then release the engine on shutdown."""
         log.info("startup", public_base_url=container.settings.public_base_url)
+        await provision_admins(
+            emails=container.settings.auth_bootstrap_admins,
+            session_factory=container.session_factory,
+        )
         yield
         await container.engine.dispose()
         log.info("shutdown")
@@ -96,6 +102,9 @@ def _configure_app(app: FastAPI, container: Container) -> None:
     install_middleware(app, container)
     register_error_handlers(app, container.reporter)
     app.include_router(api_router)
+    # Last: the document builder reads the routes it has just been handed
+    # (spec 0038 OD-2). It is lazy, so nothing is built here.
+    install_openapi(app)
 
 
 def create_app(

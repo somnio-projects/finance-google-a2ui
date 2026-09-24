@@ -13,40 +13,10 @@ and verifies RS256 signatures from an identity provider's JWKS endpoint.
 import argparse
 import os
 import sys
-import time
 
-import jwt
+from app.auth.dev_tokens import build_token
 
 DEFAULT_TTL_SECONDS = 3600
-
-
-def build_token(
-    *, subject: str, secret: str, issuer: str, audience: str, ttl_seconds: int
-) -> str:
-    """Return an HS256 token carrying the claims the jwt provider requires.
-
-    Args:
-        subject: The `sub` claim — who the token speaks for.
-        secret: The shared HS256 secret (`AUTH_JWT_SECRET`).
-        issuer: The `iss` claim, which must match `AUTH_ISSUER`.
-        audience: The `aud` claim, which must match `AUTH_AUDIENCE`.
-        ttl_seconds: How long the token stays valid.
-
-    Returns:
-        The encoded token, ready for an `Authorization: Bearer` header.
-    """
-    issued_at = int(time.time())
-    return jwt.encode(
-        {
-            "sub": subject,
-            "iss": issuer,
-            "aud": audience,
-            "iat": issued_at,
-            "exp": issued_at + ttl_seconds,
-        },
-        secret,
-        algorithm="HS256",
-    )
 
 
 def main() -> int:

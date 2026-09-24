@@ -23,11 +23,11 @@ from decimal import ROUND_HALF_EVEN, Decimal
 from hashlib import sha256
 from typing import Final
 
-from app.domain.market import price_of
+from app.domain.market import market_asset, price_of
 from app.domain.prices import PricePoint
 from app.domain.symbols import normalize_symbol
 
-HISTORY_DAYS: Final[int] = 90
+HISTORY_DAYS: Final[int] = 400
 MAX_DRIFT_BP: Final[int] = 900
 BASIS_POINTS: Final[Decimal] = Decimal(10_000)
 
@@ -60,6 +60,11 @@ def price_on(symbol: str, *, offset: int) -> Decimal:
         The price for that day, at the current price's own scale.
     """
     current = price_of(symbol)
+    if offset == 1:
+        # Yesterday is a fact the reference states (`previous_close`), not a
+        # drift to generate: the last step of every series then equals the day
+        # change drawn beside it, instead of a second, unrelated figure.
+        return market_asset(symbol).previous_close
     drift = Decimal(drift_basis_points(normalize_symbol(symbol), offset=offset))
     moved = current * (BASIS_POINTS + drift) / BASIS_POINTS
     return moved.quantize(current, rounding=ROUND_HALF_EVEN)

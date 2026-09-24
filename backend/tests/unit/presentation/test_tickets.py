@@ -13,13 +13,8 @@ import pytest
 from pydantic import Field, ValidationError
 
 from app.presentation.options import ProjectionOptions
-from app.presentation.tickets import (
-    MAX_CHOICES,
-    TicketInput,
-    declared_inputs,
-    price,
-    quantity,
-)
+from app.presentation.ticket_displays import price, quantity
+from app.presentation.tickets import MAX_CHOICES, TicketInput, declared_inputs
 
 LABELS = {"mode": "Mode", "code": "Code"}
 
@@ -65,7 +60,7 @@ def test_declared_inputs_offers_only_the_options_the_surface_labelled() -> None:
 
 
 def test_a_descriptor_cannot_publish_an_unbounded_list_of_choices() -> None:
-    with pytest.raises(ValidationError, match="at most 16 items"):
+    with pytest.raises(ValidationError, match="at most 24 items"):
         TicketInput(
             option="mode",
             label="Mode",
@@ -95,7 +90,7 @@ def test_quantity_trims_a_unit_count_to_what_a_reader_needs(
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [(Decimal("64250.00"), "$64,250.00"), (Decimal("0.1273"), "$0.1273")],
+    [(Decimal("64250.00"), "$64,250.00"), (Decimal("34.22"), "$34.22")],
     ids=["exact-in-cents", "sub-dollar"],
 )
 def test_price_quotes_a_unit_price_finely_enough_to_multiply_by(

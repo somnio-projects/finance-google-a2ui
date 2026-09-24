@@ -4,7 +4,7 @@
 |---|---|
 | **Owner** | Security owner (TL backend) |
 | **Approved by** | Engineering management |
-| **Version** | 1.0 — 2026-09-19 (first annual assessment) |
+| **Version** | 2.0 — 2026-09-21 (first annual assessment) |
 | **Next review** | 2027-09-19, or after any incident ≥ SEV-2, new data class, new vendor or new deployment target |
 | **Maps to** | SOC 2 CC3.1, CC3.2, CC3.4 · ISO/IEC 27001 Cl. 6.1.2, 6.1.3, 8.2, 8.3 |
 
@@ -24,7 +24,7 @@
 | AS-1 | `audit_events` table (subject, provider, action, token fingerprint, request id) | Confidential | Security owner |
 | AS-2 | `feature_flags` table | Internal | Security owner |
 | AS-3 | Auth material: `AUTH_JWT_SECRET`, OIDC issuer config | Restricted | Security owner |
-| AS-4 | Third-party model key (Gemini, future spec) | Restricted | Security owner |
+| AS-4 | Third-party model key (Gemini — **live**, `GEMINI_API_KEY`) | Restricted | Security owner |
 | AS-5 | Sentry DSN and telemetry | Internal | Security owner |
 | AS-6 | Source code, harness, CI configuration | Public (open source) / integrity critical | TL backend |
 | AS-7 | CI secrets (`GITHUB_TOKEN`, future deploy credentials) | Restricted | Eng. management |
@@ -45,16 +45,28 @@
 | R-8 | AS-2 | Unauthorised feature-flag toggle (privilege escalation) | 2 | 3 | 6 | Modify | `admin` scope enforced in service, audit event per toggle, MFA (`amr`) requirement for admin in production (ACCESS_CONTROL) | 1×3 = 3 |
 | R-9 | AS-6 | Malicious or careless change merged without review | 2 | 4 | 8 | Modify | CODEOWNERS + **active** `protected-branches` ruleset on `main` and `develop` (1 code-owner approval, stale approvals dismissed, threads resolved, squash-only, no force-push/deletion), ship gate == CI, `backend-reviewer`, harness log | 1×4 = 4 |
 | R-10 | AS-6 | AI-generated code introduces a defect or insecure pattern | 3 | 3 | 9 | Modify | Spec approval, 100 % branch coverage, ruff `S`, Semgrep, human PR review; AI_GOVERNANCE | 2×2 = 4 |
-| R-11 | AS-8 | Regional outage / single instance unavailable | 3 | 3 | 9 | Retain (demo) → Modify (prod) | Health probes, stateless service, RPO/RTO in BCP; Cloud Run min-instances + Cloud SQL REGIONAL HA + PITR defined in `infra/` — apply before non-demo exposure | 2×3 = 6 |
+| R-11 | AS-8 | Regional outage / single instance unavailable | 3 | 3 | 9 | Retain (demo) → Modify (prod) | **Amended 2026-09-21 for GGU-83.** Health probes, stateless service, RPO/RTO in BCP; Cloud SQL REGIONAL HA + PITR defined in `infra/` — apply before non-demo exposure. The Cloud Run mitigation this row previously claimed **no longer exists**: `max_instances = 1` in production means there is no second instance to absorb a zone event, so only the database half of the mitigation stands | **3×3 = 9** (was 2×3 = 6) |
 | R-12 | AS-9 | Contributor account or workstation compromise | 2 | 4 | 8 | Modify / Share | GitHub 2FA required by org, DEVICE_POLICY baseline, onboarding/offboarding checklist, least-privilege repo roles | 1×4 = 4 |
 | R-13 | AS-4/5 | Vendor (Sentry, Google) changes data handling or suffers a breach | 2 | 3 | 6 | Share | VENDOR_MANAGEMENT register, DPAs, annual review, PII never sent to Sentry | 1×3 = 3 |
 | R-14 | AS-1 | Retention violation (data kept forever, erasure impossible) | 3 | 3 | 9 | Modify | DATA_RETENTION policy, `audit_events` purge (repository method + scheduled job), erasure procedure | 1×3 = 3 |
 | R-15 | AS-8 | Unencrypted data at rest in production | 2 | 4 | 8 | Modify | Cloud SQL encryption at rest (Google-managed keys), private IP and TLS-only in `infra/database.tf`; decision in DATA_RESIDENCY_AND_TENANCY; local compose is dev only | 1×4 = 4 |
-| R-16 | AS-8 | The **`dev`** environment runs without the edge and durability controls production has: no Cloud Armor WAF, no edge rate limit or adaptive DDoS, no regional HA, no PITR, 2 retained backups, no uptime check, deletion protection off | 3 | 2 | 6 | Retain | Deliberate, scoped and written down: `specs/infra/0001-dev-environment.md` §5 and each control's own document here. Impact is bounded by **synthetic data only** and `max-instances = 2`; the application-layer controls (bearer auth, per-principal rate limit, error masking, audit events, private DB IP, TLS-only, Secret Manager, keyless pipeline) are **unchanged** in dev | 3×2 = 6 |
+| R-16 | AS-8 | The **`dev`** environment runs without the edge and durability controls production has: no Cloud Armor WAF, no edge rate limit or adaptive DDoS, no regional HA, no PITR, 2 retained backups, no uptime check, deletion protection off | 3 | 2 | 6 | Retain | Deliberate, scoped and written down: `specs/infra/0001-dev-environment.md` §5 and each control's own document here. Impact is bounded by **synthetic data only** and `max-instances = 1` (pinned by GGU-83; it was 2 when this row was written); the application-layer controls (bearer auth, per-principal rate limit, error masking, audit events, private DB IP, TLS-only, Secret Manager, keyless pipeline) are **unchanged** in dev | 3×2 = 6 |
+| R-17 | AS-8 | **Production capacity and compute availability.** Production Cloud Run is pinned to `min = max = 1` (GGU-83), so one container — `cpu = "1"`, `memory = "512Mi"` — serves every user. No compute standby, no failover, **no measured throughput ceiling and no SLO**. Saturation and a single-instance failure are the same event: a full outage | 3 | 3 | 9 | **Retain (demo)** → Modify before non-demo exposure | Deliberate and written down: [BUSINESS_CONTINUITY_PLAN.md](BUSINESS_CONTINUITY_PLAN.md) §5a (gap G-BCP-1), `infra/main.tf:58-82`. Bounded for now by demo-only exposure behind Google reviewer credentials. Partially mitigated by `/readyz` uptime checks and Cloud Run's own reschedule; **not** mitigated by anything that measures or caps load. Lifting condition: the shared rate-limiter backing store (spec `backend/0001` OD-2), which is what allows `max_instances > 1` | **3×3 = 9** |
 
-All residual scores are ≤ 6 (accepted). R-11 is explicitly **retained** while
-the service is a demo behind Google reviewer credentials; the acceptance
-expires when the service is exposed beyond the demo (owner: TL backend).
+**Not every residual is ≤ 6 any more, and that is the honest reading.** After
+the GGU-83 amendment R-11 and R-17 both sit at **9**, which under §1 is
+"treat within the year", not "accept". Neither is being re-scored downward to
+fit the acceptance band: they are carried at 9 with a named owner and a date,
+because the only exposure between now and then is the 2026-09-28 demo behind
+Google reviewer credentials.
+
+- **Treatment owner:** TL backend. **Decision date:** 2026-10-31, before any
+  non-demo exposure.
+- **The treatment is already identified** and is the same for both: the shared
+  rate-limiter backing store (spec `backend/0001` OD-2), which is what allows
+  `max_instances > 1` and restores compute redundancy.
+- R-11 and R-17 are two faces of one topology — R-11 is *losing* the single
+  instance, R-17 is *outgrowing* it — so they close together or not at all.
 
 R-16 is **retained** on one condition: `dev` holds synthetic data only. Placing
 real, client or production-derived data in `dev` invalidates the acceptance

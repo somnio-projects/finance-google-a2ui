@@ -3,7 +3,7 @@
 UV ?= uv
 export UV_LINK_MODE ?= copy
 
-.PHONY: install lint format typecheck budget catalog catalog-check quality test test-unit test-integration audit gate run migrate purge-audit
+.PHONY: install lint format typecheck budget catalog catalog-check openapi-check openapi-docs quality test test-unit test-integration audit gate run migrate purge-audit seed
 
 install:
 	$(UV) sync --all-groups
@@ -22,14 +22,28 @@ typecheck:
 budget:
 	$(UV) run python scripts/check_file_budget.py
 
-# The frozen design contract (GGU-41): docs/catalog/CONTRACT.md is rendered from
-# the projection registry, never hand-written. `catalog` regenerates it;
-# `catalog-check` fails the gate when a projection changed and the file did not.
+# The frozen design contract, in both of its renderings: docs/catalog/CONTRACT.md
+# for the designer (GGU-41) and docs/catalog/view-catalog.snapshot.json for the
+# Flutter catalog test (GGU-53). One render pass over the projection registry,
+# never hand-written. `catalog` regenerates both; `catalog-check` fails the gate
+# when a projection changed and an artefact did not.
 catalog:
 	$(UV) run python scripts/generate_catalog_contract.py
 
 catalog-check:
 	$(UV) run python scripts/generate_catalog_contract.py --check
+
+# `GET /openapi.json` is how a client of this service is written (spec 0038),
+# so it is gated like code: every operation is audited against what its route
+# can really answer — read from the route's dependency tree, never from a list
+# — and docs/ENDPOINTS.md is re-rendered from the same document and diffed.
+# `openapi-docs` regenerates that table; `openapi-check` fails the gate when a
+# route moved and the table did not.
+openapi-check:
+	$(UV) run python scripts/check_openapi.py
+
+openapi-docs:
+	$(UV) run python scripts/check_openapi.py --write
 
 test:
 	$(UV) run pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml
@@ -47,6 +61,13 @@ audit:
 	$(UV) export --frozen --no-dev --no-emit-project --format requirements-txt -o $(AUDIT_REQ)
 	$(UV) tool run --with "pip<26" pip-audit --strict --progress-spinner off --disable-pip -r $(AUDIT_REQ)
 
+# Give one or more owners the curated demo portfolio (spec 0035 §4.1). Needs
+# DATABASE_URL. Safe to re-run: an owner who has one is skipped unless RESET=1.
+#   make seed OWNERS="lbertuzzi@somniosoftware.com demo@somnio.dev"
+#   make seed OWNERS="demo@somnio.dev" RESET=1
+seed:
+	$(UV) run python -m app.jobs.seed_portfolios $(if $(RESET),--reset,) $(OWNERS)
+
 # Retention job (docs/compliance/DATA_RETENTION.md): deletes audit_events older than
 # AUDIT_RETENTION_DAYS. Needs DATABASE_URL; run monthly (Cloud Scheduler in prod).
 purge-audit:
@@ -63,7 +84,7 @@ quality:
 	$(UV) run pylint src/app tests
 	$(UV) run codespell src tests docs scripts
 
-gate: lint typecheck budget catalog-check quality test audit
+gate: lint typecheck budget catalog-check openapi-check quality test audit
 	@echo "ship gate green"
 
 run:

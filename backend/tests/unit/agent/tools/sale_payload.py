@@ -6,6 +6,14 @@ that swapped ``shortTermPlDisplay`` with ``longTermPlDisplay`` would invert
 the tax split — the whole point of Flow B — while every invariant test stayed
 green, because short plus long still equals the total either way.
 
+The figures below were re-derived when the portfolio became equities (spec
+0025), and the split was checked by hand rather than copied: selling 75 NVDA
+under FIFO takes all 60 shares of the **long** lot, bought at $760, and 15 of
+the 30 in the **short** one, bought at $960, against a $1,204.66 price — so
+60 x $444.66 = $26,679.60 long and 15 x $244.66 = $3,669.90 short. The larger
+figure belongs to the older lot; a swapped wiring would put it under
+``shortTermPlDisplay``.
+
 Keep it identical to the example in the spec: OD-9 tells Epic 2 to write the
 component schema from that section, so the two drifting apart is a defect in
 both.
@@ -13,53 +21,53 @@ both.
 
 from collections.abc import Mapping
 
-#: The answer to ``{"symbol": "BTC", "quantity": "0.5"}``, in full.
-FIFO_HALF_BITCOIN: Mapping[str, object] = {
+#: The answer to ``{"symbol": "NVDA", "quantity": "75"}``, in full.
+FIFO_SEVENTY_FIVE_NVDA: Mapping[str, object] = {
     "summary": {
-        "symbol": "BTC",
+        "symbol": "NVDA",
         "lotMethod": "FIFO",
-        "priceDisplay": "$64,250.00",
-        "quantityDisplay": "0.5",
-        "proceedsDisplay": "$32,125.00",
-        "costBasisDisplay": "$22,620.00",
-        "realizedPlDisplay": "+$9,505.00",
-        "realizedPlPctDisplay": "42.02%",
-        "shortTermPlDisplay": "+$580.00",
-        "longTermPlDisplay": "+$8,925.00",
+        "priceDisplay": "$1,204.66",
+        "quantityDisplay": "75",
+        "proceedsDisplay": "$90,349.50",
+        "costBasisDisplay": "$60,000.00",
+        "realizedPlDisplay": "+$30,349.50",
+        "realizedPlPctDisplay": "50.58%",
+        "shortTermPlDisplay": "+$3,669.90",
+        "longTermPlDisplay": "+$26,679.60",
         "shortTermLots": 1,
         "longTermLots": 1,
         "trend": "up",
     },
     "remaining": {
         "count": 1,
-        "quantityDisplay": "0.1",
-        "costBasisDisplay": "$5,700.00",
-        "marketValueDisplay": "$6,425.00",
+        "quantityDisplay": "15",
+        "costBasisDisplay": "$14,400.00",
+        "marketValueDisplay": "$18,069.90",
     },
     "lots": [
         {
-            "lotId": "lot-btc-01",
+            "lotId": "lot-nvda-01",
             "acquiredOnDisplay": "2025-09-16",
             "term": "long",
-            "quantityDisplay": "0.42",
-            "costBasisDisplay": "$18,060.00",
-            "proceedsDisplay": "$26,985.00",
-            "gainLossDisplay": "+$8,925.00",
+            "quantityDisplay": "60",
+            "costBasisDisplay": "$45,600.00",
+            "proceedsDisplay": "$72,279.60",
+            "gainLossDisplay": "+$26,679.60",
             "trend": "up",
             "fullySold": True,
         },
         {
-            "lotId": "lot-btc-02",
+            "lotId": "lot-nvda-02",
             "acquiredOnDisplay": "2025-09-20",
             "term": "short",
-            "quantityDisplay": "0.08",
-            "costBasisDisplay": "$4,560.00",
-            "proceedsDisplay": "$5,140.00",
-            "gainLossDisplay": "+$580.00",
+            "quantityDisplay": "15",
+            "costBasisDisplay": "$14,400.00",
+            "proceedsDisplay": "$18,069.90",
+            "gainLossDisplay": "+$3,669.90",
             "trend": "up",
             "fullySold": False,
         },
     ],
 }
 
-__all__ = ["FIFO_HALF_BITCOIN"]
+__all__ = ["FIFO_SEVENTY_FIVE_NVDA"]

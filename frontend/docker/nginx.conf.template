@@ -1,0 +1,183 @@
+# nginx configuration for the A2UI client's static web bundle.
+#
+# Rendered by docker/entrypoint.sh into /tmp/nginx/nginx.conf with envsubst.
+# Only ${PORT}, ${CONNECT_SRC} and ${FRAME_SRC} are substituted — the
+# entrypoint passes that exact list, because an unrestricted envsubst would
+# happily blank every nginx variable in this file ($uri, $host, $status, …)
+# and the result would still start.
+#
+# This began as client_flutter/docker/nginx.conf.template with two headers
+# changed, both because this app signs in through Firebase and that one did
+# not. The differences are argued in Decision 2 of ../Dockerfile and marked
+# below.
+#
+# **`client_flutter/` no longer exists.** It was retired on 2026-09-22
+# (spec `specs/repo/0002-retire-the-client-flutter-app.md`). The comparisons
+# below are kept in the past tense because they record *why* these choices
+# are what they are; read them in the Git history, not in the tree.
+#
+# The root filesystem is read-only, so every path nginx wants to write to is
+# moved under /tmp, which the container mounts as tmpfs.
+
+worker_processes  auto;
+pid               /tmp/nginx/nginx.pid;
+error_log         /dev/stderr warn;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    # CanvasKit must arrive as application/wasm or streaming instantiation
+    # refuses it. nginx has shipped this mapping in mime.types since 1.21.1, so
+    # on the pinned base image this is belt-and-braces and may log a
+    # "duplicate extension" warning — which is the failure mode to prefer over
+    # a base image that quietly drops the mapping and serves octet-stream.
+    types {
+        application/wasm  wasm;
+    }
+
+    access_log  /dev/stdout;
+
+    client_body_temp_path  /tmp/nginx/body;
+    proxy_temp_path        /tmp/nginx/proxy;
+    fastcgi_temp_path      /tmp/nginx/fastcgi;
+    uwsgi_temp_path        /tmp/nginx/uwsgi;
+    scgi_temp_path         /tmp/nginx/scgi;
+
+    sendfile       on;
+    tcp_nopush     on;
+    server_tokens  off;          # do not advertise the nginx version
+
+    # This server answers GET and HEAD for static files and nothing else.
+    # Nothing is ever uploaded to it, so the body limit is a formality.
+    client_max_body_size  1k;
+
+    gzip              on;
+    gzip_vary         on;
+    gzip_min_length   1024;
+    gzip_types        text/plain text/css application/javascript application/json
+                      application/wasm image/svg+xml;
+
+    # Cache-Control is decided here rather than per-location, because an
+    # `add_header` inside a location REPLACES every inherited add_header —
+    # a per-location Cache-Control would silently drop the CSP from exactly
+    # the responses that need it. One map, one add_header, no inheritance trap.
+    #
+    # Flutter's web output is not content-hashed (main.dart.js keeps its name
+    # across builds), so nothing here may be cached immutably; `no-cache` means
+    # "revalidate", and the ETag makes that a cheap 304.
+    #
+    # /release.json is `no-store` for the same reason the backend's /health is
+    # never cached: it is the file that says WHICH build answered, and a cached
+    # answer to that question is worse than none (GGU-93, applied to a bundle).
+    map $uri $client_cache_control {
+        default         "no-cache";
+        "/release.json" "no-store";
+    }
+
+    server {
+        listen       ${PORT};
+        server_name  _;
+        root         /usr/share/nginx/html;
+        index        index.html;
+
+        # Everything below is `always`, so the headers are also on 4xx/5xx.
+        #
+        # DIFFERENCE 1 from client_flutter — script-src names www.gstatic.com.
+        # `firebase_core_web` injects https://www.gstatic.com/firebasejs/<v>/…
+        # at run time; under a 'self'-only policy the page loads and sign-in
+        # dies at the first Firebase call. `--no-web-resources-cdn` keeps
+        # CanvasKit local, so this is the ONLY remote script origin and it is
+        # reviewable as one exception rather than lost in a list.
+        #
+        # 'wasm-unsafe-eval' and not 'unsafe-eval': it permits WebAssembly
+        # instantiation and nothing else — eval() and new Function() stay
+        # blocked — and `flutter build web --csp` is what makes the broad token
+        # unnecessary. The flag and this token are a pair: drop the flag and
+        # this header is wrong. 'unsafe-inline' for styles is a genuine Flutter
+        # engine requirement, recorded as residual risk in ../SECURITY.md.
+        #
+        # DIFFERENCE 3 — connect-src names fonts.gstatic.com, and that is
+        # NOT a mistake for font-src. MEASURED against this container on
+        # 2026-09-22, signed in and on the home screen:
+        #
+        #   Connecting to 'https://fonts.gstatic.com/s/notocoloremoji/…woff2'
+        #   violates the following Content Security Policy directive:
+        #   "connect-src 'self' http://localhost:8000". The action has been
+        #   blocked.
+        #
+        # CanvasKit does not let the browser load a fallback font by URL — it
+        # `fetch()`es the bytes and installs them through FontFace, so the
+        # request is governed by connect-src and adding the host to font-src
+        # changes nothing. The app still renders without it (the glyph falls
+        # back), which is why this went unnoticed in client_flutter's copy of
+        # this file: the failure is a console full of violations, not a blank
+        # page. A policy that is violated on every load is a policy nobody
+        # reads, so the two fallback-font hosts are named.
+        #
+        # ${CONNECT_SRC} is the compiled backend origin, plus Google's two
+        # identity endpoints when this build carries a Firebase config.
+        # ${FRAME_SRC} is the Firebase auth domain, or empty.
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com 'sha256-pPjjoSpBd13bHnogATkOaA29BKZz9GGHosqgFMogFpk=' 'sha256-reYe1I77sn6jsp8gKj1EY7wGW6JUKq8FD9JneePy2ds=' 'sha256-rfg7hv0pkrN9jeIyHIK7vibT9cn0Kq7ZRLaivuDuWks=' 'sha256-iWHfbFl2xAkej/VjK83h7azThbU0Whcoa56/xuEvtok='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com; font-src 'self' data:; connect-src 'self' https://fonts.gstatic.com ${CONNECT_SRC}; frame-src 'self'${FRAME_SRC}; worker-src 'self' blob:; child-src blob:; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'" always;
+
+        # Two years, with subdomains, because the demo origin is HTTPS-only.
+        # No `preload`: that is a submission to a browser-vendor list and an
+        # irreversible commitment for the parent domain, which is not this
+        # container's decision to make.
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+
+        add_header X-Content-Type-Options "nosniff" always;
+
+        # The app puts identifiers in the URL (portfolio ids); a Referer would
+        # leak them to any origin the page links to. Nothing here needs one.
+        add_header Referrer-Policy "no-referrer" always;
+
+        # frame-ancestors 'none' above is the real clickjacking control;
+        # X-Frame-Options is kept for pre-CSP2 user agents only.
+        add_header X-Frame-Options "DENY" always;
+
+        # DIFFERENCE 2 from client_flutter — `same-origin-allow-popups`, not
+        # `same-origin`. COOP: same-origin severs window.opener between this
+        # page and the window it opened, and that handle is exactly what
+        # `signInWithPopup` resolves its promise on: the popup completes,
+        # closes, and the app waits forever. The chosen value still isolates
+        # this document from cross-origin documents that try to reach INTO it;
+        # what it keeps is the popup this page opened itself.
+        add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+
+        # `microphone=(self)` and every other feature off. The Assistant's
+        # composer dictates through the Web Speech API (spec frontend/0023),
+        # and a policy of `microphone=()` denies it before the browser ever
+        # asks the person — so the feature would work on `flutter run` and
+        # fail on the deployed origin. This value and `firebase.json`'s are
+        # one decision: change one, change the other, in the same commit
+        # (spec frontend/0017; `frontend/test/tool/permissions_policy_test.dart`
+        # is what makes that a red suite instead of a good intention).
+        add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()" always;
+
+        add_header Cache-Control $client_cache_control always;
+
+        # Liveness. `return` adds no header at this level, so the server-level
+        # headers above are still inherited here.
+        location = /health {
+            access_log    off;
+            default_type  text/plain;
+            return        200 "ok\n";
+        }
+
+        # Single-page app: unknown paths are routes, not missing files.
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Anything that is not a GET or HEAD of a static file is not this
+        # server's business.
+        if ($request_method !~ ^(GET|HEAD)$) {
+            return 405;
+        }
+    }
+}

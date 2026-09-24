@@ -1,12 +1,16 @@
-"""Spec 0006 AC-4 — the HTTP client the adapter owns, and retry classification."""
+"""Spec 0006 AC-4 — the HTTP client the adapter owns.
+
+Retry *classification* moved to ``test_provider_errors.py`` alongside the
+function that makes the decision (GGU-90); what is left here is the client's
+own lifecycle — the timeout it configures and the client it closes.
+"""
 
 import httpx
-import pytest
 from pydantic import SecretStr
 from pytest_mock import MockerFixture
 
 from app.infra.model import gemini_client as module
-from app.infra.model.gemini_client import GeminiModelClient, is_retryable
+from app.infra.model.gemini_client import GeminiModelClient
 from tests.unit.infra.model.gemini_stubs import BASE_URL, KEY, Stub, ok
 
 
@@ -38,17 +42,3 @@ async def test_the_client_it_owns_uses_the_configured_timeout_and_is_closed(
     assert reply.text == "answer"
     assert timeouts == [7.5]
     assert created[0].is_closed
-
-
-@pytest.mark.parametrize(
-    ("exc", "expected"),
-    [
-        (httpx.ConnectError("down"), True),
-        (ValueError("not json"), False),
-    ],
-    ids=["transport_error_is_retryable", "parse_error_is_not"],
-)
-def test_is_retryable_classifies_non_status_failures(
-    exc: Exception, expected: bool
-) -> None:
-    assert is_retryable(exc) is expected

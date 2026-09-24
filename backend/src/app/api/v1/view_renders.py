@@ -40,12 +40,13 @@ BatchBody = Annotated[ViewRenderBatch, Body(openapi_examples=REQUEST_EXAMPLES)]
         "round trip (ADR-K D-18). **Every entry carries its own `status`**, so "
         "an unknown view (404) or a rejected option (422) fails that entry "
         "alone and the others still render. The batch answers 201 whenever it "
-        "was well formed; a malformed, empty or oversized body is a 422, and "
+        "was well formed; a malformed or empty body is a 422 and one over the "
+        "configured size ceiling a 413, and "
         "no `Location` is returned because the batch is not retrievable. Use "
         "the repeated `?view=` parameter on the portfolio read instead when "
         "every view is over the same portfolio. Spec 0012 AC-4, AC-5, AC-6."
     ),
-    responses={**CREATED, **problem_responses(*AUTHENTICATED, 400, 404, 422, 503)},
+    responses={**CREATED, **problem_responses(*AUTHENTICATED, 404, 413, 422, 503)},
     dependencies=[require_feature("views.batch-render")],
 )
 async def create_view_render_batch(

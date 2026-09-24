@@ -2,7 +2,7 @@
 
 - **Area:** backend (pipeline + infrastructure)
 - **Status:** Approved
-- **Ticket:** [GGU-48](https://somniosoftware.atlassian.net/browse/GGU-48) · **Related:** [ADR-F](../../docs/adr/ADR-F-simulated-portfolio.md) (Cloud Run + Cloud SQL), [ADR-J](../../docs/adr/ADR-J-rest-api-and-a2a-surface.md), `.claude/rules/ci-conventions.md`, `docs/compliance/CHANGE_MANAGEMENT.md`, `docs/compliance/ACCESS_CONTROL.md`
+- **Ticket:** [GGU-48](https://somniosoftware.atlassian.net/browse/GGU-48) · **Related:** [ADR-F](../../docs/adr/ADR-F-persistence-and-session-lifetime.md) (Cloud Run + Cloud SQL), [ADR-J](../../docs/adr/ADR-J-rest-api-and-a2a-surface.md), `.claude/rules/ci-conventions.md`, `docs/compliance/CHANGE_MANAGEMENT.md`, `docs/compliance/ACCESS_CONTROL.md`
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-19
 
 ## 1. Problem

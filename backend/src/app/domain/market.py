@@ -1,10 +1,21 @@
 """Curated market reference — the backend's single source of price (OD-5).
 
-The old sample's ``crypto_data.json`` was deleted with ``backend_python/``, so
-this package owns the reference list instead: symbol, display name, current
-price and a placeholder logo. Every price is declared as a **string** and
-parsed to ``Decimal`` (ADR-E D-5), so a holding's price and the asset list's
-price are the same object, not two roundings of the same idea.
+This package owns the reference list: symbol, display name, current price,
+**previous close**, **asset class**, **sector** and a placeholder logo. Every
+price is declared as a **string** and parsed to ``Decimal`` (ADR-E D-5), so a
+holding's price and the asset list's price are the same object, not two
+roundings of the same idea.
+
+**These are equities, and they used to be crypto (spec 0025 OD-2).** The design
+is a US equities portfolio; this backend held eight crypto assets, so no
+component could be made to match by styling — the numbers on screen come from
+here and were different numbers. Replaced rather than extended: two asset
+universes in one demo portfolio would make every allocation figure meaningless.
+
+``previous_close`` is a second *price*, not a derived figure, because the
+design draws a day change on every legend row and every position row. Deriving
+it would be the client computing, and storing only the delta would make the
+figure unreconcilable with the price beside it.
 
 The data is deliberately fake and the logo host is an ``.example`` domain — a
 demo catalogue must not read like a live feed.
@@ -17,22 +28,12 @@ from typing import Final
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.errors import SymbolNotFoundError
+from app.domain.market_data import REFERENCE_ROWS
 from app.domain.money import Money
 from app.domain.symbols import SYMBOL_PATTERN, normalize_symbol
+from app.domain.taxonomy import AssetClass, Sector
 
 _LOGO_TEMPLATE: Final[str] = "https://assets.finance-a2ui.example/logos/{slug}.svg"
-
-# symbol, display name, current price as a string (ADR-E D-5 — never a float).
-_REFERENCE_ROWS: Final[tuple[tuple[str, str, str], ...]] = (
-    ("BTC", "Bitcoin", "64250.00"),
-    ("ETH", "Ethereum", "3180.50"),
-    ("SOL", "Solana", "152.40"),
-    ("LINK", "Chainlink", "11.85"),
-    ("DOGE", "Dogecoin", "0.1273"),
-    ("ADA", "Cardano", "0.4825"),
-    ("AVAX", "Avalanche", "27.60"),
-    ("DOT", "Polkadot", "4.2150"),
-)
 
 
 class MarketAsset(BaseModel):
@@ -47,6 +48,25 @@ class MarketAsset(BaseModel):
     price: Money = Field(
         gt=0, description="Current price in USD, parsed from a string."
     )
+    previous_close: Money = Field(
+        gt=0,
+        description="Yesterday's close, the other half of every day change.",
+    )
+    asset_class: AssetClass = Field(
+        description="Which slice of the allocation donut this belongs to."
+    )
+    sector: Sector | None = Field(
+        default=None,
+        description="Economic sector; only equities carry one.",
+    )
+    is_fund: bool = Field(
+        default=False,
+        description=(
+            "A pooled vehicle (ETF, bond fund) rather than a single name. The "
+            "Home page's *Top movers* lists single names only, so this is what "
+            "keeps a fund out of it (spec 0026 OD-4)."
+        ),
+    )
     logo_url: str = Field(
         min_length=1, max_length=255, description="Placeholder logo for the client."
     )
@@ -57,9 +77,15 @@ MARKET_REFERENCE: Final[tuple[MarketAsset, ...]] = tuple(
         symbol=symbol,
         name=name,
         price=Decimal(price),
+        previous_close=Decimal(previous_close),
+        asset_class=asset_class,
+        sector=sector,
+        is_fund=is_fund,
         logo_url=_LOGO_TEMPLATE.format(slug=symbol.lower()),
     )
-    for symbol, name, price in _REFERENCE_ROWS
+    for symbol, name, price, previous_close, asset_class, sector, is_fund in (
+        REFERENCE_ROWS
+    )
 )
 
 _BY_SYMBOL: Final[Mapping[str, MarketAsset]] = {

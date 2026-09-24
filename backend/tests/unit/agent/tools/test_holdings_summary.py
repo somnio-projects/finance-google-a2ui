@@ -9,7 +9,8 @@ import re
 
 from app.agent.contracts import ToolContext
 from app.agent.tools.holdings_summary import HoldingsSummaryTool
-from app.core.display import money_display, percentage_display, signed_money_display
+from app.core.display import money_display, percentage_display
+from app.core.signed_display import signed_money_display
 from app.core.trend import trend_of
 from app.domain.invariants import WEIGHT_TOLERANCE
 from app.domain.money import ONE, ZERO
@@ -31,7 +32,7 @@ async def test_it_describes_itself_for_the_model_to_choose_by(
     assert "gainers" in tool.description
     properties = tool.parameters["properties"]
     assert isinstance(properties, dict)
-    assert set(properties) == {"sort_by", "symbols", "top_n"}
+    assert set(properties) == {"sort_by", "symbols", "top_n", "group_by"}
     assert tool.parameters["additionalProperties"] is False
 
 
@@ -43,7 +44,7 @@ async def test_the_totals_agree_with_the_domain(
     Asserted on a trimmed call on purpose: the block describes the
     **portfolio**, not the rows returned.
     """
-    portfolio = await tool_context.portfolios.get(tool_context.subject)
+    portfolio = await tool_context.portfolios.get(tool_context.owner)
     profit = portfolio.total_unrealized_pl()
     ratio = return_on_cost(profit, portfolio.total_cost_basis())
     assert ratio is not None

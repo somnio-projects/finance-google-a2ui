@@ -1,0 +1,261 @@
+/*
+ * The manual's layout, built from the app's own design tokens.
+ *
+ * There is no Somnio document template, so the identity here is the product's:
+ * every colour below is copied from a file in `frontend/app/lib/theme/` or
+ * `frontend/app/lib/charts/chart_tokens.dart`, which are themselves measured
+ * from the design rather than generated. The comment beside each one names its
+ * home, so a palette change in the app can be followed here.
+ *
+ * Print target: A4 through headless Chrome (`tool/build_pdf.sh`).
+ */
+
+:root {
+  /* app/lib/theme/app_colors.dart */
+  --page: #f7f6fb;          /* backgroundLight   */
+  --surface: #fdfbff;       /* surfaceLight      */
+  --raised: #f0edf7;        /* surfaceRaisedLight*/
+  --ink: #1a1b20;           /* onSurfaceLight    */
+  --muted: #5f6169;         /* onSurfaceMutedLight */
+  --line: #e5e1e9;          /* outlineLight      */
+  --accent: #4f5dff;        /* accentLight       */
+  /* app/lib/theme/login_tokens.dart — LoginTokens.logoGradient */
+  --accent-2: #7a5cff;
+  /* app/lib/charts/chart_tokens.dart — ChartTokens.light */
+  --gain: #12805c;
+  --loss: #c0362c;
+  --warn: #e0a010;
+}
+
+@page {
+  size: A4;
+  margin: 18mm 16mm 16mm 16mm;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--ink);
+  background: #fff;
+}
+
+/* ---------------------------------------------------------------- cover */
+
+.cover {
+  page-break-after: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 245mm;
+  text-align: left;
+}
+
+.mark {
+  width: 62px;
+  height: 62px;
+  border-radius: 19px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  position: relative;
+  margin-bottom: 26px;
+}
+
+/* The design's mark: the top half of a ring over a stem
+   (app/lib/features/sign_in/view/sign_in_hero.dart). */
+.mark::before {
+  content: "";
+  position: absolute;
+  left: 18px; top: 18px;
+  width: 26px; height: 13px;
+  border: 4px solid #fff;
+  border-bottom: none;
+  border-radius: 13px 13px 0 0;
+}
+.mark::after {
+  content: "";
+  position: absolute;
+  left: 29px; top: 29px;
+  width: 4px; height: 16px;
+  background: #fff;
+  border-radius: 3px;
+}
+
+.cover h1 {
+  font-size: 32pt;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  margin: 0 0 10px;
+  font-weight: 500;
+}
+
+.cover .lede {
+  font-size: 13pt;
+  color: var(--muted);
+  max-width: 120mm;
+  margin: 0 0 34px;
+}
+
+.cover dl {
+  display: grid;
+  grid-template-columns: 42mm 1fr;
+  gap: 5px 0;
+  margin: 0;
+  font-size: 9.5pt;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  max-width: 130mm;
+}
+.cover dt { color: var(--muted); }
+.cover dd { margin: 0; }
+
+/* -------------------------------------------------------------- headings */
+
+h2 {
+  font-size: 17pt;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+  padding-top: 2px;
+  page-break-after: avoid;
+}
+
+h2 .num {
+  display: inline-block;
+  min-width: 26px;
+  color: var(--accent);
+}
+
+h3 {
+  font-size: 11.5pt;
+  font-weight: 500;
+  margin: 20px 0 6px;
+  page-break-after: avoid;
+}
+
+/* Sections flow into one another; only the two part openers start a page.
+   Forcing a break per section left half-empty pages behind every short one,
+   which reads as a document that ran out of things to say. */
+section {
+  page-break-before: auto;
+  page-break-inside: auto;
+  margin-top: 26px;
+}
+/* A part opener gets air, not a forced page: forcing one stranded the tail of
+   the previous section on a page of its own. */
+section.newpage { margin-top: 40px; }
+
+.kicker {
+  font-size: 8.5pt;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+p { margin: 0 0 11px; }
+
+/* ----------------------------------------------------------------- bits */
+
+.callout {
+  background: var(--raised);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  page-break-inside: avoid;
+}
+.callout.warn { border-left-color: var(--warn); }
+.callout h3 { margin-top: 0; }
+.callout p:last-child { margin-bottom: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 18px;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding: 7px 10px 7px 0;
+}
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px 8px 0;
+  vertical-align: top;
+}
+td:first-child { font-weight: 500; white-space: nowrap; }
+
+ul, ol { margin: 0 0 12px; padding-left: 18px; }
+li { margin-bottom: 5px; }
+
+strong { font-weight: 500; color: var(--ink); }
+.gain { color: var(--gain); }
+.loss { color: var(--loss); }
+
+/* ------------------------------------------------------------ the shots */
+
+/* A screenshot sits in a light phone frame so a reader can tell at a glance
+   that they are looking at the product and not at this document. */
+figure {
+  margin: 0;
+  page-break-inside: avoid;
+}
+figure img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--page);
+}
+figcaption {
+  font-size: 8.5pt;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 8px;
+}
+
+.shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm;
+  margin: 16px 0 6px;
+  page-break-inside: avoid;
+}
+/* A phone screenshot is twice as tall as it is wide, so a full-column pair
+   would be 180mm high and could never share a page with the text that
+   explains it. Height is the constraint; the width follows. */
+.shots figure img {
+  max-height: 142mm;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.side {
+  display: grid;
+  grid-template-columns: 58mm 1fr;
+  gap: 8mm;
+  align-items: start;
+  margin: 16px 0;
+  page-break-inside: avoid;
+}
+.side .body p:last-child { margin-bottom: 0; }
+
+/* --------------------------------------------------------------- footer */
+
+.end {
+  margin-top: 26px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 8.5pt;
+  color: var(--muted);
+}

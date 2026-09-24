@@ -17,9 +17,32 @@ from app.presentation.option_text import (
 )
 from app.presentation.registry import Projection
 
+#: What the model is told about the catalog, and — as of 2026-09-22 — what it
+#: is told NOT to do with it.
+#:
+#: The first version read "Pick one by id and fill only the options listed for
+#: it", which describes a capability the model does not have: a surface is
+#: attached by the **tool** it called (``ToolOutcome.render``), and there is no
+#: channel through which the model can name a view. Told to do something it
+#: has no way of doing, it did the only thing left and wrote the intent into
+#: its prose. Measured, same question three times:
+#:
+#:     Here is your portfolio allocation broken down by sector.
+#:     ```json
+#:     { "id": "holdings.allocation.v1", "options": {"group_by": "sector"} }
+#:     ```
+#:
+#: Twice out of three, with the surface rendered *correctly* beside it — and
+#: the third time it refused a grouping the catalog declares. The catalog is
+#: here so the model can choose the right TOOL and the right ARGUMENTS, which
+#: is the only lever it holds; saying so is the fix (spec backend/0036 OD-2).
 PROMPT_HEADER: Final[str] = (
-    "Available views. Pick one by id and fill only the options listed for it; "
-    "an unknown view, an undeclared option or an out-of-range value is "
+    "Views the client can draw. You do not choose one and you never write a "
+    "view id, an options object or JSON in your answer: a surface is attached "
+    "by the tool you call, and your lever is which tool you call and which "
+    "arguments you give it. Read this catalog to know what a tool's arguments "
+    "can produce, then answer in plain prose about what the reader is seeing. "
+    "An unknown view, an undeclared option or an out-of-range value is "
     "rejected and the default view is rendered instead. Never invent a payload "
     "shape, a field or a formatted number."
 )
@@ -36,6 +59,47 @@ def _options_line(projection: Projection) -> str:
     return f"  options: {described or NO_OPTIONS}"
 
 
+def _guidance_lines(projection: Projection) -> list[str]:
+    """Return the do/don't pair for ``projection``, or nothing.
+
+    A projection whose design page has not been written contributes no lines
+    at all rather than an empty "use when:" — a blank instruction is worse
+    than a missing one, because the model reads it as a constraint it cannot
+    satisfy (``presentation.guidance``).
+    """
+    guidance = projection.guidance
+    if guidance is None:
+        return []
+    return [
+        f"  use when: {guidance.use_when}",
+        f"  do not use for: {guidance.avoid_when}",
+    ]
+
+
+def view_fragment(projection: Projection) -> str:
+    """Render the lines the system prompt carries for one projection.
+
+    This is **the text the agent is actually taught** about a view, and the
+    catalog publishes it verbatim (``contract.catalog_entry``, spec 0034) so
+    the developer catalog's *Zone 3 · Prompt fragment* shows the sentence the
+    model reads rather than a paraphrase of it.
+
+    Args:
+        projection: The registered projection.
+
+    Returns:
+        Its id with its purpose, its declared options with their bounds, and
+        — where design has written one — the do/don't pair (spec 0023).
+    """
+    return "\n".join(
+        [
+            f"- {projection.id} — {projection.summary}",
+            _options_line(projection),
+            *_guidance_lines(projection),
+        ]
+    )
+
+
 def prompt_fragment(projections: Sequence[Projection]) -> str:
     """Render the registry as the catalog text the model is taught.
 
@@ -43,14 +107,11 @@ def prompt_fragment(projections: Sequence[Projection]) -> str:
         projections: Every registered projection.
 
     Returns:
-        One header line, then two lines per projection: id with its purpose,
-        and its declared options with their bounds.
+        The header, then ``view_fragment`` of every projection in order.
     """
-    lines = [PROMPT_HEADER]
-    for projection in projections:
-        lines.append(f"- {projection.id} — {projection.summary}")
-        lines.append(_options_line(projection))
-    return "\n".join(lines)
+    return "\n".join(
+        [PROMPT_HEADER, *(view_fragment(projection) for projection in projections)]
+    )
 
 
-__all__ = ["PROMPT_HEADER", "prompt_fragment"]
+__all__ = ["PROMPT_HEADER", "prompt_fragment", "view_fragment"]

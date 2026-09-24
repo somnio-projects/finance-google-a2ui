@@ -1,9 +1,15 @@
-"""The persisted portfolio of one subject (spec 0020).
+"""The persisted portfolio of one owner (spec 0020, re-keyed by 0035).
 
-``subject`` is the ownership key and it is **unique**: one subject has exactly
-one portfolio. That constraint is not decoration — it is what makes two
-instances seeding the same new subject converge on one row instead of two
+``owner_email`` is the ownership key and it is **unique**: one owner has
+exactly one portfolio. That constraint is not decoration — it is what makes
+two instances seeding the same new owner converge on one row instead of two
 (spec 0020 AC-6), which is the whole reason this aggregate left process memory.
+
+It was ``subject`` — the identity provider's opaque ``sub`` — until spec 0035.
+A row keyed that way named nobody, and the same person arriving through two
+Firebase methods owned two portfolios. The key is now the verified e-mail
+(``Principal.owner_key``), which is Confidential data and is therefore never
+logged: ``portfolio.seeded`` carries ``as_of`` and the symbol set, on purpose.
 
 ``as_of`` lives here rather than being read from a clock on each load. It was
 the fact being lost when two processes each seeded their own copy: the figures
@@ -33,12 +39,14 @@ EXACT = Numeric(38, 18)
 
 
 class Portfolio(TimestampMixin, Base):
-    """One subject's portfolio, read back at the ``as_of`` it was seeded with."""
+    """One owner's portfolio, read back at the ``as_of`` it was seeded with."""
 
     __tablename__ = "portfolios"
-    __table_args__ = (UniqueConstraint("subject", name="uq_portfolios_subject"),)
+    __table_args__ = (
+        UniqueConstraint("owner_email", name="uq_portfolios_owner_email"),
+    )
 
-    subject: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    owner_email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
@@ -58,7 +66,7 @@ class PortfolioLot(TimestampMixin, Base):
 
 
 class PortfolioTransaction(TimestampMixin, Base):
-    """One executed buy or sell, cascading from its portfolio."""
+    """One ledger row — trade, dividend or deposit — cascading from its portfolio."""
 
     __tablename__ = "portfolio_transactions"
 
@@ -72,6 +80,7 @@ class PortfolioTransaction(TimestampMixin, Base):
     quantity: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     price: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     amount: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
+    memo: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 __all__ = ["EXACT", "Portfolio", "PortfolioLot", "PortfolioTransaction"]

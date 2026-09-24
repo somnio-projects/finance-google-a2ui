@@ -62,7 +62,7 @@ async def list_feature_flags(
         "`FEATURE_FLAGS_FORCE_DISABLED` is persisted but still reported "
         "disabled — the kill-switch wins. Spec 0002 AC-1, AC-3, AC-4, AC-6."
     ),
-    responses={**ADMIN_RESPONSES, **problem_responses(422)},
+    responses={**ADMIN_RESPONSES, **problem_responses(413, 422)},
 )
 async def set_feature_flag(
     key: FlagKey,

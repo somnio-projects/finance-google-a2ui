@@ -42,19 +42,23 @@ def test_every_figure_the_reader_sees_is_a_display_string(
     assert all(pair["display"].lstrip("+-").startswith("$") for pair in numbers)
     # ADR-K D-5: the exact Decimal travels *beside* the string, never instead.
     assert all(set(pair) == {"amount", "display"} for pair in numbers)
-    assert body["subject"]["quantity_display"] == "0.18"
+    assert body["subject"]["quantity_display"] == "30"
 
 
 def test_the_surface_binds_the_payload_without_computing_anything(
     card: ScenarioComparisonPayload,
 ) -> None:
     rendered = surface(card)
-    assert rendered.component == "ComparisonCard"
+    assert rendered.component == "ScenarioComparison"
     assert rendered.view == VIEW_ID
-    assert rendered.props["subject"]["symbol"] == "BTC"
+    assert rendered.props["subject"]["symbol"] == "NVDA"
     assert len(rendered.props["columns"]) == len(card.columns)
     assert rendered.props["spread"]["differs"] is True
-    assert rendered.props["notes"] == [note.text for note in card.notes]
+    # Label included: N-9 makes both halves of a note compliance text, and the
+    # adapter used to drop the label (spec 0024 §6).
+    assert rendered.props["notes"] == [
+        {"label": note.label, "text": note.text} for note in card.notes
+    ]
 
 
 def test_the_card_is_never_auto_selected(portfolio: Portfolio) -> None:

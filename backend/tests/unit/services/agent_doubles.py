@@ -4,10 +4,16 @@ from collections.abc import Sequence
 
 from app.agent.registry import ToolRegistry
 from app.core.model import MessageRole, ModelMessage, ModelReply, ToolCall, ToolSpec
-from app.core.protocols import ModelClient
+from app.core.protocols import ErrorReporter, ModelClient
+from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import FixedClock
 from app.infra.model.null_client import NullModelClient
+from app.presentation.registry import REGISTRY
+from app.presentation.views import LOADED
+from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_service import AgentService
+from app.services.render_intent_service import RenderIntentService
+from app.services.view_service import ViewService
 from tests.conftest import FROZEN_NOW, FakeReporter
 from tests.unit.conftest import FakeTool
 
@@ -21,6 +27,24 @@ TEST_PROMPT = "test system prompt"
 def call(name: str = "fake_tool", *, call_id: str = "0-fake") -> ToolCall:
     """Build a tool call the model could have emitted."""
     return ToolCall(call_id=call_id, name=name, arguments={"top_n": 1})
+
+
+def make_resolver(reporter: ErrorReporter) -> TurnRenderResolver:
+    """Build the turn's render-intent resolver over the **real** registry.
+
+    The doubles stop at the model and the tools on purpose: what a turn is
+    allowed to ask the client to draw is decided by the projections this
+    backend actually ships, so a test that invents a registry would prove
+    nothing about the surfaces a real turn emits.
+    """
+    assert LOADED, "the views package fills the registry; nothing else does"
+    views = ViewService(
+        provider=InMemoryPortfolioProvider(clock=FixedClock(FROZEN_NOW)),
+        registry=REGISTRY,
+    )
+    return TurnRenderResolver(
+        intents=RenderIntentService(views=views, reporter=reporter)
+    )
 
 
 def make_service(
@@ -38,6 +62,7 @@ def make_service(
         model=model,
         tools=registry,
         reporter=reporter,
+        renders=make_resolver(reporter),
         clock=FixedClock(FROZEN_NOW),
         max_iterations=max_iterations,
         system_prompt=TEST_PROMPT,

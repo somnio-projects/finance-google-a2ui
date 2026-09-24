@@ -1,28 +1,49 @@
 """Providers for the agent host (spec 0006).
 
-No route resolves these yet — GGU-3 exposes the turn over the A2A surface
-(ADR-J D-2). They live here rather than inside that future controller so the
-transport lands as a controller, not as a second wiring path.
+The A2A controller resolves these. A provider that no controller resolves is
+not wiring — GGU-84 was exactly that: `get_render_intent_service` existed,
+type-checked and was tested, and no turn ever asked for it. Anything added
+here is reached from a route, or it is dead.
 """
 
+from typing import Annotated
+
+from fastapi import Depends
+
 from app.agent.contracts import ToolContext
-from app.api.deps.common import ContainerDep, PortfolioDep, PrincipalDep
+from app.api.deps.common import (
+    ContainerDep,
+    PortfolioDep,
+    PrincipalDep,
+    get_audit_service,
+    get_feature_flag_service,
+)
+from app.api.deps.views import OwnersDep, get_render_intent_service
 from app.schemas.agent_card import AgentCard
 from app.services.a2a_service import A2aService
+from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_service import AgentService
+from app.services.audit_service import AuditService
+from app.services.feature_flag_service import FeatureFlagService
+from app.services.surface_action_service import SurfaceActionService
 
 
-def get_agent_service(container: ContainerDep) -> AgentService:
-    """Provide the agent host (spec 0006).
+def get_agent_service(
+    container: ContainerDep, portfolio: PortfolioDep, owners: OwnersDep
+) -> AgentService:
+    """Provide the agent host over the request's portfolio (spec 0006).
 
-    No route resolves it yet: GGU-3 exposes the turn over the A2A surface and
-    GGU-46 supplies the history. The provider lives here so both land as a
-    controller, not as a second wiring path.
+    The portfolio provider is the request's own, so the render-intent entry
+    point the turn validates through judges a surface with the same registry
+    the `?view=` path uses (ADR-K D-11, GGU-84).
     """
     return AgentService(
         model=container.agent.model,
         tools=container.agent.tools,
         reporter=container.reporter,
+        renders=TurnRenderResolver(
+            intents=get_render_intent_service(container, portfolio, owners)
+        ),
         clock=container.clock,
         max_iterations=container.settings.agent_max_tool_iterations,
         system_prompt=container.agent.system_prompt,
@@ -30,13 +51,24 @@ def get_agent_service(container: ContainerDep) -> AgentService:
 
 
 def get_tool_context(portfolio: PortfolioDep, principal: PrincipalDep) -> ToolContext:
-    """Provide the subject-scoped context every tool of a turn receives."""
-    return ToolContext(subject=principal.subject, portfolios=portfolio)
+    """Provide the owner-scoped context every tool of a turn receives."""
+    return ToolContext(owner=principal.owner_key, portfolios=portfolio)
 
 
-def get_a2a_service(container: ContainerDep) -> A2aService:
+def get_surface_action_service(
+    container: ContainerDep,
+    flags: Annotated[FeatureFlagService, Depends(get_feature_flag_service)],
+    audit: Annotated[AuditService, Depends(get_audit_service)],
+) -> SurfaceActionService:
+    """Provide the surface-action dispatcher (spec 0022 §3)."""
+    return SurfaceActionService(flags=flags, audit=audit, reporter=container.reporter)
+
+
+def get_a2a_service(
+    container: ContainerDep, portfolio: PortfolioDep, owners: OwnersDep
+) -> A2aService:
     """Provide the A2A protocol adapter over the agent host (ADR-J D-2)."""
-    return A2aService(agent=get_agent_service(container))
+    return A2aService(agent=get_agent_service(container, portfolio, owners))
 
 
 def get_agent_card(container: ContainerDep) -> AgentCard:
@@ -48,5 +80,6 @@ __all__ = [
     "get_a2a_service",
     "get_agent_card",
     "get_agent_service",
+    "get_surface_action_service",
     "get_tool_context",
 ]

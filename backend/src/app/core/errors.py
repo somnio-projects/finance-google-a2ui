@@ -78,6 +78,12 @@ class AuthorizationError(AppError):
     code = "forbidden"
 
 
+class NotProvisionedError(AuthorizationError):
+    """This account isn't provisioned for the preview."""
+
+    code = "not-provisioned"
+
+
 class RateLimitedError(AppError):
     """Too many requests for this principal in the current window."""
 
@@ -109,6 +115,7 @@ __all__ = [
     "FeatureDisabledError",
     "MissingTokenError",
     "NotFoundError",
+    "NotProvisionedError",
     "RateLimitedError",
     "ValidationFailedError",
 ]

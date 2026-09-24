@@ -3,7 +3,8 @@
 GGU-3 adds the controller and GGU-46 the history; the providers exist now so
 both land as a controller rather than as a second wiring path. A turn is run
 through them end to end: with no ``GEMINI_API_KEY`` the container holds the
-null client, so the service answers deterministically and opens no socket.
+scripted client (spec 0033), so a prompt outside its table gets the honest
+unconfigured sentence, deterministically, and no socket is opened.
 """
 
 from fastapi import FastAPI
@@ -14,6 +15,8 @@ from app.domain.provider import InMemoryPortfolioProvider
 from app.helpers.clock import FixedClock
 from app.infra.model.null_client import UNCONFIGURED_MESSAGE
 from app.services.agent_service import AgentService
+from tests.conftest import FROZEN_NOW
+from tests.unit.api.app_factory import NoUsers
 
 
 def test_get_tool_context_scopes_the_context_to_the_caller(
@@ -30,7 +33,7 @@ def test_get_tool_context_scopes_the_context_to_the_caller(
 
     context = get_tool_context(portfolio, principal)
 
-    assert context.subject == principal.subject
+    assert context.owner == principal.owner_key
     assert context.portfolios is portfolio
 
 
@@ -38,12 +41,13 @@ async def test_the_wired_service_runs_a_turn_against_the_configured_model(
     app: FastAPI, principal: Principal
 ) -> None:
     container = app.state.container
-    service = get_agent_service(container)
+    portfolio = InMemoryPortfolioProvider(clock=FixedClock(FROZEN_NOW))
+    service = get_agent_service(container, portfolio, NoUsers())
 
     result = await service.run_turn(
         prompt="what do I hold?",
         history=[],
-        context=get_tool_context(container, principal),
+        context=get_tool_context(portfolio, principal),
     )
 
     assert isinstance(service, AgentService)

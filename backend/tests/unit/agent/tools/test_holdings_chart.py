@@ -20,14 +20,17 @@ async def test_a_default_call_asks_for_the_allocation_chart(
 
     assert outcome.render is not None
     assert outcome.render.view == VIEW
-    assert outcome.render.options == {"top_n": len(await held(tool_context))}
+    assert outcome.render.options == {
+        "top_n": len(await held(tool_context)),
+        "group_by": "holding",
+    }
 
 
 async def test_a_filtered_call_asks_for_no_chart(
     tool: HoldingsSummaryTool, tool_context: ToolContext
 ) -> None:
     """AC-7, OD-1 — a whole-portfolio donut would contradict two rows."""
-    outcome = await tool.run({"symbols": ["BTC"]}, tool_context)
+    outcome = await tool.run({"symbols": ["NVDA"]}, tool_context)
 
     assert outcome.render is None
 
@@ -54,5 +57,8 @@ def test_the_chart_is_never_asked_for_more_rows_than_it_declares() -> None:
     """
     options = HoldingsSummaryArguments()
 
-    assert options.chart_options(MAX_TOP_N + 5) == {"top_n": MAX_TOP_N}
+    assert options.chart_options(MAX_TOP_N + 5) == {
+        "top_n": MAX_TOP_N,
+        "group_by": "holding",
+    }
     assert options.chart_options(0) is None

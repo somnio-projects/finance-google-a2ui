@@ -21,9 +21,12 @@ In the **same PR** as the code, whenever the change adds or alters:
 | Terraform: network, runtime, secrets, observability | `08-infrastructure.md` |
 | A check moving between pre-commit, CI or CD | `09-delivery-pipeline.md` |
 | The branch model or the ticket lifecycle | `10-branching.md` |
+| A layer, package or import rule in `frontend/` | `12-frontend-layers.md` |
+| How the A2UI client reaches a browser | `13-client-delivery.md` |
 
 A PR that changes structure and leaves its diagram stale is **incomplete** —
-the `backend-reviewer` agent flags it and review blocks on it.
+the `backend-reviewer` agent flags it for `backend/`, the `frontend-reviewer`
+agent for `frontend/`, and review blocks on it.
 
 ## How to write one
 
@@ -38,4 +41,8 @@ the `backend-reviewer` agent flags it and review blocks on it.
 
 Add the file as `NN-<slug>.md`, register it in `docs/diagrams/README.md` with
 the question it answers and what keeps it true, and link it from the ADR or
-spec it illustrates. Diagrams are numbered in reading order, not creation order.
+spec it illustrates. Diagrams are numbered in reading order, not creation
+order, and a number is **never reused** — `11` is free and stays free, because
+`11-client-architecture.md` drew an app that was retired (spec `repo/0002`) and
+a deleted diagram's number would otherwise make two different pictures answer
+to one citation.

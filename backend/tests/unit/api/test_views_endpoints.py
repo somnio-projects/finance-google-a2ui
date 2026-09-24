@@ -17,6 +17,7 @@ from app.helpers.clock import FixedClock
 from app.presentation.registry import REGISTRY
 from app.schemas.views import MAX_VIEWS
 from tests.catalog import SHIPPED_VIEWS
+from tests.unit.api.app_factory import NoUsers
 
 ALLOCATION = "holdings.allocation.v1"
 WATERFALL = "attribution.waterfall.v1"
@@ -36,7 +37,7 @@ def test_two_views_are_rendered_in_one_request(views_client: TestClient) -> None
     assert body["views"][ALLOCATION]["view"] == ALLOCATION
     assert body["views"][WATERFALL]["view"] == WATERFALL
     assert body["portfolio_id"] == "current"
-    assert body["views"][ALLOCATION]["total"]["amount"]["display"] == "$65,038.60"
+    assert body["views"][ALLOCATION]["total"]["amount"]["display"] == "$482,915.20"
 
 
 def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> None:
@@ -45,7 +46,7 @@ def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> N
     )
     assert response.status_code == 200
     categories = response.json()["views"][ALLOCATION]["categories"]
-    assert [row["key"] for row in categories] == ["DOGE", "other"]
+    assert [row["key"] for row in categories] == ["TIP", "other"]
 
 
 def test_no_view_lets_the_selection_rule_choose(views_client: TestClient) -> None:
@@ -112,6 +113,9 @@ def test_catalog_describes_every_registered_projection(
         assert entry["endpoints"] == list(projection.endpoints)
         assert entry["options_schema"]["properties"]
         assert entry["example"]["view"] == entry["id"]
+        # Spec 0034: the gallery binds the inventory and the prompt as served.
+        assert entry["fields"][0]["path"] == "view"
+        assert entry["prompt"].startswith(f"- {entry['id']} — ")
 
 
 def test_the_operation_documents_the_union_and_one_example_per_view(
@@ -134,5 +138,5 @@ def test_the_providers_build_both_services(app: FastAPI, clock: FixedClock) -> N
     """
     container: Container = app.state.container
     portfolio = InMemoryPortfolioProvider(clock=clock)
-    assert get_view_service(portfolio).surface  # the renderer is wired
-    assert get_render_intent_service(container, portfolio) is not None
+    assert get_view_service(portfolio, NoUsers()).surface  # the renderer is wired
+    assert get_render_intent_service(container, portfolio, NoUsers()) is not None

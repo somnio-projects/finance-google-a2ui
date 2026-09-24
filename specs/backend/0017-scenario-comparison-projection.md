@@ -366,3 +366,11 @@ edited. The literal lists are deliberate, for the reason
 being listed should fail loudly rather than ship invisible to the catalog, the
 prompt and the client. A test that asserted "the catalog equals the registry"
 would pass for a projection nobody knew existed.
+
+> **Amended 2026-09-21 by spec [0024](0024-contract-serves-the-designs.md)
+> (GGU-104).** **OD-4 stands** — the TL ruled for it against the design's
+> `recommended` / `metrics[].betterWhen`. `betterWhen` is the same ranking
+> moved into the client, and a per-row `best` marker is the field OD-4 names
+> first. The A2UI surface now carries each note's **label and text**; it
+> flattened to `text` alone, dropping *Before tax* and *Not advice*'s
+> captions, which N-9 requires verbatim.

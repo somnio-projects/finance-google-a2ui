@@ -78,7 +78,7 @@ this table.
 | 401 | `…/errors/auth-missing-token` | Missing credentials | no `Authorization` header | sign out → login |
 | 401 | `…/errors/auth-invalid-token` | Invalid credentials | signature / `iss` / `aud` fail | sign out |
 | 401 | `…/errors/auth-expired-token` | Expired credentials | `exp` past | **force-refresh + retry once** (ADR-B D-7) |
-| 401 | `…/errors/auth-revoked-token` | Revoked credentials | `check_revoked` hit | sign out |
+| ~~401~~ | ~~`…/errors/auth-revoked-token`~~ | ~~Revoked credentials~~ | ~~`check_revoked` hit~~ | **struck 2026-09-20 (GGU-87)** — never built, and nothing can raise it. A revoked token is accepted until `exp`; see [ADR-B](../../adr/ADR-B-auth-credential-contract.md) D-12 |
 | 403 | `…/errors/session-forbidden` | Session not accessible | `contextId` belongs to another uid (ADR-A D-2) | start a new session |
 | 400 | `…/errors/malformed-request` | Malformed request | JSON-RPC or part validation failure | non-retryable |
 | 429 | `…/errors/rate-limited` | Too many requests | per-uid limit (ADR-G D-7) | back off; honour `Retry-After` |

@@ -23,6 +23,7 @@ from app.presentation import scenario_build as build
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import Annotation, ProjectionDto
 from app.presentation.registry import register
+from app.presentation.scenario_guidance import GUIDANCE
 from app.presentation.scenario_options import ScenarioComparisonOptions, resolve
 from app.presentation.scenarios import (
     NOTES,
@@ -100,16 +101,23 @@ def render(
 
 
 def surface(payload: ScenarioComparisonPayload) -> Surface:
-    """Map the payload onto the A2UI comparison card the genui client shows."""
+    """Map the payload onto the A2UI comparison card the genui client shows.
+
+    ``notes`` carries the whole ``Annotation``, label included. It used to
+    flatten to ``note.text``, which dropped *Before tax* and *Not advice* —
+    server-written strings the client must render verbatim under N-9, and one
+    of them is this card's compliance statement. The DTO path and the A2UI
+    path now hand a widget the same thing (spec 0024 §6).
+    """
     return Surface(
-        component="ComparisonCard",
+        component="ScenarioComparison",
         view=payload.view,
         title=payload.title,
         props={
             "subject": payload.subject.model_dump(mode="json"),
             "columns": [row.model_dump(mode="json") for row in payload.columns],
             "spread": payload.spread.model_dump(mode="json"),
-            "notes": [note.text for note in payload.notes],
+            "notes": [note.model_dump(mode="json") for note in payload.notes],
         },
     )
 
@@ -129,6 +137,7 @@ PROJECTION: Final = register(
         render=render,
         surface=surface,
         fitness=fitness,
+        guidance=GUIDANCE,
     )
 )
 

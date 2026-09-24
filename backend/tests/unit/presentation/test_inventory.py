@@ -49,10 +49,18 @@ def test_inventory_marks_every_money_string_as_pre_formatted() -> None:
     assert displays == [
         "start.amount.display",
         "end.amount.display",
+        "net.amount.display",
+        "net.percent.display",
         "buckets[].delta.display",
         "buckets[].cumulative.display",
+        "buckets[].move.display",
+        "buckets[].units.display",
+        "buckets[].price.display",
     ]
-    assert all(row.binding != "raw" or ".amount" in row.path for row in rows)
+    # Every raw figure is the exact half of an ADR-E pair — money, a ratio or
+    # a unit count — and never travels alone (GGU-100 added the last two).
+    raw_members = (".amount", ".value", ".units")
+    assert all(row.binding != "raw" or row.path.endswith(raw_members) for row in rows)
 
 
 def test_inventory_reports_the_discriminator_and_the_required_fields() -> None:

@@ -35,6 +35,20 @@ class Principal(BaseModel):
     token_fingerprint: str = Field(min_length=8, max_length=64)
     auth_methods: frozenset[str] = Field(default_factory=frozenset)
 
+    @property
+    def owner_key(self) -> str:
+        """Which portfolio this caller owns (spec 0035 OD-1).
+
+        The **verified** e-mail, lower-cased — the same join key the
+        provisioning registry uses (spec 0027 OD-1), so one person signing in
+        through two Firebase methods owns one portfolio rather than two. A
+        token with no usable `email` claim (a machine token, or a provider
+        that sent a blank one) falls back to `sub`, which is what it did for
+        everyone before. Stripped as well as folded: a whitespace-only claim
+        would otherwise key a portfolio on three spaces.
+        """
+        return (self.email or "").strip().lower() or self.subject
+
     def has_scope(self, scope: str) -> bool:
         """Return True when the principal was granted ``scope``."""
         return scope.lower() in self.scopes

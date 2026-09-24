@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<!--
+  The English user manual. Source of the PDF beside it; regenerate with
+  `bash docs/manual/tool/build_pdf.sh` (see docs/manual/README.md).
+
+  Screenshots come from docs/manual/assets/, captured against a running stack
+  by docs/manual/tool/capture_screenshots.mjs. Never paste an image in by hand:
+  a picture nobody can retake is how a manual starts describing an app that no
+  longer exists.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Portfolio companion — User manual</title>
+<link rel="stylesheet" href="manual.css">
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark"></div>
+  <h1>Portfolio&nbsp;companion</h1>
+  <p class="lede">A user manual for the A2UI finance showcase — an assistant that answers
+  portfolio questions by composing interface, not paragraphs.</p>
+  <dl>
+    <dt>Audience</dt><dd>Anyone seeing the application for the first time</dd>
+    <dt>Built by</dt><dd>Somnio Software, with Google</dd>
+    <dt>Build shown</dt><dd><code>local+5cb9a40</code></dd>
+    <dt>Screens captured</dt><dd>22 September 2026</dd>
+    <dt>Portfolio data</dt><dd><strong>Simulated.</strong> No live prices, no broker, no money</dd>
+  </dl>
+</div>
+
+<!-- ============================================================ 1 -->
+<section>
+  <p class="kicker">Part one · The idea</p>
+  <h2><span class="num">1</span> What this application is</h2>
+
+  <p>Ask a normal question about a portfolio — <em>“how is my money split up?”</em>,
+  <em>“what moved today?”</em>, <em>“which lots would I sell?”</em> — and most assistants
+  answer with a paragraph. You then have to trust a number you cannot inspect,
+  sitting in a sentence you cannot click.</p>
+
+  <p>This application answers differently. It replies with <strong>the actual
+  interface</strong>: a donut of your allocation, a table of your lots, a breakdown of
+  what moved. The same components the rest of the app is built from, assembled on
+  the spot in response to what you asked.</p>
+
+  <p>That is what “A2UI” means here — an agent that speaks in user interface. It is a
+  working reference application, open source under Apache 2.0, and the four screens
+  in this manual are the whole product.</p>
+
+  <div class="callout">
+    <h3>Two things worth knowing before the walkthrough</h3>
+    <p><strong>The assistant chooses, it does not invent.</strong> It picks from a fixed,
+    published set of components and fills them in. It cannot draw something the app
+    was not built to draw, which is why nothing ever arrives looking broken or
+    improvised.</p>
+    <p><strong>The assistant never does the arithmetic.</strong> Every figure on screen is
+    calculated by the system and handed to the assistant already written out. The
+    assistant decides <em>what to show you</em>; the numbers come from code that is
+    tested. A language model is not permitted to add anything up.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section>
+  <h2><span class="num">2</span> Read this first: the portfolio is simulated</h2>
+
+  <p>Every figure in this application is generated from a fixed, repeatable recipe.
+  It is a convincing portfolio and it is not a real one.</p>
+
+  <table>
+    <tr><th>What you see</th><th>What it actually is</th></tr>
+    <tr><td>Prices and market moves</td><td>Simulated. There is no market-data feed and no pricing licence behind this app.</td></tr>
+    <tr><td>Balances, holdings, tax lots</td><td>Simulated. Generated from a fixed seed, so the demo shows the same figures every time.</td></tr>
+    <tr><td>Activity — dividends, deposits, sales</td><td>Simulated, and reset for each session.</td></tr>
+    <tr><td>Buying or selling anything</td><td>Does not exist. There is no broker connection and no way to move money.</td></tr>
+    <tr><td>The assistant, the components, the app itself</td><td><strong>Real</strong>, and deployed. What you are evaluating is the interaction, and that part is genuine.</td></tr>
+  </table>
+
+  <p>The application says so on screen rather than leaving it to a footnote. A
+  <strong>Simulated portfolio</strong> badge sits beside your name on Home, the Activity
+  list is headed <em>“Simulated activity — resets each session”</em>, and the assistant
+  carries a <strong>Simulated</strong> badge of its own.</p>
+
+  <div class="callout warn">
+    <h3>Not financial advice</h3>
+    <p>Nothing this application displays is a recommendation, and nothing in it can be
+    acted on. It is a demonstration of how an assistant and an interface can work
+    together, using invented money.</p>
+  </div>
+
+  <p>The choice is deliberate. A fixed portfolio means the demo behaves identically
+  for every viewer, and it means a screenshot in this manual can be checked against
+  the running app rather than aged out by a market that moved overnight.</p>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="newpage">
+  <p class="kicker">Part two · Walkthrough</p>
+  <h2><span class="num">3</span> Signing in</h2>
+
+  <div class="side">
+    <figure>
+      <img src="assets/01-sign-in.png" alt="The sign-in screen: Portfolio companion, a Google button, and an e-mail field.">
+    </figure>
+    <div class="body">
+      <p>Two ways in, and the app is honest about which one is available to you.</p>
+      <p><strong>Continue with Google</strong> is the normal route for a hosted
+      environment.</p>
+      <p><strong>Continue with email</strong> takes an address and lets you straight
+      through. This is the path to use for a local or demo build, where there is no
+      Google project configured; the app says so rather than showing a button that
+      cannot work.</p>
+      <p>Access is invite-only during the preview, and <strong>Request access</strong>
+      under the buttons is how somebody without an account asks for one.</p>
+      <p>Each portfolio belongs to the address that signed in, so two people in the
+      same demo do not see each other's figures.</p>
+    </div>
+  </div>
+
+  <h3>What you land in</h3>
+  <p>After signing in you are inside a four-tab application. The bar at the bottom is
+  the whole of the navigation.</p>
+
+  <table>
+    <tr><th>Tab</th><th>The question it answers</th></tr>
+    <tr><td>Home</td><td>How am I doing right now, in one screen?</td></tr>
+    <tr><td>Holdings</td><td>What exactly do I own, and how is it grouped?</td></tr>
+    <tr><td>Activity</td><td>What has happened to this portfolio lately?</td></tr>
+    <tr><td>Assistant</td><td>Anything you can put into words.</td></tr>
+  </table>
+
+  <p>A round moon or sun button in the corner of the first screen switches the whole
+  app between light and dark. Every screen in this manual is shown in light mode; the
+  dark one is the same layout with a palette the designers measured separately.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section>
+  <h2><span class="num">4</span> Home — the daily glance</h2>
+
+  <p>Home is built to be read in about five seconds and then left alone. It opens on
+  the one figure most people want, and everything under it is context for that
+  figure.</p>
+
+  <div class="shots">
+    <figure>
+      <img src="assets/02-home-top.png" alt="Home: total portfolio value, today's change, a sparkline, range chips and the allocation donut.">
+      <figcaption>The top of Home. Note the <strong>Simulated portfolio</strong> badge beside the name.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/03-home-suggested-questions.png" alt="Home, scrolled: the allocation breakdown, suggested questions and today's top movers.">
+      <figcaption>Further down: suggested questions, then the day's biggest movers.</figcaption>
+    </figure>
+  </div>
+
+  <table>
+    <tr><th>Element</th><th>What it tells you</th></tr>
+    <tr><td>Total portfolio value</td><td>Everything, added up, with today's change underneath in green or red.</td></tr>
+    <tr><td>The sparkline</td><td>The shape of the period, drawn small. It is a picture of the trend, not a chart to read values off.</td></tr>
+    <tr><td>1D · 1W · 1M · YTD · 1Y · All</td><td>The period the line and the change above it describe. Tap one and both update.</td></tr>
+    <tr><td>Holdings &amp; allocation</td><td>Your money split by asset class — equities, bonds, cash, alternatives — as a ring, then as a list with each class's value and move.</td></tr>
+    <tr><td>Suggested questions</td><td>Shortcuts. Tapping one carries that question into the Assistant with it, so you never have to start from a blank field.</td></tr>
+    <tr><td>Top movers today</td><td>The handful of positions responsible for most of the day's change.</td></tr>
+  </table>
+
+  <p>The colour language is consistent everywhere in the app and worth learning once:
+  <span class="gain">green with an up triangle</span> is a gain,
+  <span class="loss">red with a down triangle</span> is a loss, and a grey dash means
+  nothing moved.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section>
+  <h2><span class="num">5</span> Holdings — what you actually own</h2>
+
+  <p>Home tells you how much. Holdings tells you what, and lets you look at the same
+  money two different ways without leaving the screen.</p>
+
+  <div class="shots">
+    <figure>
+      <img src="assets/04-holdings.png" alt="The Holdings tab: total value, a by-asset-class and by-sector toggle, the allocation ring and the breakdown list.">
+      <figcaption>The top half groups the portfolio. The toggle above the ring switches between asset class and sector.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/05-holdings-positions.png" alt="The Holdings list of individual positions, with the first one expanded to show day, price and weight.">
+      <figcaption>The bottom half lists positions. Tapping one opens it in place.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Reading a position</h3>
+  <p>Each row carries the ticker, the name, how many shares and what you paid on
+  average, then the position's value today and what it has gained or lost since you
+  bought it. The coloured edge down the left repeats that in a glance.</p>
+
+  <p>Tap a row and it expands with three more facts — the move today, the current
+  price, and how much of the whole portfolio this one position represents. That last
+  number, <strong>Weight</strong>, is the one people usually came looking for.</p>
+
+  <p>Inside the expanded row is <strong>Ask the assistant about this</strong>. It hands
+  the position straight to the Assistant tab, already framed as a question, so you do
+  not have to describe what you are looking at.</p>
+
+  <table>
+    <tr><th>Control</th><th>What it does</th></tr>
+    <tr><td>By asset class / By sector</td><td>Regroups the ring and the breakdown above. Same money, two ways of cutting it.</td></tr>
+    <tr><td>By position / By asset class</td><td>Regroups the list below into individual holdings or into buckets.</td></tr>
+    <tr><td>Search</td><td>Finds a holding by ticker or name.</td></tr>
+    <tr><td>Filter</td><td>Narrows the list down to a subset of what you own.</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ 6 -->
+<section>
+  <h2><span class="num">6</span> Activity — what has been happening</h2>
+
+  <div class="side">
+    <figure>
+      <img src="assets/06-activity.png" alt="The Activity tab: filter chips across the top, then dividends, deposits and a sale grouped by date.">
+    </figure>
+    <div class="body">
+      <p>Activity is the portfolio's diary: every dividend, deposit, purchase and sale,
+      newest first.</p>
+      <p>Entries are grouped under plain headings — <strong>Today</strong>,
+      <strong>This week</strong>, then by month — rather than a wall of dates, so the
+      recent past reads at a glance.</p>
+      <p>Each entry says what happened, and the second line carries the detail that
+      makes it checkable: the rate per share and how many shares for a dividend, the
+      account and day for a deposit, the price and the gain realised for a sale.</p>
+      <p>The chips across the top filter the list: <strong>All</strong>,
+      <strong>Buys</strong>, <strong>Sells</strong>, <strong>Dividends</strong>,
+      <strong>Deposits</strong>. The magnifying glass searches it.</p>
+      <p>The amber line under the chips is the app being straight with you:
+      <em>“Simulated activity — resets each session.”</em> Nothing here happened, and
+      nothing you do here can make it happen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section>
+  <h2><span class="num">7</span> The Assistant — the point of the whole thing</h2>
+
+  <p>The first three tabs are a good portfolio app. The fourth is the reason this one
+  exists.</p>
+
+  <div class="side">
+    <figure>
+      <img src="assets/07-assistant-answer.png" alt="The Assistant: the question 'How is my portfolio allocated?' answered with an allocation component and follow-up chips.">
+      <figcaption>One question, answered with a component — not a paragraph describing one.</figcaption>
+    </figure>
+    <div class="body">
+      <h3>How to use it</h3>
+      <p>Type a question into the field at the bottom and send it. Or tap the
+      <strong>microphone</strong> and dictate it — and if the browser will not allow
+      dictation, the app tells you so instead of quietly doing nothing.</p>
+      <p>You can also arrive here from elsewhere: a suggested question on Home, or
+      <strong>Ask the assistant about this</strong> on a position, both open this tab
+      with the question already written.</p>
+
+      <h3>What comes back</h3>
+      <p>Your question appears as a bubble. Under it, the assistant replies with a
+      <strong>live component</strong> — in the example, the allocation ring and
+      breakdown, the same one Home and Holdings use, filled with this portfolio's
+      figures.</p>
+      <p>Underneath sit <strong>follow-up chips</strong>. They are the assistant
+      offering the obvious next questions, so a conversation can be three taps rather
+      than three sentences.</p>
+    </div>
+  </div>
+
+  <h3>Things to try in a demo</h3>
+  <ul>
+    <li><em>“How is my portfolio allocated?”</em> — returns the allocation component.</li>
+    <li><em>“What do I hold?”</em> — returns the positions.</li>
+    <li><em>“What are my biggest drivers?”</em> — returns a breakdown of what moved the total.</li>
+    <li><em>“Show me my tax lots.”</em> — returns the lot-level table.</li>
+  </ul>
+
+  <p>The two badges in the header are worth pointing at during a demo.
+  <strong>Gemini · A2UI</strong> names what is answering: Google's Gemini model,
+  speaking through the A2UI protocol. <strong>Simulated</strong> repeats that the
+  figures underneath are invented.</p>
+
+  <div class="callout">
+    <h3>What the assistant is not doing</h3>
+    <p>It is not writing HTML, and it is not designing a layout on the fly. It selects
+    a component from a published catalog and fills in the options that component
+    declares. Anything outside that catalog it simply cannot produce — which is why
+    an answer never arrives malformed.</p>
+    <p>It is also not calculating. Every currency figure and every percentage in the
+    component above was worked out by the system and handed over already formatted.
+    The assistant copies them; it is not allowed to compute one.</p>
+  </div>
+
+  <p>This is an early preview of a genuinely new interaction, and it behaves like one.
+  An answer takes a few seconds to assemble, and a question far outside the
+  portfolio's subject will be answered less confidently than one inside it. Stay near
+  the four topics above and the demo is reliable.</p>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="newpage">
+  <p class="kicker">Part three · Why it matters</p>
+  <h2><span class="num">8</span> The value of the idea</h2>
+
+  <p>Set the portfolio aside for a moment. What is being demonstrated is a way of
+  building software where the assistant and the interface are the same thing.</p>
+
+  <table>
+    <tr><th>What changes</th><th>Why it is worth something</th></tr>
+    <tr><td><strong>An answer you can use</strong></td>
+        <td>A paragraph about your allocation is something to read. A live allocation component is something to tap, sort, and carry on from. The answer is a starting point rather than an endpoint.</td></tr>
+    <tr><td><strong>An answer you can check</strong></td>
+        <td>Because the figures come from the system and not from the model, the number in the assistant's reply is the same number the Holdings tab shows. There are not two versions of the truth.</td></tr>
+    <tr><td><strong>An answer that cannot be malformed</strong></td>
+        <td>The assistant can only compose from a catalog of components that already exist and are already tested. The failure mode where a model invents a broken layout is removed by construction, not by careful prompting.</td></tr>
+    <tr><td><strong>A product that grows in one place</strong></td>
+        <td>A new chart is added once, on the server, and the assistant can use it immediately. There is no second piece of work on each client to catch up.</td></tr>
+    <tr><td><strong>An interface that fits the question</strong></td>
+        <td>Nobody has to predict, at design time, which of a hundred questions deserves its own screen. The screen is assembled when the question is asked.</td></tr>
+  </table>
+
+  <p>For the technically curious, the app carries its own proof of this: a built-in
+  gallery, reachable from the <strong>Catalog</strong> button on the allocation card,
+  listing every component this build can render. That list is generated from the
+  server's own registry — it is the contract the assistant chooses from, shown live.</p>
+</section>
+
+<!-- ============================================================ 9 -->
+<section>
+  <h2><span class="num">9</span> Limits, plainly stated</h2>
+
+  <p>A demo is more persuasive when it says what it does not do.</p>
+
+  <ul>
+    <li><strong>No live market data.</strong> No pricing feed, no market-data licence. Prices are generated.</li>
+    <li><strong>No broker, no orders, no transfers.</strong> There is no path from this application to anybody's money, and there is not going to be one here.</li>
+    <li><strong>No advice.</strong> Nothing on screen is a recommendation to do anything.</li>
+    <li><strong>Not a real account.</strong> Signing in creates a demo portfolio for that address. It is not connected to anything you own.</li>
+    <li><strong>An early preview.</strong> The assistant is the newest part of the product and the part still moving fastest. Treat what it returns as a demonstration of the interaction, not as a finished feature set.</li>
+  </ul>
+
+  <h3>Quick reference</h3>
+  <table>
+    <tr><th>If you want to…</th><th>Go to</th></tr>
+    <tr><td>See the total and today's move</td><td>Home, at the top</td></tr>
+    <tr><td>Change the period of the chart</td><td>Home — the 1D / 1W / 1M / YTD / 1Y / All row</td></tr>
+    <tr><td>See the split by asset class or sector</td><td>Holdings — the toggle above the ring</td></tr>
+    <tr><td>Find one holding</td><td>Holdings — the magnifying glass</td></tr>
+    <tr><td>See a position's weight in the portfolio</td><td>Holdings — tap the row to expand it</td></tr>
+    <tr><td>Check a dividend or a deposit</td><td>Activity — filter to Dividends or Deposits</td></tr>
+    <tr><td>Ask anything at all</td><td>Assistant — type it, or tap the microphone</td></tr>
+    <tr><td>Ask about the holding you are looking at</td><td>Holdings — <em>Ask the assistant about this</em></td></tr>
+    <tr><td>Switch to dark mode</td><td>The moon button on the sign-in screen</td></tr>
+  </table>
+
+  <p class="end">Portfolio companion — user manual · Somnio Software with Google ·
+  Screens captured from build <code>local+5cb9a40</code> on 22 September 2026 ·
+  Open source, Apache 2.0 · The portfolio shown throughout is simulated.</p>
+</section>
+
+</body>
+</html>

@@ -6,6 +6,12 @@ call goes wrong. Neither an unknown tool nor a raising one fails the turn —
 the model is told in a structured result and gets another iteration to
 recover.
 
+**Where a surface is judged.** A render intent is appended to the turn only
+after the projection registry accepted it (ADR-K D-11/D-12, GGU-84). This is
+the single point at which an intent enters a turn, so one call here covers
+both ways one leaves: the streamed ``SurfaceReady`` and the final
+``TurnResult``.
+
 The exception's text goes to the ``ErrorReporter`` and nowhere else: the log
 line carries the exception *type*, never its message, because a tool's message
 can quote a value the portfolio holds.
@@ -21,6 +27,7 @@ from app.agent.registry import ToolRegistry
 from app.core.logging import get_logger
 from app.core.model import MessageRole, ModelMessage, ToolCall
 from app.core.protocols import ErrorReporter
+from app.services.agent_renders import TurnRenderResolver
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
@@ -52,6 +59,7 @@ async def execute_tool(
     *,
     tools: ToolRegistry,
     reporter: ErrorReporter,
+    renders: TurnRenderResolver,
     state: TurnState,
 ) -> ModelMessage:
     """Run one requested tool and render its outcome as a tool message.
@@ -61,6 +69,8 @@ async def execute_tool(
         context: The subject and portfolio provider the tool may reach.
         tools: The registry the call is resolved against.
         reporter: Where a raising tool's exception is reported.
+        renders: The projection registry's verdict on the intent the tool
+            produced — no surface enters the turn unjudged (ADR-K D-11).
         state: The turn's accumulator; a render intent is appended to it.
 
     Returns:
@@ -78,7 +88,7 @@ async def execute_tool(
         log.warning("agent.tool.failed", tool=call.name, error=type(exc).__name__)
         return tool_message(call, TOOL_FAILED_ERROR)
     if outcome.render is not None:
-        state.renders.append(outcome.render)
+        state.renders.append(renders.resolve(outcome.render))
     return tool_message(call, outcome.data)
 
 

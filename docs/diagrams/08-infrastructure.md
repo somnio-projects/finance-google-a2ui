@@ -17,8 +17,10 @@ flowchart TB
         subgraph vpc["VPC (private, deny-all ingress, flow logs)"]
             conn["Serverless VPC connector<br/>(production only — dev uses<br/>Cloud Run direct VPC egress)"]
             subgraph runtime["Cloud Run"]
-                svc["backend service · uid 10001<br/>prod: min-instances ≥ 1, LB-only ingress<br/>dev: scales to zero, open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
-                job["purge job<br/>audit_events retention"]
+                svc["backend service · uid 10001<br/>exactly 1 instance, every environment<br/>prod: LB-only ingress · dev: open ingress, run.app URL<br/>probes: /readyz startup, /health liveness"]
+                job["purge job<br/>audit_events retention<br/><i>run monthly by Scheduler</i>"]
+                mig["migrate job<br/>alembic upgrade head<br/><i>run by the deploy, before the traffic shift</i>"]
+                seed["seed-portfolios job<br/>the demo audience<br/><i>run by a HUMAN, never by the deploy</i>"]
             end
             sql[("Cloud SQL PostgreSQL 16<br/>PRIVATE IP · TLS only — both environments<br/>prod: REGIONAL HA · PITR · 30 backups<br/>dev: ZONAL · no PITR · 2 backups · destroyable")]
         end
@@ -46,11 +48,16 @@ flowchart TB
     svc -. "dev only: direct VPC egress" .-> sql
     sched --> job --> conn
     job -. "dev only: direct VPC egress" .-> sql
+    mig --> conn
+    seed --> conn
     svc -. "secretAccessor" .-> sm
     job -. "secretAccessor" .-> sm
     svc --> obs
     sa -.->|"identity of"| svc
     sa -.->|"identity of"| job
+    sa -.->|"identity of"| mig
+    sa -.->|"identity of"| seed
+    dsa -->|"execute, then wait"| mig
 
     %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,delivery}.tf
     %% trivy config: 0 misconfigurations. Apply is GGU-29.
@@ -61,6 +68,28 @@ flowchart TB
     %% are identical in every environment: dev gives up durability, not privacy.
     %% The deployer can publish an image and create a revision. It cannot read
     %% a secret, reach the database, or act as any other identity.
+    %% THREE jobs, three triggers, and the third one is the point: the purge
+    %% is a monthly Scheduler, the migration is executed by the deploy before
+    %% traffic moves, and `seed-portfolios` (spec backend/0035 §4.1) is run by
+    %% a person — `gcloud run jobs execute … --args=a@x,b@y`. Nothing schedules
+    %% it and `deploy_cloud_run.sh` never NAMES it, which
+    %% infra/scripts/tests/test_dev_environment.sh asserts over the script's
+    %% code: deciding who gets a portfolio is not a thing a deploy should do on
+    %% its own, and a deploy that quietly reseeded an account mid-rehearsal
+    %% would be data loss with a green checkmark. Its audience is `args`, not
+    %% an env var, precisely so one execution can override it.
+    %% WHO RUNS a job and WHICH BUILD it runs are different questions, and
+    %% conflating them cost two of these three jobs their image (spec
+    %% infra/0004). All three now carry `image-owner=delivery`, and the deploy
+    %% points every labelled job at the digest it just released — including the
+    %% two it never executes. Terraform keeps the shape and ignores the image;
+    %% without that an apply would put `var.backend_image` back, which on dev
+    %% is the floating `:latest` tag.
+    %% ONE instance is not a cost choice: the rate limiter and the feature-flag
+    %% cache count in process memory, so the documented per-principal limit only
+    %% holds while one process serves the traffic (ADR-F D-9, GGU-83). Raising
+    %% max_instances turns test_rate_limit_ceiling.sh red on purpose. Session and
+    %% portfolio state are in Cloud SQL and do NOT need the pin.
 ```
 
 ## What dev does not have
@@ -71,6 +100,7 @@ flowchart TB
 | Load balancer, reserved IP, managed certificate, TLS policy | TLS on Cloud Run's own certificate |
 | Regional HA, PITR, 30 backups, deletion protection | daily backups (2 retained), synthetic data only |
 | Uptime check and readiness alert | 5xx and auth-failure alerts; the deploy's own `/health` verify-and-rollback |
+| Horizontal scale-out (pinned to 1 instance — so is every environment) | a per-principal rate limit that is exactly what `backend/docs/SECURITY.md` documents |
 | Always-on VPC connector, warm instance | private database IP, TLS-only, `PRIVATE_RANGES_ONLY` egress, deny-all ingress |
 
 Full reasoning and the compliance record: [`specs/infra/0001-dev-environment.md`](../../specs/infra/0001-dev-environment.md) §5, §8.

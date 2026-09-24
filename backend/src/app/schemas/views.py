@@ -14,6 +14,8 @@ from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
 
 from app.presentation.fragments import ProjectionDto
 from app.presentation.options import Locale, SortOrder
+from app.schemas.view_catalog import ViewDescriptor
+from app.schemas.view_options import ProjectionOptions
 
 MAX_VIEWS: Final[int] = 4
 DEFAULT_VIEW: Final[str] = "holdings.allocation.v1"
@@ -25,11 +27,13 @@ ViewId = Annotated[str, Field(max_length=64, pattern=VIEW_ID_PATTERN)]
 SectionName = Annotated[str, Field(max_length=32, pattern=r"^[a-z_]{1,32}$")]
 
 
-class ViewQuery(BaseModel):
+class ViewQuery(ProjectionOptions):
     """Query parameters of ``GET /v1/portfolios/{portfolio_id}/views``.
 
     ``extra="forbid"`` is the endpoint's half of ADR-K D-3: a query parameter
     this endpoint does not declare is a 422, not a silently ignored string.
+    The per-projection knobs come from ``ProjectionOptions`` — see that module
+    for why they were missing and what their bounds do and do not mean.
     Every option defaults to ``None`` so only what the caller actually supplied
     is forwarded, and each projection then rejects what it does not declare.
     """
@@ -85,35 +89,6 @@ class ViewQuery(BaseModel):
     def options(self) -> dict[str, Any]:
         """Return only the options the caller actually supplied."""
         return self.model_dump(exclude_none=True, exclude={"view"})
-
-
-class ViewDescriptor(BaseModel):
-    """One entry of the `/v1/views` catalog (ADR-K D-8)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    id: str = Field(
-        max_length=64,
-        description="Versioned projection id to pass as `?view=`.",
-        examples=["holdings.allocation.v1"],
-    )
-    summary: str = Field(
-        max_length=300,
-        description="What the projection shows, in one line.",
-        examples=["Allocation by holding: market value and weight per symbol."],
-    )
-    endpoints: list[str] = Field(
-        description="The endpoints that serve this projection.",
-        examples=[["GET /v1/portfolios/{portfolio_id}/views", "POST /v1/view-renders"]],
-    )
-    options_schema: dict[str, Any] = Field(
-        description="JSON schema of the options this projection declares.",
-        examples=[{"properties": {"precision": {"type": "integer"}}}],
-    )
-    example: dict[str, Any] = Field(
-        description="A payload this projection really renders, for the client.",
-        examples=[{"view": "holdings.allocation.v1"}],
-    )
 
 
 class PortfolioViewsResponse(BaseModel):

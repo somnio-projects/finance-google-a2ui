@@ -13,7 +13,7 @@ from tests.conftest import FROZEN_NOW
 def _price_point(price: object) -> PricePoint:
     """Build a point the way raw data would arrive, bypassing static typing."""
     return PricePoint.model_validate(
-        {"symbol": "BTC", "observed_on": FROZEN_NOW.date(), "price": price}
+        {"symbol": "NVDA", "observed_on": FROZEN_NOW.date(), "price": price}
     )
 
 
@@ -31,7 +31,7 @@ def test_reject_float_names_the_offending_value() -> None:
     ("raw", "expected"),
     [
         ("64250.00", Decimal("64250.00")),
-        (Decimal("0.1273"), Decimal("0.1273")),
+        (Decimal("34.22"), Decimal("34.22")),
         (7, Decimal(7)),
     ],
     ids=["string", "decimal", "int"],

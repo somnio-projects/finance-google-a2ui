@@ -90,6 +90,7 @@ division the model never performs (ADR-K D-5).
   "view": "order.ticket.v1",
   "title": "Proposed order",
   "symbol": "DOGE", "name": "Dogecoin", "side": "buy",
+  "size": "500", "sizeIn": "usd",
   "quantity":    { "units": "3927.729772…", "display": "3927.72977219" },
   "entryPrice":  { "amount": "0.1273",      "display": "$0.1273" },
   "notional":    { "label": "Order value", "amount": { "display": "$500.00", … } },
@@ -103,6 +104,15 @@ division the model never performs (ADR-K D-5).
   "disclosure": "Illustrative ticket. This showcase has no broker and no execution: …"
 }
 ```
+
+**Amended by GGU-78.** The payload carries `size` and `size_in` as top-level
+fields, named **exactly** as the options that set them, because that naming is
+what the generated contract reads to report a field as editable (spec 0019
+OD-3). Without them the document advertised `symbol` and `side` only — the two
+that happened to share a name with a payload field — and said nothing about the
+other half of the controls `inputs[]` offers. `quantity` is deliberately *not*
+renamed: under `size_in="usd"` it is the size divided by the entry price, so it
+is an output of the render and not a value a caller may send back.
 
 `inputs` is the answer to *where does the editability live*. Each descriptor
 names a **declared option**, its current value, how to offer it, and the bound
@@ -158,7 +168,10 @@ None. Nothing is persisted; the projection is pure and the portfolio is read.
    for **every** published input the advertised bound is the enforced one:
    every advertised choice is accepted, the published pattern is the schema's
    pattern and cannot match unbounded input, and a value outside the bound is
-   rejected with a 422.
+   rejected with a 422. **GGU-78 adds the half that was missing:** every option
+   `inputs[]` offers is also a payload field of exactly that name, so the
+   generated contract reports it — checked for every projection by
+   `presentation/test_declared_interactivity.py`, not for this one by hand.
 6. **AC-6** — the symbols the ticket offers are exactly the curated market
    reference; the two declarations are compared by a test.
 7. **AC-7** — `locale` and `precision` shape every rendered string.
@@ -214,3 +227,11 @@ view with a bad option is rejected and counted like any other
 (`presentation.render_intent.rejected`, spec 0005 AC-9). The projection is a
 handful of `Decimal` operations over an eight-row reference list, so it is
 comfortably inside the ADR-K p95 budget.
+
+> **Amended 2026-09-21 by spec [0024](0024-contract-serves-the-designs.md)
+> (GGU-102).** `order.ticket.v1` **stays single-leg.** The design's
+> multi-leg ticket is not a backwards-compatible addition to this payload —
+> it is `order.ticket.v2`, raised as GGU-108 and post-demo. The default
+> `symbol` is unchanged: see 0024 §3 for why 'use an equity' could not be
+> carried out. The page's Zone 3 fragment is **not** transcribed — as
+> written it instructs the reader to recompute figures (0024 §5).

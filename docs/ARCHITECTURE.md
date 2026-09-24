@@ -121,9 +121,11 @@ the model invented is not reported at all, because that is the model's mistake
 rather than a defect.
 
 **The model provider is behind a Protocol.** With no API key configured the
-service uses a deterministic null client that needs no network — which is how
-the entire test suite runs, and why no call site anywhere branches on whether
-Gemini is configured.
+service uses a deterministic scripted client that needs no network — a table
+from the demo's prompts to the tool calls they make, with every figure copied
+from a tool result (spec `backend/0033`); the test suite uses a null client that
+records its calls. No call site anywhere branches on whether Gemini is
+configured.
 
 ## How a payload is shaped
 

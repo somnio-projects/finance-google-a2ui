@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Owner** | Security owner (TL backend) · **Version** 1.0 — 2026-09-19 · **Next review** 2027-09-19 |
+| **Owner** | Security owner (TL backend) · **Version** 1.1 — 2026-09-21 · **Next review** 2027-09-19 |
 | **Maps to** | SOC 2 CC6.1, CC6.2, CC6.3, CC6.6 · ISO/IEC 27001 A.5.15, A.5.17, A.5.18, A.8.2, A.8.5 |
 
 ## 1. Principles
@@ -34,7 +34,7 @@ New scopes are added to this table in the same PR that introduces them.
 ## 3. Token lifetime, revocation, secrets
 
 - **Lifetime**: user tokens ≤ 1 h (IdP setting); service tokens ≤ 10 min, minted per job. The API rejects anything past `exp` + leeway.
-- **Revocation**: the API is stateless by design; revoke at the IdP (session/refresh revocation) — takes effect at the next token expiry (≤ 1 h). For HS256 service tokens, rotating `AUTH_JWT_SECRET` invalidates all of them immediately; that is the break-glass revocation.
+- **Revocation**: the API is stateless by design; revoke at the IdP (session/refresh revocation) — takes effect at the next token expiry (≤ 1 h). For HS256 service tokens, rotating `AUTH_JWT_SECRET` invalidates all of them immediately; that is the break-glass revocation. **This latency is an accepted residual risk, not an implementation gap to be closed** — [ADR-B](../adr/ADR-B-auth-credential-contract.md) D-12 and the gap row in [`backend/docs/SECURITY.md`](../../backend/docs/SECURITY.md) carry the reasoning and the owner. Concretely, during that window the revoked token is **accepted with a 200**; it is not rejected early, because a stateless verifier has nothing to consult. Offboarding and incident playbooks must assume the wait (GGU-87).
 - **Password / MFA standards**: delegated to the OIDC IdP (Firebase/Google): minimum 12 characters or passkeys, breached-password check, MFA required for the admin group, lockout after repeated failures. The API never handles passwords.
 - **`AUTH_JWT_SECRET`**: ≥ 32 random bytes (PyJWT warns below); rotated every **90 days** and on any suspicion or leaver event ([ONBOARDING_OFFBOARDING.md](ONBOARDING_OFFBOARDING.md)); stored only in `.env` (local) / Secret Manager (production).
 - **Model key, Sentry DSN**: same 90-day rotation; owner TL backend; rotation recorded in the access-review table.

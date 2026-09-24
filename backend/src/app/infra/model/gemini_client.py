@@ -9,7 +9,11 @@ one function, on the way into a header — never a query string, never a log,
 never an error. And **every** provider failure leaves as
 ``DependencyUnavailableError`` carrying the same fixed detail: no status line,
 no provider message, no URL. The original exception survives as ``__cause__``
-for the error reporter, the one place provider text may go.
+for the error reporter, and ``provider_errors.log_provider_failure`` writes
+what the provider said to the **server's** log before the mask goes on
+(GGU-90 AC-4) — masking outward and recording inward are different decisions,
+and having only the first is what made two turn-breaking 400s look like an
+unavailable provider.
 """
 
 from collections.abc import Mapping, Sequence
@@ -20,26 +24,11 @@ from pydantic import SecretStr
 
 from app.core.errors import DependencyUnavailableError
 from app.core.model import ModelMessage, ModelReply, ToolSpec
-from app.infra.model.payload import from_response, to_request
+from app.infra.model.payload import to_request
+from app.infra.model.provider_errors import is_retryable, log_provider_failure
+from app.infra.model.reply import from_response
 
 UNAVAILABLE: Final[str] = "model provider unavailable"
-RETRYABLE_STATUS: Final[frozenset[int]] = frozenset({408, 429, 500, 502, 503, 504})
-
-
-def is_retryable(exc: BaseException) -> bool:
-    """Return True when another attempt could plausibly succeed.
-
-    Args:
-        exc: The failure from one attempt.
-
-    Returns:
-        True for a transport failure or a retryable status; False for a
-        rejected request (a bad key retried three times is still a bad key)
-        and for a body that cannot be parsed.
-    """
-    if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code in RETRYABLE_STATUS
-    return isinstance(exc, httpx.TransportError)
 
 
 class GeminiModelClient:
@@ -103,6 +92,7 @@ class GeminiModelClient:
                 return response.json()
             except (httpx.HTTPError, ValueError) as exc:
                 last = exc
+                log_provider_failure(exc)
                 if not is_retryable(exc):
                     break
         raise DependencyUnavailableError(UNAVAILABLE) from last
@@ -147,4 +137,4 @@ class GeminiModelClient:
             raise DependencyUnavailableError(UNAVAILABLE) from exc
 
 
-__all__ = ["RETRYABLE_STATUS", "UNAVAILABLE", "GeminiModelClient", "is_retryable"]
+__all__ = ["UNAVAILABLE", "GeminiModelClient"]

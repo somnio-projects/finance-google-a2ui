@@ -16,6 +16,7 @@ the list is what keeps the contract spec 0010 AC-2 pinned.
 import json
 from typing import Final
 
+from app.actions.suggestions import suggestion_chips
 from app.agent.contracts import RenderIntent
 
 TURN_FAILED: Final[str] = "The turn could not be completed."
@@ -109,6 +110,7 @@ def answer(
     context_id: str | None,
     text: str,
     intents: tuple[RenderIntent, ...],
+    suggestions: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """Build the terminal message event carrying the answer and every surface.
 
@@ -117,10 +119,10 @@ def answer(
         context_id: The conversation id to echo.
         text: The assistant's answer.
         intents: Every render intent of the turn, in order.
+        suggestions: Keys the turn recommends next (spec 0029), sent with labels.
 
     Returns:
-        The event body. ``renderIntents`` repeats what the incremental events
-        already carried, so a client that ignores them still gets everything.
+        The event body; ``renderIntents`` repeats the incremental events.
     """
     return {
         "kind": "message",
@@ -129,6 +131,7 @@ def answer(
         "role": "agent",
         "parts": [{"kind": "text", "text": text}],
         "renderIntents": [intent.model_dump(mode="json") for intent in intents],
+        "suggestions": suggestion_chips(suggestions),
     }
 
 

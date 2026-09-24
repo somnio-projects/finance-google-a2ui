@@ -18,7 +18,7 @@ Docs at http://localhost:8000/docs (disabled when `ENVIRONMENT=production`).
 ```bash
 cd backend && make gate            # lint · typecheck · budget · catalog-check · quality · test 100 % · audit
 cd backend && make quality         # code smells: complexity, dead code, docstrings, deps, duplication, typos
-cd backend && make catalog         # regenerate docs/catalog/CONTRACT.md after touching a projection
+cd backend && make catalog         # regenerate both docs/catalog/ artefacts after touching a projection
 ```
 
 - `make gate` == CI == `.claude/ship-gate.json`. Red gate = not done. Never lower `fail_under`, never add `# pragma: no cover` without a one-line reason.
@@ -50,7 +50,7 @@ Rules that are checked, not suggested:
 - **Config**: only through `Settings` (pydantic-settings, frozen). Required values have no default. Never `os.environ` in application code.
 - **Auth**: controllers get the caller via `PrincipalDep`; the token is never read anywhere else, never logged, never stored (use `token_fingerprint`).
 - **Persistence**: one `AsyncSession` per request (`get_session`), commit/rollback owned by `session_scope`. Schema changes ship with an Alembic migration in the same PR.
-- **Telemetry**: report through the injected `ErrorReporter`; never `if sentry_configured:` at call sites (the null reporter handles absence). Same shape for the model: an unset `GEMINI_API_KEY` yields `NullModelClient`, so no call site branches on configuration.
+- **Telemetry**: report through the injected `ErrorReporter`; never `if sentry_configured:` at call sites (the null reporter handles absence). Same shape for the model: an unset `GEMINI_API_KEY` yields `ScriptedModelClient` — the demo's flows replayed from a table, the honest "no model provider" sentence for anything else (spec 0033) — so no call site branches on configuration.
 - **Agent tools**: one module per tool under `app/agent/tools/`, ending in `register(MyTool())`; `load_tools()` discovers it. Adding a tool edits **no** shared file. Tools return pre-formatted `*Display` strings from `app/core/display.py` — the LLM never computes a figure. See `specs/backend/0006-agent-host.md`.
 - **Feature flags**: gate a route with `dependencies=[require_feature("<domain>.<capability>")]` (`api/feature_gate.py`); dark-launch with `default=False`. Toggle via `PUT /v1/admin/feature-flags/{key}` (scope `admin`) or the `FEATURE_FLAGS_FORCE_DISABLED` env kill-switch. See `docs/FEATURE_FLAGS.md`.
 - **REST + OpenAPI**: resource paths, correct verbs/status codes, and *every* operation carrying `summary`, `description`, `operation_id`, `tags`, `response_model`, the full `responses` map (problem+json per status) and examples; every DTO field documented and bounded. Shared response blocks come from `api/openapi.py` — never copy-pasted. See `.claude/rules/backend/api-design.md`.

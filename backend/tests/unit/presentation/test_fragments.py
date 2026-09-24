@@ -10,10 +10,12 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from app.presentation.displays import signed_money, signed_percentage
 from app.presentation.fragments import (
     Annotation,
     Bucket,
     Category,
+    Delta,
     Series,
     SeriesPoint,
     Total,
@@ -38,25 +40,39 @@ def test_percentage_pairs_the_exact_ratio_with_its_display() -> None:
 def test_fragments_compose_into_the_shapes_a_widget_binds() -> None:
     total = Total(label="Total market value", amount=money(Decimal("100")))
     category = Category(
-        key="BTC",
-        label="Bitcoin",
+        key="NVDA",
+        label="NVIDIA Corp",
         value=money(Decimal("60")),
         weight=percentage(Decimal("0.6")),
     )
     bucket = Bucket(
-        label="Bitcoin",
+        key="NVDA",
+        label="NVIDIA Corp",
         delta=money(Decimal("10")),
         cumulative=money(Decimal("110")),
         direction="up",
     )
     series = Series(
-        name="BTC",
-        points=(SeriesPoint(label="2026-01-15", value=money(Decimal("64250"))),),
+        name="NVDA",
+        points=(
+            SeriesPoint(
+                at=money(Decimal("64000")),
+                label="$64,000.00",
+                value=money(Decimal("64250")),
+            ),
+        ),
     )
     note = Annotation(label="Net", text="$10.00")
     assert (total.amount.display, category.weight.display) == ("$100.00", "60.00%")
     assert (bucket.direction, series.points[0].value.display) == ("up", "$64,250.00")
     assert note.text == "$10.00"
+    # The pair a painter needs: `at` places the point, `label` prints the tick.
+    assert (series.points[0].at.amount, series.points[0].at.display) == (
+        Decimal("64000"),
+        "$64,000.00",
+    )
+    # A segment's key is the value a tap sends back, never its prose label.
+    assert (bucket.key, bucket.label) == ("NVDA", "NVIDIA Corp")
 
 
 def test_fragments_are_frozen() -> None:
@@ -65,10 +81,30 @@ def test_fragments_are_frozen() -> None:
         total.label = "other"
 
 
+def test_delta_carries_a_signed_move_and_its_direction() -> None:
+    """GGU-100 AC-1/AC-2 — the headline pill is one fragment, signs included."""
+    delta = Delta(
+        label="Net",
+        amount=signed_money(Decimal("3240.18")),
+        percent=signed_percentage(Decimal("0.006755")),
+        direction="up",
+    )
+    assert (delta.amount.display, delta.percent.display) == ("+$3,240.18", "+0.68%")
+    assert delta.direction == "up"
+    with pytest.raises(ValidationError, match="direction"):
+        Delta(
+            label="Net",
+            amount=signed_money(Decimal("0")),
+            percent=signed_percentage(Decimal("0")),
+            direction="sideways",  # pyright: ignore[reportArgumentType]
+        )
+
+
 def test_bucket_direction_is_bounded_to_up_or_down() -> None:
     with pytest.raises(ValidationError, match="direction"):
         Bucket(
-            label="Bitcoin",
+            key="NVDA",
+            label="NVIDIA Corp",
             delta=money(Decimal("1")),
             cumulative=money(Decimal("1")),
             direction="sideways",  # pyright: ignore[reportArgumentType]
@@ -77,7 +113,7 @@ def test_bucket_direction_is_bounded_to_up_or_down() -> None:
 
 def test_surface_carries_the_component_and_its_props() -> None:
     surface = Surface(
-        component="DonutChart",
+        component="HoldingsSummary",
         view="holdings.allocation.v1",
         title="Allocation",
         props={"slices": []},

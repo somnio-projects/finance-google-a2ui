@@ -106,6 +106,81 @@ resource "google_cloud_run_v2_service_iam_member" "deployer_developer" {
   member   = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+# Execute the migration job, and nothing else in the project.
+#
+# `deploy_cloud_run.sh` runs `gcloud run jobs execute` **between** creating the
+# no-traffic revision and shifting traffic to it, so the schema moves under a
+# revision nobody is served yet. The grant above is scoped to the *service*, so
+# the deployer could create that revision and then could not run the job:
+#
+#   PERMISSION_DENIED: Permission 'run.jobs.get' denied on resource
+#   'namespaces/finance-a2ui/jobs/finance-a2ui-dev-migrate'
+#
+# The pipeline behaved correctly — it reported "migrations failed; the schema
+# was not moved" and rolled traffic back — but no deploy could ever have
+# succeeded. `run.developer` rather than `run.invoker` because the script polls
+# the execution, which needs `run.jobs.get` as well as `run.jobs.run`.
+# **Every delivery-owned job, not just the migration.** Spec `infra/0004` made
+# the deploy pin all three jobs to the released digest, and this grant did not
+# follow: the deployer could `list` nothing and `update` only `migrate`. The
+# first real deploy after it failed at the guard, which reported *"no Cloud
+# Run job carries image-owner=delivery"* and told the operator to run
+# `terraform apply` — Terraform had already run, and the labels were there.
+# The suite could not have caught it: it stubs `gcloud`, so it never meets an
+# IAM decision (spec `infra/0005`).
+#
+# Per job rather than project-wide, which keeps what the original grant was
+# for: the deployer still cannot touch a job nobody opted in. `for_each` over
+# the same declaration the deploy filters on, so a fourth job is opted in once
+# — in its own resource block — and is reachable and pinnable by construction.
+resource "google_cloud_run_v2_job_iam_member" "deployer_owns_delivery_jobs" {
+  for_each = {
+    migrate         = google_cloud_run_v2_job.migrate.name
+    purge_audit     = google_cloud_run_v2_job.purge_audit.name
+    seed_portfolios = google_cloud_run_v2_job.seed_portfolios.name
+    provision_users = google_cloud_run_v2_job.provision_users.name
+  }
+
+  name     = each.value
+  location = var.region
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.deployer.email}"
+}
+
+# Listing jobs is a **project-level** permission: there is no per-job grant
+# that makes a job appear in `gcloud run jobs list`. `roles/run.viewer` is the
+# smallest role that carries `run.jobs.list`, and it is read-only — the write
+# path stays the per-job grants above.
+resource "google_project_iam_member" "deployer_lists_jobs" {
+  project = var.project_id
+  role    = "roles/run.viewer"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}
+
+# Publish the A2UI client's bundle to Firebase Hosting (spec frontend/0017).
+#
+# PROJECT-SCOPED, and that is a real widening worth naming rather than
+# burying: every other grant above is on one resource — this repository's
+# Artifact Registry repository, this service, this job — because Google offers
+# resource-level IAM for them. Firebase Hosting does not. There are no
+# per-site IAM bindings, so `roles/firebasehosting.admin` on the project is
+# the narrowest role that can deploy a site, and it can deploy, delete and
+# roll back every site in the project.
+#
+# What bounds it is the identity, not the role: this service account is
+# impersonable only through the Workload Identity pool, only from
+# `var.github_repository`, and on production only from `refs/heads/main`
+# (the attribute condition above). `test_wif_conditions.sh` fails the build if
+# that narrowing is ever removed.
+#
+# Not `roles/firebase.admin`, which is the whole product — Firestore, Auth
+# configuration, the lot — and would let the deployer change who may sign in.
+resource "google_project_iam_member" "deployer_hosting" {
+  project = data.google_project.this.project_id
+  role    = "roles/firebasehosting.admin"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 # Deploy a revision that RUNS AS the backend identity, without being able to
 # act as any other service account in the project.
 resource "google_service_account_iam_member" "deployer_acts_as_backend" {

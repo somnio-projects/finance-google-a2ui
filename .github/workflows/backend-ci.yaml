@@ -52,10 +52,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -77,8 +77,11 @@ jobs:
       - name: Enforce the 150-line file budget (check_file_budget.py)
         run: uv run python scripts/check_file_budget.py
 
-      - name: Verify the frozen catalog contract is current (generate_catalog_contract.py)
+      - name: Verify the generated catalog artefacts are current (generate_catalog_contract.py)
         run: uv run python scripts/generate_catalog_contract.py --check
+
+      - name: Audit the OpenAPI document and the endpoint table (check_openapi.py)
+        run: uv run python scripts/check_openapi.py
 
       - name: Detect code smells (xenon, vulture, interrogate, deptry, pylint, codespell)
         run: make quality
@@ -106,10 +109,10 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://app:app@localhost:5432/finance
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -124,27 +127,25 @@ jobs:
 
       - name: Publish the coverage report (actions/upload-artifact)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-coverage
           path: backend/coverage.xml
           retention-days: 14
 
+  # Secret scanning used to be the first step of this job. It moved to
+  # `repo-ci.yaml`, which carries no `paths:` filter, because this workflow's
+  # filter is `backend/**` and the control the corpus documents is "every
+  # commit / PR" — a promise a scoped workflow cannot keep for a client-only
+  # pull request. `backend-cd` calls `repo-ci` as a job and `needs:` it, so the
+  # delivery path kept the gate it had. See ci-conventions §5.
   security:
-    name: "Security · secrets, SAST, dependency CVEs"
+    name: "Security · SAST and dependency CVEs"
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Check out the full history (actions/checkout)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Scan every commit for secrets (gitleaks)
-        working-directory: .
-        run: |
-          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
-            git --config=/repo/.gitleaks.toml --redact --no-banner --exit-code 1
+      - name: Check out the branch (actions/checkout)
+        uses: actions/checkout@v7
 
       - name: Scan the source for vulnerable patterns (semgrep)
         working-directory: .
@@ -154,7 +155,7 @@ jobs:
             --config p/secrets --error --metrics=off backend/src backend/alembic
 
       - name: Set up Python and uv (astral-sh/setup-uv)
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
@@ -172,13 +173,13 @@ jobs:
     needs: [quality, tests]
     steps:
       - name: Check out the branch (actions/checkout)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up BuildKit (docker/setup-buildx-action)
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build the runtime image from cache (docker/build-push-action)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: false
@@ -216,9 +217,9 @@ jobs:
             echo ""
             echo "| Gate | Proves | Result |"
             echo "|---|---|---|"
-            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
+            echo "| Quality | ruff, basedpyright strict, 150-line budget, frozen catalog contract and its JSON snapshot, complete OpenAPI document and endpoint table, complexity, dead code, duplication, docstrings, typos | ${{ needs.quality.result }} |"
             echo "| Tests | unit + integration on PostgreSQL 16, 100 % branch coverage | ${{ needs.tests.result }} |"
-            echo "| Security | gitleaks (full history), Semgrep, pip-audit | ${{ needs.security.result }} |"
+            echo "| Security | Semgrep, pip-audit — secret scanning is repo-ci's, on every pull request | ${{ needs.security.result }} |"
             echo "| Container | non-root image, no CRITICAL/HIGH CVEs | ${{ needs.image.result }} |"
             echo ""
             echo "Local equivalent: \`cd backend && make gate\`; pre-commit runs the same checks before every commit."

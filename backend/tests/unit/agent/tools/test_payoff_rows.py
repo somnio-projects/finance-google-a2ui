@@ -19,7 +19,7 @@ from app.domain.payoff import PayoffPoint
 def test_a_point_with_no_defined_return_says_nothing_rather_than_zero() -> None:
     """OD-4 — ``null``, because ``0.00%`` would call it flat (spec 0011 OD-2)."""
     point = PayoffPoint(
-        price=Decimal("152.40"),
+        price=Decimal("528.00"),
         move_ratio=ZERO,
         position_value=ZERO,
         profit_loss=ZERO,

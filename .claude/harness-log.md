@@ -7,6 +7,441 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-21 — GGU-99 the contract serves what the designs draw · spec `specs/backend/0024-contract-serves-the-designs.md`
+
+**Branch:** `feat/GGU-99_contract_serves_the_designs`. Backend only. Seven TL
+rulings closing the design-versus-contract gaps GGU-99..GGU-104 measured.
+
+**What changed.** Two components renamed to what their own Zone 2 block says
+(`PayoffChart` → `RiskPayoffChart`, `AllocationSummary` → `HoldingsSummary`).
+`payoff.curve.v1` gained a required `markers` `{break_even, current}` block, so
+the break-even is placed by a field path instead of by matching the string
+`"Break-even price"`. `taxlots.table.v1` gained `acquired_on_display` and
+`units_display`, and lost `price` and `remaining[]`. The scenario card's A2UI
+adapter stopped dropping each note's label. All six Zone 3 prompt fragments
+were audited against the numbers-from-tools invariant.
+
+### Why each thing is where it is
+
+- **The rulings went into a spec, not a PR body.** `sdd.md`'s table sends
+  feature-level decisions to the spec, and six weeks from now the interesting
+  artefact is not the diff — it is *why the payload lacks a field somebody can
+  see in a design*. Spec 0024 is that, with one section per ruling, and the
+  four specs it amends carry a pointer back.
+- **`docs/catalog/design/README.md` grew a Zone 3 audit table and two settled
+  rows.** The OD-4 disagreement had been sitting there marked *"Live
+  disagreement — needs the TL"*; a ruling that closes it and stays in Jira has
+  not been recorded. Same for the N-9 slot question.
+- **No diagram moved.** `06-response-shaping.md` draws the mechanism — callers,
+  registry, selection, renderings — and nothing in this branch adds a layer, an
+  option mechanism or a selection rule. `PriceMarker` is view-local, not a new
+  `fragments.py` primitive, so the box listing those is still accurate.
+
+### What the next person should know
+
+- **The gallery-card fallback is a fallback, not a tie-break.** 0023 §3 named a
+  component by its own Zone 2 block and fell back to its gallery card where no
+  detail page existed. Three pages arrived and two of those fallbacks lost. The
+  README's table now says a row filled from a gallery card is *provisional*, so
+  the next reader revisits it when a page lands rather than when a client is
+  found registering a widget under a name design never wrote.
+- **A Zone 3 fragment is prompt text, so audit it before transcribing it.**
+  The `OrderTicket` page describes the component as one that *"recomputes
+  weights, cash and shares live as parameters change"*. Shipped as guidance
+  that is the product's central invariant broken in the one place built to
+  teach the model the rules — and it is not what `effect: "recalculate"` means.
+  The one-line replacement for design is written out in the README; until then
+  the fragment is **not** transcribed, and the contract still prints "no design
+  page yet" for two components. That sentence is now imprecise rather than
+  false, and the README says which.
+- **A rename is only checked because a *second* declaration exists.** The
+  mutation check is in the PR: renaming one adapter turns four renderings red.
+  That test came from GGU-53, and this branch is the first time it earned its
+  keep — it caught the rename in five places at once.
+- **`price`, `remaining[]` and the `cost_basis`/`proceeds` totals were all
+  candidates for deletion and only two went.** `taxlots_table_component.dart`
+  binds `cost_basis.label` and `proceeds.label` as column captions, on purpose,
+  because a Dart constant would not follow the `locale` option. **Check what the
+  client actually binds before removing a field** — the five open client PRs are
+  the evidence, and a `label` is a binding.
+- **There are no equities in this backend**, and one instruction in the ruling
+  assumed there were. `domain/market.py` is eight crypto assets and `seed_data`
+  holds five of them; the only equity ticker anywhere is `NVDA` in two prose
+  examples. `order.ticket.v1`'s sample stays `BTC`. This is spec 0024 OD-1, a
+  comment on GGU-102, and a prerequisite on GGU-108, where it also blocks the
+  design's sector-weight rows.
+- **A live manual run *was* possible, and the first attempt to record otherwise
+  was wrong.** This entry originally said `portfolios` is empty and nothing
+  seeds it, so nothing renders. Both halves were false. A portfolio is created
+  for the caller's `subject` on first read, and every view renders against it;
+  what actually failed was the request — `{portfolio_id}` is the well-known
+  `current`, not a UUID, and it says so in the controller's own `Path`
+  description. A UUID read out of the table answers 404 *correctly*, and that
+  404 was misread as absent data.
+
+  The lesson is the one GGU-93 already paid for, one level in: **a failing
+  request is not evidence that the feature is missing.** The run is now in the
+  PR body and it renders `markers`, `acquired_on_display` and `units_display`
+  live, and shows `price` and `remaining[]` gone from the payload — the three
+  rulings this branch is about, proven by the service rather than by a test
+  that shares their assumptions.
+
+## 2026-09-21 — GGU-59 the scenario comparison card · spec `specs/frontend/0004-scenario-comparison.md`
+
+**Branch:** `feat/GGU-59_scenario_comparison`, cut from `develop` at `c6dd5b2`.
+Serves GGU-18 and design GGU-42.
+
+**What changed.** The third catalog component: `scenario.comparison.v1`, the
+same sale costed under FIFO / LIFO / HIFO side by side. Twelve files under
+`app/lib/components/scenario_comparison/`, nine test files, two goldens, and
+the regenerated manifest. **No hand-written file was edited** — the seam held
+end to end for the first component added since GGU-79 closed it, so this is
+also the first independent confirmation that it works.
+
+**The design asked for a winner and the card does not name one.** Its schema
+declares `scenarios[].recommended` and `metrics[].betterWhen`; its artboards
+badge one column `★ Recommended` and tint the better cell of each row green
+with a tick. Spec `backend/0017` OD-4 rules both out and the backend emits
+neither, so rendering them would be the client inventing a claim. The reason
+is not process: marking one disposal strategy "recommended" is tax advice, and
+whether FIFO's `+$3,825.00` (all long-term) beats LIFO's `+$1,305.00` (all
+short-term) depends on a marginal rate and a jurisdiction nothing here knows.
+The card renders `spread` — the arithmetic difference and which method sits at
+each end, which is data the columns already show — with the backend's own
+`Not advice` note verbatim beneath it. `specs/frontend/0004` OD-3 carries the
+full argument so nobody has to rediscover it.
+
+**A finding worth keeping: Flutter's border is not CSS's border.** The design
+is `box-sizing: border-box`, so its 1 px hairline sits *inside* the declared
+width. `DecoratedBox` and `CustomPaint` paint over the child and reserve no
+space, so the same padding left the content box 2 px too wide and every grid
+track wrong — 209.30 / 155.03 against the designer's 208.48 / 154.44. Every
+bordered element now pads by `ScenarioComparisonLayout.hairline` as well. The
+geometry test found it; **no golden of this card could have**, which is the
+next point.
+
+**The golden is narrow because the card is all text.** ADR-L D-15's measured
+noise floor is 0.69 % and it lives in glyph edges; a card with no bars and no
+connectors is nothing but glyph edges, and the defect most worth catching here
+— a token one step off, `#F0EDF5` against `#F0EEF5` — moves well under 1 %. So
+the colours are asserted **directly**, against the rendered `BoxDecoration`,
+which catches a one-step error exactly; the goldens capture only the column
+header's painted hairline, with no text in frame. First cut used the design's
+track width and a radius mutation moved 1.66 % against a 1.5 % tolerance — a
+margin of 1.1×, not a gate worth trusting. Cropping the frame to 56×30 raised
+it to **5.00 %**, 3.3× the tolerance. **The tolerance was not touched**; it
+goes down as noise is understood, never up to absorb a failure.
+
+**Harness.** No rule, hook, command or diagram changed. Diagram 12 is
+layer-level and a third component adds no layer, package or import rule —
+which is the seam claim restated as a diff.
+
+### What the next person should know
+
+- **`frontend/CLAUDE.md`'s "only file naming a `Color`" sentence is false, and
+  GGU-57 is fixing it — independently.** It and `chart_tokens.dart` both say
+  `chart_tokens.dart` is *the only file in `app/lib/` naming a `Color`*;
+  `scenario_comparison_tokens.dart` names eight. The alternative was adding
+  four fields to `ChartPalette` **and** `ChartTokens` — two shared
+  hand-written files edited in order to add a component, which ADR-L D-3
+  exists to prevent — and three of the four are not chart roles anyway (a
+  table's row rule, a header hairline, a caption). No test enforced the claim,
+  so nothing went red.
+
+  **Two components hit this from two directions in the same week and reached
+  the same answer without coordinating**: GGU-57's tax-lot table has its own
+  token file for the same reason, and its PR (#71) replaces the count with a
+  rule in `frontend/CLAUDE.md`. Whichever merges first fixes it; the second
+  conflicts on that line and should take the rule form. `specs/frontend/0004`
+  OD-8 keeps the reasoning and asks for the rule to get a **test**, since
+  replacing one unenforced sentence with another only resets the clock.
+- **`ViewPayload` has no boolean accessor**, so `spread.differs` is unreadable.
+  The card reads the two ends instead — and **the review caught that the first
+  cut of that rule was wrong.** It required *both* ends, while the contract
+  makes `spread.highest` and `spread.lowest` `default null` **independently**
+  and ties neither to `differs`: a payload naming one end would have had the
+  card drop a name the backend sent *and* claim the methods coincide. The rule
+  is now `||`, lives once on the model as `namesAnyEnd`, and the `||` → `&&`
+  mutation turns two tests red — it turned none before. If a second component
+  wants a boolean, add `ViewPayload.flag(path)` in a PR of its own; that is a
+  **deferral, not a prohibition** — ADR-L D-3's subject is dispatch, and
+  `geometry` set the precedent that widening `ViewPayload` is an amendment
+  (OD-2, reworded after review).
+- **Four contract fields are bound by nothing**: `short_term_lots`,
+  `long_term_lots` and `lots` per column. The counts are raw integers with no
+  `*Display` companion, so printing one is the client turning a number into
+  text; `lots` is internal ids. OD-6, not an oversight.
+- **Two more things the design asks for have no field**: row labels (its
+  `metrics[].label` — ours are client copy, OD-1) and a colour for a gain or a
+  loss (`scenario.comparison.v1` carries no `direction` enum the way the
+  waterfall's buckets do, and reading the sign out of `"+$3,825.00"` is exactly
+  what the rule forbids — OD-7).
+- **Measure the rendered DOM, still.** Eight colours and eleven geometry values
+  were read with `getComputedStyle` off the served page. The metric-name colour
+  cross-confirms against the catalog index's own token legend.
+- **A `.dc.html` design page opened from `file://` renders its chrome but does
+  not boot its data binding** — the table shows `{{ h.label }}` / `{{ r.label }}`
+  where the figures belong. Over `http://` the same file boots fully (547
+  nodes, no placeholders). Both were observed on this page, minutes apart, so
+  it is the scheme and not the wait. **Check for `{{` before measuring
+  anything off one of these pages**; a pixel claim taken off a placeholder is
+  worse than no claim. Other pages in the set reportedly do boot under
+  `file://`, so test the page in front of you rather than assuming either way.
+- **The newer fourteen-screen design export changes nothing here — except one
+  thing.** Re-measured `.design-refs/Catalog_ScenarioComparison.dc.html` in
+  both artboards: every colour, padding, radius, width and both grid rules are
+  identical to the earlier export. The miss it caught is that the `Metric`
+  caption is weight **500 with normal tracking**, not the eyebrow's 600 at
+  `0.08em` — this card had been reusing `caption` for it. Now its own slot,
+  asserted against `caption`'s weight so they cannot silently converge.
+- **The design index still says `ComparisonCard`.** Its detail page and the
+  backend both say `ScenarioComparison`; the schema block is authoritative and
+  `catalog_contract_test.dart` is what would catch getting it wrong.
+- **Spec numbering has no gate, and it has now collided twice.** This spec was
+  written as `0003` and renamed to **`0004`** because GGU-57 (#71) was landing
+  `0003-taxlot-table.md` with an `assets/0003-taxlot-table/` directory beside
+  it — renaming this one was the cheaper move. That is the *second* instance:
+  `develop` already carries two files numbered `0002`
+  (`0002-a2ui-agent-path.md` and `0002-chart-primitives-and-waterfall.md`).
+  `.claude/rules/backend/sdd.md` says `NNNN` is "the next free number", but
+  nothing computes it and nothing checks it, so two branches cut in the same
+  week reliably pick the same one. Left as-is here — the `0002` pair is
+  pre-existing and not this ticket's to move — but it wants either a gate
+  (a check that no two specs in a directory share a prefix, the same
+  anti-collision shape `manifest-check` already has) or a convention that does
+  not depend on branch timing.
+
+---
+
+## 2026-09-20 — GGU-53 the catalog contract as JSON · spec `specs/backend/0021-machine-readable-catalog.md`
+
+**Branch:** `feat/GGU-53_catalog_json`. Server half of GGU-53 only; the Flutter
+harness and `catalog_contract_test.dart` stay with the client half (blocked by
+GGU-1).
+
+**What changed.** `docs/catalog/CONTRACT.md` proved the contract to a human and
+to nobody else — a Dart test cannot parse a table, so the one fact the client
+binds to (the A2UI component name) was published nowhere a machine could read.
+`docs/catalog/view-catalog.snapshot.json` now ships beside it: per view the
+component type, the view id, the digest, the field paths, the options schema
+and the rendered example. `presentation/catalog_artifacts.py` holds both
+renderings as a list, `render_all(REGISTRY.all())` produces them in **one**
+pass, and the existing generator script writes and `--check`s each. No new gate
+step, no new Makefile target, no change to `ship-gate.json` — the command it
+already names covers both files, which is what §5 of the CI rule asks for.
+
+**The mutation check found the point of the ticket.** Renaming one adapter's
+component (`DonutChart` → `PieChart`, nothing else touched) turns the new suite
+red three ways and `catalog-check` red on the snapshot — while
+**`CONTRACT.md` stays current**. The Markdown prints payload fields, not the
+adapter's output, so the string the Flutter `FinanceCatalog` registers against
+was the one string no gate watched. That is the drift GGU-53 describes
+(`WaterfallChart` vs `attribution_waterfall`), reproduced on demand.
+
+**For the next person:**
+
+- **A generated artefact is an entry in a list now, not a script.** Adding a
+  third rendering of the registry means one `Artifact(path, render)` in
+  `ARTIFACTS` and its renderer. If you find yourself writing a second
+  `--check` script or a second gate step, stop.
+- **The component name is read, never written.** `component_of` validates the
+  shipped example back into the DTO and asks the projection's own adapter, so
+  the snapshot cannot carry a name the backend does not emit — and the round
+  trip proves the example still deserialises, which is the client test's
+  property asserted server-side.
+- **One named case, never the list.** The suite asserts the *rule* over
+  `REGISTRY.all()` plus a single pinned example (`holdings.allocation.v1 →
+  DonutChart`). Listing all six components would rebuild the hardcoded
+  inventory 0019 OD-2 deleted and would fail the day a seventh registers.
+- **A double gate has to be symmetric.** The JSON was checked from inside the
+  suite and the Markdown only by the generator script, which coverage does not
+  measure (`source = ["app"]`). `test_contract_matches_the_registry` closes it:
+  both artefacts are now compared against the registry by a test, so a
+  generator that stopped reporting one cannot let a stale file through. Found
+  by the `backend-reviewer` agent, which is what it is for.
+- **Prose hits the line budget too.** The cross-reference paragraph pushed
+  `catalog_preamble.py` to 162 lines; the legend moved to
+  `catalog_legend.py` at the seam between "what is frozen" and "how to read a
+  row". Budgets are not raised for prose.
+
+---
+
+## 2026-09-20 — GGU-82 the client harness · spec client/0001
+
+**Branch:** `docs/GGU-82_client_harness`, PR #46. Documentation and rules only;
+no executable code changed.
+
+**What changed in the harness.** The client got what the backend already had:
+`client_flutter/CLAUDE.md`, four project rules in `.claude/rules/client/`
+(architecture · presentation · testing · security), `specs/client/0001-client-foundation.md`
+and `docs/diagrams/11-client-architecture.md`. The four rules are registered in
+the root `CLAUDE.md` table; the diagram is registered in both
+`docs/diagrams/README.md` and the "when a diagram must change" table in
+`.claude/rules/diagrams.md`.
+
+**Why a separate rule layer rather than editing `.claude/rules/flutter/`.**
+Those seven files are synced from `somnio-ai-tools` and are overwritten by the
+Somnio CLI. They are also written against a different repository — a `mobile/`
+root, a `packages/app_ui` design system, an ARB i18n setup — none of which
+exist here. `client/architecture.md` opens with a table of the four places the
+generic rules name something this repo does not have, and states that the
+project layer wins.
+
+**The Dart budget is 220 lines, and the number was measured.** Copying the
+backend's 150 across would have been the easy answer and the wrong one: this
+workspace's analyzer config puts one widget argument per line, and every file
+carries a 14-line Apache header. Of the twelve `.dart` files under `app/lib`,
+the median is 65 and the second-largest 128; exactly one exceeds 220 —
+`features/landing/view/landing_page.dart` at 247 — and it hosts the genui
+surface, owns the connector lifecycle and renders the error banner. 220 is the
+line where "does one thing" fits and "does three" does not.
+
+**Things that are true and unflattering, written down rather than smoothed
+over.** The client's gate is young, so the temptation was to describe it as
+though it were the backend's. Instead:
+
+- `flutter test --coverage` runs and uploads `lcov.info`; **no coverage threshold is asserted anywhere.** The ≥80 %/file bar is a review rule until someone adds the assertion (spec OD-2).
+- **Nothing enforces ADR-K on the client.** The rule says so and names the two things that partly carry it: the per-ban greps, and a verbatim-binding widget test that asserts `find.text(fake.marketValueDisplay)` rather than a literal — the literal form passes whether the widget bound or formatted. OD-3 proposes the grep gate.
+- `app/pubspec.yaml` declares only `flutter_test`. **`bloc_test`, `mocktail` and `checks` are not dependencies**, though all three generic rules assume them.
+- **There is no deep-link surface at all** (ADR-I keeps `Navigator`), so the security rule records the absence as the control rather than inventing a validation policy for a path that does not exist.
+
+Each rule carries a table separating what a command enforces (with the
+`ship-gate.json` id and the command string) from what is *review only*. The
+standard the ticket set was: do not write a rule that nothing enforces and
+state it as though something does.
+
+**Deferred to GGU-1 on purpose.** Timur's PRs #26 (scaffold) and #30 (gate) own
+`.claude/ship-gate.json`, `.github/workflows/client-ci.yaml`,
+`.pre-commit-config.yaml`, `client_flutter/tool/check_*.sh`,
+`client_flutter/README.md` and everything under `client_flutter/app/{lib,test,android,ios}`
+plus `app/pubspec.yaml`. Nothing here touches any of them; rules that depend on
+one of those checks cite it by id with "lands with GGU-1", the way
+`ship-gate.json` already says "Flutter gate lands with GGU-1".
+
+**What the next person needs to know.**
+
+- **`/harness-init` will delete the four new rule rows.** They sit inside the block that command regenerates. Teach it about `.claude/rules/client/` or the rows vanish silently and the rules stop loading. This is the single most likely way this PR quietly undoes itself.
+- **Check what `origin/develop` actually resolves to before branching.** This branch was first cut from a stale `origin/develop` (`bf2d0c2`) while the real tip was `c1f758d`, because `.git/config` could not be locked in the worktree and the fetch never updated the remote-tracking ref. The first PR push showed **407 changed files** and would have reverted other people's merged work, including the GGU-1 files this ticket exists to stay away from. `git diff --name-only <base> HEAD` before opening a PR — the file count is the tell.
+- The backend gate is green on every step a docs change can break (`catalog-check` and `codespell` included; codespell scans `docs/`, so it covers the new diagram). The 52 integration errors are the Docker daemon being unavailable locally, not this branch.
+
+---
+
+## 2026-09-20 — GGU-83 one instance, because the limiter only works at one
+
+**Branch:** `fix/GGU-83_single_instance`. **Spec:** `specs/backend/0001-backend-foundation.md` (OD-2
+resolved) · **ADR:** ADR-F **D-9** settled.
+
+**The defect.** The fixed-window rate limiter and the feature-flag TTL cache both hold state in
+process memory. ADR-F **D-4** had required `max-instances = 1`, which bounded them. Dev ran `1/2`,
+so the per-principal limit was **twice** what `backend/docs/SECURITY.md` documents — a SOC 2 CC6.6
+control describing behaviour the service did not have.
+
+**Why it survived.** D-4 carried *two* properties in one sentence: `as_of` consistency and the
+boundedness of these caches. Spec `0020` removed the first reason and retired D-4 with it; the
+second went unexamined. Spec `0001` OD-2 had already named the fix, conditional on
+"`max-instances > 1`" — and that condition came true when dev was scaled for the cold-start budget,
+on cost grounds, against a constraint living in a different document. **Nobody evaluates a condition
+written in prose.**
+
+**The decision (TL, Option B).** Pin `max_instances = 1` rather than build a distributed limiter a
+week before the demo. `min_instances = 1` is untouched — it is what keeps the instance warm, and
+scaling out was never what bought that. Memorystore (Option A) stays the real fix.
+
+**What is actually the deliverable.** Not the Terraform line. The line makes the configuration match
+the limiter's capability today; it does nothing the moment someone raises the value.
+`infra/scripts/tests/test_rate_limit_ceiling.sh` is what survives the decision being reversed: it
+reads the ceiling out of `infra/main.tf` and every `*.tfvars`, the limit out of `core/config.py` and
+`env.example`, and both numbers out of `SECURITY.md`, and fails naming every declaration that
+disagrees. Registered verbatim as `infra.rate-limit-ceiling` in `.claude/ship-gate.json`, in
+`infra-ci.yaml` and in pre-commit (ci-conventions §5 — copied, never paraphrased).
+
+Mutation-checked both ways before it was trusted: Terraform ceiling → 2 goes red naming both
+declarations and printing `120 x 2 = 240`; the documented limit → 200 goes red against
+`config.py`'s default. A gate that has never been seen red is not evidence.
+
+**The harness change.** `infra-ci.yaml` now also triggers on `backend/docs/SECURITY.md`,
+`backend/src/app/core/config.py`, `backend/env.example` and `docs/diagrams/08-infrastructure.md` —
+the same reasoning that put `docs/catalog/**` on `backend-ci`: **the edit that breaks a pair must
+start the run that rejects it.**
+
+**Next person should know**
+
+- **A cross-declaration test is only worth writing if an unreadable declaration is a FAILURE.**
+  Every value is parsed and an unparsable one fails loudly with what was looked for. A check that
+  quietly matches nothing is worse than no check — the guard idiom from `test_rules_index.sh`.
+- **Resolving an open decision means naming what re-opens it.** OD-2 now lists three conditions, the
+  first of which (`max_instances > 1`) is the one the gate enforces. "Resolved" without a re-opening
+  condition is how OD-2 stayed conditional and unevaluated for weeks in the first place.
+- **The instance count was declared in nine places.** Terraform (`main.tf` + three `*.tfvars`), two
+  specs, the infrastructure diagram, the risk register, a domain docstring and a migration
+  docstring. Eight are now consistent; `20260920_0005_portfolios.py` still says `max_instances = 2`
+  in its module docstring and was left alone because merged migrations are not edited.
+  `infra/network.tf`'s `min_instances = 2` is the **VPC connector**, not Cloud Run — do not "fix" it.
+- **This is the eighth defect this iteration with the same shape: a property written down and
+  enforced by nothing.** The previous seven were caught by reading. This one was caught by an
+  *amendment* forcing a re-read of the decision it superseded — which is the argument for amending
+  over silently superseding.
+
+---
+
+## 2026-09-20 — GGU-81: the tool schemas Gemini actually accepts · spec `specs/backend/0006-agent-host.md`
+
+**Branch:** `fix/GGU-81_gemini_tool_schema`.
+
+**The product's core flow had never worked, and 1180 tests said it had.**
+Every agent turn against the real `GeminiModelClient` came back
+`{"kind":"error","code":"dependency-unavailable"}` with `outcome:
+model-unavailable`, which reads like a provider outage and is not one. The
+request was a 400: `parameters` in a `functionDeclaration` is an **OpenAPI 3
+`Schema` proto**, decoded with proto3 JSON rules, and proto3 rejects an
+unknown field instead of ignoring it. `payload.py` was passing pydantic's JSON
+Schema through unchanged, so `additionalProperties` and `examples` — both of
+which our own rules *require* tools to carry — made every turn fail.
+
+**The two consumers of one schema want different dialects.** `api-design.md`
+says every field is documented and exemplified; OpenAPI wants that, Gemini
+refuses it. The fix is a translation at the adapter boundary
+(`infra/model/tool_schema.py`), never a weakening of the tools: the
+declarations, the OpenAPI document and
+`tests/unit/agent/test_tool_argument_bounds.py` all still see the full schema.
+
+**The subset was measured, not remembered.** One POST per keyword against
+`gemini-3.8-flash`, at the `parameters` root and inside a property, keeping
+whatever answered 200. 21 keywords are refused, including four that carry a
+bound — `const`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf` — and
+`$ref`/`$defs`, which carry *everything*. `$ref` is therefore **resolved**, and
+`const` rewritten as a single-valued `enum`; dropping either would delete a
+bound from what the model reads, which is the failure the bounds gate exists
+to prevent. The lists live in `tool_schema_keys.py` with the note that they
+came from the API.
+
+**What the suite learned.** `tests/unit/infra/model/test_outgoing_tool_schema.py`
+builds the real outgoing body from the **real registry** and asserts no refused
+keyword survives, plus that no argument lost a bound on the way out. No
+network. Mutation-checked: putting `examples` back in the allow-list turns it
+red for three of the four tools.
+
+**Next person should know**
+
+- **A fake that is never compared to the real thing is a shared belief, not a
+  test.** `payload.py` had 100 % branch coverage against stubs we wrote from
+  our own assumption of the format. Spec 0006 OD-7 had even written the risk
+  down — *"the Gemini wire mapping has never met the real API"* — and it still
+  took a human reproducing the 400 by hand to collect. Coverage cannot see a
+  wrong premise; only the provider can.
+- **An error taxonomy can hide the defect it reports.** Every provider failure
+  leaves as `DependencyUnavailableError("model provider unavailable")`, by
+  design (no status, no provider text, ADR-J). That is right for the client
+  and blinding for us: a 400 that will never succeed is indistinguishable from
+  a 503 that will. Worth a look at whether non-retryable statuses deserve a
+  distinguishable log field — the body still must not travel.
+- **Gemini 3 answers with `thoughtSignature` on the part beside a
+  `functionCall`.** `payload.from_response` ignores unknown fields, so it is
+  dropped today. If a future multi-step turn starts failing on the *second*
+  model call, look there first.
+
+---
+
 ## 2026-09-19 — GGU-41 the frozen component contract · specs 0015–0019
 
 **Branch:** `feat/GGU-41_catalog`, integrating five parallel branches.
@@ -1452,3 +1887,2994 @@ that were each internally consistent, and nothing read both:
   binding and it plans clean; applying it is an exposure decision left to the
   TL (OD-4). The rollback path was exercised for real by this failure and
   worked: traffic was restored to the previous revision.
+
+---
+
+## 2026-09-20 (cont.) — persistence, delivery, and four claims nothing checked (#35, #37, #38, #39, #40, #41)
+
+**Specs:** `specs/backend/0020-portfolio-persistence.md`
+
+**Code.** The portfolio left process memory for PostgreSQL. Delivery became a
+button (`workflow_dispatch` only — merging deploys nothing). Migrations run as
+a Cloud Run job *before* the traffic shift. Five GitHub Actions bumped, and
+Dependabot pointed at `develop`. The views endpoint now accepts the options
+its own catalog advertises.
+
+**The pattern, again.** Every defect found today was a property someone had
+written down and nothing enforced. Listing them together because the shape is
+more useful than any one of them:
+
+| Claim | What was true |
+|---|---|
+| `dev` is a deployable environment | `Environment` in `config.py` had no `dev`; the container would have died at startup |
+| the compliance corpus's Cloud SQL audit logs | `sqladmin` does not accept a service-level audit config — the claim was *unapplyable* |
+| `/healthz` is the liveness endpoint | Google's edge intercepts that exact path on `*.run.app`; it never reached the container |
+| migrations run on deploy | nothing ran them anywhere — `/readyz` proves the connection, not the schema |
+| the catalog's options are the endpoint's options | nine advertised options answered 422; four of six projections unreachable from the client |
+| every operation documents an example | `POST /` — the A2A surface — had none, and it is the route a client is most written against |
+| `ship-gate.json` == CI | CI linted `tests/*.sh`, the gate did not; my own shellcheck finding reached `develop` |
+
+**Next person should know**
+
+- **Verify from outside the thing you are verifying.** Four of the seven above
+  were found by sweeping the *deployed* service or the *running* stack, not by
+  reading code. The sweep that found the options gap was generated from
+  `/v1/views` so it could not miss one; had I written the list by hand I would
+  have written the same nine names the endpoint already knew.
+- **A contrast isolates a defect faster than a stack trace.** `POST
+  /v1/view-renders` served the identical options with a 201 while `?view=`
+  answered 422. That one comparison moved the bug from "the projections are
+  broken" to "the query model is stale" in a single request.
+- **Two of my own verifications lied before they told the truth.** A schema
+  probe passed its Python through `gcloud --args`, which splits on commas, so
+  the container ran `import asyncio` and exited 0 — a pass with no output. And
+  an error-path test raised `IntegrityError` from `execute`, where the *read*
+  handler caught and translated it, so the write path was never exercised. A
+  green check is evidence only if it could have been red.
+- **A real database finds what a fake never will.** An `IntegrityError` aborts
+  the whole PostgreSQL transaction, so the loser of the seeding race could not
+  re-read the winner until `replace` was wrapped in a SAVEPOINT. No fake
+  repository has that behaviour to imitate.
+- **`NUMERIC(38,18)` changes a `Decimal`'s string form.** Returning the freshly
+  seeded object made a session's *first* answer differ from every answer after
+  it, which ADR-K D-20 forbids. `get` re-reads after seeding. The integration
+  flow test caught it — written months before persistence existed.
+- **Dependabot needs `target-branch`.** Without it, it opens against the
+  repository default (`main`), and this project merges to `develop`. Five PRs
+  sat unmergeable-by-construction for weeks with nothing saying why.
+- **`/healthz` is unusable on run.app.** Proven with two controls from two
+  networks. Do not "fix" it back.
+
+---
+
+## 2026-09-20 — ADR-F D-4: recording what replaced the single-instance constraint
+
+**Documentation only.** No code, no Terraform, no threshold moved.
+
+**What was wrong.** ADR-F D-4 required Cloud Run to run
+`min-instances=1, max-instances=1` because session and portfolio state lived in
+process memory. Two things had happened to it: no environment ever ran 1/1
+(production 1/4, staging 0/2, dev 1/2 derived), and the reason had been removed
+— sessions in PostgreSQL since GGU-46, the portfolio since spec `backend/0020`.
+The divergence was known and lived in `specs/infra/0001` §11 and three Jira
+comments, which is not where anyone reads a constraint.
+
+**What changed.** D-4 is struck and superseded by D-7 (scaling out is capacity,
+not correctness — the unique constraint on `portfolios.subject` is the
+load-bearing part), D-8 (`min-instances = 1` survives as a **cost** decision for
+the 2026-09-28 demo and must never be cited as a safety property) and D-9 (the
+two in-process caches D-4 was silently bounding: the fixed-window rate limiter
+and the feature-flag TTL cache). D-1, D-2 and D-5 are annotated as overtaken in
+fact; D-3 is annotated as **resolved — the seam it bought was spent**. The
+amendment is **Proposed**: ratification is the TL's.
+
+**Also.** Diagrams 07 (three portfolio tables, migration 0005, and the reason
+they exist) and 08 (dev is 1–2 instances, not scale-to-zero). `specs/README.md`
+deduplicated (0003, 0006, 0013 were each listed twice) and completed (0004,
+0007 and 0020 had no row at all). Two `ADR-F-*.md` links in specs `0007` and
+`0020` pointed at filenames that do not exist.
+
+**Next person should know**
+
+- **The registry gained a status.** `Accepted · D-n superseded by D-m` is now in
+  `docs/adr/README.md`'s vocabulary, for when the context changes under one
+  ruling rather than under a whole record. Strike the old `D-n`, never delete
+  it — code and specs cite rulings by number and those citations must resolve.
+- **A number that outlives its reason is worse than no number.** `min-instances
+  = 1` is unchanged in the Terraform and means something completely different
+  from what it meant two days earlier. D-8 exists only so nobody re-derives the
+  old reason from the surviving value.
+- **Removing a constraint un-bounds whatever was quietly leaning on it.** D-4
+  was also the only thing making the in-process rate limiter a hard ceiling. It
+  is now `N × limit` across `N` instances. Spec `0001` OD-2 had already named
+  the Redis adapter as the fix "when `max-instances > 1`"; that condition is
+  true today and nothing announced it.
+- **`specs/infra/0001` §11 is the pattern to avoid.** Three real divergences
+  were found and written into a spec section titled "not fixed here". Two of
+  them are closed by this change, four days later, because someone was asked to
+  look — not because the record surfaced them.
+
+---
+
+## 2026-09-20 — ADR-B D-4: a revocation check that was never built (GGU-87)
+
+**Documentation only.** No code, no dependency, no threshold moved.
+
+**What was wrong.** ADR-B D-4 required `check_revoked=True` and D-6 listed an
+`auth/revoked-token` error code. Neither exists. `check_revoked` is a keyword
+argument of `firebase_admin.auth.verify_id_token`, and `firebase-admin` is in
+neither `backend/pyproject.toml` nor `backend/uv.lock`. What shipped instead is
+a provider-agnostic verifier — `OidcTokenVerifier` is a single `jwt.decode`
+against a JWKS, asserting signature, `iss`, `aud`, `exp`, `iat` and `sub` and
+nothing more. Generalising the verifier is what dropped the one Firebase-
+specific assertion, because revocation is not an OIDC concept.
+
+**What changed.** D-4 is struck and superseded by D-11 (what verification
+actually asserts — six things, with issuer and audience as configuration rather
+than the hard-coded literals D-4 named) and D-12 (there is no revocation check;
+revocation latency equals the token's remaining lifetime). D-6's
+`auth/revoked-token` is struck in place. `backend/docs/SECURITY.md` gains a
+**Known gaps** section, `ACCESS_CONTROL.md` §3 gains the cross-reference, and
+the stale row in `docs/specs/GGU-3/api-contract.md` §6 is struck.
+
+**Next person should know**
+
+- **The comfortable version of this gap is wrong, and it is the version everyone
+  reaches for.** "A revoked token reads as `auth/invalid-token`, so the client
+  signs out" is false. Revoking a Firebase session invalidates the *refresh*
+  token and sets a valid-since watermark; the ID token already issued keeps its
+  valid signature, `iss`, `aud` and `exp`, and nothing in `auth/claims.py` reads
+  a watermark. For the rest of that hour the request is **accepted with a 200**.
+  What signs the user out is D-7 — at expiry the refresh fails at Firebase. The
+  client is correct; the mechanism is expiry, not rejection. Check the mechanism
+  before calling a gap harmless.
+- **A control mapping that overstates is the defect.** The SECURITY.md matrix
+  never claimed revocation in a row — that part was clean. The overstatement was
+  a *threat note* saying "`check_revoked` semantics belong to the provider
+  adapter", which reads as a control assigned to a layer, and no adapter has it.
+  Prose beside a control matrix is read as part of the mapping. Audit it too.
+- **Two records can be individually right and jointly wrong.** `ACCESS_CONTROL.md`
+  §3 has said "revoke at the IdP — takes effect at the next token expiry (≤ 1 h)"
+  all along, which is exactly correct and flatly contradicts ADR-B D-4. Nobody
+  read both. This is the same failure shape as `infra.shell-lint` in
+  `ci-conventions.md` §5, and the same fix: when you write a claim, grep for the
+  other places that claim lives.
+- **Copy the supersession convention, do not invent a second one.** The shape is
+  PR #43's (ADR-F D-4): strike the ruling with `~~…~~`, keep it, add
+  `superseded YYYY-MM-DD by D-n`, renumber forward, and put the reasoning in a
+  dated amendment section. Citations by number must keep resolving.
+- **AC-4 went to the other PR's branch, not to `develop`.** `specs/client/0003`
+  exists only on PR #48, so §4.4 and OD-3 were fixed in a separate one-file PR
+  **based on #48's branch** (#56), not folded into this one — a reviewer of #48
+  should see that change on its own. It was **not** pushed onto
+  `docs/GGU-82_client_contract` directly: that branch is checked out in another
+  agent's live worktree, and `git worktree list` is the cheap way to find that
+  out before racing someone. Sequence: #48 → #56, and #43 → #55.
+- **§4.4 carried the same comfortable fiction, and was the worse place for it.**
+  An ADR states a decision; a client contract tells a developer what to branch
+  on. "The backend rejects a revoked token" and "a timer bounds it" prescribe
+  different client behaviour — the first invites polling for a rejection that
+  never arrives. Fixed there too.
+- **Swept `docs/specs/**` for other stale copies** (it predates the current
+  specs and was written against the deleted sample). Only one live claim — the
+  struck `check_revoked` row in `GGU-3/api-contract.md` §6. Two other hits are
+  prose *about* the problem, not claims of a control: `GGU-3` §6's opening
+  sentence and `GGU-6/refinement-report.md:155` both say the client "cannot
+  distinguish expired from revoked", which is still true. Left alone.
+- **Run a new repo-wide gate with its own config before trusting its verdict.**
+  Against PR #54's `repo.spelling`, a bare `codespell` from the root reports
+  five findings that are all false — `bloc`, `pres`, `re-use` and the untracked
+  `backend/reports/`. None survive #54's `.codespellrc`, which lists each with
+  the reason it is an exception. Run the check the way the gate runs it
+  (`--config` the real file), or the noise buries the one real hit.
+
+---
+
+## 2026-09-20 (cont.) — GGU-78: what a surface is allowed to send back (spec only)
+
+**Spec:** `specs/backend/0022-surface-actions.md` — Draft, awaiting TL approval.
+No code. The SDD rule is that a human approves the spec before implementation,
+and this one carries a product decision rather than a mechanical one.
+
+**The question.** GGU-15's round-trip has a backend half nobody had designed:
+what a generated surface may send *back*. Two interactions do not fit the
+options mechanism — a waterfall tap that should make the agent recompose deeper
+(GGU-31) and a chip that should start a turn (GGU-32).
+
+**What the spec decides.**
+
+| Question | Answer |
+|---|---|
+| Is a new mechanism needed at all? | Only for those two. Everything else in the six-component catalog is an option change and needs nothing. |
+| The shape | a registered action **id** plus scalar args bounded by the action's own pydantic model. The client never sends prose, a template, a field path, a tool name or a view id; the turn's prompt is a constant in backend code with validated arguments substituted in. |
+| Where it goes | **back into the A2A turn**, as an A2A `data` part — not a REST resource. Every action's observable result is a stream of surfaces, and `/v1` would add a second round trip and a third error shape for the client to parse. |
+| Audit | declared per action (`audited`), off for both shipped actions; the seam is tested now so the first deciding action inherits a trail instead of an omission. |
+| Idempotency | none, deliberately — nothing in scope mutates. The registry **refuses** `mutating=True` outright, so the first mutating action cannot be added without amending the spec. |
+
+**The line worth keeping.** *If the answer is the same view with different
+numbers, it is an option. If the answer is a new agent turn, it is an action.*
+The failure this spec exists to prevent is a second, looser copy of the options
+mechanism — the design ADR-K D-3 already argues against, arriving through the
+front door because no bounded alternative was offered.
+
+**Next person should know**
+
+- **Approving this spec obliges an ADR change.** ADR-J D-6 requires a recorded
+  decision to extend the JSON-RPC surface, so the implementing PR must add
+  ADR-J D-7 (or a short ADR-L). Written as OD-6 so it cannot be missed.
+- **A cheaper answer exists and is on the table.** OD-7: if GGU-31 is scoped to
+  "the same chart, focused", a bounded `focus` option does it and this spec is
+  unnecessary — a chip is then plain `text` and GGU-32 needs nothing either.
+  Recorded so that choice is made on purpose rather than by momentum.
+- **`RenderIntentService` has no call site on the agent turn path.** It is what
+  enforces ADR-K D-11/D-12, its docstring names GGU-47, and nothing calls it —
+  so render intents from tools are only pattern-checked today. Found while
+  mapping this ticket; it needs its own ticket before `surface.actions` is
+  switched on.
+
+---
+
+## 2026-09-20 — GGU-84: the render-intent enforcement finally has a call site
+
+**Spec:** `specs/backend/0005-presentation-layer.md` (AC-9), `specs/backend/0006-agent-host.md` (OD-2, now closed).
+
+**Code.** `RenderIntentService` — the class that enforces ADR-K D-11/D-12 —
+was called by nothing. Not by a controller, not by the turn: its provider
+`get_render_intent_service` was constructed and handed to nobody, and the only
+test touching the wiring asserted the factory returned something. What
+actually guarded a tool-emitted view id was `VIEW_PATTERN`, a regex on the
+string's shape that `totally.invented.v9` satisfies, and **options were never
+validated on that path at all**.
+
+- `RenderIntentService.accept(view=…, options=…, default=…)` is the verdict
+  without the payload (registry + options model + `REJECTED_METRIC` + fallback);
+  `render` is now `accept` followed by the render, so there is one verdict.
+- `services/agent_renders.TurnRenderResolver` translates between the agent's
+  `RenderIntent` and that verdict; `AgentService` takes it as one more
+  collaborator and `services/agent_tools.execute_tool` calls it at the single
+  point an intent enters a turn — which covers both ways one leaves (the
+  streamed `SurfaceReady` and the final `TurnResult`).
+- `VIEW_PATTERN` → `VIEW_ID_SHAPE`, with the comment saying what it is: a bound
+  on the string, never the check.
+
+**Harness.** `tests/unit/api/test_deps_are_wired.py` asserts the *class* of
+defect away: every `get_*` that `app.api.deps` exports must be reachable from
+a route of the real app, following both FastAPI's dependency graph and the
+provider-calls-provider edges read out of the package's own source. Its second
+test deletes the `get_agent_service` → `get_render_intent_service` edge and
+requires the guard to go red, because a reachability check that passes
+everything is worse than none.
+
+**Next person should know**
+
+- **A `Depends` provider looks wired by virtue of existing.** That is the whole
+  illusion: it type-checks, it has a unit test, it is re-exported in `__all__`,
+  and no request ever resolves it. Nine defects of this class in one iteration;
+  this is the first one where the missing line was *never written* rather than
+  deleted, so no diff could have shown it.
+- **Assert at the seam, over the registry.** The new suite drives a
+  tool-emitted intent through a real turn, parametrised over every registered
+  projection — so a chart whose options model a turn cannot satisfy fails in
+  CI rather than in a conversation. On the way it proved the sweep can be
+  vacuous: run alone, the file collected **zero** projections, because
+  importing `app.presentation.views` is what fills `REGISTRY`. A sweep needs a
+  test that the sweep found something.
+- **A rejection must answer, not fail.** ADR-K D-12 is the easy half to get
+  wrong: it would have been simpler to raise. The fallback is what keeps a
+  model's bad guess from ending a conversation, and it is asserted at the HTTP
+  surface, not only on the class.
+- **`docs/diagrams/05-agent-turn.md` had been merged twice into itself** —
+  duplicated participants, two contradictory claims about who validates an
+  intent (`H-->>P` said the turn, another line said the client). Rewritten as
+  one diagram. Worth a look at the others.
+- **What could not run here:** Docker (host disk full), so the integration
+  suite and the compose stack did not run and coverage reads 97.56 % with the
+  DB suite deselected — every file this PR touches is at 100 %. The manual run
+  in the PR drives the real A2A route in process with the in-memory portfolio
+  provider instead; CI has the real verdict.
+
+---
+
+- **An instruction loses to the example beside it.** The reviewer-account
+  runbook said *never inline* and then showed `export DEMO_PASSWORD='…'`
+  directly underneath. Three passwords reached a session transcript in one
+  afternoon, each one pasted from that example by someone following the
+  document. The words were right and nobody read them, because the block below
+  was runnable and the sentence above was not. `read -rs` does not echo, so the
+  same session can be pasted into a chat or a ticket without disclosing
+  anything — the fix is a mechanism, not a stronger warning. When a document
+  tells someone what not to do, check that the copyable part agrees.
+
+---
+
+## 2026-09-20 (cont.) — the client joins the stack, and a manifest that could not build itself (GGU-82)
+
+**Specs:** `specs/client/0002-client-delivery.md`
+
+**Code.** `client_flutter/` gained a container: multi-stage, both stages pinned
+by digest, non-root (uid 101), read-only root filesystem, `no-new-privileges`,
+`/health` (not `/healthz` — the harness log above explains why), and a static
+nginx that serves the bundle with its own CSP. `docker-compose.yml` gained a
+`client` service behind a `client` profile, so a backend-only `docker compose
+up` still does not pay for a Flutter build. `client_flutter/docs/SECURITY.md`
+is the client's control mapping; it has fourteen implemented rows and **ten**
+listed gaps.
+
+**Two decisions worth carrying forward**
+
+- **`BACKEND_BASE_URL` is read at run time, not compiled in.** The argument
+  that nearly won — "a baked-in value is shipped to every browser" — is wrong,
+  and writing it down as the reason would have been worse than picking the
+  other option: the backend URL is public either way, it is in the network tab
+  on the first call. The reason that survives is **artifact identity**.
+  `backend-cd.yaml` promotes one digest through probe-then-shift; a
+  per-environment client image would mean the artifact CI verified is not the
+  artifact that ships. So the entrypoint renders `/config.json` at start.
+- **`wasm-unsafe-eval`, never `unsafe-eval`.** CanvasKit is WebAssembly, so
+  `script-src` must permit instantiation — but the narrow directive does only
+  that. `flutter build web --csp` is what keeps the broad one unnecessary, so
+  **the flag and the header are a pair**; whoever removes `--csp` has to widen
+  the header, and should have to notice. `style-src 'unsafe-inline'` remains
+  and is written down as residual risk rather than quietly dropped.
+
+**Next person should know**
+
+- **Building the thing is how you find out the manifest is fiction.**
+  `client_flutter/pubspec.yaml` declares `flutter: ">=3.35.7"` / `sdk:
+  ">=3.10.0"`. Its own checked-in `pubspec.lock` resolves against `flutter:
+  ">=3.44.0"` / `dart: ">=3.12.0"`. Installing the declared minimum fails
+  version solving outright. Nothing had ever installed it — every developer had
+  a newer SDK already on their machine, and there is no client CI — so the
+  declared floor had been decorative since the day it was written. Same shape
+  as the seven claims in the entry above: believed, never executed.
+- **An `add_header` inside an nginx `location` replaces every inherited one.**
+  A per-location `Cache-Control` would have silently deleted the CSP from the
+  HTML response — the one response that needs it. The config uses a `map` and a
+  single server-level `add_header` for exactly this reason. If someone adds a
+  header to a `location` later, they have to re-add all of them.
+- **`envsubst` needs its variable list.** `envsubst < in > out` with no
+  SHELL-FORMAT argument expands nginx's own `$uri`, `$host` and
+  `$request_method` to empty strings, and the resulting config still starts.
+  The entrypoint passes `'${PORT} ${CONNECT_SRC}'`.
+- **The evidence for this PR is incomplete, and that is stated in the PR rather
+  than papered over.** The host ran out of disk (460 GiB volume at 100 %, 2 GiB
+  free) mid-run and took the Docker daemon down with it, so the image was never
+  built end to end and the `docker run` / `curl -I` proofs AC-5 asks for are not
+  in the PR body. What *is* pasted is real: the version-solving failure above,
+  and the compose profile check. Do not merge on the strength of the rest —
+  the container's claims are unverified until someone runs it.
+- **Ten gaps, and the first one is the interesting one.** The client's login
+  (`login_bloc.dart`) is a fake that emits `success` for any input after a
+  two-second delay. There is no token anywhere in the browser, so every control
+  about token storage would have been invention. The mapping says so instead.
+
+---
+
+## 2026-09-20 — GGU-82 follow-up: the container was actually built and run
+
+**Spec:** `specs/client/0002-client-delivery.md` · **PR:** #49 (same branch)
+
+**What changed in code**
+
+- `client_flutter/Dockerfile` — the builder stage no longer uses a community
+  Flutter image. It is `debian:12-slim` by digest plus Google's own SDK archive
+  verified against the SHA-256 in `releases_linux.json`, and `flutter pub get`
+  gained `--enforce-lockfile`.
+- `client_flutter/docs/SECURITY.md`, `specs/client/0002-*.md` — every ⧗ that
+  was watched became a ✓ with the observation in the cell; one ⧗ stayed; gaps
+  G-6, G-8, G-11, G-12 rewritten and G-13 added.
+
+**Next person should know**
+
+- **The lockfile's `sdks:` range does not name the SDK that wrote it.** The
+  previous entry said the declared floor `flutter: ">=3.35.7"` was fiction and
+  that `pubspec.lock` wanted `>=3.44.0`. Both true, and still not enough:
+  **3.44.9 cannot reproduce the lock either.** The SDK *vendors* some of what
+  the lock pins — 3.44 pins `meta 1.18.0` and `vector_math 2.2.0` exactly,
+  while the lock holds `1.19.0` / `2.4.2`, which only 3.47.x admits. The floor
+  in the lock is derived from package constraints; it is not a record of the
+  toolchain. `--enforce-lockfile` is the only thing that says so out loud —
+  plain `pub get` would have re-resolved 14 dependencies and built something
+  nobody reviewed. Keep the flag.
+- **A CSP can be correct in a header grep and still break the app.** This is
+  the check worth adding to `client-ci.yaml`: the page loaded with the console
+  read. Served under `script-src 'self'` this bundle is a *blank page* — 200 OK,
+  every header present, nothing rendered. `curl -I` cannot see that.
+- **Reasoning got OD-3 right and one detail of G-6 wrong.** `wasm-unsafe-eval`
+  is necessary and sufficient, as argued. But G-6 said Flutter's injected
+  styles have "no supported nonce or hash path", and the browser's violation
+  report does offer per-element hashes. The accurate claim is narrower: Flutter
+  has no supported way to emit them. Worth noting because the reasoning was
+  90 % right, which is the kind that survives review unexamined.
+- **`docker run --rm <img> id` does not print a uid here**, and the first draft
+  of the PR told reviewers to run exactly that. The entrypoint requires
+  `BACKEND_BASE_URL` and exits 1 before any CMD argument matters, so the
+  command "fails" for a reason unrelated to what it was asking. Use
+  `--entrypoint id`. A verification command nobody has run is worth about as
+  much as a control nobody has tested.
+- **ghcr.io is refused by this machine's Docker registry policy.**
+  `ghcr.io/cirruslabs/flutter:3.44.0` exists, has a native `linux/arm64`
+  manifest and would have fitted; every pull answers `denied` while Docker Hub
+  works. Anything that needs ghcr has to be resolved with whoever owns that
+  policy, not worked around.
+- **G-11 is closed, and the way it closed is reusable.** The hardening was
+  first proven with `docker run` and the flags compose declares, which is not
+  the same claim — it leaves a typo in `docker-compose.yml` undetected. Compose
+  will not parse this project without `backend/.env`. The way through is a
+  throwaway overlay that resets only the *backend* service's env_file:
+
+  ```yaml
+  services:
+    backend:
+      env_file: !reset null
+  ```
+
+  `docker compose -f docker-compose.yml -f overlay.yml --profile client up -d
+  --no-deps client` then works with no credential anywhere, and the `client`
+  service stays exactly as committed. `docker inspect` on the container compose
+  created reports `Config.User=101`, `ReadonlyRootfs=true`,
+  `SecurityOpt=[no-new-privileges:true]`, `Tmpfs=map[/tmp:]` and
+  `Up (healthy)` — declared and applied agree. **`client-ci.yaml` should use
+  this overlay rather than putting a real `.env` on a runner**, and that is now
+  written into spec 0002 §9.
+- **The obvious way to unblock compose was to borrow the developer's real
+  `backend/.env`. Don't.** It holds a live `GEMINI_API_KEY`, the harness denies
+  `**/.env` precisely so an agent cannot reach it, and a key that reaches a
+  transcript is a key that has to be rotated. The overlay above gets the same
+  proof and touches nothing secret. If a future task looks like it needs that
+  file, it almost certainly needs an overlay instead.
+
+---
+
+- **A check with two configurations drifts like a check with two command
+  strings.** `make gate` ran codespell over `backend/` only while pre-commit
+  ran it over everything, so a typo in `specs/` passed a green gate — measured
+  both ways: the new root check exits 65 on it, the old scope exits 0. The
+  second half was subtler. The hook read `backend/pyproject.toml`, whose word
+  list knows nothing about Flutter, so it flagged `bloc` three times on a
+  single `login_bloc.dart` and failed every commit that touched one. A hook
+  that fails on correct code teaches people to bypass it — and a bypassed hook
+  is how the `specs/` typo reached `develop` in the first place. The scope gap
+  and the false positives were the same defect seen from two ends.
+
+---
+
+## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#TBD)
+
+---
+
+## 2026-09-20 (cont.) — GGU-91: a second Flutter app, and its whole harness (#58)
+
+**Spec:** `specs/frontend/0001-frontend-skeleton.md` · **ADR:** ADR-L (Proposed)
+
+**Code.** A new top-level `frontend/`: a pub workspace with one lockfile and
+four packages — `finance_core`, `finance_api_client`,
+`finance_views_repository` (all pure Dart) and `app` (Flutter). One composition
+root, `go_router`, Material 3 with a spacing `ThemeExtension`, sealed
+`Result`/`AppFailure`, and one vertical slice: `holdings.allocation.v1`
+fetched, decoded and rendered. 159 tests, 100 % line coverage on 26 files.
+
+**Harness.** All eight pieces, mirroring the backend's: `frontend/CLAUDE.md`;
+three project rules under `.claude/rules/frontend/` with `paths:` frontmatter;
+a `post-edit-dart.py` PostToolUse hook registered beside the Python one; a
+read-only `frontend-reviewer` agent; the ship-gate triple
+(`frontend.*` in `ship-gate.json` ≡ `frontend/Makefile gate` ≡
+`frontend-ci.yaml`, command strings copied); the spec; this entry; and the
+`docs/DEV_HARNESS.md` section. Plus diagram `12-frontend-layers.md`, the
+pre-commit hooks, and `ci-conventions.md` §5's table gaining a `frontend.*`
+row.
+
+**The point of the whole thing, in one sentence:** the backend half of this
+repository enforces its standards with tests and a gate while the client half
+enforced nothing, so every rule here is held by a script that was
+**mutation-checked** — a forbidden import, a `NumberFormat`, a 151-line file
+and an unregistered component directory each turned the suite red before being
+reverted.
+
+**Four defects the gate found in its own PR**, which is the argument for
+building it first:
+
+| Found by | What was wrong |
+|---|---|
+| a repository test | `ViewPayload` had no value equality, so two identical envelopes compared unequal — bloc state would have re-emitted on every fetch and `bloc_test` expectations would have been identity-based |
+| `check_file_budget.dart` | three test files over 150 lines; splitting them produced the two shared harnesses the suites now use |
+| `check_coverage.dart` | a `props` override on a sealed base that no subclass used (deleted), and a credential closure that could only be reached through a live request (extracted to `devTokenProvider`, now testable) |
+| `dart analyze --fatal-infos` | 21 findings in test files alone, none visible while only `lib/` was being analysed |
+| **CI's `build` job** | the app had **no `web/` scaffold at all** — it was assembled by hand rather than by `flutter create`, so a web-first client could not build for web. Every local check was green. |
+
+**Next person should know**
+
+- **`flutter pub get` silently re-resolves; `--enforce-lockfile` does not.** Every install and every CI job uses the strict flag. A build that resolved differently from the reviewed one is the whole failure mode.
+- **`dart fix --apply` is not safe to run blind on Dart 3.13.** It rewrote every constructor into the new `const new(…)` shorthand and injected a *circular self-import* into two barrel files to satisfy `comment_references`. Both changes were "valid" and both were worse. The two lints are now off in `frontend/analysis_options.yaml` with reasons (ADR-L D-10). Read a `dart fix` diff.
+- **Dart's lcov has no branch data.** "100 % branch coverage" is not expressible for Dart, so this half holds 100 % **line** coverage *per file* instead. That is why the two halves of this repository state their coverage contracts differently, and it is recorded rather than quietly rounded to 80 %.
+- **Reaching 100 % three times meant deleting or extracting code, not writing a contrived test.** That is the coverage gate doing design review.
+- **A widget test through a bare `MaterialApp` hides wiring bugs.** `pumpApp` uses the real theme and the real providers; the `AppSpacing` equality defect surfaced only because a test compared a `ThemeExtension` read back out of a real `ThemeData`.
+- **Dart has no runtime reflection on the web**, so an unimported library is tree-shaken and its registration never runs. "Adding a component edits no existing file" is therefore only true because the one file that imports them is **generated and diffed by the gate** — the same shape as the backend's frozen catalog.
+- **`go_router`'s configuration is empty until it is attached to a widget tree.** Asserting on `currentConfiguration` from a bare `buildRouter()` fails with `Bad state: No element`; route tests have to pump.
+- **A hand-assembled Flutter package has no platform scaffold, and nothing local tells you.** `make gate` was green, 159 tests passed, and `flutter build web` said *"This project is not configured for the web."* The gate's local half cannot prove a bundle compiles; that is why `frontend-ci.yaml` has a `build` job, and it earned its place on the first run. `flutter create . --platforms web` also drops in an `analysis_options.yaml`, a `README.md`, a `.gitignore` and a default `widget_test.dart` — the first of those would have silently shadowed the workspace analyzer configuration. Delete all four; keep `.metadata`.
+- **The review round found four things the gate asserted and did not hold.** Recorded because the shape repeats — a property written down, enforced by nothing — and it is the same shape as every defect in the entry above.
+
+  | Claimed | What was true |
+  |---|---|
+  | "errors shown to a user are the backend's safe text" | the transport passed `http.ClientException.message` straight through — package:http's own wording, and on `BrowserClient` it carries the target URL. A comment two lines from the render site asserted the opposite. The cited test only ever built a `ProblemFailure`, so it **could not** fail for the half that was wrong. |
+  | "no client-side interpretation of server strings, verified by the layering test" | that file had no such rule. The property was true by construction; the citation was a gap dressed as a control. |
+  | `*.iml` is gitignored | `.gitignore` has no inline comments — `#` only opens one at column 0 — so the pattern was the literal string `*.iml  # IntelliJ…` and matched nothing. `git check-ignore` exits 1 and says so. |
+  | "100 % line coverage per file" | really "100 % of the files the tests happened to load". lcov writes **no record** for a library nothing imports, so a new untested file passed silently. 30 files on disk, 26 records. |
+
+  The last is the one to carry forward: **a coverage gate that iterates the report can only ever see what the report contains.** `check_coverage.dart` now takes the file list from disk and fails on a missing record, deciding "no executable code" by parsing rather than by a hardcoded barrel list. An untested `lib/` file turns it red — mutation-checked.
+
+- **A filename rule cannot separate two classes that share a file.** The first attempt at "only a `*_page.dart` may read a repository" passed its own mutation check *green*, because `PortfolioViewsView` lived inside `portfolio_views_page.dart`. The fix was to split the file, which the page/view split wanted anyway. The mutation caught it; reading it twice had not.
+- **Needle lists have holes on the `try` prefix.** `double.parse` does **not** match `double.tryParse` as a substring, and `tryParse` is the form a developer reaches for first. Both spellings of `double`, `num` and `int` are now listed, plus `DateTime.timestamp()` beside `DateTime.now()`.
+- **The frontend gate cannot be run without a Flutter SDK, and this machine had none.** It was verified against a pinned 3.47.5 downloaded for the session. Anyone reproducing it needs that SDK, not merely Dart — `dart test` covers the three pure packages but not the widget suite.
+
+---
+
+## 2026-09-20 (merge) — GGU-91 merged with the manual run **waived**, not satisfied
+
+**Recorded because a waived gate and a passed gate are different things.**
+
+`.claude/rules/backend/sdd.md` requires every PR body to carry *"a manual run
+against the running stack with the real commands and their real responses
+pasted in. No manual run, no merge."* PR #58 does **not** carry one, and says so
+in its own body: `backend/.env` does not exist in a worktree and creating it is
+denied by this repository's own permissions (`Edit(**/.env)`), so
+`docker compose up` could not start the API. The author did not route around the
+deny — the correct call.
+
+**The TL waived the requirement for this PR and authorised the merge.** The
+blocker paragraph is left standing in the PR body on purpose: it is the record
+of what was not done. Nothing here says the manual run passed, because nobody
+ran it.
+
+**What that leaves open.** The frontend gate (`cd frontend && make gate`) and
+`frontend-ci.yaml` both ran green, so the code is proven against its tests and a
+real web build. What is *not* proven is the thing only a running stack shows:
+that the client actually reaches this backend — `BACKEND_BASE_URL`, CORS, the
+bearer token, and the shape of a real `?view=` response against a real
+projection. Spec `frontend/0001` still owns that.
+
+**Next person should know**
+
+- **The first task for whoever has a `.env` is to do the run this waiver skipped**,
+  and to append the result here. Until then, treat "the frontend binds the
+  backend" as asserted by tests, not observed.
+- **A permission deny is not a reason to lower a gate.** The gate stayed where it
+  was, the PR said plainly what it could not do, and a human took the decision.
+  That is the shape to copy the next time the sandbox blocks a verification.
+
+---
+
+## 2026-09-20 (cont.) — GGU-90 + GGU-88: the turn that actually completes · spec `specs/backend/0006-agent-host.md`
+
+**What changed in code.** Two defects in `infra/model/payload.py`, fixed
+together because either one alone still leaves the turn at a 400 on the
+*second* model call:
+
+| Defect | Fix |
+|---|---|
+| `MessageRole.TOOL` → role `"function"`, which Gemini refuses outright (GGU-90) | → `"user"`. Gemini has **no tool role**; the `functionResponse` *part* is what marks a tool result. Accepted roles measured in the new `infra/model/wire_roles.py` |
+| `from_response` dropped Gemini 3's `thoughtSignature`, and the next request is refused without it (GGU-88) | it round-trips as `ToolCall.provider_state`, an opaque bag the adapter fills and empties |
+
+`payload.py` was split: request mapping stays, response mapping moves to the
+new `reply.py` (both were at the 150-line cap). `gemini_client.py` handed its
+retry triage to the new `provider_errors.py`, which also carries GGU-90 AC-4.
+
+**The masking was half a contract.** The adapter masked every provider failure
+as `dependency-unavailable` — correct at the API boundary — and then threw the
+text away, so two 400s that broke *every* agent turn looked like an unavailable
+provider and cost an hour each to find by replaying the call by hand. Masking
+outward and recording inward are different decisions; we had only the first.
+`log_provider_failure` now writes the provider's own bounded diagnostic to the
+server log at `warning`. Nothing the caller sees changed, and there is a test
+asserting both halves at once.
+
+**What changed in the harness.** Nothing in `.claude/rules/**`. The diagram
+`docs/diagrams/05-agent-turn.md` gained the two provider facts that make the
+"tool results fed back" edge work; spec 0006 gained OD-13, the two new modules
+in its file table, and an honest amendment to AC-13 (a second log line now
+exists, on the failure path only).
+
+**Next person should know**
+
+- **A test that compares our constant to a copy of our constant is not a test.**
+  `test_payload.py` asserted a tool result went out under role `"function"`,
+  and it did, and it passed for as long as the code was broken — the assertion
+  was the mapping, written from the same belief on the same day. `wire_roles.py`
+  holds an answer the *provider* gave, quoted from its own refusal, and
+  `test_wire_roles.py` walks `MessageRole` so the next role is checked the day
+  it is added. Same shape as `tool_schema_keys.py` (GGU-81). This is the
+  thirteenth instance of this pattern in this iteration.
+- **Defects on one code path stack, and only the outermost is visible.** GGU-81
+  hid GGU-90, which hid GGU-88. Each was "the" reason turns failed. Fixing one
+  and declaring the path healthy would have been wrong three times; the only
+  honest check was driving a real turn after each fix.
+- **A/B against the live provider beats any amount of reading.** The same
+  question, same key, same stack, two images minutes apart: pre-fix ends at
+  `status-update(failed)` + `dependency-unavailable`; post-fix reaches the
+  terminal `message`. That contrast is the whole evidence, and it is cheap.
+- **The integration suite is not idempotent against a reused database** and
+  nothing fails when it is not — 1214 tests stay green and only `fail_under`
+  notices, because `portfolio_repository.py`'s lost-race branch needs an empty
+  table. Fresh volume: 100 %. Second run: 99.96 %. The integration tests use
+  fixed literal subjects (`subject-restart`, `subject-once`, …) against this
+  repo's own rule that test data is unique per test. CI always starts clean, so
+  it is permanently green there. **Not fixed here — it is not this ticket's
+  code.** Flagged for a ticket of its own.
+
+---
+
+## 2026-09-20 (cont.) — GGU-78: surface actions, and a catalog that was under-reporting
+
+**Spec:** `specs/backend/0022-surface-actions.md` (Draft → Implemented; the file
+arrives from PR #44, which is spec-only — expect a whole-file conflict there).
+**ADR:** ADR-J gains **D-7**, the decision D-6 requires before the JSON-RPC
+surface may be extended.
+
+**What changed in code**
+
+- `app/actions/` — a framework-free peer of `presentation/`: contract, spec,
+  registry, resolver, the `SurfaceActionRef` a payload publishes, the curated
+  suggestion table, and one module per action under `defined/`. Adding an
+  action edits no shared file, the way adding a chart does not.
+- The A2A envelope accepts one `data` part carrying `{action, args}` — bounded
+  to eight scalar arguments, no nesting, no arrays — resolved **before** the
+  stream opens, so a refusal is a JSON-RPC error rather than a stream that
+  fails on its first event. Flag `surface.actions`, dark-launched **off**.
+- `attribution.waterfall.v1` declares `drill.attribution.v1`; the declaration
+  reaches the payload, the A2UI props, `GET /v1/views` and `CONTRACT.md` from
+  one derivation.
+- `order.ticket.v1` now names `size` and `size_in` as payload fields.
+
+**The defect worth remembering**
+
+`order.ticket.v1` offered four editable controls and the generated contract
+reported **two**. Nothing was wrong with either declaration on its own:
+`inputs[]` published all four, and the document's rule — *an editable field is
+a payload field named exactly as the option that sets it* (spec 0019 OD-3) —
+was applied correctly. They simply disagreed, because `symbol` and `side`
+happened to share a name with a payload field and `size`/`size_in` did not.
+**Nothing compared the two declarations**, so the document quietly advertised
+half of what the component accepts, and a client binding to it could not know
+`size` was editable.
+
+The rename is not the deliverable; `test_declared_interactivity.py` is. It
+walks the **registry**, so the next component to get this wrong fails the gate
+instead of shipping, and the failure names the projection and both sides of
+the disagreement rather than printing a bare set mismatch.
+
+**Next person should know**
+
+- **A third declaration of one fact is a third place to drift.** This package
+  now has two derived ones — `TicketInput` from the options schema,
+  `SurfaceActionRef` from the arguments schema — and both are derived
+  precisely so they cannot be retyped. Keep deriving.
+- **A derived figure is never an input.** `quantity` was the obvious thing to
+  rename to `size`, and it would have been wrong: under `size_in="usd"` it is
+  the size *divided by the entry price*, so the contract would have advertised
+  as editable a value the options model refuses.
+- **An error message is an output with a bound.** Argument names are capped at
+  32 characters and a rejection names only arguments the action *declares*,
+  replacing anything else with `<undeclared>` — because that name came from
+  the caller and lands in a 256-character JSON-RPC field. `a2a_dispatch`
+  already learned this the expensive way (a 500 from an over-long `repr`).
+- **A test that only passes on an empty table is worth less than no test.**
+  The first draft of `tests/integration/test_a2a_actions_flow.py` asserted the
+  flag was off *before* any test turned it on: green on a virgin database,
+  red on the second run of the same file. Every test there now sets the state
+  it needs and puts it back, and "off by default" is asserted in the unit
+  suite, where it is a property of the call rather than of a stored row.
+- **`docs/diagrams/05-agent-turn.md` was a corrupted double-paste** — two
+  merged versions, duplicate `participant` lines, an undeclared `DB`. It would
+  not have rendered. Repaired while adding the action path to it; worth a look
+  at whether other diagrams carry the same scar.
+- **Pre-existing and not fixed here:** `test_list_recent_and_list_for_subject_
+  order_newest_first` is order-dependent — three audit rows written in one
+  transaction share a timestamp, so "newest first" is a tie the database
+  breaks arbitrarily. Filed as its own task; the ordering guarantee belongs in
+  the repository, not in the test.
+
+### Review round on #57 — two findings that were both right
+
+**A vacuous test that claimed the opposite.** `test_declared_interactivity.py`
+was written to walk the registry, and the PR body said its third case "covers
+the projections with no `inputs[]` too". The reviewer enumerated the registry
+and found that for **four of six** projections all three cases executed *zero*
+assertions: case 1 subtracted from an empty set, case 2 skipped, and case 3
+looped over an empty list. Worse, the vacuous set contained
+`attribution.waterfall.v1` — the projection the PR changes.
+
+The fix was to stop asserting over a *derived set* and start asserting the
+**rendered claim**: `read-only` is itself a claim that can be wrong, so
+checking it gives a read-only projection a real assertion. Proven by mutating
+`inputs_note` to never return `READ_ONLY`, which now turns exactly those four
+projections red. A vacuity guard (`test_the_registry_still_produces_both_kinds_of_case`)
+pins that at least one projection of each kind exists, so the file cannot
+quietly go empty again.
+
+The lesson is narrower than "write better tests": **a parametrised test over a
+registry reports as N passing cases whether or not its body ran.** Green
+parametrised output is not evidence of coverage; count the assertions.
+
+**A contract that shipped on while the capability shipped off.** The waterfall
+declared `drill.attribution.v1` unconditionally while `surface.actions` ships
+off, so `CONTRACT.md`, `/v1/views`, the payload and the A2UI props all
+advertised an affordance that answers `-32601`. "Dark-launched" was true of
+execution and false of the contract.
+
+Both now read one constant, `app.actions.capability.SHIPPED_ENABLED`. The
+skew is one-directional on purpose: enabling the flag at runtime without
+flipping the constant means the capability works and nothing advertises it,
+which is safe; advertising more than the service will do is the defect. A
+footnote was the alternative and was rejected — #45/#48 ship that catalogue to
+the client as a **machine-readable** artefact, and a footnote in Markdown does
+not reach a JSON consumer.
+
+**Next person should know**
+
+- **Gating a declaration cascades into the tests that prove the declaration.**
+  Three tests went vacuous the moment nothing declared an action, and had to
+  be re-pointed at a projection registered inside the suite. If you flip
+  `SHIPPED_ENABLED`, expect the reverse cascade and check the probes still
+  earn their place.
+- **`vulture` will not find an unused module-level constant.** `NO_ACTIONS`
+  was defined identically in two modules, and coverage stayed at 100 % because
+  the assignment *executes*. `min_confidence = 80`; an unused module-level
+  assignment scores 60.
+- **`except AppError` at a protocol boundary is too wide.** In `a2a_actions`
+  it would have mapped a `DependencyUnavailableError` from an audited action's
+  audit write onto `-32602` *and put its detail on the wire*. Narrowed to the
+  three refusals that are genuinely the caller's fault.
+
+---
+
+- **A gate can be red for the wrong reason and blind to the right one.** The
+  repository-wide spelling check shipped as a bare `codespell`, whose directory
+  walk skips dot-entries — so `.claude/` and `.github/` were never scanned,
+  while the check's own comment and `ship-gate.json`'s note both said they
+  were. a misspelling of `unparsable` sat in this very file with the gate green. Planting a
+  typo in `.claude/` gave **exit 65 and zero hits on the planted file**: red,
+  from `uv.lock` and `backend/reports/`, and entirely blind to the mutation.
+  Anyone confirming the gate "works" by watching it go red would have been
+  satisfied. It now scans an explicit `git ls-files` list and asserts that
+  `.claude/` and `.github/` are in it. Found by the agent merging the session's
+  pull requests, in a gate I had written and mutation-checked the same day —
+  my mutation proved a typo in `specs/` was caught, and I generalised from one
+  directory to "the repository" without testing the generalisation.
+
+---
+
+## 2026-09-21 — the gates cover the pull requests this repository actually opens
+
+Remediation of the 2026-09-20 Security Audit (87/100, down from 98). No spec:
+this is CI topology and documentation correction, not a feature. Branch
+`ci/security_gates_cover_every_pr`.
+
+**The finding, in one sentence.** Root `SECURITY.md` claimed "gitleaks,
+pip-audit, Trivy and Semgrep on every PR (`backend-ci.yaml`)" and
+`VULNERABILITY_MANAGEMENT.md` marked Secrets and SAST "Blocking: yes / every
+PR", while `backend-ci.yaml` is `paths:`-scoped to `backend/**`. A
+frontend-only or client-only pull request started none of it — which by
+2026-09-20 was most of them.
+
+**What moved, and the rule it produced.** `repo.secrets` (gitleaks) moved out
+of `backend-ci` and `repo.shell-lint` (shellcheck) out of `infra-ci`, both into
+`repo-ci.yaml`, which carries no `paths:` filter. `backend-cd` now calls
+`repo-ci` as a second gate job so the move did not quietly take secret scanning
+off the path to production — `test_dev_environment.sh` asserts that edge and
+was mutation-checked against its removal.
+
+The general rule is now in `ci-conventions.md` §4b/§5: **a check whose subject
+is "any file in this repository" cannot be correct in a `paths:`-scoped
+workflow.** The test is the check's subject, not where it currently lives: if
+you cannot name a directory it does *not* apply to, it belongs in `repo-ci`.
+
+**§5 has two questions, and only the first was ever asked.** `infra.shell-lint`
+and its workflow step matched byte for byte — §5 satisfied — and the check was
+still wrong, because its *subject* was two globs under `infra/scripts/`. Both
+container entry points were outside it, and pointing shellcheck at them for the
+first time found a finding in each (SC2086 in `backend/docker/entrypoint.sh`,
+SC2016 in `client_flutter/docker/entrypoint.sh` — both deliberate constructs
+that now carry justified `disable` directives rather than a lowered severity).
+So: (1) do both halves run the same command — now machine-checked; (2) does
+that command cover what its name claims — still human, and the expensive one.
+
+**The first question is no longer a human's job.** `repo.gate-pairs`
+(`scripts/check_gate_pairs.sh`) parses `ship-gate.json` and greps each `cmd` as
+a fixed string against every workflow file. Every one of the 23 entries already
+satisfied it, so it shipped green and would have caught all three historical
+drifts. It is deliberately one-directional and cannot check the "Also in"
+column — `gitleaks` and `codespell` are upstream pre-commit hooks with no
+command string to compare.
+
+**A rule may not describe a workflow nobody wrote.** §4b's table listed
+`client-ci` among the scoped workflows with no marker, and it has never
+existed. The table now carries an `exists?` column and says so. It was **not**
+written here: `client_flutter/CLAUDE.md` lists
+`.github/workflows/client-ci.yaml` under "do not touch" and assigns it to
+GGU-1 (PR #30). The security half of that gap is now covered by `repo-ci`
+anyway; the image build and its CVE scan are genuinely uncovered and are
+recorded as gaps with that owner.
+
+**What the next person should know.**
+
+- Two new repository-wide scripts, `scripts/check_shell.sh` and
+  `scripts/check_gate_pairs.sh`. Both discover their subject rather than
+  enumerating it, and both refuse to report success on an implausible file
+  list — the anti-vacuity idiom `check_spelling.sh` established.
+- `check_shell.sh` avoids `case` inside command substitution because **bash
+  3.2, which macOS still ships as `/bin/bash`, cannot parse one there** while
+  the ubuntu-latest bash 5 in CI parses it happily. The first draft ran green
+  on a runner and died on a laptop. Worth remembering for any new script here.
+- Do not "fix" the two `shellcheck disable` directives in the entry points.
+  `SC2016` is required because `envsubst` takes its variable list as a literal
+  `${NAME}` string; `SC2086` is required because `UVICORN_EXTRA_ARGS` must word
+  split. Both carry the reason at their own line.
+- Dependabot now watches both pub workspaces. That is **update** telemetry, not
+  a CVE gate; `osv-scanner` is still a declared gap because its only
+  distribution channel is `ghcr.io`, which this project's registry policy
+  refuses, so it could not be run even once before shipping. A gate nobody has
+  seen go red is not a gate — that is the whole lesson of 2026-09-20, applied
+  to the thing it was tempting to skip.
+
+**Postscript, found by this branch's own CI run: `repo.spelling` was red on
+`develop`, flakily, for a reason that had nothing to do with spelling.** Its
+anti-vacuity assertion is `printf '%s\n' "$files" | grep -q "^.claude/"`.
+`grep -q` exits at the first match, `.claude/` sorts first, and `pipefail`
+turns the resulting `printf: write error: Broken pipe` into a failed test — so
+the script reported *"nothing under .claude/ reached codespell"* about a list
+whose **first line** was `.claude/.proven-config-version`. Measured on the real
+821-path, 35 KB list on one CPU under load: the pipe form wrongly failed
+**18 of 200 runs**, the here-string form **0 of 200**. Under 64 KB it is a
+scheduling race, which is why it looked intermittent; past 64 KB printf must
+block and it fails every time.
+
+Two lessons, both of which this repository has now paid for twice:
+
+- **An anti-vacuity check is code, and can be wrong in its own right.** This
+  one failed *closed*, which is the safe direction and is exactly why it read
+  as a genuine finding rather than a bug. "The gate is red" was true; "the gate
+  is red about spelling" was not.
+- **The idiom spreads.** `check_shell.sh` was written in this same PR and had
+  copied the pipeline verbatim; it is latent there only because twelve paths
+  fit in a single write. Both are here-strings now. If you add a third
+  `check_*.sh`, do not reach for `printf ... | grep -q`.
+
+## 2026-09-21 — GGU-79: the client speaks A2UI, and the seam under it holds
+
+**Spec:** `specs/frontend/0002-a2ui-agent-path.md` · **PR:** #65 ·
+**Diagrams:** `12-frontend-layers.md`
+
+`frontend/` had no agent path at all. It now speaks A2A — `message/stream`,
+SSE, the four event kinds — and turns each `render-intent` into a surface as
+it lands. **No dependency was added**, and the reason is the finding worth
+keeping:
+
+- **`genui` / `genui_a2a` / `a2ui_core` are the wrong tool for this backend.**
+  They render A2UI component trees. This service sends none: `a2a_events.py`
+  emits `{"kind":"render-intent","renderIntent":{"view","options"}}`, and spec
+  `client/0003` §8.3 says the intent "names a registered view; it never
+  carries a payload. The client fetches the payload itself." The brief for
+  this ticket asked for those three packages by name; the wire says they would
+  render nothing. Recorded as spec `frontend/0002` OD-1 for TL sign-off.
+- **`X-A2A-Extensions` is sent, and the folklore about it is wrong for this
+  stack.** Nothing under `backend/src/app/api/` or `services/` reads it. The
+  "omit it and A2UI silently degrades" warning describes genui's connector
+  against the upstream sample, not this backend (OD-3).
+
+**The seam under it had two holes, and `frontend/CLAUDE.md` claimed it did
+not.** "Adding a component edits no existing file" was true of *registration*
+and false of everything after it: `app_router.dart` hardcoded a view id with
+no test comparing it to the registry, so a component could be registered,
+100 %-covered and **invisible with a green gate**; and the fifth component
+would have pushed one request past the endpoint's four-id cap. The route now
+names no view — the page asks the registry, so the two cannot disagree — and
+the repository splits an over-cap request. The claim in `CLAUDE.md` now says
+which two things used to break it.
+
+**Two bugs in the gate that guards coverage**, both reproduced before and
+after by executing the script against scratch trees:
+
+- an empty source walk printed `coverage ok — 0 lib file(s) accounted for` and
+  exited **0** — the disk cross-check reproducing the lcov blindness it was
+  written to fix;
+- `isExempt` ran against the raw `SF:` path, so the `lib/main.dart` exemption
+  never fired on a `flutter test` record, while the message printed the
+  **normalised** name, which looks exempt. Latent, not breaking: no test loads
+  `main.dart`, so no record exists and the disk side happened to work.
+
+**`SECURITY.md` claimed more than it checked.** All twelve number needles are
+*formatting* mechanisms; N-2 ("never compute") and N-10 ("never reorder") were
+enforced by nothing. `binding_rules_compute_test.dart` adds nine aggregation
+and rounding needles with two written carve-outs, `json.decode(` joins
+`jsonDecode(`, and the claim is narrowed — **bare `+ - * /` are named as not
+mechanically checked**, because they cannot be needled without matching prose.
+
+### What the next person should know
+
+- **There is no Flutter toolchain on the authoring machine** — and the
+  standalone Dart is 3.12.1 against a `^3.13.0` floor, so `frontend/` does not
+  even resolve. `make gate` was never run here. `frontend-ci` ran the whole
+  gate on every commit of this branch and is the only evidence in the PR body.
+  It caught three real defects a local run would have caught in seconds: a
+  `library;` directive after an import, an `async_return_with_no_await`, and
+  five files the 3.13 formatter disagreed with.
+- **The 3.12 formatter is not the 3.13 formatter.** On `binding_rules_test.dart`
+  and `result_test.dart` they disagree today (3.13 chains on a multi-line
+  receiver; 3.12 splits the argument list). Do not run `dart format .` with an
+  older SDK — it will rewrite files CI considers correct. Formatting one file
+  at a time and reading the diff is safe when it is a plain collapse.
+- **`tool/` still has no tests** and is still excluded from the coverage
+  contract it enforces. Adding `package:test` to the workspace root changes
+  `pubspec.lock`, which could not be regenerated here. Spec `frontend/0002`
+  OD-5 carries it.
+- The numbers rule matches **text, not intent**: a comment in
+  `conversation_bloc.dart` that merely *named* `DateTime.now(` tripped it. That
+  is the rule working, and the comment now says so.
+## 2026-09-21 — GGU-53: the catalog serves what the client must draw
+
+Spec: `specs/backend/0023-catalog-serves-the-client.md`. Tickets: GGU-53, and
+it touches the promises of GGU-42 (numbers-from-tools), GGU-78 (surface
+actions) and GGU-92 (actions in the snapshot).
+
+Design exported four pages of the component catalog. Comparing them against
+what this backend serves turned up four disagreements — **three of them
+defects here, one a defect in the design**:
+
+1. **Four of six component names were wrong**, not the two the ticket flagged.
+   The waterfall and the scenario card disagreed with their own design pages
+   too, and nobody noticed because the backend's spelling matched *one* of the
+   three names each design page uses. The rule adopted (spec 0023 §3): a
+   component is named by its **own A2UI schema block**; a gallery badge is
+   decoration, and a mention on another component's page is never
+   authoritative.
+2. **The payoff curve could not be plotted.** Its y coordinate was an ADR-E
+   pair; its x coordinate was a formatted string and nothing else. A client
+   would have had to parse `"$142.50"` back into a number — the exact
+   client-side arithmetic ADR-K D-5 forbids. `SeriesPoint.at` is the fix.
+3. **The waterfall's declared action was unusable.** `drill.attribution.v1`
+   accepts a symbol; `Bucket` carried only a prose label (*"Bitcoin"*) and no
+   key. The affordance was published, the bound was enforced, and the two had
+   no value in common. `Bucket.key` closes it.
+4. **The design's schemas type every figure as a bare `number`.** Not
+   conceded: ADR-K D-5 already allows the raw figure *beside* the string, so
+   the backend ships both.
+
+### What the next person should know
+
+- **`docs/catalog/CONTRACT.md` did not carry the component name at all.** The
+  snapshot did, the A2UI surface did, the Markdown did not — so the one
+  artefact design actually reads could not be used to check the one string the
+  client registers against. It now prints it in the section *and* the index
+  table, which is what made a four-way comparison possible.
+- **0021 OD-3 is reversed, deliberately, and says so at its own line.** It
+  decided against asserting the six component names because an inventory
+  transcribed from the registry is a copy of the registry. That is right, and
+  it assumed there was nothing outside the backend to compare against. The
+  design catalog is that outside thing, so `test_component_names.py` holds the
+  list as *the other party to the contract*. The failure OD-3 feared — "it
+  breaks when a seventh projection registers" — is now the point: a new
+  component must be named by design before it ships.
+- **Guidance is `None` for three of six views, on purpose.** Their design
+  pages were not exported, so the contract prints *"not guidance this backend
+  may invent"* and the prompt omits the lines. Do not fill them in from
+  imagination; fill them in from a page.
+- **Every digest moved**, because the entry a digest is taken over now carries
+  the component and the guidance. `specs/client/0003` §5 and the two Flutter
+  fixture headers were updated with it. A moved digest is the mechanism
+  working.
+- **Guidance prose lives in `<view>_guidance.py`, not in the view.** Three view
+  modules are at the 150-line budget, and a designer editing what the model is
+  taught should not have to read a projection to find the sentence.
+- **`docs/catalog/design/README.md` is the evidence, and it is why the one
+  hand-written inventory is allowed.** The exported pages are ~900 KB of
+  JS-bundled HTML each and are deliberately *not* committed — that is the
+  binary artefact `.claude/rules/diagrams.md` refuses. What they *declare* is:
+  each page's four name slots, its Zone 3 text verbatim, and every point where
+  design and this backend disagree. A path in `/tmp` would have made
+  `DESIGN_CATALOG` unverifiable the next morning.
+
+### Harness
+
+`.claude/rules/backend/presentation.md` gained two things and no hook or
+command changed. §4 now says plainly that **a drift check cannot tell you the
+generator is wrong** — it proves an artefact is current, never that it is
+right — and §6's checklist tells the next chart author to take the component
+name from design, add it to `DESIGN_CATALOG`, and leave guidance unset when no
+design page exists.
+
+**The gate was blind here in the way this log keeps recording.** Both catalog
+artefacts were re-rendered and diffed, and both were internally consistent with
+a generator that agreed with neither the design nor, in the Markdown's case,
+itself — it simply did not publish the fact. A drift check compares an artefact
+to its own generator; it cannot tell you the generator is wrong. Only a second,
+independent declaration can, which is why the design catalog's six names are
+checked in as a literal and asserted to cover every registered view.
+
+## 2026-09-21 — GGU-55: chart primitives and the attribution waterfall
+
+**Spec:** `specs/frontend/0002-chart-primitives-and-waterfall.md` ·
+**ADR:** ADR-L D-13, D-14, D-15 · **Design:** GGU-42
+
+### Code
+
+A fifth workspace package, `packages/finance_charts`: `LinearScale`,
+`BandScale`, readable tick steps, and `WaterfallLayout.of(steps, width,
+height)`. Pure Dart, so it runs under `dart test` and its output is asserted
+**arithmetically** rather than looked at. `app/lib/charts/` holds the
+`CustomPainter`, the `ChartPalette` theme extension and the measured
+`ChartTokens`; `app/lib/components/attribution_waterfall/` binds
+`attribution.waterfall.v1`.
+
+**No charting library, and the reason is not taste.** `fl_chart` and `graphic`
+were both proposed. Both generate their own axis and tooltip labels by
+formatting the values they are handed — prohibition N-1 broken silently,
+inside a dependency, on the one product invariant this showcase exists to
+demonstrate. A library that ships its own `NumberFormat` cannot be made to
+obey a rule this repository enforces by grepping for `NumberFormat`. What is
+worth having from d3 is its arithmetic, not its renderer, and that is ~350
+lines.
+
+### Harness
+
+Three things changed and each was a gate that was weaker than it read.
+
+- **`ViewPayload` gained exactly one numeric accessor, and the rule that said
+  it never would is now wrong.** `contract-binding.md` said *"exposes no
+  numeric accessor … do not add it back"*. That sentence was right about a
+  `json` getter and too broad about a named reader: the contract keeps a raw
+  `amount` beside every `*Display` string **so a chart can be drawn from it**
+  (N-4 says so in the same file), and the value-to-pixel mapping cannot live
+  on a server that does not know the width the client will be laid out in.
+  `raw_decimal.dart` is allow-listed **by path**, the same shape as
+  `jsonDecode` in the transport, and a second test asserts the exemption set
+  has exactly one member. Mutation-checked: moving `double.tryParse` into
+  `view_payload.dart` turns it red.
+- **`check_coverage.dart` reported success on an empty walk.** Run where
+  `app/` and `packages/` do not exist it printed `coverage ok — 0 lib file(s)
+  accounted for` and exited **0**. Every assertion in it is universally
+  quantified over the files it found, so the empty set satisfied all of them:
+  the gate was green precisely when it was checking nothing. This is the same
+  defect `repo.spelling` had, and it now takes the same fix — a check that
+  cannot report success on an implausibly small input. `frontend/tool/` had no
+  tests at all; `frontend/test/tool/` now covers it and `make test-tool` runs
+  it — including a suite that **spawns the script** and asserts its exit code,
+  because asserting that the walk returned an empty map proves the
+  precondition and not the failure. `check_file_budget.dart` was not scanning
+  `test/` either, so the suite over the gate's scripts would itself have been
+  exempt from the budget.
+
+  **GGU-69 found and fixed the same defect independently**, on `develop`,
+  while this branch was open — two people tripping over one vacuous gate in a
+  week is the strongest argument yet for the anti-vacuity idiom. The merge
+  keeps develop's wording for the guard and adds the tests it did not have.
+- **Goldens compare with a tolerance (ADR-L D-15).** A raster is not portable:
+  the same widget anti-aliases differently on a laptop and on the Linux
+  runner, so a byte-exact golden generated locally is a check that fails on CI
+  for a reason that is not a defect — and the fix everyone reaches for is to
+  stop running it. 0.5 % of pixels may differ. That is safe only because the
+  geometry is proved exactly and separately; the mutation check changes one
+  scale's interval count and watches fourteen geometry assertions **and** all
+  three goldens go red together.
+
+`frontend/0001` OD-1 is **closed**: `docs/catalog/view-catalog.snapshot.json`
+is on `develop` (GGU-53), so component tests read it instead of a checked-in
+copy, and `catalog_contract_test.dart` asserts every registered component's
+view id and A2UI name are ones the backend publishes — the client half of the
+rename that GGU-53 found on the backend.
+
+### What the next person should know
+
+- **The measured palette is not the one that was circulating.** Two of five
+  values passed around informally were wrong: the dark surface is `#15161C`,
+  not `#14151A`, and the dark neutral bar is `#6F7280`, not `#4B4D57`. Read
+  the rendered DOM, do not trust a list.
+- **The router no longer hard-codes a view id, and that is not this branch's
+  doing.** GGU-69 landed on `develop` while this was open and fixed it the
+  better way: the route carries no ids, `PortfolioViewsPage` reads them from
+  the registry, and a registered component is reachable *by construction*.
+  This branch merged that and kept its own half — `catalog_contract_test.dart`,
+  which checks the registry against the backend's published catalog. Two
+  halves of one defect, found from two directions in the same week.
+- Three things the design asks for have no field in the contract: a signed,
+  coloured net pill, the tooltip's price-and-share line, and which annotation
+  is the net. They are OD-2 and OD-3, not omissions.
+
+---
+
+## 2026-09-21 — GGU-63, the payoff curve (`specs/frontend/0005-payoff-chart.md`)
+
+Second chart on the GGU-55 primitives. `PayoffChart` binds `payoff.curve.v1`:
+a profit-and-loss line over a bounded price range, gain and loss shaded, with
+`totals`, `annotations` and `disclosure` rendered verbatim.
+
+**Code:** `packages/finance_charts` gains `PayoffPoint`, `PayoffLayout`,
+`payoffBounds` and `payoffGridLines` (pure Dart, asserted arithmetically);
+`app/lib/charts/` gains `PayoffChart`, `PayoffPainter`, `payoff_ticks.dart`
+and a second `ThemeExtension`, `PayoffPalette`. The component is four files
+under `app/lib/components/payoff_chart/`. No charting package (ADR-L D-13).
+
+**Harness:** nothing changed. No new rule, hook or command.
+
+### What the next person should know
+
+- **A `file://` render of a `.dc.html` design page is inert, and it looks
+  convincing.** The preview tool rewrites the page to a `data:` URL, so the
+  relative `./support.js` never resolves and the data binding never boots.
+  The descriptive prose and the legend row are *static HTML in the page
+  shell*, so a page showing `+$5,880` and `BE −14%` can still be one where
+  nothing bound — the tell is that the chart itself is empty. Serving the
+  directory over HTTP boots it properly, and that needs the sandbox off for
+  that one command (`socket.bind` is denied inside it).
+- **Better still, read the design's own source.** `Catalog_RiskPayoffChart.dc.html`
+  carries its scales as arithmetic in a `<script type="text/x-dc">` block
+  (`scaleX(x) = 44 + (x+30)/60*(486-44)`) and its strokes as literal SVG
+  attributes. Those are exact rather than sampled, and they are what
+  `packages/finance_charts/test/payoff_reference.dart` holds. The HTTP render
+  was then used to *confirm* them: break-even lands 26.5 % across the plot,
+  against the 26.67 % the scales predict.
+- **The payload cannot say where break-even is, and that blocks the design's
+  most distinctive feature.** `totals[]` is `{label, amount}` with no key or
+  discriminator, so the only routes to the marker are matching the string
+  `"Break-even price"` (N-5, and wrong in the `es-AR` and `de-DE` the view
+  offers) or computing the zero crossing — which the ticket's own AC-2
+  forbids. The design's Zone 2 schema has exactly the missing field:
+  `markers: { breakEven, current }`. Shipped shading half-planes at the
+  value-axis zero instead; OD-1 carries the ask.
+- **The value axis cannot be labelled either**, for the same reason one step
+  down: the payload carries a `*.display` per *point*, never per axis tick,
+  so the design's `$0 / +$5k / +$10k` gutter would have to be formatted in
+  the client. Gridlines are drawn unlabelled (OD-8).
+- **The ticket's AC-3 names a field this view does not have.** `positionValue`
+  lives in the agent *tool* row (`backend/src/app/agent/tools/payoff_rows.py`),
+  which the model reads — not in the projection the chart binds. The ticket
+  was written against spec `backend/0014`'s tool output rather than `0016`'s
+  projection (OD-2).
+- **Design and backend describe different products here.** The artboard is an
+  options payoff — NVDA with protective puts, a curve floored at −$2,400, x in
+  percent — while `payoff.curve.v1` is an explicitly linear *spot* payoff over
+  a crypto enum whose own disclosure says "no strike, no expiry, no implied
+  volatility". The layout takes arbitrary points, so a kinked curve would draw
+  correctly; the reference fixture deliberately keeps the design's kinked
+  shape for that reason (OD-3).
+- **Three palette roles did not fit `ChartPalette`.** It is 141 lines and each
+  field costs about eight, so three more would breach the 150-line gate on a
+  file three sibling components were editing the same week. They arrive as a
+  second `ThemeExtension`; the curve, the region tints and the marker halo
+  already match `barTotal`, `barGain`/`barLoss` and `surface` exactly, so
+  nothing is restated. The region tint *is* a token rather than an alpha at
+  the point of use, because the design's opacity differs between the themes
+  (.07 light, .10 dark) and a widget choosing between them would be branching
+  on brightness (OD-6).
+- **`app_theme.dart`'s `extensions:` list was becoming the chain ADR-L D-3
+  forbids, one chart at a time.** The component registry honours D-3 by
+  generation, so nobody looked at the theme: GGU-55 added `ChartTokens` to
+  that list, GGU-63 added `PayoffTokens`, and four catalog components are
+  still to come. `chart_tokens.dart` now owns `chartExtensions(brightness)`
+  and the theme spreads it. The list still exists one layer down — the point
+  is that it now sits beside the colours it is made of, so a new palette is
+  one edit rather than two. If the TL would rather carve theme tokens out of
+  D-3 entirely, **amend D-3**; the silent second instance was the defect, not
+  the extension (OD-9). Caught by `frontend-reviewer`, not by the gate.
+- **`ThemeExtension<dynamic>` compiles under `dart analyze` and fails under
+  the CFE.** `ThemeExtension<T extends ThemeExtension<T>>` is F-bounded, so
+  spreading a `List<ThemeExtension<dynamic>>` into `<ThemeExtension<dynamic>>[]`
+  analyses clean and then fails `flutter test` with *"Can't assign spread
+  elements of type ThemeExtension&lt;dynamic&gt; to collection elements of type
+  ThemeExtension&lt;ThemeExtension&lt;dynamic&gt;&gt;"*. `Object?` in place of
+  `dynamic` on both sides fixes it. Worth knowing because the analyzer being
+  green is normally the whole of `make analyze`.
+- **A golden over a mostly-transparent subject reports a huge diff for a
+  sub-perceptual change.** Deriving the region tints instead of transcribing
+  them moved **41 % (light) and 83 % (dark)** of golden pixels — far past the
+  1.5 % tolerance — because `diffPercent` counts any pixel that differs at
+  all, and the wash covers most of the plot. The chart paints no surface, so
+  those pixels are unpremultiplied at alpha 0.07–0.10, which amplifies a
+  sub-level rounding difference roughly tenfold: raw deltas reach 14/255.
+  Composited over `ChartTokens.surface`, which is what a reader actually
+  sees, the **max channel delta is 2/255**. Goldens were regenerated for an
+  intended change, and the measurement is in the PR rather than the number
+  being waved through. The waterfall goldens do not have this property
+  because their bars are opaque — so the comparator's measured 0.69 % noise
+  floor is an *opaque-subject* figure and does not transfer to a wash.
+## 2026-09-21 — GGU-65, the allocation summary draws
+
+**Spec:** `specs/frontend/0007-allocation-summary.md`. Completes
+`holdings.allocation.v1` / `AllocationSummary`: donut geometry and hit testing
+in `packages/finance_charts`, painter and categorical palette in
+`app/lib/charts/`, and the component split into model/header/legend/row/empty.
+
+What the next person should know:
+
+- **A design for this component exists now** — `.design-refs/Catalog_HoldingsSummary.dc.html`
+  and `.design-refs/Holdings.dc.html`, from Patricio's fourteen-screen export.
+  Nothing under `.design-refs/` is committed.
+- **`file://` renders of those pages are inert, and measuring one is worse than
+  not measuring.** The preview tool rewrites a local page to a `data:` URL, so
+  its relative `./support.js` never loads, nothing binds, and every value stays
+  `{{ … }}`. Inlining the script into a copy does not help — the tool re-serves
+  the original. **Serve the directory over HTTP instead**, which needs the
+  sandbox off for that one command (`socket.bind` is blocked inside it).
+  Measured both ways here: `mustache` 35 → 1 between the two.
+- **The design page and the frozen catalog disagree in six places**, including
+  the component's *name* (`HoldingsSummary` vs `AllocationSummary`) and a
+  per-row day-change the contract has no field for. Spec §3a lists them;
+  `catalog_contract_test.dart` now pins both halves so reconciling them has to
+  be a decision. The backend's `test_component_names.py` holds design's names
+  as a literal, so these two declarations are already meant to agree.
+- **`manifest-check` does not catch a deleted `register`.** Mutation-checked:
+  the generator lists *directories* under `app/lib/components/` and emits a
+  `register` call per directory without checking the function exists, so the
+  manifest stays byte-identical and the gate goes red at **`analyze`** instead.
+  The gate catches it either way; the prose in `frontend/CLAUDE.md` implies the
+  wrong step.
+- **`.abs()` is banned from `app/lib` with no carve-out, and that is load-bearing.**
+  The first draft of the donut's hit test used it, `binding_rules_compute_test.dart`
+  caught it, and the fix was to move the arithmetic into `finance_charts` where
+  it belongs anyway (ADR-L D-13) and write it without the mechanism at all. The
+  rule also greps *prose*: naming a banned mechanism in a doc comment trips it.
+- **Two test files that were not this ticket's were edited, both for real
+  defects.** `app_router_test.dart` built its `MaterialApp.router` with no
+  `theme:`, so it was testing an app unlike the real one; it went unnoticed
+  while every rendered component read `AppSpacing`, which falls back, and the
+  first component to read `ChartPalette` (which deliberately does not) turned
+  it red. `conversation_view_test.dart` had no test for a turn that answers
+  with no surface — GGU-65 AC-2 — only for its complement.
+- **The `frontend-reviewer` agent earned its keep on this one, twice.** It
+  found a real defect the whole suite was structurally unable to catch: the
+  donut's hit test used a monotonic surrogate for the angle and compared it
+  against arc boundaries in **true radians**, which is a category error —
+  monotonicity orders surrogate values against each other, it does not put a
+  surrogate value in the same interval as the true angle. Wrong slice for
+  **3.50 %** of directions on the catalog's own payload, worst error 4.075°,
+  against a smallest slice 8.5° wide. Every existing test used four equal
+  quarters or `[0.5, 0, 0.5]` — layouts whose boundaries all land on an axis,
+  which is the one family where the surrogate is exact. Reproduced
+  independently before fixing. `arctangent.dart` now writes the series out
+  (the `tick_steps.dart` bargain), and the new test holds reference taps
+  computed with `dart:math` 1.5° either side of every real boundary.
+  **The lesson is about the fixture, not the formula:** a test whose inputs
+  are all symmetric cannot see an asymmetric bug.
+- **`.fold<double>(` slipped past `binding_rules_compute_test.dart`**, whose
+  needle was the fixed string `.fold(`. Same near-miss shape as `double.parse`
+  vs `double.tryParse`. Both type-argument spellings are needled now, and the
+  fix is mutation-checked: planting `.fold<double>(` in `app/lib` turns it red.
+## 2026-09-21 — GGU-61: the order ticket, and the round trip that recomputes it
+
+**Spec:** [`specs/frontend/0006-order-ticket.md`](../specs/frontend/0006-order-ticket.md).
+`order.ticket.v1` (component `OrderTicket`) is the catalog's only interactive
+surface, and the only place the product's central claim is either demonstrated
+or quietly broken. An edit changes a **declared option** and re-requests the
+same view; the client computes no figure and reads no raw member.
+
+### What changed in the code
+
+- `app/lib/components/order_ticket/` — the binding, the card, the impact
+  panel, the controls, and `changedFigures`, which decides what to *mark* by
+  comparing display **strings** before and after. No subtraction, no sign: the
+  client still cannot tell which way a figure moved, and does not need to.
+- `app/lib/features/order_ticket/` — bloc, page and view. The bloc owns the
+  option map, debounces (300 ms, trailing, injected so a test drives it), and
+  guards against a superseded response landing after the one that replaced it
+  by comparing the in-flight options map **by identity**.
+- `ViewPayload.strings(path)` — the contract publishes `inputs[].choices` as an
+  array of strings, which `rows()` cannot read because it requires objects. The
+  reader simply had no accessor for it.
+- `/order-ticket` in the router table, and diagram 12 gained the edge that
+  goes with it.
+
+### What changed in the harness
+
+- `binding_rules_test.dart`'s literal-path regex now names `strings` alongside
+  `text`/`optionalText`/`rows`/`geometry`. **An accessor added to the reader
+  and forgotten in that regex is a hole in N-5 exactly the width of the new
+  method** — so the list is now kept in step with the class, and the regex was
+  mutation-checked on its own (a variable path goes red, a literal stays
+  quiet).
+- `frontend/SECURITY.md` gained a threat note: this is the first surface where
+  user-typed input *leaves* the client, and it leaves only as a declared
+  option's value, encoded by `Uri.replace`. There is no client-side validation
+  and that is deliberate (N-8) — a rule beside the server's is a second
+  declaration that drifts, and an editable bundle cannot enforce one anyway.
+
+### What the next person should know
+
+- **The design and the frozen contract are two different components sharing a
+  name, and this is not a detail.** `Catalog_OrderTicket.dc.html` draws a
+  *multi-leg equity* order — NVDA/AVGO/AMD, `legs[]`, `impact.estShares`,
+  `cashRemaining`, `constraints.maxCash` — with an `onSubmit()` and a "Review
+  order" button. `order.ticket.v1` is a *single-leg crypto* ticket whose only
+  figures are `quantity`, `entry_price` and `notional`, with `actions: []` and
+  a disclosure saying nothing is ever placed. The visual language and the three
+  states were adopted; the field inventory was not, because a client cannot
+  invent a payload field (N-3). OD-1 and OD-2 carry it, and GGU-19 owns the
+  resolution. **If the design is what ships, this needs an `order.ticket.v2`.**
+- **Zone 3's prompt fragment tells the client to recompute** — *"let the client
+  recompute impact on edit"* — and the mock does exactly that
+  (`'$' + l.price.toFixed(2)`). A mock computing its own numbers is
+  unremarkable; a **system-prompt fragment** saying so is a defect, because it
+  ships to the model and contradicts the one invariant this showcase exists to
+  demonstrate. OD-3. Raised, not followed.
+- **Rendering a `.dc.html` artboard over `file://` gives you an inert
+  snapshot.** The preview tool rewrites the page to a `data:` URL, so the
+  relative `./support.js` never resolves, the bundle never boots, and Zone 1
+  shows `{{ l.symbol }}` where the figures should be — while the *static*
+  prose in the page header reads perfectly, which is what makes it convincing.
+  Serve the directory over HTTP instead (the sandbox denies `socket.bind`, so
+  that one command needs the sandbox off). Every measured value in spec 0006
+  §6 AC-16 came from the HTTP render; the first set, taken from `file://`,
+  was discarded. **A pixel-perfect claim built on unbound placeholders is
+  indistinguishable from a correct one.**
+- **`ViewComponent.build` has no slot for a callback**, so an interactive
+  surface cannot go through `ComponentHost`. `OrderTicketView` builds its card
+  directly and attaches `onOptionChanged` — and therefore has to repeat what
+  the host does with a `PayloadContractException`. It did not, at first: a
+  contract violation was a red screen until a test caught it. If a third such
+  surface appears, the callback belongs on the seam, as an ADR-L amendment.
+- **A test harness that keys its fixture from the code under test proves
+  nothing.** The bloc suite keyed its envelope with `OrderTicketBloc.viewId`
+  and looked it up with the same constant, so a typo agreed with itself. The
+  envelopes are now keyed from the **catalog snapshot** while the bloc is given
+  the **component's** id — two declarations that must match. The constant is
+  gone: the page passes the component's `viewId`, so N-6's "a literal in one
+  place" holds again.
+## 2026-09-21 — GGU-93, GGU-94: the evidence a PR carries gets a field for what was not run
+
+**Spec:** none. This is a harness change, recorded where the harness is
+recorded: the rule in `.claude/rules/backend/sdd.md`, the CI rule in
+`.claude/rules/ci-conventions.md` §5, and this entry. A
+`specs/backend/NNNN-*.md` would have been the wrong home — nothing here is a
+backend feature, no endpoint or DTO moves, and the decisions belong to the
+process rather than to the product. `sdd.md`'s own decision table says so: *"a
+rule the agent must follow every time"* goes to `.claude/rules/**`, *"what
+changed in an iteration and why"* goes here.
+
+**Test decision:** one new suite, `scripts/tests/test_check_manual_run.sh`,
+registered as `repo.manual-run`. It asserts four rejections and one acceptance,
+because the defect being fixed is *evidence that cannot be distinguished from
+real evidence* — and a check nobody has seen reject reproduces it exactly.
+
+### One defect, seen twice
+
+GGU-93 is the runtime half: a manual run that does not say which build answered.
+GGU-94 is the toolchain half: a gate that cannot run, announcing itself as a
+formatting diff. Both are the same sentence — **the evidence format has no
+field for what was not run**, so an incomplete verification and a complete one
+produce identical-looking PR bodies. Both tickets' AC-5 anticipated being done
+once; they were.
+
+### What already existed, and was not read
+
+`GET /health` has reported `<version>+<short sha>` since spec `backend/0007`
+AC-5 — `APP_RELEASE` → `Settings.app_release` → `core/release.py` →
+`HealthService`. **Nothing needed building.** Two things were wrong around it:
+
+1. `docker-compose.yml` hard-coded `APP_RELEASE: local`, so the local stack —
+   the one a manual run actually uses — could not name its own commit. It now
+   reads `${APP_RELEASE:-local}`, and the documented way up is
+   `APP_RELEASE="$(git rev-parse --short HEAD)" docker compose up --build`.
+2. Nobody read it. The deployed dev service was answering `0.1.0+9a94346`,
+   **26 commits behind `develop`**, while the Flutter client was being built
+   against it — no GGU-53 catalog snapshot, no GGU-78 surface actions, no
+   GGU-90 agent-turn fixes. The identity was on `/health` the whole time.
+
+### The correction worth keeping: ancestry is too weak
+
+GGU-93 AC-3 asked that the reviewer check the manual run's sha is *an ancestor
+of the PR's head*. Implemented literally, that would have **passed the pull
+request that produced the ticket**: PR #69's branch was cut from the stale
+commit, so the stale commit was a perfectly good ancestor. Ancestry proves the
+build is from this line of history; only identity with the head proves it
+contains the change under review. `scripts/check_manual_run.sh` therefore has
+three verdicts — head (pass), ancestor (fail, *"it ran and it did not exercise
+this branch"*), anything else (fail).
+
+### And the reviewer instruction is a script, not a sentence
+
+`.claude/agents/*-reviewer.md` do not ask the agent to compare shas by eye.
+They run one command and quote it. An LLM reviewer *can* run `git merge-base
+--is-ancestor`; what it cannot be relied on to do is remember to. The same
+reasoning that produced `repo.gate-pairs` — three instances of a reviewer being
+asked to be careful — applies here at the first instance, because the first
+instance already cost a retracted bug report and a closed PR.
+
+### GGU-94: the pin had no local reader
+
+`FLUTTER_VERSION: "3.47.5"` lived only in `frontend-ci.yaml`. The floor
+`sdk: ^3.13.0` in `frontend/pubspec.yaml` is not consulted by `dart format`, so
+Homebrew's `dart-sdk 3.12.1` ran the gate happily and reported three tracked
+files as unformatted — 3 changed / exit 65 under 3.12.1, 0 changed / exit 0
+under the pin, on the same commit. The version now lives in
+`frontend/.fvmrc`, read by `frontend/tool/check_toolchain.sh` and by
+every SDK-setup step in the workflow, and `frontend.toolchain` is the **first**
+entry of the frontend gate.
+
+`.fvmrc` over `.fvmrc`: plain text that `cat` and the CI action both
+read, with no implied claim that fvm is the supported install path.
+
+### What the next person should know
+
+- **`flutter --version` crashes in an agent sandbox** and `dart --version` from
+  the same `bin/` does not. The cause is the tool's telemetry writer failing to
+  delete `~/.dart-tool/dart-flutter-telemetry.log`, inside flutter's own error
+  handler — a secondary crash that hides whatever the first failure was. The
+  preflight uses `flutter --version --machine --suppress-analytics`, which also
+  returns `dartSdkVersion` and `flutterRoot` as JSON. A preflight that crashes
+  is worse than no preflight.
+- **macOS `mktemp -d` with no template ignores `TMPDIR`** and uses the confstr
+  directory, which is outside the agent sandbox's write set. Same command, two
+  behaviours, red only on a laptop. Always pass a template.
+- **`repo.manual-run` needs history.** Its fixtures are `HEAD` and `HEAD~2`, so
+  its `repo-ci` job checks out with `fetch-depth: 0` and the suite says so
+  rather than failing obscurely on a shallow clone.
+- **Agent worktrees keep leaking machine state into a public repository.**
+  `.gitignore` now covers `.claude/launch.json` (commit `5f6e09c` shipped one
+  naming a path on one laptop) and `.design-refs/` (the design bundles only
+  render from inside the project folder).
+- **Making agent worktrees track `develop` automatically is still not done**,
+  deliberately — GGU-93 puts it out of scope. It is the better *preventive*
+  fix and it is a different ticket: this one is about evidence being
+  **checkable**, not about the mistake being impossible. A process that only
+  works when nobody is behind is the thing being replaced.
+
+### The review round, which found the same defect inside the fix
+
+Both reviewer agents flagged the same blocker, and they were right: **the first
+version of this change added a second pin file.** `frontend/.fvmrc` was already
+tracked, already contained `{"flutter": "3.47.5"}`, and was already cited as the
+pin by `frontend/README.md` and `docs/DEV_HARNESS.md`. The branch added
+`frontend/.flutter-version` beside it and then asserted, in nine places, that
+the version lived in one home and nowhere else. Two machine-readable pins free
+to drift is precisely the defect GGU-94 exists to remove, recreated one file
+over, by the change that removes it.
+
+`.fvmrc` is now the single home and `.flutter-version` is gone. The lesson is
+not "look harder": it is that the claim was **prose**, so nothing could check
+it. `scripts/check_gate_pairs.sh` now also asserts that no workflow sets
+`FLUTTER_VERSION` and that no second tracked pin file exists — §5's third
+question, machine-checked like the first.
+
+Four more findings worth recording, because each was a case of the new
+mechanism failing its own standard:
+
+- **The documented bring-up produced a value the checker rejected.**
+  `core/release.py::resolve_release` returns `APP_RELEASE` **verbatim** — the
+  `<version>+<sha>` shape is composed by `infra/scripts/deploy_cloud_run.sh`,
+  not by the app. So `APP_RELEASE="$(git rev-parse --short HEAD)"` gave
+  `"version":"5b942f1"`, with no `+`, and the check read no identity at all. A
+  developer following `CLAUDE.md` verbatim would have failed the check they
+  were told to pass. The documented command is now `local+$(…)`, and the suite
+  has a case pinning the bare-sha failure so the docs cannot drift back.
+- **The check contradicted the rule it enforces.** `sdd.md` says a deployed run
+  that is behind is pasted "as well, never instead"; the script looped over
+  every identity and failed the body for the context one. It now asks whether
+  **any** identity is the head, and prints the rest as context.
+- **The identity parse matched any `+<hex>` in the body**, so a line like
+  `v1.2.3+abc1234` sank a good pull request. It is scoped to the `"version"`
+  field of a `/health` payload.
+- **Nothing ran the check against a real PR body.** `repo-ci` now does, on
+  every pull request, pointed at `github.event.pull_request.head.sha` — a PR
+  checkout's `HEAD` is the ephemeral merge commit, which is not what the manual
+  run was served by. A body with **no** identity exits 3 and is reported rather
+  than failed: `sdd.md` explicitly allows a declared, reasoned "not run", and
+  no grep can tell that from an omission. That one judgement stays with the
+  reviewer; everything a machine can decide is decided by one.
+
+And the preflight got the suite it should have shipped with
+(`frontend/tool/tests/test_check_toolchain.sh`, `frontend.toolchain-test`). It
+stubs `flutter` and `dart` on `PATH`, so it runs in a second on a machine with
+no Flutter at all — which matters because it is the **first** step of the
+frontend gate, so a false failure blocks everything behind it, and because on a
+runner it can never be seen rejecting: CI always installs the pin.
+
+## 2026-09-21 — GGU-110 · the Home tab, tal cual, and the portfolio behind it
+
+`feat/GGU-110_equities`. Backend spec `backend/0025` (the equities portfolio,
+17 tickers, four classes, six sectors, previous closes solved so the design's
+six day-change figures all hold) and `backend/0026` (the Home shell:
+`portfolio.summary.v1`, and `group_by` · day change · centre count · all-time
+gain on `holdings.allocation.v1`). Frontend: `HomeTokens` (29 measured
+colours, light and dark), the sparkline primitive, the four-tab shell, the
+Home page and its bloc, the Activity placeholder, and the allocation component
+extended for the class grouping (ring ramp, centre label, stacked bar, day
+change per row). Both gates green: backend 1477 tests · 100 % branch; frontend
+507 tests · 100 % line over 156 files.
+
+What the run taught:
+
+- **A degenerate example is a gate that cannot fail.** The first equities seed
+  gave NVDA two lots at one cost, so every lot method consumed the same figure
+  and `scenario.comparison.v1` published a `$0.00` spread with no ends named —
+  the component's whole point, absent from its own example, and the frontend
+  tests that assert "names both ends" would have had to be *weakened* to pass.
+  The seed now carries two costs (OD-9), balanced so no design figure moves.
+- **Two numbers in two places are one number nowhere.** `Symbol` was declared
+  in `order_sizing` and `payoff_order`; pylint's duplicate-code check caught
+  it, and the fix was the domain's `symbols.py` owning it. The same shape hid
+  twice more as `16`: `MAX_CHOICES` in `presentation/tickets.py` and in
+  `actions/declared.py`, each sized to the crypto reference by coincidence.
+- **Overwriting a module you did not read.** `domain/symbols.py` already
+  existed; a `Write` replaced it and twenty-three imports went red. Restored
+  from `HEAD`, extended instead. Read before write, even for a "new" file.
+- **A red gate is not red for your reason (again).** The frontend gate's 65
+  failures were four defects: stale crypto literals across six component
+  suites, `No Material` under an `InkWell` (now a `GestureDetector`), rows
+  that overflow at phone width (now `Text.rich` and `Flexible`), and a test
+  fixture whose root route moved. The catalog snapshot was regenerated
+  **three** times before the literals were final — copy them last.
+
+## 2026-09-21 — GGU-115 · sign-in is invite-only, and the app has a door
+
+`feat/GGU-115_sign_in`. Backend spec `backend/0027`: a `users` registry
+(migration `0006`), `GET /v1/me/access`, admin routes to invite / approve /
+revoke, a public `POST /v1/access-requests`, and — for a stack with no
+Firebase — `POST /v1/preview-sign-ins`, which mints the HS256 development
+token for a **provisioned** e-mail and answers 404 under `oidc`. The first
+admins come from `AUTH_BOOTSTRAP_ADMINS` at boot. ADR-B gains D-13.
+Frontend spec `frontend/0008`: `packages/finance_auth` (session, the
+`IdentityProvider` seam, `AccessGateway`, `AuthRepository`), the Firebase
+adapter confined to `app/lib/auth/`, `AuthGate` as the router's one
+`redirect`, `Login.dc.html` at the design's tokens in both themes with its
+three states, the request-access sheet, sign-out from the Home avatar, and
+`FinanceApiClient.postJson` plus the 401 hook. `SECURITY.md` G-1 and G-3
+close; G-2 narrows. Firebase project `finance-a2ui`: `localhost` authorized,
+e-mail-link sign-in enabled; Google needs the console's OAuth client (OD-8).
+
+What the run taught:
+
+- **A `Write` on a name you have not read is a delete.** `domain/symbols.py`
+  existed; writing a new module under that name took twenty-three imports
+  with it. Restored from `HEAD`. The rule was already in the log; it is now
+  the first thing to check before a new file.
+- **`git status` is not `git show`.** Two `16`s — `MAX_CHOICES` in
+  `presentation/tickets.py` and in `actions/declared.py` — were both sized
+  to the crypto reference by coincidence and both failed the moment the
+  reference grew to 17. A bound that happens to equal a data set's size is a
+  latent assertion about the data set; both now say so in a comment.
+- **A `Spacer` in a scroll view is three layouts, not one.** `IntrinsicHeight`
+  overflowed by the height of a wrapped line; `SliverFillRemaining` did the
+  same for the same reason (intrinsics measure at a different width). What
+  works is a `Column` with `minHeight: viewport` and `spaceBetween` — no
+  flex child, no intrinsic pass. Written down so the next screen with a
+  footer does not rediscover it.
+- **Mocktail returns `null` for an unstubbed non-nullable.** The composition
+  root test crashed with a bare `_TypeError` inside `SignInPage` because
+  `isSignInWithEmailLink` was not stubbed. When a widget test throws a
+  `_TypeError` with a mock in the tree, stub the boolean first.
+- **The seam had to be split for the plugin.** `firebase_auth` is Flutter, so
+  the adapter cannot live in `packages/`; the interface can. A test now pins
+  the three files allowed to import the SDK, which is the only thing keeping
+  a feature from calling Firebase directly.
+
+## 2026-09-21 — the Holdings and Activity tabs, over two new projections
+
+`feat/holdings_and_activity_tabs`. Backend spec `backend/0028`:
+`holdings.positions.v1` (`PositionList`) and `activity.timeline.v1`
+(`ActivityTimeline`), two ledger kinds (`dividend`, `deposit`) and a `memo`
+column (migration `0007`), `realized_of` reading a past sale's result from
+the ledger, and month/weekday vocabularies in `core/calendar_words`. Frontend
+spec `frontend/0009`: `Holdings.dc.html` and `Activity.dc.html` at the
+design's tokens in both themes — the expanded allocation card with its
+class/sector toggle, the segmented list switch, position tiles with the
+day-move accent and the `Ask the assistant` hand-off that opens `/ask?ask=`,
+the filter chips and the dated timeline. The catalog index moved to
+`/catalog` behind the `Catalog` chip. No ticket number: Jira's highest is
+GGU-109 and 0025 §6 already recorded that GGU-110..116 were invented, so
+this branch carries a description instead of a number.
+
+What the run taught:
+
+- **A worktree with 3,400 uncommitted lines is a claim, not a state.** The
+  previous session left the whole feature written and never ran its tests:
+  fifteen failed on first contact, the backend was over budget by one line,
+  over complexity in two blocks and under docstring coverage. None of that
+  was visible in `git status`. The first act on inherited work is the gate,
+  before reading a line of it.
+- **`text(path) == 'true'` is a contract lie.** `is_cash` is a boolean and
+  `ViewPayload.text` refuses non-strings, so every position tile threw
+  `PayloadContractException` at build. The fix is a `flag()` accessor in the
+  package (0009 OD-8), not a backend that spells booleans as words.
+- **A `Border` with one coloured side cannot take a radius.** Flutter asserts
+  in paint; the design's left accent is a 4px strip inside the clipped card
+  (a `Stack`, not a `Row` with `stretch` — that one asserts in layout when
+  the height is unbounded).
+- **The test font is square.** `+$1,738 realized` is 176 px in the test
+  renderer and ~90 px in Roboto, which is enough to overflow a caption row
+  that never overflows on a phone. The caption and its badge became one
+  `Text.rich` that ellipsizes (0009 OD-9): faithful to the design *and* a
+  layout that cannot overflow.
+- **`dart fix` turns `'\$'` into `r'\$'`.** Escaping a dollar and then
+  letting `use_raw_strings` run left a literal backslash inside every
+  expected string. Raw first, or escaped — never both.
+- **A missing view in a stub is a `pumpAndSettle` timeout.** The router
+  tests' envelope carried the Home views only; a tab whose payload never
+  arrives spins forever, and the failure names the timeout, not the view.
+  `homeViews()` now carries what every tab mounts, and says why.
+- **xenon's module rank is an average.** `domain/activity.py` had one
+  function; making it four small ones was the only way to an `A`.
+- **Coverage steers loop shape.** `if remaining <= ZERO: break` at the top
+  of the loop was a branch no test reached; at the bottom, both arms are
+  covered by the tests that already existed. Same behaviour, one more line
+  of evidence.
+
+## 2026-09-22 — the Assistant, as Flow A, B and C frame it
+
+`feat/assistant_as_designed`. Frontend spec `frontend/0011`: the Assistant
+tab rebuilt to the measured artboards — header with the model pill and the
+`Simulated` badge, indigo bubbles on the right, the `Assistant` label with
+streaming dots, the composition skeleton while a surface is fetched, the
+follow-up chip row, the rounded composer with mic and send — light and dark
+(`AssistantTokens`). Backend spec `backend/0029`: the terminal `message`
+event carries `suggestions` (curated keys with labels, minus the one just
+asked), and `SHIPPED_ENABLED` flips on, so the waterfall declares its drill
+and both taps run: a chip sends `ask.suggested.v1`, a bar sends
+`drill.attribution.v1`, each as a `data` part the backend composes into a
+prompt (0022 §3.1). `SurfaceActions` is an `InheritedWidget` the
+conversation page provides; the `ViewComponent` seam did not change.
+
+What the run taught:
+
+- **A type's home is decided by who may import it.** `SurfaceActionRequest`
+  first lived in `finance_api_client`, and `layering_test` failed twice: a
+  bloc and a component had imported the transport. It moved to the
+  repository layer and the client takes an id and scalars. The test knew the
+  rule better than the author did.
+- **The label with dots must exist before the agent has said anything.** The
+  first pass drew it only above an agent entry, so the running state showed
+  a bare question and nothing composing — exactly what the L2 artboard says
+  not to do. The transcript now appends the label as a row of its own while
+  the last entry is the user's.
+- **A widened mock signature is a silent mismatch.** Adding `action` to
+  `startTurn` made every `when(() => agent.startTurn(text: …))` stub stop
+  matching, because the real call now passes `action: null` too. Every stub
+  and `verify` gained `action: any(named: 'action')` in one patch; a
+  harness that names the arguments once would have needed one edit.
+- **A `Future.delayed(days: 1)` is a pending timer at teardown.** The
+  "fetch that never answers" is a `Completer`, and the test completes it at
+  the end so it also proves the skeleton yields to the surface.
+- **The design's bold figure inside the sentence is not ours to make.**
+  Emphasising `+$3,240 (+0.68%)` inside prose means finding a figure in text
+  and re-styling it — N-1 to N-4 in one move (0011 OD-1). The answer renders
+  as written; the backend can send an emphasised part if design insists.
+- **`curl` never preflights.** The Assistant said *the agent could not be
+  reached* in every browser while the same `POST /` answered 200 from the
+  terminal and from the manual run. The A2UI client sends
+  `X-A2A-Extensions` on every turn; CORS's allow-list did not name it, so the
+  browser's `OPTIONS /` was *400 Disallowed CORS headers* and the POST never
+  left. A manual run made of `curl` cannot see a CORS defect: the one test
+  that can is a preflight with exactly the headers the client sends, and
+  `test_cors_a2a.py` is that test. The browser pane found it in a minute.
+
+## 2026-09-22 — details the review of the running app found
+
+`fix/details_the_review_found`, specs `backend/0030` and `frontend/0012`. The
+Home greeting names the signed-in person — the registry's display name,
+else the e-mail's local part raised — through `Portfolio.owner`, set by the
+view service from an `OwnerResolver` the composition root binds to the user
+service; the persona stays the fallback. The Home question rail gained the
+way back: a fading left edge and a mirrored arrow.
+
+What the run taught:
+
+- **A test that names the fake at the wrong seam fails the neighbour.**
+  Overriding `get_user_service` for every unit-test app let the view routes
+  run without a database — and broke the access route's test that asserts
+  the *real* service reaches for one. The owner lookup became its own
+  dependency, `get_owner_resolver`, and the override moved there.
+- **A default is an oracle's premise.** Moving the payoff's default symbol to
+  the design's NVDA turned nine hand-verified payoff literals red, then nine
+  frontend payoff tests through the regenerated catalog. Regenerating an
+  oracle from the code it tests is the one thing an oracle must never be, so
+  the default stays `VOO` and the spec says why: the agent names the symbol.
+- **The report was the viewport, not the app.** The tab bar and the sign-in
+  footer "missing" at 440×956 were under Chrome's docked DevTools; in a
+  viewport that fits the device they are where the artboards put them.
+  Recorded in 0012 so the next reviewer checks the frame before filing.
+
+## 2026-09-22 — the simulated assistant, offline
+
+`feat/offline_demo_agent`, spec `backend/0033`. Every local stack runs without
+`GEMINI_API_KEY`, and the Assistant tab showed one sentence — *running without
+a model provider* — over tools that were all deterministic already. The
+factory now selects `ScriptedModelClient`: a table from the design's three
+questions, the four curated chips and the drill (keys composed by the actions'
+own `compose`) to the tool calls each runs and a server-written sentence whose
+holes are filled only by strings the tools returned. Anything else still gets
+the honest sentence; a real key switches the script off entirely.
+
+What the run taught:
+
+- **A model that cannot invent is a table.** The two things a model adds to
+  a scripted flow — choosing the call, phrasing the sentence — were written
+  down, and the numbers invariant became structural: a hole is filled by a
+  string leaf of a tool result or the whole sentence is replaced. `fill`
+  refuses an integer, a list and an absent path alike, so a `tool-failed` or a
+  `position-too-small` cannot leave a bracket or a guess in the answer.
+- **The seed already says the design's sentence.** Flow A over the seeded
+  portfolio is *up +$3,240.18 (0.68%) today* — the artboard's own figure
+  (spec 0025 §2) — so the one literal oracle in the suite is design's, not a
+  regeneration from the code it tests.
+- **Script what exists; write down what does not.** Flow B's comparison card
+  and Flow C's multi-leg ticket have no tool aiming at them, so the script
+  draws one tax-lot table and one payoff leg with no surface, and the spec
+  carries an *extended when* table instead of a render intent nobody
+  produced (0033 OD-5). The drill first re-ran the waterfall for one
+  symbol; once `driver_detail` landed (GGU-100, same integration) the entry
+  calls it and the card a tapped bar opens is the day's, as the design draws.
+  Flow C likewise: one `payoff` leg with no surface until `draft_order`
+  (GGU-108) existed, then the design's three-leg ticket with the legs the tool
+  composed — the *extended when* table shrank to Flow B's comparison card.
+- **A registry filled by import is empty until someone imports.** Pointing the
+  drill at `driver_detail` made every scripted turn fall back to the default
+  view when the two suites ran alone — `make_resolver` built a `ViewService`
+  over `REGISTRY` and nothing in that import chain loaded
+  `app.presentation.views`, so the whole suite was green only because an
+  earlier test module had. The double now imports `LOADED` the way
+  `api/deps/views.py` does, and asserts it is non-empty. A test that passes
+  in the suite and fails alone is order-dependent, not passing.
+- **Two declarations of a key, compared.** The chip keys are held against
+  `DECLARED_KEYS`, the drill keys against `MARKET_REFERENCE`, every tool name
+  against the discovered registry, and every table row runs as a whole turn
+  through `AgentService` with the real tools and the real projection registry
+  — the day a tool or a prompt is renamed, the gate says so before a demo does.
+## 2026-09-21 — both themes, from inside the app
+
+`feat/theme_mode_selector`, spec `frontend/0010`. Every artboard is drawn
+twice and every token file already carried both palettes; only the device
+could pick. `ThemeModeController` (a `ValueNotifier<ThemeMode>`) and
+`ThemeModeScope` (an `InheritedNotifier`) now sit in `FinanceApp`, with a
+toggle in the sign-in screen's corner and an `Appearance · System | Light |
+Dark` row in the avatar's session sheet. Not persisted yet (OD-3): there is
+no per-device storage seam and one preference is not the reason to add one.
+
+What the run taught:
+
+- **A scope beats a provider when the reader is outside the shell.** The
+  sign-in page and the sheet are their own routes; an `InheritedNotifier`
+  reaches both from the root, and `maybeOf` lets a widget pumped alone draw
+  nothing rather than throw `ProviderNotFoundException` in fifty tests.
+- **The lint knows `ValueNotifier` already has a setter.** A `select(mode)`
+  method was flagged (`use_setters_to_change_properties`) and a
+  `super.value` parameter cannot match `ValueNotifier`'s private `_value`;
+  the answer was less code — no method, no initial parameter, `..value =` at
+  the call site.
+- **A fresh worktree analyzes nothing until `pub get` runs.** Two hundred
+  "package resolution" warnings and every import an error is not a broken
+  branch; it is a missing `.dart_tool`. The gate's `toolchain` step does not
+  catch this because the SDK is right; the first real step does.
+## 2026-09-22 — GGU-100: the waterfall's headline, and the card a tapped bar opens
+
+`feat/driver_detail`, specs `backend/0032` and `frontend/0014`.
+`attribution.waterfall.v1` gained `net` (a signed `Delta` fragment with its
+percentage and direction — the pill) and per-step `move` · `units` · `price`
+pairs with the written `detail` and `selected_label` lines. A new projection,
+`attribution.driver.v1` / `DriverDetail`, renders Flow A's D2 card from one
+domain function, `driver_detail`, and a new agent tool `driver_detail(symbol)`
+narrates from the same result and asks for the card — so the drill a bar
+sends now ends in a component instead of prose. The client binds all of it:
+pill, selected caption, dashed outline, detail line, and the new
+`attribution_driver/` component, wired through the regenerated manifest.
+
+What the run taught:
+
+- **A drift check cannot tell you the seed disagrees with the gallery.** The
+  design says NVDA contributed `+$2,980`, `92%` of a `+$3,240` day; the seed
+  says `+$4,370.40`, `134.88%` — because VOO detracted `-$2,295`. Both the
+  hero and the card read the same `day_change`, so the day total is the
+  design's to the cent and the share is not. The component test asserts the
+  design's `+$48.60` is **absent**, so nobody "corrects" it on the client.
+- **Half-even rounding is a literal in a test, or it is a surprise.**
+  `0.45725` prints `+45.72%`; the first oracle said `.73`. The test now
+  writes the raw value beside the display so the rule is visible.
+- **The agent layer imports core and domain only**, so the arithmetic the
+  tool and the projection share had to live in `domain/driver.py`, with the
+  caption *words* in presentation and `standing`/`rank` crossing the seam.
+  The boundary test is what decided the module's home.
+- **A third copy of the signed pair would have failed pylint's duplication
+  gate.** The helpers moved to `displays.py`; `summary_figures` delegates.
+- **A role the palette does not have is a parameter, not a new palette
+  field.** `ChartPalette` is at the budget; the chart takes `selectionColor`
+  and the card's own tokens file pins it to `barTotal` and
+  `HomeTokens.segmentSelected`.
+- **The rate limit dropped the harness's read state, not the files.** After
+  the interruption every `Edit` was refused until the file was `Read` again
+  in full; `git status` was the only thing that needed checking.
+## 2026-09-22 — GGU-108 `order.ticket.v2`, the multi-leg draft order
+
+`feat/GGU-108_order_ticket_v2`, specs `backend/0031` and `frontend/0013`.
+The design's `OrderTicket` — three legs with a stepper each, a live *Order
+impact* panel, an over-cash blocked state — as a second projection beside an
+untouched `order.ticket.v1`; the `draft_order` tool that turns *"put about
+$10k into semiconductors"* into the legs the design draws; and the Flutter
+component, pixel-measured from the catalog page in both themes, re-fetching
+through v1's bloc. Post-demo on the ticket, pulled forward by the product
+owner once spec 0025's equities seed made sector weights computable.
+
+What the run taught:
+
+- **A stepper is the numbers rule at its sharpest.** `+` cannot add one to
+  `3` on this client, so each rendered leg carries the whole `legs` option
+  value its two taps send, written by the backend from the same parser and
+  bound the options model enforces. The test that closes it feeds every
+  published stepper value back through `validated_options`.
+- **The interactivity declaration decided the payload's names.** The
+  registry-wide `test_declared_interactivity` matches options to payload
+  fields by name at any depth and round-trips the field's value through the
+  option. A `legs[]` list under an option called `legs` fails that round
+  trip, so the echo is `legs` (a string) and the rendered legs are
+  `lines[]` — the same split v1 made between `size` and `quantity`.
+- **The design's name went to the wrong version, on purpose.** Spec 0023's
+  rule gives `OrderTicket` to the multi-leg ticket, and the ticket forbids
+  moving v1 by a byte. v2 is `MultiLegOrderTicket`, the README table says
+  why, and the re-pointing is filed rather than done in passing.
+- **The 512-character tool description and the 400-character guidance
+  sentence are bounds a first draft hits.** Both failed at import, which is
+  the right time.
+- **`sum(generator, ZERO)` is the codebase's idiom and basedpyright accepts
+  it**; the IDE's pyright reports `int | Decimal` for the same line. The gate
+  is basedpyright strict and it is green.
+- **`Semantics(label:)` without `container: true` merges into its ancestor's
+  node**, so a stepper's count labelled `NVDA shares` was findable by nothing.
+  Every labelled control is its own node with `excludeSemantics`, which is
+  also what a screen reader should hear.
+- **A stretched `Row` inside a minimum-size `Column` has no height to
+  stretch to.** The leg's 3 px rail needed `IntrinsicHeight`; the test font is
+  also wide enough that a caption row overflowed at 390 until its note could
+  ellipsise.
+## 2026-09-22 — the component catalog, as the gallery pages frame it
+
+`feat/catalog_gallery`, specs `frontend/0016` and `backend/0034`. `/catalog`
+is the gallery index — top bar, header, token legend, one live card per view
+the backend serves and this build renders — and `/catalog/<view-id>` is a
+detail page with the three zones the artboards draw: the example and the
+states a payload can produce, the served field inventory, the prompt
+fragment verbatim, and the Do / Don't pair or the sentence that says there
+is none. `GET /v1/views` now carries `fields` and `prompt` so both zones bind
+rather than transcribe.
+
+What the run taught:
+
+- **A drift check cannot tell you the gallery is transcribing.** The design
+  pages hand-write a `props` schema (`weightPct`, `onSliceTap`) and a title
+  per card that the backend never serves. Drawing them would have been a
+  second declaration of the contract with a green gate — the defect 0023
+  found once already. Every word on a card is now a served field or named
+  chrome, and the zone that would have been a copy prints the inventory.
+- **A rendering does not belong in a frozen digest.** Adding `fields` and
+  `prompt` to `catalog_entry` moved all nine `v1` digests on the first
+  regeneration, for a change nothing a client binds had undergone.
+  `DERIVED_KEYS` drops them before hashing; `CONTRACT.md` came back
+  byte-identical.
+- **An extension method cannot be mocked.** `fetchCatalog` was going to be
+  an extension on `ViewsRepository` to spare the budget; mocktail resolves
+  an extension statically, so every page test would have hit the real body
+  on a `Mock`. It is a method, and the cache key moved out instead.
+- **The design's pairs assume mock components.** Zone 1 draws its secondary
+  states side by side at ~290 px; the real tax-lot table overflowed by 30 px
+  there in the first run. A live card now takes the full column and only the
+  skeleton and absent notes pair (0016 OD-5) — the artboard's rhythm kept
+  where it can be, the component's width where it must be.
+- **A state you cannot produce is a sentence, not a payload.** Over-cash
+  validation, hold-vs-sell comparison, an empty lot table and a 2-scenario
+  variant are all drawn on the pages and none can come out of the contract;
+  each card says why and names its GGU gap rather than inventing the data.
+- **Flutter cannot round a non-uniform border.** The prompt panel's 3 px left
+  accent plus `borderRadius` threw in paint; it is a strip inside the clip.
+## 2026-09-22 — loading states: the page arrives in its own shape
+
+`feat/first_run_states`, spec `frontend/0015`. Home before its first payload
+is `HomeFirstRun` — the page as shimmer, block for block — instead of a
+spinner; a range change keeps the total and shimmers the change and the
+sparkline (the artboard's `L2 · First-run hero`); and a surface being composed,
+in the transcript and on its gallery page, is drawn by **its own component's
+skeleton** through the same registry the payload will resolve through —
+`ViewComponent.skeleton()`, defaulting to the Assistant's generic surface, and
+`ComponentSkeletonHost` beside `ComponentHost`. Three components draw the
+skeleton their catalog page draws: the holdings ring with its hole and
+`get_holdings()…`, the payoff gridlines with the dashed line and `payoff()…`,
+the scenario table's columns.
+
+What the run taught:
+
+- **This work was done once already and lost.** A worktree under `/tmp` was
+  wiped with a session's scratch, taking an uncommitted branch with it. The
+  redo is smaller than the original — the gallery's `SurfaceSkeleton` and its
+  tokens had landed meanwhile — but the lesson is the plain one: a branch
+  that exists only in a worktree under a temp directory is not a branch.
+  Worktrees now live beside the repository, and work is pushed at the end of
+  every session.
+- **A repeating animation never settles, and neither does a suite that
+  `pumpAndSettle`s over it.** Every primitive reads
+  `MediaQuery.disableAnimations` and rests — the accessibility behaviour the
+  design owes anyway — and its tests `pump` a duration and assert the motion
+  (a quarter sweep, a breath, a quarter turn), never settle. The page suites
+  that settle do so after the payload replaces the skeleton, which is the
+  product's own sequence.
+- **`find.byType(FadeTransition)` finds the shell's fades too.** The pulse
+  and the ring are asserted as descendants of their own widget; a bare type
+  finder over a `MaterialApp` is "too many elements" waiting to happen.
+- **`.last` binds to the wrong finder when it is written inside
+  `matching:`.** `find.descendant(of: …, matching: find.byType(X).last)`
+  takes the last `X` in the whole tree and then asks whether it is a
+  descendant; the answer is usually no element. The `.last` goes on the
+  descendant finder.
+- **The artboard's caption names the range in the backend's words.**
+  `Loading last 30 days…` is `change.period`, which has not arrived when the
+  caption is on screen; the client says `Loading…` and nothing it made up
+  (N-9). The tool names on the catalog skeletons are chrome the way
+  `Composing UI…` is.
+
+## 2026-09-22 — Firebase sign-in on dev, the joins nobody had made
+
+`feat/firebase_sign_in_on_dev`, spec `infra/0002`. The provider, the adapter,
+the registry and the secret all existed; the service had no bootstrap admin,
+the model key was declared and mounted nowhere, CORS named a port no deployed
+browser uses, and Hosting served the other app.
+
+What the run taught:
+
+- **A secret with a version and no mount is a green checkbox that does
+  nothing.** `finance-a2ui-dev-gemini-api-key` has had a version since
+  2026-09-20; `run.tf` never listed it. Diagram 08 drew it in Secret Manager
+  and the dashed accessor edge — true — and nothing drew the mount, so the
+  picture matched a deployment where the assistant could never use it. When
+  a secret is declared, the diagram should say which service reads it.
+- **`gcloud run services describe … --format="yaml(…env)"` with the values
+  grepped out is the honest way to audit a service's configuration**: names
+  only, no secret material in the transcript.
+- **The public key is public and still stays out of git**, because the
+  secret scanner cannot read the ADR that says so (0002 OD-3).
+## 2026-09-22 — the OpenAPI document, audited against the routes
+
+`docs/openapi_complete`, spec `backend/0038`. `/openapi.json` is what both
+Flutter clients are written against, and nothing re-derived it. A check that
+reads each route's **dependency tree** and compares it with what the route's
+`responses=` claims found **51 findings over 23 operations** on `develop`: no
+`securitySchemes` at all (so `/docs` had no *Authorize* button and a generated
+client sent no token on any of the 18 authenticated routes), eight bodies with
+no 413, two rate-limit-**exempt** probes documenting a 429, five operations
+carrying FastAPI's 422 with nothing to validate, a 400 nothing in this service
+raises, and the A2A body and 200 with examples and no schemas. All 51 are
+fixed in the routers; the check is `make openapi-check`, `py.openapi`, a
+backend-ci step and a pre-commit hook, from one command string.
+
+What the run taught:
+
+- **A rule and its subject are different questions, again.** The old
+  `test_openapi_contract.py` asserted the document against a hand-written
+  `PUBLIC` list — a second copy of the controllers, written by the same person
+  in the same sitting. It could never have found the 429 on `/health`, because
+  whoever wrote the list also wrote the 429. The second source has to be the
+  *machine's* view of the route, which is why `route_facts` walks the dependant
+  tree FastAPI itself resolves and `answerable_statuses()` reads the `AppError`
+  hierarchy instead of listing statuses.
+- **A closure hides the thing you later need to read.** `require_feature`
+  returned an inner function, so nothing could ask which flag guarded a route.
+  The same dependency as a small callable object (`FeatureGate`) costs nothing
+  and makes the flag readable — by the audit, and by the generated endpoint
+  table. One test had to stop assuming every dependency has a `__name__`.
+- **`model=` and the media type you actually answer are not the same place.**
+  `problem_responses(...)` passes `model=ProblemDetails`, and FastAPI attaches
+  that schema to *its* default `application/json` — so every error advertised
+  two shapes, one with the schema and no example and one with the example and
+  no schema, and the service only ever sends the second. Found while fixing
+  something else, then given its own rule so it cannot come back.
+- **The hand-written route list in `backend/README.md` was seven operations
+  short.** It is generated now (`backend/docs/ENDPOINTS.md`), the same answer
+  0019 gave for the catalog contract. A list of routes is a copy of the router.
+- **Fixing the document is not the same as fixing the service.** Nothing here
+  changes a behaviour; the one runtime edit is a closure rewritten as an object.
+  Every other change is the document being made to say what was already true.
+
+## 2026-09-22 — the migrate job had been running an old image all along
+
+`fix/the_migrate_job_runs_the_released_image`, spec `infra/0003`. A deploy to
+dev failed with `Can't locate revision identified by '0007'` — a message that
+reads like a broken Alembic chain and was a stale container image: the Cloud
+Run *job* kept the image it was created with while the service moved on, and
+`gcloud run jobs execute` runs whatever the job carries.
+
+What the run taught:
+
+- **An `ignore_changes` is a claim that something else owns the field.**
+  Terraform ignored the job's image so the pipeline could set it; the pipeline
+  never did. Nobody owned it and both files looked correct in isolation — the
+  same shape as the gate-pair defects in `ci-conventions.md` §5, one level out
+  from the repository.
+- **A comment that asserts behaviour is a test that never runs.** The script
+  said "the job runs on the image being released" and the suite had 44
+  assertions, none of them about the migrate step. The sentence had been false
+  since the second deploy.
+- **A second mechanism hid the first.** `RUN_MIGRATIONS=true` on the service
+  meant the schema moved anyway, at container boot, so the only symptom was
+  the job failing *afterwards* on a version its older code did not know. Left
+  in place deliberately (0003 OD-2): removing it reorders boot and migration,
+  and the admin bootstrap runs at boot.
+- **Diagnosis came from comparing two images, not from reading migrations.**
+  `gcloud run jobs describe … --format="value(…containers[0].image)"` against
+  the same field on the service is the one-line check; it belongs in the
+  runbook next time a migration "fails" on a chain that is provably contiguous.
+## 2026-09-22 — The client runs in the stack and ships itself
+
+`feat/frontend_container_and_delivery`, spec `frontend/0017`. The A2UI client
+became a deployed web app under `infra/0002` and nothing owned it: no way to
+run it from the stack, a laptop for a pipeline, and Hosting serving the
+container's bundle with none of the container's headers — because the
+container did not exist yet either. This adds `frontend/Dockerfile`, a
+`frontend` service in the root compose project, and `frontend-cd`.
+
+What the run taught:
+
+- **Four checks of the same class, and the fourth was in a file the check
+  could not read.** `client_flutter/Dockerfile` carried
+  `ARG FLUTTER_VERSION=3.47.5` beside a `.fvmrc` pinning **3.47.3**, so its
+  image shipped a bundle compiled by an SDK its gate never proved it against.
+  `scripts/check_gate_pairs.sh` greps *workflows* for `FLUTTER_VERSION:` and
+  checks a fixed list of *pin files*; a Dockerfile is neither. Found only by
+  writing the same builder stage for `frontend/` and asking where its version
+  would live. Rule 3 now reads Dockerfiles.
+- **A check a comment can satisfy is not a check.** Rule 3's first draft
+  asserted the Dockerfile "mentions `.fvmrc`". Mutating the file — removing
+  the pin from the build entirely — left it **green**, because one `echo` in
+  an error message still contained the string. It now requires a `COPY` of the
+  file. Both halves are mutation-tested, and the mutation is what found the
+  weakness, not review.
+- **A red gate is not evidence that it is red for your reason** has a mirror:
+  a *green* console is not evidence the policy is right. The container's CSP
+  looked correct and the app rendered; the console carried a violation per
+  fallback font, because CanvasKit `fetch()`es them from `fonts.gstatic.com`
+  and installs them through `FontFace` — so the directive is **`connect-src`,
+  not `font-src`**, which is the opposite of where anyone would look.
+  `client_flutter`'s template has the same gap.
+- **`Cross-Origin-Opener-Policy: same-origin` breaks `signInWithPopup`.** It
+  severs `window.opener`, which is the handle the promise resolves on: the
+  popup completes, closes, and the app waits forever.
+  `same-origin-allow-popups` is the value for any page that signs in through a
+  popup, and the container's copy of the header set inherited the wrong one.
+- **Two files that build the same artifact, and no machine check between
+  them.** The Dockerfile and `frontend-cd` both compile the bundle, and
+  neither is a ship-gate command, so `repo.gate-pairs` is structurally unable
+  to compare them. `frontend/tool/build_web.sh` is the answer: don't write the
+  flag list twice. It is the one §5 pair in this repository whose only defence
+  is the shape of the code.
+- **`/release.json` is GGU-93 moved to a thing with no process.** A static
+  bundle cannot be asked which build it is. The build writes the answer beside
+  it and the pipeline reads it back over HTTP — once off a preview channel
+  before anything is live, once off the live origin after. Two claims that look
+  like one until they disagree.
+- **`.claude/rules/ci-conventions.md` had unresolved conflict markers on
+  `develop` since `f4fa557` (PR #26).** Two regions, both sides wanted, the
+  merge simply never performed. The file that defines "change one, change its
+  pair" could not be edited around them. Two stale counts came out with them:
+  §5 said the gate "has three parts" and warned about "a fourth runner", with
+  five in the table. And `check-merge-conflict` **was already in
+  `.pre-commit-config.yaml` at that commit** — checked, not assumed — so the
+  hook did not fail to exist; it failed to run on whatever produced that
+  commit. This repository squash-merges, and a squash merge is performed by
+  GitHub, where no local hook exists. Why this one got through is not
+  established here, and the useful conclusion is narrower than a cause: a
+  pre-commit hook is evidence about a developer's laptop, never about what is
+  on `develop`. The check that would have caught it is one in `repo-ci`, which
+  runs on the pull request. Not added in this PR — `repo.spelling` already
+  walks every tracked file and could carry it — and named as the gap it is.
+
+## 2026-09-22 — Transition states: every wait has a shape
+
+**Spec:** `specs/frontend/0020-transition-states.md` · **Branch:**
+`feat/frontend_transition_states` · frontend only.
+
+The TL's report was that transitions between tabs, between toggles and while
+a backend call is in flight are abrupt. Reading spec 0015 first turned that
+into a map rather than an impression: the skeleton vocabulary it built
+(`SkeletonShimmer` · `SkeletonPulse` · `SkeletonCaption` · `SurfaceSkeleton` ·
+the per-component `skeleton()` override · `ComponentSkeletonHost`) was spent
+on **three** moments — Home's first paint, Home's range change, and a pending
+surface in the Assistant and the gallery — and **seven** others had nothing.
+
+**In code.** `SkeletonRows` and `SkeletonSwitcher` join the primitives.
+Holdings and Activity get first-run pages; the catalog index and detail get
+board-shaped ones; both order-ticket views now draw their **component's own**
+`skeleton()` instead of a spinner, which needed no new seam because the view
+already holds the component. `HoldingsState.allocationLoading` is the one new
+piece of state.
+
+**What the next person should know.**
+
+- **Two of the seven were a correctness bug, not a polish gap.** Holdings'
+  `By sector` and Activity's chips both left the *previous* option's figures
+  on screen under the *new* option's label for the length of the request.
+  A client showing a payload under a caption it does not belong to is the one
+  thing this showcase exists to demonstrate it never does. The rule that came
+  out of it — **skeleton exactly what the option governs, keep the rest** —
+  generalises 0015 OD-1's hero and is now 0020 OD-3.
+- **"A skeleton for a surface, a spinner for an action" is now a test, not a
+  sentence.** Six pages had drifted to a bare `CircularProgressIndicator`
+  before anyone named the rule, which is the signature of a rule nothing
+  enforces. `app/test/architecture/transition_rules_test.dart` allow-lists the
+  two real action spinners *by path* — the shape `binding_rules_test.dart`
+  uses for the geometry seam — and pins the allow set's size, so a seventh
+  page is a red gate. Mutation-checked three ways; the evidence is in the PR.
+- **A finder can pass for the wrong reason, and one did.** `holdings_view_test`
+  asserted `find.byType(CircularProgressIndicator), findsOneWidget` for the
+  loading state. After the change it **still passed** — because the card's
+  `SkeletonCaption` legitimately draws an 11 px ring. The test would have been
+  green either side of the change it was supposed to guard. It now asserts
+  `HoldingsFirstRun` by type, and the comment says why. This is `repo-ci`'s
+  *"a red gate is not evidence that it is red for your reason"* with the sign
+  flipped: **a green finder is not evidence it found your widget.**
+- **No new token, deliberately (OD-4).** Seven more placeholders and
+  `SkeletonTokens` grew by nothing, which is 0015 §2's claim holding up. The
+  cross-fade's 180 ms is a `static const` beside `SkeletonShimmer.period` and
+  the other two, not a token: a `ThemeExtension` entry would have carried the
+  same value in both palettes and created a *second* home for skeleton
+  durations — the drift §5 of `ci-conventions.md` has now recorded five times.
+- **The segment gets nothing, on purpose (OD-6).** `By position` /
+  `By asset class` issues no request. An affordance marks a wait; there is no
+  wait, and a placeholder gone in the frame it appeared reads as a flicker and
+  says something false about the app.
+- **`pumpApp` gained `reducedMotion:`.** Not only for the accessibility
+  assertion — a shimmer repeats for ever, so `pumpAndSettle` never returns
+  while one is on screen. Any future test that pumps a loading state needs it.
+- **The page skeletons got goldens; the component ones did not need them
+  (OD-8).** These four are composed from the page's own layout because no
+  artboard draws them, so a count proves how many blocks exist and nothing
+  about where they sit — and "the skeleton occupies the layout the content
+  will occupy" is the whole claim. That is `testing.md` §6's *layout that
+  reflowed*, exactly.
+
+**Harness:** `docs/diagrams/12-frontend-layers.md` — the `skeleton/` node
+enumerates its contents, so it names `rows` and `switcher` now;
+`.claude/rules/frontend/architecture.md` carries OD-1 as a standing rule.
+## 2026-09-22 — Eleven components, five the agent can reach
+
+`fix/agent_reach_over_the_catalog`, spec `backend/0037`. Found by asking the
+turn telemetry a question it could finally answer.
+
+What the run taught:
+
+- **A component can be complete and unreachable.** Written, registered,
+  100 %-covered, published to `/v1/views`, printed in the frozen contract,
+  bound by a Flutter widget — and impossible for the agent to compose,
+  because a render intent is attached by a *tool* and no tool names it.
+  Every gate was green over all eleven.
+- **The symptoms did not look like the cause.** "Show me my biggest winners
+  and losers" answering in prose looks like a prompt problem. "Compare
+  keeping NVDA against trimming it" drawing a tax-lot table looks like the
+  model choosing badly. Both were the same thing: the component for that
+  answer was unreachable, so the model reached for the nearest thing it
+  could actually get. **A model asked for something it cannot produce does
+  not fail — it substitutes**, and the substitute is plausible.
+- **This is GGU-79 one level up**, and the second time this repository has
+  found it. There, a component could be registered and not reachable from a
+  *route*; here, not reachable by the *agent*. Both times the seam was
+  sound and the thing past the seam was never compared with it. Worth
+  asking, the next time a registry is added: *who consumes this, and is
+  there a test that every entry reaches each consumer?*
+- **The check asserts classification, not reachability.** Demanding that
+  every view be agent-composable would be wrong — a view a screen requests
+  by `?view=` is not an answer. What must not exist is an *undeclared* gap,
+  so the registry splits three ways and a new view is red until its author
+  picks one. Same shape as `test_component_names.py`, which is red until
+  design has named the component.
+- **Reachability is read from the sources, not by running the tools.**
+  Discovering intents by exercising tools against a portfolio would make
+  the inventory depend on the seed: a tool that attaches its surface only
+  for a non-empty result would read as unreachable on an empty one, and the
+  check would change meaning when the seed changes.
+## 2026-09-22 — The assistant, measured against the real model
+
+`fix/agent_turn_reliability`, specs `backend/0036` and `frontend/0019`. The
+agent was reported as crashing. It was not crashing; it was doing four things
+wrong at once and reporting none of them.
+
+What the run taught:
+
+- **A badge that is chrome cannot tell you anything.** The header's
+  `Simulated` pill is hardcoded from the artboards and refers to the
+  simulated **portfolio**. It reads as a statement about the model, it says
+  `Gemini · A2UI` whatever the backend runs, and the first ten minutes of
+  this investigation went into a screenshot that could not have been
+  evidence either way.
+- **`ReadTimeout` is a `TransportError`, and that inheritance was a trap.**
+  "Retry transport errors" therefore retried a model that answered too
+  slowly, three times, turning one slow turn into a 64 s failure. The lesson
+  generalises: a retry predicate written against an exception *hierarchy*
+  inherits whatever the library decided to group, and the grouping is not
+  always the one your policy means.
+- **A prompt that asks for something the model cannot do gets prose.** The
+  catalog header told the model to "pick a view by id and fill its options".
+  Nothing in the tool surface lets it. So it wrote the JSON into its answer —
+  twice in three runs of one question — and once refused an option the
+  catalog declares. The model was not confused; the instruction was wrong.
+- **The option had been declared for weeks and nothing passed it.** A
+  projection can hold a perfectly good `group_by` enum while every caller
+  sends the default, and the only visible symptom is a chart that quietly
+  disagrees with the sentence above it. **A declared option with no caller is
+  a dead option**, and nothing in the gate says so — `make catalog` proves the
+  artefact is current, never that anything uses it.
+- **Telemetry that cannot answer the product's own question.** `agent.turn`
+  logged iterations and tool calls, and nothing about whether the turn
+  composed a surface. This showcase exists to demonstrate composed UI; the
+  one number that says whether it happened was the one number absent. That is
+  why the sector defect survived: no log could have shown it.
+- **`blocTest` with an `errors:` matcher can hide the assertion.** The
+  handler's exception ends `act`, so `verify` never runs and the suite passes
+  with the fix reverted. Caught by mutating, not by reading. A bloc must also
+  be **constructed inside** `runZonedGuarded` for its unhandled errors to
+  reach that handler — built outside, they go to the test framework's zone.
+- **A docstring that names the case it does not cover.** `AgentRepository`
+  said "every failure is an event … because a turn can fail after it has
+  already produced surfaces", and an error raised *on* the stream — that
+  exact case — escaped as an exception and froze the composer. When a comment
+  states a guarantee, the test to write is the one that matches its wording.
+## 2026-09-22 — The portfolio gets an owner, and the tabs really filter
+
+**Specs:** [`backend/0035`](../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md)
+· [`frontend/0018`](../specs/frontend/0018-the-tabs-search-and-filter-for-real.md).
+Branch `feat/per_user_seed_and_real_filters`, cut from `develop` at `cb6abb0`.
+
+**What the ticket said, and what was actually true.** The TL reported two
+things against the deployed dev app: *"the filters and search are stubs"* and
+*"the portfolio data is global, not owned by anybody."* Both turned out to be
+half right, and in each case the wrong half was the interesting one.
+
+- The Activity chips were **never** stubs. `activity.timeline.v1` has declared
+  a bounded `kind` option since spec 0028, `ActivityBloc` sends it, and
+  `groups_for` filters server-side. What made them look broken is that the
+  seeded ledger held 22 rows of which **one** was a sell and **two** were
+  deposits. `Sells` returned a single line — a control indistinguishable from
+  a dead one. The fix was the seed, not the chip.
+- The portfolio was **not** shared: `PersistentPortfolioProvider` already gave
+  every subject their own row. What was true is worse and less visible — the
+  key was the identity provider's opaque `sub`, so a row named nobody and the
+  same person arriving through Firebase's Google button and its e-mail button
+  owned **two** portfolios. Spec 0027 OD-1 had already decided the join key
+  between an identity and this service is the verified e-mail; the portfolio
+  never got the memo. Migration `0008` gives it one.
+
+**What is genuinely new.** A `query` option on both tabs' projections and an
+`asset_class` option on Holdings — matched over **domain** fields (symbol,
+memo, name) rather than the captions this layer just wrote, so a result cannot
+change because a label was reworded and the same query answers the same in
+every locale (0035 OD-6). Both echo back in the payload, which is how the
+contract declares them editable. An empty result is a **200 with a
+server-written sentence**, never a 404 and never a sentence the device
+composed.
+
+**Three things worth carrying forward.**
+
+1. **A badge that was wrong and could not be seen.** `TERM_BADGES` printed
+   `ST gain` / `LT gain` unconditionally. That was invisible while the seed
+   held exactly one sale and that sale was a gain. The moment the ledger grew
+   losses it became a visible lie, so the badge now names the term *and* the
+   sign. The general shape: **a seed with one of something tests nothing about
+   that something.** Four badges now occur in the seed and four are asserted.
+2. **A whitespace-only `email` claim was going to become a portfolio key of
+   three spaces.** Found by writing the parametrised test before believing the
+   one-liner (`email.lower() if email else subject`). `owner_key` strips as
+   well as folds.
+3. **The reconciliation between the ledger and the lots is now checked, not
+   commented.** Every sell is paid for by raising its buy's quantity at the
+   same unit price, so *buys − sells = the open lot* to the unit and to the
+   cent. `test_seed_ledger.py` walks that from the data rather than restating
+   it, and it is mutation checked: PYPL 50 → 51 (with a consistent `amount`,
+   so the cheaper assertion could not catch it) turns both reconciliation
+   tests red, and restoring it turns them green.
+
+**Seeding became a command, because the TL asked for one.** Mid-flight
+requirement: *"deploya y re-seedea por usuario … dejame el seed abierto por si
+quiero seedear manualmente a otro usuario"*, then *"u otros"* — plural. So
+`python -m app.jobs.seed_portfolios <email> [<email> …] [--reset]`, plus a
+`seed-portfolios` Cloud Run job shaped like `purge_audit`. Two decisions are
+recorded rather than left to be discovered:
+
+- **Re-running is safe because an existing owner is skipped**, not upserted.
+  `--reset` is the opposite instruction said out loud. A demo that silently
+  rewinds the portfolio somebody is standing in front of is worse than one
+  that does nothing.
+- **Nothing runs it for you.** `deploy_cloud_run.sh` executes `migrate` and
+  not this, and no Scheduler points at it. `test_dev_environment.sh` asserts
+  *both* directions — that the job exists, and that the deploy script never
+  mentions it. Deciding who gets a portfolio is not a thing a deploy should do
+  on its own.
+
+**Harness changes.** No rule file changed. Two diagrams did: `07-data-model`
+(the migration and the deliberate absence of a FK to `users`) and
+`08-infrastructure` (three Cloud Run jobs, three triggers, and why the third
+is a person). `06-response-shaping` gained the filter box and the note that
+`binding_rules_compute_test.dart` needles `.sort`/`.fold`/`.reduce` but **not**
+`.where` — so "the client must not filter a list it already holds" is the
+reviewer's check, not the machine's. That gap is real and now written where
+somebody will read it before reaching for `rows.where(...)`.
+
+**What the next person should know.** The agent still cannot answer *"what did
+I earn in dividends this year?"* — no tool reads `Portfolio.transactions()`.
+This spec quadruples the dividend rows the Activity tab shows, which makes the
+gap **more** visible, so it is recorded as 0035 OD-11 rather than fixed in
+passing: a dividend-income tool needs its own `*Display` figures, its own
+prompt fragment and a period rule the domain does not have yet.
+
+### Addendum — what the review caught, and the two worth generalising
+
+`backend-reviewer` came back with four blocking findings. Two were local
+slips; two are worth carrying:
+
+- **`ignore_changes` on an image is correct only where something else owns
+  that image.** The seed job copied `migrate`'s `lifecycle` block because it
+  was "shaped like" it, and the premise did not hold: `deploy_cloud_run.sh`
+  updates the migration's image and updates nothing on the seed job — which
+  the same PR's `test_dev_environment.sh` asserts. Frozen, it would have
+  seeded an old ledger into a migrated database months later, which is
+  exactly the defect #98 had just fixed one job over. Recorded as 0035 OD-12.
+- **A bound with no test is a sentence, and §5 was leaning on it.** Both
+  `QUERY_PATTERN` and `MAX_QUERY` could be deleted with the suite green,
+  while the spec's security section cited them as the argument. So could a
+  `Literal` set: a comment claimed the endpoint's `AssetClassFilter` and the
+  projection's `AssetFilter` were compared, and the test it named compares
+  option **names**, never members — add `crypto` to one side and the catalog
+  advertises a value the route 422s, all green. Both now have tests, and both
+  were mutation-checked in the directions that matter.
+
+And the operational one, which cost nothing and proved itself: **`/health`
+caught a stale build during this very PR.** Port `8011` turned out to hold
+another agent's backend, which answered `local+f5a7da2` when the branch head
+was `b69f81a`. The GGU-93 check found a real wrong-build reading on its first
+outing after being written for exactly that.
+
+
+## 2026-09-22 — Three defects a reader found in one sitting
+
+`fix/client_navigation_and_alignment`, spec `frontend/0021`. None was caught
+by a gate, and each was a different kind of blind spot.
+
+What the run taught:
+
+- **Two `flex: 1`s split the row in half, and one of them did not want a
+  half.** `Expanded` and `Flexible` both default to a flex of 1, so a
+  "label grows, figures shrink" row was actually "each takes 50 %" — and the
+  loose one then sat at the *start* of its half. It reads as a column
+  drifting left. `crossAxisAlignment: end` is the natural first reach and
+  cannot work: the Column is already as wide as its widest child.
+  **Measure before fixing a layout.** Two `getRect` calls said what an hour
+  of reading the widget tree would not have: both blocks began at the same x
+  and ended at different ones, which is not "slightly off", it is not
+  right-aligned at all.
+- **`StatefulShellRoute` keeps a branch alive, so anything in
+  `BlocProvider.create` happens once per app run.** Delivering a route
+  parameter there works exactly once and then silently stops. The symptom —
+  "it opens the Assistant and does nothing" — points at the chip, the route
+  and the bloc before it points at widget-element reuse.
+- **A route placed outside the shell inherits none of the shell's
+  affordances, and that is easy to decide and easy to forget.** Putting the
+  catalog outside was right; nobody then asked what a reader does next. The
+  browser's back button hid it during development, which is the trap: a web
+  build has an escape hatch the app does not.
+- **`InkResponse` needs a `Material` ancestor.** Six existing tests went red
+  the moment one appeared on a `Container`-based bar — the suite catching a
+  framework requirement, which is what a widget suite is for.
+- **The reproduction is the deliverable.** The Assistant suite was written
+  against the old page first and failed with `All calls: … text: first`.
+  Without that line the fix would have been a plausible edit; with it, it is
+  a closed defect.
+
+## 2026-09-22 — The deployed client has a policy no test sees
+
+**Spec:** [`frontend/0022`](../specs/frontend/0022-the-deployed-client-has-a-policy-no-test-sees.md).
+Branch `fix/csp_allows_the_firebase_loader`, cut from `develop`.
+
+`https://finance-a2ui.web.app` served a **white page** while every gate was
+green. `firebase_core_web` boots the Firebase JS SDK from an inline script it
+writes at run time; `script-src` blocked it, `Firebase.initializeApp` threw,
+and `main()` never rendered. The only symptom was one console line.
+
+**What this says about the harness, which is the part worth keeping.** The
+client is tested exclusively in places that have no Content-Security-Policy: a
+widget harness has no browser, a local static server sends no headers, and
+`verify_release.sh` asks for `/release.json` — a static file a dead app serves
+perfectly. The policy lived in two files (`firebase.json`,
+`docker/nginx.conf.template`) that were **data nothing read**. That is §5's
+second question again — *does the command cover what its name claims?* — for a
+gate that did not exist at all.
+
+`frontend.csp` (`frontend/tool/check_csp_hashes.sh`) closes it by deriving the
+hash from the resolved plugin rather than trusting a pasted one: bump
+`firebase_core_web` and the gate fails with the new string to paste, instead of
+the site failing. Four hashes, not one — the plugin writes different bytes for
+browsers with Trusted Types than for those without, so authorising only
+Chrome's pair would have left Safari white. It also refuses to pass vacuously
+(eight policy × hash pairs asserted) and fails if `pubspec.lock` gains a
+FlutterFire plugin the service list does not cover.
+
+**Next person:** `frontend-cd` proves the origin serves the right *bytes*, not
+that the app *boots*. Spec 0022 §5 records why that was left alone — it needs a
+headless browser in the pipeline, which is a cost decision rather than a bug
+fix — and it is the reason this defect reached the TL's screen.
+---
+
+## 2026-09-22 — `client_flutter/` is retired, and the README says what is true
+
+**Spec.** `specs/repo/0002-retire-the-client-flutter-app.md` (TL request, no
+ticket). Two coupled tasks in one PR, coupled because the README documented the
+directory being deleted.
+
+**Code.** There is none. 117 tracked files under `client_flutter/` are gone,
+with `.github/workflows/client-ci.yaml`, the six `dart.*` / `client.*` /
+`flutter.*` entries in `.claude/ship-gate.json`, seven `client-*` pre-commit
+hooks, the `/client_flutter` Dependabot entry and
+`docs/diagrams/11-client-architecture.md`.
+
+**Harness.** Four rules under `.claude/rules/client/` deleted with their rows
+in the root `CLAUDE.md` index (`infra.rules-index` proves both halves moved
+together). `.claude/rules/ci-conventions.md` §4, §4b and §5 rewritten:
+`client-ci`'s row is **struck through, not removed**, because its history —
+yes → no → yes → gone — is the lesson that a row in that table is a claim with
+a truth value. `scripts/check_gate_pairs.sh` keeps `pin_apps` as a **list**
+with one entry, so a second Flutter app is one word rather than a rewrite.
+
+**The count was wrong in both files, in opposite directions.**
+`ci-conventions.md` §5 opened with "It has **five** parts" while
+`ship-gate.json`'s own `_note` opened with "in three parts" — the drift defect
+§5 exists to prevent, sitting in the two files that define it. Both now say
+**four**, and both say that removing a part means editing the number in both
+places plus the root `CLAUDE.md`.
+
+**A gate was found toothless, by a mutation the spec promised.**
+`scripts/check_shell.sh` asserts two container entry points by name, behind
+`[ -f "$required" ] || continue` — commented *"the tree is allowed to lose a
+file; it is not allowed to skip one"*, which reads as prudence and is
+vacuity. Measured: `git mv`-ing `frontend/docker/entrypoint.sh` away left the
+check **green**, reporting the same "19 scripts linted". A name that does not
+resolve is now a failure with the fix in the message. This is the fifth
+instance of §5's defect class and the second in a check's *subject* rather
+than its command string.
+
+**Superseded, not erased.** `specs/client/0001` and `0002` carry
+`Superseded by repo/0002` banners and stay in place; `client/0003` (the
+backend contract) is explicitly **left live**, because its subject is the
+server, `frontend/` binds it, and `specs/frontend/0002` OD-1 quotes its §8.3.
+ADR-I is `Superseded by ADR-L` — its D-3 outlived the app and ADR-L D-5
+restates it. ADR-H D-2 and D-6 are struck in place. Diagram 11 is the one
+outright **deletion** of a shipped artefact, argued in the spec §4: a diagram
+has no superseded form, and its number is retired rather than reused.
+
+**README.** Rewritten. Five claims it made were false on the day they were
+read — "under construction", "no end-to-end demo to run today", "Flutter
+client: upstream Google sample, unmodified", "delivery pipeline: never run",
+"A2A transport: not built". Every replacement was measured rather than
+assumed: `https://finance-a2ui.web.app/release.json` and the dev API's
+`/health` both answered `0.1.0+44968fd`, which is `develop`'s head, so both
+pipelines have demonstrably run and are current. The simulated-data honesty
+survives — that part was never wrong. Two claims in the brief were checked and
+**declined**: the agent does not reach Gemini over A2A (it calls
+`generateContent` over REST; A2A/SSE is the *client → backend* leg), and
+`make token` prints a raw JWT, not a curl line.
+
+**`repo.manual-run` fired on a real pull request, and it was right.** The first
+push of #109 carried only the two *deployed* transcripts — the site and the dev
+API, both answering `0.1.0+44968fd`. `repo-ci` failed it: *"found: 44968fd — an
+ancestor, 1 commit(s) behind the head."* That is GGU-93's check doing on a live
+PR what its suite proves it does, and it is the first time it has rejected
+something other than a fixture. The fix was to **do the run**, not to reword the
+body: the local stack was brought up at the branch head and `/health` and
+`/release.json` both answered `local+42e2edd`.
+
+Two operational notes for whoever hits this next. First, the deployed
+transcripts were not wrong to be there — sdd.md §3 says paste them *as well*,
+never instead — they were wrong to be *alone*. Second, **editing a PR body does
+not un-fail the job**: `repo-ci` reads `github.event.pull_request.body` from the
+triggering event, so a `gh run rerun` re-reads the old body. Only a push
+produces a payload with the new one. The practical consequence is an ordering
+rule: **commit everything first, then run the stack at that final sha, then
+write the body** — otherwise each fix invalidates the identity it just added.
+
+**What the next person should know.** Two pre-existing failures surfaced
+while running `pre-commit run --all-files` and are **not** from this branch:
+
+- **`repo.spelling`'s two halves run different codespell versions.** The
+  pre-commit hook pins `v2.3.0`, `make gate` resolves `2.4.3` from
+  `backend/uv.lock`. 2.4.3 honours `socio` in `.codespellrc` for the
+  hyphenated `socio-economic`; 2.3.0 does not, so `CODE_OF_CONDUCT.md:7` fails
+  the hook and passes the gate. That is §5's **third** question — *under what
+  does the command run?* — in the spelling check itself, and it is the same
+  shape as GGU-94's Dart pin: a version pinned in one half only.
+- The `ruff` pre-commit hook reports `F811` in
+  `backend/tests/unit/agent/tools/test_holdings_arguments.py` while
+  `cd backend && make gate` is green.
+
+## 2026-09-22 — The mic works, and the honest states cost more than the API
+
+`feat/voice_input`, spec `frontend/0023`. The Assistant's microphone was drawn
+and said *"Voice input is not part of this preview yet."* (spec 0011 OD-5); it
+now dictates through the browser's Web Speech API. Calling the API is ~90
+lines. Everything else in the change is about the states that are not success.
+
+What the run taught:
+
+- **A platform API a test cannot start is an architecture problem before it
+  is a feature.** `dart:js_interop` does not compile for the VM, so *any*
+  file that imports it is invisible to `flutter test` — not untested,
+  unloadable. The whole shape of this feature follows from that: an interface
+  in `app/lib/speech/`, the error-code mapping in pure Dart beside it, the
+  state machine in a bloc, and one file left holding construction and four
+  callbacks. That file is the second coverage exemption this app has, after
+  `main.dart`, and the exemption was **mutation-checked**: removing it fails
+  the gate with `no coverage record — no test loads it`, which is the proof
+  that it is load-bearing rather than decoration.
+- **A conditional import belongs in the composition root, not in a barrel.**
+  The obvious shape is `speech_platform.dart` holding one conditional
+  `export`. That file has no executable line, lcov writes no record for it,
+  and the coverage gate then has to excuse a file that does nothing — a
+  second hole to buy a tidier import. Putting the `if (dart.library.js_interop)`
+  in `bootstrap.dart` costs one line and no exemption, and it is where ADR-L
+  D-2 already says the choice lives.
+- **A `const` event with no fields cannot be covered, and the two lints that
+  demand it are a pair.** `prefer_const_constructors` forces `const` at every
+  call site, which canonicalises the object at compile time so the
+  constructor never runs; `prefer_const_constructors_in_immutables` forces
+  the constructor to *be* `const` because `Equatable` is `@immutable`.
+  Together they make a field-less event file unreachable for the 100 %
+  contract. `VoiceInputEvent` is therefore neither — recorded as a deviation
+  from ADR-L D-7 in the file itself, with the argument that survives the
+  coverage accident: **two taps are two events**, and value-equal events say
+  the opposite.
+- **A snackbar is not a state change, and `BlocListener` will tell you so
+  the second time.** Two denied permissions in a row produce two *equal*
+  states, so a listener keyed on the failure shows one notice and swallows
+  the second tap — spec `frontend/0021` OD-2 rebuilt one layer in, by the
+  person who had just read it. The state carries a `notices` counter and the
+  listener keys on that. The widget test lets the first snackbar time out
+  before tapping again, which is the only way it can fail for the right
+  reason.
+- **The feature needed a header change in two files and a CSP change in
+  none.** `Permissions-Policy: microphone=()` denies the microphone to the
+  origin itself, so the feature would have worked on `flutter run` and failed
+  on Hosting. CSP has no directive for capture — `media-src` is about URLs
+  `<audio>` loads — so widening it "because audio" would have been a change
+  nobody could justify from a violation report. The two policy files are now
+  compared by `frontend/test/tool/permissions_policy_test.dart`, inside
+  `make test`: neither file is a ship-gate command, so `repo.gate-pairs`
+  cannot see the pair, and spec 0017's "change one, change the other" was
+  until now a sentence.
+- **The recognition language was a one-attribute fix in HTML, not a constant
+  in Dart.** `SpeechRecognition.lang` defaults to `<html lang>`; the bundle
+  declared none, so a Spanish-locale browser would have dictated Spanish at
+  an English agent. Adding `lang="en"` is standards-correct, is what a screen
+  reader reads anyway, and keeps a locale out of `AppConfig`.
+
+Harness changes: `tool/coverage_sources.dart` gains its second exemption (with
+the reason in the file); `app/test/architecture/speech_rules_test.dart` is a
+new structural suite, mutation-checked four ways; `docs/diagrams/12` gains the
+seam and the browser node; `frontend/CLAUDE.md` and `frontend/SECURITY.md`
+gain the rule and the residual-risk row (G-9 — dictated audio is processed by
+the browser vendor's service, which no flag in the page changes).
+
+## 2026-09-23 — The surface answers the question that was asked
+
+**Spec:** [`backend/0039`](../specs/backend/0039-the-surface-answers-the-question-that-was-asked.md).
+Branch `fix/the_answer_and_the_surface_agree`, cut from `develop` at `5cb9a40`.
+
+The TL read three turns on the deployed app and said the conversation made no
+sense. It did not, and the model was not the reason: `compute_attribution`
+computed a move over a **window** and attached `attribution.waterfall.v1`,
+which walks **unrealised P/L from cost basis**. The chart and the sentence
+were each correct about a different quantity — and in one turn the chart
+named NVIDIA the biggest contributor directly above a sentence naming it the
+biggest detractor.
+
+**What this says about the harness.** `domain/attribution.py` opens by saying
+the two are different questions. The domain knew; the presentation layer only
+ever had one of them, and nothing compared a tool's *computation* with the
+surface it attaches. There is still no machine check for that pairing — the
+new `test_catalog_reach.py` entry proves a view is reachable, not that it
+answers the tool that reaches it. Worth writing if this recurs.
+
+**Three checks caught things on the way, which is the part to keep:**
+`test_package_boundaries.py` refused an import from `presentation` into
+`app.agent` (the window set is now declared twice and compared by a test);
+`test_catalog_reach.py` caught that the all-time walk had become unreachable
+and made it a declared ruling instead of a silent loss; and the 150-line
+budget forced two shared inventories — the reach classification and the
+design-name literal — out of their test files into data modules, which is the
+seam `tests/catalog.py` already drew.
+
+**One defect met in passing.** `CatalogSnapshot.entryFor(component)` used
+`firstWhere`, so the moment two views shared a component name it would have
+handed a test the wrong example **and passed**. It throws now, and
+`entryForView(viewId)` is how to ask.
+
+**Next person:** spec 0039 OD-8 names what is still broken in that
+conversation — "Tax lots" reaching the sale simulator, and no turn referring
+to the previous one. A green gate here is not a fixed conversation.
+## 2026-09-22 — The header stays put, and no test had ever scrolled
+
+`fix/header_stays_put`, spec `frontend/0024`. The TL: *"en el scroll el header
+no se queda fijo y deberia de todas las paginas"*. Five surfaces put their
+header inside the `ListView`; the Assistant did not, and had never moved.
+
+What the run taught:
+
+- **A whole class of defect can be invisible because of one missing verb.**
+  `grep -rl "drag\|fling\|scrollUntilVisible\|ensureVisible" app/test`
+  returned nothing: 901 tests, not one of which scrolled. Every surface was
+  asserted at offset 0, and the four page-shaped goldens are shot there too
+  — the one offset at which a pinned header and a scrolling one are the same
+  picture. The suite that fixes this asserts the scroll position advanced
+  *and* the header's rect did not; without the first half it would pass on a
+  surface that cannot scroll at all.
+- **The fix was to copy the one screen that was already right.** The
+  Assistant is `Column` + `Expanded`; the other five were
+  `ListView(children: [header, …])`. Reaching for `SliverPersistentHeader`
+  would have meant a `minExtent`/`maxExtent` constant per surface, and
+  `TabAppBar` has none — it swaps its title row for a search field. A
+  hard-coded extent that disagrees with the content is the same defect with
+  a different cause.
+- **Two goldens caught two mistakes the geometry test could not, in the
+  order §6 of the testing rule predicts.** A `Column`'s cross axis is
+  `center`, so the first band took its child's width: invisible on every
+  loaded header (their child is a `Row`) and 4.36 % of the raster on a
+  *skeleton* header, whose child is a 150-point shimmer. Then `DecoratedBox`
+  replaced `Container` and the catalog bar lost 1 px, because `Container`
+  adds a border's thickness to its padding and `DecoratedBox` paints the
+  border and reserves nothing — 1.11 % of the raster, bbox `(0, 53, 1024,
+  815)`, which is "everything below the bar". **A rule that is drawn
+  occupies space.**
+- **A tolerant golden comparator hides drift as well as noise, and the only
+  way to know which is to set it to zero.** Two catalog goldens have been
+  0.80 % stale on `develop` since 0021 added the back control; the 1.5 %
+  threshold absorbed it. Found by temporarily setting the fraction to 0 on
+  an unmodified tree — worth doing whenever a golden starts failing for a
+  change that should not have touched it, because the number you are handed
+  ("1.91 %") is the sum of your change and everything already owed. Reported
+  rather than regenerated: a golden refreshed for somebody else's reason,
+  inside an unrelated diff, is how the next one goes stale unnoticed.
+- **Pinning the header is what made the top safe-area inset real.** All four
+  existing `SafeArea`s in this app are bottom edges. A header that scrolls
+  meets the notch at offset 0 and then leaves; one that never moves is under
+  it for the session. The inset belongs *inside* the decoration — the shape
+  `ShellTabBar` already uses — or the strip it opens shows the page through
+  the band.
+
+Harness changes: `app/lib/features/shell/view/pinned_header.dart` is the one
+home for the band (colour, rule, inset); `app/test/features/shell/` gains the
+first scroll-geometry suite in the repository, in three files (two harnesses,
+split by whether a surface is driven from a stubbed repository or a stubbed
+bloc, and the suite itself).
+## 2026-09-22 — A manual for the client, and a screenshot that can be retaken
+
+**Spec.** None; a TL request — *"un manual de instrucciones con screenshots y
+business level … bien específico para el uso de la app en inglés y español en
+pdf"*. Audience: the client and the Google demo. No code, no architecture, no
+API. The two decisions were handed down and not re-asked: branding is the
+app's own, and the level is business.
+
+**Code.** None. `docs/manual/` is new: two HTML sources, one shared
+stylesheet, seven screenshots, two PDFs and two scripts. The one change
+outside it is `scripts/check_spelling.sh`, which now excludes `*.pdf`, and
+`.codespellrc`, which gains seven Spanish words.
+
+**A PDF is a generated artefact, so it is gated the way this repository gates
+generated artefacts — by being regenerable.** `.claude/rules/ci-conventions.md`
+§4 says anything the build produces is checked in *and* re-renderable. The
+manual is checked in as HTML plus `tool/build_pdf.sh`, and the pictures are
+checked in as PNGs plus `tool/capture_screenshots.mjs`. Neither is in the ship
+gate — there is nothing to diff, because a PDF is not byte-reproducible across
+Chrome versions and a screenshot is not reproducible at all once the app
+changes — so the honest form is a documented command, not a check that would
+be red for the wrong reason. Naming that limit is the point; a drift check
+that cannot work is worse than an instruction that can be followed.
+
+**The renderer was chosen by looking, not by preference.** `pandoc`,
+`weasyprint` and `prince` are all absent on this machine and none could be
+installed without a network round trip. Chrome is present because the Flutter
+web client needs it, so headless Chrome prints the A4. Headless Chrome also
+does not always exit after `--print-to-pdf`, and stock macOS has no `timeout`,
+so the script backgrounds Chrome and polls the file until it stops growing.
+
+**The screenshots are scripted because the alternative is a folder nobody can
+refresh.** `capture_screenshots.mjs` talks the DevTools protocol over Node's
+built-in `WebSocket` — no Playwright, no Puppeteer, nothing to install — and
+signs in, walks the four tabs and asks the assistant one question at 375×812
+and 2×. Two details it encodes rather than leaving to the operator: it parks
+the pointer off the content before every capture, because the first run caught
+a hover state and put a carousel arrow over a chip; and it waits long enough
+after sending for a real model turn to finish.
+
+**A manual is allowed to be no more optimistic than the product.** The
+portfolio is simulated and the app says so on screen in three places, so
+section 2 of both languages says so too and the cover says it a fourth time.
+The lead also named two assistant defects being fixed — a chart showing an
+all-time figure beside a sentence about today, and a follow-up chip that did
+not reach the view it named. Neither is documented and neither is
+screenshotted: the assistant capture is *"How is my portfolio allocated?"*,
+whose answer is an allocation component labelled `all-time`, correct end to
+end. `docs/manual/README.md` records the rule for next time — if a capture run
+produces a wrong answer, retake it; do not ship it with a caption explaining it
+away.
+
+**The Spanish is a second original, not a translation, and that has a cost the
+tooling noticed.** Seven Spanish words are English words one letter off, so
+`repo.spelling` went red on `responde`, `componentes`, `momento`,
+`alternativos`, `cliente`, `vender` and `ser`. They are in `.codespellrc` with
+the reason, in the style of the existing entries — the file already carries
+`hace` for the same reason, which is the precedent that made this obvious
+rather than a judgement call.
+
+**And `repo.spelling` found one real thing: it was reading the PDFs.** codespell
+decoded `user-manual.es.pdf` as iso-8859-1 and reported 36 findings out of font
+tables and stream dictionaries, each with a confident suggestion. The check now
+excludes `*.pdf` for the same reason it already excludes `*.lock` — the prose
+those files were rendered from is in the list, so nothing is lost. Worth
+recording because it is §5's second question in miniature: the command was
+right and its *subject* had quietly grown a kind of file it cannot read.
+
+**Branding, with no template to use.** There is no Somnio document template, so
+`manual.css` copies every colour from `frontend/app/lib/theme/app_colors.dart`,
+`login_tokens.dart` and `charts/chart_tokens.dart` — files that are themselves
+measured from the design rather than generated — with a comment beside each
+naming its home, and the cover mark is the sign-in hero's mark rebuilt in CSS.
+The Flutter default icon in `web/icons/` is deliberately not used: it is
+Flutter's logo, not this product's.
+## 2026-09-22 — Every Cloud Run job runs the build that was released
+
+`fix/cd_owns_every_job_image` · spec `infra/0004` · widens `infra/0003`.
+
+Spec 0003 fixed the migrate job's image **by name**, four days ago. Seeding
+the demo audience the same evening answered `No module named
+app.jobs.seed_portfolios` from an image older than that module, and the fix
+for that was a `gcloud run jobs update` typed into a terminal. Reading the
+other two jobs afterwards:
+
+| job | image it would have run |
+|---|---|
+| `migrate` | the release — 0003 works |
+| `seed-portfolios` | the hand-fix, **already one release stale** |
+| `purge-audit` | `backend:latest`, a floating tag nothing had ever moved |
+
+Three things this taught, none of them about Cloud Run.
+
+**A fix by name is a fix for one instance of a class.** 0003 was correct,
+mutation-checked, and closed the ticket. It also encoded the defect's shape as
+a proper noun, so the second and third instances were invisible to it — and
+the third was the *scheduled* one, deleting `audit_events` rows monthly under
+code nobody chose. When the fix is `jobs update <name>`, ask what the class is
+before writing the name.
+
+**The comment arguing against the fix was the best evidence for it.**
+`infra/run.tf` carried a paragraph explaining why `seed_portfolios`
+deliberately had no `ignore_changes`: freezing it at the applied image would
+make a human run stale code months later. The hazard was real, the conclusion
+backwards — without an owner it floated on a mutable tag instead, which is the
+same sentence with no floor. It is kept in the file above the new reasoning.
+A confident comment against a change is a place to look, not a place to stop.
+
+**Derivation is safe when it reads a declaration.** The choice was a list of
+job names in the pipeline (a third thing to remember), a name prefix
+(derives from whatever happens to be deployed — the way a deploy touches
+something nobody meant), or a label Terraform sets on each job. The label is
+the only one that is both: adding a job is one line in the block you already
+have open, and the set stays closed. It also kept
+`test_dev_environment.sh`'s existing assertion — *the deploy never names the
+seed job* — literally true, which an enumeration would have forced us to
+delete. When a new shape lets an old assertion survive, that is a signal.
+
+Two things bit while writing it, both worth keeping:
+
+- **`gcloud … --filter` on a label nothing carries exits 0 with a warning.**
+  A deploy reading that as "nothing to pin" is green having pinned nothing —
+  the defect wearing the fix's clothes. Empty list = hard failure naming
+  `terraform apply`; list without the migrate job = hard failure too, because
+  a non-empty list is not a correct list.
+- **The assertion "the deploy must not mention the seed job" started failing
+  on my own comments.** Its subject was the script's *code*; it was grepping
+  prose. Sharpened to strip comment lines, and joined by the claim it was
+  really making: the script executes exactly **one** job.
+
+Evidence that could be gathered read-only, and the line where it stopped:
+`terraform plan` on dev **before** the change showed
+`~ image = "…@sha256:854327a4…" -> "…:latest"` — an apply would have undone
+the hand-fix. After it, no job's image is in the plan at all. What could not
+be gathered is a deploy, so the whole change is stubbed `gcloud`, static greps
+and a plan; the `Verification` block says so in those words rather than
+implying a run. It also records the precondition: the label is not in the
+cloud until dev is applied, and until then the deploy fails **by design**.
+
+## 2026-09-23 — The deployer can reach the jobs it owns
+
+**Spec:** [`infra/0005`](../specs/infra/0005-the-deployer-can-reach-the-jobs-it-owns.md).
+Branch `fix/the_deployer_can_reach_the_jobs_it_owns`.
+
+The first real deploy after `infra/0004` failed, and its error sent the
+operator to the wrong place: *"no Cloud Run job carries image-owner=delivery …
+run `terraform apply`"*. Terraform had run; the labels were on all three jobs.
+The deployer simply could not **list** them — its `run.developer` was scoped to
+the service and the migrate job, from when the migration was the only job the
+pipeline touched — and `2>/dev/null || true` had turned that refusal into an
+empty result.
+
+**The lesson is about the suite, not the grant.** `infra/0004` shipped 68
+assertions and every one passed; none could have caught this, because the suite
+stubs `gcloud` and therefore never meets an IAM decision. That is still the
+right design — a delivery-script suite must not need a cloud — so the coverage
+had to go in two places that are individually insufficient: a stubbed denial
+for the script, and a Terraform assertion that every job in `run.tf` has a
+binding in `delivery.tf` for the grant. **When a change widens what a pipeline
+touches, the permission is part of the change.**
+
+**Next person:** a guard that cannot tell "refused" from "none" will always
+report the wrong cause, and the wrong cause is worse than no guard — it costs a
+deploy and then an investigation of the thing that was fine.
+
+## 2026-09-23 — The badge says what is simulated
+
+Branch `fix/the_badge_says_what_is_simulated`, cut from `develop` at `b7eca00`.
+
+The TL, on the deployed app: *"todavía dice simulated en AI assistant."* The
+badge read `Simulated`, alone, beside the pill naming the model — so read left
+to right it said the **assistant** was simulated. It is not: the turn is a real
+Gemini call against real tools. What is simulated is the portfolio.
+
+Home has said so correctly all along — `Simulated portfolio`, and **its** words
+come from the backend (`summary_payload.badge`). The Assistant's header binds no
+payload, which spec `frontend/0011` §2 rules deliberately, so the fix is not to
+introduce a binding: it is to match the wording the backend already publishes.
+
+**Worth carrying forward:** the two badges were never compared, because one is a
+payload field and the other is chrome. A shorter version of a server-written
+phrase is not a shorter phrase — it is a different claim. The nearest existing
+guard is `test_component_names.py`'s idea: where the same fact is written twice,
+something should compare the two.
+
+## 2026-09-23 — SSO enrols itself, and the screen says so
+
+**Spec:** [`backend/0040`](../specs/backend/0040-sso-enrols-itself.md).
+Branch `feat/sso_enrols_itself`.
+
+The TL could not sign in with two of their own Google accounts: only the one
+in `AUTH_BOOTSTRAP_ADMINS` was provisioned. The instruction was *"que pueda
+loguear con SSO libremente"* and then *"el aprovisionamiento debería hacerse
+de manera automática"*. So the registry is **not** bypassed — it fills itself
+in, audited, which keeps every later decision reading one table.
+
+**The ruling worth remembering is the refusal, not the admission.** `revoked`
+and `requested` rows are never enrolled: an offboarding somebody performed
+must not be undone by signing in again. Only the *absence* of a row enrols.
+
+**A background job was asked for and argued out of, with a number.** The
+concern was that provisioning could block the API. Measured on the seeded
+stack with a brand-new identity: the first read — which also seeds sixteen
+lots and forty-eight transactions — answers in **105 ms**, the second in 7 ms.
+A queue would have replaced a hundred milliseconds nobody notices with a wait
+somebody has to be told about. The measurement is in the spec so the next
+person can compare rather than re-argue.
+
+**Two gates did their job and are worth naming.** The 150-line budget forced
+`config.py` into an `AuthSettings` mixin and enrolment out of `UserService` —
+both seams that were already implied. And `transition_rules_test.dart` pins
+the *size* of the spinner allow-list, so adding a third entry failed until the
+count was edited in the same commit; that is the assertion working exactly as
+written.
+
+**Next person:** the sign-in screen still says *"Access is invite-only during
+the A2UI preview."* On dev that is now false. It is chrome with no signal
+behind it — `/v1/me/access` only answers after sign-in — so fixing it is a
+contract change, named in spec 0040 §5 rather than left to be discovered.
+
+## 2026-09-24 — A job provisions the demo audience
+
+**Spec:** [`backend/0041`](../specs/backend/0041-a-job-provisions-the-demo-audience.md).
+Branch `feat/a_job_provisions_the_demo_audience`.
+
+Five accounts in Firebase Auth on dev, one in the provisioning registry. Open
+enrolment (spec 0040) means none of them is stuck — each gets a row on their
+first sign-in — but there was **no way to write the row beforehand**, and a
+demo audience decided in advance is a different thing from whoever happened to
+open the app.
+
+**Why a job rather than one of the three faster levers.** The admin API needs
+an `admin` scope and dev sets `AUTH_ADMIN_REQUIRE_MFA=true`, so a minted token
+cannot carry the `amr` it wants; Cloud SQL is on a private VPC; and
+`AUTH_BOOTSTRAP_ADMINS` would have worked while making every demo viewer an
+**admin**. The third was the tempting one, and it is the reason to write this
+down: the fast lever granted more than the task needed.
+
+**Where it deliberately differs from `seed_portfolios`, which it otherwise
+copies:** there is no `--reset`. Replacing a portfolio is reversible and harms
+nobody; replacing an account's status would undo an offboarding somebody
+performed. Two jobs, one shape, one difference — and the difference is the
+ruling.
+
+**A gate paid off immediately.** `test_dev_environment.sh` loops over every
+`google_cloud_run_v2_job` found in `run.tf` and requires the delivery label,
+`ignore_changes` on the image, **and** a deployer IAM binding. The new job was
+red on the third until `delivery.tf` gained it — which is exactly the failure
+that cost a deploy two days ago (spec `infra/0005`), caught this time before
+anything shipped.
+
+## 2026-09-24 — Asking for access is not a worse state
+
+**Spec:** [`backend/0042`](../specs/backend/0042-asking-for-access-is-not-a-worse-state.md),
+which **corrects** `backend/0040` OD-2 and `backend/0041` OD-2. Branch
+`fix/asking_for_access_is_not_a_worse_state`.
+
+A colleague still could not sign in after open enrolment shipped *and* after
+the provisioning job ran over every dev account. The cause is two rules I wrote
+two days apart, each defensible alone:
+
+* open enrolment admits only when there is **no row**, so `revoked` cannot be
+  undone by signing in again;
+* the provisioning job never touches an existing row, for the same reason.
+
+`POST /v1/access-requests` — the **Request access** link the sign-in screen
+offers directly under the button that just refused you — writes a `requested`
+row. After that, neither path moves the person. **Clicking the link the screen
+recommends made them permanently worse off than doing nothing**, and the dev
+logs show two people did exactly that.
+
+**The lesson is about the shape of the reasoning, not the code.** Both rules
+were derived from the same true premise — *a state somebody deliberately set
+must not be undone automatically* — and `requested` is not such a state. It is
+a question. Once enrolment was open there was no longer anyone to answer it,
+so the refusal had no remaining purpose and an active cost. A rule that was
+right under one configuration became wrong under the next, silently, because
+nothing tied it to the switch.
+
+**What would have caught it:** a test over the *interaction*, not the parts.
+Every case in 0040 and 0041 passed. The missing assertion is now in
+`test_self_enrolment_refusals.py`: the same `requested` row under both switch
+positions, which is the only shape that makes the dependency visible.
+
+**Next person:** `ENROLLABLE` is a named frozen set for this reason. If you add
+a status, ask what happens to somebody in it under **both** switch positions
+before deciding, and write the pair down.
+
+---
+
+## 2026-09-24 — the screen could not see the door it was describing
+
+**Spec:** [`backend/0043`](../specs/backend/0043-the-screen-can-ask-which-door-this-is.md) ·
+**Closes:** `0040` §5 and `0042` OD-5, which recorded this same gap nine days apart.
+
+`https://finance-a2ui.web.app` told every visitor *"Access is invite-only
+during the A2UI preview"* over a **Request access** link, while the dev
+deployment ran `AUTH_OPEN_ENROLMENT=true` and admitted anybody Google vouched
+for. Both halves of that line were false, and the second one had already
+produced the defect the entry above is about.
+
+**Nobody missed this.** It was written down twice, in two specs, by the person
+who shipped the switch — with a correct reason for not fixing it on the spot:
+`GET /v1/me/access` is read *after* sign-in, so the screen genuinely could not
+know. What neither entry did was make the gap cost anything. A recorded
+untruth reads exactly like a fixed one from outside the repository.
+
+**What changed.** `GET /v1/sign-in-policy`, public by contract like the two
+routes beside it, answering one enumerated value and no subject data. The
+client asks once when the sign-in page builds its bloc, and shows the design's
+invite line **only** where the backend said `invite-only`.
+
+**Three decisions worth carrying forward:**
+
+- **A build-time flag was refused.** `AUTH_OPEN_ENROLMENT` is already the one
+  thing that decides; a `--dart-define` beside it is a second declaration of
+  one fact, compiled before the service is configured. This repository has
+  five checks against exactly that shape (`ci-conventions.md` §5) and did not
+  need a sixth. **A deployment's behaviour is reported by the deployment.**
+- **Unknown is silent, not invite-only.** A failed policy read shows no claim.
+  Defaulting to the sentence would print the untruth precisely when the
+  backend is unreachable — when it is least verifiable. The cost is named in
+  the spec (OD-5): a closed deployment with a failing read loses its
+  *Request access* link. A degraded screen beats a confident false one.
+- **The open door says nothing, on purpose.** A true replacement sentence was
+  written and discarded: the copy on that screen is design's, and design has
+  not written one for a door that did not exist when the page was drawn. Same
+  ruling `presentation.md` makes about catalog guidance, applied to chrome.
+
+**Harness:** `.claude/rules/backend/security.md`'s public-route sentence named
+five routes and there were seven — `/v1/access-requests` and
+`/v1/preview-sign-ins` had been public since spec 0027 and the rule had never
+been walked. It now names all of them and this one. The authority is still
+`test_openapi_contract.py::PUBLIC`; the rule points at it.
+
+**Next person:** if you add a third door (domain-restricted enrolment was
+discussed and not built), the wire field is already an enumeration and the
+client already refuses a value it does not know rather than guessing which of
+the two it resembles. Add it to `Enrolment`, to `SignInPolicy`, and decide
+what the screen says — that last part is design's, not yours.

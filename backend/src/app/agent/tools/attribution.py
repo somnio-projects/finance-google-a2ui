@@ -19,16 +19,22 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
 from app.agent.registry import register
 from app.core.display import money_display, percentage_display
-from app.core.display import signed_money_display as signed
+from app.core.signed_display import signed_money_display as signed
 from app.domain.attribution import WindowAttribution, attribute_window
 from app.domain.symbols import Ticker
 
 NAME: Final[str] = "compute_attribution"
-VIEW: Final[str] = "attribution.waterfall.v1"
+#: **Not** `attribution.waterfall.v1`: that walks unrealised P/L from cost
+#: basis, while this tool computes a move over a window. Attaching it drew a
+#: chart about all time beside a sentence about today (spec `backend/0039`).
+VIEW: Final[str] = "attribution.window.v1"
 MAX_SYMBOLS: Final[int] = 20
 
 #: The windows the model may ask for. A closed set rather than a free-form
-#: duration: the model picks, it does not invent (ADR-K D-12).
+#: duration: the model picks, it does not invent (ADR-K D-12). Declared here
+#: rather than imported from the projection that draws it, because `app.agent`
+#: may import nothing outside `app.core` and `app.domain` (spec 0006 AC-2).
+#: `test_attribution_windows_agree.py` compares the two declarations.
 WINDOWS: Final[Mapping[str, int]] = {"1d": 1, "7d": 7, "30d": 30}
 DEFAULT_WINDOW: Final[str] = "7d"
 
@@ -51,7 +57,7 @@ class AttributionArguments(BaseModel):
             "portfolio. The totals then cover only the named holdings, so the "
             "waterfall still closes against its own total."
         ),
-        examples=[["BTC", "ETH"]],
+        examples=[["NVDA", "AAPL"]],
     )
 
 
@@ -114,7 +120,7 @@ class ComputeAttributionTool:
                 can recover from, rather than failing the turn.
         """
         options = AttributionArguments.model_validate(dict(arguments))
-        portfolio = await context.portfolios.get(context.subject)
+        portfolio = await context.portfolios.get(context.owner)
         result = attribute_window(
             portfolio,
             window=timedelta(days=WINDOWS[options.window]),
@@ -130,7 +136,12 @@ class ComputeAttributionTool:
             "trend": "up" if result.change >= 0 else "down",
             "contributions": _rows(result),
         }
-        return ToolOutcome(data=data, render=RenderIntent(view=VIEW))
+        # The window goes with the intent: without it the surface draws its
+        # default while the sentence describes another.
+        return ToolOutcome(
+            data=data,
+            render=RenderIntent(view=VIEW, options={"window": options.window}),
+        )
 
 
 register(ComputeAttributionTool())

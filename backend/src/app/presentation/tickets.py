@@ -17,35 +17,15 @@ yet: ADR-K D-16 promotes a primitive when a second consumer needs it.
 """
 
 from collections.abc import Mapping
-from decimal import Decimal
 from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.display import price_display, quantity_display
-from app.core.locales import DEFAULT_LOCALE
-from app.presentation.displays import MoneyDisplay
-
 #: Controls published today; a numeric one is absent on purpose, and
-#: ``MAX_CHOICES`` keeps a descriptor's own list bounded (spec 0018 OD-4).
+#: ``MAX_CHOICES`` keeps a descriptor's own list bounded (spec 0018 OD-4). The
+#: seeded reference set names 17 tickers, so the bound sits above that.
 Control = Literal["choice", "text"]
-MAX_CHOICES: Final[int] = 16
-
-
-class QuantityDisplay(BaseModel):
-    """A number of units: the exact figure and the string to render."""
-
-    model_config = ConfigDict(frozen=True)
-
-    units: Decimal = Field(
-        description="Exact, unrounded unit count — for arithmetic, not display.",
-        examples=["3.2808399"],
-    )
-    display: str = Field(
-        max_length=32,
-        description="Pre-formatted unit count the client binds as-is.",
-        examples=["3.2808399"],
-    )
+MAX_CHOICES: Final[int] = 24
 
 
 class TicketInput(BaseModel):
@@ -79,22 +59,18 @@ class TicketInput(BaseModel):
         description="Regular expression a `text` value must match; else absent.",
         examples=["^[0-9]{1,9}(\\.[0-9]{1,8})?$"],
     )
-
-
-def quantity(value: Decimal, *, locale: str = DEFAULT_LOCALE) -> QuantityDisplay:
-    """Pair an exact unit count with its trimmed string, under ``locale``."""
-    return QuantityDisplay(
-        units=value, display=quantity_display(value, locale=locale, trim=True)
+    hint: str | None = Field(
+        default=None,
+        max_length=64,
+        description=(
+            "What the field accepts, in words, for the reader. The `pattern` "
+            "beside it is the machine's copy of the same fact and is not for "
+            "display: a client that rendered it put `^[0-9]{1,9}(\\.[0-9]"
+            "{1,8})?$` under a form field. Written here because N-5 forbids "
+            "a client turning a regex into prose."
+        ),
+        examples=["Up to 8 decimal places"],
     )
-
-
-def price(value: Decimal, *, locale: str = DEFAULT_LOCALE) -> MoneyDisplay:
-    """Pair an exact unit price with the string a reader multiplies by.
-
-    Quoted through ``price_display``, so a sub-dollar ticker prints no price
-    its own notional contradicts (spec 0014 OD-10).
-    """
-    return MoneyDisplay(amount=value, display=price_display(value, locale=locale))
 
 
 def _descriptor(
@@ -109,6 +85,7 @@ def _descriptor(
         value=value,
         choices=tuple(schema["enum"]) if choice else (),
         pattern=None if choice else schema["pattern"],
+        hint=None if choice else schema.get("hint"),
     )
 
 
@@ -142,9 +119,6 @@ def declared_inputs(
 __all__ = [
     "MAX_CHOICES",
     "Control",
-    "QuantityDisplay",
     "TicketInput",
     "declared_inputs",
-    "price",
-    "quantity",
 ]

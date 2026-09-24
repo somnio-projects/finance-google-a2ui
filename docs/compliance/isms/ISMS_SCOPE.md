@@ -38,7 +38,7 @@ standards because that is what the showcase demonstrates.
 
 **Out of scope**
 
-- The Flutter client's runtime data (it stores nothing; it is in scope only for secure development practices once frontend work starts — GGU-1).
+- The Flutter client's runtime data. The app stores nothing: it declares no storage package, and its ETag cache is in memory for the process lifetime. The **code** is in scope for secure development practices **now, not conditionally** — `frontend/` merged 2026-09-20 with its own gate, so the previous wording ("once frontend work starts — GGU-1") described a state this project left. This entry covered *two* Flutter apps until 2026-09-22, when `client_flutter/` was retired (spec `repo/0002`). What is in scope and not yet covered is recorded as gaps in `VULNERABILITY_MANAGEMENT.md` §1 (no Dart SAST, no Dart CVE scanning, no image scan), not waived here.
 - Physical security of facilities (Google's responsibility; the team is remote).
 - Somnio corporate IT systems beyond the accounts listed above (covered by Somnio's company ISMS).
 - Google's own systems and the Gemini model internals.

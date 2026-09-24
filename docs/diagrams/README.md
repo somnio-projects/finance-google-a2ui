@@ -18,6 +18,17 @@ no tooling, and can never drift silently from the code that a screenshot would.
 | [08-infrastructure.md](08-infrastructure.md) | The production topology on Google Cloud | `infra/`, ADR-F |
 | [09-delivery-pipeline.md](09-delivery-pipeline.md) | Where each check runs and what reaches production | `.claude/rules/ci-conventions.md` |
 | [10-branching.md](10-branching.md) | How work flows from a ticket to production | `docs/compliance/CHANGE_MANAGEMENT.md` |
+| [12-frontend-layers.md](12-frontend-layers.md) | What may import what in the `frontend/` client | ADR-L, `frontend/app/test/architecture/layering_test.dart` |
+| [13-client-delivery.md](13-client-delivery.md) | How the A2UI client reaches a browser | `specs/frontend/0017`, `.github/workflows/frontend-cd.yaml`, `infra/scripts/tests/test_dev_environment.sh` |
+
+**11 is missing on purpose.** `11-client-architecture.md` drew `client_flutter/`,
+the older of two Flutter apps. That app was retired on 2026-09-22 (spec
+[`repo/0002`](../../specs/repo/0002-retire-the-client-flutter-app.md)) and the
+diagram was **deleted rather than superseded**: rule 1 below says a diagram
+draws what is there, and a picture of a directory that does not exist has no
+honest form. The question it answered — what may import what in the Flutter
+client — is [12](12-frontend-layers.md)'s for the app that remains. Numbers are
+reading order and are **never reused**, so the next diagram is 14.
 
 ## Rules
 

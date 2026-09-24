@@ -36,6 +36,7 @@ FIELD_HEADER: Final[tuple[str, ...]] = (
 )
 INDEX_HEADER: Final[tuple[str, ...]] = (
     "Frozen id",
+    "Component",
     "Digest",
     "Fields",
     "Inputs",

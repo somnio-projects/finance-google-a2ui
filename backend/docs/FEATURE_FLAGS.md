@@ -40,6 +40,29 @@ Key convention: lowercase dotted segments, `<domain>.<capability>`
 (`identity.audit`, `orders.submit`). Keys are validated with
 `^[a-z0-9]+(\.[a-z0-9_-]+)*$`, 3–100 chars.
 
+### Keys in use today
+
+| Key | Default | Gates |
+|---|---|---|
+| `identity.audit` | on | `GET /v1/me/audit-events` |
+| `sessions.api` | on | the whole `/v1/sessions` surface (spec 0004) |
+| `views.read` | on | `GET /v1/portfolios/{id}/views` |
+| `views.batch-render` | on | `POST /v1/view-renders` |
+| `views.catalog` | on | `GET /v1/views` |
+| `agent.a2a` | on | **the A2A JSON-RPC route `POST /`** — the agent's kill-switch |
+
+`agent.a2a` is the one the incident runbook reaches for: it is what makes
+`INCIDENT_RESPONSE_PLAN.md` §4's "flip the flag, route answers 404 within the
+15 s TTL" true of the agent and not only of the `/v1` surfaces. It does
+**not** gate `/.well-known/agent-card.json`, which stays reachable by
+contract (spec 0010 OD-1) — containment stops the turn, not discovery.
+
+Regenerate this table from the source rather than trusting it:
+
+```bash
+grep -rn 'require_feature("' backend/src/app/api/ | grep -v feature_gate.py
+```
+
 ## Admin API (scope `admin`)
 
 | Method & path | Body | Result |

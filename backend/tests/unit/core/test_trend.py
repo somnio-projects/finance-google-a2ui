@@ -4,7 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.core.display import percentage_display, signed_money_display
+from app.core.display import percentage_display
+from app.core.signed_display import signed_money_display
 from app.core.trend import DOWN, FLAT, UP, trend_of
 from app.domain.returns import return_on_cost
 

@@ -1,14 +1,15 @@
-"""Deterministic ``ModelClient`` used when no provider key is configured.
+"""Deterministic ``ModelClient`` that replays the replies it was handed.
 
 The same idea as ``NullErrorReporter``: call sites never ask "is a model
 configured?" — they always call ``generate``, and this adapter makes that free
-when there is no provider. The service therefore boots and answers with no
-``GEMINI_API_KEY``, which is what keeps a demo from failing at startup over a
-missing secret.
+when there is no provider. It performs no I/O at all. Tests script it with the
+replies a turn should see and read ``calls`` back to assert what the loop
+actually sent — including that tool results were fed back.
 
-It performs no I/O at all. Tests script it with the replies a turn should see
-and read ``calls`` back to assert what the loop actually sent — including that
-tool results were fed back.
+It was also what an unset ``GEMINI_API_KEY`` selected, until spec 0033 put
+``ScriptedModelClient`` there: a stack without a key now replays the demo's
+flows, and this client's one fixed sentence — ``UNCONFIGURED_MESSAGE`` — is
+what that client still says to a prompt its table does not know.
 """
 
 from collections.abc import Sequence

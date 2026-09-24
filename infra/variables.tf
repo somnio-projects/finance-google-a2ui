@@ -31,8 +31,20 @@ variable "backend_release" {
 }
 
 variable "backend_image" {
-  description = "Fully qualified backend image (built by CI from backend/Dockerfile), e.g. us-central1-docker.pkg.dev/<project>/finance-a2ui/backend:<sha>."
+  description = "BOOTSTRAP image for the Cloud Run service and every Cloud Run job (built by CI from backend/Dockerfile), e.g. us-central1-docker.pkg.dev/<project>/finance-a2ui/backend:<sha>. It is read at CREATE time only: every resource that uses it declares `ignore_changes` on its image, because `deploy_cloud_run.sh` owns which build runs and Terraform owns the shape (spec infra/0004). A mutable tag here is therefore harmless after the first apply and a trap before it — dev names `:latest`, and until 2026-09-22 two jobs really did run whatever that happened to point at."
   type        = string
+}
+
+variable "provisioned_users" {
+  description = "Demo audience for the `provision-users` Cloud Run job (spec backend/0041): the e-mail addresses written into the provisioning registry as active members when a human runs it. An argument list rather than an environment variable so `gcloud run jobs execute --args=a@x,b@y` overrides it for a one-off, which is how it is normally used. EMPTY BY DEFAULT and deliberately so, for the same reason `seed_portfolio_owners` is: an address in an open-source repository is somebody's name. Nothing runs this job automatically."
+  type        = list(string)
+  default     = []
+}
+
+variable "seed_portfolio_owners" {
+  description = "Demo audience for the `seed-portfolios` Cloud Run job (spec backend/0035): the e-mail addresses that are given the curated portfolio when a human runs it. An argument list rather than an environment variable so `gcloud run jobs execute --args=a@x,b@y` overrides it for a one-off, which is how it is normally used. EMPTY BY DEFAULT and deliberately so: spec 0035 OD-2 refuses to put a named person's address into an open-source repository, and an argument-less run fails loudly (the job's parser requires at least one address) rather than seeding somebody nobody chose. Nothing runs this job automatically."
+  type        = list(string)
+  default     = []
 }
 
 variable "domain" {
@@ -61,6 +73,18 @@ variable "auth_audience" {
 variable "auth_oidc_jwks_url" {
   description = "JWKS endpoint of the identity provider (AUTH_OIDC_JWKS_URL)."
   type        = string
+}
+
+variable "auth_open_enrolment" {
+  description = "Whether a verified SSO identity with no registry row enrols itself as an active member (AUTH_OPEN_ENROLMENT, spec backend/0040). FALSE by default and deliberately so: the sign-in screen says access is invite-only, and an environment that sets this true is saying the opposite. `revoked` and `requested` accounts are never enrolled either way — only the absence of a row."
+  type        = bool
+  default     = false
+}
+
+variable "auth_bootstrap_admins" {
+  description = "Comma-separated e-mails made active admins at boot (AUTH_BOOTSTRAP_ADMINS, spec backend/0027 OD-2). A registry with no admin can never gain one through the API, so a fresh environment names its first admins here."
+  type        = string
+  default     = ""
 }
 
 variable "cors_allowed_origins" {

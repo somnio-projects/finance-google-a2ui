@@ -51,8 +51,8 @@ class SimulateSaleArguments(BaseModel):
         min_length=2,
         max_length=MAX_TICKER,
         pattern=TICKER_PATTERN,
-        description="Ticker to sell, such as BTC.",
-        examples=["BTC"],
+        description="Ticker to sell, such as NVDA.",
+        examples=["NVDA"],
     )
     quantity: str | None = Field(
         default=None,

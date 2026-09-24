@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Owner** | Security owner (TL backend) · **Approved by** engineering management |
-| **Version** | 1.0 — 2026-09-19 · **Next review** 2027-09-19 or after any risk-register change |
+| **Version** | 2.0 — 2026-09-21 · **Next review** 2027-09-19 or after any risk-register change |
 | **Scope** | [ISMS_SCOPE.md](ISMS_SCOPE.md) |
 | **Maps to** | ISO/IEC 27001 Cl. 6.1.3 d) |
 
@@ -17,13 +17,29 @@ cloud provider under the shared-responsibility model, referenced from a policy
 here; *Partially implemented* — control exists but a named piece is planned;
 *Planned* — owner and date named, nothing operating yet.
 
-**Summary:** 69 implemented · 5 implemented (organisational/delegated) · 7 partially implemented · 1 planned · 11 not applicable.
+**Summary (recounted from the table, 2026-09-21):** **65** implemented · **5**
+implemented (organisational/delegated: 3 + 2) · **11** partially implemented ·
+**1** planned · **11** not applicable. Total **93**.
+
+> **This line was wrong, and wrong in the flattering direction.** It read
+> "69 implemented · 7 partially implemented" while the table said 68 and 8 —
+> so the summary claimed one more implemented control than the document it
+> summarises. It is now counted from the rows rather than maintained by hand:
+>
+> ```bash
+> grep -cE '^\| A\.[0-9]+\.[0-9]+ .*\| Implemented \|' docs/compliance/isms/STATEMENT_OF_APPLICABILITY.md
+> ```
+>
+> The drop from 68 to 65 is **not** a control regression: A.5.3, A.8.6 and
+> A.8.10 were reclassified to *Partially implemented* in this revision because
+> each was rated on a claim the code does not support. The controls are
+> unchanged; the description of them is now accurate. Raised as **NC-7**.
 
 | Ref | Control | Applicability | Status | Justification / evidence |
 |---|---|---|---|---|
 | A.5.1 | Policies for information security | Applicable | Implemented | docs/compliance/INFORMATION_SECURITY_POLICY.md + policy set; backend/docs/SECURITY.md control matrix |
 | A.5.2 | Information security roles and responsibilities | Applicable | Implemented | RACI in INFORMATION_SECURITY_POLICY.md §4; CONTRIBUTORS.md; .github/CODEOWNERS |
-| A.5.3 | Segregation of duties | Applicable | Implemented | author ≠ reviewer enforced by CODEOWNERS + the **active** `protected-branches` ruleset on `main` and `develop` (`evidence/branch-protection-ruleset.json`); admin scope separate from user scope (ACCESS_CONTROL.md) |
+| A.5.3 | Segregation of duties | Applicable | **Partially implemented** | The ruleset is **active** on `main` and `develop` and requires 1 code-owner approval (`evidence/branch-protection-ruleset.json`); admin scope is separate from user scope (ACCESS_CONTROL.md). But **author ≠ reviewer is currently waived**: exception **EX-1** lets the repository admin merge their own PR (`bypass_mode: pull_request`), expiring **2026-10-03**. Compensating controls per EX-1 (full gate on every PR, `backend-reviewer`, squash-only, asynchronous review by the second code owner). This row read "Implemented — author ≠ reviewer enforced" while EX-1 waived exactly that; corrected 2026-09-21 |
 | A.5.4 | Management responsibilities | Applicable | Implemented | management commitment §5 of the IS policy; approval by merge; MANAGEMENT_REVIEW.md |
 | A.5.5 | Contact with authorities | Applicable | Implemented | BREACH_NOTIFICATION_SLA.md (regulator row, coordinated by Somnio legal) |
 | A.5.6 | Contact with special interest groups | Applicable | Implemented | GitHub Security Advisories, Dependabot/OSV feeds, OWASP rule sets via Semgrep (VULNERABILITY_MANAGEMENT.md) |
@@ -85,15 +101,15 @@ here; *Partially implemented* — control exists but a named piece is planned;
 | A.8.3 | Information access restriction | Applicable | Implemented | PrincipalDep on every route; own-subject queries; scope matrix |
 | A.8.4 | Access to source code | Applicable | Implemented | open-source read; write via GitHub roles + 2FA (`lautarob` admin, `mcampbell-somnio` write — verified 2026-09-19); branch protection **active** on `main` and `develop` (CHANGE_MANAGEMENT.md §4) |
 | A.8.5 | Secure authentication | Applicable | Implemented | auth/providers/*, rate limiting, error masking; MFA delegated to IdP and enforced for admin |
-| A.8.6 | Capacity management | Applicable | Implemented | rate limit, body limit, Cloud Run autoscaling commitments (CLOUD_SERVICES.md §3) |
+| A.8.6 | Capacity management | Applicable | **Partially implemented** | Per-principal rate limit and body limit are implemented. **There is no autoscaling and no capacity management above that**: Cloud Run is pinned `min = max = 1` in production (GGU-83, `infra/environments/production.tfvars:11`), one container at `cpu = "1"` / `512Mi`, with **no measured throughput ceiling and no SLO**. This row previously read "Implemented — Cloud Run autoscaling commitments" when the floor and the ceiling are both 1; corrected 2026-09-21. Gap **G-BCP-1** ([../BUSINESS_CONTINUITY_PLAN.md](../BUSINESS_CONTINUITY_PLAN.md) §5a), risk **R-17**, owner TL backend, review 2026-10-31 |
 | A.8.7 | Protection against malware | Applicable | Implemented | Trivy image scan, gitleaks, pip-audit; OS protection in DEVICE_POLICY.md |
 | A.8.8 | Management of technical vulnerabilities | Applicable | Implemented | PATCH_POLICY.md SLAs; scanners; scheduled scan |
 | A.8.9 | Configuration management | Applicable | Implemented | pydantic-settings frozen, env.example, Dockerfile, compose, uv.lock; .env denied to tooling |
-| A.8.10 | Information deletion | Applicable | Implemented | DATA_RETENTION.md; AuditRepository.purge_older_than + make purge-audit; erasure procedure |
+| A.8.10 | Information deletion | Applicable | **Partially implemented** | Time-based deletion is implemented and tested for `audit_events` (`AuditRepository.purge_older_than` + `make purge-audit` + the scheduled job). **Erasure is a reviewed manual script, not a tested code path** — gap **G-RET-1**, owner TL backend, due 2026-10-31. Until 2026-09-21 the procedure covered only 2 of the 7 tables while promising a data subject that no copy remained; it now covers all 7 ([../DATA_RETENTION.md](../DATA_RETENTION.md) §3, **NC-6**). This row was rated Implemented on the strength of that incomplete procedure |
 | A.8.11 | Data masking | Applicable | Implemented | core/logging.py redact_sensitive; token fingerprint; Sentry PII off |
 | A.8.12 | Data leakage prevention | Applicable | Implemented | gitleaks pre-commit/CI/weekly; .gitleaks.toml; permission denies on secrets |
 | A.8.13 | Information backup | Applicable | Implemented | BACKUP_AND_RECOVERY.md; RESTORE_DRILL_LOG.md drill #1 pass; Cloud SQL backups planned |
-| A.8.14 | Redundancy of information processing facilities | Applicable | Partially implemented | stateless service + health checks today; Cloud Run min-instances + Cloud SQL REGIONAL HA in `infra/run.tf`, `database.tf` — IaC committed in `infra/` (Terraform, validated in CI) — **not applied yet**, first apply with GGU-29 |
+| A.8.14 | Redundancy of information processing facilities | Applicable | Partially implemented | Stateless service + health checks today. **Database redundancy** is defined (Cloud SQL `REGIONAL` synchronous standby, `infra/main.tf:23`, `database.tf`) — committed IaC, validated in CI, **not applied yet**, first apply with GGU-29. **Compute redundancy does not exist and is not planned for the demo**: Cloud Run is `min = max = 1` in production (GGU-83), so there is no second instance to fail over to. `min_instances = 1` is a **cold-start** control, not a redundancy control — this row previously cited it as though it were both; corrected 2026-09-21. Risk **R-11**/**R-17**, gap **G-BCP-1** |
 | A.8.15 | Logging | Applicable | Implemented | structlog JSON with request_id; audit_events; retention in CLOUD_SERVICES.md §4 |
 | A.8.16 | Monitoring activities | Applicable | Implemented | /health, /readyz, Sentry, alert routing in CLOUD_SERVICES.md §5 |
 | A.8.17 | Clock synchronisation | Applicable | Implemented (delegated) | container/Cloud Run host NTP; app uses injected Clock; JWT leeway ≤ 300 s |
