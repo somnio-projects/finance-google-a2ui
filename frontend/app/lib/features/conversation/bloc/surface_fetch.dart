@@ -2,6 +2,11 @@ import 'package:finance_app/features/conversation/bloc/conversation_entry.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 
+/// The sentence for an answer that carried no payload for the view it was
+/// asked for — shared with the edit path so the two cannot drift.
+const String surfaceWithoutPayload =
+    'The response carried no payload for this view.';
+
 /// Turns a render intent into the entry the transcript shows for it.
 ///
 /// The intent names a view and carries no payload, so the client fetches it —
@@ -23,7 +28,7 @@ Future<ConversationEntry> fetchSurfaceEntry(
     Ok<RenderedViews>(:final value) => switch (value.views[intent.view]) {
       null => SurfaceUnavailable(
         view: intent.view,
-        message: 'The response carried no payload for this view.',
+        message: surfaceWithoutPayload,
       ),
       final payload => AgentSurface(payload, options: intent.options),
     },

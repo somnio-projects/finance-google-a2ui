@@ -11,10 +11,6 @@ part of 'conversation_bloc.dart';
 /// refused edit comes back as the backend's own sentence and the previous
 /// payload stays on screen under it.
 extension _EditSurfaces on ConversationBloc {
-  /// The sentence when a re-render answers without the view it was asked for.
-  static const String _noPayload =
-      'The response carried no payload for this view.';
-
   Future<void> _onSurfaceEdited(
     ConversationSurfaceEdited event,
     Emitter<ConversationState> emit,
@@ -26,7 +22,7 @@ extension _EditSurfaces on ConversationBloc {
       event.option: event.value,
     };
     _editsInFlight[event.slot] = options;
-    _replace(emit, event.slot, current.editing(event.option));
+    _replace(emit, event.slot, current.editing(event.option, options));
     final result = await _viewsRepository.fetchPortfolioViews(
       portfolioId: portfolioId,
       views: <String>[current.payload.view],
@@ -41,10 +37,13 @@ extension _EditSurfaces on ConversationBloc {
     _replace(emit, event.slot, switch (result) {
       Ok<RenderedViews>(:final value) =>
         switch (value.views[current.payload.view]) {
-          null => latest.refused(_noPayload),
+          null => latest.refused(surfaceWithoutPayload, current.options),
           final payload => latest.rendered(payload, options),
         },
-      Err<RenderedViews>(:final failure) => latest.refused(failure.message),
+      Err<RenderedViews>(:final failure) => latest.refused(
+        failure.message,
+        current.options,
+      ),
     });
   }
 

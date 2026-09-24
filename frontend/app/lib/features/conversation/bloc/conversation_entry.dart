@@ -72,16 +72,20 @@ final class AgentSurface extends ConversationEntry {
   /// The backend's own sentence for the last refused edit, or null.
   final String? rejection;
 
-  /// The same surface while [option] is being re-rendered.
-  AgentSurface editing(String option) =>
+  /// The same surface while [option] is being re-rendered under [options] —
+  /// the merged map, so a second edit made before this one lands merges onto
+  /// the newest intent rather than the last rendered one (spec 0026 OD-3).
+  AgentSurface editing(String option, Map<String, String> options) =>
       AgentSurface(payload, options: options, pendingOption: option);
 
   /// The re-rendered surface: a new payload under the [options] that made it.
   AgentSurface rendered(ViewPayload payload, Map<String, String> options) =>
       AgentSurface(payload, options: options);
 
-  /// The edit was refused: the previous payload stays, with [message] under it.
-  AgentSurface refused(String message) =>
+  /// The edit was refused: the previous payload stays under [options] — the
+  /// intent that payload was rendered with, so the refused value is not
+  /// re-sent by the next edit — with [message] under it.
+  AgentSurface refused(String message, Map<String, String> options) =>
       AgentSurface(payload, options: options, rejection: message);
 
   @override

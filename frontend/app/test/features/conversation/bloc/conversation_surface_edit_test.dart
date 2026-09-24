@@ -37,7 +37,8 @@ void main() {
               'view': view,
               'title': 'before',
             }),
-            options: <String, String>{'top_n': '5'},
+            // The merged intent is written on the edit itself (OD-3).
+            options: <String, String>{'top_n': '3'},
             pendingOption: 'top_n',
           ),
         );

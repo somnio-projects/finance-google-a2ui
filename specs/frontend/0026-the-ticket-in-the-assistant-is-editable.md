@@ -3,7 +3,7 @@
 - **Area:** frontend (the conversation bloc and transcript, the two order-ticket components, one new scope under `components/`)
 - **Status:** In progress
 - **Ticket:** GGU-113
-- **Also:** [frontend/0011](0011-the-assistant-as-designed.md) OD-4 (a surface's tap becomes a turn), [frontend/0025](0025-failures-have-a-way-out.md) (the branch this stacks on), [backend/0006](../backend/0006-agent-host.md) AC-10 (a ticket with no host renders read-only), [ADR-K](../../docs/adr/ADR-K-response-shaping.md) D-3, D-11
+- **Also:** [frontend/0011](0011-the-assistant-as-designed.md) OD-4 (a surface's tap becomes a turn), [frontend/0025](0025-failures-have-a-way-out.md) (the branch this stacks on), [frontend/0006](0006-order-ticket.md) AC-10 / OD-4 (a ticket with no host renders read-only — the ruling this spec gives a host to), [ADR-K](../../docs/adr/ADR-K-response-shaping.md) D-3, D-11
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-24
 
 ## 1. Problem
@@ -37,7 +37,7 @@ The component's own doc comment said so: *"the card exposes a callback and
   edit is not a question for the model — the declared option is the whole
   message, and the endpoint that answers it validates the value against the
   registry that declared it (D-3). Running a turn per keystroke would also
-  re-run tools whose effects are already on screen (0019 §5). The re-rendered
+  re-run tools whose effects are already on screen (frontend/0019 §5). The re-rendered
   ticket is the backend's, so the edit round-trips and is not local state.
 
 - **OD-2 — `SurfaceEdits`, the scope the host puts around an editable
@@ -50,7 +50,10 @@ The component's own doc comment said so: *"the card exposes a callback and
   option, `legs`. Adding the scope edits no registry and no manifest.
 
 - **OD-3 — the surface remembers what it was rendered with.** `AgentSurface`
-  carries `options` (the agent's intent, then every edit since),
+  carries `options` (the agent's intent, then every edit since — written on
+  the edit itself, not on the answer, so a second edit made while the first
+  is in flight merges onto the newest intent and the first is not silently
+  undone; review caught the half-ported version of this rule),
   `pendingOption` and `rejection`, and three named transitions —
   `editing`, `rendered`, `refused` — so the bloc reads as the machine it is.
   Entries are only ever appended, so an entry's index names the same surface
@@ -63,7 +66,11 @@ The component's own doc comment said so: *"the card exposes a callback and
   ticket (AC-3).** A size that is not a number is a 422 problem document from
   the read endpoint; the client shows its `detail` verbatim in the card's
   notice and keeps the last payload. It validates nothing itself (N-8): the
-  bound lives where the option is declared.
+  bound lives where the option is declared. The detail is shown for **every**
+  failure of the read, including a `dependency-unavailable` — the same choice
+  the standalone `OrderTicketBloc` makes, and unlike the turn notice of 0025
+  OD-4, because a 422's detail *is* the copy: it names the bound that was
+  crossed, and nothing else could.
 
 - **OD-5 — the text control commits on submit, so no debounce.** The v1 text
   field fires `onFieldSubmitted`, not `onChanged`; a choice fires once. The
