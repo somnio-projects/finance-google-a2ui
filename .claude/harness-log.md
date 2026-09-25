@@ -5295,3 +5295,45 @@ moves the frame with it instead of letting a caption drift into shot.
 example — they are built from the suite's own lots — so GGU-114's crypto
 migration does **not** re-shoot them. It does change every *example*-bound
 assertion in the other files of this suite; that is where its rebase lands.
+
+## 2026-09-25 — Every registered account gets today's seed
+
+**Spec:** [`backend/0045`](../specs/backend/0045-every-account-gets-todays-seed.md) ·
+**Ticket:** GGU-126 · **Follows** `backend/0044`.
+
+GGU-114 changed what the seed *contains*. It could not change what accounts
+already **hold**, because both paths that create a portfolio refuse to touch
+an owner who has one: the provider seeds on a miss, and the job skips — the
+property that makes re-running it safe. So an environment seeded before that
+day still serves equities on a build that is entirely crypto, with `/health`
+reporting the right commit and the gate green. `--all` lets the job name the
+population instead of the people; `--all --reset` is the whole instruction.
+
+**Three things worth carrying forward.**
+
+**A data migration is not finished when the code is.** The gate proves the
+*generator* changed. Nothing in it looks at rows that were written by an
+earlier generator, and no check can — the rows are not in the repository. The
+question "what is already out there, and does this change reach it?" belongs
+in the spec of any change to seeded or derived data, and `0045` §1 is the
+worked example.
+
+**The first draft of the tests monkeypatched `session_scope` and ran to 206
+lines.** The file-budget hook rejected it, and the rejection was right for a
+reason the budget does not state: a test that has to patch a session is a test
+whose subject has no seam. Extracting `selected_owners` into its own module
+made the same assertions three lines long and against a fake repository. When
+a test needs scaffolding, suspect the seam before the test.
+
+**`xenon --max-modules A` is part of `quality`, and it is a *module average*.**
+Two `if` statements inline in `parse_args` took `seed_arguments.py` from rank A
+to B — not because either branch is complex, but because the module has two
+functions and one of them (`owners_from`) already scores 8. Extracting
+`_require_one_selection` moved the average from 6.5 to 4.67. Check
+`uv run radon cc <file> -a -s` before assuming a small addition is free.
+
+**Next person:** the capability ships; the **migration does not**. `gcloud` is
+not installed on the machine this was built on, so dev still serves whatever it
+was seeded with until somebody runs
+`gcloud run jobs execute seed-portfolios --args=--all,--reset`. That is AC-7,
+and the PR names it under *Not run* rather than implying it happened.
