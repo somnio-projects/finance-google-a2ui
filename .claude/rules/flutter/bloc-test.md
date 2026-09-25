@@ -1,11 +1,12 @@
 ---
-description: Bloc testing standards — bloc, event, and state test patterns.
+description: "Bloc testing standards — bloc, event, and state test patterns."
 paths:
-  - "client_flutter/*/test/**/*bloc_test.dart"
-  - "client_flutter/*/test/**/*event_test.dart"
-  - "client_flutter/*/test/**/*state_test.dart"
-alwaysApply: false
+  - "frontend/app/test/**/*bloc_test.dart"
+  - "frontend/app/test/**/*event_test.dart"
+  - "frontend/app/test/**/*state_test.dart"
+  - "frontend/packages/*/test/**/*bloc_test.dart"
 ---
+
 # Bloc Testing Standards
 
 How to write comprehensive bloc tests following the project's established patterns and conventions.
@@ -160,7 +161,7 @@ void main() {
 
     group('EventWithData', () {
       const data = 'test-data';
-
+      
       test('supports value equality', () {
         expect(
           EventWithData(data),

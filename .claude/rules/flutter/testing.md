@@ -1,9 +1,10 @@
 ---
-description: Flutter/Dart testing best practices.
+description: "Flutter/Dart testing best practices."
 paths:
-  - "client_flutter/*/test/**/*.dart"
-alwaysApply: false
+  - "frontend/app/test/**/*.dart"
+  - "frontend/packages/*/test/**/*.dart"
 ---
+
 # Flutter/Dart Testing Best Practices
 
 This rule provides comprehensive guidelines for writing high-quality tests in Flutter/Dart projects, following testing standards.
