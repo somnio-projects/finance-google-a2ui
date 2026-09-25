@@ -67,9 +67,16 @@ concurrency:
   group: repo-ci-${{ github.ref }}
   cancel-in-progress: true
 
+# uv's own version is pinned here; the interpreter's is not, and must not be.
+# `backend/.python-version` is its one home, and the `uv run --project backend`
+# inside `scripts/check_spelling.sh` reads it from this repository root —
+# measured, not assumed: `uv python find --project backend` answers 3.14 here
+# with no env var set. A `PYTHON_VERSION` handed to `setup-uv`'s
+# `python-version` input is the same fact declared a second time, in the one
+# place no laptop can read, which is GGU-94's defect in the other language
+# (GGU-125). `repo.gate-pairs` fails on a workflow that restates it.
 env:
   UV_VERSION: "0.11.19"
-  PYTHON_VERSION: "3.14"
 
 jobs:
   spelling:
@@ -84,7 +91,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
+          # No `python-version:` — see the `env:` block above.
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
 

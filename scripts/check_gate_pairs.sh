@@ -197,3 +197,164 @@ fi
 for app in $pin_apps; do
   echo "repo.gate-pairs: ${app} pins Flutter $(jq -r .flutter "${app}/.fvmrc") in ${app}/.fvmrc, and nowhere else"
 done
+
+# ---------------------------------------------------------------------------
+# §5's third question again, in the other language: Python (GGU-125)
+# ---------------------------------------------------------------------------
+# Everything above this line was written for Flutter, and the identical defect
+# sat in the Python half of the repository the whole time with nothing watching
+# it. Until 2026-09-25 `backend-ci.yaml` and `repo-ci.yaml` each carried
+# `PYTHON_VERSION: "3.12"` in an `env:` block, handed to `astral-sh/setup-uv`,
+# while `backend/.python-version`, `backend/pyproject.toml` (twice) and
+# `backend/Dockerfile` (twice) declared the same fact separately. Six
+# declarations, one of them unreadable by any local command — GGU-94's defect,
+# one language over. It was found by hand while upgrading to 3.14 (#130),
+# which is where this repository stops trusting reviewers and writes the check.
+#
+# The drift is REMOVED rather than policed, which is why rule 1 forbids the
+# workflow pin outright instead of comparing its value: `uv sync` and `uv run`
+# read `.python-version` from the project directory on their own and install the
+# interpreter it names, so `setup-uv` needs no `python-version:` input at all.
+# Measured from the repository root with no env var: `uv python find --project
+# backend` answers 3.14, and the same command in a directory with no pin file
+# answers something else entirely.
+#
+# Forbidding it outright rather than comparing it is deliberate, and the reason
+# is the sharpest part of GGU-125: which of the two declarations wins is not
+# stable. `python-version` sets `UV_PYTHON`, and on uv 0.11.19 the tracked file
+# beats it — so the CI-only pin was *inert* while reading as authoritative, and
+# a uv bump or a stray `--python` flag turns it back on. A value that agrees
+# today is still a second home, so rule 1 fails on the LINE, not on the value.
+#
+# `py_pin_dirs` is a LIST for the reason `pin_apps` is: one pin per SOLUTION,
+# not one per repository. A second Python service is one word here.
+py_pin_dirs="backend"
+py_failed=0
+py_checked=0
+
+for dir in $py_pin_dirs; do
+  pin_file="${dir}/.python-version"
+
+  if [ ! -f "$pin_file" ]; then
+    echo "repo.gate-pairs: ${pin_file} is missing — that solution's interpreter pin has no home" >&2
+    exit 1
+  fi
+
+  pin="$(tr -d '[:space:]' < "$pin_file")"
+  case "$pin" in
+    [0-9]*.[0-9]*) ;;
+    *)
+      echo "repo.gate-pairs: ${pin_file} reads '${pin}', which is not an X.Y interpreter version" >&2
+      exit 1
+      ;;
+  esac
+  pin_next="${pin%.*}.$(( ${pin#*.} + 1 ))"
+
+  # 1. No workflow may name a Python version. Comments are stripped first: the
+  #    workflows explain at length why the `env:` var is gone, and prose about
+  #    a removed pin is not a pin. `python-version-file:` is deliberately NOT
+  #    matched — a step that READS the pin is the fix, not the defect.
+  for wf in "${workflow_dir}"/*.yaml; do
+    while IFS= read -r line; do
+      [ -n "$line" ] || continue
+      echo "repo.gate-pairs: $(basename "$wf") names an interpreter version of its own:" >&2
+      echo "    ${line#"${line%%[![:space:]]*}"}" >&2
+      echo "  ${pin_file} says ${pin} and is the one home. Delete the line: uv reads" >&2
+      echo "  that file from the project directory. If a step truly needs the value," >&2
+      echo "  read it (\`python-version-file: ${pin_file}\`), never restate it." >&2
+      py_failed=$(( py_failed + 1 ))
+    done < <(sed 's/[[:space:]]*#.*$//' "$wf" |
+      grep -E '(PYTHON_VERSION|UV_PYTHON)[[:space:]]*[:=]|(^|[^-[:alnum:]_])python-version[[:space:]]*:' || true)
+  done
+
+  # 2. No second machine-readable pin file for the same solution. The prose in
+  #    `CLAUDE.md` and `README.md` names the version as documentation, the way
+  #    each app's `pubspec.yaml` does for Flutter, so only pin files are read.
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
+    [ "$candidate" = "$pin_file" ] && continue
+    echo "repo.gate-pairs: ${candidate} is a second machine-readable Python pin" >&2
+    echo "  ${pin_file} is that solution's one home; a pin file that disagrees with" >&2
+    echo "  it is the defect this rule removed, recreated one file over." >&2
+    py_failed=$(( py_failed + 1 ))
+  done < <(git ls-files -- "${dir}/.python-version" "${dir}/.python-versions" \
+    "${dir}/.tool-versions" "${dir}/runtime.txt")
+
+  # 3. `pyproject.toml` restates the fact twice and cannot stop: `requires-python`
+  #    is the package metadata every resolver reads, and basedpyright's
+  #    `pythonVersion` is what decides which syntax type-checks. Neither can be
+  #    deleted, so these two are COMPARED rather than forbidden — a mismatch
+  #    means the gate type-checks against an interpreter it does not run.
+  pyproject="${dir}/pyproject.toml"
+  if [ -f "$pyproject" ]; then
+    requires="$(sed -n 's/^requires-python[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$pyproject" | head -1)"
+    py_checked=$(( py_checked + 1 ))
+    if [ "$requires" != ">=${pin},<${pin_next}" ]; then
+      echo "repo.gate-pairs: ${pyproject} requires-python = \"${requires:-<absent>}\"" >&2
+      echo "  ${pin_file} says ${pin}, so this must read \">=${pin},<${pin_next}\"" >&2
+      py_failed=$(( py_failed + 1 ))
+    fi
+
+    pyright="$(sed -n 's/^pythonVersion[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$pyproject" | head -1)"
+    py_checked=$(( py_checked + 1 ))
+    if [ "$pyright" != "$pin" ]; then
+      echo "repo.gate-pairs: ${pyproject} pythonVersion = \"${pyright:-<absent>}\"" >&2
+      echo "  ${pin_file} says ${pin}; the type-checker's target and the interpreter" >&2
+      echo "  that runs the tests are the same fact and must read the same value." >&2
+      py_failed=$(( py_failed + 1 ))
+    fi
+  fi
+
+  # 4. The Dockerfile's base images are the fourth and fifth declarations, and
+  #    the ones a laptop never exercises. `FROM` cannot read a file — an `ARG`
+  #    would just be the CI-only pin again — and the builder sets
+  #    `UV_PYTHON_DOWNLOADS=never`, so the base tag IS the interpreter the
+  #    image ships. Compared, therefore, and both values printed.
+  dockerfile="${dir}/Dockerfile"
+  if [ -f "$dockerfile" ]; then
+    docker_code="$(sed 's/[[:space:]]*#.*$//' "$dockerfile")"
+    from_count=0
+    while IFS= read -r line; do
+      [ -n "$line" ] || continue
+      from_count=$(( from_count + 1 ))
+      py_checked=$(( py_checked + 1 ))
+      version="$(printf '%s\n' "$line" |
+        sed -E 's|.*[Ff][Rr][Oo][Mm][[:space:]]+python:([0-9]+\.[0-9]+).*|\1|')"
+      if [ "$version" != "$pin" ]; then
+        echo "repo.gate-pairs: ${dockerfile} builds on python:${version}" >&2
+        echo "    ${line#"${line%%[![:space:]]*}"}" >&2
+        echo "  ${pin_file} says ${pin}. An image built on another interpreter is" >&2
+        echo "  not the service the gate proved; bump both in the same commit." >&2
+        py_failed=$(( py_failed + 1 ))
+      fi
+    done < <(printf '%s\n' "$docker_code" |
+      grep -E '^[[:space:]]*[Ff][Rr][Oo][Mm][[:space:]]+python:[0-9]+\.[0-9]+' || true)
+
+    # Anti-vacuity, the idiom `infra/scripts/tests/` and `check_spelling.sh`
+    # already use: a Dockerfile whose base names no interpreter makes rule 4
+    # pass by finding nothing, which is the shape of every defect above.
+    if [ "$from_count" -lt 1 ]; then
+      echo "repo.gate-pairs: ${dockerfile} has no \`FROM python:X.Y\` line" >&2
+      echo "  the base image is where that solution's shipped interpreter is named;" >&2
+      echo "  if it moved, this rule must be taught the new home, not left green." >&2
+      py_failed=$(( py_failed + 1 ))
+    fi
+  fi
+done
+
+# Three is the floor a single solution cannot fall below while still declaring
+# the fact anywhere: `requires-python`, `pythonVersion`, and at least one base
+# image. Fewer means the comparison found nothing to compare.
+if [ "$py_checked" -lt 3 ]; then
+  echo "repo.gate-pairs: only ${py_checked} derived Python declaration(s) compared — the search found nothing, which is not the same as agreement" >&2
+  exit 1
+fi
+
+if [ "$py_failed" -gt 0 ]; then
+  echo "repo.gate-pairs: ${py_failed} Python interpreter declaration(s) disagree with their pin" >&2
+  exit 1
+fi
+
+for dir in $py_pin_dirs; do
+  echo "repo.gate-pairs: ${dir} pins Python $(tr -d '[:space:]' < "${dir}/.python-version") in ${dir}/.python-version, no workflow restates it, and ${py_checked} derived declaration(s) agree"
+done

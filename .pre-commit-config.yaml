@@ -112,12 +112,16 @@ repos:
 
       # Runs when either half of a §5 pair moves — the gate file or any
       # workflow — because the property it guards spans the two, the same
-      # trigger shape as `infra-dev-environment` above.
+      # trigger shape as `infra-dev-environment` above. It also runs on every
+      # file that declares a TOOLCHAIN version, in both languages: the pin
+      # itself and each file that must agree with it (GGU-94, GGU-125). A
+      # `.python-version` bump that forgets `pyproject.toml` or the Dockerfile
+      # is exactly the commit this hook exists to stop at the laptop.
       - id: repo-gate-pairs
         name: Prove every gate command appears verbatim in its workflow (check_gate_pairs.sh)
         entry: bash scripts/check_gate_pairs.sh
         language: system
-        files: ^(\.claude/ship-gate\.json|\.github/workflows/|frontend/(Dockerfile|\.fvmrc)$)
+        files: ^(\.claude/ship-gate\.json|\.github/workflows/|frontend/(Dockerfile|\.fvmrc)$|backend/(Dockerfile|pyproject\.toml|\.python-version)$)
         pass_filenames: false
 
       # Runs when the check, its suite, or the rule that defines the manual-run
