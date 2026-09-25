@@ -33,7 +33,11 @@ make audit                      # pip-audit
 
 Integration tests need Docker (testcontainers pulls `postgres:16-alpine`).
 Alternative: `docker compose up -d db` at the repo root, then
-`TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance make test`.
+`TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance make test`
+— but **that run empties the compose database**, because the fixtures delete
+every row of every migrated table before each test so the suite is runnable
+twice against one database (GGU-124, spec `backend/0047`). Re-seed with
+`make seed` afterwards, or give the suite its own container.
 
 ### The frontend half
 

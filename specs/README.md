@@ -139,9 +139,11 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0025-failures-have-a-way-out.md](frontend/0025-failures-have-a-way-out.md) | In progress | GGU-110 · GGU-111 · GGU-112 |
 | [frontend/0026-the-ticket-in-the-assistant-is-editable.md](frontend/0026-the-ticket-in-the-assistant-is-editable.md) | In progress | GGU-113 |
 | [backend/0044-the-portfolio-is-crypto.md](backend/0044-the-portfolio-is-crypto.md) | In progress | GGU-114 |
+| [backend/0045-every-account-gets-todays-seed.md](backend/0045-every-account-gets-todays-seed.md) | In progress | GGU-126 |
 | [frontend/0028-the-waterfall-matches-the-ui-kit.md](frontend/0028-the-waterfall-matches-the-ui-kit.md) | In progress | GGU-115 |
 | [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
 | [backend/0046-no-equity-vocabulary-in-a-crypto-payload.md](backend/0046-no-equity-vocabulary-in-a-crypto-payload.md) | In progress | GGU-122 · GGU-123 · GGU-119 |
+| [backend/0047-the-db-backed-suite-cleans-up-after-itself.md](backend/0047-the-db-backed-suite-cleans-up-after-itself.md) | In progress | GGU-124 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |
@@ -153,6 +155,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [infra/0005-the-deployer-can-reach-the-jobs-it-owns.md](infra/0005-the-deployer-can-reach-the-jobs-it-owns.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
 | [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |
+| [repo/0003-the-interpreter-pin-has-one-home.md](repo/0003-the-interpreter-pin-has-one-home.md) | Implemented | GGU-125 |
 | [backend/0021-machine-readable-catalog.md](backend/0021-machine-readable-catalog.md) | Implemented | GGU-53 (server half) |
 | [backend/0043-the-screen-can-ask-which-door-this-is.md](backend/0043-the-screen-can-ask-which-door-this-is.md) | In progress | *unassigned* |
 | [frontend/0002-chart-primitives-and-waterfall.md](frontend/0002-chart-primitives-and-waterfall.md) | Draft | GGU-55 (design GGU-42) |

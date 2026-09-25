@@ -22,7 +22,7 @@ cd backend && make catalog         # regenerate both docs/catalog/ artefacts aft
 ```
 
 - `make gate` == CI == `.claude/ship-gate.json`. Red gate = not done. Never lower `fail_under`, never add `# pragma: no cover` without a one-line reason.
-- Integration tests start PostgreSQL via testcontainers (Docker required). `TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance` reuses `docker compose up db`.
+- Integration tests start PostgreSQL via testcontainers (Docker required). `TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance` reuses `docker compose up db` — **and `make test` empties it**: the fixtures delete every row of every migrated table before each test so the suite can run twice against one database (GGU-124, spec `backend/0047`). Re-run `make seed` afterwards, or point `TEST_DATABASE_URL` at a throwaway container. See `docs/TESTING.md`.
 - The PostToolUse hook runs ruff + basedpyright + file budget on every edited `.py` under `backend/`; the full suite runs in the gate.
 
 ## Layout and the pattern every file follows
