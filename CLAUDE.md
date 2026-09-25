@@ -4,7 +4,7 @@ Somnio × Google **A2UI finance showcase** (Jira project `GGU`): an open-source 
 
 | Folder | What | Manual |
 |---|---|---|
-| `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
+| `backend/` | FastAPI · Python 3.14 · PostgreSQL · uv — the API and (soon) the A2UI agent host | [`backend/CLAUDE.md`](backend/CLAUDE.md) |
 | `frontend/` | The A2UI client — Flutter 3.47.5 pub workspace (`app/` + five pure-Dart packages, one of them the chart geometry) · Bloc · go_router. Layering, the 150-line budget, the numbers rule and the component seam are all held by its gate (ADR-L). Runs in the stack as a container and ships to Firebase Hosting through `frontend-cd` (spec `frontend/0017`) | [`frontend/CLAUDE.md`](frontend/CLAUDE.md) |
 | `infra/` | Terraform for Google Cloud (ADR-F): private VPC, Cloud SQL, Secret Manager, Cloud Run, logging/alerts — one shape per `environment`, with HA/PITR/Cloud Armor derived **on outside `dev`** (`specs/infra/0001-dev-environment.md`). Validated, applied with GGU-29 | [`infra/README.md`](infra/README.md) |
 | `specs/` | Spec-Driven Development — one spec per feature, read before coding | [`specs/README.md`](specs/README.md) |

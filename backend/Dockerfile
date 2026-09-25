@@ -3,7 +3,7 @@
 # the runtime image carries only the virtualenv and the source, runs as a
 # non-root user with a read-only filesystem (see docker-compose.yml).
 
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_PYTHON_DOWNLOADS=never
 RUN pip install --no-cache-dir uv==0.11.19
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH" PORT=8000
 # Pull Debian security updates so the image does not ship base-layer CVEs
 # (Trivy gates CRITICAL/HIGH in CI); perl-base is only a dpkg dependency here.
