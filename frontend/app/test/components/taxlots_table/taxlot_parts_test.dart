@@ -96,19 +96,31 @@ void main() {
       expect(one.shouldRepaint(other), isTrue);
     });
 
-    testWidgets('draws the kit polyline inside the box', (tester) async {
+    testWidgets('strokes the kit polyline in the colour it is given', (
+      tester,
+    ) async {
+      // Asserted against what reached the canvas, not against the constant
+      // the painter reads: `expect(points, hasLength(3))` would be a
+      // tautology, and the tick is ~50 px of a 600 × 346 card — two orders
+      // of magnitude under the golden tolerance, so no raster can see it
+      // either. Emptying `paint` turns this red and nothing else.
       await tester.pumpApp(
         const SizedBox.square(
           dimension: TaxLotMetrics.checkBoxSize,
           child: CustomPaint(
-            painter: TaxLotCheckGlyphPainter(color: Color(0xFFFFFFFF)),
+            painter: TaxLotCheckGlyphPainter(color: Color(0xFF3C90F1)),
           ),
         ),
       );
-      // The tick is a stroke, not a glyph: what is asserted is that it was
-      // painted at the kit's three points rather than how it anti-aliases.
-      expect(TaxLotCheckGlyphPainter.points, hasLength(3));
-      expect(find.byType(CustomPaint), findsWidgets);
+      expect(
+        find.byType(CustomPaint).first,
+        // The stroke width is deliberately not in the predicate: a `Paint`
+        // stores it as a 32-bit float, so 1.6 comes back 1.600000023841858
+        // and the matcher compares exactly. It is asserted below instead.
+        paints
+          ..path(color: const Color(0xFF3C90F1), style: PaintingStyle.stroke),
+      );
+      expect(TaxLotCheckGlyphPainter.strokeWidth, 1.6);
     });
   });
 }

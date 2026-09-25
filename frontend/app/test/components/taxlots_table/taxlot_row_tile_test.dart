@@ -14,8 +14,10 @@ import 'taxlots_table_harness.dart';
 ///
 /// ADR-L D-15 measured that glyph edges carry nearly all cross-platform
 /// raster noise, and a tax-lot row is mostly glyphs. Reading the decoration
-/// names the defect — "the rail is the wrong colour", "a consumed lot is not
-/// tinted" — where a golden says only that something moved.
+/// names the defect — "the rail is the wrong colour" — where a golden says
+/// only that something moved. The tick and the tint are the same kind of
+/// claim about the same row and live in `taxlot_check_box_test.dart`, which
+/// is where AC-3 is proved.
 void main() {
   group(TaxLotRowTile, () {
     Future<void> pumpRow(
@@ -23,7 +25,6 @@ void main() {
       TaxLotTerm term, {
       TaxLotTrend trend = TaxLotTrend.up,
       Brightness brightness = Brightness.light,
-      bool fullySold = false,
     }) => tester.pumpApp(
       Scaffold(
         body: Center(
@@ -34,7 +35,6 @@ void main() {
                 term: term,
                 trend: trend,
                 termLabel: term == TaxLotTerm.long ? 'Long-term' : 'Short-term',
-                fullySold: fullySold,
               ),
             ),
           ),

@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
+import 'taxlot_raw_figures.dart';
 
 /// The two forms the kit draws, and the one model behind them (AC-4).
 ///
@@ -96,6 +97,19 @@ void main() {
       await pumpAt(tester, 600);
       for (final value in values) {
         expect(find.text(value), findsOneWidget, reason: 'desktop: $value');
+      }
+    });
+
+    testWidgets('neither form puts a raw figure on screen', (tester) async {
+      // N-4 over **every** path the catalog marks `binding: raw`, in both
+      // trees: the phone form binds the same six values and inherits the
+      // same obligation, and the two are different widgets.
+      final raws = rawFigures(CatalogSnapshot.load().entryFor('TaxLotTable'));
+      for (final width in <double>[cardFor(328), cardFor(600)]) {
+        await pumpAt(tester, width);
+        for (final raw in raws) {
+          expect(find.text(raw), findsNothing, reason: '$raw at $width');
+        }
       }
     });
 

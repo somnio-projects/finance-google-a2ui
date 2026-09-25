@@ -70,7 +70,8 @@ class TaxLotPalette {
   /// Column captions, the subtitle, the footer's caption.
   final Color mutedText;
 
-  /// A lot the backend marked `trend: up`, and the footer's split pill.
+  /// A lot the backend marked `trend: up`. The footer's split pills take
+  /// their term's colours instead, not this one.
   final Color gain;
 
   /// A lot the backend marked `trend: down`.

@@ -23,7 +23,14 @@ class TaxLotCheckBox extends StatelessWidget {
   static const String tickedLabel = 'fully sold';
 
   /// …and for an empty one.
-  static const String partialLabel = 'partially sold';
+  ///
+  /// The **negation of the flag**, not a claim beyond it: `fully_sold: false`
+  /// says the sale does not consume the lot whole and nothing about what it
+  /// does consume. "Partially sold" would be this client asserting the
+  /// payload's other half, which is the move OD-1 refuses for *Unrealized*.
+  /// These two and the four captions in `TaxLotColumnHeaders` are the whole
+  /// of this component's client-authored English (spec `frontend/0027` OD-1).
+  static const String partialLabel = 'not fully sold';
 
   /// The sentence a whole row announces, in both layouts.
   ///

@@ -67,6 +67,18 @@ void main() {
               as BoxDecoration;
       expect(box.color, TaxLotTokens.light.checkedBox);
       expect(box.border, isNull);
+      // …and the tick itself reaches the canvas. Without this the glyph
+      // could be deleted and every other assertion here would still pass.
+      expect(
+        find.descendant(
+          of: find.byType(TaxLotCheckBox),
+          matching: find.byType(CustomPaint),
+        ),
+        paints..path(
+          color: TaxLotTokens.light.checkGlyph,
+          style: PaintingStyle.stroke,
+        ),
+      );
     });
 
     testWidgets('leaves a partly sold lot untinted and its box empty', (
@@ -86,12 +98,32 @@ void main() {
               as BoxDecoration;
       expect(box.color, isNull);
       expect(box.border!.top.color, TaxLotTokens.light.checkboxBorder);
+      // No tick is painted at all — not a tick in the background colour.
+      expect(
+        find.descendant(
+          of: find.byType(TaxLotCheckBox),
+          matching: find.byType(CustomPaint),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('announces which lots the sale consumes', (tester) async {
       await pumpRow(tester, fullySold: true);
       expect(
         find.bySemanticsLabel(RegExp(TaxLotCheckBox.tickedLabel)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('says of a partly consumed lot only what the flag says', (
+      tester,
+    ) async {
+      // The negation of `fully_sold`, not a claim about what *was* sold.
+      await pumpRow(tester);
+      expect(TaxLotCheckBox.partialLabel, 'not fully sold');
+      expect(
+        find.bySemanticsLabel(RegExp(TaxLotCheckBox.partialLabel)),
         findsOneWidget,
       );
     });

@@ -35,30 +35,32 @@ class TaxLotsTableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TaxLotsTableSurface(
     child: LayoutBuilder(
-      builder: (context, constraints) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          TaxLotsTableHeader(
-            data: data,
-            stacked: constraints.maxWidth < TaxLotMetrics.stackBelow,
-          ),
-          const SizedBox(height: TaxLotMetrics.headerGap),
-          if (data.lots.isEmpty)
-            const TaxLotsTableEmpty()
-          else if (constraints.maxWidth < TaxLotMetrics.stackBelow)
-            ..._stacked()
-          else
-            ..._table(),
-          const SizedBox(height: TaxLotMetrics.dividerGap),
-          TaxLotsTableFooter(
-            label: data.realizedLabel,
-            totalDisplay: data.realizedDisplay,
-            splits: data.splits,
-          ),
-        ],
-      ),
+      builder: (context, constraints) =>
+          _body(stacked: constraints.maxWidth < TaxLotMetrics.stackBelow),
     ),
+  );
+
+  /// The card at one of its two widths — the breakpoint is read once, so the
+  /// header and the lots cannot disagree about which form this is.
+  Widget _body({required bool stacked}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      TaxLotsTableHeader(data: data, stacked: stacked),
+      const SizedBox(height: TaxLotMetrics.headerGap),
+      if (data.lots.isEmpty)
+        const TaxLotsTableEmpty()
+      else if (stacked)
+        ..._stacked()
+      else
+        ..._table(),
+      const SizedBox(height: TaxLotMetrics.dividerGap),
+      TaxLotsTableFooter(
+        label: data.realizedLabel,
+        totalDisplay: data.realizedDisplay,
+        splits: data.splits,
+      ),
+    ],
   );
 
   /// The desktop form: a caption line over the rows, on one grid.

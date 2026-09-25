@@ -1,3 +1,4 @@
+import 'package:finance_app/components/taxlots_table/taxlot_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_tile.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_row_tile.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
@@ -18,12 +19,21 @@ import 'taxlots_table_harness.dart';
 /// enough for a tall card to trip it.
 void main() {
   group('$TaxLotsTableCard edge cases', () {
+    /// The card's own width for a content width — the breakpoint is read
+    /// inside the padding, where the `LayoutBuilder` sits.
+    double cardFor(double content) =>
+        content + TaxLotMetrics.cardPadding.horizontal;
+
+    /// Whether [width] is a card drawing its phone form.
+    bool stacked(double width) =>
+        width - TaxLotMetrics.cardPadding.horizontal < TaxLotMetrics.stackBelow;
+
     Future<void> pumpBoth(
       WidgetTester tester,
       TaxLotsTableData data,
       Future<void> Function(WidgetTester tester, double width) check,
     ) async {
-      for (final width in <double>[360, 600]) {
+      for (final width in <double>[cardFor(328), cardFor(600)]) {
         await tester.pumpApp(
           Scaffold(
             body: SingleChildScrollView(
@@ -48,7 +58,7 @@ void main() {
         width,
       ) async {
         expect(
-          width < 420
+          stacked(width)
               ? find.byType(TaxLotMobileTile)
               : find.byType(TaxLotRowTile),
           findsOneWidget,
@@ -67,7 +77,7 @@ void main() {
       ];
       await pumpBoth(tester, cardData(lots: lots), (tester, width) async {
         expect(
-          width < 420
+          stacked(width)
               ? find.byType(TaxLotMobileTile)
               : find.byType(TaxLotRowTile),
           findsNWidgets(8),

@@ -55,8 +55,17 @@ raster's ink extents).
 ## 3. Design against contract — the gap table
 
 `docs/catalog/view-catalog.snapshot.json`, component `TaxLotTable`, view
-`taxlots.table.v1`, digest `c960b55bd552`, `actions: []`, `options_schema:
-null`.
+`taxlots.table.v1`, digest `c960b55bd552`, **`actions: []`**.
+
+Its `options_schema` declares seven knobs — `currency`, `fields`, `locale`,
+`lot_method`, `precision`, `quantity`, `symbol` — and two of them are load
+bearing below: `locale` is why four captions come from the payload rather
+than from Dart, and `lot_method` is why the rows are never re-sorted (N-10).
+**None of them is a selection**, which is what OD-3 turns on. `symbol` and
+`quantity` are *inputs* the caller already knows — they do not answer the
+header gap, though the payload's `subtitle` ("Sell 75 NVDA under FIFO")
+carries all three of symbol, quantity and method in one server-written
+string.
 
 | Design element | Contract field | Present? | What this build does, and what a viewer sees |
 |---|---|---|---|
@@ -199,12 +208,12 @@ decision before it is a contract one. They are listed in the PR under
 
 | AC | How |
 |---|---|
-| 1 | `taxlots_table_card_test.dart` — the six captions and their order, read from the generated snapshot's own example; `taxlot_columns_test.dart` for the shared grid |
-| 2 | `taxlots_table_card_test.dart::never puts a raw figure on screen` — the N-4 half, extended to `units_display`'s raw twin |
-| 3 | `taxlot_row_tile_test.dart` — the box's decoration and the row's fill for both values of `fully_sold`, plus `findsNothing` on every gesture detector in the card |
+| 1 | `taxlots_table_card_test.dart` — the six captions, read from the generated snapshot's own example; `taxlot_parts_test.dart` for the shared grid and its six-cell assert |
+| 2 | `taxlots_table_card_test.dart::never puts a raw figure on screen` and `taxlots_table_responsive_test.dart::neither form puts a raw figure on screen` — quantified over **every** path the snapshot marks `binding: raw` (`taxlot_raw_figures.dart`), not over a typed list |
+| 3 | `taxlot_check_box_test.dart` — the box's decoration, the row's fill and the **painted tick** for both values of `fully_sold`; `taxlots_table_card_test.dart::nothing on the card is tappable` for the affordance half |
 | 4 | `taxlots_table_responsive_test.dart` — pumped at 360 and at 640, asserting the phone tile appears and the desktop grid does not, and that neither overflows |
 | 5 | `taxlot_tokens_test.dart` — literals, the cross-theme rail equality, the `ChartTokens` agreement and both divergences |
-| 6 | `taxlots_table_skeleton_test.dart` — bars present, no payload text, and `findsNothing` for `AnimationController`-owning widgets |
+| 6 | `taxlots_table_skeleton_test.dart` — one bar per line the table will have, no `Text` at all, the card's own surface rather than the generic one, and the component seam (`ViewComponent.skeleton`). The "no `AnimationController` of its own" half is **structural, not asserted here**: `transition_rules_test.dart` is what fails a new skeleton that declares one, and `SkeletonShimmer` owns the only controllers in this tree |
 | 7 | `taxlots_table_edges_test.dart` — one lot, eight lots, all-ST, all-LT, mixed trend, a 120-character title, each at both widths |
 | 8 | `taxlots_table_golden_test.dart` — through the tolerant comparator (ADR-L D-15); text renders in the test font, so these prove layout, colour and chrome, never typography |
 | 9 | `make gate` |

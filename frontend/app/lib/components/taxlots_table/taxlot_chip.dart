@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 /// and type. One widget with those as parameters keeps the corner radius and
 /// the shape in a single place, which is what stops the third one drifting.
 ///
-/// [label] is always a string the backend wrote. Nothing is appended to it
-/// and nothing is formatted here (N-1).
+/// [label] is always text the backend wrote, and nothing here formats it
+/// (N-1). The footer's caller passes **two** server strings joined by a
+/// space (`'+$26,679.60 Long-term'`) — a join of two payload values, which
+/// is what the kit's `$4,100 LT` costs while `LT` stays uncoined (OD-5).
 class TaxLotChip extends StatelessWidget {
   /// Creates a pill.
   const TaxLotChip({

@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
+import 'taxlot_raw_figures.dart';
 import 'taxlots_table_harness.dart';
 
 /// The desktop card, bound to the generated catalog's own example (AC-1,
@@ -60,19 +61,15 @@ void main() {
     });
 
     testWidgets('never puts a raw figure on screen', (tester) async {
-      // The N-4 half of the contract. `units` and every raw `amount` beside
-      // a display string must not reach a `Text` — and `acquired_on`, whose
-      // display twin is what the kit shows.
+      // The N-4 half of the contract, quantified over **every** path the
+      // catalog marks `binding: raw` rather than over a typed list of five
+      // — plus `acquired_on`, whose display twin is what the kit shows and
+      // which `develop` was printing raw.
       await pumpCard(tester, example);
-      for (final raw in <String>[
-        '60.0000',
-        '15.0000',
-        '45600.00',
-        '26679.600000',
-        '30349.500000',
-        '72279.600000',
-        '2025-01-13',
-      ]) {
+      final raws = rawFigures(CatalogSnapshot.load().entryFor('TaxLotTable'));
+      expect(raws, contains('45600.00'));
+      expect(raws, contains('60.0000'));
+      for (final raw in <String>[...raws, '2025-01-13']) {
         expect(find.text(raw), findsNothing, reason: '$raw is a raw figure');
       }
     });

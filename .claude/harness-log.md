@@ -5028,6 +5028,17 @@ as one no test loads — indistinguishable from a genuinely untested file.
 reason in its doc comment. `TaxLotMetrics` was already over the line by
 accident, because its radii are getters.
 
+**And one the reviewer found, which is the same defect one level up:** the
+hand-painted tick had a test that could never be red —
+`expect(TaxLotCheckGlyphPainter.points, hasLength(3))` compares a constant
+with itself, and the mark is ~50 px of a 600 × 346 card, two orders of
+magnitude under the 1.5 % golden tolerance. Neither the widget tests nor the
+goldens could see it. It is asserted through `paints..path(…)` now, against
+what reached the canvas, and emptying `paint` was watched turning two suites
+red. **When a component paints something by hand instead of using a
+framework glyph, that mark needs a `paints` assertion**: it is below what a
+tolerant raster can resolve and above what a decoration test looks at.
+
 **Next person:** the goldens in
 `app/test/components/taxlots_table/goldens/` were shot against today's
 catalog snapshot. GGU-114 migrates the portfolio from equities to crypto and
