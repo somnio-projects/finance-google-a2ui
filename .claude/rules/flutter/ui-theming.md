@@ -1,10 +1,11 @@
 ---
-description: Flutter UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, WidgetStateProperty, fonts, and accessibility.
+description: "Flutter UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, WidgetStateProperty, fonts, and accessibility."
 paths:
-  - "client_flutter/*/lib/**/view/**/*.dart"
-  - "client_flutter/*/lib/**/widgets/**/*.dart"
-alwaysApply: false
+  - "frontend/app/lib/**/view/**/*.dart"
+  - "frontend/app/lib/components/**/*.dart"
+  - "frontend/app/lib/theme/**/*.dart"
 ---
+
 # Flutter UI Theming & Styling
 
 ## Visual Design & Theming
@@ -326,7 +327,7 @@ education levels, and learning styles.
 ### No hardcoded spacing, radius, or color values
 
 Every numeric spacing, border radius, and color value must come from
-`mobile/packages/app_ui`.
+`frontend/packages/app_ui`.
 
 **Spacing / radius:** use `AppSpacing.*` constants (`xs`, `sm`, `md`, `lg`, `xl`,
 `xxl`, `s10`, `xxs`, `xxxs`). If no single token matches, compose with addition:

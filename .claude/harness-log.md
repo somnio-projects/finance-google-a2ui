@@ -5771,3 +5771,59 @@ needed once one appears: the quoted one as context, one from the branch as
 evidence.
 
 `sdd.md` §3 now carries both, next to the check they are about.
+
+## 2026-09-25 — GGU-131 · seven Flutter rule files were dead, and the first two fixes were wrong
+
+**No spec.** Synced rule content, corrected. The path to the fix is the entry.
+
+**The defect.** Every file under `.claude/rules/flutter/` scoped itself to
+`client_flutter/*/…`, an app deleted on 2026-09-22. Fifteen patterns matching
+**zero** tracked files, so seven rule files never loaded — including the ones
+`.claude/rules/frontend/testing.md` delegates to with *"still apply in full"*.
+A rule that does not load produces no error, no warning and no diff.
+
+**Two wrong diagnoses before the right one, both recorded because the shape
+repeats:**
+
+1. *"It is an upstream bug, raise it there."* Written without opening the
+   upstream repository. Upstream is generic: `globs: "mobile/…"`.
+2. *"Then the fix is re-running the sync."* Measured, and **false**: the CLI
+   installed on the machine was **v2.13.0**, and the `paths:` lazy-load adapter
+   landed in **v3.0.0**. Running v2.13.0 rewrote the frontmatter into the old
+   prose form — which the upstream CHANGELOG records as *always-loaded, ~56 KB
+   per session for the dart stack alone*. That run was reverted immediately.
+
+**What actually fixes it.** `somnio update` (2.13.0 → 3.0.0), then
+`somnio rules install --agent claude --project --stacks flutter`. That restores
+the lazy-load `paths:` form — but emits upstream's `mobile/…` verbatim, which
+matches nothing here either. **The CLI does not remap to the consumer's
+layout.** So the globs are corrected locally to this app's tree, and every one
+is verified by count rather than by eye:
+
+```
+frontend/app/lib/**/*.dart                297      frontend/app/test/**/*.dart      265
+frontend/packages/*/lib/**/*.dart          54      frontend/packages/*/test/**/…     62
+frontend/app/lib/**/view/**/*.dart         92      …/*bloc_test.dart                  9
+frontend/app/lib/components/**/*.dart     113      …/*event_test.dart                 2
+frontend/app/lib/theme/**/*.dart           17
+```
+
+Two patterns still match zero — `*state_test.dart` and a bloc test under
+`packages/`. Those are **kept on purpose**: they name a convention the synced
+rule prescribes and this app has not used yet, so they start working the day
+someone writes that file. That is a different thing from a glob pointing at a
+directory that cannot exist.
+
+**The standing tension this creates, stated rather than hidden.** `CLAUDE.md`
+lists `.claude/rules/flutter/` under *Do not touch* because it is synced. The
+local path correction is drift by that rule's definition, and the next sync
+will undo it. The trade was: seven dead rule files in a Flutter project, versus
+a documented override that a ticket tracks. The durable fix is upstream making
+the pack layout-agnostic — `mobile/` is one consumer's directory name hardcoded
+into a shared pack.
+
+**Also found, not fixed here:** four rules carry no `paths:` at all and are
+therefore always loaded — `backend/api-design.md`, `backend/presentation.md`,
+`ci-conventions.md`, `diagrams.md`. The last two are marked *all* in the index
+and are fine. The first two are indexed as python-path-scoped and are not,
+which is GGU-129's defect class in the table that says when each rule loads.

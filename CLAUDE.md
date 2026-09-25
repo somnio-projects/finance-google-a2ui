@@ -140,3 +140,17 @@ matching path is touched.
 
 See `.claude/ship-gate.json` — `cd backend && make gate` and `cd frontend && make gate`.
 <!-- somnio:harness:end -->
+
+<!-- BEGIN SOMNIO RULES — do not edit this block manually -->
+## Flutter Rules
+
+Loaded on demand from `.claude/rules/flutter/` when you open a matching file — see each rule's `paths:` frontmatter.
+
+- `.claude/rules/flutter/architecture.md` — General architecture guidelines when using Flutter.
+- `.claude/rules/flutter/best-practices.md` — Flutter principles, workflow, testing standards, documentation, and project-specific rules.
+- `.claude/rules/flutter/bloc-test.md` — Bloc testing standards
+- `.claude/rules/flutter/code-patterns.md` — Dart and Flutter implementation patterns
+- `.claude/rules/flutter/layout.md` — Flutter layout patterns
+- `.claude/rules/flutter/testing.md` — Flutter/Dart testing best practices.
+- `.claude/rules/flutter/ui-theming.md` — Flutter UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, WidgetStateProperty, fonts, and accessibility.
+<!-- END SOMNIO RULES -->
