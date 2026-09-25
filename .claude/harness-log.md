@@ -5039,9 +5039,25 @@ red. **When a component paints something by hand instead of using a
 framework glyph, that mark needs a `paints` assertion**: it is below what a
 tolerant raster can resolve and above what a decoration test looks at.
 
+**And the third defect the branch met, which CI found and the laptop could
+not:** the first six goldens were whole-card, and **five failed on the Linux
+runner** at 4.06–5.98 % against a 1.5 % tolerance while passing on macOS.
+Light and dark differed by the *identical* pixel count — the signature of
+glyph rasterisation rather than of anything this code draws. The fix is not a
+wider tolerance (that is threshold-fitting, and GGU-106 measured that an
+amplitude floor does not suppress glyph noise either): **a golden frames
+chrome, never text**. Spec OD-10 carries the table of what each of the seven
+frames now proves and what it no longer proves.
+
+Two things worth carrying forward from it. **Cropping made the goldens
+stronger, not weaker** — a one-step token error on the selected-row tint
+moves 32.5 % of the cropped frame and well under 1 % of a whole card, so the
+narrow frame is the sensitive one. And **derive the crop from the layout's
+own constants** (`TaxLotColumns.leadingWidth + railGap`), so a grid change
+moves the frame with it instead of letting a caption drift into shot.
+
 **Next person:** the goldens in
-`app/test/components/taxlots_table/goldens/` were shot against today's
-catalog snapshot. GGU-114 migrates the portfolio from equities to crypto and
-regenerates that snapshot, so whichever of the two lands second re-runs
-`flutter test --update-goldens` and commits the result. Nothing in this
-component anticipates the new data.
+`app/test/components/taxlots_table/goldens/` no longer bind the catalog
+example — they are built from the suite's own lots — so GGU-114's crypto
+migration does **not** re-shoot them. It does change every *example*-bound
+assertion in the other files of this suite; that is where its rebase lands.

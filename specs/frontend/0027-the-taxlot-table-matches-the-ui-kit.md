@@ -173,6 +173,42 @@ decision before it is a contract one. They are listed in the PR under
   `SurfaceSkeleton` is not it. No `AnimationController` is declared here:
   reduced motion is inherited through `SkeletonShimmer` (ADR-L, rule §3b).
 
+- **OD-10 — a golden frames chrome, never text, and this one was learned the
+  expensive way.** The first attempt shot the whole card at both widths and
+  both themes. It passed on macOS and **five of six failed on the Linux
+  runner**, at 4.06–5.98 % against a 1.5 % tolerance — and light and dark
+  differed by the *identical* pixel count (8132 both times), which is the
+  signature that says the difference is not in the drawing: macOS and Linux
+  lay glyphs out differently, and this card is a table of dates, counts and
+  money columns. ADR-L D-15 measured that noise floor and `frontend/0004`
+  already concluded it for a card of the same kind. Widening the tolerance
+  would be threshold-fitting; the tolerance goes down as the noise is
+  understood, never up to absorb a failure.
+
+  So each golden now frames a region with **no text in it**, and the crops are
+  computed from the same constants the layout uses (`TaxLotColumns.leadingWidth
+  + railGap`), so a grid change moves the frame instead of letting a caption
+  drift into shot:
+
+  | Golden | Proves | No longer proves |
+  |---|---|---|
+  | `taxlot_rails{,_dark}` | both rail colours and the 4 px width, the 41/8 row rhythm, the tint of a consumed lot, the filled box with its painted tick, the hairline box of an untouched one | anything to the right of the tick box |
+  | `taxlot_rails_phone` | the phone block's 80/4 rhythm and the same rail and tick | the four-cell grid and the date |
+  | `taxlot_surface{,_dark}` | the card plane: surface, 16 px radius, the shadow that replaces the old hairline | the padding, which an empty plane does not show |
+  | `taxlot_skeleton{,_dark}` | the whole loading card — kept whole **because the artboard draws it with no text at all**, which is also why the waterfall's loading goldens are portable | nothing it draws is text |
+
+  What the deleted goldens covered is asserted on the widget tree instead,
+  where it already was and where a failure names the defect: the six captions
+  and their order, every display string, the absent raw figures, the footer's
+  caption and total, the two forms at their two widths.
+
+  **Mutation-checked, both ways.** `railWidth` 4 → 5 turns all three rail
+  goldens red; a **one-step** colour change on `selectedRow`
+  (`#EBF1FF` → `#EBF1FE`) moves **32.5 %** of the table frame and 26.9 % of
+  the phone one. The same one-step error on a whole-card golden moves well
+  under 1 % — under the tolerance, invisible. Cropping did not weaken these
+  goldens; it is what makes them sensitive.
+
 - **OD-9 — the files split again, by responsibility.** The directory was
   already 17 files; the new work adds the phone tile, the header, the tick
   box, the skeleton and a second metrics table, and splits the model in two.
@@ -199,8 +235,8 @@ decision before it is a contract one. They are listed in the PR under
 7. **AC-7** — the edge cases render without overflow at both widths: one lot,
    many lots, all short-term, all long-term, gain and loss rows together, and
    a long title.
-8. **AC-8** — goldens exist for both widths × both themes, and for the
-   selected and loading states.
+8. **AC-8** — every golden frames a region a raster can carry across
+   platforms, and each one says what it proves and what it no longer proves.
 9. **AC-9** — `cd frontend && make gate` green, 100 % line coverage per file,
    no file over 150 lines.
 
@@ -215,7 +251,7 @@ decision before it is a contract one. They are listed in the PR under
 | 5 | `taxlot_tokens_test.dart` — literals, the cross-theme rail equality, the `ChartTokens` agreement and both divergences |
 | 6 | `taxlots_table_skeleton_test.dart` — one bar per line the table will have, no `Text` at all, the card's own surface rather than the generic one, and the component seam (`ViewComponent.skeleton`). The "no `AnimationController` of its own" half is **structural, not asserted here**: `transition_rules_test.dart` is what fails a new skeleton that declares one, and `SkeletonShimmer` owns the only controllers in this tree |
 | 7 | `taxlots_table_edges_test.dart` — one lot, eight lots, all-ST, all-LT, mixed trend, a 120-character title, each at both widths |
-| 8 | `taxlots_table_golden_test.dart` — through the tolerant comparator (ADR-L D-15); text renders in the test font, so these prove layout, colour and chrome, never typography |
+| 8 | `taxlots_table_golden_test.dart` — seven text-free frames through the tolerant comparator (ADR-L D-15). See OD-10 for what each one proves; mutation-checked twice, and the crops are derived from the layout's own constants so a caption cannot drift into shot |
 | 9 | `make gate` |
 
 ## 7. Open decisions
@@ -241,5 +277,7 @@ decision before it is a contract one. They are listed in the PR under
   neither and uses `tabularFigures` on the system face instead
   (`frontend/0002` OD-4, `frontend/0003` OD-6). Unchanged here.
 - **The crypto migration (GGU-114).** It regenerates the catalog snapshot and
-  therefore every example and golden in this suite. This branch is built
+  therefore every example in this suite. The goldens no longer bind the
+  example — OD-10's frames are built from the harness's own lots — so they
+  survive it, which is a second dividend of cropping. This branch is built
   against today's contract; whichever lands second re-shoots the goldens.

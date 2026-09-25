@@ -1,106 +1,104 @@
-import 'package:finance_app/components/taxlots_table/taxlots_table_card.dart';
-import 'package:finance_app/components/taxlots_table/taxlots_table_component.dart';
-import 'package:finance_app/components/taxlots_table/taxlots_table_data.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_columns.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_metrics.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_mobile_metrics.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_mobile_tile.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_row_tile.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
-import 'package:finance_app/components/taxlots_table/taxlots_table_skeleton.dart';
-import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/catalog_snapshot.dart';
-import '../../helpers/pump_app.dart';
+import 'taxlot_golden_frame.dart';
 import 'taxlots_table_harness.dart';
 
-/// Goldens for the two layouts, both themes and the loading state (AC-8).
+/// Goldens for a row's chrome: the rail, the tick box and the tint (AC-8).
 ///
-/// They go through the tolerant comparator in `flutter_test_config.dart`
-/// (ADR-L D-15) — a raster is not portable, and the measured cross-platform
-/// noise floor is 0.69 % against a 1.5 % threshold. **Text renders in
-/// Flutter's test font**, a block per glyph, so what these prove is the
-/// chrome the row tests cannot see: the rail, the tint, the tick, the rule,
-/// the pills and the way the six columns fall. Colour and geometry are
-/// asserted directly beside them, which is what makes a tolerance here safe
-/// rather than a loosened threshold.
+/// Each frame is the left edge of a row, cut at the point its first **text**
+/// cell begins — computed from the layout's own constants, so a grid change
+/// moves the frame rather than letting a caption drift into shot. What these
+/// no longer prove (the captions, the column order, the figures) is asserted
+/// on the widget tree in `taxlots_table_card_test.dart`, where a failure
+/// names the defect instead of saying only that something moved.
+///
+/// **Cropping made them stronger.** A one-step error on the selected-row
+/// tint (`#EBF1FF` → `#EBF1FE`) moves 32.5 % of this frame and 26.9 % of the
+/// phone one; the same error on a whole-card golden moves well under 1 %,
+/// which is under the tolerance and therefore invisible.
 void main() {
-  group('TaxLotTable goldens', () {
-    const component = TaxLotsTableComponent();
-    const boundary = Key('golden-subject');
-    late TaxLotsTableData data;
+  group('TaxLotTable row-chrome goldens', () {
+    /// The widest a row can be before its first text cell begins: the rail,
+    /// the tick box and the two gaps around them.
+    const tableChrome = TaxLotColumns.leadingWidth + TaxLotMetrics.railGap;
 
-    setUp(() {
-      data = component.read(
-        ViewPayload.fromJson(CatalogSnapshot.load().exampleFor('TaxLotTable')),
-      );
-    });
+    /// The same for the phone block, whose date begins after the box.
+    const phoneChrome =
+        TaxLotMetrics.railWidth +
+        TaxLotMobileMetrics.railGap +
+        TaxLotMetrics.checkBoxSize;
 
-    Future<void> shoot(
-      WidgetTester tester,
-      Widget subject,
-      double width,
-      String name, {
-      Brightness brightness = Brightness.light,
-    }) async {
-      await tester.pumpApp(
-        Center(
-          child: RepaintBoundary(
-            key: boundary,
-            child: SizedBox(width: width, child: subject),
-          ),
+    /// Four rows: a consumed long-term lot, an untouched one, and the same
+    /// pair short-term — every combination the rail and the box can be in.
+    Widget rows() => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final (index, lot) in <TaxLot>[
+          lot(fullySold: true),
+          lot(),
+          lot(term: TaxLotTerm.short, termLabel: 'Short-term', fullySold: true),
+          lot(term: TaxLotTerm.short, termLabel: 'Short-term'),
+        ].indexed) ...<Widget>[
+          if (index > 0) const SizedBox(height: TaxLotMetrics.rowGap),
+          TaxLotRowTile(lot: lot),
+        ],
+      ],
+    );
+
+    /// Two phone blocks, one consumed and one not.
+    Widget blocks() => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        TaxLotMobileTile(
+          lot: lot(fullySold: true),
+          costBasisLabel: 'Cost basis',
+          proceedsLabel: 'Proceeds',
         ),
-        brightness: brightness,
-        surfaceSize: const Size(900, 900),
-        // A shimmer repeats for ever, so a skeleton golden never settles
-        // without this; it is also the state the card must be correct in.
-        reducedMotion: true,
-      );
-      await expectLater(
-        find.byKey(boundary),
-        matchesGoldenFile('goldens/$name.png'),
-      );
-    }
+        const SizedBox(height: TaxLotMobileMetrics.tileGap),
+        TaxLotMobileTile(
+          lot: lot(term: TaxLotTerm.short, termLabel: 'Short-term'),
+          costBasisLabel: 'Cost basis',
+          proceedsLabel: 'Proceeds',
+        ),
+      ],
+    );
 
-    testWidgets('the table, light', (tester) async {
-      await shoot(tester, TaxLotsTableCard(data: data), 600, 'taxlot_table');
+    testWidgets('the rails, the boxes and the tint, light', (tester) async {
+      // Proves: both rail colours and the 4 px width, the 41/8 row rhythm,
+      // the tinted band of a consumed lot, the filled box with its painted
+      // tick, and the hairline box of an untouched one.
+      await shootGolden(
+        tester,
+        croppedFrame(width: 600, crop: tableChrome, child: rows()),
+        'taxlot_rails',
+      );
     });
 
-    testWidgets('the table, dark', (tester) async {
-      await shoot(
+    testWidgets('the rails, the boxes and the tint, dark', (tester) async {
+      await shootGolden(
         tester,
-        TaxLotsTableCard(data: data),
-        600,
-        'taxlot_table_dark',
+        croppedFrame(width: 600, crop: tableChrome, child: rows()),
+        'taxlot_rails_dark',
         brightness: Brightness.dark,
       );
     });
 
-    testWidgets('the phone card, light', (tester) async {
-      await shoot(tester, TaxLotsTableCard(data: data), 328, 'taxlot_phone');
-    });
-
-    testWidgets('the phone card, dark', (tester) async {
-      await shoot(
+    testWidgets('the phone block rail and tick', (tester) async {
+      // The phone form's rail is 80 px on a 4 px gap — a different rhythm
+      // from the table's, and the one thing about it a picture can hold.
+      await shootGolden(
         tester,
-        TaxLotsTableCard(data: data),
-        328,
-        'taxlot_phone_dark',
-        brightness: Brightness.dark,
+        croppedFrame(width: 328, crop: phoneChrome, child: blocks()),
+        'taxlot_rails_phone',
       );
-    });
-
-    testWidgets('a table whose lots the sale all consumes', (tester) async {
-      // The kit's *selected* artboard, which is a payload rather than an
-      // interaction (OD-3): the tint, the filled boxes and the ticks.
-      final consumed = cardData(lots: <TaxLot>[lot(fullySold: true), lot()]);
-      await shoot(
-        tester,
-        TaxLotsTableCard(data: consumed),
-        600,
-        'taxlot_table_consumed',
-      );
-    });
-
-    testWidgets('the loading state, light', (tester) async {
-      await shoot(tester, const TaxLotsTableSkeleton(), 600, 'taxlot_skeleton');
     });
   });
 }
