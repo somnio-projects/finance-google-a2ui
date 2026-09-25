@@ -1,6 +1,6 @@
 # CLAUDE.md — backend
 
-FastAPI 0.141 · Python 3.12 · uv · SQLAlchemy 2 (async, asyncpg) · Alembic · PostgreSQL 16 · structlog · Sentry. Package `app` under `src/`. Part of the Somnio × Google A2UI showcase (Jira `GGU`). Read the root `CLAUDE.md` first; path-scoped rules for this folder live in `.claude/rules/backend/`.
+FastAPI 0.141 · Python 3.14 · uv · SQLAlchemy 2 (async, asyncpg) · Alembic · PostgreSQL 16 · structlog · Sentry. Package `app` under `src/`. Part of the Somnio × Google A2UI showcase (Jira `GGU`). Read the root `CLAUDE.md` first; path-scoped rules for this folder live in `.claude/rules/backend/`.
 
 ## Run
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "FastAPI backend for the Somnio × Google A2UI finance showcase."
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -75,7 +75,7 @@ known-first-party = ["app"]
 # --------------------------------------------------------------------------- pyright
 [tool.basedpyright]
 typeCheckingMode = "strict"
-pythonVersion = "3.12"
+pythonVersion = "3.14"
 include = ["src", "tests"]
 exclude = [".venv", "alembic"]
 reportMissingTypeStubs = false
