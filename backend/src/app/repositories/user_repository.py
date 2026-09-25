@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from datetime import datetime
+from typing import Final
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,6 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DependencyUnavailableError
 from app.models.user import User
+
+#: The statuses an account must be in for a seeded portfolio to mean anything.
+#:
+#: ``revoked`` is absent for the reason ``provision_users`` states out loud: an
+#: offboarding somebody performed is not undone by a job run. ``requested`` is
+#: absent for a subtler one — that account cannot sign in yet, so seeding it now
+#: would fix an ``as_of`` at today and the lazy provider would never replace it,
+#: handing the person a portfolio dated before they were admitted.
+ADMITTED: Final[tuple[str, ...]] = ("active", "invited")
 
 
 class UserRepository:
@@ -37,6 +47,31 @@ class UserRepository:
         except (SQLAlchemyError, OSError) as exc:
             raise DependencyUnavailableError("database read failed") from exc
         return result.scalars().all()
+
+    async def list_admitted_emails(self) -> list[str]:
+        """Return the ownership key of every admitted account, oldest first.
+
+        Deliberately unbounded, unlike :meth:`list_all`. Its caller is the seed
+        job's ``--all``, whose whole claim is *every* account — a limit there
+        would seed a subset and report success, which is the failure this
+        repository's rules keep finding. The population is a demo audience,
+        counted in tens.
+
+        Returns:
+            Lower-cased addresses of the ``active`` and ``invited`` accounts.
+
+        Raises:
+            DependencyUnavailableError: When the database cannot be reached.
+        """
+        try:
+            result = await self._session.execute(
+                select(User.email)
+                .where(User.status.in_(ADMITTED))
+                .order_by(User.created_at, User.email)
+            )
+        except (SQLAlchemyError, OSError) as exc:
+            raise DependencyUnavailableError("database read failed") from exc
+        return list(result.scalars().all())
 
     async def upsert(
         self,
