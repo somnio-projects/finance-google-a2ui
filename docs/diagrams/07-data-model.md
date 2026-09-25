@@ -53,6 +53,7 @@ erDiagram
         decimal quantity "NUMERIC(38,18) — never float"
         decimal cost_basis "NUMERIC(38,18)"
         datetime created_at
+        datetime updated_at
     }
     PORTFOLIO_TRANSACTIONS {
         uuid id PK
@@ -65,6 +66,7 @@ erDiagram
         decimal price "NUMERIC(38,18)"
         string memo "words beside the row — 0007, nullable"
         datetime created_at
+        datetime updated_at
     }
     USERS {
         uuid id PK
@@ -93,6 +95,16 @@ erDiagram
 | `0007_transaction_memo` *(spec [`backend/0028`](../../specs/backend/0028-holdings-and-activity.md))* | `memo` on the ledger, for the words the Activity tab prints beside a row |
 | `0008_portfolio_owner_email` *(spec [`backend/0035`](../../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md))* | `subject` → `owner_email`; the ownership key becomes the **verified e-mail**, and existing rows are deleted because an opaque `sub` maps to no address |
 | `0009_transaction_kind_width` *(spec [`backend/0044`](../../specs/backend/0044-the-portfolio-is-crypto.md))* | `kind` widens to 16 characters for `staking_reward`; the column was sized when `dividend` was exactly eight. No data is migrated — the demo portfolios are **re-seeded**, because a backfill would keep rows whose symbols left the market reference |
+
+**This picture is now checked against both of its sources** (spec
+[`backend/0048`](../../specs/backend/0048-the-metadata-knows-every-table.md)).
+`tests/integration/test_metadata_completeness.py` compares the metadata
+`alembic/env.py` hands to autogenerate against the migrated schema, so a table
+in `alembic/versions/` and in no model fails the suite — it used to propose
+`op.drop_table()` for `portfolios`, `portfolio_lots`, `portfolio_transactions`
+and `users` instead. `updated_at` appears on six tables and is declared once, by
+`UpdatedAtMixin` in `models/base.py`; two of the rows above were missing it here
+while PostgreSQL had it since `0005`.
 
 **No holdings table, on purpose.** `Portfolio.positions` is derived from the
 lots and `Portfolio.validate` proves the derivation on every load; persisting

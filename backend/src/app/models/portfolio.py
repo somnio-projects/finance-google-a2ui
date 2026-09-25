@@ -30,7 +30,7 @@ from uuid import UUID
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, UpdatedAtMixin
 
 #: Money and quantity are stored exactly, never as a float (ADR-E D-5). The
 #: scale is wide enough for a crypto quantity and a sub-cent price; a `Decimal`
@@ -38,7 +38,7 @@ from app.models.base import Base, TimestampMixin
 EXACT = Numeric(38, 18)
 
 
-class Portfolio(TimestampMixin, Base):
+class Portfolio(TimestampMixin, UpdatedAtMixin, Base):
     """One owner's portfolio, read back at the ``as_of`` it was seeded with."""
 
     __tablename__ = "portfolios"
@@ -50,7 +50,7 @@ class Portfolio(TimestampMixin, Base):
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
-class PortfolioLot(TimestampMixin, Base):
+class PortfolioLot(TimestampMixin, UpdatedAtMixin, Base):
     """One open acquisition lot, cascading from its portfolio."""
 
     __tablename__ = "portfolio_lots"
@@ -65,7 +65,7 @@ class PortfolioLot(TimestampMixin, Base):
     cost_basis: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
 
 
-class PortfolioTransaction(TimestampMixin, Base):
+class PortfolioTransaction(TimestampMixin, UpdatedAtMixin, Base):
     """One ledger row — trade, reward or deposit — cascading from its portfolio."""
 
     __tablename__ = "portfolio_transactions"

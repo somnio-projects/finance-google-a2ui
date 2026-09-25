@@ -8,10 +8,10 @@ the one claim both providers carry, and it never stores a credential.
 from datetime import datetime
 from typing import Final
 
-from sqlalchemy import CheckConstraint, DateTime, String, func
+from sqlalchemy import CheckConstraint, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, UpdatedAtMixin
 
 ROLES: Final[tuple[str, ...]] = ("member", "admin")
 STATUSES: Final[tuple[str, ...]] = ("requested", "invited", "active", "revoked")
@@ -19,7 +19,7 @@ _ROLE_LIST = ", ".join(f"'{role}'" for role in ROLES)
 _STATUS_LIST = ", ".join(f"'{status}'" for status in STATUSES)
 
 
-class User(TimestampMixin, Base):
+class User(TimestampMixin, UpdatedAtMixin, Base):
     """One provisioned account, keyed by its lower-cased e-mail."""
 
     __tablename__ = "users"
@@ -35,12 +35,6 @@ class User(TimestampMixin, Base):
     invited_by: Mapped[str | None] = mapped_column(String(320), nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
     )
 
 
