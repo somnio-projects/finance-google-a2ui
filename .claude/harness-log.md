@@ -5383,3 +5383,107 @@ pins it for a laptop. It is recorded in `repo/0003` §6 and in §5 rather than
 fixed, because it needs a new tracked file and a rule of its own. The shape to
 copy is the `py_pin_dirs` loop, not the `pin_apps` one — Terraform's version,
 like Python's, is restated by files that cannot delete it.
+
+## 2026-09-25 — GGU-124: the DB-backed suite cleans up after itself
+
+**Spec:** [`specs/backend/0047-the-db-backed-suite-cleans-up-after-itself.md`](../specs/backend/0047-the-db-backed-suite-cleans-up-after-itself.md)
+
+`cd backend && make test` was not idempotent: the first run against a given
+PostgreSQL was green, the second failed six integration tests. Six tests
+provisioned users and seeded portfolios, committed, and left the rows behind,
+so their own next run collided with them. Measured identically on 3.12.13 and
+3.14.5 — the interpreter upgrade (#130) only forced the second run that made it
+visible.
+
+**Code:** one autouse function-scoped fixture, `_empty_database`, in
+`backend/tests/integration/conftest.py`, plus `tests/integration/
+database_cleanup.py`. Nothing in `src/` moved, and none of the six tests was
+edited — AC-2 is explicit that a test cleaning up after itself is one assertion
+away from one that does not.
+
+**Two things worth carrying forward.**
+
+**Rollback was the canonical answer and it was the wrong one here.** Spec §3
+has the table: this suite commits through four paths — the `session` fixture,
+the app's own engine behind `integration_client`, a job's own `session_scope`,
+and two deliberately concurrent sessions — and an outer-transaction rollback
+reaches exactly one of them. Making it reach the others means `bootstrap.py`
+accepting a caller-supplied connection so tests can bind it, and it cannot
+reach the fourth at all: forcing those two sessions into one transaction
+deletes the race `uq_portfolios_owner_email` exists to decide. Emptying the
+tables asks the database what it holds rather than which session put it there.
+
+**The failing test named the wrong thing, and that is the part that cost
+time.** The first of the six is
+`test_an_owner_never_reads_another_owners_portfolio` — a *concurrency* test. A
+developer running the pre-push hook twice reads that as a real race in
+`PersistentPortfolioProvider`, not as a fixture that did not clean up. One
+defect produced a permanently green CI (every runner gets a fresh
+`postgres:16`, so the suite always met an empty database) and a red that
+pointed somewhere else. The suite's isolation was asserted by the environment,
+which is the reverse of `.claude/rules/python/testing-integration.md` rule 1,
+and nothing in `tests/` claimed it — so nothing could fail when it stopped
+being true. `tests/integration/test_fixture_isolation.py` claims it now, and
+the AC-3 pair is deliberately order-dependent against that same rule's rule 3,
+because what one test leaves for the next cannot be observed from inside one
+test.
+
+**And one thing the review caught that the fix itself did not:** this is a
+**destructive** behaviour change to a command three documents recommend.
+`backend/docs/TESTING.md`, `backend/CLAUDE.md` and `docs/DEV_HARNESS.md` all
+print `TEST_DATABASE_URL=…localhost:5432/finance make test` against the compose
+database. That command used to leave rows alone — `alembic upgrade head` on an
+already-migrated database is a no-op — and now deletes every row of all eight
+tables, including `make seed`'s demo portfolio. All three are amended here, and
+spec §5's first draft called it "the same exposure the suite already had", which
+was the wrong claim in the one section whose job is to be honest about reach.
+**When a test-layer change alters what a documented command does to a
+developer's data, the docs printing that command are part of the diff.**
+
+**One defect found in passing and deliberately not fixed here.** Deciding
+between `Base.metadata` and reflection for the table list meant measuring both,
+and `from app.models import Base` sees **four of eight** tables:
+`app/models/__init__.py` never imports `Portfolio` or `User`. `alembic/env.py`
+hands exactly that object to autogenerate as `target_metadata`, so
+`alembic revision --autogenerate` would propose **dropping** `users`,
+`portfolios`, `portfolio_lots` and `portfolio_transactions`. The file's own
+docstring says *"Import every model here so Alembic's autogenerate sees the full
+metadata."* It is filed as its own task: it belongs to `models/` and a migration
+review, not to a test fixture, and it is also why this fixture reflects from the
+database rather than trusting that list.
+
+**A process finding from the same branch, which cost fifteen minutes and will
+cost the next parallel branch the same.** After the PR was opened, `gh pr checks`
+reported *"no checks reported on the branch"* and `gh run list --branch …`
+returned nothing, while another branch's PR opened three minutes earlier had
+`repo-ci` and `backend-ci` both green. `repo-ci.yaml` has a bare
+`pull_request:` — no `branches:`, no `paths:` — so it must run. The cause was
+one field away:
+
+```console
+$ gh pr view 132 --json mergeable,mergeStateStatus
+{"mergeStateStatus":"DIRTY","mergeable":"CONFLICTING"}
+```
+
+**GitHub creates no `pull_request` workflow runs for a PR it cannot merge**, and
+says so nowhere on the PR — an empty checks list is indistinguishable from busy
+runners. This repository makes that likely rather than exotic: **every** PR
+appends to `.claude/harness-log.md` and adds a row to `specs/README.md`, so two
+branches in flight conflict by construction the moment one merges. GGU-126
+merged at 15:31 and this PR went `DIRTY` in the same minute.
+
+So: **an empty checks list is a mergeability question first, never a workflow
+question.** And after the rebase, re-run the gate rather than assuming — the
+conflict was in two prose files, but `develop` had brought
+`test_seed_population.py`, a new integration test that seeds a whole population
+and which this branch's autouse fixture now governs. 2045 tests became 2055; the
+gate and both acceptance runs were redone on the rebased tree and the PR body's
+transcripts replaced.
+
+**Next person:** the ticket's AC-3 asked for a CI job that runs the suite twice
+against one service container, and it is **not in this PR** — `.github/` and
+`scripts/check_gate_pairs.sh` were owned by a parallel branch. Spec §9 carries
+the proposal, including the `ship-gate.json` entry it needs so
+`repo.gate-pairs` does not fail on a paraphrase. It is worth doing: without it,
+this fix is held only by the two tests in `test_fixture_isolation.py`, and CI
+goes back to being unable to see the class of defect at all.

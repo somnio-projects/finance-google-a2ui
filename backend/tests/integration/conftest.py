@@ -15,7 +15,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from testcontainers.postgres import PostgresContainer
 
 from app.bootstrap import build_container, create_app
@@ -24,18 +24,38 @@ from app.helpers.clock import FixedClock
 from app.infra.db.engine import create_engine
 from app.infra.db.session import create_session_factory, session_scope
 from tests.conftest import FROZEN_NOW, FakeReporter, make_settings, make_token
+from tests.integration.database_cleanup import empty_every_table
 
 
 @pytest.fixture
-async def session(database_url: str) -> AsyncIterator[AsyncSession]:
-    """One rolled-back session per test against the migrated database."""
-    engine = create_engine(make_settings(database_url=database_url))
+async def engine(database_url: str) -> AsyncIterator[AsyncEngine]:
+    """One disposable engine per test, shared by the cleanup and the session."""
+    created = create_engine(make_settings(database_url=database_url))
     try:
-        async with session_scope(create_session_factory(engine)) as db_session:
-            yield db_session
-            await db_session.rollback()
+        yield created
     finally:
-        await engine.dispose()
+        await created.dispose()
+
+
+@pytest.fixture(autouse=True)
+async def _empty_database(engine: AsyncEngine) -> None:
+    """Hand every integration test an empty database (spec 0047, AC-1/AC-2).
+
+    Autouse and in **setup**, not teardown: a test that commits is the normal
+    case here — six of them assert what the database decides *after* a commit —
+    so the isolation cannot be the session's rollback. Emptying on the way in
+    also means an interrupted run cannot poison the next one, which emptying on
+    the way out would not give. Spec 0047 §3 records why over rollback.
+    """
+    await empty_every_table(engine)
+
+
+@pytest.fixture
+async def session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
+    """One rolled-back session per test against the migrated database."""
+    async with session_scope(create_session_factory(engine)) as db_session:
+        yield db_session
+        await db_session.rollback()
 
 
 ALEMBIC_INI = os.path.join(os.path.dirname(__file__), "..", "..", "alembic.ini")
