@@ -7,10 +7,8 @@ import 'package:flutter/material.dart';
 /// (`.claude/rules/flutter/ui-theming.md`): a widget reads its colours from
 /// its `BuildContext`, so light and dark differ without a single widget
 /// branching on brightness, and a test can pump either. The values live in
-/// `ChartTokens` — one of the handful of `*_tokens.dart` files that may name
-/// a `Color` at all (`frontend/CLAUDE.md` § *Drawing a chart*). It was the
-/// only one when this was written; the tax-lot table, the shell and the
-/// waterfall have since measured their own.
+/// `ChartTokens` — one of the app's several `*_tokens.dart` files, which are
+/// the only files allowed to name a `Color` (spec frontend/0029 OD-4).
 ///
 /// Material 3's `ColorScheme` cannot supply these. Gain, loss and "a total"
 /// are **semantic** roles a finance chart needs and a generated scheme has no
@@ -66,11 +64,7 @@ class ChartPalette extends ThemeExtension<ChartPalette> {
   /// The closing total, which the design gives its own accent.
   final Color barTotal;
 
-  /// The hairline between two bars, from one's exit level to the next band.
-  ///
-  /// **Solid**, at 1 px: the UI Kit draws an unbroken run, and a dash in this
-  /// app means a *reference* line, which is a different statement (spec
-  /// frontend/0028 OD-2). It was dashed until then.
+  /// The dashed run between two bars.
   final Color connector;
 
   /// The hairline under the plot, and the fill of a neutral chip.

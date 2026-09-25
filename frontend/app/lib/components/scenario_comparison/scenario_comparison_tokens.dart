@@ -10,15 +10,17 @@ import 'package:flutter/material.dart';
 /// obtained; `scenario_comparison_tokens_test.dart` pins all eight values so
 /// a future edit has to disagree with a test rather than with a memory.
 ///
-/// **Why a second colour file exists.** `chart_tokens.dart` used to say it
-/// was the only file in `app/lib/` naming a `Color`, and that was true while
-/// one component had been built. Three of this card's colours are simply not
+/// **Why a second colour file exists.** `chart_tokens.dart` used to say it was
+/// the only file in `app/lib/` naming a `Color`, and that was true while one
+/// component had been built. Three of this card's colours are simply not
 /// chart roles — a table's row rule, a column header's hairline, a caption —
 /// and `ChartPalette` has no field for them. Adding four would edit
 /// `chart_palette.dart` and `chart_tokens.dart`, and *adding a component
 /// edits no existing file* (ADR-L D-3). So the card brings its own, and the
-/// stale sentence is raised in `specs/frontend/0004` OD-6 rather than fixed
-/// quietly here.
+/// stale sentence was raised in `specs/frontend/0004` OD-6 rather than fixed
+/// quietly here — the report GGU-105 was cut from. The claim is now a naming
+/// convention a test enforces, so this file is inside the rule rather than an
+/// exception to it (spec frontend/0029 OD-4).
 ///
 /// The card's surface, hairline and primary text are **not** duplicated: they
 /// coincide with `ChartPalette.surface`, `.border` and `.title` because both

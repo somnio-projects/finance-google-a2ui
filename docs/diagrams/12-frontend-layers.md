@@ -96,6 +96,9 @@ graph TD
   %%   anything but speech/speech_web.dart importing dart:js_interop or package:web
   %%   anything but bootstrap.dart naming speech_stub.dart / speech_web.dart
   %%     — speech_rules_test.dart, one allowance, its size asserted
+  %%   a Color literal outside a *_tokens.dart or *_palettes.dart, anywhere in
+  %%     app/lib — and none at all under packages/, which paints nothing
+  %%     — color_rules_test.dart, no path exceptions (spec frontend/0029 OD-4)
 ```
 
 ## Reading it

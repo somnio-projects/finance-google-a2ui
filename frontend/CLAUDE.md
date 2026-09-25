@@ -189,15 +189,30 @@ own axis labels, which breaks the one product invariant this showcase exists
 to demonstrate. The reasoning is ADR-L D-13; the chart's measured design values
 are in `app/lib/charts/chart_tokens.dart`.
 
-**Colour literals live in a `*_tokens.dart` and nowhere else.** `AppTheme`
-names the seed; each design-bound surface names its own measured palette —
-`charts/chart_tokens.dart`, `components/taxlots_table/taxlot_tokens.dart` —
-and every other file reads it through a palette object. A component's palette
-stays in the component's directory on purpose: registering a `ThemeExtension`
-would mean editing `AppTheme` to add one, which ADR-L D-3 forbids. Where two
-palettes share a semantic role, a test pins them to each other
+**Colour literals live in a `*_tokens.dart` or a `*_palettes.dart`, and
+nowhere else — and that is now a test, not a sentence**
+(`app/test/architecture/color_rules_test.dart`, spec `frontend/0029` OD-4).
+`AppTheme` names the seed; each design-bound surface names its own measured
+palette — `charts/chart_tokens.dart`,
+`components/taxlots_table/taxlot_tokens.dart` — and every other file reads it
+through a palette object. A component's palette stays in the component's
+directory on purpose: registering a `ThemeExtension` would mean editing
+`AppTheme` to add one, which ADR-L D-3 forbids. Where two palettes share a
+semantic role, a test pins them to each other
 (`taxlot_tokens_test.dart::agrees with the chart palette on every shared
 role`) so they cannot drift while staying separate.
+
+The rule is a **naming convention** rather than a list of allowed paths, for
+that same reason: a path list would have to be edited every time a component is
+added, so the check would be the seam violation it protects. The exception set
+is empty and the test asserts it. Four files used to claim *"this is the only
+file in `app/lib/` naming a `Color`"* and all four sentences were false when
+GGU-105 read them — twenty-one files named one, five of them widgets. A value
+that is the same on both artboards is a `static const` on the token class
+(`LoginTokens.logoGradient`, `HoldingsTokens.toggleShadow`), not a
+`ThemeExtension` field. `Colors.white` is **not** covered: nine occurrences in
+four files, left alone on purpose because moving them is a design decision
+about dark mode rather than a file-location one (0029 OD-5).
 
 Responsive through `LayoutBuilder` alone — the painter takes the `Size` and
 the scales recompute. There is no breakpoint to keep in step with a design.

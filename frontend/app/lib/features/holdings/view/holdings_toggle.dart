@@ -64,7 +64,7 @@ class HoldingsToggle extends StatelessWidget {
                             borderRadius: BorderRadius.circular(9),
                             boxShadow: const <BoxShadow>[
                               BoxShadow(
-                                color: Color(0x14000000),
+                                color: HoldingsTokens.toggleShadow,
                                 blurRadius: 2,
                                 offset: Offset(0, 1),
                               ),

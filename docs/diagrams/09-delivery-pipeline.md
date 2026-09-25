@@ -6,14 +6,14 @@ Cheap checks locally, expensive ones once, and nothing released without the gate
 flowchart LR
     subgraph dev["Developer machine — free"]
         edit["edit"]
-        pc["pre-commit<br/>hygiene · gitleaks · ruff · codespell<br/>actionlint · shell lint (all tracked) · gate pairs<br/>manual-run check · frontend toolchain preflight<br/>terraform fmt · basedpyright · 150-line budget<br/>quality suite · unit tests · delivery script tests"]
+        pc["pre-commit<br/>hygiene · gitleaks · ruff · codespell<br/>actionlint · shell lint (all tracked) · gate pairs<br/>manual-run check · spec numbering (GGU-105)<br/>frontend toolchain preflight<br/>terraform fmt · basedpyright · 150-line budget<br/>quality suite · unit tests · delivery script tests"]
         pp["pre-push<br/>make gate (full, with PostgreSQL)"]
     end
     subgraph ci["GitHub Actions — paid, only what a laptop cannot prove"]
         %% repo-ci carries NO paths: filter. Everything else here is scoped to
         %% one stack, which is why secret and shell scanning cannot live there:
         %% a client-only pull request would start none of it.
-        r["Repository · spelling · secrets (full history) · shell lint · gate pairs<br/>manual-run check (GGU-93)<br/>every PR, no paths: filter"]
+        r["Repository · spelling · secrets (full history) · shell lint · gate pairs<br/>manual-run check (GGU-93) · spec numbering (GGU-105)<br/>every PR, no paths: filter"]
         q["Quality · style, types, complexity, duplication"]
         t["Tests · pytest 100% branch on PostgreSQL 16 service container"]
         s["Security · Semgrep · pip-audit<br/>backend/** only"]
