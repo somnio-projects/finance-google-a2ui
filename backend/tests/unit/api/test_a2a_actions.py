@@ -63,7 +63,7 @@ def test_a_data_part_runs_a_turn_and_streams_the_documented_events(
     """AC-3 — an action is a turn, and it streams like any other."""
     response = actions_client.post(
         "/",
-        json=call("message/stream", **action_message(DRILL, {"driver": "XOM"})),
+        json=call("message/stream", **action_message(DRILL, {"driver": "LINK"})),
         headers=AUTH,
     )
 

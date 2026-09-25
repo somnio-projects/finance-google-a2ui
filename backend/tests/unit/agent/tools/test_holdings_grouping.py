@@ -68,7 +68,7 @@ def test_a_grouping_never_resurrects_a_chart_the_filter_removed() -> None:
     — a donut of the whole portfolio under a sentence about three tickers is
     the contradiction that rule exists to prevent.
     """
-    filtered = HoldingsSummaryArguments(symbols=("NVDA",), group_by="sector")
+    filtered = HoldingsSummaryArguments(symbols=("BTC",), group_by="sector")
 
     assert filtered.chart_options(1) is None
     assert HoldingsSummaryArguments(group_by="sector").chart_options(0) is None

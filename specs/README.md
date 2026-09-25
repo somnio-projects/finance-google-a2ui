@@ -31,6 +31,23 @@ app, and `frontend/` binds it. A new client spec goes in `frontend/`.
 Numbers are per area, zero-padded, never reused. The filename is stable once
 merged; a replaced spec is marked `Superseded by NNNN` and kept.
 
+**Three of those properties are now checked** — `repo.spec-numbers`
+(`scripts/check_spec_numbers.sh`, spec [`frontend/0029`](frontend/0029-the-conventions-are-checked.md)):
+the filename is `NNNN-lowercase-kebab-slug.md`, no two specs in an area share a
+number, and every spec has exactly one row in the index below. Until GGU-105
+none of it was, and two specs had shared `frontend/0002` since the day they
+merged while nine files had no row at all. *Never reused* is the one property
+left to people: in git history a renumbering is a delete plus an add, which is
+exactly what a reuse looks like, so the check would have failed on a legitimate
+rename. What keeps it true is the rule above — a superseded spec keeps its file
+and its row, so a number in use stays visible.
+
+A **gap** is not a defect and is not flagged: `frontend/0027` and `0028` are
+free and the renumbering that resolved the `0002` collision chose `0030`
+deliberately, above the numbers two branches in flight were about to take.
+"Next free" is evaluated at a branch point, which is why picking the lowest one
+is how collisions happen.
+
 ## Status lifecycle
 
 | Status | Meaning |
@@ -49,8 +66,15 @@ target. Link the Jira ticket, the ADRs it depends on (`docs/adr/` on the
 
 ## Index
 
-One row per file, ordered by area then number — so a missing spec and a
-duplicated one are both visible at a glance.
+One row per file, and **exactly** one — `repo.spec-numbers` fails the build on a
+spec with no row, a spec with two, and a row over a file that does not exist.
+
+The table used to claim it was "ordered by area then number — so a missing spec
+and a duplicated one are both visible at a glance." It was neither ordered nor
+complete, and neither the duplicate nor the nine unlisted files had been visible
+to anyone. Ordering is a reading convenience and is deliberately **not**
+asserted: reordering seventy rows is not what makes a collision fail, and a
+claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 
 | Spec | Status | Ticket |
 |---|---|---|
@@ -77,7 +101,7 @@ duplicated one are both visible at a glance.
 | [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Implemented | GGU-78 |
 | [backend/0023-catalog-serves-the-client.md](backend/0023-catalog-serves-the-client.md) | Implemented | GGU-53 |
 | [backend/0024-contract-serves-the-designs.md](backend/0024-contract-serves-the-designs.md) | Implemented | GGU-99 (closes GGU-101/103/104 in part) |
-| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | Implemented | *unassigned* (PR #81) |
+| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | Implemented — **OD-2 superseded by backend/0044** | *unassigned* (PR #81) |
 | [backend/0026-the-home-shell.md](backend/0026-the-home-shell.md) | Implemented | *unassigned* (PR #81) |
 | [backend/0027-user-provisioning.md](backend/0027-user-provisioning.md) | In progress | *unassigned* |
 | [backend/0028-holdings-and-activity.md](backend/0028-holdings-and-activity.md) | In progress | *unassigned* |
@@ -114,6 +138,7 @@ duplicated one are both visible at a glance.
 | [frontend/0024-the-header-stays-put.md](frontend/0024-the-header-stays-put.md) | In progress | *unassigned* (TL request 2026-09-22) |
 | [frontend/0025-failures-have-a-way-out.md](frontend/0025-failures-have-a-way-out.md) | In progress | GGU-110 · GGU-111 · GGU-112 |
 | [frontend/0026-the-ticket-in-the-assistant-is-editable.md](frontend/0026-the-ticket-in-the-assistant-is-editable.md) | In progress | GGU-113 |
+| [backend/0044-the-portfolio-is-crypto.md](backend/0044-the-portfolio-is-crypto.md) | In progress | GGU-114 |
 | [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
@@ -126,3 +151,13 @@ duplicated one are both visible at a glance.
 | [infra/0005-the-deployer-can-reach-the-jobs-it-owns.md](infra/0005-the-deployer-can-reach-the-jobs-it-owns.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
 | [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |
+| [backend/0021-machine-readable-catalog.md](backend/0021-machine-readable-catalog.md) | Implemented | GGU-53 (server half) |
+| [backend/0043-the-screen-can-ask-which-door-this-is.md](backend/0043-the-screen-can-ask-which-door-this-is.md) | In progress | *unassigned* |
+| [frontend/0002-chart-primitives-and-waterfall.md](frontend/0002-chart-primitives-and-waterfall.md) | Draft | GGU-55 (design GGU-42) |
+| [frontend/0003-taxlot-table.md](frontend/0003-taxlot-table.md) | Implemented | GGU-57 (serving GGU-17) |
+| [frontend/0004-scenario-comparison.md](frontend/0004-scenario-comparison.md) | Draft | GGU-59 (serving GGU-18) |
+| [frontend/0005-payoff-chart.md](frontend/0005-payoff-chart.md) | Implemented | GGU-63 (parent GGU-20) |
+| [frontend/0006-order-ticket.md](frontend/0006-order-ticket.md) | Implemented | GGU-61 (the Flutter half of GGU-19) |
+| [frontend/0007-allocation-summary.md](frontend/0007-allocation-summary.md) | Draft | GGU-65 (the Flutter half of GGU-21) |
+| [frontend/0029-the-conventions-are-checked.md](frontend/0029-the-conventions-are-checked.md) | In progress | GGU-105 · GGU-106 |
+| [frontend/0030-a2ui-agent-path.md](frontend/0030-a2ui-agent-path.md) | Implemented | GGU-79 — **renumbered from `0002`** by `frontend/0029` |

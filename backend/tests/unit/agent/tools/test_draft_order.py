@@ -19,7 +19,7 @@ from tests.unit.agent.tools.payoff_fixtures import block, rows
 
 DESIGN_PROMPT: Final[Mapping[str, object]] = {
     "amount": "10000",
-    "basket": "semiconductors",
+    "basket": "majors",
 }
 
 
@@ -53,28 +53,28 @@ async def test_it_describes_itself_for_the_model_to_choose_by(
 async def test_the_design_prompt_composes_the_design_legs(
     tool: DraftOrderTool, tool_context: ToolContext
 ) -> None:
-    """AC-7 — "put about $10k into semiconductors" → NVDA / AVGO / AMD."""
+    """AC-7 — "put about $10k into the majors" → BTC / ETH / SOL."""
     outcome = await tool.run(DESIGN_PROMPT, tool_context)
 
-    assert outcome.data["legs"] == "NVDA:3,AVGO:2,AMD:14"
+    assert outcome.data["legs"] == "BTC:0.06,ETH:1.0,SOL:16"
     assert [
         (line["symbol"], line["quantityDisplay"], line["notionalDisplay"])
         for line in rows(outcome.data["lines"])
     ] == [
-        ("NVDA", "3", "$3,613.98"),
-        ("AVGO", "2", "$3,480.00"),
-        ("AMD", "14", "$2,333.80"),
+        ("BTC", "0.06", "$3,855.00"),
+        ("ETH", "1", "$3,480.00"),
+        ("SOL", "16", "$2,438.40"),
     ]
     impact = block(outcome.data["impact"])
-    assert impact["totalDisplay"] == "$9,427.78"
-    assert impact["unitsDisplay"] == "19"
-    assert impact["cashRemainingDisplay"] == "$29,205.44"
-    assert rows(impact["weightShifts"]) == [
-        {
-            "label": "Technology",
-            "beforeDisplay": "46.57%",
-            "afterDisplay": "48.52%",
-        }
+    assert impact["totalDisplay"] == "$9,773.40"
+    assert impact["unitsDisplay"] == "17.06"
+    assert impact["cashRemainingDisplay"] == "$41,990.60"
+    # Three rows, not one: the design's three legs settle on three different
+    # chains, so the panel names three groups (spec 0044 OD-2).
+    assert [row["label"] for row in rows(impact["weightShifts"])] == [
+        "Bitcoin",
+        "Ethereum",
+        "Solana",
     ]
 
 
@@ -86,21 +86,24 @@ async def test_it_renders_the_ticket_with_the_legs_it_composed(
 
     assert outcome.render is not None
     assert outcome.render.view == VIEW == "order.ticket.v2"
-    assert outcome.render.options == {"legs": "NVDA:3,AVGO:2,AMD:14", "side": "buy"}
+    assert outcome.render.options == {
+        "legs": "BTC:0.06,ETH:1.0,SOL:16",
+        "side": "buy",
+    }
 
 
 async def test_a_draft_beyond_cash_says_so_in_the_models_words(
     tool: DraftOrderTool, tool_context: ToolContext
 ) -> None:
     """AC-6 — the shortfall is a string the model copies."""
-    outcome = await tool.run({**DESIGN_PROMPT, "amount": "60000"}, tool_context)
+    outcome = await tool.run({**DESIGN_PROMPT, "amount": "80000"}, tool_context)
     constraints = block(outcome.data["constraints"])
 
-    assert constraints["maxCashDisplay"] == "$38,633.22"
+    assert constraints["maxCashDisplay"] == "$51,764.00"
     assert constraints["breach"] == "over_cash"
-    assert constraints["shortfallDisplay"] == "$19,971.62"
+    assert constraints["shortfallDisplay"] == "$27,522.90"
     assert constraints["message"] == (
-        "Exceeds available cash — reduce order by $19,971.62."
+        "Exceeds available cash — reduce order by $27,522.90."
     )
 
 
@@ -129,10 +132,13 @@ async def test_every_basket_composes_a_draft(
 @pytest.mark.parametrize(
     "arguments",
     [
-        {"amount": "0", "basket": "semiconductors"},
-        {"amount": "10000", "basket": "crypto"},
-        {"amount": "-5", "basket": "energy"},
-        {"amount": "10000", "basket": "energy", "leverage": 2},
+        # The basket is VALID in three of these on purpose: with an unknown
+        # basket every row would be rejected for the basket and the amount
+        # validator would never be reached (spec 0044).
+        {"amount": "0", "basket": "majors"},
+        {"amount": "10000", "basket": "semiconductors"},
+        {"amount": "-5", "basket": "majors"},
+        {"amount": "10000", "basket": "majors", "leverage": 2},
     ],
     ids=["nothing", "unknown-basket", "negative", "undeclared"],
 )

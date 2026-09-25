@@ -26,10 +26,7 @@ void main() {
 
     testWidgets('renders the title and the plot', (tester) async {
       await tester.pumpApp(subject());
-      expect(
-        find.text('Payoff across a price range: buy Vanguard S&P 500 ETF'),
-        findsOne,
-      );
+      expect(find.text('Payoff across a price range: buy Solana'), findsOne);
       expect(find.byKey(PayoffChart.plotKey), findsOne);
     });
 
@@ -46,15 +43,15 @@ void main() {
       // drawn. On a fee-free spot order the break-even sits exactly on the
       // entry, so the repetition is the payload telling the truth; the card
       // never de-duplicates or picks among the rows it was sent (N-10).
-      expect(find.text(r'$528.00'), findsNWidgets(4));
+      expect(find.text(r'$152.40'), findsNWidgets(4));
     });
 
     testWidgets('renders every annotation verbatim (N-9)', (tester) async {
       await tester.pumpApp(subject());
       expect(find.text('Entry'), findsOne);
       expect(find.text('Break-even'), findsOne);
-      expect(find.text(r'at $369.60: -$150.00'), findsOne);
-      expect(find.text(r'at $686.40: $150.00'), findsOne);
+      expect(find.text(r'at $106.68: -$150.00'), findsOne);
+      expect(find.text(r'at $198.12: $150.00'), findsOne);
     });
 
     testWidgets('renders the disclosure in full and never truncated', (

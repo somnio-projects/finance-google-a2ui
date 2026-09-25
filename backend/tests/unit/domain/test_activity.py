@@ -17,14 +17,14 @@ def _row(
         transaction_id=txn_id,
         occurred_on=day,
         kind=kind,
-        symbol="VOO",
+        symbol="SOL",
         quantity=quantity,
         price=unit,
         amount=quantity * unit,
     )
 
 
-def test_the_seeded_voo_sale_realised_a_short_term_gain(portfolio: Portfolio) -> None:
+def test_the_seeded_btc_sale_realised_a_short_term_gain(portfolio: Portfolio) -> None:
     sale = next(
         row
         for row in portfolio.ledger
@@ -32,8 +32,8 @@ def test_the_seeded_voo_sale_realised_a_short_term_gain(portfolio: Portfolio) ->
     )
     realized = realized_of(sale, portfolio.ledger)
     assert realized is not None
-    # 20 VOO sold at $489 against the $402.10 they were bought at, 330 days on.
-    assert realized.amount == Decimal("1738.00")
+    # 0.25 BTC sold at $58,400 against the $36,000 it was bought at, 307 days on.
+    assert realized.amount == Decimal("5600.00")
     assert realized.term is LotTerm.SHORT
 
 

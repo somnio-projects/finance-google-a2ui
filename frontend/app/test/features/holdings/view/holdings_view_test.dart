@@ -62,12 +62,12 @@ void main() {
       expect(find.text('By asset class'), findsNWidgets(2));
       expect(find.text('By sector'), findsOneWidget);
       expect(find.text('✓ By position'), findsOneWidget);
-      expect(find.text('NVIDIA Corp'), findsWidgets);
-      expect(find.text(r'90 sh · avg $826.67'), findsOneWidget);
-      expect(find.text(r'▲ +$34,019 (+45.7%)'), findsOneWidget);
+      expect(find.text('Bitcoin'), findsWidgets);
+      expect(find.text(r'2.1 sh · avg $41,698.00'), findsOneWidget);
+      expect(find.text(r'▲ +$47,359 (+54.1%)'), findsOneWidget);
       // The expanded row shows its three stats and the hand-off.
       expect(find.text('Day'), findsOneWidget);
-      expect(find.text('▲ +4.2%'), findsWidgets);
+      expect(find.text('▲ +3.7%'), findsWidgets);
       expect(find.text('Weight'), findsOneWidget);
       expect(find.text('Ask the assistant about this'), findsOneWidget);
     });
@@ -80,12 +80,12 @@ void main() {
         // list.
         final apple = find.descendant(
           of: find.byType(PositionList),
-          matching: find.text('Apple Inc.'),
+          matching: find.text('Ethereum'),
         );
         await tester.tap(apple);
         await tester.pumpAndSettle();
-        expect(find.text(r'300 sh · avg $135.40'), findsOneWidget);
-        expect(find.text(r'$233.18'), findsOneWidget);
+        expect(find.text(r'30 sh · avg $2,780.00'), findsOneWidget);
+        expect(find.text(r'$3,480.00'), findsOneWidget);
         await tester.tap(apple);
         await tester.pumpAndSettle();
         expect(find.text('Ask the assistant about this'), findsNothing);

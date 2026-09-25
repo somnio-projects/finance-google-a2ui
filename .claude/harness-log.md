@@ -2741,7 +2741,9 @@ Two lessons, both of which this repository has now paid for twice:
 
 ## 2026-09-21 — GGU-79: the client speaks A2UI, and the seam under it holds
 
-**Spec:** `specs/frontend/0002-a2ui-agent-path.md` · **PR:** #65 ·
+**Spec:** `specs/frontend/0030-a2ui-agent-path.md` (renumbered from
+`0002` by GGU-105, which found it sharing that number with
+`0002-chart-primitives-and-waterfall.md`) · **PR:** #65 ·
 **Diagrams:** `12-frontend-layers.md`
 
 `frontend/` had no agent path at all. It now speaks A2A — `message/stream`,
@@ -2755,7 +2757,7 @@ keeping:
   `client/0003` §8.3 says the intent "names a registered view; it never
   carries a payload. The client fetches the payload itself." The brief for
   this ticket asked for those three packages by name; the wire says they would
-  render nothing. Recorded as spec `frontend/0002` OD-1 for TL sign-off.
+  render nothing. Recorded as spec `frontend/0030` OD-1 for TL sign-off.
 - **`X-A2A-Extensions` is sent, and the folklore about it is wrong for this
   stack.** Nothing under `backend/src/app/api/` or `services/` reads it. The
   "omit it and A2UI silently degrades" warning describes genui's connector
@@ -2805,7 +2807,7 @@ mechanically checked**, because they cannot be needled without matching prose.
   at a time and reading the diff is safe when it is a plain collapse.
 - **`tool/` still has no tests** and is still excluded from the coverage
   contract it enforces. Adding `package:test` to the workspace root changes
-  `pubspec.lock`, which could not be regenerated here. Spec `frontend/0002`
+  `pubspec.lock`, which could not be regenerated here. Spec `frontend/0030`
   OD-5 carries it.
 - The numbers rule matches **text, not intent**: a comment in
   `conversation_bloc.dart` that merely *named* `DateTime.now(` tripped it. That
@@ -4330,7 +4332,7 @@ than its command string.
 **Superseded, not erased.** `specs/client/0001` and `0002` carry
 `Superseded by repo/0002` banners and stay in place; `client/0003` (the
 backend contract) is explicitly **left live**, because its subject is the
-server, `frontend/` binds it, and `specs/frontend/0002` OD-1 quotes its §8.3.
+server, `frontend/` binds it, and `specs/frontend/0030` OD-1 quotes its §8.3.
 ADR-I is `Superseded by ADR-L` — its D-3 outlived the app and ADR-L D-5
 restates it. ADR-H D-2 and D-6 are struck in place. Diagram 11 is the one
 outright **deletion** of a shipped artefact, argued in the spec §4: a diagram
@@ -4977,6 +4979,148 @@ is derived on the standalone page from the previous payload and is not yet
 drawn in the transcript. `AgentSurface` has the previous payload at the
 moment `rendered` replaces it; keeping it is a field, not a contract change.
 
+## 2026-09-24 — The conventions are checked
+
+**Spec:** [`frontend/0029`](../specs/frontend/0029-the-conventions-are-checked.md) ·
+**Tickets:** GGU-105 (spec numbering · the Color-in-lib rule), GGU-106 (the
+golden tolerance). Three conventions, one shape: each was written down, each
+was true because somebody remembered, and nothing failed when one broke.
+
+**What changed.** `repo.spec-numbers` (`scripts/check_spec_numbers.sh`, with
+its own suite) asserts that a spec's filename is `NNNN-lowercase-kebab-slug.md`,
+that no two specs in an area share a number — naming **both** files — and that
+every spec has exactly one row in `specs/README.md` and every row a file.
+`app/test/architecture/color_rules_test.dart` asserts that only a
+`*_tokens.dart` or a `*_palettes.dart` names a colour literal. The golden
+comparator now measures *amplitude* as well as *area*, and
+`GoldenDifference` has its own suite over hand-built rasters.
+
+**What the checks found on `develop` the first time they ran.** Two specs
+numbered `frontend/0002`; nine spec files with no index row; five widget files
+and `theme/app_colors.dart` naming colours; four separate doc comments each
+claiming to be *"the only file in `app/lib/` naming a `Color`"*. All fixed
+here: `0002-a2ui-agent-path.md` became `0030`, the index gained ten rows, the
+colour values moved onto `HoldingsTokens` and `LoginTokens` as `static const`s,
+and `app_colors.dart` was renamed `app_color_tokens.dart`.
+
+**Four things worth carrying forward:**
+
+- **When two specs collide, the number stays with the one the corpus cites
+  *by bare number*.** Chronology was the obvious tie-break and the wrong one:
+  twenty bare `frontend/0002` citations — nine Dart files, `frontend/SECURITY.md`,
+  six sibling specs — all mean the chart spec, while every citation of the
+  other already carried its slug. Moving the chart spec would have rewritten
+  twenty citations a reader cannot verify; moving the other rewrote five
+  explicit ones. Measured, not argued (0029 OD-2). It then took **`0030`**
+  rather than the free `0027`, deliberately above the numbers two in-flight
+  branches will each compute as "next free" from their own branch point —
+  which is the defect being closed.
+- **A structural rule is a naming convention, never a path list.** ADR-L D-3
+  says adding a component edits no existing file, so a colour-rule allow-list
+  would have to be edited for every new component: the check would *be* the
+  seam violation it protects. Suffixes instead, exception set empty and
+  asserted empty. The same reasoning says why the six stragglers moved rather
+  than being allow-listed — the only thing qualifying them was that nobody had
+  moved them, and *"it was here first"* is what this repository keeps finding
+  at the bottom of a rotted rule.
+- **A red gate is not evidence that it is red for your reason — and a green
+  one is not evidence it can go red.** Both halves of GGU-106's comparator
+  matched their documentation and the metric was still meaningless for
+  translucent paint: a **2/255** change nobody can see measures **83.893 %** of
+  pixels differing, while an opaque bar in flatly the wrong colour measures
+  **2.107 %**. The metric ranked the invisible change forty times above the
+  visible one. The fix is the question, not the threshold: count a pixel only
+  once it differs by more than 2/255, keep 1.5 % untouched, and every invisible
+  case measures 0.000 % while every real one measures 2.093 % or more.
+- **Say when a change is a relaxation, and prove which direction it can move.**
+  The new metric counts a **subset** of the pixels the old one counted, so
+  `new ≤ old` for every raster and no green golden can turn red — which is what
+  makes it safe to land while GGU-115 and GGU-116 are regenerating goldens. It
+  does admit any ≤ 2/255 change on any paint, including opaque; that is stated
+  rather than filed under "translucency".
+
+**Harness changes.** `.claude/ship-gate.json` gains `repo.spec-numbers` and
+`repo.spec-numbers-test` (its `_note` explains why it is a pair rather than one
+entry); `repo-ci.yaml` gains one job with those two steps, and a row in its
+report table; `.pre-commit-config.yaml` gains the two hooks, triggered by
+`specs/` and by either half of the check. `.claude/rules/ci-conventions.md` §5
+records this as the **sixth** instance of its own defect class and the first
+with *no command at all* on one side. `.claude/rules/frontend/testing.md` §6
+carries the golden calibration — the measurement, not the number.
+`frontend/CLAUDE.md`'s colour paragraph now points at the test.
+
+**Declined, with the reason and the measurement, rather than silently:**
+`Colors.white` (nine occurrences in four files — moving them is a dark-mode
+design decision, not a file-location one, 0029 OD-5); a history-based *never
+reused* check (a renumbering and a reuse are the same diff, OD-11); the index's
+ordering claim, **removed** rather than enforced (OD-12); widening GGU-59's
+hairline crop (glyph noise is high-amplitude on few pixels and this change does
+not help — OD-8).
+
+**Next person:** two goldens, `catalog_index_loading.png` and
+`catalog_detail_loading.png`, differ from their checked-in masters by
+**0.800 % of pixels at max Δ 231** on the machine that renders them. That is a
+real difference, not noise, and it passes both the old comparator and the new
+one. It was reported rather than regenerated, because erasing it inside a
+harness PR would destroy the evidence of whatever caused it. That is a ticket.
+
+## 2026-09-24 — The portfolio is crypto
+
+**Spec:** [`backend/0044`](../specs/backend/0044-the-portfolio-is-crypto.md) ·
+**Ticket:** GGU-114 · **Supersedes** `backend/0025` OD-2.
+
+The demo portfolio was US equities. The demo is crypto. Eight assets — BTC,
+ETH, SOL, AVAX, ARB, USDC, AAVE, LINK — replace seventeen, and the change runs
+from `domain/market_data.py` through every projection to the client's goldens.
+
+**Which layer.** Data, plus the four places the data's *vocabulary* is a
+contract: the taxonomy (`AssetClass`, `Sector`), the declared option values
+(`ActivityKind`, `AssetClassFilter`, `legs`), the `kind` column's width, and
+the prose the model reads. The last one is the easiest to miss: the tool
+descriptions and generated fragments said "whole shares" and
+"semiconductors", and they ship to the model.
+
+**Two findings worth carrying forward:**
+
+- **A universe change is not a rename; it is a change of what the options
+  *mean*.** `group_by=sector` was the sharp one. The crypto vocabulary a
+  reader reaches for — L1, L2, DeFi, oracles, stablecoins — *is* the
+  asset-class vocabulary, so re-lettering `Sector` with it would have made the
+  second grouping a relabelling of the first and the option pointless. It is
+  now the **chain ecosystem**, which is genuinely orthogonal (ARB, AAVE and
+  LINK share Ethereum across three classes). The option *value* stays
+  `sector`, because that word is design's, the client binds it and the catalog
+  publishes it — renaming it would break three contracts for a synonym.
+
+- **A bound that was right for one asset class can be a functional bug in
+  another.** `order.ticket.v2`'s `legs` were integers and `basket_legs`
+  floored to a whole unit. At $64,250 a BTC, Flow C's own $10k prompt composed
+  a leg of **zero** — a demo flow broken by a regex, with every test green,
+  because every test asked for equities. Units are now fractional and a
+  stepper's step is a **declared column of the market reference**
+  (`MarketAsset.step`), not a constant: one tap cannot serve a $64,250 coin
+  and an 86-cent token. The client still computes nothing — each leg carries
+  the whole option value its `+` sends, as before.
+
+**Three tests got sharper rather than merely updated**, and each was a case
+the equities seed could not reach. `test_simulate_sale_sizes.py` carried a
+comment recording that its sub-dollar-price case was **dead** because nothing
+in an equities portfolio is quoted below a dollar; ARB is, so it is live again
+with real data. `test_draft_order.py`'s refusal table used an invalid basket in
+every row, so the "amount is zero" row was rejected for its *basket* and the
+amount validator was never reached. `test_draft_weights.py` asserted one
+weight-shift row; the design's three legs now settle on three chains.
+
+**Harness:** no rule changed. `.claude/rules/backend/presentation.md`'s
+"before removing a field nothing appears to bind, read the clients" was
+applied rather than amended — `is_fund` went, because a flag false in every
+row is a claim the data does not support, and the grep over `lib/` and the
+tests is what said it was safe.
+
+**Next person:** the goldens in this branch will need regenerating again after
+GGU-115 and GGU-116 land — they redesign the waterfall and tax-lot components
+against the UI kit, and this branch deliberately edits neither component
+source. Take theirs for `lib/`, rerun `flutter test --update-goldens`.
 ## 2026-09-24 — The tax-lot table matches the UI Kit
 
 **Spec:** [`frontend/0027`](../specs/frontend/0027-the-taxlot-table-matches-the-ui-kit.md) ·

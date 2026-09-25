@@ -37,7 +37,7 @@ void main() {
         AgentSurfaceReady(
           index: 0,
           view: viewId,
-          options: const <String, String>{'symbol': 'NVDA'},
+          options: const <String, String>{'symbol': 'BTC'},
         ),
         const AgentAnswered(text: 'Here is the ticket.', views: <String>[]),
         const AgentTurnEnded(AgentTurnState.inputRequired),
@@ -48,7 +48,7 @@ void main() {
       tester,
     ) async {
       await pumpConversation(tester, agent: agent, views: views);
-      await ask(tester, 'buy 10 NVDA');
+      await ask(tester, 'buy 0.1 BTC');
 
       final card = tester.widget<OrderTicketCard>(find.byType(OrderTicketCard));
       expect(card.onOptionChanged, isNotNull);
@@ -77,7 +77,7 @@ void main() {
         () => views.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[viewId],
-          options: <String, String>{'symbol': 'NVDA', 'side': other},
+          options: <String, String>{'symbol': 'BTC', 'side': other},
         ),
       ).called(1);
       expect(find.byType(OrderTicketCard), findsOneWidget);

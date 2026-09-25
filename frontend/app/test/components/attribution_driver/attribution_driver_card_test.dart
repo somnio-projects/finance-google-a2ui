@@ -22,7 +22,7 @@ void main() {
 
   AttributionDriverData data(DriverTrend trend, String contribution) =>
       AttributionDriverData(
-        symbol: 'NVDA',
+        symbol: 'BTC',
         name: 'NVIDIA Corp',
         caption: 'Top contributor today',
         contributionDisplay: contribution,
@@ -44,7 +44,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpApp(subject(data(DriverTrend.up, r'+$4,370.40')));
-      expect(find.text('NVDA'), findsOneWidget);
+      expect(find.text('BTC'), findsOneWidget);
       expect(find.text('NVIDIA Corp'), findsOneWidget);
       expect(find.text('Top contributor today'), findsOneWidget);
       expect(find.text(r'+$4,370.40'), findsOneWidget);
@@ -106,7 +106,7 @@ void main() {
       expect(boxes, contains(AttributionDriverTokens.dark.tile));
       expect(boxes, contains(homeTokensDark.ticker));
       expect(
-        tester.widget<Text>(find.text('NVDA')).style?.color,
+        tester.widget<Text>(find.text('BTC')).style?.color,
         homeTokensDark.tickerText,
       );
     });

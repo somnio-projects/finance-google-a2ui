@@ -50,7 +50,7 @@ void main() {
     testWidgets('names the stepped leg once one has been recomputed', (
       tester,
     ) async {
-      // OD-2: the design's pill reads `NVDA +$2,000`; the delta is arithmetic
+      // OD-2: the design's pill reads `BTC +$2,000`; the delta is arithmetic
       // this client may not do, so the pill carries the symbol and the word.
       final key = readTicketV2(ticketV2Example()).lines.first.key;
       await pump(tester, stepped: <String>{key}, brightness: Brightness.dark);

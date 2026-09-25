@@ -42,16 +42,16 @@ void main() {
     testWidgets('swaps the pill for the selected caption, verbatim', (
       tester,
     ) async {
-      // Flow A's D2 state: `NVDA selected` where the pill was (GGU-100 AC-3).
+      // Flow A's D2 state: `BTC selected` where the pill was (GGU-100 AC-3).
       await tester.pumpApp(
         const AttributionWaterfallHeader(
           title: 'Unrealised P/L attribution',
           net: net,
-          selectedLabel: 'NVDA selected',
+          selectedLabel: 'BTC selected',
         ),
       );
       expect(find.byType(AttributionWaterfallPill), findsNothing);
-      final caption = tester.widget<Text>(find.text('NVDA selected'));
+      final caption = tester.widget<Text>(find.text('BTC selected'));
       expect(caption.style?.color, AttributionWaterfallTokens.light.selection);
     });
   });

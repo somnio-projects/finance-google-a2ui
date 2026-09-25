@@ -25,7 +25,7 @@ derived from the "restaurant finder" sample in Google's genui repository
 `frontend/` was written from scratch and derives nothing from that sample: it
 carries no Google copyright headers and does not depend on the genui packages
 (`genui`, `genui_a2a`, `a2ui_core`) — a decision recorded in
-`specs/frontend/0002-a2ui-agent-path.md` OD-1, because this service streams
+`specs/frontend/0030-a2ui-agent-path.md` OD-1, because this service streams
 render intents rather than A2UI component trees. The attribution above is
 therefore retired with the code it covered; the Git history keeps it, as the
 licence expects.

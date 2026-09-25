@@ -23,9 +23,9 @@ def build(
     range_pct: int = RANGE_PCT,
     steps: int = STEPS,
 ) -> PayoffCurve:
-    """Return a curve over the seeded VOO price, varying one thing at a time."""
+    """Return a curve over the seeded SOL price, varying one thing at a time."""
     return payoff_curve(
-        symbol="VOO",
+        symbol="SOL",
         name="Vanguard S&P 500 ETF",
         entry_price=ENTRY,
         quantity=quantity,

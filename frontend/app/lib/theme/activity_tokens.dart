@@ -9,8 +9,8 @@ class ActivityTokens extends ThemeExtension<ActivityTokens> {
     required this.buyGlyph,
     required this.sellTile,
     required this.sellGlyph,
-    required this.dividendTile,
-    required this.dividendGlyph,
+    required this.rewardTile,
+    required this.rewardGlyph,
     required this.depositTile,
     required this.depositGlyph,
     required this.shortBadge,
@@ -40,10 +40,10 @@ class ActivityTokens extends ThemeExtension<ActivityTokens> {
   final Color sellGlyph;
 
   /// `$` tile.
-  final Color dividendTile;
+  final Color rewardTile;
 
   /// `$`.
-  final Color dividendGlyph;
+  final Color rewardGlyph;
 
   /// `+` tile.
   final Color depositTile;
@@ -72,13 +72,13 @@ class ActivityTokens extends ThemeExtension<ActivityTokens> {
   /// `TODAY` · `THIS WEEK` · the months.
   final Color section;
 
-  /// `Buy` · `Dividend` · `Deposit` under an amount.
+  /// `Buy` · `Staking` · `Deposit` under an amount.
   final Color badge;
 
   /// The tile and glyph for [kind].
   (Color, Color) tileFor(String kind) => switch (kind) {
     'sell' => (sellTile, sellGlyph),
-    'dividend' => (dividendTile, dividendGlyph),
+    'staking_reward' => (rewardTile, rewardGlyph),
     'deposit' => (depositTile, depositGlyph),
     _ => (buyTile, buyGlyph),
   };
@@ -97,8 +97,8 @@ const ActivityTokens activityTokensLight = ActivityTokens(
   buyGlyph: Color(0xFF4A3F8A),
   sellTile: Color(0xFFF0EEF4),
   sellGlyph: Color(0xFF5F6169),
-  dividendTile: Color(0xFFDBEEE7),
-  dividendGlyph: Color(0xFF0C6A52),
+  rewardTile: Color(0xFFDBEEE7),
+  rewardGlyph: Color(0xFF0C6A52),
   depositTile: Color(0xFFE2ECF7),
   depositGlyph: Color(0xFF2B5A86),
   shortBadge: Color(0xFFFBE9C8),
@@ -117,8 +117,8 @@ const ActivityTokens activityTokensDark = ActivityTokens(
   buyGlyph: Color(0xFFC9CBFF),
   sellTile: Color(0xFF1F2028),
   sellGlyph: Color(0xFFA4A6B0),
-  dividendTile: Color(0xFF153029),
-  dividendGlyph: Color(0xFF4ADE9E),
+  rewardTile: Color(0xFF153029),
+  rewardGlyph: Color(0xFF4ADE9E),
   depositTile: Color(0xFF182634),
   depositGlyph: Color(0xFF83B3E0),
   shortBadge: Color(0xFF3A2C12),

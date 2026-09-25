@@ -89,7 +89,12 @@ void main() {
       // The breakpoint changes the arrangement, never the content — a card
       // that dropped a column on a phone would be deciding which of the
       // backend's figures matter.
-      const values = <String>['01/13/2025', '60', r'$45,600.00', r'$72,279.60'];
+      const values = <String>[
+        '01/13/2025',
+        '0.25',
+        r'$9,000.00',
+        r'$16,062.50',
+      ];
       await pumpAt(tester, 360);
       for (final value in values) {
         expect(find.text(value), findsOneWidget, reason: 'phone: $value');

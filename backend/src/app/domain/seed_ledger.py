@@ -1,8 +1,7 @@
-"""The curated ledger, as data (spec 0035 OD-7, extending 0003 OD-2).
+"""The curated ledger, as data (spec 0044, 0035 OD-7, extending 0003 OD-2).
 
 Split from ``seed_data.py`` for the reason ``market_data.py`` is split from
-``market.py``: the lots and the ledger are two tables, and 48 rows plus 16
-lots do not fit one module under the 150-line budget. ``seed_data`` holds
+``market.py``: the lots and the ledger are two tables. ``seed_data`` holds
 what is **held**; this holds what **happened**.
 
 Every number is a **string**, parsed to ``Decimal`` by ``Transaction``
@@ -17,12 +16,24 @@ sale consumed is exactly what the lot no longer holds. Change one quantity
 here without changing its partner and
 ``tests/unit/domain/test_seed_ledger.py`` goes red, which is the point of it.
 
-**TSLA is the deliberate exception**: bought and fully sold, so the timeline
+**AVAX is the deliberate exception**: bought and fully sold, so the timeline
 shows a closed position that the holdings list correctly does not carry.
 
-**Income and deposits still do not move the cash lot** (spec 0035 OD-8).
-Twenty-five of these rows are dividends and deposits sitting against a
-``USD`` balance that is itself seed data. The ledger is the history the
+**Seven sales, and the badges are the reason there are seven**: four gains and
+three losses, four short-term and three long, so every badge the Activity tab
+can print is printed by the seed (spec 0028 AC-5). One sale per symbol, so
+each walks its own buys.
+
+**Staking rewards replace dividends (spec 0044 OD-7).** A token has no
+dividend; the demo's yield-bearing assets pay *in the asset*, so a reward
+carries the units received as its quantity and that day's unit price as its
+price, and ``amount == quantity * price`` holds for it as for every other
+kind. BTC pays none — proof of work has nothing to stake — and neither does
+USDC, because a yield this showcase does not model is not one it should claim.
+
+**Rewards and deposits still do not move the settlement lot** (spec 0035
+OD-8). Twenty-five of these rows are rewards and deposits sitting against a
+``USDC`` balance that is itself seed data. The ledger is the history the
 design draws, not a double-entry system; making it one would move every
 figure on Home and Holdings for nothing the showcase can use.
 """
@@ -47,87 +58,79 @@ class TransactionRow:
     memo: str | None = None
 
 
-_QUALIFIED: Final[str] = "qualified"
+_PROTOCOL: Final[str] = "protocol reward"
 _PAYROLL: Final[str] = "Payroll · Recurring"
 
 # fmt: off
 #: What built the positions. A symbol that was later sold was bought in the
-#: larger quantity the sale then reduced (OD-7); NVDA and AAPL keep two lots
-#: at two costs, which is what lets FIFO and LIFO disagree (spec 0013 AC-5).
+#: larger quantity the sale then reduced (OD-7); BTC and ETH keep two lots at
+#: two costs, which is what lets FIFO and LIFO disagree (spec 0013 AC-5).
+#: txn-0009 and txn-0010 share a date on purpose: they are what proves the
+#: same-date tiebreak in ``Portfolio.transactions`` is stable (0028 AC-4).
 _BUYS: Final[tuple[TransactionRow, ...]] = (
-    TransactionRow("txn-0001", 800, "buy", "AAPL", "200.0000", "155.40", "31080.00"),
-    TransactionRow("txn-0016", 300, "buy", "AAPL", "100.0000", "95.40", "9540.00"),
-    TransactionRow("txn-0002", 700, "buy", "JNJ", "30.0000", "170.00", "5100.00"),
-    TransactionRow("txn-0003", 660, "buy", "PG", "25.0000", "180.00", "4500.00"),
-    TransactionRow("txn-0004", 610, "buy", "MSFT", "135.0000", "305.20", "41202.00"),
-    TransactionRow("txn-0005", 540, "buy", "VOO", "105.0000", "402.10", "42220.50"),
-    TransactionRow("txn-0006", 520, "buy", "AGG", "400.0000", "108.00", "43200.00"),
-    TransactionRow("txn-0007", 480, "buy", "XOM", "180.0000", "42.00", "7560.00"),
-    TransactionRow("txn-0008", 460, "buy", "TIP", "45.0000", "135.00", "6075.00"),
-    TransactionRow("txn-0009", 430, "buy", "BND", "620.0000", "74.10", "45942.00"),
-    TransactionRow("txn-0010", 390, "buy", "GLD", "290.0000", "240.00", "69600.00"),
-    TransactionRow("txn-0011", 367, "buy", "NVDA", "60.0000", "760.00", "45600.00"),
-    TransactionRow("txn-0012", 363, "buy", "NVDA", "30.0000", "960.00", "28800.00"),
-    TransactionRow("txn-0013", 350, "buy", "VNQ", "93.0000", "106.51", "9905.43"),
-    TransactionRow("txn-0023", 330, "buy", "TSLA", "50.0000", "240.00", "12000.00"),
-    # txn-0014 and txn-0015 share a date on purpose: they are what proves the
-    # same-date tiebreak in ``Portfolio.transactions`` is stable (0028 AC-4).
-    TransactionRow("txn-0014", 210, "buy", "PYPL", "300.0000", "88.60", "26580.00"),
+    TransactionRow("txn-0001", 800, "buy", "ETH", "20.50000000", "1850.00", "37925.00"),
+    TransactionRow("txn-0002", 610, "buy", "AAVE", "200.00000000", "179.40", "35880.00"),
+    TransactionRow("txn-0003", 540, "buy", "SOL", "435.50000000", "177.70", "77388.35"),
+    TransactionRow("txn-0004", 480, "buy", "ARB", "58625.00000000", "0.9200", "53935.00"),
+    TransactionRow("txn-0005", 430, "buy", "LINK", "2500.00000000", "25.85", "64625.00"),
+    TransactionRow("txn-0006", 367, "buy", "BTC", "0.50000000", "36000.00", "18000.00"),
+    TransactionRow("txn-0007", 363, "buy", "BTC", "1.85000000", "42468.00", "78565.80"),
+    TransactionRow("txn-0008", 330, "buy", "AVAX", "900.00000000", "30.00", "27000.00"),
+    TransactionRow("txn-0009", 300, "buy", "ETH", "12.00000000", "4175.00", "50100.00"),
 )
 
-#: Seven sales: four gains and three losses, four short-term and three long,
-#: so every badge the Activity tab can print is printed by the seed (AC-5).
+#: Four gains and three losses, four short-term and three long.
 _SELLS: Final[tuple[TransactionRow, ...]] = (
-    TransactionRow("txn-0024", 300, "sell", "TIP", "15.0000", "128.00", "1920.00"),
-    TransactionRow("txn-0015", 210, "sell", "VOO", "20.0000", "489.00", "9780.00"),
-    TransactionRow("txn-0025", 168, "sell", "MSFT", "25.0000", "415.00", "10375.00"),
-    TransactionRow("txn-0026", 120, "sell", "PYPL", "50.0000", "71.20", "3560.00"),
-    TransactionRow("txn-0027", 95, "sell", "XOM", "50.0000", "38.50", "1925.00"),
-    TransactionRow("txn-0028", 60, "sell", "TSLA", "50.0000", "291.00", "14550.00"),
-    TransactionRow("txn-0029", 20, "sell", "GLD", "40.0000", "262.00", "10480.00"),
+    TransactionRow("txn-0010", 300, "sell", "ARB", "8000.00000000", "1.2400", "9920.00"),
+    TransactionRow("txn-0011", 210, "sell", "ETH", "2.50000000", "3150.00", "7875.00"),
+    TransactionRow("txn-0012", 168, "sell", "AAVE", "25.00000000", "150.00", "3750.00"),
+    TransactionRow("txn-0013", 120, "sell", "SOL", "60.00000000", "145.00", "8700.00"),
+    TransactionRow("txn-0014", 95, "sell", "LINK", "400.00000000", "19.80", "7920.00"),
+    TransactionRow("txn-0015", 60, "sell", "BTC", "0.25000000", "58400.00", "14600.00"),
+    TransactionRow("txn-0016", 20, "sell", "AVAX", "900.00000000", "52.00", "46800.00"),
 )
 
-#: A dividend carries the per-share amount as the price and the shares held
-#: **on that day** as the quantity — which is why VOO pays on 105 shares
-#: before its sale and on 85 after it.
-_DIVIDENDS: Final[tuple[TransactionRow, ...]] = (
-    TransactionRow("txn-0017", 0, "dividend", "VOO", "85.0000", "1.62", "137.70", _QUALIFIED),
-    TransactionRow("txn-0019", 9, "dividend", "MSFT", "110.0000", "0.83", "91.30", _QUALIFIED),
-    TransactionRow("txn-0030", 35, "dividend", "BND", "620.0000", "0.21", "130.20", _QUALIFIED),
-    TransactionRow("txn-0021", 40, "dividend", "AAPL", "300.0000", "0.25", "75.00", _QUALIFIED),
-    TransactionRow("txn-0031", 55, "dividend", "PG", "25.0000", "1.01", "25.25", _QUALIFIED),
-    TransactionRow("txn-0032", 68, "dividend", "XOM", "130.0000", "0.99", "128.70", _QUALIFIED),
-    TransactionRow("txn-0022", 75, "dividend", "JNJ", "30.0000", "1.24", "37.20", _QUALIFIED),
-    TransactionRow("txn-0033", 92, "dividend", "VOO", "85.0000", "1.55", "131.75", _QUALIFIED),
-    TransactionRow("txn-0034", 99, "dividend", "MSFT", "110.0000", "0.79", "86.90", _QUALIFIED),
-    TransactionRow("txn-0035", 127, "dividend", "BND", "620.0000", "0.21", "130.20", _QUALIFIED),
-    TransactionRow("txn-0036", 131, "dividend", "AAPL", "300.0000", "0.25", "75.00", _QUALIFIED),
-    TransactionRow("txn-0037", 166, "dividend", "JNJ", "30.0000", "1.19", "35.70", _QUALIFIED),
-    TransactionRow("txn-0038", 183, "dividend", "VOO", "85.0000", "1.49", "126.65", _QUALIFIED),
-    TransactionRow("txn-0039", 190, "dividend", "MSFT", "135.0000", "0.75", "101.25", _QUALIFIED),
-    TransactionRow("txn-0040", 222, "dividend", "AAPL", "300.0000", "0.24", "72.00", _QUALIFIED),
-    TransactionRow("txn-0041", 275, "dividend", "VOO", "105.0000", "1.44", "151.20", _QUALIFIED),
+#: A reward is paid in the asset: units received as the quantity, that day's
+#: unit price as the price. AVAX earns only while it was held, which is why
+#: its two rows sit between its buy at 330 days and its sale at 20.
+_REWARDS: Final[tuple[TransactionRow, ...]] = (
+    TransactionRow("txn-0017", 0, "staking_reward", "ETH", "0.07500000", "3480.00", "261.00", _PROTOCOL),
+    TransactionRow("txn-0018", 7, "staking_reward", "SOL", "2.20000000", "152.40", "335.28", _PROTOCOL),
+    TransactionRow("txn-0019", 14, "staking_reward", "LINK", "12.00000000", "22.60", "271.20", _PROTOCOL),
+    TransactionRow("txn-0020", 21, "staking_reward", "AAVE", "0.50000000", "248.00", "124.00", _PROTOCOL),
+    TransactionRow("txn-0021", 35, "staking_reward", "ETH", "0.07500000", "3400.00", "255.00", _PROTOCOL),
+    TransactionRow("txn-0022", 49, "staking_reward", "SOL", "2.20000000", "148.00", "325.60", _PROTOCOL),
+    TransactionRow("txn-0023", 63, "staking_reward", "LINK", "12.00000000", "21.50", "258.00", _PROTOCOL),
+    TransactionRow("txn-0024", 77, "staking_reward", "AAVE", "0.50000000", "232.00", "116.00", _PROTOCOL),
+    TransactionRow("txn-0025", 92, "staking_reward", "ETH", "0.07500000", "3280.00", "246.00", _PROTOCOL),
+    TransactionRow("txn-0026", 106, "staking_reward", "SOL", "2.20000000", "160.00", "352.00", _PROTOCOL),
+    TransactionRow("txn-0027", 120, "staking_reward", "LINK", "12.00000000", "24.00", "288.00", _PROTOCOL),
+    TransactionRow("txn-0028", 140, "staking_reward", "AVAX", "6.00000000", "45.00", "270.00", _PROTOCOL),
+    TransactionRow("txn-0029", 155, "staking_reward", "ETH", "0.07500000", "3120.00", "234.00", _PROTOCOL),
+    TransactionRow("txn-0030", 175, "staking_reward", "SOL", "2.20000000", "138.00", "303.60", _PROTOCOL),
+    TransactionRow("txn-0031", 190, "staking_reward", "AVAX", "6.00000000", "38.50", "231.00", _PROTOCOL),
+    TransactionRow("txn-0032", 210, "staking_reward", "LINK", "12.00000000", "26.00", "312.00", _PROTOCOL),
 )
 
-#: Funding. A deposit is ``USD`` at a price of one, so ``amount ==
+#: Funding. A deposit is ``USDC`` at a price of one, so ``amount ==
 #: quantity * price`` holds for it like every other kind.
 _DEPOSITS: Final[tuple[TransactionRow, ...]] = (
-    TransactionRow("txn-0018", 2, "deposit", "USD", "5000.0000", "1.00", "5000.00", "Bank transfer · Chase ••4021"),
-    TransactionRow("txn-0020", 14, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0042", 44, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0043", 74, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0044", 104, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0045", 134, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0046", 165, "deposit", "USD", "3200.0000", "1.00", "3200.00", "Bank transfer · Wells ••7788"),
-    TransactionRow("txn-0047", 195, "deposit", "USD", "2500.0000", "1.00", "2500.00", _PAYROLL),
-    TransactionRow("txn-0048", 240, "deposit", "USD", "7500.0000", "1.00", "7500.00", "Bonus · Annual"),
+    TransactionRow("txn-0033", 2, "deposit", "USDC", "5000.00000000", "1.00", "5000.00", "Transfer in · Coinbase ••4021"),
+    TransactionRow("txn-0034", 14, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0035", 44, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0036", 74, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0037", 104, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0038", 134, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0039", 165, "deposit", "USDC", "3200.00000000", "1.00", "3200.00", "Transfer in · Kraken ••7788"),
+    TransactionRow("txn-0040", 195, "deposit", "USDC", "2500.00000000", "1.00", "2500.00", _PAYROLL),
+    TransactionRow("txn-0041", 240, "deposit", "USDC", "7500.00000000", "1.00", "7500.00", "Bonus · Annual"),
 )
 # fmt: on
 
 SEEDED_TRANSACTIONS: Final[tuple[TransactionRow, ...]] = (
     *_BUYS,
     *_SELLS,
-    *_DIVIDENDS,
+    *_REWARDS,
     *_DEPOSITS,
 )
 

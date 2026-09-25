@@ -23,7 +23,7 @@ void main() {
 
     test('binds the measured difference and names both ends', () {
       final data = component.read(ViewPayload.fromJson(example));
-      expect(data.spread.amountDisplay, r'$6,000.00');
+      expect(data.spread.amountDisplay, r'$1,617.00');
       expect(data.spread.highest, 'FIFO');
       expect(data.spread.lowest, 'LIFO');
       expect(data.spread.namesAnyEnd, isTrue);

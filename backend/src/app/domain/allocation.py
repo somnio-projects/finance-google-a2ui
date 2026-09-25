@@ -1,17 +1,20 @@
 """How the portfolio is grouped for an allocation donut (spec 0026 OD-2).
 
 `HoldingsSummary`'s own schema says ``"groupBy": "assetClass | sector"``, and
-the design draws both — four classes on the Home page, six sectors on the
-catalog page. Each grouping is a pure fold over the holdings: value, what it
-was worth yesterday, and its share of the whole.
+the design draws both. Each grouping is a pure fold over the holdings: value,
+what it was worth yesterday, and its share of the whole.
 
-Order is **semantic**, not sorted. The design draws Equities, Bonds, Cash,
-Alternatives in that order whatever their sizes, and sectors likewise; a
-grouping that re-sorted by value would move Cash around as the market moved,
-which is not how a reader finds a row.
+Order is **semantic**, not sorted. The taxonomy's own order is the row order
+whatever the sizes; a grouping that re-sorted by value would move the
+settlement row around as the market moved, which is not how a reader finds a
+row.
 
-Sectors are a breakdown of **equities**, so the six sector weights sum to the
-equities total, not the portfolio's — a bond fund has no sector to be in.
+The second fold is the **ecosystem** (spec 0044 OD-2), and it is deliberately
+not a relabelling of the first: BTC, ETH, SOL and AVAX share one class and no
+ecosystem, while ARB, AAVE and LINK share Ethereum across three classes. It
+covers only what has an ecosystem, so its weights sum to the attributable
+total, not the portfolio's — a multi-chain stablecoin has no single chain to be
+in.
 """
 
 from collections.abc import Callable, Sequence
@@ -32,10 +35,8 @@ class AllocationGroup(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    key: str = Field(
-        description="Stable identifier of the slice.", examples=["equities"]
-    )
-    label: str = Field(description="Words the legend shows.", examples=["Equities"])
+    key: str = Field(description="Stable identifier of the slice.", examples=["layer1"])
+    label: str = Field(description="Words the legend shows.", examples=["Layer 1"])
     value: Decimal = Field(ge=0, description="Market value today.")
     previous_value: Decimal = Field(ge=0, description="Market value yesterday.")
     weight: Decimal = Field(ge=0, le=1, description="Share of the grouping's total.")
@@ -78,7 +79,7 @@ def _fold(
 
 #: The design's row order for classes, whatever their sizes.
 CLASS_ORDER: Final[tuple[str, ...]] = tuple(kind.value for kind in AssetClass)
-#: And for sectors.
+#: And for ecosystems.
 SECTOR_ORDER: Final[tuple[str, ...]] = tuple(sector.value for sector in Sector)
 
 
@@ -93,7 +94,7 @@ def by_asset_class(holdings: Sequence[Holding]) -> tuple[AllocationGroup, ...]:
 
 
 def by_sector(holdings: Sequence[Holding]) -> tuple[AllocationGroup, ...]:
-    """Group the **equities** by sector; anything without a sector is left out."""
+    """Group by **ecosystem**; anything without one is left out (OD-2)."""
 
     def keyed(row: Holding) -> tuple[str, str] | None:
         sector = market_asset(row.symbol).sector

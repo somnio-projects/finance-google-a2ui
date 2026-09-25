@@ -13,7 +13,7 @@ What GGU-100 added, criterion by criterion (spec 0032):
 * **AC-3** — each step carries the figures the selected state shows: the
   step's own percentage move, the units held and the unit price, all pairs,
   plus the sentence the detail strip prints and the caption the header shows
-  while that bar is selected (*NVDA selected*).
+  while that bar is selected (*BTC selected*).
 * **AC-6** — ``cumulative`` stays: design binds it.
 """
 
@@ -69,7 +69,7 @@ class HoldingStep(Bucket):
     selected_label: str = Field(
         max_length=48,
         description="What the card's header says while this step is selected.",
-        examples=["NVDA selected"],
+        examples=["BTC selected"],
     )
 
 

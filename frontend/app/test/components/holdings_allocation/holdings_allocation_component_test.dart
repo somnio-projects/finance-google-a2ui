@@ -39,9 +39,9 @@ void main() {
       );
       expect(find.text(r'$482,915.20'), findsOneWidget);
       for (final row in <List<String>>[
-        <String>['NVIDIA Corp', r'$108,419.40', '22.45%'],
-        <String>['Apple Inc.', r'$69,954.00', '14.49%'],
-        <String>['Other', r'$163,631.80', '33.88%'],
+        <String>['Bitcoin', r'$134,925.00', '27.94%'],
+        <String>['Ethereum', r'$104,400.00', '21.62%'],
+        <String>['Other', r'$87,140.00', '18.04%'],
       ]) {
         expect(find.text(row[0]), findsOneWidget);
         expect(find.text(row[1]), findsOneWidget);
@@ -56,9 +56,9 @@ void main() {
         _subject(component, example),
         surfaceSize: const Size(1000, 1400),
       );
-      expect(find.text('0.2245102245694482178237504224'), findsNothing);
-      expect(find.text('482915.200000'), findsNothing);
-      expect(find.text('108419.400000'), findsNothing);
+      expect(find.text('0.2793968796177879677425767505'), findsNothing);
+      expect(find.text('482915.200000000000'), findsNothing);
+      expect(find.text('134925.0000000000'), findsNothing);
     });
 
     test('reads the raw weight only as geometry, never as text', () {
@@ -67,9 +67,9 @@ void main() {
       // `weightDisplay` is the backend's string. Neither is derived from the
       // other, and this pins that they disagree in type as well as in value.
       final data = component.read(ViewPayload.fromJson(example));
-      final nvidia = data.categories.first;
-      expect(nvidia.weight, closeTo(0.22451022456944822, 1e-15));
-      expect(nvidia.weightDisplay, equals('22.45%'));
+      final bitcoin = data.categories.first;
+      expect(bitcoin.weight, closeTo(0.279396879617788, 1e-15));
+      expect(bitcoin.weightDisplay, equals('27.94%'));
       expect(data.weights, hasLength(data.categories.length));
     });
 
@@ -79,7 +79,7 @@ void main() {
       final data = component.read(ViewPayload.fromJson(example));
       expect(
         data.categories.map((row) => row.key),
-        equals(<String>['NVDA', 'AAPL', 'GLD', 'MSFT', 'VOO', 'other']),
+        equals(<String>['BTC', 'ETH', 'SOL', 'USDC', 'LINK', 'other']),
       );
     });
 

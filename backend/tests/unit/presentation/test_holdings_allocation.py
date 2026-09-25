@@ -25,20 +25,13 @@ def test_render_lists_one_category_per_holding(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsAllocationOptions(top_n=20))
     assert payload.view == VIEW_ID
     assert [category.key for category in payload.categories] == [
-        "NVDA",
-        "AAPL",
-        "GLD",
-        "MSFT",
-        "VOO",
-        "BND",
-        "AGG",
-        "USD",
-        "PYPL",
-        "VNQ",
-        "JNJ",
-        "XOM",
-        "PG",
-        "TIP",
+        "BTC",
+        "ETH",
+        "SOL",
+        "USDC",
+        "LINK",
+        "ARB",
+        "AAVE",
     ]
     assert payload.total.amount.display == "$482,915.20"
 
@@ -48,30 +41,30 @@ def test_every_number_is_displayed_next_to_its_exact_decimal(
 ) -> None:
     payload = render(portfolio, HoldingsAllocationOptions())
     btc = payload.categories[0]
-    assert btc.value.display == "$108,419.40"
-    assert btc.value.amount == Decimal("108419.400000")  # exact, unrounded
-    assert btc.weight.display == "22.45%"
-    assert btc.weight.value > Decimal("0.22")
+    assert btc.value.display == "$134,925.00"
+    assert btc.value.amount == Decimal("134925.0000000000")  # exact, unrounded
+    assert btc.weight.display == "27.94%"
+    assert btc.weight.value > Decimal("0.27")
 
 
 def test_render_honours_top_n_with_a_residual_bucket(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsAllocationOptions(top_n=2))
     assert [category.key for category in payload.categories] == [
-        "NVDA",
-        "AAPL",
+        "BTC",
+        "ETH",
         "other",
     ]
     residual = payload.categories[-1]
     assert residual.key == OTHER_KEY
-    assert residual.value.display == "$304,541.80"
-    assert residual.weight.display == "63.06%"
+    assert residual.value.display == "$243,590.20"
+    assert residual.weight.display == "50.44%"
 
 
 def test_render_drops_the_residual_bucket_when_not_wanted(
     portfolio: Portfolio,
 ) -> None:
     payload = render(portfolio, HoldingsAllocationOptions(top_n=2, include_other=False))
-    assert [category.key for category in payload.categories] == ["NVDA", "AAPL"]
+    assert [category.key for category in payload.categories] == ["BTC", "ETH"]
     assert payload.total.amount.display == "$482,915.20"  # the total still counts all
 
 
@@ -85,9 +78,9 @@ def test_render_adds_no_residual_when_nothing_is_left_over(
 @pytest.mark.parametrize(
     ("sort", "expected"),
     [
-        ("value_desc", ["NVDA", "AAPL", "GLD"]),
-        ("value_asc", ["TIP", "PG", "XOM"]),
-        ("label", ["Apple Inc.", "Cash & sweep", "Exxon Mobil"]),
+        ("value_desc", ["BTC", "ETH", "SOL"]),
+        ("value_asc", ["AAVE", "ARB", "LINK"]),
+        ("label", ["Aave", "Arbitrum", "Bitcoin"]),
     ],
     ids=["value_desc", "value_asc", "label"],
 )
@@ -104,8 +97,8 @@ def test_render_honours_sort(
 
 def test_render_honours_precision(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsAllocationOptions(precision=0, top_n=1))
-    assert payload.categories[0].value.display == "$108,419"
-    assert payload.categories[0].weight.display == "22%"
+    assert payload.categories[0].value.display == "$134,925"
+    assert payload.categories[0].weight.display == "28%"
 
 
 def test_surface_maps_the_payload_onto_the_donut(portfolio: Portfolio) -> None:
@@ -114,8 +107,8 @@ def test_surface_maps_the_payload_onto_the_donut(portfolio: Portfolio) -> None:
     assert rendered.component == "HoldingsSummary"
     assert rendered.view == VIEW_ID
     assert rendered.props["total"]["amount"]["display"] == "$482,915.20"
-    assert rendered.props["center"] == {"count": "14", "unit": "Holdings"}
-    assert rendered.props["slices"][0]["label"] == "NVIDIA Corp"
+    assert rendered.props["center"] == {"count": "7", "unit": "Holdings"}
+    assert rendered.props["slices"][0]["label"] == "Bitcoin"
 
 
 def test_fitness_scores_one_for_any_portfolio_with_holdings(

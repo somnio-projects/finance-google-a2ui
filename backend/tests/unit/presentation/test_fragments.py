@@ -40,20 +40,20 @@ def test_percentage_pairs_the_exact_ratio_with_its_display() -> None:
 def test_fragments_compose_into_the_shapes_a_widget_binds() -> None:
     total = Total(label="Total market value", amount=money(Decimal("100")))
     category = Category(
-        key="NVDA",
+        key="BTC",
         label="NVIDIA Corp",
         value=money(Decimal("60")),
         weight=percentage(Decimal("0.6")),
     )
     bucket = Bucket(
-        key="NVDA",
+        key="BTC",
         label="NVIDIA Corp",
         delta=money(Decimal("10")),
         cumulative=money(Decimal("110")),
         direction="up",
     )
     series = Series(
-        name="NVDA",
+        name="BTC",
         points=(
             SeriesPoint(
                 at=money(Decimal("64000")),
@@ -72,7 +72,7 @@ def test_fragments_compose_into_the_shapes_a_widget_binds() -> None:
         "$64,000.00",
     )
     # A segment's key is the value a tap sends back, never its prose label.
-    assert (bucket.key, bucket.label) == ("NVDA", "NVIDIA Corp")
+    assert (bucket.key, bucket.label) == ("BTC", "NVIDIA Corp")
 
 
 def test_fragments_are_frozen() -> None:
@@ -103,7 +103,7 @@ def test_delta_carries_a_signed_move_and_its_direction() -> None:
 def test_bucket_direction_is_bounded_to_up_or_down() -> None:
     with pytest.raises(ValidationError, match="direction"):
         Bucket(
-            key="NVDA",
+            key="BTC",
             label="NVIDIA Corp",
             delta=money(Decimal("1")),
             cumulative=money(Decimal("1")),

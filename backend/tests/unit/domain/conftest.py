@@ -25,7 +25,7 @@ def portfolio() -> Portfolio:
 def make_lot(
     *,
     lot_id: str = "lot-test-01",
-    symbol: str = "NVDA",
+    symbol: str = "BTC",
     days_before: int = 30,
     quantity: str = "1.0000",
     cost_basis: str = "40000.00",
@@ -42,7 +42,7 @@ def make_lot(
 
 def make_holding(
     *,
-    symbol: str = "NVDA",
+    symbol: str = "BTC",
     quantity: str = "1.0000",
     price: str = "64250.00",
     market_value: str = "64250.0000",

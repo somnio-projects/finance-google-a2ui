@@ -9,7 +9,7 @@ curated market reference.
 Two declarations of one fact, so a test compares them rather than a comment
 claiming they agree. Before GGU-53 they could not have agreed: ``Bucket``
 carried no ``key`` at all, only a prose ``label`` (*"NVIDIA Corp"*), while
-``driver`` accepts symbols (*"NVDA"*) — so the surface advertised an action no
+``driver`` accepts symbols (*"BTC"*) — so the surface advertised an action no
 client could invoke from the payload it was attached to. The declaration was
 published, the bound was enforced, and the two had no value in common.
 """
@@ -63,9 +63,9 @@ def test_a_segment_key_is_the_symbol_and_never_the_prose_label(
     rejected. So the two are asserted to differ, on a holding where they do.
     """
     payload = render(portfolio, AttributionWaterfallOptions())
-    bitcoin = next(bucket for bucket in payload.buckets if bucket.key == "NVDA")
+    bitcoin = next(bucket for bucket in payload.buckets if bucket.key == "BTC")
 
-    assert bitcoin.label == "NVIDIA Corp"
+    assert bitcoin.label == "Bitcoin"
     assert bitcoin.key != bitcoin.label
 
 

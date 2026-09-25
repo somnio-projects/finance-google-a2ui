@@ -13,7 +13,7 @@
 > [client/0002](0002-client-delivery.md) — went `Superseded` with it. **This
 > one did not**, because its subject is the *backend's* contract, not that
 > app: `frontend/` binds it today, [ADR-L](../../docs/adr/ADR-L-client-architecture.md)
-> cites it, and `specs/frontend/0002` §OD-1 argues against `genui` by quoting
+> cites it, and `specs/frontend/0030` §OD-1 argues against `genui` by quoting
 > its §8.3. Where the text below says `client_flutter/`, read it as history —
 > the sentences about what the backend answers are unaffected.
 

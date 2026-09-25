@@ -6,6 +6,7 @@ text a caller sends or receives, because that text *is* the contract.
 """
 
 import re
+from decimal import Decimal
 
 import pytest
 
@@ -19,11 +20,11 @@ from app.domain.draft_legs import (
     with_quantity,
 )
 
-DEFAULT = "NVDA:3,AVGO:2,AMD:14"
+DEFAULT = "BTC:0.06,ETH:1.0,SOL:16"
 LEGS = (
-    LegRequest(symbol="NVDA", quantity=3),
-    LegRequest(symbol="AVGO", quantity=2),
-    LegRequest(symbol="AMD", quantity=14),
+    LegRequest(symbol="BTC", quantity=Decimal("0.06")),
+    LegRequest(symbol="ETH", quantity=Decimal("1.0")),
+    LegRequest(symbol="SOL", quantity=Decimal("16")),
 )
 
 
@@ -39,8 +40,8 @@ def test_format_writes_back_exactly_what_parse_read() -> None:
 
 def test_a_repeated_ticker_is_refused_as_the_options_own_error() -> None:
     """A regular expression cannot say "named once"; the parser does."""
-    with pytest.raises(ValueError, match="'NVDA' appears more than once"):
-        parse_legs("NVDA:1,NVDA:2")
+    with pytest.raises(ValueError, match="'BTC' appears more than once"):
+        parse_legs("BTC:1,BTC:2")
 
 
 def test_a_ticker_outside_the_reference_is_refused_the_same_way() -> None:
@@ -52,13 +53,15 @@ def test_a_ticker_outside_the_reference_is_refused_the_same_way() -> None:
 @pytest.mark.parametrize(
     ("text", "accepted"),
     [
-        ("NVDA:3", True),
-        ("NVDA:3,AVGO:2,AMD:14,AAPL:1,MSFT:1", True),
-        ("NVDA:3,AVGO:2,AMD:14,AAPL:1,MSFT:1,PG:1", False),
-        ("nvda:3", False),
-        ("NVDA:3.5", False),
-        ("NVDA:1234567", False),
-        ("NVDA:3,", False),
+        ("BTC:3", True),
+        ("BTC:3,ETH:2,SOL:14,ARB:1,AAVE:1", True),
+        ("BTC:3,ETH:2,SOL:14,ARB:1,AAVE:1,LINK:1", False),
+        ("btc:3", False),
+        ("BTC:0.06", True),
+        ("BTC:0.12345678", True),
+        ("BTC:0.123456789", False),
+        ("BTC:1234567890", False),
+        ("BTC:3,", False),
         ("", False),
     ],
     ids=[
@@ -67,7 +70,9 @@ def test_a_ticker_outside_the_reference_is_refused_the_same_way() -> None:
         "six-legs",
         "lowercase",
         "fractional",
-        "seven-digits",
+        "eight-decimals",
+        "nine-decimals",
+        "ten-digits",
         "trailing-comma",
         "empty",
     ],
@@ -80,24 +85,34 @@ def test_the_pattern_is_the_whole_truth_about_the_shape(
 
 
 def test_with_quantity_moves_one_leg_and_keeps_the_order() -> None:
-    moved = with_quantity(LEGS, "AVGO", 7)
+    moved = with_quantity(LEGS, "ETH", Decimal("0.7"))
 
-    assert [leg.symbol for leg in moved] == ["NVDA", "AVGO", "AMD"]
-    assert [leg.quantity for leg in moved] == [3, 7, 14]
+    assert [leg.symbol for leg in moved] == ["BTC", "ETH", "SOL"]
+    assert [leg.quantity for leg in moved] == [
+        Decimal("0.06"),
+        Decimal("0.7"),
+        Decimal("16"),
+    ]
 
 
 def test_stepped_writes_the_whole_option_a_tap_sends() -> None:
-    """OD-3 — the client never adds one; it sends the string it was handed."""
-    assert stepped(LEGS, "AMD", 1) == "NVDA:3,AVGO:2,AMD:15"
-    assert stepped(LEGS, "NVDA", -1) == "NVDA:2,AVGO:2,AMD:14"
+    """OD-3 — the client never adds one; it sends the string it was handed.
+
+    How far one tap moves is the *asset's* step (spec 0044 OD-6): SOL steps by
+    a whole unit and BTC by a hundredth, and one step size could not serve
+    both.
+    """
+    assert stepped(LEGS, "SOL", 1) == "BTC:0.06,ETH:1.0,SOL:17"
+    assert stepped(LEGS, "BTC", -1) == "BTC:0.05,ETH:1.0,SOL:16"
+    assert stepped(LEGS, "ETH", 1) == "BTC:0.06,ETH:1.1,SOL:16"
 
 
 def test_stepped_is_none_where_the_published_bound_ends() -> None:
     """A disabled control, never a value the backend would refuse."""
-    at_zero = (LegRequest(symbol="NVDA", quantity=0),)
-    at_max = (LegRequest(symbol="NVDA", quantity=MAX_LEG_QUANTITY),)
+    at_zero = (LegRequest(symbol="BTC", quantity=Decimal(0)),)
+    at_max = (LegRequest(symbol="BTC", quantity=MAX_LEG_QUANTITY),)
 
-    assert stepped(at_zero, "NVDA", -1) is None
-    assert stepped(at_zero, "NVDA", 1) == "NVDA:1"
-    assert stepped(at_max, "NVDA", 1) is None
-    assert stepped(at_max, "NVDA", -1) == f"NVDA:{MAX_LEG_QUANTITY - 1}"
+    assert stepped(at_zero, "BTC", -1) is None
+    assert stepped(at_zero, "BTC", 1) == "BTC:0.01"
+    assert stepped(at_max, "BTC", 1) is None
+    assert stepped(at_max, "BTC", -1) == f"BTC:{MAX_LEG_QUANTITY - Decimal('0.01')}"

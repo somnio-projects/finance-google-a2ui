@@ -75,9 +75,9 @@ void main() {
   group('the selected state', () {
     test("binds each step's written detail and caption", () {
       final data = component.read(ViewPayload.fromJson(example));
-      final nvidia = data.steps[1];
-      expect(nvidia.detail, r'+45.72% · 90 sh · $1,204.66');
-      expect(nvidia.selectedLabel, 'NVDA selected');
+      final bitcoin = data.steps[1];
+      expect(bitcoin.detail, r'+54.08% · 2.1 sh · $64,250.00');
+      expect(bitcoin.selectedLabel, 'BTC selected');
       // The totals have no selected state in the contract.
       expect(data.steps.first.detail, isNull);
       expect(data.steps.last.selectedLabel, isNull);
@@ -91,14 +91,14 @@ void main() {
             width: 571,
             child: AttributionWaterfallCard(
               data: component.read(ViewPayload.fromJson(example)),
-              initialSelectedKey: 'NVDA',
+              initialSelectedKey: 'BTC',
             ),
           ),
         ),
       );
       expect(find.byType(AttributionWaterfallPill), findsNothing);
-      expect(find.text('NVDA selected'), findsOneWidget);
-      expect(find.text(r'+45.72% · 90 sh · $1,204.66'), findsOneWidget);
+      expect(find.text('BTC selected'), findsOneWidget);
+      expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
       // N-4: the raw pairs behind the detail never reach the screen.
       expect(find.textContaining('0.45725'), findsNothing);
       expect(find.textContaining('90.0000'), findsNothing);

@@ -73,7 +73,7 @@ const String capturedTurn =
     'data: {"kind":"render-intent","index":0,"renderIntent": '
     '{"view":"holdings.allocation.v1","options":{"top_n":5}}}\n\n'
     'data: {"kind":"message","role":"agent","parts":[{"kind":"text", '
-    '"text":"NVDA is the biggest contributor."}],"renderIntents": '
+    '"text":"BTC is the biggest contributor."}],"renderIntents": '
     '[{"view":"holdings.allocation.v1","options":{"top_n":5}}]}\n\n'
     'data: {"kind":"status-update","status":{"state":"input_required"}, '
     '"final":true}\n\n';

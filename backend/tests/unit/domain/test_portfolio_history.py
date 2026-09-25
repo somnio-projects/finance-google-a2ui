@@ -22,10 +22,13 @@ def test_yesterday_is_the_reference_close_so_the_hero_and_series_agree(
     assert value_on(holdings, offset=1) == portfolio_previous_value(holdings)
 
 
-def test_cash_is_carried_flat_rather_than_drifted(portfolio: Portfolio) -> None:
-    cash = [row for row in portfolio.holdings() if row.symbol == "USD"]
+def test_the_stablecoin_is_carried_flat_rather_than_drifted(
+    portfolio: Portfolio,
+) -> None:
+    """A dollar-pegged token that wobbled 9 % last Tuesday is a bug (0044)."""
+    cash = [row for row in portfolio.holdings() if row.symbol == "USDC"]
     assert value_on(cash, offset=0) == value_on(cash, offset=45)
-    assert value_on(cash, offset=45) == Decimal("38633.22")
+    assert value_on(cash, offset=45) == Decimal("51764.00")
 
 
 def test_series_is_ascending_ends_today_and_has_the_points_asked_for(

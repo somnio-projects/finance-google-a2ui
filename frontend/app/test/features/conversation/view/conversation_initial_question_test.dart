@@ -32,7 +32,7 @@ void main() {
       // The Home chips and the Holdings hand-off arrive through
       // `/ask?ask=…` (spec frontend/0009 OD-3); the page must ask it without
       // the user touching the composer.
-      const question = 'Tell me about my NVDA position';
+      const question = 'Tell me about my BTC position';
       await tester.pumpApp(
         const ConversationPage(initialQuestion: question),
         viewsRepository: views,

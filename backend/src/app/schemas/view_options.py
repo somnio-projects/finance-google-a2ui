@@ -8,7 +8,7 @@ the knobs a projection can be asked for.
 options between them and nothing extended this query model, which carries
 `extra="forbid"`: the catalog advertised `symbol`, `quantity`, `lot_method`,
 `methods`, `side`, `size`, `size_in`, `range_pct` and `steps` while
-`GET /v1/portfolios/{id}/views?view=…&symbol=NVDA` answered **422** for every
+`GET /v1/portfolios/{id}/views?view=…&symbol=BTC` answered **422** for every
 one, and `POST /v1/view-renders` — which forwards a dict — served the same
 request with a 201. Two declarations of one fact, compared by nothing until
 `test_view_query_accepts_every_registered_option`.
@@ -40,8 +40,13 @@ SizeIn = Literal["units", "usd"]
 DECIMAL_PATTERN = r"^[0-9]{1,9}(\.[0-9]{1,8})?$"
 #: A ticker of the market reference; membership is the projection's to enforce.
 TICKER_PATTERN = r"^[A-Z]{2,10}$"
-#: `order.ticket.v2`'s legs, `TICKER:SHARES` pairs (`domain/draft_legs.py`).
-LEGS_PATTERN = r"^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$"
+#: `order.ticket.v2`'s legs, `TICKER:UNITS` pairs (`domain/draft_legs.py`).
+#: Fractional since spec 0044 OD-6: one whole unit of BTC is a third of the
+#: demo portfolio, so an integer-only leg cannot express a crypto order.
+LEGS_PATTERN = (
+    r"^[A-Z]{2,10}:[0-9]{1,9}(\.[0-9]{1,8})?"
+    r"(,[A-Z]{2,10}:[0-9]{1,9}(\.[0-9]{1,8})?){0,4}$"
+)
 
 
 class ProjectionOptions(TabOptions):
@@ -65,7 +70,7 @@ class ProjectionOptions(TabOptions):
         description=(
             "Asset the view is about; the projection rejects one it does not hold."
         ),
-        examples=["NVDA"],
+        examples=["BTC"],
     )
     quantity: Annotated[str, Field(pattern=DECIMAL_PATTERN)] | None = Field(
         default=None,
@@ -118,7 +123,7 @@ class ProjectionOptions(TabOptions):
         examples=[12],
     )
     legs: Annotated[str, Field(pattern=LEGS_PATTERN)] | None = Field(
-        default=None, description="`order.ticket.v2`: `TICKER:SHARES` pairs."
+        default=None, description="`order.ticket.v2`: `TICKER:UNITS` pairs."
     )
 
 
