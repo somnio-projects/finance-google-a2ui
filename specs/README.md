@@ -152,6 +152,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [infra/0005-the-deployer-can-reach-the-jobs-it-owns.md](infra/0005-the-deployer-can-reach-the-jobs-it-owns.md) | In progress | *unassigned* |
 | [repo/0001-open-source-readiness.md](repo/0001-open-source-readiness.md) | Implemented | GGU-28 |
 | [repo/0002-retire-the-client-flutter-app.md](repo/0002-retire-the-client-flutter-app.md) | In progress | *unassigned* (TL request 2026-09-22) |
+| [repo/0003-the-interpreter-pin-has-one-home.md](repo/0003-the-interpreter-pin-has-one-home.md) | Implemented | GGU-125 |
 | [backend/0021-machine-readable-catalog.md](backend/0021-machine-readable-catalog.md) | Implemented | GGU-53 (server half) |
 | [backend/0043-the-screen-can-ask-which-door-this-is.md](backend/0043-the-screen-can-ask-which-door-this-is.md) | In progress | *unassigned* |
 | [frontend/0002-chart-primitives-and-waterfall.md](frontend/0002-chart-primitives-and-waterfall.md) | Draft | GGU-55 (design GGU-42) |
