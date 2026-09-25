@@ -1,6 +1,7 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_card.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_model.dart';
+import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -37,8 +38,19 @@ class OrderTicketV2Component extends ViewComponent {
   String get a2uiComponent => 'MultiLegOrderTicket';
 
   @override
-  Widget build(BuildContext context, ViewPayload payload) =>
-      OrderTicketV2Card(data: read(payload));
+  Widget build(BuildContext context, ViewPayload payload) {
+    // Live inside a host that can re-request (the Assistant's transcript,
+    // GGU-113); read-only anywhere else, as the v1 ticket.
+    final edits = SurfaceEdits.maybeOf(context);
+    return OrderTicketV2Card(
+      data: read(payload),
+      onLegsChanged: edits == null
+          ? null
+          : (legs) => edits.onOptionChanged(legsOption, legs),
+      isBusy: edits?.pendingOption != null,
+      rejection: edits?.rejection,
+    );
+  }
 
   /// Reads [payload] into the model the card renders.
   ///

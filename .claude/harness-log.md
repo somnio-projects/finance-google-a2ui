@@ -4932,3 +4932,47 @@ is right to mask it; the client was wrong to show the mask as copy.
 enough to deserve a sentence, add one `case` to `turnFailureNotice` and a test
 asserting the raw code does not render. Do not widen `TabFailure` to take a
 sentence of its own: the tab's message is the backend's, and that is the rule.
+
+## 2026-09-24 — The ticket in the Assistant is editable
+
+**Spec:** [`frontend/0026`](../specs/frontend/0026-the-ticket-in-the-assistant-is-editable.md) ·
+**Ticket:** GGU-113 (Patricio, product review of the deployed preview).
+
+*"Buy 10 shares of NVDA"* returned the order ticket, and it rendered static —
+a confirmation screen for whatever the model guessed, in the one component
+whose whole point is that it can be edited.
+
+**Which layer.** The client, and only the client. The contract declares four
+editable inputs; the render intent is resolved through the same read endpoint
+a `?view=` request uses, so the payload carries them; and
+`OrderTicketComponent.build` handed the card no callback. Its own doc comment
+said so — *"the card exposes a callback and `build` passes none"* — which is
+a sentence that was accurate and was the bug.
+
+**What changed.** `SurfaceEdits`, the counterpart of `SurfaceActions` for the
+other half of ADR-K D-11: a tap sends an action and starts a turn; an edit
+**re-requests the same view** with one declared option changed. The
+transcript wraps every surface in one, `AgentSurface` remembers the options
+it was rendered with (the agent's intent, then every edit), and both ticket
+components render live inside the scope and read-only outside it — the
+catalog card and the standalone page are unchanged.
+
+**Two decisions worth carrying forward:**
+
+- **An edit is not a question for the model.** The ticket's AC-2 said "emits
+  an action back to the agent". It does not, on purpose: the declared option
+  is the whole message, the read endpoint validates it against the registry
+  that declared it (D-3), and a turn per edit would re-run tools whose effects
+  are already on screen (0019 §5). A refused edit is the backend's 422
+  sentence under the previous ticket, and the client validates nothing (N-8).
+- **"Adding one edits no existing file" has a sibling: "a component renders
+  what its host can honour".** The read-only fallback was right; what was
+  missing was a host. When a component grows an interaction, ask which scope
+  carries it before asking which widget draws it — `SurfaceActions` for a
+  turn, `SurfaceEdits` for a re-render — and give the transcript that scope
+  rather than teaching the component about blocs.
+
+**Next person:** `changedFigures` — the highlight of figures that moved —
+is derived on the standalone page from the previous payload and is not yet
+drawn in the transcript. `AgentSurface` has the previous payload at the
+moment `rendered` replaces it; keeping it is a field, not a contract change.
