@@ -11,6 +11,7 @@ class TaxLot extends Equatable {
   const TaxLot({
     required this.label,
     required this.acquiredOnDisplay,
+    required this.holdingPeriodDisplay,
     required this.unitsDisplay,
     required this.costBasisDisplay,
     required this.proceedsDisplay,
@@ -31,6 +32,16 @@ class TaxLot extends Equatable {
   /// here would be formatting (N-1) — `intl` is one of the mechanisms
   /// `binding_rules_test.dart` fails on.
   final String acquiredOnDisplay;
+
+  /// The payload's `lots[].holding_period_display`, e.g. `5.5 yr`.
+  ///
+  /// The duration the kit draws beside the term pill. It arrives as a string
+  /// because a duration is `as_of - acquired_on` and this app has no clock to
+  /// subtract with — reading the device clock is N-13, and
+  /// `binding_rules_test.dart` fails on the three mechanisms for it, in
+  /// comments too. The backend words it, and the form it takes always agrees
+  /// with [term] (spec `backend/0049` OD-2).
+  final String holdingPeriodDisplay;
 
   /// The payload's `units_display` — the *Shares* column.
   ///
@@ -74,6 +85,7 @@ class TaxLot extends Equatable {
   List<Object?> get props => <Object?>[
     label,
     acquiredOnDisplay,
+    holdingPeriodDisplay,
     unitsDisplay,
     costBasisDisplay,
     proceedsDisplay,

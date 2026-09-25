@@ -122,5 +122,23 @@ void main() {
       // which is the whole point of not reading the sign off the string.
       expect(cell.style.color, TaxLotTokens.light.loss);
     });
+
+    testWidgets('prints the holding period the backend worded', (tester) async {
+      // The goldens here are cropped to the left chrome and are deliberately
+      // text-free (`taxlot_golden_frame.dart`), so **nothing else in this
+      // suite can see this string reach the screen**. The duration is a
+      // server string — the client has no clock to derive one with (N-13) —
+      // and it sits beside the pill, as the artboard draws it.
+      await pumpRow(tester, TaxLotTerm.long);
+
+      expect(find.text('5.5 yr'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(TaxLotRowTile),
+          matching: find.text('Long-term'),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

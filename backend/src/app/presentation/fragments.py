@@ -4,21 +4,26 @@ The tenth chart must reuse what the first nine established instead of
 inventing a tenth vocabulary, so a new projection composes these fragments and
 only adds a primitive here — with its tests — when it genuinely needs one.
 
-The figure/string pairs live in ``app.presentation.displays`` and are
-re-exported here, so a projection imports the whole vocabulary from one place.
+The figure/string pairs live in ``app.presentation.displays``, the shared base
+in ``app.presentation.labels`` and the plotting primitives in
+``app.presentation.plot_fragments``; all of them are re-exported here, so a
+projection imports the whole vocabulary from one place even though the 150-line
+budget split it across four files.
 """
 
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.day_change import Trend
+from app.core.trend import Trend
 from app.presentation.displays import (
     MoneyDisplay,
     PercentageDisplay,
     money,
     percentage,
 )
+from app.presentation.labels import Labelled
+from app.presentation.plot_fragments import Annotation, Series, SeriesPoint
 
 
 class ProjectionDto(BaseModel):
@@ -27,22 +32,32 @@ class ProjectionDto(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
-class Labelled(BaseModel):
-    """A fragment the widget shows under a human label."""
-
-    model_config = ConfigDict(frozen=True)
-
-    label: str = Field(
-        max_length=64,
-        description="Human label the widget shows.",
-        examples=["NVIDIA Corp"],
-    )
-
-
 class Total(Labelled):
     """A headline figure the widget shows on its own."""
 
     amount: MoneyDisplay = Field(description="The figure, exact and formatted.")
+
+
+class SignedTotal(Total):
+    """A headline figure whose **sign** is part of what it says (GGU-117).
+
+    The tax-lot footer's realised result: the design colours it, and the client
+    may neither read the sign off the string (N-1) nor compare the number
+    (N-2), so the payload has to say which way it points.
+
+    A separate fragment rather than an optional field on ``Total``, because
+    almost every headline figure in every projection has no direction and would
+    carry a field nothing binds — which is what spec 0024 §7 deleted fields for
+    (spec 0049 OD-4). ``direction`` is spelled as ``Delta`` spells it; the
+    ``trend`` on ``TaxLotRow`` one level down is the older spelling of the same
+    concept and is left alone rather than renamed under a bound client.
+    """
+
+    direction: Trend = Field(
+        description="Sign of the figure, decided from the rounded value so a "
+        "half-cent loss is `flat` beside a `$0.00`.",
+        examples=["up"],
+    )
 
 
 class Delta(Labelled):
@@ -93,45 +108,6 @@ class Bucket(Labelled):
     )
 
 
-class SeriesPoint(Labelled):
-    """One observation of a series: where it sits, and what it is worth there.
-
-    ``at`` is the **x** coordinate as an ADR-E pair, and it is what makes the
-    series drawable. ``label`` is the axis tick a widget prints; a client
-    given only that would have to parse ``"$142.50"`` back into a number to
-    place the point, which is the client-side arithmetic ADR-K D-5 exists to
-    remove (GGU-53).
-    """
-
-    at: MoneyDisplay = Field(
-        description="Where the point sits on the x axis — exact, and formatted."
-    )
-    value: MoneyDisplay = Field(description="The observed figure at this point.")
-
-
-class Series(BaseModel):
-    """A named sequence of observations the widget plots as one line."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: str = Field(
-        max_length=64, description="Name of the series.", examples=["BTC"]
-    )
-    points: tuple[SeriesPoint, ...] = Field(
-        description="The observations, oldest first."
-    )
-
-
-class Annotation(Labelled):
-    """A sentence the widget shows beside the chart, written server-side."""
-
-    text: str = Field(
-        max_length=200,
-        description="The sentence to show; it already contains its numbers.",
-        examples=["contributed $8,925.00"],
-    )
-
-
 __all__ = [
     "Annotation",
     "Bucket",
@@ -143,6 +119,7 @@ __all__ = [
     "ProjectionDto",
     "Series",
     "SeriesPoint",
+    "SignedTotal",
     "Total",
     "money",
     "percentage",

@@ -19,17 +19,19 @@ import 'package:flutter/material.dart';
 /// field with different content, chosen by the backend for the sale it was
 /// asked about.
 ///
-/// The total is drawn in [TaxLotPalette.primaryText] rather than the kit's
-/// green. The kit colours it by sign; `realized` carries no `direction` or
-/// `trend` the way each lot does, and the two ways to get one back — reading
-/// the `+` off the display string, or taking the sign through the geometry
-/// seam — are the parse N-1 forbids and a use ADR-L D-14 reserves for canvas
-/// coordinates. Spec `frontend/0027` OQ-4 asks the backend for the field.
+/// The total takes the kit's green from [trend], which is `realized.direction`
+/// — the field spec `frontend/0027` OQ-4 asked the backend for and
+/// `backend/0049` OD-4 added. Until it existed this was drawn in
+/// [TaxLotPalette.primaryText], because the two ways to recover a sign without
+/// it — reading the `+` off the display string, or taking the sign through the
+/// geometry seam — are the parse N-1 forbids and a use ADR-L D-14 reserves for
+/// canvas coordinates.
 class TaxLotsTableFooter extends StatelessWidget {
   /// Creates the footer line.
   const TaxLotsTableFooter({
     required this.label,
     required this.totalDisplay,
+    required this.trend,
     required this.splits,
     super.key,
   });
@@ -39,6 +41,9 @@ class TaxLotsTableFooter extends StatelessWidget {
 
   /// The payload's `realized.amount.display`.
   final String totalDisplay;
+
+  /// The payload's `realized.direction` — the total's colour.
+  final TaxLotTrend trend;
 
   /// The `by_term` halves, in arrival order (N-10).
   final List<TaxLotTermSplit> splits;
@@ -86,7 +91,7 @@ class TaxLotsTableFooter extends StatelessWidget {
                     children: <Widget>[
                       Text(
                         totalDisplay,
-                        style: TaxLotType.footerTotal(palette.primaryText),
+                        style: TaxLotType.footerTotal(trend.colorFor(palette)),
                       ),
                       for (final split in splits) _splitChip(palette, split),
                     ],

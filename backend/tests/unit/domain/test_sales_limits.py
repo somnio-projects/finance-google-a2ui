@@ -110,6 +110,7 @@ def test_a_simulation_whose_rows_do_not_reach_its_totals_does_not_close() -> Non
         lot_id="lot-btc-01",
         acquired_on=FROZEN_NOW.date(),
         term=LotTerm.SHORT,
+        held_days=0,  # acquired on the frozen day itself, so short-term agrees
         quantity=Decimal(1),
         cost_basis=Decimal(10),
         proceeds=Decimal(15),

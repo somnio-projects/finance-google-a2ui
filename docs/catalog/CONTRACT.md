@@ -150,7 +150,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `f3cae9fd15c1` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `535ba6e23bf0` | 43 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `0556567d7b94` | 45 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `activity.timeline.v1`
 
@@ -3747,7 +3747,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `535ba6e23bf0`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `0556567d7b94`
 - **Component:** `TaxLotTable`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -3787,6 +3787,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `realized.amount` | object | required | `container` | — | — |
 | `realized.amount.amount` | decimal | required | `raw` | — | — |
 | `realized.amount.display` | string ≤32 chars | required | `display` | — | — |
+| `realized.direction` | enum up / down / flat | required | `enum` | variant | — |
 | `by_term` | array | required | `container` | empty | — |
 | `by_term[].label` | string ≤64 chars | required | `text` | — | — |
 | `by_term[].term` | enum short / long | required | `enum` | variant | — |
@@ -3799,6 +3800,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `lots[].acquired_on` | string | required | `text` | — | — |
 | `lots[].acquired_on_display` | string ≤32 chars | required | `text` | — | — |
 | `lots[].term` | enum short / long | required | `enum` | variant | — |
+| `lots[].holding_period_display` | string ≤16 chars | required | `text` | — | — |
 | `lots[].units` | decimal | required | `raw` | — | — |
 | `lots[].units_display` | string ≤32 chars | required | `text` | — | — |
 | `lots[].cost_basis` | object | required | `container` | — | — |
@@ -3848,7 +3850,8 @@ _This surface sends nothing back: tapping it starts no turn._
     "amount": {
       "amount": "17953.5000000000",
       "display": "+$17,953.50"
-    }
+    },
+    "direction": "up"
   },
   "by_term": [
     {
@@ -3876,6 +3879,7 @@ _This surface sends nothing back: tapping it starts no turn._
       "acquired_on": "2025-01-13",
       "acquired_on_display": "01/13/2025",
       "term": "long",
+      "holding_period_display": "1.0 yr",
       "units": "0.25000000",
       "units_display": "0.25",
       "cost_basis": {
@@ -3898,6 +3902,7 @@ _This surface sends nothing back: tapping it starts no turn._
       "acquired_on": "2025-01-17",
       "acquired_on_display": "01/17/2025",
       "term": "short",
+      "holding_period_display": "12 mo",
       "units": "0.50000000",
       "units_display": "0.5",
       "cost_basis": {

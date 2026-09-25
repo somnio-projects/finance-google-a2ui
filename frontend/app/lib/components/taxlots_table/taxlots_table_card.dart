@@ -58,6 +58,7 @@ class TaxLotsTableCard extends StatelessWidget {
       TaxLotsTableFooter(
         label: data.realizedLabel,
         totalDisplay: data.realizedDisplay,
+        trend: data.realizedTrend,
         splits: data.splits,
       ),
     ],

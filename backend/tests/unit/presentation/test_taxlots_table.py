@@ -35,6 +35,7 @@ def test_render_walks_the_lots_the_sale_consumes(portfolio: Portfolio) -> None:
     assert payload.proceeds.amount.display == "$48,187.50"
     assert payload.cost_basis.amount.display == "$30,234.00"
     assert payload.realized.amount.display == "+$17,953.50"
+    assert payload.realized.direction == "up"
     assert [(row.label, row.term, row.fully_sold) for row in payload.lots] == [
         ("lot-btc-01", LotTerm.LONG, True),
         ("lot-btc-02", LotTerm.SHORT, False),
@@ -79,6 +80,7 @@ def test_render_trims_unselected_sections(
     assert bool(payload.lots) is has_lots
     assert len(payload.by_term) == len(LotTerm)
     assert payload.realized.amount.display == "+$17,953.50"
+    assert payload.realized.direction == "up"
 
 
 @pytest.mark.parametrize(
