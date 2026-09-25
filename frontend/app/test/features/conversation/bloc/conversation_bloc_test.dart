@@ -15,7 +15,7 @@ void main() {
         events: const <AgentEvent>[
           AgentTurnStarted(),
           exampleSurface,
-          AgentAnswered(text: 'NVDA led it.', views: <String>[exampleView]),
+          AgentAnswered(text: 'BTC led it.', views: <String>[exampleView]),
           AgentTurnEnded(AgentTurnState.inputRequired),
         ],
       ),
@@ -24,7 +24,7 @@ void main() {
         expect(bloc.state.entries, hasLength(3));
         expect(bloc.state.entries[0], equals(const UserSaid('what moved?')));
         expect(bloc.state.entries[1], isA<AgentSurface>());
-        expect(bloc.state.entries[2], equals(const AgentSaid('NVDA led it.')));
+        expect(bloc.state.entries[2], equals(const AgentSaid('BTC led it.')));
         expect(bloc.state.status, equals(ConversationStatus.idle));
       },
     );

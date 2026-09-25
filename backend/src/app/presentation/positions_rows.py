@@ -38,13 +38,13 @@ class HoldingsPositionsOptions(DisplayOptions, SortOptions, SearchOptions):
     asset_class: AssetFilter = Field(
         default=ALL_CLASSES,
         description="Keep only this asset class; `all` keeps every row.",
-        examples=["bonds"],
+        examples=["layer1"],
     )
 
 
 def is_cash(holding: Holding) -> bool:
-    """Whether ``holding`` is the settlement fund."""
-    return market_asset(holding.symbol).asset_class is AssetClass.CASH
+    """Whether ``holding`` is the settlement asset — the stablecoin (0044)."""
+    return market_asset(holding.symbol).asset_class is AssetClass.STABLECOIN
 
 
 def gain_of(value: Decimal, cost: Decimal, *, period: str, locale: str) -> Change:

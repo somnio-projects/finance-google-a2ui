@@ -39,8 +39,8 @@ def test_greeting_follows_the_hour_of_as_of_not_the_clock(
 def test_today_is_the_home_page_hero_to_the_cent(portfolio: Portfolio) -> None:
     """▲ +$3,240.18 (+0.68%) today."""
     change = figures.change_over(portfolio, portfolio.holdings(), DEFAULTS)
-    assert change.amount.display == "+$3,240.18"
-    assert change.percent.display == "+0.68%"
+    assert change.amount.display == "+$2,201.05"
+    assert change.percent.display == "+0.46%"
     assert change.trend == "up"
     assert change.period == "today"
 
@@ -83,12 +83,12 @@ def test_the_sparkline_is_thirty_days_ending_on_the_total(portfolio: Portfolio) 
 def test_movers_are_written_as_the_design_prints_them() -> None:
     rows = figures.movers(DEFAULTS)
     assert [(r.symbol, r.change.display, r.trend) for r in rows] == [
-        ("NVDA", "+4.2%", "up"),
-        ("TSLA", "-2.3%", "down"),
-        ("AAPL", "+1.1%", "up"),
+        ("AVAX", "-6.3%", "down"),
+        ("AAVE", "-4.4%", "down"),
+        ("BTC", "+3.7%", "up"),
     ]
-    assert rows[0].price.display == "$1,204.66"
-    assert rows[1].name == "Tesla, Inc."
+    assert rows[0].price.display == "$41.80"
+    assert rows[0].name == "Avalanche"
 
 
 def test_signed_helpers_carry_the_exact_value_beside_the_string() -> None:

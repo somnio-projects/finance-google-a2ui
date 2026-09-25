@@ -90,7 +90,7 @@ class WindowStep(Bucket):
     selected_label: str = Field(
         max_length=48,
         description="What the card's header says while this step is selected.",
-        examples=["NVDA selected"],
+        examples=["BTC selected"],
     )
 
 

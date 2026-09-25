@@ -25,7 +25,7 @@ class OrderLine(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     key: str = Field(max_length=10, description="Stable id: the ticker.")
-    symbol: str = Field(max_length=10, description="Ticker.", examples=["NVDA"])
+    symbol: str = Field(max_length=10, description="Ticker.", examples=["BTC"])
     name: str = Field(
         max_length=64, description="Asset name.", examples=["NVIDIA Corp"]
     )
@@ -37,13 +37,13 @@ class OrderLine(BaseModel):
         max_length=MAX_LEGS_TEXT,
         pattern=LEGS_PATTERN,
         description="The `legs` value a `+` sends; null when at the bound.",
-        examples=["NVDA:4,AVGO:2,AMD:14"],
+        examples=["BTC:4,ETH:2,SOL:14"],
     )
     decrement: str | None = Field(
         max_length=MAX_LEGS_TEXT,
         pattern=LEGS_PATTERN,
         description="The `legs` value a `-` sends; null at zero shares.",
-        examples=["NVDA:2,AVGO:2,AMD:14"],
+        examples=["BTC:2,ETH:2,SOL:14"],
     )
 
 

@@ -43,8 +43,8 @@ void main() {
 
     test('an unset filter is an absent key, not a default sent back', () {
       expect(positionsOptionsFor(everyAssetClass, ''), isEmpty);
-      expect(positionsOptionsFor('bonds', ''), <String, String>{
-        'asset_class': 'bonds',
+      expect(positionsOptionsFor('layer2', ''), <String, String>{
+        'asset_class': 'layer2',
       });
       expect(positionsOptionsFor(everyAssetClass, 'voo'), <String, String>{
         'query': 'voo',
@@ -54,8 +54,8 @@ void main() {
     blocTest<HoldingsBloc, HoldingsState>(
       'a chip refetches the list with asset_class (AC-4)',
       build: build,
-      act: (bloc) => bloc.add(const HoldingsAssetClassChanged('bonds')),
-      verify: (_) => verifyPositions(<String, String>{'asset_class': 'bonds'}),
+      act: (bloc) => bloc.add(const HoldingsAssetClassChanged('layer2')),
+      verify: (_) => verifyPositions(<String, String>{'asset_class': 'layer2'}),
     );
 
     blocTest<HoldingsBloc, HoldingsState>(
@@ -63,7 +63,7 @@ void main() {
       build: build,
       act: (bloc) async {
         bloc
-          ..add(const HoldingsAssetClassChanged('bonds'))
+          ..add(const HoldingsAssetClassChanged('layer2'))
           ..add(const HoldingsQueryChanged('vanguard'));
         // A wait for something that must NOT happen cannot be an
         // `untilCalled`: it would hang until the test timed out. This

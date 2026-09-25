@@ -50,7 +50,7 @@ STREAM_EXAMPLE: Final[str] = (
     "\n"
     'data: {"kind":"message","taskId":"7b1e...","contextId":"c2f1...",'
     '"role":"agent","parts":[{"kind":"text","text":"Your portfolio is up '
-    '2.4% this month, driven by NVDA."}],'
+    '2.4% this month, driven by BTC."}],'
     '"renderIntents":[{"view":"attribution.waterfall.v1",'
     '"options":{"window":"30d"}}],'
     '"suggestions":[{"key":"biggest-drivers","label":"Biggest drivers"}]}\n'

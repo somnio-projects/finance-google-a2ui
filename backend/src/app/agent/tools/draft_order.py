@@ -1,6 +1,6 @@
 """``draft_order`` — a vague buying intent as an editable multi-leg draft (spec 0031).
 
-*"Put about $10k into semiconductors, keep it diversified."* The model names a
+*"Put about $10k into the majors, keep it diversified."* The model names a
 basket and an amount; **this** picks the legs, weighs them and divides dollars
 by prices (``app.domain.baskets``), then states what the draft costs and
 shifts (``app.domain.draft_impact``, ``draft_weights``). Every figure leaves as
@@ -56,11 +56,11 @@ class DraftOrderArguments(BaseModel):
     )
     basket: Basket = Field(
         description=(
-            "What to buy into: 'semiconductors' (NVDA, AVGO, AMD at 40/35/25), "
-            "or a sector — 'technology', 'financials', 'healthcare', "
-            "'consumer', 'energy' — split equally across its single names."
+            "What to buy into: 'majors' (BTC, ETH, SOL at 40/35/25), or a "
+            "chain ecosystem — 'bitcoin', 'ethereum', 'solana', 'avalanche' — "
+            "split equally across the assets that settle on it."
         ),
-        examples=["semiconductors"],
+        examples=["majors"],
     )
     side: Side = Field(
         default="buy",
@@ -88,12 +88,13 @@ class DraftOrderTool:
     name = NAME
     description = (
         "Compose an editable multi-leg draft order from a vague intent: a "
-        "dollar amount and a basket ('semiconductors' or a sector). Returns "
-        "the legs (ticker, whole shares, price, value, weight) and the impact "
-        "(total, shares, simulated fees, cash remaining, the sector's weight "
-        "before and after), every figure already formatted, plus whether the "
-        "available cash covers it. Nothing is placed. Copy the strings, never "
-        "recompute them, and never confirm an order in prose."
+        "dollar amount and a basket ('majors' or an ecosystem). Returns the "
+        "legs (ticker, units, price, value, weight) and the impact (total, "
+        "units, simulated fees, cash remaining, the group's weight before and "
+        "after), every figure already formatted, plus whether the available "
+        "cash covers it. Units are fractional and are floored to each asset's "
+        "step. Nothing is placed. Copy the strings, never recompute them, and "
+        "never confirm an order in prose."
     )
     parameters: Mapping[str, object] = DraftOrderArguments.model_json_schema()
 

@@ -62,7 +62,7 @@ class ScenarioSubject(Labelled):
     """What every column of one card shares — the comparability contract."""
 
     symbol: str = Field(
-        pattern=SYMBOL_PATTERN, description="Ticker being sold.", examples=["NVDA"]
+        pattern=SYMBOL_PATTERN, description="Ticker being sold.", examples=["BTC"]
     )
     quantity_display: str = Field(
         max_length=32, description="Units the sale disposes of.", examples=["0.18"]

@@ -25,11 +25,11 @@ void main() {
     test('binds the subject once, outside the columns', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.title, 'Same sale, different lot method');
-      expect(data.subject.label, 'NVIDIA Corp');
-      expect(data.subject.symbol, 'NVDA');
-      expect(data.subject.quantityDisplay, '30');
-      expect(data.subject.priceDisplay, r'$1,204.66');
-      expect(data.subject.proceedsDisplay, r'$36,139.80');
+      expect(data.subject.label, 'Bitcoin');
+      expect(data.subject.symbol, 'BTC');
+      expect(data.subject.quantityDisplay, '0.25');
+      expect(data.subject.priceDisplay, r'$64,250.00');
+      expect(data.subject.proceedsDisplay, r'$16,062.50');
     });
 
     test('keeps the columns in the order the backend sent them', () {
@@ -54,17 +54,17 @@ void main() {
       ]);
       // Every cell is the backend's own display string, in column order.
       expect(data.metrics[0].valueDisplays, <String>[
-        r'$22,800.00',
-        r'$28,800.00',
-        r'$28,800.00',
+        r'$9,000.00',
+        r'$10,617.00',
+        r'$10,617.00',
       ]);
       expect(data.metrics[1].valueDisplays, <String>[
-        r'+$13,339.80',
-        r'+$7,339.80',
-        r'+$7,339.80',
+        r'+$7,062.50',
+        r'+$5,445.50',
+        r'+$5,445.50',
       ]);
       expect(data.metrics[2].valueDisplays.first, r'$0.00');
-      expect(data.metrics[3].valueDisplays.first, r'+$13,339.80');
+      expect(data.metrics[3].valueDisplays.first, r'+$7,062.50');
     });
 
     // `spread` has a suite of its own: `scenario_comparison_spread_test.dart`.

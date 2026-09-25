@@ -37,7 +37,7 @@ void main() {
         ViewPayload.fromJson(example),
       );
       expect(drivers, isNotNull);
-      expect(drivers, contains('NVDA'));
+      expect(drivers, contains('BTC'));
     });
 
     testWidgets('inside a scope, a tapped driver is sent as the action', (

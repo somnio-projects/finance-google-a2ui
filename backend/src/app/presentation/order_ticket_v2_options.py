@@ -1,7 +1,7 @@
 """The declared options of ``order.ticket.v2`` (spec 0031).
 
 Two knobs beside the display trio: which way the order goes, and the legs as
-one bounded string — ``NVDA:3,AVGO:2,AMD:14``. One string rather than one
+one bounded string — ``BTC:0.06,ETH:1.0,SOL:16``. One string rather than one
 option per ticker (spec 0031 OD-2): a stepper edit is then the same option
 with one number moved, the bound is a single pattern the model and the widget
 both read, and the reference list is not spelled into the schema a second
@@ -26,10 +26,10 @@ from app.domain.draft_legs import (
 from app.domain.payoff import Side
 from app.presentation.options import DisplayOptions
 
-#: What the ``semiconductors`` basket composes for the design's own prompt,
-#: *"put about $10k into semiconductors"*, at the seeded prices — a test
-#: compares the two rather than a comment claiming they agree.
-DEFAULT_LEGS: Final[str] = "NVDA:3,AVGO:2,AMD:14"
+#: What the ``majors`` basket composes for the design's own prompt,
+#: *"put about $10k into the majors"*, at the seeded prices — a test compares
+#: the two rather than a comment claiming they agree.
+DEFAULT_LEGS: Final[str] = "BTC:0.06,ETH:1.0,SOL:16"
 
 
 class OrderTicketV2Options(DisplayOptions):
@@ -40,13 +40,14 @@ class OrderTicketV2Options(DisplayOptions):
         pattern=LEGS_PATTERN,
         max_length=MAX_LEGS_TEXT,
         description=(
-            "The legs of the draft as `TICKER:SHARES` pairs separated by "
-            "commas, one to five of them, whole shares, each ticker from the "
-            "market reference and named once. Every rendered leg carries the "
-            "value a `+` or `-` sends back, so a stepper edit is this option "
-            "re-sent with one number moved."
+            "The legs of the draft as `TICKER:UNITS` pairs separated by "
+            "commas, one to five of them, units up to eight decimals, each "
+            "ticker from the market reference and named once. Every rendered "
+            "leg carries the value a `+` or `-` sends back, so a stepper edit "
+            "is this option re-sent with one number moved by that asset's own "
+            "step."
         ),
-        examples=[DEFAULT_LEGS, "NVDA:4,AVGO:2,AMD:14"],
+        examples=[DEFAULT_LEGS, "BTC:0.07,ETH:1.0,SOL:16"],
     )
     side: Side = Field(
         default="buy",

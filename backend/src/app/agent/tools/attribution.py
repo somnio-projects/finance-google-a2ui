@@ -57,7 +57,7 @@ class AttributionArguments(BaseModel):
             "portfolio. The totals then cover only the named holdings, so the "
             "waterfall still closes against its own total."
         ),
-        examples=[["NVDA", "AAPL"]],
+        examples=[["BTC", "ETH"]],
     )
 
 

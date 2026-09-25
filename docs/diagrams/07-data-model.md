@@ -59,9 +59,9 @@ erDiagram
         uuid portfolio_id FK
         string transaction_id
         date occurred_on
-        string kind
+        string kind "buy | sell | staking_reward | deposit — 16 chars since 0009"
         string symbol
-        decimal quantity "NUMERIC(38,18)"
+        decimal quantity "NUMERIC(38,18) — carries a crypto unit's 8 dp"
         decimal price "NUMERIC(38,18)"
         string memo "words beside the row — 0007, nullable"
         datetime created_at
@@ -92,6 +92,7 @@ erDiagram
 | `0006_users` *(spec [`backend/0027`](../../specs/backend/0027-user-provisioning.md))* | the provisioning registry — who was invited; no credential, ever |
 | `0007_transaction_memo` *(spec [`backend/0028`](../../specs/backend/0028-holdings-and-activity.md))* | `memo` on the ledger, for the words the Activity tab prints beside a row |
 | `0008_portfolio_owner_email` *(spec [`backend/0035`](../../specs/backend/0035-the-portfolio-has-an-owner-and-the-tabs-really-filter.md))* | `subject` → `owner_email`; the ownership key becomes the **verified e-mail**, and existing rows are deleted because an opaque `sub` maps to no address |
+| `0009_transaction_kind_width` *(spec [`backend/0044`](../../specs/backend/0044-the-portfolio-is-crypto.md))* | `kind` widens to 16 characters for `staking_reward`; the column was sized when `dividend` was exactly eight. No data is migrated — the demo portfolios are **re-seeded**, because a backfill would keep rows whose symbols left the market reference |
 
 **No holdings table, on purpose.** `Portfolio.positions` is derived from the
 lots and `Portfolio.validate` proves the derivation on every load; persisting

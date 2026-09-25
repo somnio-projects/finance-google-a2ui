@@ -14,16 +14,17 @@ class TransactionType(StrEnum):
 
     BUY = "buy"
     SELL = "sell"
-    DIVIDEND = "dividend"
+    STAKING_REWARD = "staking_reward"
     DEPOSIT = "deposit"
 
 
 class Transaction(BaseModel):
-    """One ledger row of the simulated history — a trade, a dividend, a deposit.
+    """One ledger row of the simulated history — a trade, a reward, a deposit.
 
-    A dividend carries the per-share amount as ``price`` and the shares as
-    ``quantity``; a deposit is ``USD`` at a price of one, so ``amount ==
-    quantity * price`` holds for every kind and one invariant covers them all.
+    A staking reward is paid in the asset, so it carries the units received as
+    ``quantity`` and that day's unit price as ``price``; a deposit is ``USDC``
+    at a price of one, so ``amount == quantity * price`` holds for every kind
+    and one invariant covers them all (spec 0044 OD-7).
     """
 
     model_config = ConfigDict(frozen=True)

@@ -75,7 +75,15 @@ def test_every_declared_pair_agrees_member_for_member() -> None:
 
 def test_the_comparison_would_notice_a_new_member() -> None:
     """The check itself, checked — it must not be an equality that cannot fail."""
-    widened = Literal["all", "equities", "bonds", "alternatives", "cash", "crypto"]
+    widened = Literal[
+        "all",
+        "layer1",
+        "layer2",
+        "stablecoin",
+        "defi",
+        "infrastructure",
+        "equities",
+    ]
 
     assert _members(widened) != _members(AssetFilter)
-    assert _members(widened) - _members(AssetFilter) == {"crypto"}
+    assert _members(widened) - _members(AssetFilter) == {"equities"}

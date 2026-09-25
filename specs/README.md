@@ -101,7 +101,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [backend/0022-surface-actions.md](backend/0022-surface-actions.md) | Implemented | GGU-78 |
 | [backend/0023-catalog-serves-the-client.md](backend/0023-catalog-serves-the-client.md) | Implemented | GGU-53 |
 | [backend/0024-contract-serves-the-designs.md](backend/0024-contract-serves-the-designs.md) | Implemented | GGU-99 (closes GGU-101/103/104 in part) |
-| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | Implemented | *unassigned* (PR #81) |
+| [backend/0025-the-design-portfolio.md](backend/0025-the-design-portfolio.md) | Implemented — **OD-2 superseded by backend/0044** | *unassigned* (PR #81) |
 | [backend/0026-the-home-shell.md](backend/0026-the-home-shell.md) | Implemented | *unassigned* (PR #81) |
 | [backend/0027-user-provisioning.md](backend/0027-user-provisioning.md) | In progress | *unassigned* |
 | [backend/0028-holdings-and-activity.md](backend/0028-holdings-and-activity.md) | In progress | *unassigned* |
@@ -138,6 +138,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0024-the-header-stays-put.md](frontend/0024-the-header-stays-put.md) | In progress | *unassigned* (TL request 2026-09-22) |
 | [frontend/0025-failures-have-a-way-out.md](frontend/0025-failures-have-a-way-out.md) | In progress | GGU-110 · GGU-111 · GGU-112 |
 | [frontend/0026-the-ticket-in-the-assistant-is-editable.md](frontend/0026-the-ticket-in-the-assistant-is-editable.md) | In progress | GGU-113 |
+| [backend/0044-the-portfolio-is-crypto.md](backend/0044-the-portfolio-is-crypto.md) | In progress | GGU-114 |
 | [frontend/0028-the-waterfall-matches-the-ui-kit.md](frontend/0028-the-waterfall-matches-the-ui-kit.md) | In progress | GGU-115 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |

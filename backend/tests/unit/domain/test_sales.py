@@ -17,24 +17,24 @@ from app.domain.sales import simulate_sale
 from app.domain.terms import LotTerm
 from tests.unit.domain.conftest import make_lot, make_portfolio
 
-NVDA_PRICE = Decimal("1204.66")
+BTC_PRICE = Decimal("64250.00")
 
 #: Age order and price order disagree, so each method realises a different
-#: gain on the very same share sold. The seed cannot prove this: there NVDA's
-#: two lots share a cost, and LIFO and HIFO answer alike (AC-3).
+#: gain on the very same unit sold. Three lots are needed for all three methods
+#: to answer differently, which two cannot do (AC-3).
 DISAGREEING = make_portfolio(
-    make_lot(lot_id="lot-old", days_before=400, cost_basis="800.00"),
-    make_lot(lot_id="lot-dear", days_before=200, cost_basis="1100.00"),
-    make_lot(lot_id="lot-new", days_before=100, cost_basis="900.00"),
+    make_lot(lot_id="lot-old", days_before=400, cost_basis="50000.00"),
+    make_lot(lot_id="lot-dear", days_before=200, cost_basis="62000.00"),
+    make_lot(lot_id="lot-new", days_before=100, cost_basis="55000.00"),
 )
 
 
 @pytest.mark.parametrize(
     ("method", "lot_id", "realized"),
     [
-        (LotMethod.FIFO, "lot-old", "404.66"),
-        (LotMethod.LIFO, "lot-new", "304.66"),
-        (LotMethod.HIFO, "lot-dear", "104.66"),
+        (LotMethod.FIFO, "lot-old", "14250.00"),
+        (LotMethod.LIFO, "lot-new", "9250.00"),
+        (LotMethod.HIFO, "lot-dear", "2250.00"),
     ],
     ids=["fifo_realises_the_most", "lifo_the_middle", "hifo_the_least"],
 )
@@ -43,17 +43,17 @@ def test_each_method_consumes_the_lot_it_names(
 ) -> None:
     """AC-3 — the same unit sold three ways gives three tax bills."""
     result = simulate_sale(
-        DISAGREEING, symbol="NVDA", quantity=Decimal(1), method=method
+        DISAGREEING, symbol="BTC", quantity=Decimal(1), method=method
     )
 
     assert [row.lot_id for row in result.consumed] == [lot_id]
     assert result.realized_pl == Decimal(realized)
-    assert result.proceeds == NVDA_PRICE
+    assert result.proceeds == BTC_PRICE
 
 
 def test_the_consumed_lots_sum_to_the_totals(portfolio: Portfolio) -> None:
     """AC-2 — the comparator's rows reach its own totals, exactly."""
-    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
+    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.75"))
 
     assert len(result.consumed) == 2
     assert sum((row.proceeds for row in result.consumed), ZERO) == result.proceeds
@@ -64,7 +64,7 @@ def test_the_consumed_lots_sum_to_the_totals(portfolio: Portfolio) -> None:
 
 def test_the_term_split_sums_to_the_realised_result(portfolio: Portfolio) -> None:
     """AC-2 — short plus long is the whole answer, with nothing in between."""
-    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
+    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.75"))
 
     short = result.pl_in(LotTerm.SHORT)
     long_term = result.pl_in(LotTerm.LONG)
@@ -75,38 +75,38 @@ def test_the_term_split_sums_to_the_realised_result(portfolio: Portfolio) -> Non
 def test_a_sale_spanning_the_boundary_splits_short_from_long(
     portfolio: Portfolio,
 ) -> None:
-    """AC-4 — the seeded NVDA lots sit at 367 and 363 days, either side of it.
+    """AC-4 — the seeded BTC lots sit at 367 and 363 days, either side of it.
 
     The classification is ``app.domain.terms``' (OD-7); what is asserted here
     is that a *sale* carries it through to the row the reader sees, and that
     each lot's gain lands in the half it belongs to.
     """
-    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
+    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.75"))
 
     by_id = {row.lot_id: row for row in result.consumed}
-    assert by_id["lot-nvda-01"].term is LotTerm.LONG
-    assert by_id["lot-nvda-02"].term is LotTerm.SHORT
-    assert result.pl_in(LotTerm.LONG) == by_id["lot-nvda-01"].gain_loss
-    assert result.pl_in(LotTerm.SHORT) == by_id["lot-nvda-02"].gain_loss
+    assert by_id["lot-btc-01"].term is LotTerm.LONG
+    assert by_id["lot-btc-02"].term is LotTerm.SHORT
+    assert result.pl_in(LotTerm.LONG) == by_id["lot-btc-01"].gain_loss
+    assert result.pl_in(LotTerm.SHORT) == by_id["lot-btc-02"].gain_loss
 
 
 def test_a_partly_consumed_lot_gives_up_its_basis_pro_rata(
     portfolio: Portfolio,
 ) -> None:
-    """Fifteen ninetieths of a lot costs fifteen ninetieths of what it cost."""
-    result = simulate_sale(portfolio, symbol="NVDA", quantity=Decimal(75))
+    """Half a lot costs half of what the whole lot cost, exactly."""
+    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.75"))
 
     partial = result.consumed[1]
     whole = next(
-        lot for lot in portfolio.tax_lots("NVDA") if lot.lot_id == partial.lot_id
+        lot for lot in portfolio.tax_lots("BTC") if lot.lot_id == partial.lot_id
     )
     assert not partial.exhausted
-    assert partial.quantity == Decimal(15)
+    assert partial.quantity == Decimal("0.50")
     assert partial.cost_basis == whole.cost_basis * partial.quantity / whole.quantity
 
 
 def test_a_ticker_is_normalised_before_anything_else(portfolio: Portfolio) -> None:
     """Spec 0003 AC-4 — the caller may write the ticker however they like."""
-    result = simulate_sale(portfolio, symbol="  nvda  ", quantity=Decimal("0.1"))
+    result = simulate_sale(portfolio, symbol="  btc  ", quantity=Decimal("0.1"))
 
-    assert result.symbol == "NVDA"
+    assert result.symbol == "BTC"

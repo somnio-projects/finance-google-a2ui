@@ -107,7 +107,7 @@ void main() {
         const ConversationActionSent(
           SurfaceActionRequest(
             action: 'drill.attribution.v1',
-            args: <String, String>{'driver': 'NVDA'},
+            args: <String, String>{'driver': 'BTC'},
           ),
         ),
       ),
@@ -122,7 +122,7 @@ void main() {
                   ),
                 ).captured.single
                 as SurfaceActionRequest;
-        expect(sent.args, <String, String>{'driver': 'NVDA'});
+        expect(sent.args, <String, String>{'driver': 'BTC'});
       },
     );
 

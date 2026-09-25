@@ -25,8 +25,8 @@ from app.presentation.surfaces import Surface
 #: The selection rule never volunteers this card: a tap, or the agent's
 #: ``driver_detail`` tool, asks for it by id with the symbol (0028 OD-1).
 NEVER_SELECTED: Final[int] = 0
-#: The design's D2 state drills into NVDA, so the documented example does too.
-DEFAULT_SYMBOL: Final[str] = "NVDA"
+#: The design's D2 state drills into BTC, so the documented example does too.
+DEFAULT_SYMBOL: Final[str] = "BTC"
 
 
 class DriverDetailOptions(DisplayOptions):
@@ -40,7 +40,7 @@ class DriverDetailOptions(DisplayOptions):
     symbol: Symbol = Field(
         default=DEFAULT_SYMBOL,
         description="The holding to describe, from the market reference.",
-        examples=["NVDA"],
+        examples=["BTC"],
     )
 
 

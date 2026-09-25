@@ -85,3 +85,10 @@ Future<void> awaitRequest(
     await Future<void>.delayed(const Duration(milliseconds: 1));
   }
 }
+
+/// The reward row's subtitle, as the seed's own example prints it: the unit
+/// price, the units received and the memo (spec `backend/0044` OD-7).
+const String rewardDetail = r'$3,480.00/unit · 0.075 units · protocol reward';
+
+/// The simulation note the Activity tab prints under its title (N-9).
+const String simulationNote = 'Simulated activity — resets each session.';

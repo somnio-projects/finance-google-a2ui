@@ -22,7 +22,7 @@ def test_render_is_the_home_page_header_and_hero(portfolio: Portfolio) -> None:
     assert payload.badge == "Simulated portfolio"
     assert payload.total.label == "Total portfolio value"
     assert payload.total.amount.display == "$482,915.20"
-    assert payload.change.amount.display == "+$3,240.18"
+    assert payload.change.amount.display == "+$2,201.05"
     assert payload.questions_title == "Suggested questions"
     assert payload.movers_title == "Top movers today"
     assert len(payload.spark) == 30
@@ -40,7 +40,7 @@ def test_the_questions_are_the_three_chips_the_design_draws(
     assert payload.questions == SUGGESTED_QUESTIONS
     assert [q.text for q in payload.questions] == [
         "What moved my portfolio today?",
-        "Tax impact of selling NVDA?",
+        "Tax impact of selling BTC?",
         "Build a $10k order in tech",
     ]
 

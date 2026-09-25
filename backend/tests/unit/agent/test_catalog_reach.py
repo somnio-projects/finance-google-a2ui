@@ -11,7 +11,7 @@ Two of the day's symptoms were that, and neither looked like it:
 
 - *"Show me my biggest winners and losers"* answered in prose, because
   `holdings.positions.v1` is unreachable;
-- *"Compare keeping NVDA against trimming it by a third"* drew a tax-lot
+- *"Compare keeping BTC against trimming it by a third"* drew a tax-lot
   table, because `scenario.comparison.v1` is unreachable and the model
   reached for the nearest thing it could actually get.
 

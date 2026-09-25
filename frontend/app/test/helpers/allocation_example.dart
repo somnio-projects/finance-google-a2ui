@@ -3,125 +3,122 @@
 ///
 /// It is a **fixture, not a contract**. The contract is that file; this is a
 /// copy, and `catalog_contract_test.dart` is what keeps the copy honest.
-/// Regenerated with the equities portfolio of spec `backend/0025`.
+/// Regenerated with the crypto portfolio of spec `backend/0044`.
 const Map<String, dynamic> holdingsAllocationExample = <String, dynamic>{
   'categories': <Map<String, dynamic>>[
     <String, dynamic>{
       'change': <String, dynamic>{
-        'display': '+4.2%',
-        'value': '0.04200328691289680823458178358',
+        'display': '+3.7%',
+        'value': '0.03662471765085511455308163924',
       },
-      'key': 'NVDA',
-      'label': 'NVIDIA Corp',
+      'key': 'BTC',
+      'label': 'Bitcoin',
       'trend': 'up',
       'value': <String, dynamic>{
-        'amount': '108419.400000',
-        'display': r'$108,419.40',
+        'amount': '134925.0000000000',
+        'display': r'$134,925.00',
       },
       'weight': <String, dynamic>{
-        'display': '22.45%',
-        'value': '0.2245102245694482178237504224',
+        'display': '27.94%',
+        'value': '0.2793968796177879677425767505',
       },
     },
     <String, dynamic>{
       'change': <String, dynamic>{
         'display': '+1.1%',
-        'value': '0.01101283385362469649670482137',
+        'value': '0.01104009296920395119116792562',
       },
-      'key': 'AAPL',
-      'label': 'Apple Inc.',
+      'key': 'ETH',
+      'label': 'Ethereum',
       'trend': 'up',
       'value': <String, dynamic>{
-        'amount': '69954.000000',
-        'display': r'$69,954.00',
+        'amount': '104400.0000000000',
+        'display': r'$104,400.00',
       },
       'weight': <String, dynamic>{
-        'display': '14.49%',
-        'value': '0.1448577307154548044874131110',
+        'display': '21.62%',
+        'value': '0.2161870241400560595317770076',
       },
     },
     <String, dynamic>{
       'change': <String, dynamic>{
-        'display': '+1.4%',
-        'value': '0.01382488479262672811059907834',
+        'display': '-2.8%',
+        'value': '-0.02806122448979591836734693878',
       },
-      'key': 'GLD',
-      'label': 'SPDR Gold Shares',
-      'trend': 'up',
-      'value': <String, dynamic>{
-        'amount': '49500.000000',
-        'display': r'$49,500.00',
-      },
-      'weight': <String, dynamic>{
-        'display': '10.25%',
-        'value': '0.1025024683422679592607563398',
-      },
-    },
-    <String, dynamic>{
-      'change': <String, dynamic>{
-        'display': '-0.1%',
-        'value': '-0.0005198242049052502244695430273',
-      },
-      'key': 'MSFT',
-      'label': 'Microsoft Corp',
+      'key': 'SOL',
+      'label': 'Solana',
       'trend': 'down',
       'value': <String, dynamic>{
-        'amount': '46530.000000',
-        'display': r'$46,530.00',
+        'amount': '57226.2000000000',
+        'display': r'$57,226.20',
       },
       'weight': <String, dynamic>{
-        'display': '9.64%',
-        'value': '0.09635232024173188170511095944',
+        'display': '11.85%',
+        'value': '0.1185015505827938321262200900',
+      },
+    },
+    <String, dynamic>{
+      'change': <String, dynamic>{'display': '0.0%', 'value': '0'},
+      'key': 'USDC',
+      'label': 'USD Coin',
+      'trend': 'flat',
+      'value': <String, dynamic>{
+        'amount': '51764.0000000000',
+        'display': r'$51,764.00',
+      },
+      'weight': <String, dynamic>{
+        'display': '10.72%',
+        'value': '0.1071906620458415887509856803',
       },
     },
     <String, dynamic>{
       'change': <String, dynamic>{
-        'display': '-4.9%',
-        'value': '-0.04864864864864864864864864865',
+        'display': '-2.4%',
+        'value': '-0.02375809935205183585313174946',
       },
-      'key': 'VOO',
-      'label': 'Vanguard S&P 500 ETF',
+      'key': 'LINK',
+      'label': 'Chainlink',
       'trend': 'down',
       'value': <String, dynamic>{
-        'amount': '44880.000000',
-        'display': r'$44,880.00',
+        'amount': '47460.0000000000',
+        'display': r'$47,460.00',
       },
       'weight': <String, dynamic>{
-        'display': '9.29%',
-        'value': '0.09293557129698961639641908145',
+        'display': '9.83%',
+        'value': '0.09827812419240479487910092704',
       },
     },
     <String, dynamic>{
       'change': <String, dynamic>{
-        'display': '-0.2%',
-        'value': '-0.001513426119213457764354390919',
+        'display': '-1.0%',
+        'value': '-0.01020857292953387002882253553',
       },
       'key': 'other',
       'label': 'Other',
       'trend': 'down',
       'value': <String, dynamic>{
-        'amount': '163631.800000',
-        'display': r'$163,631.80',
+        'amount': '87140.000000000000',
+        'display': r'$87,140.00',
       },
       'weight': <String, dynamic>{
-        'display': '33.88%',
-        'value': '0.3388416848341075203265500858',
+        'display': '18.04%',
+        'value': '0.1804457594211157569693395445',
       },
     },
   ],
-  'center': <String, dynamic>{'count': '14', 'unit': 'Holdings'},
+  'center': <String, dynamic>{'count': '7', 'unit': 'Holdings'},
   'group_by': 'holding',
   'title': 'Allocation by holding',
   'total': <String, dynamic>{
     'amount': <String, dynamic>{
-      'amount': '482915.200000',
+      'amount': '482915.200000000000',
       'display': r'$482,915.20',
     },
     'label': 'Total market value',
   },
   'total_gain': <String, dynamic>{
     'amount': <String, dynamic>{
-      'amount': '61204.050000',
+      'amount': '61204.050000000000',
       'display': r'+$61,204',
     },
     'percent': <String, dynamic>{

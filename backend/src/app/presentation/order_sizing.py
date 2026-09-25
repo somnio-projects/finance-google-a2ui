@@ -47,9 +47,9 @@ class OrderTicketOptions(DisplayOptions):
     """Declared knobs of ``order.ticket.v1``; nothing else is accepted."""
 
     symbol: Symbol = Field(
-        default="NVDA",
+        default="BTC",
         description="Asset the order is written for, from the market reference.",
-        examples=["VOO"],
+        examples=["SOL"],
     )
     side: Side = Field(
         default="buy",
