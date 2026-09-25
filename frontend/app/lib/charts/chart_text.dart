@@ -20,13 +20,45 @@ abstract final class ChartText {
     fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
   );
 
+  /// A total's figure, which the UI Kit prints heavier than a contribution's.
+  ///
+  /// `$479,675` and `$482,915` are the two figures a reader takes away from
+  /// the walk, and the design gives them the card's title colour at 700
+  /// rather than the gain/loss marks around them (spec frontend/0028 OD-2).
+  static TextStyle total(Color color) => TextStyle(
+    color: color,
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
+
   /// A category name drawn under the axis rule.
   static TextStyle axis(Color color) =>
       TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w400);
 
+  /// The category name of the closing total, and of the selected band.
+  ///
+  /// The design bolds `Now` and whichever name the reader tapped, and leaves
+  /// every other name muted — the two places the eye is meant to land.
+  static TextStyle axisStrong(Color color) =>
+      TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700);
+
   /// The card's caption above the plot.
   static TextStyle title(Color color) =>
       TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500);
+
+  /// The figure that sits opposite a card's title, at the title's own size.
+  ///
+  /// The UI Kit's waterfall header is *`+$3,240 · +0.68%`* set level with
+  /// `Today's drivers` and one weight heavier, not a chip or a pill (spec
+  /// frontend/0028 OD-1).
+  static TextStyle headlineFigure(Color color) => TextStyle(
+    color: color,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
 
   /// A small uppercase caption above a figure.
   ///
@@ -95,15 +127,3 @@ TextPainter measureLabel(
   textDirection: textDirection,
   maxLines: 1,
 )..layout();
-
-/// Paints [painter] centred on [center] horizontally, with its baseline block
-/// ending [above] pixels above that point.
-void paintCenteredAbove(
-  Canvas canvas,
-  TextPainter painter,
-  Offset center, {
-  required double above,
-}) => painter.paint(
-  canvas,
-  Offset(center.dx - painter.width / 2, center.dy - above - painter.height),
-);

@@ -139,6 +139,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0025-failures-have-a-way-out.md](frontend/0025-failures-have-a-way-out.md) | In progress | GGU-110 · GGU-111 · GGU-112 |
 | [frontend/0026-the-ticket-in-the-assistant-is-editable.md](frontend/0026-the-ticket-in-the-assistant-is-editable.md) | In progress | GGU-113 |
 | [backend/0044-the-portfolio-is-crypto.md](backend/0044-the-portfolio-is-crypto.md) | In progress | GGU-114 |
+| [frontend/0028-the-waterfall-matches-the-ui-kit.md](frontend/0028-the-waterfall-matches-the-ui-kit.md) | In progress | GGU-115 |
 | [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
