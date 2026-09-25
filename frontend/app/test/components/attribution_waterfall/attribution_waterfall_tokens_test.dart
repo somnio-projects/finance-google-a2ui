@@ -94,11 +94,20 @@ void main() {
       }
     });
 
-    test('agrees with the chart palette and the tax lots on gain and loss', () {
-      // AC-5, the `taxlot_tokens_test` idiom: three palettes were measured
-      // independently off three pages, and this is what stops them drifting
-      // while staying separate files (ADR-L D-3).
-      expect(TaxLotTokens.light.gain, ChartTokens.light.barGain);
+    test('agrees with the tax lots on every role they still share', () {
+      // AC-5: three palettes were measured independently off three pages, and
+      // this is what stops them drifting while staying separate files
+      // (ADR-L D-3).
+      //
+      // **Light `gain` is deliberately absent.** It agreed when this was
+      // written; GGU-116 then measured the tax-lot frame and it does not —
+      // `#026E4F` there against `#12805C` here. Spec `frontend/0027` OD-6
+      // rules that each page keeps its own and the divergence is *asserted*
+      // rather than smoothed over, so forcing either constant to match would
+      // silently restyle a component design measured separately. That
+      // assertion lives in `taxlot_tokens_test.dart`, which owns the tax-lot
+      // palette; repeating it here would be a third copy of one claim.
+      // Which palette wins is GGU-120's, and it is design's to answer.
       expect(TaxLotTokens.light.loss, ChartTokens.light.barLoss);
       expect(TaxLotTokens.dark.gain, ChartTokens.dark.barGain);
       expect(TaxLotTokens.dark.loss, ChartTokens.dark.barLoss);
