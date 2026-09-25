@@ -5714,3 +5714,38 @@ targets, the component count against the generated snapshot — in the shape
 `binding_rules_test.dart::the geometry seam is the only exemption` already uses.
 That is a decision about how much prose to put under a gate, and it belongs in
 its own ticket rather than riding along with the corrections.
+
+## 2026-09-25 — GGU-130 · a shared gate needs a per-caller concurrency key
+
+**No spec.** A one-token defect in a workflow, found by it happening.
+
+Both delivery buttons were pressed on `develop` 23 s apart. `backend-cd` failed
+with `delivery did not complete — gate=success publish=skipped deploy=skipped`,
+and dev was left with **the client shipped and the API not** — a bundle binding
+`holding`, `delta_label` and `realized.direction` against a revision that
+serves none of them, which `ViewPayload.text()` answers by throwing.
+
+**Cause.** `backend-cd` and `frontend-cd` both call `repo-ci`. A reusable
+workflow evaluates `concurrency` in the **caller's** context, and `repo-ci`'s
+key was `repo-ci-${{ github.ref }}` — no `github.workflow`. So both calls
+shared one group and `cancel-in-progress: true` made the later dispatch cancel
+the earlier one's gate. `publish` declares `needs: [ci, repo, settings]`, so it
+skipped, and `deploy` with it.
+
+**`backend-ci` and `frontend-ci` are called by the same two workflows and both
+already carried `github.workflow`.** Only the repository-wide one did not —
+which is also why the error message misleads: `gate=` prints
+`needs.ci.result`, and `ci` is the gate whose key happened to be right. The
+one that was killed does not appear in the message at all.
+
+**The rule produced it.** `ci-conventions.md` §3 said *"`concurrency:
+cancel-in-progress` on every workflow, keyed by ref"*, and on a workflow
+declaring `workflow_call:` that sentence **is** the bug. §3 now carries the
+clause and the reason, and `repo.gate-pairs` gained **rule 4** so the property
+is checked rather than asked for — mutation-checked in both directions,
+including the anti-vacuity floor (a run finding zero callable workflows has
+stopped reading them, not proved them correct).
+
+**For the next reader:** two workflows calling one reusable workflow is the
+whole precondition. It will recur the moment a third `-cd` appears, and the
+check is what makes that a red build instead of a half-shipped environment.

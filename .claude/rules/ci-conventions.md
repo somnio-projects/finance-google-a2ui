@@ -29,7 +29,17 @@ clean checkout.
 
 ## 3. Cost rules
 
-- `concurrency: cancel-in-progress` on every workflow, keyed by ref.
+- `concurrency: cancel-in-progress` on every workflow, keyed by ref — **and by
+  `github.workflow` too on any workflow that declares `workflow_call:`**. A
+  reusable workflow evaluates `concurrency` in the **caller's** context, so a
+  key of `${{ github.ref }}` alone puts every caller on one branch into one
+  group and `cancel-in-progress` makes the second caller cancel the first
+  one's gate. This rule said "keyed by ref" until GGU-130, and following it
+  literally is what broke a delivery: `repo-ci` is called by both `backend-cd`
+  and `frontend-cd`, the two were dispatched 23 s apart on `develop`, and the
+  frontend's call cancelled the backend's `repo` job — leaving `publish` and
+  `deploy` skipped, the client shipped and the API not. `repo.gate-pairs`
+  rule 4 now fails a callable workflow whose key is not per-caller.
 - `paths:` filters so a docs-only change does not start a build.
 - `timeout-minutes` on every job (no runaway runners).
 - Expensive jobs (`image`, deploy) declare `needs:` on the cheap ones — a branch that fails lint never pays for a build.
