@@ -77,7 +77,7 @@ void main() {
     ]);
     await pump(tester, data, selected: 'ONE');
     expect(find.text('ONE · ONE Holdings Incorporated'), findsOneWidget);
-    expect(find.text(r'+1.0% · 10 sh · $100.00'), findsOneWidget);
+    expect(find.text(r'+1.0% · 10 ONE · $100.00'), findsOneWidget);
   });
 
   testWidgets('twenty buckets ellipsise their names instead of overflowing', (

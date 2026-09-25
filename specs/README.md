@@ -141,6 +141,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [backend/0044-the-portfolio-is-crypto.md](backend/0044-the-portfolio-is-crypto.md) | In progress | GGU-114 |
 | [frontend/0028-the-waterfall-matches-the-ui-kit.md](frontend/0028-the-waterfall-matches-the-ui-kit.md) | In progress | GGU-115 |
 | [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
+| [backend/0046-no-equity-vocabulary-in-a-crypto-payload.md](backend/0046-no-equity-vocabulary-in-a-crypto-payload.md) | In progress | GGU-122 · GGU-123 · GGU-119 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |

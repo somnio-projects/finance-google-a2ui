@@ -140,13 +140,13 @@ Three of the four states design needs are facts about the schema. One is not:
 | Frozen id | Component | Digest | Fields | Inputs | Purpose |
 |---|---|---|---|---|---|
 | [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `ca94f0c3c8bf` | 23 | `kind`, `query`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
-| [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `cd870456aaaf` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
-| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `af6abbaab603` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `4cdf45fbd636` | 47 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
+| [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `aa0536008605` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
+| [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `d33d3882383f` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
+| [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `abde9901e9d2` | 47 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `cc5bbfb7061b` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
-| [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `4c0e9857b789` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
+| [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `9ff39ae83d7f` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `4f00c29a4c39` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `f5f062ba3e24` | 64 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
+| [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `8cd79663e799` | 59 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `f3cae9fd15c1` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
@@ -989,7 +989,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens.
 
-- **Frozen id:** `attribution.driver.v1` · **digest:** `cd870456aaaf`
+- **Frozen id:** `attribution.driver.v1` · **digest:** `aa0536008605`
 - **Component:** `DriverDetail`
 - **Payload type:** `DriverDetailPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1025,15 +1025,15 @@ _This surface sends nothing back: tapping it starts no turn._
 | `price_move.amount.amount` | decimal | required | `raw` | — | — |
 | `price_move.amount.display` | string ≤32 chars | required | `display` | — | — |
 | `price_move.trend` | enum up / down / flat | required | `enum` | variant | — |
-| `shares` | object | required | `container` | — | — |
-| `shares.label` | string ≤64 chars | required | `text` | — | — |
-| `shares.units` | object | required | `container` | — | — |
-| `shares.units.units` | decimal | required | `raw` | — | — |
-| `shares.units.display` | string ≤32 chars | required | `display` | — | — |
-| `shares.price` | object | required | `container` | — | — |
-| `shares.price.amount` | decimal | required | `raw` | — | — |
-| `shares.price.display` | string ≤32 chars | required | `display` | — | — |
-| `shares.caption` | string ≤40 chars | required | `text` | — | — |
+| `holding` | object | required | `container` | — | — |
+| `holding.label` | string ≤64 chars | required | `text` | — | — |
+| `holding.units` | object | required | `container` | — | — |
+| `holding.units.units` | decimal | required | `raw` | — | — |
+| `holding.units.display` | string ≤32 chars | required | `display` | — | — |
+| `holding.price` | object | required | `container` | — | — |
+| `holding.price.amount` | decimal | required | `raw` | — | — |
+| `holding.price.display` | string ≤32 chars | required | `display` | — | — |
+| `holding.caption` | string ≤40 chars | required | `text` | — | — |
 | `day_share` | object | required | `container` | — | — |
 | `day_share.label` | string ≤64 chars | required | `text` | — | — |
 | `day_share.percent` | object | required | `container` | — | — |
@@ -1077,8 +1077,8 @@ _This surface sends nothing back: tapping it starts no turn._
     },
     "trend": "up"
   },
-  "shares": {
-    "label": "Shares",
+  "holding": {
+    "label": "BTC held",
     "units": {
       "units": "2.10000000",
       "display": "2.1"
@@ -1108,7 +1108,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.
 
-- **Frozen id:** `attribution.waterfall.v1` · **digest:** `af6abbaab603`
+- **Frozen id:** `attribution.waterfall.v1` · **digest:** `d33d3882383f`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWaterfallPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1168,7 +1168,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `buckets[].price.amount` | decimal | required | `raw` | — | — |
 | `buckets[].price.display` | string ≤32 chars | required | `display` | — | — |
 | `buckets[].detail` | string ≤64 chars | required | `text` | — | — |
-| `buckets[].selected_label` | string ≤48 chars | required | `text` | — | — |
+| `buckets[].delta_label` | string ≤32 chars | required | `text` | — | — |
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
@@ -1248,8 +1248,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "64250.00",
         "display": "$64,250.00"
       },
-      "detail": "+54.08% \u00b7 2.1 sh \u00b7 $64,250.00",
-      "selected_label": "BTC selected"
+      "detail": "+54.08% \u00b7 2.1 BTC \u00b7 $64,250.00",
+      "delta_label": "Contribution"
     },
     {
       "label": "Ethereum",
@@ -1275,8 +1275,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "3480.00",
         "display": "$3,480.00"
       },
-      "detail": "+25.18% \u00b7 30 sh \u00b7 $3,480.00",
-      "selected_label": "ETH selected"
+      "detail": "+25.18% \u00b7 30 ETH \u00b7 $3,480.00",
+      "delta_label": "Contribution"
     },
     {
       "label": "Aave",
@@ -1302,8 +1302,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "248.00",
         "display": "$248.00"
       },
-      "detail": "+38.24% \u00b7 175 sh \u00b7 $248.00",
-      "selected_label": "AAVE selected"
+      "detail": "+38.24% \u00b7 175 AAVE \u00b7 $248.00",
+      "delta_label": "Contribution"
     },
     {
       "label": "Solana",
@@ -1329,8 +1329,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "152.40",
         "display": "$152.40"
       },
-      "detail": "-14.24% \u00b7 375.5 sh \u00b7 $152.40",
-      "selected_label": "SOL selected"
+      "detail": "-14.24% \u00b7 375.5 SOL \u00b7 $152.40",
+      "delta_label": "Contribution"
     },
     {
       "label": "Chainlink",
@@ -1356,8 +1356,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "22.60",
         "display": "$22.60"
       },
-      "detail": "-12.57% \u00b7 2100 sh \u00b7 $22.60",
-      "selected_label": "LINK selected"
+      "detail": "-12.57% \u00b7 2100 LINK \u00b7 $22.60",
+      "delta_label": "Contribution"
     },
     {
       "label": "Arbitrum",
@@ -1383,8 +1383,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "0.8640",
         "display": "$0.8640"
       },
-      "detail": "-6.09% \u00b7 50625 sh \u00b7 $0.8640",
-      "selected_label": "ARB selected"
+      "detail": "-6.09% \u00b7 50625 ARB \u00b7 $0.8640",
+      "delta_label": "Contribution"
     },
     {
       "label": "USD Coin",
@@ -1410,8 +1410,8 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "1.00",
         "display": "$1.00"
       },
-      "detail": "0.00% \u00b7 51764 sh \u00b7 $1.00",
-      "selected_label": "USDC selected"
+      "detail": "0.00% \u00b7 51764 USDC \u00b7 $1.00",
+      "delta_label": "Contribution"
     }
   ],
   "annotations": [
@@ -1454,7 +1454,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.
 
-- **Frozen id:** `attribution.window.v1` · **digest:** `4cdf45fbd636`
+- **Frozen id:** `attribution.window.v1` · **digest:** `abde9901e9d2`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWindowPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1517,7 +1517,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `buckets[].closed.amount` | decimal | required | `raw` | — | — |
 | `buckets[].closed.display` | string ≤32 chars | required | `display` | — | — |
 | `buckets[].detail` | string ≤64 chars | required | `text` | — | — |
-| `buckets[].selected_label` | string ≤48 chars | required | `text` | — | — |
+| `buckets[].delta_label` | string ≤32 chars | required | `text` | — | — |
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
@@ -1590,7 +1590,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$134,925.00"
       },
       "detail": "+3.66% \u00b7 $130,158.00 \u2192 $134,925.00",
-      "selected_label": "BTC selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "Aave",
@@ -1617,7 +1617,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$43,400.00"
       },
       "detail": "-4.43% \u00b7 $45,412.50 \u2192 $43,400.00",
-      "selected_label": "AAVE selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "Solana",
@@ -1644,7 +1644,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$57,226.20"
       },
       "detail": "-2.81% \u00b7 $58,878.40 \u2192 $57,226.20",
-      "selected_label": "SOL selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "Chainlink",
@@ -1671,7 +1671,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$47,460.00"
       },
       "detail": "-2.38% \u00b7 $48,615.00 \u2192 $47,460.00",
-      "selected_label": "LINK selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "Ethereum",
@@ -1698,7 +1698,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$104,400.00"
       },
       "detail": "+1.10% \u00b7 $103,260.00 \u2192 $104,400.00",
-      "selected_label": "ETH selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "Arbitrum",
@@ -1725,7 +1725,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$43,740.00"
       },
       "detail": "+2.61% \u00b7 $42,626.25 \u2192 $43,740.00",
-      "selected_label": "ARB selected"
+      "delta_label": "Contribution"
     },
     {
       "label": "USD Coin",
@@ -1752,7 +1752,7 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$51,764.00"
       },
       "detail": "0.00% \u00b7 $51,764.00 \u2192 $51,764.00",
-      "selected_label": "USDC selected"
+      "delta_label": "Contribution"
     }
   ],
   "annotations": [
@@ -1972,9 +1972,9 @@ _This surface sends nothing back: tapping it starts no turn._
 
 ## `holdings.positions.v1`
 
-> The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.
+> The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.
 
-- **Frozen id:** `holdings.positions.v1` · **digest:** `4c0e9857b789`
+- **Frozen id:** `holdings.positions.v1` · **digest:** `9ff39ae83d7f`
 - **Component:** `PositionList`
 - **Payload type:** `HoldingsPositionsPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -2107,7 +2107,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "BTC",
       "name": "Bitcoin",
-      "detail": "2.1 sh \u00b7 avg $41,698.00",
+      "detail": "2.1 BTC \u00b7 avg $41,698.00",
       "value": {
         "amount": "134925.0000000000",
         "display": "$134,925.00"
@@ -2145,7 +2145,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "ETH",
       "name": "Ethereum",
-      "detail": "30 sh \u00b7 avg $2,780.00",
+      "detail": "30 ETH \u00b7 avg $2,780.00",
       "value": {
         "amount": "104400.0000000000",
         "display": "$104,400.00"
@@ -2183,7 +2183,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "SOL",
       "name": "Solana",
-      "detail": "375.5 sh \u00b7 avg $177.70",
+      "detail": "375.5 SOL \u00b7 avg $177.70",
       "value": {
         "amount": "57226.2000000000",
         "display": "$57,226.20"
@@ -2221,7 +2221,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "LINK",
       "name": "Chainlink",
-      "detail": "2100 sh \u00b7 avg $25.85",
+      "detail": "2100 LINK \u00b7 avg $25.85",
       "value": {
         "amount": "47460.0000000000",
         "display": "$47,460.00"
@@ -2259,7 +2259,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "ARB",
       "name": "Arbitrum",
-      "detail": "50625 sh \u00b7 avg $0.92",
+      "detail": "50625 ARB \u00b7 avg $0.92",
       "value": {
         "amount": "43740.000000000000",
         "display": "$43,740.00"
@@ -2297,7 +2297,7 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "symbol": "AAVE",
       "name": "Aave",
-      "detail": "175 sh \u00b7 avg $179.40",
+      "detail": "175 AAVE \u00b7 avg $179.40",
       "value": {
         "amount": "43400.0000000000",
         "display": "$43,400.00"
@@ -2512,9 +2512,9 @@ _This surface sends nothing back: tapping it starts no turn._
 
 ## `order.ticket.v2`
 
-> Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.
+> Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.
 
-- **Frozen id:** `order.ticket.v2` · **digest:** `f5f062ba3e24`
+- **Frozen id:** `order.ticket.v2` · **digest:** `8cd79663e799`
 - **Component:** `MultiLegOrderTicket`
 - **Payload type:** `OrderTicketV2Payload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -2563,11 +2563,6 @@ _This surface sends nothing back: tapping it starts no turn._
 | `impact.total.amount` | object | required | `container` | — | — |
 | `impact.total.amount.amount` | decimal | required | `raw` | — | — |
 | `impact.total.amount.display` | string ≤32 chars | required | `display` | — | — |
-| `impact.units` | object | required | `container` | — | — |
-| `impact.units.label` | string ≤64 chars | required | `text` | — | — |
-| `impact.units.units` | object | required | `container` | — | — |
-| `impact.units.units.units` | decimal | required | `raw` | — | — |
-| `impact.units.units.display` | string ≤32 chars | required | `display` | — | — |
 | `impact.fees` | object | required | `container` | — | — |
 | `impact.fees.label` | string ≤64 chars | required | `text` | — | — |
 | `impact.fees.amount` | object | required | `container` | — | — |
@@ -2694,13 +2689,6 @@ _This surface sends nothing back: tapping it starts no turn._
       "amount": {
         "amount": "9773.4000",
         "display": "$9,773.40"
-      }
-    },
-    "units": {
-      "label": "Est. shares",
-      "units": {
-        "units": "17.06",
-        "display": "17.06"
       }
     },
     "fees": {

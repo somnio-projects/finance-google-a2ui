@@ -28,7 +28,7 @@ AssetFilter = Literal["all", "layer1", "layer2", "stablecoin", "defi", "infrastr
 ALL_CLASSES: Final[AssetFilter] = "all"
 SUMMARY: Final[str] = (
     "The Holdings tab: total value with the all-time gain, then one row per "
-    "position — shares and average cost, value, unrealised result, today's "
+    "position — units and average cost, value, unrealised result, today's "
     "move, price and weight — each with the question that hands it to the "
     "assistant."
 )
@@ -74,8 +74,11 @@ class Position(BaseModel):
     name: str = Field(max_length=64, description="Display name.")
     detail: str = Field(
         max_length=48,
-        description="The caption under the name: shares and average cost.",
-        examples=["90 sh · avg $826.67"],
+        description=(
+            "The caption under the name: the quantity in the asset's own "
+            "units, and the average cost."
+        ),
+        examples=["2.1 BTC · avg $41,698.00"],
     )
     value: MoneyDisplay = Field(description="Market value today.")
     unrealized: Change | None = Field(

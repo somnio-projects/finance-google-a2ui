@@ -16,7 +16,7 @@ class OrderTicketV2Figure extends Equatable {
   });
 
   /// A stable slot name, so a changed figure is marked without matching on
-  /// its value: `total`, `units`, `fees`, `cash`.
+  /// its value: `total`, `fees`, `cash`.
   final String name;
 
   /// The caption, server-written (N-9).

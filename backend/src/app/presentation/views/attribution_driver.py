@@ -80,7 +80,7 @@ def surface(payload: DriverDetailPayload) -> Surface:
             "contribution": payload.contribution.model_dump(mode="json"),
             "trend": payload.trend,
             "priceMove": payload.price_move.model_dump(mode="json"),
-            "shares": payload.shares.model_dump(mode="json"),
+            "holding": payload.holding.model_dump(mode="json"),
             "dayShare": payload.day_share.model_dump(mode="json"),
         },
     )

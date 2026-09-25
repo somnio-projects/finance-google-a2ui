@@ -87,14 +87,14 @@ class DraftOrderTool:
 
     name = NAME
     description = (
-        "Compose an editable multi-leg draft order from a vague intent: a "
-        "dollar amount and a basket ('majors' or an ecosystem). Returns the "
-        "legs (ticker, units, price, value, weight) and the impact (total, "
-        "units, simulated fees, cash remaining, the group's weight before and "
-        "after), every figure already formatted, plus whether the available "
-        "cash covers it. Units are fractional and are floored to each asset's "
-        "step. Nothing is placed. Copy the strings, never recompute them, and "
-        "never confirm an order in prose."
+        "Compose an editable multi-leg draft order from a dollar amount and "
+        "a basket ('majors' or an ecosystem). Returns the legs (ticker, "
+        "units, price, value, weight) and the impact (total, simulated fees, "
+        "cash remaining, the group's weight before and after), every figure "
+        "formatted, plus whether cash covers it. It has no total quantity: "
+        "units of different assets do not add, so quote each leg's "
+        "own, floored to its step. Nothing is placed. Copy the strings, "
+        "never recompute them, and never confirm an order in prose."
     )
     parameters: Mapping[str, object] = DraftOrderArguments.model_json_schema()
 

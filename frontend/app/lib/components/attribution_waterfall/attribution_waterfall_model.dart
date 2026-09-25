@@ -18,7 +18,7 @@ class AttributionStep extends Equatable {
     required this.valueDisplay,
     required this.cumulativeDisplay,
     this.detail,
-    this.selectedLabel,
+    this.deltaLabel,
   });
 
   /// The geometry half: key, direction and running total.
@@ -34,14 +34,24 @@ class AttributionStep extends Equatable {
   /// The running total after this step, as `cumulative.display`.
   final String cumulativeDisplay;
 
-  /// The selected state's sentence, `buckets[].detail` — *+45.72% · 90 sh ·
-  /// $1,204.66* — written by the backend (GGU-100 AC-3). Null for the two
+  /// The selected state's sentence, `buckets[].detail` — *+54.08% · 2.1 BTC ·
+  /// $64,250.00* — written by the backend (GGU-100 AC-3). Null for the two
   /// totals, which the contract gives no selected state.
+  ///
+  /// The unit word is the asset's own ticker, because a quantity of Bitcoin
+  /// has no unit but Bitcoin (backend spec 0046 OD-1). It arrives composed;
+  /// this only prints it.
   final String? detail;
 
-  /// What the header says while this step is selected,
-  /// `buckets[].selected_label`. Null for the two totals.
-  final String? selectedLabel;
+  /// The word the detail frame prints in front of [valueDisplay],
+  /// `buckets[].delta_label` — *Contribution*. Null for the two totals.
+  ///
+  /// A backend field rather than a Dart constant, because a caption has to
+  /// follow the view's `locale` option: a `label` is a binding
+  /// (`presentation.md`, GGU-119 BG-1). It replaced `selected_label`, which
+  /// the kit's frame left no place for once the net moved to the card header
+  /// (backend spec 0046 OD-4).
+  final String? deltaLabel;
 
   /// The payload's `key`, which a drill-down action takes as its argument.
   String get key => step.key;
@@ -64,7 +74,7 @@ class AttributionStep extends Equatable {
     valueDisplay,
     cumulativeDisplay,
     detail,
-    selectedLabel,
+    deltaLabel,
   ];
 }
 
