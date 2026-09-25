@@ -93,7 +93,7 @@ class PositionTile extends StatelessWidget {
             boxShadow: expanded
                 ? const <BoxShadow>[
                     BoxShadow(
-                      color: Color(0x2E4F5DFF),
+                      color: HoldingsTokens.expandedGlow,
                       blurRadius: 8,
                       spreadRadius: -2,
                       offset: Offset(0, 2),

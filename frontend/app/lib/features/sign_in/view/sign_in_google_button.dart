@@ -59,16 +59,16 @@ class GoogleMarkPainter extends CustomPainter {
   /// Creates the painter.
   const GoogleMarkPainter();
 
-  static const Color _blue = Color(0xFF4285F4);
-  static const Color _red = Color(0xFFEA4335);
-  static const Color _yellow = Color(0xFFFBBC05);
-  static const Color _green = Color(0xFF34A853);
-
   /// π, spelled out: `dart:math` is banned under `app/lib` (binding rules).
   static const double _pi = 3.141592653589793;
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Google's brand colours, in the order `LoginTokens.googleMark` documents.
+    // They used to be four private literals here, which made this widget file
+    // one of five naming a `Color` while `frontend/CLAUDE.md` said only a
+    // `*_tokens.dart` did (spec frontend/0029 OD-4).
+    final [blue, red, yellow, green] = LoginTokens.googleMark;
     final stroke = size.width * 0.19;
     final rect = Offset.zero & size;
     final inset = rect.deflate(stroke / 2);
@@ -78,10 +78,10 @@ class GoogleMarkPainter extends CustomPainter {
     // Clockwise from the gap at the right: red (top), yellow (left),
     // green (bottom), blue (bottom-right up to the bar).
     canvas
-      ..drawArc(inset, -_pi * 0.85, _pi * 0.6, false, paint..color = _red)
-      ..drawArc(inset, _pi * 0.75, _pi * 0.5, false, paint..color = _yellow)
-      ..drawArc(inset, _pi * 0.25, _pi * 0.5, false, paint..color = _green)
-      ..drawArc(inset, 0, _pi * 0.25, false, paint..color = _blue)
+      ..drawArc(inset, -_pi * 0.85, _pi * 0.6, false, paint..color = red)
+      ..drawArc(inset, _pi * 0.75, _pi * 0.5, false, paint..color = yellow)
+      ..drawArc(inset, _pi * 0.25, _pi * 0.5, false, paint..color = green)
+      ..drawArc(inset, 0, _pi * 0.25, false, paint..color = blue)
       ..drawRect(
         Rect.fromLTWH(
           size.width / 2,
@@ -89,7 +89,7 @@ class GoogleMarkPainter extends CustomPainter {
           size.width / 2 - stroke / 3,
           stroke,
         ),
-        Paint()..color = _blue,
+        Paint()..color = blue,
       );
   }
 

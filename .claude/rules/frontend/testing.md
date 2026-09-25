@@ -105,6 +105,57 @@ that fails on the Linux runner for a reason that is not a defect. Text in a
 golden renders in Flutter's test font, so they prove bars, connectors,
 colours and layout, **not** typography.
 
+### The comparator measures two things, and both are calibrated (GGU-106)
+
+The 1.5 % tolerance was chosen from two measurements — a **0.69 %**
+cross-platform noise floor and a **4.97 %** smallest real defect — and both
+were taken on **opaque bars**. The payoff chart shades half-planes with a
+translucent wash, and there the metric means something else: a wash touches
+every pixel in its region, so any adjustment to it moves ~all of them by a
+trace amount. *"Percentage of pixels that differ at all"* and *"the amount by
+which they differ"* are different questions, and translucency makes the first
+useless. Measured on this suite under the pinned SDK (spec `frontend/0029` §4):
+
+| change | paint | differ at all | max Δ | differ by > 2/255 |
+|---|---|---|---|---|
+| re-render, no source change (×14) | both | 0.000 % | 0 | 0.000 % |
+| wash alpha .070 → .078 — **invisible** | translucent | **83.893 %** | **2** | **0.000 %** |
+| wash at the other artboard's alpha (.070 → .100) | translucent | 85.540 % | 8 | 83.020 % |
+| wash alpha .070 → .200 | translucent | 85.627 % | 33 | 85.496 % |
+| gain bar in the other artboard's colour | opaque | 2.107 % | 94 | 2.093 % |
+| gain bar nudged 2/255 — **invisible** | opaque | 2.029 % | 2 | **0.000 %** |
+
+Read the third column down: it ranks an invisible change **forty times above**
+a bar drawn in flatly the wrong colour. So a pixel is now counted only once it
+differs by more than `GoldenDifference.amplitudeFloor` (**2/255**, the measured
+amplitude of the invisible case and the smallest value that admits it), and the
+count is compared with the **unchanged** 1.5 %. Two gates against two kinds of
+noise: translucency is many pixels at a trace amplitude, cross-platform
+anti-aliasing is few pixels at a large one — and the amplitude floor
+deliberately does **not** suppress the second, which is why the area threshold
+stays.
+
+Three things to inherit rather than rediscover:
+
+- **The calibration, not the number.** A new threshold needs a noise floor *and*
+  a smallest-real-defect, both measured, for the kind of paint it will meet.
+  Every invisible case above measures 0.000 % and every real one 2.093 % or
+  more; a single bar between them is supported by that separation, not assumed.
+- **This is a relaxation, and a one-directional one.** The counted pixels are a
+  subset of those counted before, so no golden that is green can turn red. The
+  1.5 % itself is untouched and goes **down** as the noise is understood better,
+  never up to absorb a failure.
+- **A crop is still the right answer for text.** `frontend/0004`'s hairline
+  golden stays cropped (0029 OD-8): glyph edges are high-amplitude noise on few
+  pixels, which this change does not help with. The two whole-page skeleton
+  goldens measure 0.800 % at Δ 231 against their own masters *on the machine
+  that renders them* — half the budget spent before CI is involved.
+
+`GoldenDifference` lives in `app/test/helpers/` and has its own suite over
+hand-built rasters, because a comparator whose thresholds are only ever
+exercised by the goldens that pass is the "never been shown to reject" defect
+§7 is about.
+
 ## 7. The gate's own scripts have a suite
 
 `frontend/test/tool/` covers `tool/`, and `make test-tool` runs it. It exists

@@ -1,4 +1,15 @@
-# 0002 — The A2UI agent path: the client answers in interfaces
+# 0030 — The A2UI agent path: the client answers in interfaces
+
+> **Renumbered from `0002` on 2026-09-24 by [`frontend/0029`](0029-the-conventions-are-checked.md)
+> (GGU-105).** It shared `0002` with
+> [`0002-chart-primitives-and-waterfall.md`](0002-chart-primitives-and-waterfall.md)
+> from the day it merged, because both branches were cut from the same commit
+> and each picked "the next free number" against its own branch point. This one
+> moved rather than the other because every citation of it already named its
+> slug, while twenty citations of `frontend/0002` — in nine Dart files, in
+> `frontend/SECURITY.md` and in six sibling specs — are bare numbers that mean
+> the chart spec. `0029` OD-2 carries the ruling; `repo.spec-numbers` now fails
+> the build on a collision instead of leaving it for a directory listing.
 
 - **Area:** frontend
 - **Status:** Implemented

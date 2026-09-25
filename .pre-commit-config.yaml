@@ -130,6 +130,25 @@ repos:
         files: ^(scripts/check_manual_run\.sh|scripts/tests/test_check_manual_run\.sh|\.claude/rules/backend/sdd\.md)$
         pass_filenames: false
 
+      # Runs when a spec file, the index, or either half of the check moves —
+      # the property spans the directory and the README, so touching one
+      # without the other is exactly what it catches. Command strings copied
+      # from .claude/ship-gate.json (`repo.spec-numbers`, `repo.spec-numbers-test`)
+      # and repo-ci.yaml, not paraphrased (ci-conventions §5).
+      - id: repo-spec-numbers-test
+        name: Prove the spec-number check rejects a collision (test_check_spec_numbers.sh)
+        entry: bash scripts/tests/test_check_spec_numbers.sh
+        language: system
+        files: ^(specs/|scripts/(check_spec_numbers\.sh|tests/test_check_spec_numbers\.sh)$)
+        pass_filenames: false
+
+      - id: repo-spec-numbers
+        name: Check every spec's number, shape and index row (check_spec_numbers.sh)
+        entry: bash scripts/check_spec_numbers.sh
+        language: system
+        files: ^(specs/|scripts/check_spec_numbers\.sh$)
+        pass_filenames: false
+
       - id: backend-typecheck
         name: Type-check the backend in strict mode (basedpyright)
         entry: bash -c 'cd backend && uv run basedpyright'

@@ -3,7 +3,7 @@
 - **Area:** frontend (+ backend/0029 for the chips)
 - **Status:** In progress
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here_
-- **Also:** [backend/0029](../backend/0029-the-turn-recommends-its-chips.md), [backend/0022](../backend/0022-surface-actions.md) §3, [`frontend/0002-a2ui-agent-path`](0002-a2ui-agent-path.md), [backend/0026](../backend/0026-the-home-shell.md) §2 (the shared palette), [ADR-L](../../docs/adr/ADR-L-client-architecture.md), [ADR-K](../../docs/adr/ADR-K-response-shaping.md) N-9/N-10/N-13
+- **Also:** [backend/0029](../backend/0029-the-turn-recommends-its-chips.md), [backend/0022](../backend/0022-surface-actions.md) §3, [`frontend/0030-a2ui-agent-path`](0030-a2ui-agent-path.md), [backend/0026](../backend/0026-the-home-shell.md) §2 (the shared palette), [ADR-L](../../docs/adr/ADR-L-client-architecture.md), [ADR-K](../../docs/adr/ADR-K-response-shaping.md) N-9/N-10/N-13
 - **Owner:** Lautaro Bertuzzi · **Date:** 2026-09-22
 
 ## 1. Problem
