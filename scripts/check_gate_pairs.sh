@@ -358,3 +358,56 @@ fi
 for dir in $py_pin_dirs; do
   echo "repo.gate-pairs: ${dir} pins Python $(tr -d '[:space:]' < "${dir}/.python-version") in ${dir}/.python-version, no workflow restates it, and ${py_checked} derived declaration(s) agree"
 done
+
+# ---------------------------------------------------------------------------
+# Rule 4 — a workflow that can be CALLED needs a per-caller concurrency key.
+#
+# A reusable workflow evaluates `concurrency` in the **caller's** context, so a
+# group keyed by `github.ref` alone puts every caller of it on one branch into
+# one group. With `cancel-in-progress: true` the second caller then cancels the
+# first one's gate.
+#
+# Measured, not theorised (GGU-130): on 2026-09-25 `frontend-cd` started 23 s
+# after `backend-cd` on `develop`. Both call `repo-ci`, whose key was
+# `repo-ci-${{ github.ref }}`. The later run cancelled the earlier run's `repo`
+# job; `publish` and `deploy` declare `needs: [ci, repo, settings]` and were
+# therefore **skipped**, so the client shipped to Hosting and the API did not —
+# leaving a new bundle bound to `holding`, `delta_label` and
+# `realized.direction` talking to a revision that serves none of them.
+#
+# `backend-ci` and `frontend-ci` are called the same way and both already
+# carried `github.workflow`. Only the repository-wide one did not, which is why
+# the failure message read `gate=success`: it prints `needs.ci.result`, and
+# `ci` was the gate whose key happened to be right.
+conc_checked=0
+conc_failed=0
+for workflow in .github/workflows/*.yaml; do
+  grep -q "workflow_call:" "$workflow" || continue
+  conc_checked=$(( conc_checked + 1 ))
+  group="$(grep -A1 '^concurrency:' "$workflow" | tail -1 | sed 's/^ *//')"
+  case "$group" in
+    *'github.workflow'*) ;;
+    *)
+      echo "repo.gate-pairs: ${workflow} is callable and its concurrency group is not per-caller" >&2
+      echo "  ${group}" >&2
+      echo "  add \${{ github.workflow }} to the key, as backend-ci and frontend-ci do." >&2
+      echo "  without it, two workflows that call this one on the same branch" >&2
+      echo "  share a group, and cancel-in-progress makes the second kill the first." >&2
+      conc_failed=$(( conc_failed + 1 ))
+      ;;
+  esac
+done
+
+# Anti-vacuity: three workflows are callable today. A run that finds none has
+# stopped reading workflows, not proved them correct.
+if [ "$conc_checked" -lt 3 ]; then
+  echo "repo.gate-pairs: only ${conc_checked} callable workflow(s) found — the search is wrong, not the repository" >&2
+  exit 1
+fi
+
+if [ "$conc_failed" -gt 0 ]; then
+  echo "repo.gate-pairs: ${conc_failed} callable workflow(s) can cancel another caller's gate" >&2
+  exit 1
+fi
+
+echo "repo.gate-pairs: ${conc_checked} callable workflow(s) key concurrency per caller"

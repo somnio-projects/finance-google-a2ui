@@ -63,8 +63,18 @@ on:
 permissions:
   contents: read
 
+# `github.workflow` is in the key, and it is load-bearing rather than
+# decorative (GGU-130). This workflow is **called** by both `backend-cd` and
+# `frontend-cd`, and a reusable workflow evaluates `concurrency` in the
+# CALLER's context — so keyed by ref alone, two delivery runs on one branch
+# land in one group, and `cancel-in-progress: true` makes the second kill the
+# first's gate. That is not hypothetical: on 2026-09-25 `frontend-cd` started
+# 23 s after `backend-cd` on `develop`, cancelled its `repo` job, and left
+# `publish` and `deploy` skipped — the client shipped and the API did not.
+# `backend-ci` and `frontend-ci` are also called by their `-cd` counterparts
+# and both already carry `github.workflow`; this file was the one that did not.
 concurrency:
-  group: repo-ci-${{ github.ref }}
+  group: repo-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # uv's own version is pinned here; the interpreter's is not, and must not be.
