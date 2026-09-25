@@ -120,7 +120,7 @@ void main() {
       expect(offenders, isEmpty);
       // Anti-vacuity: a walk that found nothing satisfies the assertion
       // above for the wrong reason (`testing.md` §7).
-      expect(componentSkeletons, hasLength(4));
+      expect(componentSkeletons, hasLength(5));
       expect(motionPrimitives, hasLength(3));
       final paths = sources.under('app/lib/skeleton').keys;
       for (final primitive in motionPrimitives) {

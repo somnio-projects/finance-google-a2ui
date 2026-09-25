@@ -11,27 +11,25 @@ import 'package:flutter/material.dart';
 /// already carries, which needs nothing registered.
 ///
 /// Material 3's `ColorScheme` cannot supply these. "Short-term", "long-term",
-/// "gain" and "loss" are semantic roles a tax-lot table needs and a generated
-/// scheme has no slot for; deriving them from a seed would also throw away
-/// the design's measured values.
+/// "gain", "loss" and "a lot this sale consumes" are semantic roles a tax-lot
+/// table needs and a generated scheme has no slot for; deriving them from a
+/// seed would also throw away the design's measured values.
 @immutable
 class TaxLotPalette {
   /// Creates a palette. Every colour is required — a table with a missing
   /// role would fall back to something nobody chose.
   const TaxLotPalette({
     required this.surface,
-    required this.border,
-    required this.selectedSurface,
-    required this.selectedAccent,
-    required this.footerSurface,
+    required this.shadow,
+    required this.divider,
+    required this.selectedRow,
+    required this.checkedBox,
+    required this.checkGlyph,
+    required this.checkboxBorder,
     required this.primaryText,
-    required this.figureText,
-    required this.labelText,
     required this.mutedText,
     required this.gain,
     required this.loss,
-    required this.checkboxBorder,
-    required this.checkboxGlyph,
     required this.placeholderBorder,
     required this.shortTerm,
     required this.longTerm,
@@ -44,44 +42,40 @@ class TaxLotPalette {
   static TaxLotPalette of(BuildContext context) =>
       TaxLotTokens.forBrightness(Theme.of(context).brightness);
 
-  /// The card, and the fill of an unselected row.
+  /// The card. The UI Kit draws **no hairline** around it — it is a white
+  /// (or near-black) plane lifted off the page by [shadow].
   final Color surface;
 
-  /// The hairline around the card, a row and the footer.
-  final Color border;
+  /// That lift.
+  final Color shadow;
 
-  /// The fill of a row the sale fully consumes.
-  final Color selectedSurface;
+  /// The one rule on the card: between the last row and the footer.
+  final Color divider;
 
-  /// That row's hairline and its ticked box.
-  final Color selectedAccent;
+  /// The tint of a row whose lot the sale consumes whole (`fully_sold`).
+  final Color selectedRow;
 
-  /// The realised-result bar at the foot of the card.
-  final Color footerSurface;
+  /// The fill of that row's tick box.
+  final Color checkedBox;
 
-  /// Dates, the title and the figure the design emphasises.
+  /// The tick inside it.
+  final Color checkGlyph;
+
+  /// The hairline of an unticked box.
+  final Color checkboxBorder;
+
+  /// Dates, shares, and both money columns.
   final Color primaryText;
 
-  /// A supporting figure — cost basis and proceeds.
-  final Color figureText;
-
-  /// The footer's caption and the empty state's sentence.
-  final Color labelText;
-
-  /// Column headers and a row's holding-period text.
+  /// Column captions, the subtitle, the footer's caption.
   final Color mutedText;
 
-  /// A lot the backend marked `trend: up`.
+  /// A lot the backend marked `trend: up`. The footer's split pills take
+  /// their term's colours instead, not this one.
   final Color gain;
 
   /// A lot the backend marked `trend: down`.
   final Color loss;
-
-  /// The empty box on a row the sale does not fully consume.
-  final Color checkboxBorder;
-
-  /// The tick drawn inside a filled box.
-  final Color checkboxGlyph;
 
   /// The dashed square the empty state shows.
   final Color placeholderBorder;

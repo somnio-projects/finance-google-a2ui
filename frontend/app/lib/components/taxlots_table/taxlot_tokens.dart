@@ -2,85 +2,92 @@ import 'package:finance_app/components/taxlots_table/taxlot_palette.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term_colors.dart';
 import 'package:flutter/material.dart';
 
-/// The tax-lot palette in each brightness, **measured from the design**.
+/// The tax-lot palette in each brightness, **measured from the UI Kit**.
 ///
-/// Every value below was read out of `Catalog - Tax-Lot Table.html` with
-/// `getComputedStyle` on the rendered artboards, not copied from a token
-/// list — GGU-55 found two of five informally circulated values wrong, so
-/// this table is measured the same way and pinned by
-/// `taxlot_tokens_test.dart`, which fails on any drift.
+/// Every value below was read out of
+/// `specs/frontend/assets/0027-taxlot-uikit/taxlot-uikit.svg` — a Figma export
+/// whose fills are exact — rather than off a rendered page. That matters
+/// because the file it replaces was measured from the *earlier* artboard with
+/// `getComputedStyle`, honestly, and most of those colours no longer exist in
+/// the design (spec `frontend/0027` OD-5). `taxlot_tokens_test.dart` pins each
+/// one as a literal, so a drift is someone changing a colour on purpose.
 ///
-/// The four semantic roles the two pages share — gain, loss, the selected
-/// accent and the surfaces — were measured here **independently** and agree
-/// with `ChartTokens` to the byte; `::agrees with the chart palette on every
-/// shared role` asserts that, so the two files cannot drift apart while
-/// staying separate (a chart palette is not a table's palette, and coupling
-/// them would mean editing a shared file to add a component).
+/// **Two colours are not in this frame**, and both say where they come from:
+///
+/// - [TaxLotPalette.loss] — the frame draws four gains and no loss, so the
+///   loss colour is the chart palette's `barLoss`. It is written out here
+///   rather than read from `ChartTokens` (a field of a `const` object is not
+///   a constant expression in Dart) and `taxlot_tokens_test.dart` asserts the
+///   two are equal, which is the same arrangement the old file used for the
+///   roles the two pages share.
+/// - [TaxLotPalette.placeholderBorder] — the empty state is not in this frame
+///   either; it takes the same grey as an unticked box.
 abstract final class TaxLotTokens {
-  /// Light mode, as the `L1 · Light · 1024` artboard draws it.
+  /// Light mode, as the kit's light artboards draw it.
   static const TaxLotPalette light = TaxLotPalette(
-    surface: Color(0xFFFDFBFF),
-    border: Color(0xFFEAE7F0),
-    selectedSurface: Color(0xFFEEF0FF),
-    selectedAccent: Color(0xFF4F5DFF),
-    footerSurface: Color(0xFFF5F3FB),
-    primaryText: Color(0xFF1A1B20),
-    figureText: Color(0xFF44464E),
-    labelText: Color(0xFF5F6169),
-    mutedText: Color(0xFF8A8D96),
-    gain: Color(0xFF12805C),
+    surface: Color(0xFFFFFFFF),
+    shadow: Color(0x14000000),
+    divider: Color(0xFFE1E2E3),
+    selectedRow: Color(0xFFEBF1FF),
+    checkedBox: Color(0xFF3C90F1),
+    checkGlyph: Color(0xFFFFFFFF),
+    checkboxBorder: Color(0xFFCBCDD0),
+    primaryText: Color(0xFF242425),
+    mutedText: Color(0xFF56575B),
+    gain: Color(0xFF026E4F),
     loss: Color(0xFFC0362C),
-    checkboxBorder: Color(0xFFC4C6D0),
-    checkboxGlyph: Color(0xFFFFFFFF),
-    placeholderBorder: Color(0xFFC4C6D0),
+    placeholderBorder: Color(0xFFCBCDD0),
     shortTerm: TaxLotTermColors(
-      accent: Color(0xFFF0A52E),
-      chipForeground: Color(0xFF8A5A10),
-      chipBackground: Color(0xFFFDF0DC),
-      chipBorder: Color(0xFFF0D9A8),
+      accent: shortRail,
+      chipForeground: Color(0xFF855807),
+      chipBackground: Color(0xFFFFF4E0),
     ),
     longTerm: TaxLotTermColors(
-      accent: Color(0xFF0F9D8F),
-      chipForeground: Color(0xFF0C6A60),
-      chipBackground: Color(0xFFDCEFEC),
-      chipBorder: Color(0xFFB8DDD6),
+      accent: longRail,
+      chipForeground: Color(0xFF026E4F),
+      chipBackground: Color(0xFFD8FDEB),
     ),
   );
 
-  /// Dark mode, as the `D1 · Dark · 1024` artboard draws it.
+  /// Dark mode, as the kit's dark artboards draw it.
   ///
-  /// The geometry is pixel-identical between the artboards — only the
-  /// palette changes — which is why one layout serves both. Note that
-  /// [TaxLotPalette.mutedText] is the **same** `#8A8D96` in both: the
-  /// designer holds the column headers at one value across themes.
+  /// The geometry is pixel-identical between the artboards — only the palette
+  /// changes — which is why one layout serves both.
   static const TaxLotPalette dark = TaxLotPalette(
-    surface: Color(0xFF15161C),
-    border: Color(0xFF24252D),
-    selectedSurface: Color(0xFF20223A),
-    selectedAccent: Color(0xFF7A83FF),
-    footerSurface: Color(0xFF101017),
-    primaryText: Color(0xFFE5E1E9),
-    figureText: Color(0xFFC9CBD4),
-    labelText: Color(0xFFA4A6B0),
-    mutedText: Color(0xFF8A8D96),
+    surface: Color(0xFF17181C),
+    shadow: Color(0x33000000),
+    divider: Color(0xFF353A42),
+    selectedRow: Color(0xFF17283C),
+    checkedBox: Color(0xFF308CF5),
+    checkGlyph: Color(0xFFFFFFFF),
+    checkboxBorder: Color(0xFF474D58),
+    primaryText: Color(0xFFE8E8E9),
+    mutedText: Color(0xFFB9BEC6),
     gain: Color(0xFF4ADE9E),
     loss: Color(0xFFFF6B5E),
-    checkboxBorder: Color(0xFF45464F),
-    checkboxGlyph: Color(0xFF0B0C10),
-    placeholderBorder: Color(0xFF3A3B44),
+    placeholderBorder: Color(0xFF474D58),
     shortTerm: TaxLotTermColors(
-      accent: Color(0xFFFFBF5C),
-      chipForeground: Color(0xFFFFCF7A),
-      chipBackground: Color(0xFF2E2410),
-      chipBorder: Color(0xFF4A3A18),
+      accent: shortRail,
+      chipForeground: Color(0xFFF2BD62),
+      chipBackground: Color(0xFF513F1D),
     ),
     longTerm: TaxLotTermColors(
-      accent: Color(0xFF3FC8B8),
-      chipForeground: Color(0xFF6FE0D2),
-      chipBackground: Color(0xFF12302C),
-      chipBorder: Color(0xFF1F4A44),
+      accent: longRail,
+      chipForeground: Color(0xFF4ADE9E),
+      chipBackground: Color(0xFF25483E),
     ),
   );
+
+  /// The long-term rail, **the same in both themes**.
+  ///
+  /// Not an oversight in the measurement: the kit draws `#2FA584` on the
+  /// light and the dark artboard alike, the way the old file held the column
+  /// header at one value. It is a constant here so the two palettes cannot
+  /// half-change it, and a test asserts the equality.
+  static const Color longRail = Color(0xFF2FA584);
+
+  /// The short-term rail, likewise one value across both themes.
+  static const Color shortRail = Color(0xFFB8790A);
 
   /// The palette for [brightness].
   static TaxLotPalette forBrightness(Brightness brightness) =>

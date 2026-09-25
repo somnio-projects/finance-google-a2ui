@@ -53,6 +53,12 @@ void main() {
       expectRaises(withTermField(example, 'term', '?'), 'by_term[0].term');
     });
 
+    test('raises a fully_sold that is not a boolean', () {
+      // `flag` is as strict as `text`: a contract that publishes a boolean
+      // and sends a word is a contract violation, not a truthy string.
+      expectRaises(withLotField(example, 'fully_sold', 'yes'), 'fully_sold');
+    });
+
     test('raises a trend the contract does not declare', () {
       expectRaises(withLotField(example, 'trend', 'sideways'), 'lots[0].trend');
     });

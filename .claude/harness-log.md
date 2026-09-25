@@ -5211,3 +5211,87 @@ bound and rendered nowhere: the frame keeps the net in the header, so the
 caption has no home. It is a **declared deviation from N-9** rather than a
 silent drop, and the honest follow-up is design either giving it a place or
 the projection dropping it.
+## 2026-09-24 — The tax-lot table matches the UI Kit
+
+**Spec:** [`frontend/0027`](../specs/frontend/0027-the-taxlot-table-matches-the-ui-kit.md) ·
+**Ticket:** GGU-116. Design source committed under
+`specs/frontend/assets/0027-taxlot-uikit/`.
+
+`TaxLotTable` was built (GGU-57) against an earlier artboard and the kit has
+moved: bordered rows became flat bands with a 4 px term rail, the filled
+footer bar became a rule and a line of text, five columns became six, the
+palette changed end to end, and two states appeared that this build had none
+of — a ticked/tinted row and a loading skeleton — plus a phone layout.
+
+**The design asks for four fields the frozen contract does not serve**, and
+the spec's §3 is the table: a per-lot market value, a holding-period string
+(*5.5 yr*), a header line (`NVDA · 4 lots`), and a direction on `realized`.
+None is invented and none is computed. What each one costs a viewer is
+written down beside it, which is the part of the ticket that took the longest
+and the part worth reading first.
+
+**Three decisions worth carrying forward:**
+
+- **The kit's *selected* artboard is a payload, not an interaction.** The
+  contract publishes `lots[].fully_sold` as a flag with `state: variant` —
+  the catalog's own words for "this changes how the row looks" — so the tick
+  and the tint bind to it and nothing is tappable. Local highlight state was
+  considered and rejected: the artboard's own selected footer is a **sum over
+  the ticked rows** (`$6,820` → `$35,833`), so a toggle either computes it
+  (N-2) or leaves a footer contradicting its own ticks. When a selection
+  option arrives it is a projection option, not client state.
+- **A column the contract cannot name keeps its slot and the payload's
+  word.** *Market value* is drawn from `proceeds.display` under
+  `proceeds.label`, because `proceeds` is the field that carries the figure
+  and the label follows the `locale` option a Dart constant would ignore.
+  The holding-period column keeps its slot and loses only its duration text —
+  a column removed is a layout that has to be rebuilt the day the field
+  lands, and a duration is `now - acquired_on`, which N-13 forbids outright.
+- **A palette that disagrees with a neighbour is asserted, not merged.**
+  The kit's light gain is `#026E4F` and `ChartTokens`' is `#12805C`; the
+  Activity screen's term badges are a third declaration again. Each page owns
+  its own source, so `taxlot_tokens_test.dart` now pins the agreements *and*
+  both divergences — the shape `frontend/0007` OD-2 already used. Picking a
+  winner by editing another screen's tokens is a design decision made in Dart.
+
+**A mechanical trap, recorded because it costs an afternoon:** a metrics
+class of nothing but `static const` emits **no executable line**, so Dart's
+lcov writes no record for the file and `tool/check_coverage.dart` reports it
+as one no test loads — indistinguishable from a genuinely untested file.
+`TaxLotMobileMetrics.tilePadding` is a getter for that reason, with the
+reason in its doc comment. `TaxLotMetrics` was already over the line by
+accident, because its radii are getters.
+
+**And one the reviewer found, which is the same defect one level up:** the
+hand-painted tick had a test that could never be red —
+`expect(TaxLotCheckGlyphPainter.points, hasLength(3))` compares a constant
+with itself, and the mark is ~50 px of a 600 × 346 card, two orders of
+magnitude under the 1.5 % golden tolerance. Neither the widget tests nor the
+goldens could see it. It is asserted through `paints..path(…)` now, against
+what reached the canvas, and emptying `paint` was watched turning two suites
+red. **When a component paints something by hand instead of using a
+framework glyph, that mark needs a `paints` assertion**: it is below what a
+tolerant raster can resolve and above what a decoration test looks at.
+
+**And the third defect the branch met, which CI found and the laptop could
+not:** the first six goldens were whole-card, and **five failed on the Linux
+runner** at 4.06–5.98 % against a 1.5 % tolerance while passing on macOS.
+Light and dark differed by the *identical* pixel count — the signature of
+glyph rasterisation rather than of anything this code draws. The fix is not a
+wider tolerance (that is threshold-fitting, and GGU-106 measured that an
+amplitude floor does not suppress glyph noise either): **a golden frames
+chrome, never text**. Spec OD-10 carries the table of what each of the seven
+frames now proves and what it no longer proves.
+
+Two things worth carrying forward from it. **Cropping made the goldens
+stronger, not weaker** — a one-step token error on the selected-row tint
+moves 32.5 % of the cropped frame and well under 1 % of a whole card, so the
+narrow frame is the sensitive one. And **derive the crop from the layout's
+own constants** (`TaxLotColumns.leadingWidth + railGap`), so a grid change
+moves the frame with it instead of letting a caption drift into shot.
+
+**Next person:** the goldens in
+`app/test/components/taxlots_table/goldens/` no longer bind the catalog
+example — they are built from the suite's own lots — so GGU-114's crypto
+migration does **not** re-shoot them. It does change every *example*-bound
+assertion in the other files of this suite; that is where its rebase lands.
