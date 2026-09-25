@@ -34,4 +34,22 @@ class TimestampMixin:
     )
 
 
-__all__ = ["NAMING_CONVENTION", "Base", "TimestampMixin"]
+class UpdatedAtMixin:
+    """``updated_at`` for the six tables whose migrations created it.
+
+    Written by the database on insert, bumped by the ORM on update. It was
+    spelled out identically in three models and omitted from three others whose
+    tables have the column, which is one of the two declaration gaps GGU-127
+    found (spec 0048 §3): a column declared per model is a column that can
+    drift per model.
+    """
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+__all__ = ["NAMING_CONVENTION", "Base", "TimestampMixin", "UpdatedAtMixin"]

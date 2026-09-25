@@ -143,6 +143,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0028-the-waterfall-matches-the-ui-kit.md](frontend/0028-the-waterfall-matches-the-ui-kit.md) | In progress | GGU-115 |
 | [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
 | [backend/0047-the-db-backed-suite-cleans-up-after-itself.md](backend/0047-the-db-backed-suite-cleans-up-after-itself.md) | In progress | GGU-124 |
+| [backend/0048-the-metadata-knows-every-table.md](backend/0048-the-metadata-knows-every-table.md) | In progress | GGU-127 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |

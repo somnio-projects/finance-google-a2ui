@@ -5487,3 +5487,57 @@ the proposal, including the `ship-gate.json` entry it needs so
 `repo.gate-pairs` does not fail on a paraphrase. It is worth doing: without it,
 this fix is held only by the two tests in `test_fixture_isolation.py`, and CI
 goes back to being unable to see the class of defect at all.
+
+## 2026-09-25 — GGU-127: the metadata knows every table
+
+**Spec:** [`specs/backend/0048-the-metadata-knows-every-table.md`](../specs/backend/0048-the-metadata-knows-every-table.md)
+
+`app/models/__init__.py` opened with *"Import every model here so Alembic's
+autogenerate sees the full metadata"* and imported four of the eight mapped
+tables. `alembic/env.py` hands that object to autogenerate as
+`target_metadata`, so `alembic revision --autogenerate` proposed
+`op.drop_table()` for `portfolios`, `portfolio_lots`, `portfolio_transactions`
+and `users` — measured, not reasoned about. Found while building GGU-124's
+cleanup fixture, which reflects from the database precisely because this list
+could not be trusted (spec 0047 §3 filed it).
+
+**Code:** the four imports, `__all__` with them, and `UpdatedAtMixin` in
+`models/base.py`. The second half of the defect only appeared *after* the first
+was fixed: with the tables visible, the proposed revision stopped dropping four
+tables and started dropping three `updated_at` **columns**, which migration
+`0005` created and no model declared. Three models spelled that column out
+identically and three omitted it; it is declared once now, for all six.
+
+**The test is the part worth reading: `tests/integration/
+test_metadata_completeness.py`.** Two traps, both measured rather than assumed:
+
+1. **A list of eight names in the test would be the same unenforced claim one
+   level down** — green until somebody adds a ninth model *and* remembers to
+   edit it. Both halves compare against the migrated schema, read back by
+   reflection, so a ninth table is covered the day its migration lands.
+2. **Reading `Base.metadata` in the test process is vacuous.** By collection
+   time the repositories have imported `app.models.portfolio` and
+   `app.models.user`, so the registry holds all eight tables *whatever*
+   `models/__init__.py` says — with the `User` import deleted,
+   `python -c "import app.repositories.user_repository; from app.models import
+   Base; print(sorted(Base.metadata.tables))"` still prints eight. The table set
+   is therefore measured in a **subprocess** that imports exactly what
+   `alembic/env.py` imports. The second test is in-process on purpose and sound
+   there for the opposite reason: an import can add a table, never a column, so
+   it asks alembic's own `compare_metadata` for the diff and asserts it is
+   empty — AC-4 as a standing assertion instead of a paste that ages.
+
+Both mutations are in the PR: `User` import removed → red naming `users`;
+`UpdatedAtMixin` removed from `Portfolio` → red naming `portfolios.updated_at`.
+
+**Harness:** no rule, hook or gate entry changed. The property's subject is one
+directory, so it is a test inside `py.test` rather than a `repo.*` check
+(`ci-conventions.md` §5, second question), and spec 0048 OD-1 records that
+choice. `docs/diagrams/07-data-model.md` gained the two `updated_at` rows it was
+missing — the same fact's third declaration — and a note saying what now keeps
+the picture true.
+
+**Next person:** `git checkout <file>` in a worktree restores from the **index**,
+not from your edits — it silently reverted the whole fix mid-mutation-check and
+the suite went green for the wrong reason for one run. Restore a mutation by
+re-applying the edit, or make the mutation with `sed` and reverse it with `sed`.
