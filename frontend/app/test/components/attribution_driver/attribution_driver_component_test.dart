@@ -42,8 +42,10 @@ void main() {
           caption: r'+$2,270.00',
           trend: DriverTrend.up,
         ),
+        // `holding`, labelled with the asset the payload already knows:
+        // 2.1 Bitcoin was tiled as "Shares" until GGU-123.
         const DriverTile(
-          label: 'Shares',
+          label: 'BTC held',
           figure: '2.1',
           caption: r'@ $64,250.00',
         ),
@@ -73,14 +75,14 @@ void main() {
     });
 
     test('raises the missing field instead of reconstructing it', () {
-      final broken = Map<String, dynamic>.from(example)..remove('shares');
+      final broken = Map<String, dynamic>.from(example)..remove('holding');
       expect(
         () => component.read(ViewPayload.fromJson(broken)),
         throwsA(
           isA<PayloadContractException>().having(
             (error) => error.failure.path,
             'path',
-            'shares.label',
+            'holding.label',
           ),
         ),
       );

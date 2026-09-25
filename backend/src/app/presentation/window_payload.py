@@ -87,10 +87,10 @@ class WindowStep(Bucket):
         description="The selected state's sentence, written here.",
         examples=["+4.2% · $104,049.00 → $108,419.40"],
     )
-    selected_label: str = Field(
-        max_length=48,
-        description="What the card's header says while this step is selected.",
-        examples=["BTC selected"],
+    delta_label: str = Field(
+        max_length=32,
+        description="The caption printed in front of `delta` (GGU-119 BG-1).",
+        examples=["Contribution"],
     )
 
 

@@ -53,7 +53,8 @@ def impact_block(
     """Describe the order's consequences, every figure formatted."""
     return {
         "totalDisplay": money_display(impact.total),
-        "unitsDisplay": quantity_display(impact.units, trim=True),
+        # No total quantity: the legs are different assets, so their counts do
+        # not add. Each leg's own count is in `line()` (GGU-122, spec 0046).
         "feesDisplay": money_display(impact.fees),
         "cashRemainingDisplay": money_display(impact.cash_after),
         "weightShifts": [

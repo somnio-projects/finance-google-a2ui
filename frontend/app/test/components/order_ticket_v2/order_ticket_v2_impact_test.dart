@@ -30,16 +30,19 @@ void main() {
       brightness: brightness,
     );
 
-    testWidgets('renders the four figures with their server labels', (
+    testWidgets('renders the money figures with their server labels', (
       tester,
     ) async {
       await pump(tester);
       final tiles = tester.widgetList<OrderTicketV2FigureTile>(
         find.byType(OrderTicketV2FigureTile),
       );
+      // Three, not four. The `units` tile carried the arithmetic sum of every
+      // leg's quantity under the label *Est. shares*; units of different
+      // assets do not add, so the backend stopped sending it (GGU-122,
+      // backend spec 0046 OD-2) and nothing took its place.
       expect(tiles.map((tile) => tile.figure.name), <String>[
         'total',
-        'units',
         'fees',
         'cash',
       ]);
@@ -124,7 +127,7 @@ void main() {
       await pump(tester, rejection: 'legs must match the pattern');
       expect(find.byType(OrderTicketV2Notice), findsOneWidget);
       expect(find.text('legs must match the pattern'), findsOneWidget);
-      expect(find.byType(OrderTicketV2FigureTile), findsNWidgets(4));
+      expect(find.byType(OrderTicketV2FigureTile), findsNWidgets(3));
     });
   });
 }

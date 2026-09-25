@@ -40,9 +40,16 @@ def test_render_writes_the_three_tiles_with_their_captions(
         "up",
     )
     assert payload.price_move.amount.display == "+$2,270.00"
-    assert (payload.shares.label, payload.shares.units.display) == ("Shares", "2.1")
+    # The tile names the asset, not a unit Bitcoin does not have: it held
+    # 2.1 coins, and "Shares" was the label until GGU-123 (spec 0046 OD-3).
+    assert (payload.holding.label, payload.holding.units.display) == (
+        "BTC held",
+        "2.1",
+    )
     assert (
-        payload.shares.caption == f"@ {payload.shares.price.display}" == "@ $64,250.00"
+        payload.holding.caption
+        == f"@ {payload.holding.price.display}"
+        == "@ $64,250.00"
     )
     assert (payload.day_share.label, payload.day_share.percent.display) == (
         "Of day gain",
@@ -123,7 +130,8 @@ def test_surface_maps_the_payload_onto_the_card(portfolio: Portfolio) -> None:
     assert rendered.props["symbol"] == "BTC"
     assert rendered.props["contribution"]["display"] == "+$4,767.00"
     assert rendered.props["priceMove"]["label"] == "Price move"
-    assert rendered.props["shares"]["caption"] == "@ $64,250.00"
+    assert rendered.props["holding"]["label"] == "BTC held"
+    assert rendered.props["holding"]["caption"] == "@ $64,250.00"
     assert rendered.props["dayShare"]["percent"]["display"] == "216.58%"
 
 

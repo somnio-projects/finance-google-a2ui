@@ -98,7 +98,7 @@ void main() {
           <String, dynamic>{
             'symbol': 'PG',
             'name': 'Procter & Gamble',
-            'detail': r'25 sh · avg $180.00',
+            'detail': r'25 PG · avg $180.00',
             'value': <String, dynamic>{
               'amount': '4200',
               'display': r'$4,200.00',

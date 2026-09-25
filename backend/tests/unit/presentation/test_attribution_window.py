@@ -121,7 +121,7 @@ class TestEveryFigureIsPreFormatted:
         assert step.detail == (
             f"{step.move.display} · {step.opened.display} → {step.closed.display}"
         )
-        assert step.selected_label == f"{step.key} selected"
+        assert step.delta_label == "Contribution"
 
     def test_a_negative_step_is_signed_and_pointed_down(
         self, portfolio: Portfolio

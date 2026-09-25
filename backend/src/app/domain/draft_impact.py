@@ -1,9 +1,17 @@
 """What a multi-leg draft order does to the portfolio (spec 0031).
 
-The design's *Order impact* panel — total, estimated shares, fees, cash
-remaining — is a set of financial statements, and a statement belongs to the
-domain rather than to the presenter that prints it or the tool that reads it
-aloud (ADR-K D-6). Both of those format what this module states; neither
+The design's *Order impact* panel — total, fees, cash remaining — is a set of
+financial statements, and a statement belongs to the domain rather than to the
+presenter that prints it or the tool that reads it aloud (ADR-K D-6).
+
+**It states no total quantity.** It used to: ``units``, the sum of every leg's
+quantity, which the panel labelled *Est. shares* and the assistant read aloud.
+Summing 0.05 BTC, 1.0 ETH and 16 SOL into ``17.05`` is not an imprecise answer
+to a sensible question, it is an answer to none — quantities of different
+assets do not add — so the statement is gone from the domain rather than left
+here for the next consumer to print, and it had two (GGU-122, spec 0046 OD-2).
+
+The presenter and the tool format what this module states; neither
 computes. The panel's last row, a sector's weight before and after, is
 ``app.domain.draft_weights``: split off for the file budget along the seam
 that was already there — what the order costs, apart from what it shifts.
@@ -45,7 +53,6 @@ class DraftImpact:
 
     legs: tuple[PricedLeg, ...]
     total: Decimal
-    units: Decimal
     fees: Decimal
     cash_available: Decimal
     cash_after: Decimal
@@ -99,8 +106,9 @@ def draft_impact(
             ``simulate_sale``'s question (spec 0018 OD-3).
 
     Returns:
-        The priced legs and the panel's figures. ``shortfall`` is positive
-        only for a buy the available cash cannot cover.
+        The priced legs and the panel's figures — money only, since a
+        multi-asset order has no quantity. ``shortfall`` is positive only for
+        a buy the available cash cannot cover.
     """
     legs = price_legs(requests)
     total = sum((leg.notional for leg in legs), ZERO)
@@ -110,7 +118,6 @@ def draft_impact(
     return DraftImpact(
         legs=legs,
         total=total,
-        units=sum((leg.quantity for leg in legs), ZERO),
         fees=ZERO,
         cash_available=cash,
         cash_after=cash_after,

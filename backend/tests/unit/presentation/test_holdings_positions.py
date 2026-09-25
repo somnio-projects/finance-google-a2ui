@@ -43,7 +43,9 @@ def test_rows_run_by_value_with_cash_last(portfolio: Portfolio) -> None:
 def test_a_position_row_is_the_design_row(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsPositionsOptions())
     btc = payload.positions[0]
-    assert (btc.name, btc.detail) == ("Bitcoin", "2.1 sh · avg $41,698.00")
+    # The second line counts the asset in its own units — "2.1 BTC", not
+    # "2.1 sh" (GGU-122, spec 0046 OD-1).
+    assert (btc.name, btc.detail) == ("Bitcoin", "2.1 BTC · avg $41,698.00")
     assert btc.value.display == "$134,925.00"
     assert btc.unrealized is not None
     assert (btc.unrealized.amount.display, btc.unrealized.percent.display) == (
@@ -79,7 +81,7 @@ def test_a_loser_is_signed_and_marked_down(portfolio: Portfolio) -> None:
 def test_the_locale_reaches_every_figure(portfolio: Portfolio) -> None:
     payload = render(portfolio, HoldingsPositionsOptions(locale="de-DE", precision=0))
     assert payload.total.amount.display == "482.915 $"
-    assert payload.positions[0].detail == "2.1 sh · avg 41.698,00 $"
+    assert payload.positions[0].detail == "2.1 BTC · avg 41.698,00 $"
 
 
 def test_surface_and_fitness(portfolio: Portfolio, empty_portfolio: Portfolio) -> None:

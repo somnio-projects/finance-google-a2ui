@@ -46,8 +46,12 @@ def test_render_gives_each_step_what_its_selected_state_shows(
     assert bitcoin.move.value > Decimal("0.5408")
     assert bitcoin.move.display == "+54.08%"
     assert (bitcoin.units.display, bitcoin.price.display) == ("2.1", "$64,250.00")
-    assert bitcoin.detail == "+54.08% · 2.1 sh · $64,250.00"
-    assert bitcoin.selected_label == "BTC selected"
+    # The unit word is the asset's own ticker: 2.1 of Bitcoin is 2.1 BTC, and
+    # was "2.1 sh" until GGU-122 (spec 0046 OD-1).
+    assert bitcoin.detail == "+54.08% · 2.1 BTC · $64,250.00"
+    # GGU-119 BG-1: the figure now arrives with the word design prints in
+    # front of it, and `selected_label` left with the frame that drew it.
+    assert bitcoin.delta_label == "Contribution"
     loser = next(step for step in payload.buckets if step.key == "ARB")
     assert loser.move.display.startswith("-")  # a loser's move is signed too
 

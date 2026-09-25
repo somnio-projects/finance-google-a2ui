@@ -68,12 +68,18 @@ def gain_of(value: Decimal, cost: Decimal, *, period: str, locale: str) -> Chang
 
 
 def detail_of(holding: Holding, *, locale: str) -> str:
-    """``90 sh · avg $826.67`` — or the settlement fund's caption."""
+    """``2.1 BTC · avg $41,698.00`` — or the settlement fund's caption.
+
+    The unit word is the **asset's own ticker** (GGU-122, spec 0046 OD-1): a
+    quantity of Bitcoin has no unit but Bitcoin, and this line is the one place
+    the row states what the number counts. Composed here, never in the client,
+    for the reason every other sentence on a surface is (N-9).
+    """
     if is_cash(holding):
         return CASH_DETAIL
-    shares = quantity_display(holding.quantity, locale=locale, trim=True)
+    held = quantity_display(holding.quantity, locale=locale, trim=True)
     average = money(holding.cost_basis / holding.quantity, locale=locale).display
-    return f"{shares} sh · avg {average}"
+    return f"{held} {holding.symbol} · avg {average}"
 
 
 def question_for(holding: Holding) -> Question:

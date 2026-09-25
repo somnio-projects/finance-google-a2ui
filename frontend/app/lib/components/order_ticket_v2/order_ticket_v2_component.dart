@@ -73,11 +73,11 @@ class OrderTicketV2Component extends ViewComponent {
         label: payload.text('impact.total.label'),
         display: payload.text('impact.total.amount.display'),
       ),
-      OrderTicketV2Figure(
-        name: 'units',
-        label: payload.text('impact.units.label'),
-        display: payload.text('impact.units.units.display'),
-      ),
+      // No `units` tile. `impact.units` was the arithmetic sum of every leg's
+      // quantity under the label *Est. shares* — 0.05 BTC + 1 ETH + 16 SOL =
+      // 17.05, a figure of nothing — and the backend stopped sending it
+      // rather than relabelling it (GGU-122, backend spec 0046 OD-2). Each
+      // line carries its own quantity in its own asset.
       OrderTicketV2Figure(
         name: 'fees',
         label: payload.text('impact.fees.label'),

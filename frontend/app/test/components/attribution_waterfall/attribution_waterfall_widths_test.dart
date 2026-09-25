@@ -57,7 +57,7 @@ void main() {
       for (final width in <double>[380, 700]) {
         await tester.pumpApp(subject(width), surfaceSize: const Size(900, 900));
         expect(find.text('BTC · Bitcoin'), findsOneWidget);
-        expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
+        expect(find.text(r'+54.08% · 2.1 BTC · $64,250.00'), findsOneWidget);
         expect(find.text(r'$47,359.20'), findsWidgets);
       }
     });

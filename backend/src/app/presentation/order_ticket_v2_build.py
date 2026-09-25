@@ -18,7 +18,7 @@ from app.domain.draft_weights import WeightShift as ShiftFigures
 from app.domain.money import ZERO
 from app.domain.payoff import Side
 from app.presentation.fragments import Total
-from app.presentation.order_ticket_v2_lines import OrderLine, UnitTotal, WeightShift
+from app.presentation.order_ticket_v2_lines import OrderLine, WeightShift
 from app.presentation.order_ticket_v2_options import OrderTicketV2Options
 from app.presentation.order_ticket_v2_payload import (
     Badge,
@@ -30,7 +30,6 @@ from app.presentation.ticket_displays import price, quantity
 
 #: The panel's captions, server-written so the client spells none (N-9).
 TOTAL_LABEL = "Total order"
-UNITS_LABEL = "Est. shares"
 FEES_LABEL = "Est. fees · sim"
 CASH_LABEL = "Cash remaining"
 MAX_CASH_LABEL = "Available cash"
@@ -75,9 +74,6 @@ def impact_block(
     """Render the *Order impact* panel."""
     return OrderImpact(
         total=Total(label=TOTAL_LABEL, amount=options.money(impact.total)),
-        units=UnitTotal(
-            label=UNITS_LABEL, units=quantity(impact.units, locale=options.locale)
-        ),
         fees=Total(label=FEES_LABEL, amount=options.money(impact.fees)),
         cash_remaining=Total(label=CASH_LABEL, amount=options.money(impact.cash_after)),
         weight_shifts=tuple(
@@ -125,7 +121,6 @@ __all__ = [
     "MAX_CASH_LABEL",
     "OVER_CASH",
     "TOTAL_LABEL",
-    "UNITS_LABEL",
     "WEIGHT_LABEL",
     "badge_of",
     "breach_of",

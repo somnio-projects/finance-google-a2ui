@@ -11,8 +11,8 @@ from app.presentation.displays import percentage, signed_money, signed_percentag
 from app.presentation.driver_payload import (
     DayShare,
     DriverDetailPayload,
+    HoldingUnits,
     PriceMove,
-    SharesHeld,
 )
 from app.presentation.options import DisplayOptions
 from app.presentation.ticket_displays import price, quantity
@@ -37,11 +37,15 @@ def price_move(detail: DriverDetail, options: DisplayOptions) -> PriceMove:
     )
 
 
-def shares_held(detail: DriverDetail, options: DisplayOptions) -> SharesHeld:
-    """The second tile: the units that carried the move, at their price."""
+def units_held(detail: DriverDetail, options: DisplayOptions) -> HoldingUnits:
+    """The second tile: the units that carried the move, at their price.
+
+    The label names the asset — ``BTC held`` — because the payload knows which
+    one this is and a crypto holding has no count of shares (GGU-123 AC-1).
+    """
     unit_price = price(detail.price, locale=options.locale)
-    return SharesHeld(
-        label=words.SHARES_LABEL,
+    return HoldingUnits(
+        label=words.HOLDING_LABEL.format(symbol=detail.symbol),
         units=quantity(detail.quantity, locale=options.locale),
         price=unit_price,
         caption=f"@ {unit_price.display}",
@@ -74,9 +78,9 @@ def payload_for(detail: DriverDetail, options: DisplayOptions) -> DriverDetailPa
         ),
         trend=trend_of(detail.contribution),
         price_move=price_move(detail, options),
-        shares=shares_held(detail, options),
+        holding=units_held(detail, options),
         day_share=day_share(detail, options),
     )
 
 
-__all__ = ["caption_for", "day_share", "payload_for", "price_move", "shares_held"]
+__all__ = ["caption_for", "day_share", "payload_for", "price_move", "units_held"]

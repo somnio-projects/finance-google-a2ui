@@ -43,11 +43,13 @@ def test_an_order_for_nothing_weighs_every_leg_at_zero() -> None:
 
 
 def test_a_buy_within_cash_spends_it_and_is_not_short(portfolio: Portfolio) -> None:
-    """AC-5 — total, units and cash remaining, from one statement."""
+    """AC-5 — total, fees and cash remaining, from one statement."""
     impact = draft_impact(portfolio, DESIGN_LEGS, "buy")
 
     assert impact.total == Decimal("9773.40")
-    assert impact.units == Decimal("17.06")
+    # `units` is gone rather than corrected: a multi-asset order has no
+    # quantity to state (GGU-122, spec 0046 OD-2).
+    assert not hasattr(impact, "units")
     assert impact.fees == ZERO
     assert impact.cash_available == Decimal("51764.00")
     assert impact.cash_after == Decimal("41990.60")

@@ -111,7 +111,7 @@ void main() {
       expect(tapped, <String>['BTC']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
       expect(find.text('BTC · Bitcoin'), findsOneWidget);
-      expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
+      expect(find.text(r'+54.08% · 2.1 BTC · $64,250.00'), findsOneWidget);
     });
 
     testWidgets('a second tap on the same bucket clears the selection', (
