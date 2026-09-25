@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 /// (`.claude/rules/flutter/ui-theming.md`): a widget reads its colours from
 /// its `BuildContext`, so light and dark differ without a single widget
 /// branching on brightness, and a test can pump either. The values live in
-/// `ChartTokens`, which is the only file in `app/lib/` naming a `Color`.
+/// `ChartTokens` — one of the app's several `*_tokens.dart` files, which are
+/// the only files allowed to name a `Color` (spec frontend/0029 OD-4).
 ///
 /// Material 3's `ColorScheme` cannot supply these. Gain, loss and "a total"
 /// are **semantic** roles a finance chart needs and a generated scheme has no

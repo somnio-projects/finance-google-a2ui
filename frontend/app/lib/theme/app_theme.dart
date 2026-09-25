@@ -1,6 +1,6 @@
 import 'package:finance_app/charts/chart_extensions.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
-import 'package:finance_app/theme/app_colors.dart';
+import 'package:finance_app/theme/app_color_tokens.dart';
 import 'package:finance_app/theme/app_spacing.dart';
 import 'package:finance_app/theme/assistant_palettes.dart';
 import 'package:finance_app/theme/catalog_palettes.dart';

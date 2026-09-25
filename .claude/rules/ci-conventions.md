@@ -111,7 +111,7 @@ repository-wide one is not, on purpose:
 
 | workflow | runs on | scope | exists? |
 |---|---|---|---|
-| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, manual-run check | yes |
+| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, spec numbering, manual-run check | yes |
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
@@ -323,6 +323,39 @@ PR body and compares the `<version>+<sha>` on `/health` with the branch head;
 what the gate runs is its **suite**, because the check needs a PR body and the
 gate has none. A check that has never been shown to reject is the same defect
 one level up, so the suite asserts the four rejections and only one pass.
+
+**The sixth instance is the one §5 was always going to reach: a property with
+no command at all (GGU-105).** `specs/README.md` says *"Numbers are per area,
+zero-padded, never reused"* and *"One row per file … so a missing spec and a
+duplicated one are both visible at a glance."* Both halves were false on
+`develop`: two files were numbered `frontend/0002` and **nine** spec files had
+no index row, including both halves of that collision. There was nothing to
+compare, because only one half existed — the sentence was doing a check's job.
+
+`repo.spec-numbers` (`scripts/check_spec_numbers.sh`) is the other half:
+filename shape, uniqueness per area (naming **both** files), and one index row
+per spec in both directions. `repo.spec-numbers-test` is its suite, the
+`frontend.toolchain` / `frontend.toolchain-test` pair applied here, and it
+plants a collision, an unpadded number, an unindexed spec, an orphan row, a
+duplicated row, an emptied area and a corpus too small to believe.
+
+Two things it deliberately does **not** claim, because §5's second question
+has to be answered *before* the name is chosen rather than after:
+
+- **"Never reused" is not machine-checkable here.** In git history a
+  renumbering is a delete plus an add, indistinguishable from a reuse, and the
+  check would have failed on GGU-59's own legitimate rename. It is protected by
+  the index rule instead — a superseded spec keeps its file and its row.
+- **Ordering is not asserted, and the claim was removed rather than enforced.**
+  The index said it was "ordered by area then number" and was not. A claim this
+  repository cannot keep is the whole subject of the ticket, so the sentence
+  went; reordering seventy rows is not what makes a collision fail.
+
+The frontend half of GGU-105 needed no gate entry at all, which is also §5
+working: *"the Color-in-lib rule"* proves one stack, so it is a test
+(`app/test/architecture/color_rules_test.dart`) inside `frontend.test`, beside
+the four architecture tests that already fail on a mechanism. A check whose
+subject is one directory does not belong in `repo-ci`, in either direction.
 
 A PR that changes one without its pair is incomplete. A new runner goes in
 this table rather than in a comment — and the count in the sentence above it
