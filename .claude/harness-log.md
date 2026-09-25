@@ -5406,6 +5406,34 @@ metadata."* It is filed as its own task: it belongs to `models/` and a migration
 review, not to a test fixture, and it is also why this fixture reflects from the
 database rather than trusting that list.
 
+**A process finding from the same branch, which cost fifteen minutes and will
+cost the next parallel branch the same.** After the PR was opened, `gh pr checks`
+reported *"no checks reported on the branch"* and `gh run list --branch …`
+returned nothing, while another branch's PR opened three minutes earlier had
+`repo-ci` and `backend-ci` both green. `repo-ci.yaml` has a bare
+`pull_request:` — no `branches:`, no `paths:` — so it must run. The cause was
+one field away:
+
+```console
+$ gh pr view 132 --json mergeable,mergeStateStatus
+{"mergeStateStatus":"DIRTY","mergeable":"CONFLICTING"}
+```
+
+**GitHub creates no `pull_request` workflow runs for a PR it cannot merge**, and
+says so nowhere on the PR — an empty checks list is indistinguishable from busy
+runners. This repository makes that likely rather than exotic: **every** PR
+appends to `.claude/harness-log.md` and adds a row to `specs/README.md`, so two
+branches in flight conflict by construction the moment one merges. GGU-126
+merged at 15:31 and this PR went `DIRTY` in the same minute.
+
+So: **an empty checks list is a mergeability question first, never a workflow
+question.** And after the rebase, re-run the gate rather than assuming — the
+conflict was in two prose files, but `develop` had brought
+`test_seed_population.py`, a new integration test that seeds a whole population
+and which this branch's autouse fixture now governs. 2045 tests became 2055; the
+gate and both acceptance runs were redone on the rebased tree and the PR body's
+transcripts replaced.
+
 **Next person:** the ticket's AC-3 asked for a CI job that runs the suite twice
 against one service container, and it is **not in this PR** — `.github/` and
 `scripts/check_gate_pairs.sh` were owned by a parallel branch. Spec §9 carries
