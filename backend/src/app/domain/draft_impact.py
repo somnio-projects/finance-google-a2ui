@@ -80,7 +80,7 @@ def cash_available(portfolio: Portfolio) -> Decimal:
         (
             row.market_value
             for row in portfolio.holdings()
-            if market_asset(row.symbol).asset_class is AssetClass.CASH
+            if market_asset(row.symbol).asset_class is AssetClass.STABLECOIN
         ),
         ZERO,
     )

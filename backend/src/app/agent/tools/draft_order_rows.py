@@ -28,7 +28,7 @@ from app.domain.money import ZERO
 #: model says around the numbers, the surface can state what they are not.
 DISCLOSURE: Final[str] = (
     "Illustrative draft on the demo portfolio's simulated prices: whole "
-    "shares at the reference price, fees simulated at zero, nothing placed, "
+    "units at the reference price, fees simulated at zero, nothing placed, "
     "sent or settled. The user edits the legs on the ticket; nothing is "
     "confirmed in prose."
 )

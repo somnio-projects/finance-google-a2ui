@@ -35,10 +35,10 @@ NOT_A_FIGURE = frozenset(
     }
 )
 
-#: The one call most of these tests make: half the seeded NVDA position, which
-#: spans both lots and therefore both terms.
-HALF_A_BITCOIN: Mapping[str, object] = {"symbol": "NVDA", "quantity": "75"}
-TEN_THOUSAND_DOLLARS: Mapping[str, object] = {"symbol": "NVDA", "amount_usd": "10000"}
+#: The one call most of these tests make: 0.75 of the seeded 2.10 BTC, which
+#: spans both lots and therefore both terms (spec 0044).
+HALF_A_BITCOIN: Mapping[str, object] = {"symbol": "BTC", "quantity": "0.75"}
+TEN_THOUSAND_DOLLARS: Mapping[str, object] = {"symbol": "BTC", "amount_usd": "10000"}
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ def free_sale() -> SaleSimulation:
         exhausted=True,
     )
     return SaleSimulation(
-        symbol="XOM",
+        symbol="LINK",
         price=Decimal(50),
         quantity=Decimal(10),
         proceeds=Decimal(500),

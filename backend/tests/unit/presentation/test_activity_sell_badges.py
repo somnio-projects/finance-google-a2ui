@@ -23,22 +23,25 @@ def test_every_sell_carries_its_realised_result_and_the_term_badge(
     payload = render(portfolio, ActivityOptions(kind="sell"))
     sales = {entry.key: entry for group in payload.groups for entry in group.entries}
     assert len(sales) == 7
-    voo = sales["txn-0015"]
-    assert (voo.title, voo.detail) == ("Sold 20 VOO", "20 sh @ $489.00 · Feb 20")
-    assert voo.amount.display == "$9,780.00"
-    assert voo.realized is not None and voo.term is not None
-    assert (voo.realized.text, voo.realized.trend) == ("+$1,738 realized", "up")
+    btc = sales["txn-0015"]
+    assert (btc.title, btc.detail) == (
+        "Sold 0.25 BTC",
+        "0.25 units @ $58,400.00 · Jul 20",
+    )
+    assert btc.amount.display == "$14,600.00"
+    assert btc.realized is not None and btc.term is not None
+    assert (btc.realized.text, btc.realized.trend) == ("+$5,600 realized", "up")
     badges = {
         key: (entry.term.label, entry.realized.text)
         for key, entry in sales.items()
         if entry.term is not None and entry.realized is not None
     }
     assert badges == {
-        "txn-0015": ("ST gain", "+$1,738 realized"),
-        "txn-0024": ("ST loss", "-$105 realized"),
-        "txn-0025": ("LT gain", "+$2,745 realized"),
-        "txn-0026": ("ST loss", "-$870 realized"),
-        "txn-0027": ("LT loss", "-$175 realized"),
-        "txn-0028": ("ST gain", "+$2,550 realized"),
-        "txn-0029": ("LT gain", "+$880 realized"),
+        "txn-0010": ("ST gain", "+$2,560 realized"),
+        "txn-0011": ("LT gain", "+$3,250 realized"),
+        "txn-0012": ("LT loss", "-$735 realized"),
+        "txn-0013": ("LT loss", "-$1,962 realized"),
+        "txn-0014": ("ST loss", "-$2,420 realized"),
+        "txn-0015": ("ST gain", "+$5,600 realized"),
+        "txn-0016": ("ST gain", "+$19,800 realized"),
     }

@@ -138,7 +138,7 @@ void main() {
       tester
           .element(find.byType(OrderTicketV2View))
           .read<OrderTicketBloc>()
-          .add(const OrderTicketOptionChanged(option: 'legs', value: 'NVDA:1'));
+          .add(const OrderTicketOptionChanged(option: 'legs', value: 'BTC:1'));
       await settleDebounce(tester);
 
       final card = tester.widget<OrderTicketV2Card>(

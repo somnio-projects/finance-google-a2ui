@@ -77,7 +77,7 @@ void main() {
       // Replaced: the previous filter's rows never show under the new chip.
       expect(find.byType(ActivitySections), findsNothing);
       expect(find.byType(SkeletonRows), findsOneWidget);
-      expect(find.text('Dividend — VOO'), findsNothing);
+      expect(find.text('Staking — ETH'), findsNothing);
 
       pending.complete(
         Ok<RenderedViews>(
@@ -87,10 +87,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SkeletonRows), findsNothing);
       expect(find.byType(ActivitySections), findsOneWidget);
-      // `findsWidgets`, not `findsOneWidget`: the seed pays VOO quarterly
+      // `findsWidgets`, not `findsOneWidget`: the seed pays ETH monthly
       // since spec backend/0035, so the timeline carries four of these.
       // What this assertion is about is that the rows came BACK.
-      expect(find.text('Dividend — VOO'), findsWidgets);
+      expect(find.text('Staking — ETH'), findsWidgets);
     });
   });
 }

@@ -43,7 +43,7 @@ def test_surface_maps_the_payload_onto_its_own_component(
 
     assert (emitted.component, emitted.view) == (COMPONENT, VIEW_ID)
     assert COMPONENT == "MultiLegOrderTicket"
-    assert emitted.props["lines"][0]["increment"] == "NVDA:4,AVGO:2,AMD:14"
+    assert emitted.props["lines"][0]["increment"] == "BTC:0.07,ETH:1.0,SOL:16"
     assert emitted.props["constraints"]["breach"] == "none"
 
 

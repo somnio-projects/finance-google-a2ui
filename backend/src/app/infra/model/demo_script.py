@@ -30,19 +30,19 @@ DRAFT: Final[str] = "draft_order"
 
 #: The questions the design's three flows open with, byte for byte.
 FLOW_A: Final[str] = "What moved my portfolio today?"
-FLOW_B: Final[str] = "If I sell $20k of NVDA, what's the tax hit?"
-FLOW_C: Final[str] = "Put about $10k into semiconductors, keep it diversified."
+FLOW_B: Final[str] = "If I sell $20k of BTC, what's the tax hit?"
+FLOW_C: Final[str] = "Put about $10k into the majors, keep it diversified."
 
 #: Flow B's sale and Flow C's order, as the design states them. A user's own
-#: amount is an argument, not a figure: the tool turns it into shares.
+#: amount is an argument, not a figure: the tool turns it into units.
 DESIGN_SALE: Final[Mapping[str, object]] = {
-    "symbol": "NVDA",
+    "symbol": "BTC",
     "amount_usd": "20000",
     "lot_method": "FIFO",
 }
 DESIGN_ORDER: Final[Mapping[str, object]] = {
     "amount": "10000",
-    "basket": "semiconductors",
+    "basket": "majors",
 }
 
 _MOVED: Final[str] = "Your portfolio is {trend} {changeDisplay} ({changePctDisplay})"
@@ -67,8 +67,8 @@ FLOW_SCRIPTS: Final[Mapping[str, Script]] = {
     FLOW_C: Script(
         calls=(ScriptedCall(DRAFT, DESIGN_ORDER),),
         answer=(
-            "Here is a draft across the semiconductor basket: "
-            "{impact.totalDisplay} in {impact.unitsDisplay} whole shares, fees "
+            "Here is a draft across the majors basket: "
+            "{impact.totalDisplay} in {impact.unitsDisplay} units, fees "
             "{impact.feesDisplay}, leaving {impact.cashRemainingDisplay} in cash "
             "of {constraints.maxCashDisplay}. Edit the legs on the ticket; "
             "nothing is placed."

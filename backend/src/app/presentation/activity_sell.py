@@ -28,12 +28,12 @@ RESULT_WORDS: Final[dict[str, str]] = {"up": "gain", "down": "loss", "flat": "ev
 
 
 def sell(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
-    """``Sold 30 VOO`` with what it realised and its term badge, when known."""
+    """``Sold 0.25 BTC`` with what it realised and its term badge, when known."""
     row = words.row
     realized = realized_of(row, ledger)
     return words.entry(
         title=f"Sold {words.shares} {row.symbol}",
-        detail=f"{words.shares} sh @ {words.price} · {words.when}{words.memo}",
+        detail=f"{words.shares} units @ {words.price} · {words.when}{words.memo}",
         amount=money(row.amount, locale=words.locale),
         tone="flat",
         realized=None if realized is None else _realized_line(realized, words),

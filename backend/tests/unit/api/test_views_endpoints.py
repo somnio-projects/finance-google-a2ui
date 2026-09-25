@@ -46,7 +46,7 @@ def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> N
     )
     assert response.status_code == 200
     categories = response.json()["views"][ALLOCATION]["categories"]
-    assert [row["key"] for row in categories] == ["TIP", "other"]
+    assert [row["key"] for row in categories] == ["AAVE", "other"]
 
 
 def test_no_view_lets_the_selection_rule_choose(views_client: TestClient) -> None:

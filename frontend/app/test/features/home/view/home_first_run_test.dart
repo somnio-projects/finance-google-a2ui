@@ -60,7 +60,7 @@ void main() {
       expect(find.text('Total portfolio value'), findsOneWidget);
       expect(find.byType(HomeHeroLoading), findsOneWidget);
       expect(find.byType(SparklineChart), findsNothing);
-      expect(find.textContaining('+0.68%', findRichText: true), findsNothing);
+      expect(find.textContaining('+0.46%', findRichText: true), findsNothing);
       // The range strip stays, so the person can change their mind.
       expect(find.byType(HomeRangeSelector), findsOneWidget);
       final spark = tester.widget<SkeletonShimmer>(

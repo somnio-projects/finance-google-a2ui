@@ -80,7 +80,7 @@ class DriverDetailPayload(ProjectionDto):
     symbol: str = Field(
         max_length=10,
         description="Ticker, as the chip prints it. Also the option that selects it.",
-        examples=["NVDA"],
+        examples=["BTC"],
     )
     name: str = Field(
         max_length=64, description="Display name.", examples=["NVIDIA Corp"]

@@ -50,7 +50,7 @@ def value_on(holdings: Sequence[Holding], *, offset: int) -> Decimal:
         asset = market_asset(row.symbol)
         price = (
             asset.price
-            if asset.asset_class is AssetClass.CASH
+            if asset.asset_class is AssetClass.STABLECOIN
             else (price_on(row.symbol, offset=offset))
         )
         total += row.quantity * price

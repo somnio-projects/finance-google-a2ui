@@ -24,9 +24,11 @@ from app.presentation import options as opt
 SIZE_PATTERN: Final[str] = r"^\d{1,12}(\.\d{1,8})?$"
 
 #: BTC's two lots straddle the one-year boundary, so the default scenario — the
-#: one the documented example renders — shows both halves of the split.
-DEFAULT_SYMBOL: Final[str] = "NVDA"
-DEFAULT_QUANTITY: Final[str] = "75"
+#: one the documented example renders — shows both halves of the split. 0.75 is
+#: more than the 0.25 long lot and less than the 2.10 held, so FIFO consumes
+#: all of the long lot and part of the short one (spec 0044).
+DEFAULT_SYMBOL: Final[str] = "BTC"
+DEFAULT_QUANTITY: Final[str] = "0.75"
 
 
 class TaxLotsTableOptions(opt.DisplayOptions, opt.FieldSelection):
@@ -35,7 +37,7 @@ class TaxLotsTableOptions(opt.DisplayOptions, opt.FieldSelection):
     symbol: Ticker = Field(
         default=DEFAULT_SYMBOL,
         description="Ticker being sold, in any case.",
-        examples=["NVDA"],
+        examples=["BTC"],
     )
     quantity: str = Field(
         default=DEFAULT_QUANTITY,
@@ -45,7 +47,7 @@ class TaxLotsTableOptions(opt.DisplayOptions, opt.FieldSelection):
             "ask is resolved to units by the `simulate_sale` tool; copy the "
             "units it returned rather than dividing (spec 0015 OD-4)."
         ),
-        examples=["75"],
+        examples=["0.75"],
     )
     lot_method: Literal["FIFO", "LIFO", "HIFO"] = Field(
         default="FIFO",

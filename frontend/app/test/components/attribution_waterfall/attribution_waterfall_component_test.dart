@@ -29,23 +29,16 @@ void main() {
     test('walks start, every bucket, then end, in arrival order', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.title, example['title']);
-      expect(data.steps, hasLength(14 + 2));
+      expect(data.steps, hasLength(7 + 2));
       expect(data.steps.map((step) => step.key).toList(), <String>[
         ':start',
-        'NVDA',
-        'AAPL',
-        'MSFT',
-        'VOO',
-        'GLD',
-        'PYPL',
-        'AGG',
-        'BND',
-        'VNQ',
-        'XOM',
-        'JNJ',
-        'TIP',
-        'PG',
-        'USD',
+        'BTC',
+        'ETH',
+        'AAVE',
+        'SOL',
+        'LINK',
+        'ARB',
+        'USDC',
         ':end',
       ]);
     });
@@ -56,10 +49,10 @@ void main() {
         data.steps.map((step) => step.step.kind).toList(),
         <WaterfallStepKind>[
           WaterfallStepKind.start,
-          ...List<WaterfallStepKind>.filled(4, WaterfallStepKind.gain),
-          ...List<WaterfallStepKind>.filled(9, WaterfallStepKind.loss),
-          // Cash moves by $0.00 and the backend calls that `up`; the client
-          // takes the enum, not the sign, which is the point of this test.
+          ...List<WaterfallStepKind>.filled(3, WaterfallStepKind.gain),
+          ...List<WaterfallStepKind>.filled(3, WaterfallStepKind.loss),
+          // The stablecoin moves by $0.00 and the backend calls that `up`; the
+          // client takes the enum, not the sign, which is this test's point.
           WaterfallStepKind.gain,
           WaterfallStepKind.total,
         ],
@@ -69,16 +62,16 @@ void main() {
     test('binds every figure from a display string', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.valueDisplays.first, r'$421,711.15');
-      expect(data.valueDisplays[1], r'$34,019.40');
-      expect(data.valueDisplays[5], r'-$10,500.00');
+      expect(data.valueDisplays[1], r'$47,359.20');
+      expect(data.valueDisplays[4], r'-$9,500.15');
       expect(data.valueDisplays.last, r'$482,915.20');
-      expect(data.steps[1].cumulativeDisplay, r'$455,730.55');
+      expect(data.steps[1].cumulativeDisplay, r'$469,070.35');
     });
 
     test('takes the geometry from the raw levels beside them', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.steps.first.step.level, closeTo(421711.15, 1e-9));
-      expect(data.steps[1].step.level, closeTo(455730.55, 1e-9));
+      expect(data.steps[1].step.level, closeTo(469070.35, 1e-9));
       expect(data.steps.last.step.level, closeTo(482915.2, 1e-9));
     });
 

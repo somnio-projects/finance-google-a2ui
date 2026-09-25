@@ -7,7 +7,7 @@ from app.infra.model.script import TOOLS_FAILED_MESSAGE, fill, flatten, normalis
 RESULT = {
     "asOf": "2026-09-18T12:00:00+00:00",
     "summary": {"proceedsDisplay": "$20,000.00", "shortTermLots": 0},
-    "lots": [{"lotId": "lot-nvda-01"}],
+    "lots": [{"lotId": "lot-btc-01"}],
     "trend": "up",
 }
 
@@ -20,8 +20,8 @@ RESULT = {
         ("what moved my portfolio today!", "what moved my portfolio today"),
         ("keep it diversified.", "keep it diversified"),
         (
-            "If I sell $20k of NVDA, what's the tax hit?",
-            "if i sell $20k of nvda, what's the tax hit",
+            "If I sell $20k of BTC, what's the tax hit?",
+            "if i sell $20k of btc, what's the tax hit",
         ),
     ],
     ids=[

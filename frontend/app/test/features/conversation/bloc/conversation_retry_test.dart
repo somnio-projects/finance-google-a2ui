@@ -65,7 +65,7 @@ void main() {
         ).thenAnswer(
           (_) => Stream<AgentEvent>.fromIterable(const <AgentEvent>[
             AgentAnswered(
-              text: 'NVDA led.',
+              text: 'BTC led.',
               views: <String>[],
               suggestions: chips,
             ),
@@ -89,7 +89,7 @@ void main() {
         // One bubble, not two: the question is already in the transcript.
         expect(bloc.state.entries, const <ConversationEntry>[
           UserSaid('what moved?'),
-          AgentSaid('NVDA led.'),
+          AgentSaid('BTC led.'),
         ]);
         expect(bloc.state.failure, isNull);
         expect(bloc.state.suggestions, chips);

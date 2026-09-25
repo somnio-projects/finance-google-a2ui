@@ -28,29 +28,23 @@ void main() {
         ),
       );
       expect(find.byType(PayoffChartCard), findsOne);
-      expect(
-        find.text('Payoff across a price range: buy Vanguard S&P 500 ETF'),
-        findsOne,
-      );
+      expect(find.text('Payoff across a price range: buy Solana'), findsOne);
     });
 
     test('binds every displayed string verbatim from the example', () {
       final data = payoffData();
-      expect(
-        data.title,
-        'Payoff across a price range: buy Vanguard S&P 500 ETF',
-      );
+      expect(data.title, 'Payoff across a price range: buy Solana');
       expect(data.disclosure, startsWith('Illustrative linear spot payoff'));
       expect(
         data.totals.map((t) => '${t.label} ${t.text}'),
         containsAll(<String>[
-          r'Entry price $528.00',
-          r'Break-even price $528.00',
+          r'Entry price $152.40',
+          r'Break-even price $152.40',
           r'Notional $500.00',
         ]),
       );
       expect(data.annotations.first.label, 'Entry');
-      expect(data.annotations.first.text, r'$528.00');
+      expect(data.annotations.first.text, r'$152.40');
     });
 
     test('keeps rows in arrival order and never re-ranks them (N-10)', () {
@@ -74,17 +68,17 @@ void main() {
       expect(line.points, hasLength(25));
       // The first sample of the published example: at $106.68 the position is
       // down $150. Both arrive as raw decimals and become coordinates only.
-      expect(line.points.first.at, closeTo(369.6, 1e-9));
+      expect(line.points.first.at, closeTo(106.68, 1e-9));
       expect(line.points.first.value, closeTo(-150, 1e-9));
-      expect(line.points.last.at, closeTo(686.4, 1e-9));
+      expect(line.points.last.at, closeTo(198.12, 1e-9));
       expect(line.points.last.value, closeTo(150, 1e-9));
     });
 
     test('carries one tick label per point, formatted by the backend', () {
       final line = payoffData().lines.single;
       expect(line.tickLabels, hasLength(line.points.length));
-      expect(line.tickLabels.first, r'$369.60');
-      expect(line.tickLabels.last, r'$686.40');
+      expect(line.tickLabels.first, r'$106.68');
+      expect(line.tickLabels.last, r'$198.12');
     });
 
     test('renders a payload with no series rather than throwing (AC-5)', () {

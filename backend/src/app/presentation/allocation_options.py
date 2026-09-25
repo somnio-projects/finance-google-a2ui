@@ -18,8 +18,9 @@ class HoldingsAllocationOptions(DisplayOptions, SortOptions, TopNOptions):
         default="holding",
         description=(
             "How the donut is sliced. `holding` is one slice per position; "
-            "`asset_class` folds them into Equities, Bonds, Cash and "
-            "Alternatives; `sector` folds the equities by sector."
+            "`asset_class` folds them into Layer 1, Layer 2, "
+            "Infrastructure, DeFi and Stablecoins; `sector` folds them by "
+            "chain ecosystem."
         ),
         examples=["asset_class"],
     )

@@ -16,7 +16,7 @@ MOVERS_TITLE: Final[str] = "Top movers today"
 
 SUGGESTED_QUESTIONS: Final[tuple[Question, ...]] = (
     Question(text="What moved my portfolio today?"),
-    Question(text="Tax impact of selling NVDA?"),
+    Question(text="Tax impact of selling BTC?"),
     Question(text="Build a $10k order in tech"),
 )
 
