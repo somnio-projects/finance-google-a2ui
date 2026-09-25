@@ -21,7 +21,7 @@ import 'taxlots_table_harness.dart';
 /// names the defect instead of saying only that something moved.
 ///
 /// **Cropping made them stronger.** A one-step error on the selected-row
-/// tint (`#EBF1FF` → `#EBF1FE`) moves 32.5 % of this frame and 26.9 % of the
+/// tint (`#EBF1FF` → `#EBF1FE`) moves 32.5 % of this frame and 32.5 % of the
 /// phone one; the same error on a whole-card golden moves well under 1 %,
 /// which is under the tolerance and therefore invisible.
 void main() {
@@ -30,11 +30,20 @@ void main() {
     /// the tick box and the two gaps around them.
     const tableChrome = TaxLotColumns.leadingWidth + TaxLotMetrics.railGap;
 
-    /// The same for the phone block, whose date begins after the box.
-    const phoneChrome =
-        TaxLotMetrics.railWidth +
-        TaxLotMobileMetrics.railGap +
-        TaxLotMetrics.checkBoxSize;
+    /// The same for the phone block — and it stops **before** the tick box,
+    /// which is the narrower frame on purpose.
+    ///
+    /// A horizontal crop applies to the whole height, and a block is two
+    /// lines: the box sits on the first, but under it the four-cell grid
+    /// starts at the rail's own gap, because `tilePadding` insets vertically
+    /// only. Framing to the box therefore put 16 px of the *Shares* caption
+    /// and its figure in shot, and that is what failed on the Linux runner
+    /// at 4.54 % after the whole-card frames were already cropped away
+    /// (spec `frontend/0027` OD-10). The rail and its band are the full
+    /// height of the claim; the box and its tick are asserted on the canvas
+    /// in `taxlot_check_box_test.dart`, where emptying `paint` turns them
+    /// red.
+    const phoneChrome = TaxLotMetrics.railWidth + TaxLotMobileMetrics.railGap;
 
     /// Four rows: a consumed long-term lot, an untouched one, and the same
     /// pair short-term — every combination the rail and the box can be in.
@@ -91,9 +100,11 @@ void main() {
       );
     });
 
-    testWidgets('the phone block rail and tick', (tester) async {
+    testWidgets('the phone block rail and its band', (tester) async {
       // The phone form's rail is 80 px on a 4 px gap — a different rhythm
       // from the table's, and the one thing about it a picture can hold.
+      // Beside it, the 8 px band carries the consumed lot's tint for the
+      // block's whole height, which is the other half of this frame.
       await shootGolden(
         tester,
         croppedFrame(width: 328, crop: phoneChrome, child: blocks()),

@@ -6,6 +6,15 @@
 /// pixel count — the signature of glyph rasterisation rather than of anything
 /// this code draws (ADR-L D-15, spec `frontend/0027` OD-10). Widening the
 /// tolerance would be threshold-fitting; framing the claim is the fix.
+///
+/// **A crop is only text-free if it is text-free at every height it covers.**
+/// The second attempt cropped, and the phone frame still failed at 4.54 %,
+/// because a horizontal crop applies to the whole height and a phone block is
+/// two lines: the frame was cut at the tick box on the first line, and under
+/// it the four-cell grid begins further left. Deriving the crop from a layout
+/// constant proves the frame moves with the grid; it does not prove the frame
+/// holds what you think. Check the leftmost text on *every* line the frame
+/// crosses.
 library;
 
 import 'package:flutter/material.dart';

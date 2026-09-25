@@ -193,7 +193,7 @@ decision before it is a contract one. They are listed in the PR under
   | Golden | Proves | No longer proves |
   |---|---|---|
   | `taxlot_rails{,_dark}` | both rail colours and the 4 px width, the 41/8 row rhythm, the tint of a consumed lot, the filled box with its painted tick, the hairline box of an untouched one | anything to the right of the tick box |
-  | `taxlot_rails_phone` | the phone block's 80/4 rhythm and the same rail and tick | the four-cell grid and the date |
+  | `taxlot_rails_phone` | the phone block's 80/4 rhythm, its rail colour, and the consumed lot's tint down the block's whole height | the tick box, the four-cell grid and the date |
   | `taxlot_surface{,_dark}` | the card plane: surface, 16 px radius, the shadow that replaces the old hairline | the padding, which an empty plane does not show |
   | `taxlot_skeleton{,_dark}` | the whole loading card — kept whole **because the artboard draws it with no text at all**, which is also why the waterfall's loading goldens are portable | nothing it draws is text |
 
@@ -202,12 +202,33 @@ decision before it is a contract one. They are listed in the PR under
   and their order, every display string, the absent raw figures, the footer's
   caption and total, the two forms at their two widths.
 
+  **And cropping horizontally was not enough, which is the sharper half of
+  the lesson.** With the whole-card frames gone, `taxlot_rails_phone` still
+  failed on the runner at **4.54 %**, and this time the count was not a
+  glyph-layout signature — it was glyphs, in a frame built to exclude them.
+  A horizontal crop applies to the **whole height**, and a phone block is two
+  lines: the tick box sits on the first, but under it the four-cell grid
+  begins at the rail's own gap, because `tilePadding` insets *vertically
+  only*. Framing to the box therefore left 16 px of the *Shares* caption and
+  its figure in shot. The frame now stops at `railWidth + railGap` — the rail
+  and the band beside it, both flat fills — and the box's tick is asserted on
+  the canvas in `taxlot_check_box_test.dart` instead, where emptying `paint`
+  was watched turning it red.
+
+  Stated as a rule: **a crop is only text-free if it is text-free at every
+  height it covers.** Deriving the crop from a layout constant proves the
+  frame moves with the grid; it does not prove the frame contains what you
+  think, because the constant you reach for describes one line of a
+  multi-line block. Check the narrowest text on *every* line the frame
+  crosses, or crop vertically too.
+
   **Mutation-checked, both ways.** `railWidth` 4 → 5 turns all three rail
   goldens red; a **one-step** colour change on `selectedRow`
-  (`#EBF1FF` → `#EBF1FE`) moves **32.5 %** of the table frame and 26.9 % of
-  the phone one. The same one-step error on a whole-card golden moves well
-  under 1 % — under the tolerance, invisible. Cropping did not weaken these
-  goldens; it is what makes them sensitive.
+  (`#EBF1FF` → `#EBF1FE`) moves **32.5 %** of the table frame and
+  **32.5 %** of the phone one — 640 px of 1968, which is every pixel of the
+  tint. The same one-step error on a whole-card golden moves well under 1 %
+  — under the tolerance, invisible. Cropping did not weaken these goldens;
+  it is what makes them sensitive.
 
 - **OD-9 — the files split again, by responsibility.** The directory was
   already 17 files; the new work adds the phone tile, the header, the tick
