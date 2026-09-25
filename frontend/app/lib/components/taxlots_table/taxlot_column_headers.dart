@@ -4,22 +4,25 @@ import 'package:finance_app/components/taxlots_table/taxlot_palette.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_type.dart';
 import 'package:flutter/material.dart';
 
-/// The column captions, on the same grid as the rows below them.
+/// The six column captions, on the same grid as the rows below them.
 ///
-/// **Two of the five come from the payload.** The contract gives no per-lot
-/// labels, but its top-level `cost_basis.label` and `proceeds.label` name
+/// **Two of the six come from the payload.** The contract gives no per-lot
+/// captions, but its top-level `cost_basis.label` and `proceeds.label` name
 /// exactly those two columns' quantity, and the view declares a `locale`
 /// option — so a Dart constant there would be client-authored copy that
-/// silently ignores it, which is the argument this component already wins
-/// for a row's term label and for the footer's pills (N-1, OD-5).
+/// silently ignores it (N-1, spec `frontend/0027` OD-1).
 ///
-/// The other three have no payload label and stay client-authored. Two of
-/// them deliberately do **not** match the artboard: `Gain / loss` where the
-/// design says *Unrealized*, because these are lots the sale consumes and
-/// the figure beside them is realised. Spec `frontend/0003` OD-7 is where
-/// that wording goes back to design.
+/// The other four have no payload label and stay client-authored. Two of them
+/// deliberately do **not** match the artboard:
+///
+/// - the kit says *Market value*; this prints `proceeds.label`, because
+///   `proceeds` is the field that carries the figure and naming it anything
+///   else would be this client narrating the payload (OD-1);
+/// - the kit says *Unrealized*; this says [gainLoss], because these are lots
+///   a sale consumes and the figure beside the caption is realised
+///   (`frontend/0003` OD-7, carried forward).
 class TaxLotColumnHeaders extends StatelessWidget {
-  /// Creates the header line.
+  /// Creates the caption line.
   const TaxLotColumnHeaders({
     required this.costBasisLabel,
     required this.proceedsLabel,
@@ -29,41 +32,44 @@ class TaxLotColumnHeaders extends StatelessWidget {
   /// The payload's `cost_basis.label`.
   final String costBasisLabel;
 
-  /// The payload's `proceeds.label`.
+  /// The payload's `proceeds.label`, over the *Market value* column.
   final String proceedsLabel;
 
-  /// The three captions the contract does not supply, in design order.
+  /// The acquisition column's caption.
   static const String acquired = 'Acquired';
 
-  /// The gain/loss column's caption (OD-7).
+  /// The quantity column's caption.
+  static const String shares = 'Shares';
+
+  /// The gain/loss column's caption.
   static const String gainLoss = 'Gain / loss';
 
-  /// The holding-period column's caption.
-  static const String term = 'Term';
+  /// The term column's caption, which is the kit's own words even though
+  /// the duration under it is missing (OD-2).
+  static const String holdingPeriod = 'Holding period';
 
   @override
   Widget build(BuildContext context) {
-    final style = TaxLotType.columnHeader(TaxLotPalette.of(context).mutedText);
-    // The design right-aligns the three money columns and leaves the date
-    // and the term flush left.
-    final captions = <(String, TextAlign)>[
-      (acquired, TextAlign.left),
-      (costBasisLabel, TextAlign.right),
-      (proceedsLabel, TextAlign.right),
-      (gainLoss, TextAlign.right),
-      (term, TextAlign.left),
+    final style = TaxLotType.caption(TaxLotPalette.of(context).mutedText);
+    final captions = <String>[
+      acquired,
+      shares,
+      costBasisLabel,
+      proceedsLabel,
+      gainLoss,
+      holdingPeriod,
     ];
     return Padding(
-      padding: TaxLotMetrics.columnHeaderPadding,
+      padding: const EdgeInsets.only(bottom: TaxLotMetrics.captionGap),
       child: TaxLotColumns(
         leading: const SizedBox.shrink(),
         cells: <Widget>[
-          for (final (caption, align) in captions)
+          for (final (index, caption) in captions.indexed)
             Text(
               caption,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textAlign: align,
+              textAlign: TaxLotMetrics.columnAlign[index],
               style: style,
             ),
         ],

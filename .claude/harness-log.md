@@ -4976,3 +4976,61 @@ catalog card and the standalone page are unchanged.
 is derived on the standalone page from the previous payload and is not yet
 drawn in the transcript. `AgentSurface` has the previous payload at the
 moment `rendered` replaces it; keeping it is a field, not a contract change.
+
+## 2026-09-24 — The tax-lot table matches the UI Kit
+
+**Spec:** [`frontend/0027`](../specs/frontend/0027-the-taxlot-table-matches-the-ui-kit.md) ·
+**Ticket:** GGU-116. Design source committed under
+`specs/frontend/assets/0027-taxlot-uikit/`.
+
+`TaxLotTable` was built (GGU-57) against an earlier artboard and the kit has
+moved: bordered rows became flat bands with a 4 px term rail, the filled
+footer bar became a rule and a line of text, five columns became six, the
+palette changed end to end, and two states appeared that this build had none
+of — a ticked/tinted row and a loading skeleton — plus a phone layout.
+
+**The design asks for four fields the frozen contract does not serve**, and
+the spec's §3 is the table: a per-lot market value, a holding-period string
+(*5.5 yr*), a header line (`NVDA · 4 lots`), and a direction on `realized`.
+None is invented and none is computed. What each one costs a viewer is
+written down beside it, which is the part of the ticket that took the longest
+and the part worth reading first.
+
+**Three decisions worth carrying forward:**
+
+- **The kit's *selected* artboard is a payload, not an interaction.** The
+  contract publishes `lots[].fully_sold` as a flag with `state: variant` —
+  the catalog's own words for "this changes how the row looks" — so the tick
+  and the tint bind to it and nothing is tappable. Local highlight state was
+  considered and rejected: the artboard's own selected footer is a **sum over
+  the ticked rows** (`$6,820` → `$35,833`), so a toggle either computes it
+  (N-2) or leaves a footer contradicting its own ticks. When a selection
+  option arrives it is a projection option, not client state.
+- **A column the contract cannot name keeps its slot and the payload's
+  word.** *Market value* is drawn from `proceeds.display` under
+  `proceeds.label`, because `proceeds` is the field that carries the figure
+  and the label follows the `locale` option a Dart constant would ignore.
+  The holding-period column keeps its slot and loses only its duration text —
+  a column removed is a layout that has to be rebuilt the day the field
+  lands, and a duration is `now - acquired_on`, which N-13 forbids outright.
+- **A palette that disagrees with a neighbour is asserted, not merged.**
+  The kit's light gain is `#026E4F` and `ChartTokens`' is `#12805C`; the
+  Activity screen's term badges are a third declaration again. Each page owns
+  its own source, so `taxlot_tokens_test.dart` now pins the agreements *and*
+  both divergences — the shape `frontend/0007` OD-2 already used. Picking a
+  winner by editing another screen's tokens is a design decision made in Dart.
+
+**A mechanical trap, recorded because it costs an afternoon:** a metrics
+class of nothing but `static const` emits **no executable line**, so Dart's
+lcov writes no record for the file and `tool/check_coverage.dart` reports it
+as one no test loads — indistinguishable from a genuinely untested file.
+`TaxLotMobileMetrics.tilePadding` is a getter for that reason, with the
+reason in its doc comment. `TaxLotMetrics` was already over the line by
+accident, because its radii are getters.
+
+**Next person:** the goldens in
+`app/test/components/taxlots_table/goldens/` were shot against today's
+catalog snapshot. GGU-114 migrates the portfolio from equities to crypto and
+regenerates that snapshot, so whichever of the two lands second re-runs
+`flutter test --update-goldens` and commits the result. Nothing in this
+component anticipates the new data.

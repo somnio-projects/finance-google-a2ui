@@ -1,3 +1,4 @@
+import 'package:finance_app/components/taxlots_table/taxlot_check_box.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_chip.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_columns.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_metrics.dart';
@@ -9,7 +10,11 @@ import 'package:finance_app/components/taxlots_table/taxlot_type.dart';
 import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
 import 'package:flutter/material.dart';
 
-/// One lot, drawn as the design draws a row.
+/// One lot, drawn as the kit draws a table row.
+///
+/// The row has no hairline and no card of its own — that was the earlier
+/// artboard. It is a 41 px band on the card's own surface, tinted only when
+/// the sale consumes the lot whole, with the term rail flush left.
 ///
 /// Every string on it is a value the backend produced. The only decisions
 /// this widget makes are which colour a term takes and which colour a
@@ -28,75 +33,72 @@ class TaxLotRowTile extends StatelessWidget {
     final term = lot.term.colorsIn(palette);
     return Semantics(
       container: true,
-      label:
-          '${lot.acquiredOn} ${lot.costBasisDisplay} '
-          '${lot.proceedsDisplay} ${lot.gainLossDisplay} ${lot.termLabel}',
+      label: TaxLotCheckBox.rowLabel(lot),
       child: ExcludeSemantics(
         child: Container(
           height: TaxLotMetrics.rowHeight,
-          decoration: BoxDecoration(
-            color: palette.surface,
-            border: Border.all(color: palette.border),
-            borderRadius: TaxLotMetrics.rowBorderRadius,
-          ),
-          child: ClipRRect(
-            // Inside the 1 px hairline, so the rail's outer corners follow
-            // the row's rounding instead of squaring it off.
-            borderRadius: TaxLotMetrics.rowInnerBorderRadius,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                SizedBox(
-                  width: TaxLotMetrics.rowAccentWidth,
-                  child: ColoredBox(color: term.accent),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: TaxLotMetrics.rowPadding,
-                    child: _cells(palette, term),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          color: lot.fullySold ? palette.selectedRow : null,
+          child: _cells(palette, term),
         ),
       ),
     );
   }
 
-  Widget _cells(TaxLotPalette palette, TaxLotTermColors term) {
-    return TaxLotColumns(
-      leading: const TaxLotCheckBox(),
-      cells: <Widget>[
-        TaxLotCell(lot.acquiredOn, style: TaxLotType.date(palette.primaryText)),
-        TaxLotCell(
-          lot.costBasisDisplay,
-          style: TaxLotType.figure(palette.figureText),
-          align: TextAlign.right,
+  Widget _cells(TaxLotPalette palette, TaxLotTermColors term) => TaxLotColumns(
+    leading: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        SizedBox(
+          width: TaxLotMetrics.railWidth,
+          child: ColoredBox(color: term.accent),
         ),
-        TaxLotCell(
-          lot.proceedsDisplay,
-          style: TaxLotType.figure(palette.primaryText),
-          align: TextAlign.right,
-        ),
-        TaxLotCell(
-          lot.gainLossDisplay,
-          // The only colour decision in the row, and it comes from the
-          // backend's `trend` enum rather than from the sign printed in
-          // the string beside it.
-          style: TaxLotType.figureEmphasis(switch (lot.trend) {
-            TaxLotTrend.up => palette.gain,
-            TaxLotTrend.down => palette.loss,
-          }),
-          align: TextAlign.right,
-        ),
-        TaxLotChip(
+        const SizedBox(width: TaxLotMetrics.railGap),
+        TaxLotCheckBox(ticked: lot.fullySold),
+      ],
+    ),
+    cells: <Widget>[
+      TaxLotCell(
+        lot.acquiredOnDisplay,
+        style: TaxLotType.cell(palette.primaryText),
+        align: TaxLotMetrics.columnAlign[0],
+      ),
+      TaxLotCell(
+        lot.unitsDisplay,
+        style: TaxLotType.cell(palette.primaryText),
+        align: TaxLotMetrics.columnAlign[1],
+      ),
+      TaxLotCell(
+        lot.costBasisDisplay,
+        style: TaxLotType.cell(palette.primaryText),
+        align: TaxLotMetrics.columnAlign[2],
+      ),
+      TaxLotCell(
+        lot.proceedsDisplay,
+        style: TaxLotType.cellStrong(palette.primaryText),
+        align: TaxLotMetrics.columnAlign[3],
+      ),
+      TaxLotCell(
+        lot.gainLossDisplay,
+        // The only colour decision in the row, and it comes from the
+        // backend's `trend` enum rather than from the sign printed in the
+        // string beside it.
+        style: TaxLotType.cellAccent(switch (lot.trend) {
+          TaxLotTrend.up => palette.gain,
+          TaxLotTrend.down => palette.loss,
+        }),
+        align: TaxLotMetrics.columnAlign[4],
+      ),
+      // The holding-period column. The kit shows a pill and a duration; the
+      // contract serves no duration, so the pill sits alone and the slot
+      // stays (spec `frontend/0027` OD-2).
+      Align(
+        child: TaxLotChip(
           label: lot.termLabel,
           background: term.chipBackground,
-          padding: TaxLotMetrics.rowChipPadding,
-          style: TaxLotType.rowChip(term.chipForeground),
+          padding: TaxLotMetrics.chipPadding,
+          style: TaxLotType.chip(term.chipForeground),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }

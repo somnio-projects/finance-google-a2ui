@@ -114,6 +114,7 @@ duplicated one are both visible at a glance.
 | [frontend/0024-the-header-stays-put.md](frontend/0024-the-header-stays-put.md) | In progress | *unassigned* (TL request 2026-09-22) |
 | [frontend/0025-failures-have-a-way-out.md](frontend/0025-failures-have-a-way-out.md) | In progress | GGU-110 · GGU-111 · GGU-112 |
 | [frontend/0026-the-ticket-in-the-assistant-is-editable.md](frontend/0026-the-ticket-in-the-assistant-is-editable.md) | In progress | GGU-113 |
+| [frontend/0027-the-taxlot-table-matches-the-ui-kit.md](frontend/0027-the-taxlot-table-matches-the-ui-kit.md) | In progress | GGU-116 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |
