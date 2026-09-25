@@ -1,4 +1,6 @@
 import 'package:finance_app/charts/waterfall_chart.dart';
+import 'package:finance_app/charts/waterfall_overlay.dart';
+import 'package:finance_app/charts/waterfall_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,7 +11,8 @@ void main() {
   group(WaterfallChart, () {
     Widget subject({
       void Function(String key)? onSegmentTap,
-      int? selectedIndex,
+      WaterfallSelection? selection,
+      WaterfallOverlay? overlay,
       double width = 560,
     }) => Center(
       child: SizedBox(
@@ -19,7 +22,8 @@ void main() {
           valueLabels: harnessValueDisplays,
           axisLabels: harnessAxisLabels,
           onSegmentTap: onSegmentTap,
-          selectedIndex: selectedIndex,
+          selection: selection,
+          overlay: overlay,
         ),
       ),
     );
@@ -65,13 +69,6 @@ void main() {
       await tester.tapAt(chart + const Offset(-5, 100));
       await tester.pump();
       expect(tapped, isEmpty);
-    });
-
-    testWidgets('marks the selected band in the axis row', (tester) async {
-      await tester.pumpApp(subject(selectedIndex: 1));
-      final selected = tester.widget<Text>(find.text('Bitcoin'));
-      final other = tester.widget<Text>(find.text('Solana'));
-      expect(selected.style?.color, isNot(other.style?.color));
     });
 
     testWidgets('lays itself out from the width it is given', (tester) async {

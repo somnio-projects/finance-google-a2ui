@@ -1,8 +1,9 @@
+import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_header.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_notes.dart';
-import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_pill.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,13 +11,18 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 
-/// GGU-100 (spec frontend/0014): the headline, the selected caption and the
-/// per-step detail are **bound** from the new contract fields — the card
-/// computes none of them (N-1..N-4). Beside the component and card suites,
-/// under the 150-line budget.
+/// The header (spec frontend/0028 AC-1): two of the backend's own strings in
+/// the direction's mark, where a pill used to be.
 void main() {
   const component = AttributionWaterfallComponent();
   late Map<String, dynamic> example;
+
+  AttributionNet net(NetDirection direction) => AttributionNet(
+    label: 'Net',
+    amountDisplay: r'+$3,240',
+    percentDisplay: '+0.68%',
+    direction: direction,
+  );
 
   setUp(() {
     example = CatalogSnapshot.load().exampleForView('attribution.waterfall.v1');
@@ -32,12 +38,12 @@ void main() {
     });
 
     test('raises a `net.direction` the contract does not declare', () {
-      final net = Map<String, dynamic>.from(
+      final broken = Map<String, dynamic>.from(
         example['net'] as Map<String, dynamic>,
       )..['direction'] = 'sideways';
       expect(
         () => component.read(
-          ViewPayload.fromJson(<String, dynamic>{...example, 'net': net}),
+          ViewPayload.fromJson(<String, dynamic>{...example, 'net': broken}),
         ),
         throwsA(
           isA<PayloadContractException>().having(
@@ -49,59 +55,67 @@ void main() {
       );
     });
 
-    testWidgets('is the pill in the header, and the notes sit below', (
+    testWidgets('joins the amount and the percent with a middle dot', (
       tester,
     ) async {
       await tester.pumpApp(
-        Center(
-          child: SizedBox(
-            width: 571,
-            child: AttributionWaterfallCard(
-              data: component.read(ViewPayload.fromJson(example)),
-            ),
-          ),
+        AttributionWaterfallHeader(
+          title: "Today's drivers",
+          net: net(NetDirection.up),
         ),
       );
-      expect(find.text(r'▲ Net +$61,204.05 (+14.51%)'), findsOneWidget);
-      // The notes moved, they were not dropped (N-9, spec 0014 OD-2).
-      expect(find.byType(AttributionWaterfallNotes), findsOneWidget);
-      expect(find.text(r'Net $61,204.05'), findsOneWidget);
-      final pill = tester.getRect(find.byType(AttributionWaterfallPill));
-      final notes = tester.getRect(find.byType(AttributionWaterfallNotes));
-      expect(pill.bottom, lessThan(notes.top));
-    });
-  });
-
-  group('the selected state', () {
-    test("binds each step's written detail and caption", () {
-      final data = component.read(ViewPayload.fromJson(example));
-      final bitcoin = data.steps[1];
-      expect(bitcoin.detail, r'+54.08% · 2.1 sh · $64,250.00');
-      expect(bitcoin.selectedLabel, 'BTC selected');
-      // The totals have no selected state in the contract.
-      expect(data.steps.first.detail, isNull);
-      expect(data.steps.last.selectedLabel, isNull);
+      expect(find.text(r'+$3,240 · +0.68%'), findsOneWidget);
+      // The pill, its glyph and its parentheses are gone (OD-1).
+      expect(find.textContaining('▲'), findsNothing);
+      expect(find.textContaining('('), findsNothing);
+      expect(find.text('Net'), findsNothing);
     });
 
-    testWidgets("shows the payload's caption where the pill was, and the "
-        'detail line', (tester) async {
+    testWidgets('marks the figure by the declared direction, never a sign', (
+      tester,
+    ) async {
+      for (final (direction, colour) in <(NetDirection, Color)>[
+        (NetDirection.up, ChartTokens.light.barGain),
+        (NetDirection.down, ChartTokens.light.barLoss),
+        (NetDirection.flat, ChartTokens.light.mutedLabel),
+      ]) {
+        await tester.pumpApp(
+          AttributionWaterfallHeader(title: 'T', net: net(direction)),
+        );
+        expect(
+          tester.widget<Text>(find.text(r'+$3,240 · +0.68%')).style?.color,
+          colour,
+        );
+      }
+    });
+
+    testWidgets("keeps the payload's own label for a screen reader", (
+      tester,
+    ) async {
+      // N-9: `net.label` is not printed, because the design does not print
+      // it — but it is not dropped either.
+      await tester.pumpApp(
+        AttributionWaterfallHeader(title: 'T', net: net(NetDirection.up)),
+      );
+      expect(find.bySemanticsLabel(r'Net +$3,240 · +0.68%'), findsOneWidget);
+    });
+
+    testWidgets('sits on the card with the notes below it', (tester) async {
       await tester.pumpApp(
         Center(
           child: SizedBox(
             width: 571,
             child: AttributionWaterfallCard(
               data: component.read(ViewPayload.fromJson(example)),
-              initialSelectedKey: 'BTC',
             ),
           ),
         ),
       );
-      expect(find.byType(AttributionWaterfallPill), findsNothing);
-      expect(find.text('BTC selected'), findsOneWidget);
-      expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
-      // N-4: the raw pairs behind the detail never reach the screen.
-      expect(find.textContaining('0.45725'), findsNothing);
-      expect(find.textContaining('90.0000'), findsNothing);
+      expect(find.byType(AttributionWaterfallNotes), findsOneWidget);
+      expect(find.text(r'Net $61,204.05'), findsOneWidget);
+      final header = tester.getRect(find.byType(AttributionWaterfallHeader));
+      final notes = tester.getRect(find.byType(AttributionWaterfallNotes));
+      expect(header.bottom, lessThan(notes.top));
     });
   });
 }

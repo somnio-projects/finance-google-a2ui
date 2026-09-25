@@ -1,6 +1,9 @@
 import 'package:finance_app/charts/waterfall_chart.dart';
+import 'package:finance_app/charts/waterfall_selection.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_skeleton.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 
-/// Goldens for the chart, in both themes and in the selected state.
+/// Goldens for the chart and the loading card, in both themes.
 ///
 /// They sit **beside** the geometry assertions in `finance_charts`, not
 /// instead of them: a golden says something moved, the arithmetic says what.
@@ -23,11 +26,8 @@ import '../../helpers/pump_app.dart';
 /// gate anybody should trust, and widening the tolerance to fit it would have
 /// been threshold-fitting.
 ///
-/// Goldening the chart alone cuts the text to seven short axis labels and
-/// leaves the margin wide. The card's text is asserted by `find.text` in
-/// `attribution_waterfall_card_test.dart`, which is a better check for text
-/// than a raster, and its chrome constants are asserted as constants.
-/// ADR-L D-15 carries the ruling.
+/// The skeleton is the exception and is goldened whole: it has **no text at
+/// all**, so none of that drift applies to it. ADR-L D-15 carries the ruling.
 void main() {
   group('AttributionWaterfall goldens', () {
     late AttributionWaterfallData data;
@@ -40,28 +40,38 @@ void main() {
       );
     });
 
-    /// The chart inside its own repaint boundary.
+    /// The subject inside its own repaint boundary.
     ///
     /// Without the boundary `matchesGoldenFile` walks up to the nearest one —
     /// the whole test surface — and silently captures far more than the
     /// finder names, which is what made the first attempt at this suite noisy.
     const boundary = Key('golden-subject');
 
-    Widget subject({int? selected}) => Center(
+    Widget framed(Widget child, {double width = 533.37}) => Center(
       child: RepaintBoundary(
         key: boundary,
-        child: SizedBox(
-          // The design's plot width for a single card at 1024.
-          width: 533.37,
-          child: WaterfallChart(
-            steps: data.waterfallSteps,
-            valueLabels: data.valueDisplays,
-            axisLabels: data.axisLabels,
-            selectedIndex: selected,
-          ),
-        ),
+        // The design's plot width for a single card at 1024.
+        child: SizedBox(width: width, child: child),
       ),
     );
+
+    Widget subject({WaterfallSelection? selection}) => framed(
+      WaterfallChart(
+        steps: data.waterfallSteps,
+        valueLabels: data.valueDisplays,
+        axisLabels: data.axisLabels,
+        selection: selection,
+      ),
+    );
+
+    WaterfallSelection selected(Brightness brightness) {
+      final tokens = AttributionWaterfallTokens.forBrightness(brightness);
+      return WaterfallSelection(
+        index: 1,
+        barFill: tokens.selectedGainBar,
+        column: tokens.gainColumn,
+      );
+    }
 
     testWidgets('default, light', (tester) async {
       await tester.pumpApp(subject());
@@ -80,10 +90,44 @@ void main() {
     });
 
     testWidgets('selected, light', (tester) async {
-      await tester.pumpApp(subject(selected: 1));
+      await tester.pumpApp(subject(selection: selected(Brightness.light)));
       await expectLater(
         find.byKey(boundary),
         matchesGoldenFile('goldens/attribution_waterfall_selected.png'),
+      );
+    });
+
+    testWidgets('selected, dark', (tester) async {
+      await tester.pumpApp(
+        subject(selection: selected(Brightness.dark)),
+        brightness: Brightness.dark,
+      );
+      await expectLater(
+        find.byKey(boundary),
+        matchesGoldenFile('goldens/attribution_waterfall_selected_dark.png'),
+      );
+    });
+
+    testWidgets('loading, light', (tester) async {
+      await tester.pumpApp(
+        framed(const AttributionWaterfallSkeleton(), width: 380),
+        reducedMotion: true,
+      );
+      await expectLater(
+        find.byKey(boundary),
+        matchesGoldenFile('goldens/attribution_waterfall_loading.png'),
+      );
+    });
+
+    testWidgets('loading, dark', (tester) async {
+      await tester.pumpApp(
+        framed(const AttributionWaterfallSkeleton(), width: 380),
+        brightness: Brightness.dark,
+        reducedMotion: true,
+      );
+      await expectLater(
+        find.byKey(boundary),
+        matchesGoldenFile('goldens/attribution_waterfall_loading_dark.png'),
       );
     });
   });

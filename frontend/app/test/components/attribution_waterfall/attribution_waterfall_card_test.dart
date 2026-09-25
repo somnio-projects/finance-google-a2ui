@@ -1,5 +1,5 @@
-import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/waterfall_chart.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_callout.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
@@ -11,13 +11,32 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 
-/// The centre of band [index] of the nine the example walks — start, seven
-/// holdings, end — measured off the plot the test pumped.
+/// How many bands the example walks: a start total, one per holding, an end.
+///
+/// **Read from the example, never written down.** This was the literal `16`
+/// of the equity seed, and the crypto seed (spec `backend/0044`) walks nine.
+/// A hardcoded count does not fail on the band it names — it silently taps
+/// somewhere else on the plot and the assertion reports an empty selection,
+/// which reads like a broken tap handler rather than a stale constant.
+int get bandCount => const AttributionWaterfallComponent()
+    .read(
+      ViewPayload.fromJson(
+        CatalogSnapshot.load().exampleForView('attribution.waterfall.v1'),
+      ),
+    )
+    .steps
+    .length;
+
+/// The centre of band [index] of the [bandCount] the example walks, measured
+/// off the plot the test pumped.
 Offset bandCentre(WidgetTester tester, int index) {
   final plot = tester.getRect(find.byKey(WaterfallChart.plotKey));
-  final band = plot.width / 9;
+  final band = plot.width / bandCount;
   return Offset(plot.left + band * (index + 0.5), plot.center.dy);
 }
+
+/// A card narrow enough to show the footer strip rather than the callout.
+const double phoneWidth = 380;
 
 void main() {
   group(AttributionWaterfallCard, () {
@@ -34,9 +53,10 @@ void main() {
     Widget subject({
       void Function(String key)? onSegmentTap,
       String? initialSelectedKey,
+      double width = phoneWidth,
     }) => Center(
       child: SizedBox(
-        width: 571,
+        width: width,
         child: AttributionWaterfallCard(
           data: data,
           onSegmentTap: onSegmentTap,
@@ -46,14 +66,12 @@ void main() {
     );
 
     test('keeps the card chrome the design was measured at', () {
-      // Constants, asserted as constants. A raster golden would prove these
-      // too, and far less precisely — 16 px is exact, "looks the same" is
-      // not. See the golden suite for why the chrome is not in a golden.
       expect(AttributionWaterfallCard.radius, 16);
       expect(
         AttributionWaterfallCard.padding,
         const EdgeInsets.fromLTRB(18, 16, 18, 14),
       );
+      expect(AttributionWaterfallCard.calloutMinWidth, 520);
     });
 
     testWidgets('shows the title and every annotation verbatim', (
@@ -73,12 +91,13 @@ void main() {
       await tester.pumpApp(subject());
       expect(find.textContaining('421711.15'), findsNothing);
       expect(find.textContaining('482915.2'), findsNothing);
-      expect(find.textContaining('-9500.1500000000'), findsNothing);
+      expect(find.textContaining('-10500.000000'), findsNothing);
     });
 
     testWidgets('shows no detail until a band is tapped', (tester) async {
       await tester.pumpApp(subject());
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
+      expect(find.byType(AttributionWaterfallCallout), findsNothing);
     });
 
     testWidgets('reveals the tapped bucket and reports its key', (
@@ -91,7 +110,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tapped, <String>['BTC']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
-      expect(find.text(r'$469,070.35'), findsOneWidget);
+      expect(find.text('BTC · Bitcoin'), findsOneWidget);
+      expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
     });
 
     testWidgets('a second tap on the same bucket clears the selection', (
@@ -120,21 +140,6 @@ void main() {
     ) async {
       await tester.pumpApp(subject(initialSelectedKey: 'NOPE'));
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
-    });
-
-    testWidgets('colours a gain with the gain mark', (tester) async {
-      await tester.pumpApp(subject(initialSelectedKey: 'BTC'));
-      final gain = tester.widget<Text>(find.text(r'$47,359.20'));
-      expect(gain.style?.color, ChartTokens.light.barGain);
-    });
-
-    testWidgets('colours a loss with the loss mark', (tester) async {
-      // A separate test rather than a second pump: the card's `State`
-      // survives a re-pump of the same widget type, so its selection would
-      // not change and the assertion would quietly read the first one.
-      await tester.pumpApp(subject(initialSelectedKey: 'SOL'));
-      final loss = tester.widget<Text>(find.text(r'-$9,500.15'));
-      expect(loss.style?.color, ChartTokens.light.barLoss);
     });
   });
 }

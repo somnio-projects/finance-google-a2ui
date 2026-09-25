@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Draws the dashed rounded square the empty state shows.
 ///
-/// `app/lib/charts/dashed_line.dart` dashes a straight horizontal run and
-/// cannot follow a corner, and widening it to take a `Path` would be
-/// editing a file the charts own to add a component (ADR-L D-3). This
-/// painter walks the rounded rect's own `PathMetric`, which is the shape a
-/// border needs and the chart helper never will.
+/// It walks the rounded rect's own `PathMetric`, because a dash pattern has
+/// to turn the corners with the border.
+///
+/// It used to explain itself by contrast with `charts/dashed_line.dart`, a
+/// straight-run helper that could not follow a corner. That file is **gone**
+/// — the UI Kit's waterfall draws solid connectors, which left it with no
+/// caller (spec frontend/0028 OD-2) — so this is now simply the only dashed
+/// stroke the app draws.
 ///
 /// **The pattern is approximate, and knowingly so** — the same limitation
 /// `specs/frontend/0002` records for the connector. CSS leaves a `dashed`

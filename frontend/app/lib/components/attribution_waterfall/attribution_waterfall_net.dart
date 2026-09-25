@@ -4,8 +4,8 @@ import 'package:equatable/equatable.dart';
 ///
 /// The contract's `net.direction` is `up / down / flat`. It is its own enum
 /// rather than a `WaterfallStepKind`: a net is not a bar, and `flat` has no
-/// bar kind to map onto. The pill's glyph and colour come from this field and
-/// never from the sign of a figure (N-1).
+/// bar kind to map onto. The header's colour comes from this field and never
+/// from the sign of a figure (N-1).
 enum NetDirection {
   /// The walk ended above where it started.
   up,
@@ -17,11 +17,12 @@ enum NetDirection {
   flat,
 }
 
-/// The headline of `attribution.waterfall.v1` — *▲ Net +$3,240 (+0.68%)*.
+/// The headline of `attribution.waterfall.v1` — *+$3,240 · +0.68%*.
 ///
 /// Both figures arrive **signed** from the backend (GGU-100 AC-1/AC-2); the
-/// client adds the label's glyph from [direction] and the punctuation between
-/// them, and nothing else.
+/// client joins them with a middle dot and colours them from [direction], and
+/// nothing else. The glyph, the parentheses and the pill they sat on were the
+/// older catalog page's and went with it (spec frontend/0028 OD-1).
 class AttributionNet extends Equatable {
   /// Creates the headline.
   const AttributionNet({
