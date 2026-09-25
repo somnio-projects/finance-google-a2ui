@@ -40,7 +40,7 @@ class PositionAsk extends StatelessWidget {
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: <Color>[Color(0xFF4F5DFF), Color(0xFF7A5CFF)],
+                    colors: HoldingsTokens.askIconGradient,
                   ),
                 ),
               ),

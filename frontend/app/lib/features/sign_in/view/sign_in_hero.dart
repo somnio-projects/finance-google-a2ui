@@ -30,7 +30,7 @@ class SignInHero extends StatelessWidget {
             ),
             boxShadow: const <BoxShadow>[
               BoxShadow(
-                color: Color(0x8C4F5DFF),
+                color: LoginTokens.logoGlow,
                 blurRadius: 20,
                 spreadRadius: -6,
                 offset: Offset(0, 8),

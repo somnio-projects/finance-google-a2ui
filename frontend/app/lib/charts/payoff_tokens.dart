@@ -10,9 +10,11 @@ import 'package:flutter/material.dart';
 
 /// The payoff curve's extra roles, measured the same way.
 ///
-/// They live here rather than beside `PayoffPalette` so this file stays the
-/// only one in `app/lib/` that names a `Color` — the invariant `ChartTokens`
-/// documents above, which a second token file would quietly break.
+/// They live here rather than beside `PayoffPalette` because a colour literal
+/// belongs in a `*_tokens.dart`. This comment used to say the file stayed the
+/// only one in `app/lib/` naming a `Color`, which was already false as it was
+/// written — this file is itself the second chart token file. The rule is now
+/// `app/test/architecture/color_rules_test.dart` (spec frontend/0029 OD-4).
 ///
 /// Read from the design's own SVG template rather than from the rendered DOM:
 /// `.design-refs/Catalog_RiskPayoffChart.dc.html` sets these as literal
