@@ -32,12 +32,23 @@ app/lib/components/   bind a payload to widgets. Import ViewPayload (a type);
                       never read a repository instance; never a feature.
 packages/finance_views_repository/   composes the api client. Pure Dart.
 packages/finance_api_client/         the ONLY HTTP speaker. Pure Dart.
+packages/finance_auth/               session, IdentityProvider seam, AccessGateway,
+                                     AuthRepository. Never a widget, never Firebase —
+                                     the Firebase implementation lives in app/lib/auth/.
+packages/finance_charts/             chart GEOMETRY only: scales, nice ticks,
+                                     (steps, size) → rects. Never dart:ui — the painter
+                                     that needs it is app/lib/charts/ (ADR-L D-13).
 packages/finance_core/               Result, failures, problem details. Depends on nothing.
 ```
 
-Dependencies point one way, and never skip a layer. The first three packages
-are **pure Dart**, so importing Flutter into them is a compile error rather
-than a review note — that is the point of the workspace.
+Dependencies point one way, and never skip a layer. **All five** packages are
+**pure Dart**, so importing Flutter into them is a compile error rather than a
+review note — that is the point of the workspace.
+
+This block listed **three** of the five until GGU-129, which made it a hole in
+the rule rather than a stale count: the table that governs what may import what
+was silent on `finance_charts` — the package the root `CLAUDE.md` calls out as
+load-bearing for the numbers invariant — and on `finance_auth`.
 
 The **page/view split** is the shape `.claude/rules/flutter/architecture.md`
 prescribes and its own example uses: a page builds the bloc, so it needs the

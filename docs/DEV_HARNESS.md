@@ -50,7 +50,7 @@ make gate                            # toolchain · format · analyze · budget 
 Flutter **3.47.5** (Dart 3.13.4), pinned in `frontend/.fvmrc` — the one home,
 read by `frontend/tool/check_toolchain.sh` and by `frontend-ci.yaml`, which no
 longer carries a version of its own (GGU-94). `make gate` proves it first.
-Needs no Docker and no database: the three pure-Dart packages run under `dart
+Needs no Docker and no database: the five pure-Dart packages run under `dart
 test` in about a second, and the widget suite drives the transport with
 `MockClient`.
 

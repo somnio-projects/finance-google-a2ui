@@ -15,7 +15,7 @@ file adds what is **specific to `frontend/`** and stricter.
 
 ## 1. The coverage contract
 
-**100 % line coverage, per file**, over all four packages
+**100 % line coverage, per file**, over `app/lib` and all **five** packages
 (`tool/check_coverage.dart`).
 
 Why not "100 % branch", like the backend: **Dart's coverage tooling emits line
@@ -24,8 +24,17 @@ cannot be reproduced literally, so this is the strongest honest equivalent. It
 is strictly above the `≥ 80 % per file` floor in the synced rule.
 
 The threshold goes **up**, never down, and never in a feature PR. Exemptions
-live in `tool/check_coverage.dart` with a written reason each, and there are
-two today: generated code, and `lib/main.dart`.
+live in **`tool/coverage_sources.dart`** — `check_coverage.dart` only *calls*
+`isExempt` and defines nothing — and there are **four** patterns: `.g.dart`,
+`.freezed.dart`, `lib/main.dart` and **`lib/speech/speech_web.dart`**.
+
+The last one is the one this sentence used to omit, and omitting it was not
+harmless: `speech_web.dart` imports `dart:js_interop` and **cannot be compiled
+for the Dart VM**, so `flutter test` can never emit a record for it. Anyone who
+read "there are two" and removed the exemption would get a gate that fails
+permanently with no legitimate fix. Both non-generated members are boundaries
+to something a test cannot start — never merely hard-to-test code, which is the
+bar an exemption has to clear (spec `frontend/0023`).
 
 **100 % is not the goal; it is the floor that makes the goal visible.** A test
 that executes a line without asserting behaviour is not a test. If reaching a
@@ -45,7 +54,8 @@ Mirror the source tree.
 | `app/lib/features/<f>/bloc/<f>_bloc.dart` | `app/test/features/<f>/bloc/<f>_bloc_test.dart` + `_event_test` + `_state_test` |
 | the structural rules themselves | `app/test/architecture/` |
 
-The three pure packages run under **`dart test`** in about a second, which is
+All **five** packages are pure Dart and run under **`dart test`** in about a
+second, which is
 the practical payoff of keeping them free of Flutter.
 
 ## 3. The harness

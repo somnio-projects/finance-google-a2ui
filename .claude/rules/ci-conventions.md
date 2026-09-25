@@ -41,11 +41,22 @@ clean checkout.
 ## 4. Quality gates the project keeps
 
 **Backend.** `make gate` == pre-push == CI, in this order: `lint` (ruff check +
-format), `typecheck` (basedpyright strict), `budget` (150 lines), `quality`
-(xenon complexity · vulture dead code · interrogate 100 % docstrings · deptry
-dependency hygiene · pylint duplication and design limits · codespell), `test`
-(pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
-`backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
+format), `typecheck` (basedpyright strict), `budget` (150 lines),
+`catalog-check`, `openapi-check`, `quality` (xenon complexity · vulture dead
+code · interrogate 100 % docstrings · deptry dependency hygiene · pylint
+duplication and design limits · codespell), `test` (pytest, 100 % branch
+coverage), `audit` (pip-audit). Thresholds live in `backend/pyproject.toml`;
+they go **up**, never down, and never in a feature PR.
+
+**That list omitted `openapi-check` entirely until GGU-129**, which is worth
+more than a correction, because of *where* it sat: this section also carries the
+ruling that *"a new artefact is an entry in
+`presentation/catalog_artifacts.ARTIFACTS`, **not a new gate step**"* — and
+`openapi-check` is exactly a second regenerate-and-diff artefact check that
+arrived as a new gate step, in the paragraph that says not to. Whether that was
+the right call is a separate question; the section describing the gate must at
+least name it. `repo.gate-pairs` cannot catch this: it compares command strings
+against workflows, and an enumeration in prose is neither.
 
 `catalog-check` sits between `budget` and `quality`: it re-renders **every**
 generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
