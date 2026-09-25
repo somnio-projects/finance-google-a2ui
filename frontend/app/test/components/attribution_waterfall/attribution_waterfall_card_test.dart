@@ -11,11 +11,27 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 
-/// The centre of band [index] of the sixteen the example walks — start,
-/// fourteen holdings, end — measured off the plot the test pumped.
+/// How many bands the example walks: a start total, one per holding, an end.
+///
+/// **Read from the example, never written down.** This was the literal `16`
+/// of the equity seed, and the crypto seed (spec `backend/0044`) walks nine.
+/// A hardcoded count does not fail on the band it names — it silently taps
+/// somewhere else on the plot and the assertion reports an empty selection,
+/// which reads like a broken tap handler rather than a stale constant.
+int get bandCount => const AttributionWaterfallComponent()
+    .read(
+      ViewPayload.fromJson(
+        CatalogSnapshot.load().exampleForView('attribution.waterfall.v1'),
+      ),
+    )
+    .steps
+    .length;
+
+/// The centre of band [index] of the [bandCount] the example walks, measured
+/// off the plot the test pumped.
 Offset bandCentre(WidgetTester tester, int index) {
   final plot = tester.getRect(find.byKey(WaterfallChart.plotKey));
-  final band = plot.width / 16;
+  final band = plot.width / bandCount;
   return Offset(plot.left + band * (index + 0.5), plot.center.dy);
 }
 
@@ -64,8 +80,8 @@ void main() {
       await tester.pumpApp(subject());
       expect(find.text('Unrealised P/L attribution'), findsOneWidget);
       // N-9: notes are compliance statements and none is dropped.
-      expect(find.text(r'NVIDIA Corp $34,019.40'), findsOneWidget);
-      expect(find.text(r'Apple Inc. $29,334.00'), findsOneWidget);
+      expect(find.text(r'Bitcoin $47,359.20'), findsOneWidget);
+      expect(find.text(r'Ethereum $21,000.00'), findsOneWidget);
       expect(find.text(r'Net $61,204.05'), findsOneWidget);
     });
 
@@ -89,19 +105,19 @@ void main() {
     ) async {
       final tapped = <String>[];
       await tester.pumpApp(subject(onSegmentTap: tapped.add));
-      // Sixteen bands over the plot: the second is NVDA, the first holding.
+      // Nine bands over the plot: the second is BTC, the first holding.
       await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();
-      expect(tapped, <String>['NVDA']);
+      expect(tapped, <String>['BTC']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
-      expect(find.text('NVDA · NVIDIA Corp'), findsOneWidget);
-      expect(find.text(r'+45.72% · 90 sh · $1,204.66'), findsOneWidget);
+      expect(find.text('BTC · Bitcoin'), findsOneWidget);
+      expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
     });
 
     testWidgets('a second tap on the same bucket clears the selection', (
       tester,
     ) async {
-      await tester.pumpApp(subject(initialSelectedKey: 'NVDA'));
+      await tester.pumpApp(subject(initialSelectedKey: 'BTC'));
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
       await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();

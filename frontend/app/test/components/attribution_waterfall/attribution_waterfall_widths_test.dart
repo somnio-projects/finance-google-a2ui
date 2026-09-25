@@ -26,7 +26,7 @@ void main() {
   Widget subject(double width) => Center(
     child: SizedBox(
       width: width,
-      child: AttributionWaterfallCard(data: data, initialSelectedKey: 'NVDA'),
+      child: AttributionWaterfallCard(data: data, initialSelectedKey: 'BTC'),
     ),
   );
 
@@ -56,9 +56,9 @@ void main() {
       // dropped the sentence would look fine and be a different component.
       for (final width in <double>[380, 700]) {
         await tester.pumpApp(subject(width), surfaceSize: const Size(900, 900));
-        expect(find.text('NVDA · NVIDIA Corp'), findsOneWidget);
-        expect(find.text(r'+45.72% · 90 sh · $1,204.66'), findsOneWidget);
-        expect(find.text(r'$34,019.40'), findsWidgets);
+        expect(find.text('BTC · Bitcoin'), findsOneWidget);
+        expect(find.text(r'+54.08% · 2.1 sh · $64,250.00'), findsOneWidget);
+        expect(find.text(r'$47,359.20'), findsWidgets);
       }
     });
 
@@ -72,7 +72,7 @@ void main() {
           surfaceSize: const Size(900, 900),
         );
         expect(tester.takeException(), isNull);
-        expect(find.text('NVDA · NVIDIA Corp'), findsOneWidget);
+        expect(find.text('BTC · Bitcoin'), findsOneWidget);
       }
     });
   });
