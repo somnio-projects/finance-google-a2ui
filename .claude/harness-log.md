@@ -5749,3 +5749,25 @@ stopped reading them, not proved them correct).
 **For the next reader:** two workflows calling one reusable workflow is the
 whole precondition. It will recur the moment a third `-cd` appears, and the
 check is what makes that a red build instead of a half-shipped environment.
+
+## 2026-09-25 — GGU-130 follow-up · a PR-body edit needs a push, not a re-run
+
+Found by getting it wrong. After correcting PR #138's body I used *Re-run
+failed jobs*, watched `repo.manual-run` fail again, and merged with `--admin`
+anyway — then established the reason. That order was backwards.
+
+The reason is worth keeping: `check_manual_run.sh` reads
+`${{ github.event.pull_request.body }}`, which is **frozen in the event
+payload** at run creation. A re-run replays it, so the corrected body is
+invisible and the failure is byte-identical to a genuine one. Locally the same
+script on the same fetched body passed. **Push to get a fresh event.**
+
+Second half, also from this PR: a body with no runtime change stops being an
+exit-3 case the moment it **quotes a `/health` response as narrative**. #138's
+first draft said *"Not run: no runtime code changes"* while quoting
+`0.1.0+0f46807` and `0.1.0+2d7bf99` from the incident it described — so the
+check found identities, none of them the head, and was right to fail. Both are
+needed once one appears: the quoted one as context, one from the branch as
+evidence.
+
+`sdd.md` §3 now carries both, next to the check they are about.
