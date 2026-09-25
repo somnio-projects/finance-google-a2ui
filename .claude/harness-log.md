@@ -5338,6 +5338,52 @@ was seeded with until somebody runs
 `gcloud run jobs execute seed-portfolios --args=--all,--reset`. That is AC-7,
 and the PR names it under *Not run* rather than implying it happened.
 
+## 2026-09-25 — The interpreter pin has one home
+
+**Spec:** [`repo/0003`](../specs/repo/0003-the-interpreter-pin-has-one-home.md) ·
+**Ticket:** GGU-125. `repo.gate-pairs` has ended with *"frontend pins Flutter
+3.47.5 in frontend/.fvmrc, and nowhere else"* since GGU-94. Python had the
+identical defect and no assertion at all: `backend-ci.yaml` and `repo-ci.yaml`
+each set `PYTHON_VERSION` in an `env:` block handed to `astral-sh/setup-uv`,
+while `backend/.python-version`, `backend/pyproject.toml` (twice) and
+`backend/Dockerfile` (twice) declared the same fact. Six declarations, one of
+them readable only by GitHub Actions — found by hand in #130, when five were
+bumped to 3.14 and the sixth still said 3.12.
+
+**What changed in code.** Both `PYTHON_VERSION` blocks and all four
+`python-version:` inputs are gone: `uv` reads `backend/.python-version` from the
+project directory and installs what it names. `scripts/check_gate_pairs.sh`
+gained a Python half mirroring the Flutter one — `py_pin_dirs` (a list, so a
+second Python service is one word), no workflow may name an interpreter version,
+no second pin file per solution, and `requires-python`, `pythonVersion` and both
+`FROM python:X.Y` lines are **compared** against the pin with both values
+printed. Two anti-vacuity guards: a Dockerfile that stops naming an interpreter
+fails, and the half refuses to report success on fewer than three compared
+declarations.
+
+**What changed in the harness.** `.claude/rules/ci-conventions.md` §5 gains its
+**seventh** instance, and question 3 gains a clause it did not have: *ask it of
+every toolchain the repository runs, not only the one that last cost a day.* The
+`repo-gate-pairs` pre-commit hook's `files:` now also matches
+`backend/.python-version`, `backend/pyproject.toml` and `backend/Dockerfile`, so
+the commit that bumps one of them runs the check on the laptop that made it.
+
+**The measurement worth keeping, because it contradicts the obvious story.** The
+CI-only pin was not winning. On uv 0.11.19, `.python-version` = 3.14 beats
+`UV_PYTHON=3.12`, and `uv` narrows any request by `requires-python` anyway — so
+the workflow pin was *inert while reading as authoritative*, which is worse than
+a pin that wins, because CI was green for a reason nobody had checked. The first
+draft of this change asserted the override in three comments; all three now say
+what was measured. A rule file that over-claims is already §5's third instance.
+
+**Next person:** `infra/` is the same defect, still open —
+`infra-ci.yaml` pins `terraform_version: "1.9.8"` as a workflow input,
+`infra/versions.tf` declares `required_version = ">= 1.9"`, and no tracked file
+pins it for a laptop. It is recorded in `repo/0003` §6 and in §5 rather than
+fixed, because it needs a new tracked file and a rule of its own. The shape to
+copy is the `py_pin_dirs` loop, not the `pin_apps` one — Terraform's version,
+like Python's, is restated by files that cannot delete it.
+
 ## 2026-09-25 — GGU-124: the DB-backed suite cleans up after itself
 
 **Spec:** [`specs/backend/0047-the-db-backed-suite-cleans-up-after-itself.md`](../specs/backend/0047-the-db-backed-suite-cleans-up-after-itself.md)

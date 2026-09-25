@@ -357,6 +357,49 @@ working: *"the Color-in-lib rule"* proves one stack, so it is a test
 the four architecture tests that already fail on a mechanism. A check whose
 subject is one directory does not belong in `repo-ci`, in either direction.
 
+**The seventh instance is the third question in a second language, and the
+lesson is that a rule written from one stack quietly exempts the others
+(GGU-125).** Question 3 above was answered for Flutter and the answer was made
+machine-checkable — `repo.gate-pairs` ends by printing that `frontend/.fvmrc` is
+the only home of the Flutter pin. Nothing was watching Python, and it carried
+the same defect from the day the backend was written: `backend-ci.yaml` and
+`repo-ci.yaml` each set `PYTHON_VERSION` in an `env:` block, handed to
+`astral-sh/setup-uv`, while `backend/.python-version`, `backend/pyproject.toml`
+(`requires-python` **and** `pythonVersion`) and `backend/Dockerfile` (two `FROM`
+lines) declared the same fact. **Six declarations, one of them readable only by
+GitHub Actions.** It was found by hand during the 3.14 upgrade (#130): five were
+bumped, the sixth still said `3.12`, and CI failed pointing somewhere else.
+
+Two things make this instance worth more than "do it for Python too":
+
+- **The CI-only pin was not even winning.** Measured on uv 0.11.19, a
+  `.python-version` of 3.14 beats `UV_PYTHON=3.12`, so the workflow pin sat
+  there for months being *inert while reading as authoritative* — and a uv bump
+  or a stray `--python` flag turns it back on. A pin whose effect depends on the
+  tool's version is a claim, not a pin. The check therefore fails on the
+  **line**, not on the value: `PYTHON_VERSION: "3.14"`, the correct value, is
+  red, because the defect is the second home.
+- **The drift is removed, not policed.** `uv` reads `backend/.python-version`
+  from the project directory and installs what it names, so no workflow needs to
+  say anything; `python-version-file:` stays allowed, because a step that
+  *reads* the pin is the fix. Where a declaration cannot be deleted —
+  `requires-python`, `pythonVersion`, `FROM python:X.Y` — it is **compared**,
+  and the failure prints every offending file with both values.
+
+`py_pin_dirs` is a list, exactly as `pin_apps` is, for the same reason: one pin
+per *solution*. Spec [`repo/0003`](../../specs/repo/0003-the-interpreter-pin-has-one-home.md)
+records the nine mutations that show each rule rejecting, including the
+anti-vacuity ones — a Dockerfile that stops naming an interpreter fails rather
+than passing by finding nothing.
+
+So question 3 gets a clause it did not have: **ask it of every toolchain the
+repository runs, not only the one that last cost a day.** `infra/` is the open
+case at the time of writing — `infra-ci.yaml` pins `terraform_version: "1.9.8"`
+in a workflow input, `infra/versions.tf` declares `required_version = ">= 1.9"`,
+and no tracked file pins it for a laptop at all. It is recorded in
+`repo/0003` §6 rather than fixed there, because a rule that lists its own
+unfinished cases is what this section is for.
+
 A PR that changes one without its pair is incomplete. A new runner goes in
 this table rather than in a comment — and the count in the sentence above it
 goes up in the same edit.

@@ -37,9 +37,19 @@ concurrency:
   group: backend-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The uv version is pinned here because nothing in the repository declares it
+# in a form a workflow can read. The INTERPRETER version is not, and must not
+# be: it is pinned in `backend/.python-version`, which `uv sync` and `uv run`
+# read on their own from this job's working directory and install if missing.
+# A `PYTHON_VERSION` env var handed to `setup-uv`'s `python-version` input is a
+# second declaration of that one fact, and the only one no local command reads
+# — GGU-94's defect in the other language (GGU-125). Which of the two wins is
+# not even stable: `python-version` sets `UV_PYTHON`, and on uv 0.11.19 the
+# tracked file beats it, so the CI-only pin sat here for months being quietly
+# inert while looking authoritative. `repo.gate-pairs` now fails on a workflow
+# that reintroduces it, whichever value it names.
 env:
   UV_VERSION: "0.11.19"
-  PYTHON_VERSION: "3.14"
 
 defaults:
   run:
@@ -58,7 +68,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
+          # No `python-version:` — see the `env:` block. uv resolves the
+          # interpreter from `backend/.python-version` and installs it.
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
@@ -115,7 +126,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
+          # No `python-version:` — see the `env:` block. uv resolves the
+          # interpreter from `backend/.python-version` and installs it.
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
@@ -158,7 +170,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
+          # No `python-version:` — see the `env:` block. uv resolves the
+          # interpreter from `backend/.python-version` and installs it.
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
