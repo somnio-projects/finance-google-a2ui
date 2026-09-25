@@ -5394,6 +5394,18 @@ was the wrong claim in the one section whose job is to be honest about reach.
 **When a test-layer change alters what a documented command does to a
 developer's data, the docs printing that command are part of the diff.**
 
+**One defect found in passing and deliberately not fixed here.** Deciding
+between `Base.metadata` and reflection for the table list meant measuring both,
+and `from app.models import Base` sees **four of eight** tables:
+`app/models/__init__.py` never imports `Portfolio` or `User`. `alembic/env.py`
+hands exactly that object to autogenerate as `target_metadata`, so
+`alembic revision --autogenerate` would propose **dropping** `users`,
+`portfolios`, `portfolio_lots` and `portfolio_transactions`. The file's own
+docstring says *"Import every model here so Alembic's autogenerate sees the full
+metadata."* It is filed as its own task: it belongs to `models/` and a migration
+review, not to a test fixture, and it is also why this fixture reflects from the
+database rather than trusting that list.
+
 **Next person:** the ticket's AC-3 asked for a CI job that runs the suite twice
 against one service container, and it is **not in this PR** — `.github/` and
 `scripts/check_gate_pairs.sh` were owned by a parallel branch. Spec §9 carries

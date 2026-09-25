@@ -112,9 +112,29 @@ Two sub-decisions inside it:
 - **`DELETE` over `TRUNCATE`, and reflection over an enumerated list.** The
   table list is reflected from the database, so a table a future migration adds
   is covered the day it lands rather than the day somebody remembers this file
-  — and reflection reads the *database*, not `app.models.__init__`, whose
-  import list is not complete. `DELETE` in reverse `sorted_tables` order needs
-  no `CASCADE` and no dynamically concatenated SQL string.
+  — and reflection reads the *database*, not `app.models.__init__`. That second
+  half is not hypothetical, and it is worth measuring rather than asserting:
+
+  ```console
+  $ uv run python -c "from app.models import Base; print(sorted(Base.metadata.tables))"
+  ['audit_events', 'feature_flags', 'messages', 'sessions']
+  ```
+
+  **Four of the eight tables the migrations create.** `app/models/__init__.py`
+  does not import `Portfolio` or `User`, so `Base.metadata` — which
+  `alembic/env.py` hands to autogenerate as `target_metadata` — cannot see
+  `users`, `portfolios`, `portfolio_lots` or `portfolio_transactions`. Building
+  the cleanup on that list would have emptied half the database and reported
+  eight names' worth of confidence. Reflection has no opinion about the import
+  graph.
+
+  That gap is a defect in its own right — `alembic revision --autogenerate`
+  would propose **dropping** those four tables — and it is filed separately
+  rather than fixed here, because it belongs to `models/` and to a migration
+  review, not to a test fixture.
+
+  `DELETE` in reverse `sorted_tables` order needs no `CASCADE` and no
+  dynamically concatenated SQL string.
 
 ## 4. Data model & migration
 
