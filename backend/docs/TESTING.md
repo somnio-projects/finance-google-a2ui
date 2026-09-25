@@ -36,7 +36,19 @@ Run one: `uv run pytest -m unit --no-cov` / `uv run pytest -m integration --no-c
 - `tests/integration/conftest.py` starts PostgreSQL once per session, runs
   `alembic upgrade head` (the production path), then builds the app with the
   real JWT verifier and a `FakeReporter`.
-- Tests generate unique subjects (`uuid4`) and never depend on order.
+- **`_empty_database` is autouse: every DB-backed test starts against an empty
+  database.** It deletes every row of every migrated table *before* the test
+  body, not after, so a test that commits needs no cleanup of its own and an
+  interrupted run cannot poison the next one. This is what makes `make test`
+  runnable twice against one database; before GGU-124 it was not (spec
+  [`backend/0047`](../../specs/backend/0047-the-db-backed-suite-cleans-up-after-itself.md)
+  records why emptying rather than an outer-transaction rollback).
+- Tests generate unique subjects (`uuid4`) and do not depend on order. The one
+  deliberate exception is the pair in
+  `tests/integration/test_fixture_isolation.py`, which shares a literal e-mail
+  on purpose: what one test leaves behind for the next cannot be observed from
+  inside a single test, and that handoff is the property GGU-124 was about.
+  Both halves say so, and step 2 fails loudly if step 1 did not run.
 - Repository tests open their own `session_scope` and roll back.
 
 ## Conventions
@@ -56,6 +68,22 @@ relevant tests, confirm they fail, restore. Note it in the PR under
 is not a test.
 
 ## Local database for manual testing
+
+> **`make test` empties this database.** Since GGU-124 the integration fixtures
+> delete every row of every migrated table before each test, so pointing
+> `TEST_DATABASE_URL` at the compose database costs you whatever is in it —
+> including the demo portfolio from `make seed`. Re-seed afterwards, or run the
+> suite against its own throwaway container and leave the compose one for
+> manual testing:
+>
+> ```bash
+> docker run -d --name pg-scratch -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app \
+>   -e POSTGRES_DB=finance -p 55433:5432 postgres:16-alpine
+> TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:55433/finance make test
+> ```
+>
+> Omitting `TEST_DATABASE_URL` entirely is the safe default: testcontainers
+> starts and destroys its own PostgreSQL.
 
 ```bash
 docker compose up -d db
