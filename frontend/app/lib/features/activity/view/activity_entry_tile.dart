@@ -15,7 +15,7 @@ class ActivityEntryTile extends StatelessWidget {
   static const Map<String, String> glyphs = <String, String>{
     'buy': '↓',
     'sell': '↑',
-    'dividend': r'$',
+    'staking_reward': '\u2726',
     'deposit': '+',
   };
 

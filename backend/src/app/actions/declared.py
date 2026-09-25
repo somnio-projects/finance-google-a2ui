@@ -55,7 +55,7 @@ class SurfaceActionRef(BaseModel):
         default=(),
         max_length=MAX_CHOICES,
         description="Every accepted value, for a `choice`; empty otherwise.",
-        examples=[["JNJ", "NVDA", "XOM", "AAPL"]],
+        examples=[["AAVE", "BTC", "LINK", "ETH"]],
     )
     pattern: str | None = Field(
         default=None,

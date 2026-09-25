@@ -16,7 +16,7 @@ from app.presentation.payoff_order import PayoffCurveOptions
 from app.presentation.payoff_payload import SECTIONS
 from app.presentation.views.payoff_curve import render
 
-ENTRY_SOL = "$528.00"
+ENTRY_SOL = "$152.40"
 
 
 def options(**overrides: object) -> PayoffCurveOptions:
@@ -29,17 +29,17 @@ def test_both_markers_are_reached_by_field_name(portfolio: Portfolio) -> None:
 
     assert markers.break_even.at.display == ENTRY_SOL
     assert markers.current.at.display == ENTRY_SOL
-    assert markers.break_even.at.amount == Decimal("528.00")
+    assert markers.break_even.at.amount == Decimal("152.40")
 
 
 def test_a_marker_carries_the_exact_price_beside_the_string(
     portfolio: Portfolio,
 ) -> None:
-    """The coordinate is a figure, so nothing parses `"$528.00"` back."""
-    markers = render(portfolio, options(symbol="XOM")).markers
+    """The coordinate is a figure, so nothing parses `"$152.40"` back."""
+    markers = render(portfolio, options(symbol="LINK")).markers
 
-    assert markers.break_even.at.amount == Decimal("34.22")
-    assert markers.break_even.at.display == "$34.22"
+    assert markers.break_even.at.amount == Decimal("22.60")
+    assert markers.break_even.at.display == "$22.60"
 
 
 def test_relabelling_a_marker_does_not_move_it(portfolio: Portfolio) -> None:
@@ -55,7 +55,7 @@ def test_relabelling_a_marker_does_not_move_it(portfolio: Portfolio) -> None:
 
     assert german.break_even.at.amount == english.break_even.at.amount
     assert german.current.at.amount == english.current.at.amount
-    assert german.break_even.at.display == "528,00 $"
+    assert german.break_even.at.display == "152,40 $"
 
 
 @pytest.mark.parametrize(

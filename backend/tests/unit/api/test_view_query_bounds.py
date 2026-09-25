@@ -45,7 +45,7 @@ def _status(client: TestClient, query: str) -> int:
 
 def test_a_query_inside_the_bound_is_served(views_client: TestClient) -> None:
     """The control: the rejections below are the bound, not everything 422ing."""
-    assert _status(views_client, "nvda") == OK
+    assert _status(views_client, "btc") == OK
     assert _status(views_client, "a" * MAX_QUERY) == OK
 
 

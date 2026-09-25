@@ -10,7 +10,7 @@ void main() {
   );
 
   AttributionDriverData data(String contribution) => AttributionDriverData(
-    symbol: 'NVDA',
+    symbol: 'BTC',
     name: 'NVIDIA Corp',
     caption: 'Top contributor today',
     contributionDisplay: contribution,

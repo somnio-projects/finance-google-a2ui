@@ -14,23 +14,24 @@ from app.domain.day_change import (
 from app.domain.market import market_asset
 from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
+from app.domain.taxonomy import AssetClass
 
 
 def test_previous_value_is_quantity_times_the_reference_previous_close(
     portfolio: Portfolio,
 ) -> None:
-    nvda = next(row for row in portfolio.holdings() if row.symbol == "NVDA")
-    assert previous_value(nvda) == nvda.quantity * market_asset("NVDA").previous_close
-    assert previous_value(nvda) == Decimal("104049.00")
+    btc = next(row for row in portfolio.holdings() if row.symbol == "BTC")
+    assert previous_value(btc) == btc.quantity * market_asset("BTC").previous_close
+    assert previous_value(btc) == Decimal("130158.00")
 
 
 def test_day_change_is_signed_and_reconciles_with_the_two_prices(
     portfolio: Portfolio,
 ) -> None:
     by_symbol = {row.symbol: row for row in portfolio.holdings()}
-    assert day_change(by_symbol["NVDA"]) > ZERO
-    assert day_change(by_symbol["MSFT"]) < ZERO
-    assert day_change(by_symbol["USD"]) == ZERO
+    assert day_change(by_symbol["BTC"]) > ZERO
+    assert day_change(by_symbol["AAVE"]) < ZERO
+    assert day_change(by_symbol["USDC"]) == ZERO
 
 
 def test_change_ratio_is_zero_from_a_zero_base() -> None:
@@ -47,22 +48,24 @@ def test_trend_names_the_direction_without_arithmetic_downstream() -> None:
 def test_the_portfolio_moved_by_the_figure_the_home_page_states(
     portfolio: Portfolio,
 ) -> None:
-    """`Home.dc.html`: ▲ +$3,240.18 (+0.68%) today — solved into the seed."""
+    """▲ +$2,201.05 (+0.46%) today — solved into the crypto seed (0044 OD-4)."""
     previous = portfolio_previous_value(portfolio.holdings())
-    assert portfolio.total_market_value() - previous == Decimal("3240.18")
+    assert portfolio.total_market_value() - previous == Decimal("2201.05")
 
 
 def test_top_movers_are_the_three_single_names_the_design_lists() -> None:
-    """NVDA ▲ +4.2%, TSLA ▼ -2.3%, AAPL ▲ +1.1% — funds and cash never appear."""
+    """AVAX ▼ -6.3%, AAVE ▼ -4.4%, BTC ▲ +3.7% — the stablecoin never appears."""
     rows = top_movers()
     assert len(rows) == MOVERS
-    assert [row.symbol for row in rows] == ["NVDA", "TSLA", "AAPL"]
-    assert [row.ratio > ZERO for row in rows] == [True, False, True]
-    assert all(not market_asset(row.symbol).is_fund for row in rows)
+    assert [row.symbol for row in rows] == ["AVAX", "AAVE", "BTC"]
+    assert [row.ratio > ZERO for row in rows] == [False, False, True]
+    assert all(
+        market_asset(row.symbol).asset_class is not AssetClass.STABLECOIN
+        for row in rows
+    )
 
 
 def test_top_movers_are_ordered_by_the_size_of_the_move() -> None:
     magnitudes = [abs(row.ratio) for row in top_movers(limit=8)]
     assert magnitudes == sorted(magnitudes, reverse=True)
-    assert "USD" not in {row.symbol for row in top_movers(limit=20)}
-    assert "GLD" not in {row.symbol for row in top_movers(limit=20)}
+    assert "USDC" not in {row.symbol for row in top_movers(limit=20)}

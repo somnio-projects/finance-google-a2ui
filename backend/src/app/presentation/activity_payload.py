@@ -4,8 +4,12 @@
 timeline. Filter chips scope by type; each row carries a type icon,
 price/quantity subtitle, and a right-aligned amount (buys neutral, dividends
 green +, sells colored by realized P/L). Sell rows add a tax-lot badge —
-amber ST, teal LT."* Every word here — headings, captions, badges — is the
-server's (N-9); the client draws icons and colours from ``kind`` and ``tone``.
+amber ST, teal LT."* Every word here is the server's (N-9); the client draws
+icons and colours from ``kind`` and ``tone``.
+
+**The income kind is a staking reward, not a dividend (spec 0044 OD-7)**: the
+sentence above was written over an equities ledger. The *shape* is unchanged —
+income is still green and still carries a ``+``.
 """
 
 from typing import Final, Literal
@@ -24,8 +28,8 @@ SUMMARY: Final[str] = (
     "and each month, filtered by kind, every row captioned and its amount "
     "signed the way the design colours it."
 )
-Kind = Literal["all", "buy", "sell", "dividend", "deposit"]
-EntryKind = Literal["buy", "sell", "dividend", "deposit"]
+Kind = Literal["all", "buy", "sell", "staking_reward", "deposit"]
+EntryKind = Literal["buy", "sell", "staking_reward", "deposit"]
 Term = Literal["short", "long"]
 
 
@@ -42,13 +46,13 @@ FILTERS: Final[tuple[Filter, ...]] = (
     Filter(key="all", label="All"),
     Filter(key="buy", label="Buys"),
     Filter(key="sell", label="Sells"),
-    Filter(key="dividend", label="Dividends"),
+    Filter(key="staking_reward", label="Staking"),
     Filter(key="deposit", label="Deposits"),
 )
 BADGES: Final[dict[str, str]] = {
     "buy": "Buy",
     "sell": "Sell",
-    "dividend": "Dividend",
+    "staking_reward": "Staking",
     "deposit": "Deposit",
 }
 #: What the tab says when the filters keep nothing — server-written like
@@ -82,13 +86,11 @@ class ActivityEntry(BaseModel):
 
     key: str = Field(max_length=32, description="The ledger row's id.")
     kind: EntryKind = Field(description="Picks the icon and the sign.")
-    title: str = Field(max_length=48, description="``Bought 60 NVDA``.")
-    detail: str = Field(max_length=64, description="``60 sh @ $760.00 · Sep 12``.")
+    title: str = Field(max_length=48, description="``Bought 1.6 BTC``.")
+    detail: str = Field(max_length=64, description="``1.6 units @ $36,000.00``.")
     amount: MoneyDisplay = Field(description="Right-aligned, signed as drawn.")
     tone: Trend = Field(description="The amount's colour: up green, flat neutral.")
-    badge: str = Field(
-        max_length=12, description="``Buy`` · ``Dividend`` · ``Deposit``."
-    )
+    badge: str = Field(max_length=12, description="``Buy`` · ``Staking``.")
     realized: RealizedLine | None = Field(default=None, description="Sells only.")
     term: TermBadge | None = Field(default=None, description="Sells only.")
 

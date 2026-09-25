@@ -83,7 +83,7 @@ def test_a_declared_option_reaches_the_projection(views_client: TestClient) -> N
     )
 
     categories = response.json()["results"][0]["payload"]["categories"]
-    assert [row["key"] for row in categories] == ["TIP", "other"]
+    assert [row["key"] for row in categories] == ["AAVE", "other"]
 
 
 @pytest.mark.parametrize(

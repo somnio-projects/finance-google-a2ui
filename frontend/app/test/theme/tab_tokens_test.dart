@@ -53,7 +53,7 @@ void main() {
       ));
       expect(activityTokensLight.tileFor('sell').$1, const Color(0xFFF0EEF4));
       expect(
-        activityTokensLight.tileFor('dividend').$2,
+        activityTokensLight.tileFor('staking_reward').$2,
         const Color(0xFF0C6A52),
       );
       expect(
@@ -66,7 +66,7 @@ void main() {
       );
       expect(activityTokensLight.shortBadge, const Color(0xFFFBE9C8));
       expect(activityTokensLight.longBadge, const Color(0xFFCFE9E3));
-      expect(activityTokensDark.dividendGlyph, const Color(0xFF4ADE9E));
+      expect(activityTokensDark.rewardGlyph, const Color(0xFF4ADE9E));
       expect(activityTokensFor(Brightness.light), same(activityTokensLight));
       expect(
         AppTheme.dark.extension<ActivityTokens>(),

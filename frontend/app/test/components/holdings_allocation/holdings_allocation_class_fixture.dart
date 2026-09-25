@@ -8,7 +8,12 @@ const AllocationGain allTimeGain = AllocationGain(
   period: 'all-time',
 );
 
-/// The four asset classes of `Home.dc.html`, with day changes.
+/// The five asset classes of the crypto portfolio (spec `backend/0044`), with
+/// their day changes, in the taxonomy's own order.
+///
+/// The stablecoin row carries **no** trend at all, which is the fixture's job:
+/// the glyph comes from the declared enum, so a row without one draws no line
+/// rather than a client inferring one from the sign (N-2).
 AllocationData byClass({
   AllocationGain? gain = allTimeGain,
   bool headline = true,
@@ -17,45 +22,54 @@ AllocationData byClass({
   totalLabel: 'Total value',
   totalDisplay: r'$482,915.20',
   groupBy: 'asset_class',
-  centerCount: '4',
+  centerCount: '5',
   centerUnit: 'Classes',
   totalGain: gain,
   headline: headline,
   categories: const <AllocationCategory>[
     AllocationCategory(
-      key: 'equities',
-      label: 'Equities',
-      valueDisplay: r'$289,430',
-      weightDisplay: '59.9%',
-      weight: 0.599,
-      changeDisplay: '+0.9%',
+      key: 'layer1',
+      label: 'Layer 1',
+      valueDisplay: r'$296,551',
+      weightDisplay: '61.4%',
+      weight: 0.614,
+      changeDisplay: '+1.5%',
       trend: 'up',
     ),
     AllocationCategory(
-      key: 'bonds',
-      label: 'Bonds',
-      valueDisplay: r'$96,240',
-      weightDisplay: '19.9%',
-      weight: 0.199,
-      changeDisplay: '-0.2%',
-      trend: 'down',
+      key: 'layer2',
+      label: 'Layer 2',
+      valueDisplay: r'$43,740',
+      weightDisplay: '9.1%',
+      weight: 0.091,
+      changeDisplay: '+2.6%',
+      trend: 'up',
     ),
     AllocationCategory(
-      key: 'cash',
-      label: 'Cash',
-      valueDisplay: r'$38,633',
-      weightDisplay: '8.0%',
-      weight: 0.08,
+      key: 'stablecoin',
+      label: 'Stablecoins',
+      valueDisplay: r'$51,764',
+      weightDisplay: '10.7%',
+      weight: 0.107,
       changeDisplay: '0.0%',
     ),
     AllocationCategory(
-      key: 'alternatives',
-      label: 'Alternatives',
-      valueDisplay: r'$58,612',
-      weightDisplay: '12.1%',
-      weight: 0.121,
-      changeDisplay: '+1.4%',
-      trend: 'up',
+      key: 'defi',
+      label: 'DeFi',
+      valueDisplay: r'$43,400',
+      weightDisplay: '9.0%',
+      weight: 0.09,
+      changeDisplay: '-4.4%',
+      trend: 'down',
+    ),
+    AllocationCategory(
+      key: 'infrastructure',
+      label: 'Infrastructure',
+      valueDisplay: r'$47,460',
+      weightDisplay: '9.8%',
+      weight: 0.098,
+      changeDisplay: '-2.4%',
+      trend: 'down',
     ),
   ],
 );

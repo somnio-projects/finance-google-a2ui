@@ -15,7 +15,7 @@ DRILL = "drill.attribution.v1"
 
 def _data_part(action: str = DRILL) -> dict[str, object]:
     """Build one `data` part carrying a registered action."""
-    return {"kind": "data", "data": {"action": action, "args": {"driver": "XOM"}}}
+    return {"kind": "data", "data": {"action": action, "args": {"driver": "LINK"}}}
 
 
 def test_a_message_joins_its_text_parts() -> None:
@@ -52,7 +52,7 @@ def test_a_message_carrying_one_action_exposes_it_and_no_text() -> None:
 
     action = message.action()
     assert action is not None
-    assert (action.action, dict(action.args)) == (DRILL, {"driver": "XOM"})
+    assert (action.action, dict(action.args)) == (DRILL, {"driver": "LINK"})
     assert message.text() == ""
 
 

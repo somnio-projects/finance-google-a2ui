@@ -22,7 +22,7 @@ def drill(symbol: str) -> Script:
         answer=(
             "{name} ({symbol}) contributed {contributionDisplay} today: its price "
             "moved {priceMovePctDisplay} ({priceMoveDisplay}) on {sharesDisplay} "
-            "shares at {priceDisplay}, {shareOfDayDisplay} of the day's "
+            "units at {priceDisplay}, {shareOfDayDisplay} of the day's "
             "{dayGainDisplay}."
         ),
         otherwise=(

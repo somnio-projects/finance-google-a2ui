@@ -1,7 +1,7 @@
 """``driver_detail`` — what one holding did to the portfolio today (spec 0032).
 
 The turn a tapped waterfall bar opens asks the model to *break down the
-contribution of NVDA*; until this tool existed the model had nothing to
+contribution of BTC*; until this tool existed the model had nothing to
 render for it and answered in prose. It now renders ``attribution.driver.v1``
 for the symbol, and narrates from the strings below.
 
@@ -36,7 +36,7 @@ class DriverDetailArguments(BaseModel):
 
     symbol: Ticker = Field(
         description="The holding to describe — the bar that was tapped.",
-        examples=["NVDA"],
+        examples=["BTC"],
     )
 
 

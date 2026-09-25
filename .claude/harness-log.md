@@ -5063,3 +5063,61 @@ not help — OD-8).
 real difference, not noise, and it passes both the old comparator and the new
 one. It was reported rather than regenerated, because erasing it inside a
 harness PR would destroy the evidence of whatever caused it. That is a ticket.
+
+## 2026-09-24 — The portfolio is crypto
+
+**Spec:** [`backend/0044`](../specs/backend/0044-the-portfolio-is-crypto.md) ·
+**Ticket:** GGU-114 · **Supersedes** `backend/0025` OD-2.
+
+The demo portfolio was US equities. The demo is crypto. Eight assets — BTC,
+ETH, SOL, AVAX, ARB, USDC, AAVE, LINK — replace seventeen, and the change runs
+from `domain/market_data.py` through every projection to the client's goldens.
+
+**Which layer.** Data, plus the four places the data's *vocabulary* is a
+contract: the taxonomy (`AssetClass`, `Sector`), the declared option values
+(`ActivityKind`, `AssetClassFilter`, `legs`), the `kind` column's width, and
+the prose the model reads. The last one is the easiest to miss: the tool
+descriptions and generated fragments said "whole shares" and
+"semiconductors", and they ship to the model.
+
+**Two findings worth carrying forward:**
+
+- **A universe change is not a rename; it is a change of what the options
+  *mean*.** `group_by=sector` was the sharp one. The crypto vocabulary a
+  reader reaches for — L1, L2, DeFi, oracles, stablecoins — *is* the
+  asset-class vocabulary, so re-lettering `Sector` with it would have made the
+  second grouping a relabelling of the first and the option pointless. It is
+  now the **chain ecosystem**, which is genuinely orthogonal (ARB, AAVE and
+  LINK share Ethereum across three classes). The option *value* stays
+  `sector`, because that word is design's, the client binds it and the catalog
+  publishes it — renaming it would break three contracts for a synonym.
+
+- **A bound that was right for one asset class can be a functional bug in
+  another.** `order.ticket.v2`'s `legs` were integers and `basket_legs`
+  floored to a whole unit. At $64,250 a BTC, Flow C's own $10k prompt composed
+  a leg of **zero** — a demo flow broken by a regex, with every test green,
+  because every test asked for equities. Units are now fractional and a
+  stepper's step is a **declared column of the market reference**
+  (`MarketAsset.step`), not a constant: one tap cannot serve a $64,250 coin
+  and an 86-cent token. The client still computes nothing — each leg carries
+  the whole option value its `+` sends, as before.
+
+**Three tests got sharper rather than merely updated**, and each was a case
+the equities seed could not reach. `test_simulate_sale_sizes.py` carried a
+comment recording that its sub-dollar-price case was **dead** because nothing
+in an equities portfolio is quoted below a dollar; ARB is, so it is live again
+with real data. `test_draft_order.py`'s refusal table used an invalid basket in
+every row, so the "amount is zero" row was rejected for its *basket* and the
+amount validator was never reached. `test_draft_weights.py` asserted one
+weight-shift row; the design's three legs now settle on three chains.
+
+**Harness:** no rule changed. `.claude/rules/backend/presentation.md`'s
+"before removing a field nothing appears to bind, read the clients" was
+applied rather than amended — `is_fund` went, because a flag false in every
+row is a claim the data does not support, and the grep over `lib/` and the
+tests is what said it was safe.
+
+**Next person:** the goldens in this branch will need regenerating again after
+GGU-115 and GGU-116 land — they redesign the waterfall and tax-lot components
+against the UI kit, and this branch deliberately edits neither component
+source. Take theirs for `lib/`, rerun `flutter test --update-goldens`.

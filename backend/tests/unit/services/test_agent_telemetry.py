@@ -74,7 +74,7 @@ async def test_the_turn_log_line_carries_no_prompt_no_result_and_no_subject(
 
     with structlog.testing.capture_logs() as logs:
         await service.run_turn(
-            prompt="how much NVDA do I hold?", history=[], context=tool_context
+            prompt="how much BTC do I hold?", history=[], context=tool_context
         )
 
     turns = [entry for entry in logs if entry["event"] == TURN_METRIC]
@@ -97,7 +97,7 @@ async def test_the_turn_log_line_carries_no_prompt_no_result_and_no_subject(
     }
     assert turns[0]["outcome"] == "ok"
     rendered = str(turns[0])
-    assert "NVDA" not in rendered
+    assert "BTC" not in rendered
     assert tool_context.owner not in rendered
     assert ANSWER not in rendered
 

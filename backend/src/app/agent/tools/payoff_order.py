@@ -43,8 +43,8 @@ class PayoffArguments(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     symbol: Ticker = Field(
-        description="Ticker of the asset the order is for, such as 'VOO'.",
-        examples=["VOO"],
+        description="Ticker of the asset the order is for, such as 'SOL'.",
+        examples=["SOL"],
     )
     size: str = Field(
         pattern=SIZE_PATTERN,

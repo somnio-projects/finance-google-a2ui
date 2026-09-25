@@ -27,7 +27,7 @@ REQUEST_ID = "req-7"
 
 def _drill() -> ActionData:
     """Build the `data` part a waterfall tap would have sent."""
-    return ActionData(action=DRILL, args={"driver": "XOM"})
+    return ActionData(action=DRILL, args={"driver": "LINK"})
 
 
 async def test_the_capability_ships_on_when_no_row_exists() -> None:

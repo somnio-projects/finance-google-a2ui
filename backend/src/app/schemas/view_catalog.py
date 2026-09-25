@@ -121,7 +121,7 @@ class ViewDescriptor(BaseModel):
                     "label": "Break this down",
                     "arg": "driver",
                     "control": "choice",
-                    "choices": ["JNJ", "NVDA", "XOM", "AAPL"],
+                    "choices": ["AAVE", "BTC", "LINK", "ETH"],
                 }
             ]
         ],

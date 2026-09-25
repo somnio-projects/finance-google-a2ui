@@ -1,4 +1,4 @@
-"""How a holding is grouped — asset class and sector (spec 0025 OD-3).
+"""How a holding is grouped — asset class and ecosystem (spec 0044 OD-1, OD-2).
 
 The design's `HoldingsSummary` groups the portfolio two ways and says so in its
 own schema: ``"groupBy": "assetClass | sector"``. A grouping the backend cannot
@@ -7,13 +7,22 @@ invariant broken by another name — so both vocabularies live here, closed, and
 a projection selects between them through a declared option.
 
 Closed rather than free text on purpose. An asset class is the denominator of
-every allocation figure on screen; a typo would silently create a fifth slice
+every allocation figure on screen; a typo would silently create a sixth slice
 that sums to nothing, and no test reading its expectation from the same seed
 would notice.
 
-Cash is an asset class like any other. The design lists ``USD · Cash & sweep``
-as a row with a market value and a 0.0 % day change, and modelling it as a
-special case would put a branch in every consumer of a holding.
+**The portfolio is crypto (spec 0044).** An equity's *economic sector* —
+Technology, Energy — says nothing about a token, so the two folds are now
+*what kind of asset it is* (`AssetClass`) and *which chain family it settles
+on* (`Sector`). The option value stays the word design wrote, ``sector``: the
+second fold is still "the correlated-exposure bucket this asset sits in", and
+renaming design's own schema word in a data change would break the client, the
+catalog snapshot and the design contract for a synonym (OD-2).
+
+The settlement asset is an asset class like any other. The design lists a row
+with a market value and a 0.0 % day change, and modelling the stablecoin as a
+special case would put a branch in every consumer of a holding — the argument
+cash carried here before it, unchanged by the balance now being tokenised.
 """
 
 from enum import StrEnum
@@ -22,46 +31,45 @@ from enum import StrEnum
 class AssetClass(StrEnum):
     """What kind of thing a holding is, as the design's donut groups them."""
 
-    EQUITIES = "equities"
-    BONDS = "bonds"
-    CASH = "cash"
-    ALTERNATIVES = "alternatives"
+    LAYER1 = "layer1"
+    LAYER2 = "layer2"
+    STABLECOIN = "stablecoin"
+    DEFI = "defi"
+    INFRASTRUCTURE = "infrastructure"
 
 
 class Sector(StrEnum):
-    """The economic sector an equity belongs to.
+    """The chain family an asset settles on — the second fold's vocabulary.
 
-    Only equities carry one. A bond fund, a gold ETF and a settlement balance
-    have no sector, and the absence is modelled as ``None`` on the asset rather
+    Not every asset has one. A multi-chain stablecoin is natively issued on
+    several of these at once, so attributing it to one would be a false
+    denominator, and the absence is modelled as ``None`` on the asset rather
     than as an ``OTHER`` bucket that would then be indistinguishable from a
-    genuine "Other" equity like a broad-market ETF.
+    genuine ecosystem (OD-2).
     """
 
-    TECHNOLOGY = "technology"
-    FINANCIALS = "financials"
-    HEALTHCARE = "healthcare"
-    CONSUMER = "consumer"
-    ENERGY = "energy"
-    OTHER = "other"
+    BITCOIN = "bitcoin"
+    ETHEREUM = "ethereum"
+    SOLANA = "solana"
+    AVALANCHE = "avalanche"
 
 
 #: What each class is called on screen. The client never spells these: a label
 #: is a server-written string under N-9, like every other word on a surface.
 ASSET_CLASS_LABELS: dict[AssetClass, str] = {
-    AssetClass.EQUITIES: "Equities",
-    AssetClass.BONDS: "Bonds",
-    AssetClass.CASH: "Cash",
-    AssetClass.ALTERNATIVES: "Alternatives",
+    AssetClass.LAYER1: "Layer 1",
+    AssetClass.LAYER2: "Layer 2",
+    AssetClass.STABLECOIN: "Stablecoins",
+    AssetClass.DEFI: "DeFi",
+    AssetClass.INFRASTRUCTURE: "Infrastructure",
 }
 
-#: What each sector is called on screen, for the same reason.
+#: What each ecosystem is called on screen, for the same reason.
 SECTOR_LABELS: dict[Sector, str] = {
-    Sector.TECHNOLOGY: "Technology",
-    Sector.FINANCIALS: "Financials",
-    Sector.HEALTHCARE: "Healthcare",
-    Sector.CONSUMER: "Consumer",
-    Sector.ENERGY: "Energy",
-    Sector.OTHER: "Other",
+    Sector.BITCOIN: "Bitcoin",
+    Sector.ETHEREUM: "Ethereum",
+    Sector.SOLANA: "Solana",
+    Sector.AVALANCHE: "Avalanche",
 }
 
 __all__ = [

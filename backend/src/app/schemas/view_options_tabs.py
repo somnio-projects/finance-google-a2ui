@@ -22,14 +22,16 @@ from pydantic import BaseModel, Field
 #: Periods the Home hero is measured over; groupings of the allocation donut.
 Range = Literal["1d", "1w", "1m", "ytd", "1y", "all"]
 GroupBy = Literal["holding", "asset_class", "sector"]
-ActivityKind = Literal["all", "buy", "sell", "dividend", "deposit"]
+ActivityKind = Literal["all", "buy", "sell", "staking_reward", "deposit"]
 #: `holdings.positions.v1`'s class chips. The presentation layer's
 #: `AssetFilter` is the same closed set, and `tests/unit/schemas/
 #: test_view_option_members.py` compares the two **member for member** —
 #: the names-only comparison in `test_view_query_accepts_every_registered_
 #: option` cannot see a value on one side alone, which is a 422 for
 #: something the catalog advertises.
-AssetClassFilter = Literal["all", "equities", "bonds", "alternatives", "cash"]
+AssetClassFilter = Literal[
+    "all", "layer1", "layer2", "stablecoin", "defi", "infrastructure"
+]
 #: A search needle. Bounded in length *and* in alphabet: it reaches no SQL,
 #: no template and no log line (spec 0035 §5), and a bound that says so is
 #: cheaper than a reader having to go and check.
@@ -57,7 +59,7 @@ class TabOptions(BaseModel):
     kind: ActivityKind | None = Field(
         default=None,
         description="`activity.timeline.v1`: rows to show.",
-        examples=["dividend"],
+        examples=["staking_reward"],
     )
     limit: int | None = Field(
         default=None,
@@ -68,7 +70,7 @@ class TabOptions(BaseModel):
     asset_class: AssetClassFilter | None = Field(
         default=None,
         description="`holdings.positions.v1`: keep only this asset class.",
-        examples=["bonds"],
+        examples=["layer1"],
     )
     query: Annotated[str, Field(pattern=QUERY_PATTERN)] | None = Field(
         default=None,
@@ -77,7 +79,7 @@ class TabOptions(BaseModel):
             "text, case-insensitively. The projection rejects it where it is "
             "not declared."
         ),
-        examples=["nvda"],
+        examples=["btc"],
     )
 
 

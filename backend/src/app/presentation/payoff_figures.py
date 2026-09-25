@@ -45,7 +45,7 @@ def price_places(*, step: Decimal, entry: Decimal) -> int:
 
     Two rules together. A unit price is quoted to the resolution it is
     actually quoted at — ``app.core.display.price_display``'s rule, which is
-    why XOM is not printed as ``$0.13``. The grid's own step then widens that
+    why LINK is not printed as ``$0.13``. The grid's own step then widens that
     when the step is finer, because a ladder whose adjacent rows render the
     same price states two contradictory things at once (spec 0014 OD-10).
 

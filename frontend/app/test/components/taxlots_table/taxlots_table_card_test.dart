@@ -42,14 +42,14 @@ void main() {
     ) async {
       await pumpCard(tester, component.read(ViewPayload.fromJson(example)));
       expect(find.text('Tax lots this sale consumes'), findsOneWidget);
-      expect(find.text('Sell 75 NVDA under FIFO'), findsOneWidget);
-      expect(find.text(r'$45,600.00'), findsOneWidget);
-      expect(find.text(r'$72,279.60'), findsOneWidget);
-      expect(find.text(r'+$26,679.60'), findsOneWidget);
-      expect(find.text(r'$14,400.00'), findsOneWidget);
-      expect(find.text(r'+$3,669.90'), findsOneWidget);
+      expect(find.text('Sell 0.75 BTC under FIFO'), findsOneWidget);
+      expect(find.text(r'$9,000.00'), findsOneWidget);
+      expect(find.text(r'$16,062.50'), findsOneWidget);
+      expect(find.text(r'+$7,062.50'), findsOneWidget);
+      expect(find.text(r'$21,234.00'), findsOneWidget);
+      expect(find.text(r'+$10,891.00'), findsOneWidget);
       expect(find.text('Realised P/L'), findsOneWidget);
-      expect(find.text(r'+$30,349.50'), findsOneWidget);
+      expect(find.text(r'+$17,953.50'), findsOneWidget);
       expect(find.text('2025-01-13'), findsOneWidget);
     });
 
@@ -58,12 +58,12 @@ void main() {
       // beside a display string, must not reach a `Text`.
       await pumpCard(tester, component.read(ViewPayload.fromJson(example)));
       for (final raw in <String>[
-        '60.0000',
-        '15.0000',
-        '45600.00',
-        '26679.600000',
-        '30349.500000',
-        '72279.600000',
+        '0.25000000',
+        '0.50000000',
+        '9000.00',
+        '7062.5000000000',
+        '17953.5000000000',
+        '16062.5000000000',
       ]) {
         expect(find.text(raw), findsNothing, reason: '$raw is a raw figure');
       }
@@ -109,7 +109,7 @@ void main() {
       expect(find.byType(TaxLotRowTile), findsNothing);
       expect(find.byType(TaxLotColumnHeaders), findsNothing);
       // The realised result is still the answer to the question asked.
-      expect(find.text(r'+$30,349.50'), findsOneWidget);
+      expect(find.text(r'+$17,953.50'), findsOneWidget);
     });
 
     testWidgets('renders in the dark theme', (tester) async {

@@ -38,7 +38,7 @@ void main() {
     /// One good turn, so the chips exist, then a failed one.
     Future<void> failAfterAnAnswer(WidgetTester tester) async {
       scriptTurn(agent, const <AgentEvent>[
-        AgentAnswered(text: 'NVDA led.', views: <String>[], suggestions: chips),
+        AgentAnswered(text: 'BTC led.', views: <String>[], suggestions: chips),
         AgentTurnEnded(AgentTurnState.completed),
       ]);
       await pumpConversation(tester, agent: agent, views: views);
@@ -83,7 +83,7 @@ void main() {
     ) async {
       await failAfterAnAnswer(tester);
       scriptTurn(agent, const <AgentEvent>[
-        AgentAnswered(text: 'Chips and GLD.', views: <String>[]),
+        AgentAnswered(text: 'Chips and SOL.', views: <String>[]),
         AgentTurnEnded(AgentTurnState.completed),
       ]);
 
@@ -91,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TurnFailureCard), findsNothing);
-      expect(find.text('Chips and GLD.'), findsOneWidget);
+      expect(find.text('Chips and SOL.'), findsOneWidget);
       // The question was not echoed a second time.
       expect(find.text('and the drivers?'), findsOneWidget);
       verify(

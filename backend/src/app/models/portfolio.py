@@ -66,7 +66,7 @@ class PortfolioLot(TimestampMixin, Base):
 
 
 class PortfolioTransaction(TimestampMixin, Base):
-    """One ledger row — trade, dividend or deposit — cascading from its portfolio."""
+    """One ledger row — trade, reward or deposit — cascading from its portfolio."""
 
     __tablename__ = "portfolio_transactions"
 
@@ -75,7 +75,10 @@ class PortfolioTransaction(TimestampMixin, Base):
     )
     transaction_id: Mapped[str] = mapped_column(String(32), nullable=False)
     occurred_on: Mapped[date] = mapped_column(Date(), nullable=False)
-    kind: Mapped[str] = mapped_column(String(8), nullable=False)
+    # 16, not 8: ``staking_reward`` is fourteen characters and ``dividend``
+    # was exactly eight, so the column that fitted the equities ledger would
+    # have truncated the one that replaced it (spec 0044 OD-7, AC-6).
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
     symbol: Mapped[str] = mapped_column(String(10), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     price: Mapped[Decimal] = mapped_column(EXACT, nullable=False)

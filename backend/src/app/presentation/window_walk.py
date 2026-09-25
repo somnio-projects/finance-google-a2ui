@@ -37,7 +37,7 @@ def net_of(*, start: Decimal, end: Decimal, options: DisplayOptions) -> Delta:
 def step_of(row: Contribution, total: Decimal, options: DisplayOptions) -> WindowStep:
     """Write one holding's contribution down as a step of the walk.
 
-    The step names the two values the move is between, because "NVDA
+    The step names the two values the move is between, because "BTC
     -$7,871.40" answers *how much* and not *from what*.
     """
     move = move_of(row.end_value, row.start_value, options)

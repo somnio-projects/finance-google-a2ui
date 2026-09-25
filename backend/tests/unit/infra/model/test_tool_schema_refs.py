@@ -13,7 +13,7 @@ import pytest
 from app.core.errors import ConfigurationError
 from app.infra.model.tool_schema import to_gemini_schema
 
-TICKER = {"type": "string", "maxLength": 10, "examples": ["NVDA"]}
+TICKER = {"type": "string", "maxLength": 10, "examples": ["BTC"]}
 RESOLVED = {"type": "string", "maxLength": 10}
 
 

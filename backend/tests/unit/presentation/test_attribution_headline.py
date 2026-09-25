@@ -39,16 +39,17 @@ def test_render_gives_each_step_what_its_selected_state_shows(
 ) -> None:
     """AC-3 — move, units and price as pairs, plus the written lines."""
     payload = render(portfolio, AttributionWaterfallOptions())
-    nvidia = next(step for step in payload.buckets if step.key == "NVDA")
+    bitcoin = next(step for step in payload.buckets if step.key == "BTC")
 
-    # 0.45725 rounds half-even to 45.72 (ADR-E D-3), and only at display.
-    assert nvidia.move.value == Decimal("0.45725")
-    assert nvidia.move.display == "+45.72%"
-    assert (nvidia.units.display, nvidia.price.display) == ("90", "$1,204.66")
-    assert nvidia.detail == "+45.72% · 90 sh · $1,204.66"
-    assert nvidia.selected_label == "NVDA selected"
-    gold = next(step for step in payload.buckets if step.key == "GLD")
-    assert gold.move.display.startswith("-")  # a loser's move is signed too
+    # The exact ratio is carried beside the string, and rounding happens only
+    # at display (ADR-E D-3) — 0.5408412873… is never quantized in the payload.
+    assert bitcoin.move.value > Decimal("0.5408")
+    assert bitcoin.move.display == "+54.08%"
+    assert (bitcoin.units.display, bitcoin.price.display) == ("2.1", "$64,250.00")
+    assert bitcoin.detail == "+54.08% · 2.1 sh · $64,250.00"
+    assert bitcoin.selected_label == "BTC selected"
+    loser = next(step for step in payload.buckets if step.key == "ARB")
+    assert loser.move.display.startswith("-")  # a loser's move is signed too
 
 
 @pytest.mark.parametrize(

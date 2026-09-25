@@ -23,20 +23,25 @@ from app.presentation.displays import money
 from app.presentation.options import DisplayOptions
 
 
-def _dividend(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
-    """``Dividend — VOO`` · ``$1.62/sh · 85 sh · qualified`` · green ``+``."""
+def _reward(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
+    """``Staking — ETH`` · ``$3,480.00/unit · 0.075 units · …`` · green ``+``.
+
+    A reward is paid **in the asset** (spec 0044 OD-7), so the price is the
+    unit price on the day and the quantity is what arrived — the same pair a
+    dividend carried, counting units instead of shares.
+    """
     del ledger
     row = words.row
     return words.entry(
-        title=f"Dividend — {row.symbol}",
-        detail=f"{words.price}/sh · {words.shares} sh{words.memo}",
+        title=f"Staking — {row.symbol}",
+        detail=f"{words.price}/unit · {words.shares} units{words.memo}",
         amount=words.signed(row.amount),
         tone="up",
     )
 
 
 def _deposit(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
-    """``Deposit — Bank transfer`` · ``Chase ••4021 · Mon`` · green ``+``."""
+    """``Deposit — Transfer in`` · ``Coinbase ••4021 · Mon`` · green ``+``."""
     del ledger
     row = words.row
     source, *rest = (row.memo or "").split(MEMO_SEPARATOR)
@@ -48,12 +53,12 @@ def _deposit(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
 
 
 def _buy(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
-    """``Bought 60 NVDA`` · ``60 sh @ $760.00 · Sep 16`` · a neutral ``-``."""
+    """``Bought 1.6 BTC`` · ``1.6 units @ $36,000.00 · Sep 16`` · neutral ``-``."""
     del ledger
     row = words.row
     return words.entry(
         title=f"Bought {words.shares} {row.symbol}",
-        detail=f"{words.shares} sh @ {words.price} · {words.when}{words.memo}",
+        detail=f"{words.shares} units @ {words.price} · {words.when}{words.memo}",
         amount=words.signed(-row.amount),
         tone="flat",
     )
@@ -61,7 +66,7 @@ def _buy(words: Words, ledger: Sequence[Transaction]) -> ActivityEntry:
 
 _Writer = Callable[[Words, Sequence[Transaction]], ActivityEntry]
 _WRITERS: Final[dict[TransactionType, _Writer]] = {
-    TransactionType.DIVIDEND: _dividend,
+    TransactionType.STAKING_REWARD: _reward,
     TransactionType.DEPOSIT: _deposit,
     TransactionType.BUY: _buy,
     TransactionType.SELL: sell,

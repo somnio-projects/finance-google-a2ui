@@ -103,7 +103,7 @@ class OrderTicketV2Payload(ProjectionDto):
         max_length=MAX_LEGS_TEXT,
         pattern=LEGS_PATTERN,
         description="The `legs` option as sent, ready to be sent back unchanged.",
-        examples=["NVDA:3,AVGO:2,AMD:14"],
+        examples=["BTC:3,ETH:2,SOL:14"],
     )
     lines: tuple[OrderLine, ...] = Field(
         max_length=MAX_LEGS,

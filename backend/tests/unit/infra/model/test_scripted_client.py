@@ -125,12 +125,12 @@ async def test_the_default_table_is_the_demos() -> None:
 async def test_a_script_says_its_own_empty_answer_when_a_hole_is_unfilled() -> None:
     """``otherwise`` replaces the failure sentence for a tool that had nothing."""
     script = Script(
-        calls=(ScriptedCall("driver_detail", {"symbol": "AMD"}),),
+        calls=(ScriptedCall("driver_detail", {"symbol": "SOL"}),),
         answer="{name} moved {contributionDisplay}.",
-        otherwise="AMD is not held, so there is nothing to break down.",
+        otherwise="SOL is not held, so there is nothing to break down.",
     )
-    client = ScriptedModelClient({"drill amd": script})
-    messages = [user("Drill AMD"), tool_result({"symbol": "AMD", "held": False})]
+    client = ScriptedModelClient({"drill sol": script})
+    messages = [user("Drill SOL"), tool_result({"symbol": "SOL", "held": False})]
 
     reply = await client.generate(system="s", messages=messages, tools=())
 

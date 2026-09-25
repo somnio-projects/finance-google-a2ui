@@ -70,16 +70,18 @@ void main() {
       final data = byClass();
       await tester.pumpApp(
         AllocationLegendRow(
-          category: data.categories[1],
-          index: 1,
+          // DeFi, the first row whose day is down: the glyph under test comes
+          // from the declared trend, so the row has to carry one.
+          category: data.categories[3],
+          index: 3,
           selected: false,
           onTap: null,
           color: const Color(0xFF0F9D8F),
         ),
       );
-      expect(find.text(r'$96,240'), findsOneWidget);
-      expect(find.text('▼ -0.2%'), findsOneWidget);
-      expect(find.text('19.9%'), findsOneWidget);
+      expect(find.text(r'$43,400'), findsOneWidget);
+      expect(find.text('▼ -4.4%'), findsOneWidget);
+      expect(find.text('9.0%'), findsOneWidget);
     });
 
     testWidgets('a flat change takes the dash; no change draws no line', (

@@ -29,13 +29,13 @@ def test_the_query_model_carries_the_domains_pattern_verbatim() -> None:
     "legs",
     [
         "XRP:1",
-        "NVDA:1,NVDA:2",
-        "nvda:1",
-        "NVDA:1.5",
-        "NVDA:1,AVGO:1,AMD:1,AAPL:1,MSFT:1,PG:1",
+        "BTC:1,BTC:2",
+        "btc:1",
+        "BTC:1.123456789",
+        "BTC:1,ETH:1,SOL:1,ARB:1,AAVE:1,LINK:1",
         "",
     ],
-    ids=["unknown", "repeated", "lowercase", "fractional", "six-legs", "empty"],
+    ids=["unknown", "repeated", "lowercase", "nine-decimals", "six-legs", "empty"],
 )
 def test_a_value_outside_the_bound_is_a_422_naming_the_option(legs: str) -> None:
     """AC-4 — the pattern and the parser refuse together, as one option."""
@@ -45,7 +45,7 @@ def test_a_value_outside_the_bound_is_a_422_naming_the_option(legs: str) -> None
 
 def test_an_undeclared_option_is_refused_rather_than_ignored() -> None:
     with pytest.raises(ValidationFailedError, match="rejected option"):
-        validated_options(REGISTRY.get(VIEW_ID), {"quantity_nvda": "3"})
+        validated_options(REGISTRY.get(VIEW_ID), {"quantity_btc": "3"})
 
 
 def test_every_stepper_value_a_line_carries_is_accepted_back(
@@ -66,27 +66,31 @@ def test_every_stepper_value_a_line_carries_is_accepted_back(
 def test_a_stepper_at_the_bound_is_disabled_rather_than_refused(
     portfolio: Portfolio,
 ) -> None:
-    """OD-3 — null at zero shares and at the six-digit ceiling."""
-    empty = render(portfolio, OrderTicketV2Options(legs="NVDA:0"))
-    full = render(portfolio, OrderTicketV2Options(legs=f"NVDA:{MAX_LEG_QUANTITY}"))
+    """OD-3 — null at zero units and at the published ceiling."""
+    empty = render(portfolio, OrderTicketV2Options(legs="BTC:0"))
+    # ARB at the ceiling rather than BTC: a billion units of a 64-thousand
+    # dollar coin is a portfolio weight of 13 billion per cent, and the
+    # `display` bound refuses the string before the stepper can be asserted.
+    full = render(portfolio, OrderTicketV2Options(legs=f"ARB:{MAX_LEG_QUANTITY}"))
 
     assert empty.title == "Draft order · Buy · 1 leg"
-    assert (empty.lines[0].decrement, empty.lines[0].increment) == (None, "NVDA:1")
+    assert (empty.lines[0].decrement, empty.lines[0].increment) == (None, "BTC:0.01")
     assert empty.lines[0].weight.display == "0.00%"
     assert empty.impact.total.amount.display == "$0.00"
     assert full.lines[0].increment is None
 
 
-def test_a_leg_without_a_sector_is_weighed_under_its_asset_class(
+def test_legs_on_one_chain_are_weighed_as_one_group(
     portfolio: Portfolio,
 ) -> None:
-    """OD-5 — bonds and gold get a row each; none is silently dropped."""
-    payload = render(portfolio, OrderTicketV2Options(legs="BND:10,GLD:1"))
+    """OD-5 — LINK and ARB settle on Ethereum, so they fold into one row.
+
+    The stablecoin is the leg with no ecosystem, and
+    `test_draft_weights.py` covers the fall back to its asset class.
+    """
+    payload = render(portfolio, OrderTicketV2Options(legs="LINK:10,ARB:100"))
 
     assert [
         (shift.label, shift.before.display, shift.after.display)
         for shift in payload.impact.weight_shifts
-    ] == [
-        ("Portfolio weight · Bonds", "18.00%", "18.15%"),
-        ("Portfolio weight · Alternatives", "12.00%", "12.04%"),
-    ]
+    ] == [("Portfolio weight · Ethereum", "49.49%", "49.56%")]

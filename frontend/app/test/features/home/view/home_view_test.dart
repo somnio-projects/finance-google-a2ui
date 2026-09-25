@@ -28,7 +28,7 @@ void main() {
       expect(find.text('Total portfolio value'), findsOneWidget);
       expect(find.text(r'$482,915.20'), findsOneWidget);
       expect(
-        find.text(r'▲ +$3,240.18 (+0.68%)  today', findRichText: true),
+        find.text(r'▲ +$2,201.05 (+0.46%)  today', findRichText: true),
         findsOneWidget,
       );
       expect(find.byType(SparklineChart), findsOneWidget);
@@ -43,17 +43,17 @@ void main() {
       expect(find.text('Suggested questions'), findsOneWidget);
       expect(find.text('💬 What moved my portfolio today?'), findsOneWidget);
       expect(find.text('Top movers today'), findsOneWidget);
-      expect(find.text('NVDA'), findsOneWidget);
-      expect(find.text('Tesla, Inc.'), findsOneWidget);
-      expect(find.text('▼ -2.3%'), findsOneWidget);
-      expect(find.text(r'$1,204.66'), findsOneWidget);
+      expect(find.text('AVAX'), findsOneWidget);
+      expect(find.text('Aave'), findsOneWidget);
+      expect(find.text('▼ -4.4%'), findsOneWidget);
+      expect(find.text(r'$41.80'), findsOneWidget);
     });
 
     testWidgets('never puts a raw figure on screen', (tester) async {
       await pump(tester);
-      expect(find.text('482915.200000'), findsNothing);
-      expect(find.text('3240.180000'), findsNothing);
-      expect(find.text('0.006754948381510465147841136276'), findsNothing);
+      expect(find.text('482915.200000000000'), findsNothing);
+      expect(find.text('2201.050000000000'), findsNothing);
+      expect(find.text('0.004578708573483846897371338039'), findsNothing);
     });
 
     testWidgets('a range tap asks the backend for that range', (tester) async {
