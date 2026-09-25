@@ -14,11 +14,11 @@ import 'package:flutter/material.dart';
 /// second line is `buckets[].detail`, a sentence the backend wrote and this
 /// prints verbatim.
 ///
-/// **What the design has and the payload does not** is the word *Contribution*
-/// in front of the figure. There is no caption field on a bucket, and a Dart
-/// constant would not follow the view's `locale` option, so the figure is
-/// drawn on its own and the gap is raised (spec frontend/0028 §6, backend
-/// gap BG-1).
+/// The word *Contribution* in front of the figure is `buckets[].delta_label`,
+/// which the backend now sends. It was the gap raised as frontend/0028 §6
+/// BG-1 and closed by backend spec 0046 OD-4: a Dart constant would not
+/// follow the view's `locale` option, so the caption is the backend's like
+/// every other word here (N-9).
 class AttributionWaterfallDetail extends StatelessWidget {
   /// Creates the detail strip.
   const AttributionWaterfallDetail({required this.step, super.key});
@@ -63,11 +63,24 @@ class AttributionWaterfallDetail extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                step.valueDisplay,
-                style: ChartText.headlineFigure(
-                  palette.labelFor(step.step.kind),
-                ),
+              // The caption sits *above* the figure here rather than beside
+              // it, which is the one place this strip departs from the
+              // callout: the identity line already owns the left of the row,
+              // and a caption inline with the figure would push it out at
+              // phone width. Same two strings, same order top to bottom.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (step.deltaLabel case final String label)
+                    Text(label, style: ChartText.chip(palette.mutedLabel)),
+                  Text(
+                    step.valueDisplay,
+                    style: ChartText.headlineFigure(
+                      palette.labelFor(step.step.kind),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

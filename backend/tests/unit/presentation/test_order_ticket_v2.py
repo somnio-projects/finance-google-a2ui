@@ -41,14 +41,18 @@ def test_render_strikes_the_design_legs_at_the_seeded_prices(
 
 
 def test_render_states_the_impact_pre_formatted(portfolio: Portfolio) -> None:
-    """AC-5 — the panel: total, units, fees, cash and each group's shift."""
+    """AC-5 — the panel: total, fees, cash and each group's shift."""
     impact = render(portfolio, OrderTicketV2Options()).impact
 
     assert (impact.total.label, impact.total.amount.display) == (
         "Total order",
         "$9,773.40",
     )
-    assert (impact.units.label, impact.units.units.display) == ("Est. shares", "17.06")
+    # No quantity, under any label: the panel showed "Est. shares 17.06" for
+    # 0.06 BTC + 1 ETH + 16 SOL, a figure of nothing beside money totals that
+    # are right. The field is gone rather than renamed (GGU-122, spec 0046
+    # OD-2); each `lines[]` entry carries its own quantity in its own asset.
+    assert "units" not in type(impact).model_fields
     assert (impact.fees.label, impact.fees.amount.display) == (
         "Est. fees · sim",
         "$0.00",

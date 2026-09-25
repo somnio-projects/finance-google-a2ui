@@ -6,7 +6,7 @@ that was already there: what one **leg** carries, apart from what the
 primitive when a second consumer needs it, and a stepper has one.
 
 ``increment`` and ``decrement`` are the stepper. A client may not add one to a
-share count (N-2), so each is the whole ``legs`` option value the tap sends,
+unit count (N-2), so each is the whole ``legs`` option value the tap sends,
 written here from the same parser and bound the options model enforces. A
 ``null`` means the move would leave the published bound, and the control is
 disabled rather than sending a value the backend refuses (spec 0031 OD-3).
@@ -29,8 +29,10 @@ class OrderLine(BaseModel):
     name: str = Field(
         max_length=64, description="Asset name.", examples=["NVIDIA Corp"]
     )
-    price: MoneyDisplay = Field(description="Reference price a share is struck at.")
-    quantity: QuantityDisplay = Field(description="Whole shares this leg covers.")
+    price: MoneyDisplay = Field(description="Reference price a unit is struck at.")
+    quantity: QuantityDisplay = Field(
+        description="Units of this asset the leg covers, in the asset's own units."
+    )
     notional: MoneyDisplay = Field(description="What the leg is worth at that price.")
     weight: PercentageDisplay = Field(description="The leg's share of the order.")
     increment: str | None = Field(
@@ -42,15 +44,9 @@ class OrderLine(BaseModel):
     decrement: str | None = Field(
         max_length=MAX_LEGS_TEXT,
         pattern=LEGS_PATTERN,
-        description="The `legs` value a `-` sends; null at zero shares.",
+        description="The `legs` value a `-` sends; null at zero units.",
         examples=["BTC:2,ETH:2,SOL:14"],
     )
-
-
-class UnitTotal(Labelled):
-    """A headline unit count the widget shows on its own."""
-
-    units: QuantityDisplay = Field(description="The count, exact and formatted.")
 
 
 class WeightShift(Labelled):
@@ -61,4 +57,4 @@ class WeightShift(Labelled):
     after: PercentageDisplay = Field(description="Weight once the order fills.")
 
 
-__all__ = ["OrderLine", "UnitTotal", "WeightShift"]
+__all__ = ["OrderLine", "WeightShift"]

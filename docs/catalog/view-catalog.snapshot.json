@@ -1061,7 +1061,7 @@
     {
       "actions": [],
       "component": "DriverDetail",
-      "digest": "cd870456aaaf",
+      "digest": "aa0536008605",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1084,6 +1084,18 @@
             "display": "+$2,201.05"
           }
         },
+        "holding": {
+          "caption": "@ $64,250.00",
+          "label": "BTC held",
+          "price": {
+            "amount": "64250.00",
+            "display": "$64,250.00"
+          },
+          "units": {
+            "display": "2.1",
+            "units": "2.10000000"
+          }
+        },
         "name": "Bitcoin",
         "price_move": {
           "amount": {
@@ -1096,18 +1108,6 @@
             "value": "0.03662471765085511455308163924"
           },
           "trend": "up"
-        },
-        "shares": {
-          "caption": "@ $64,250.00",
-          "label": "Shares",
-          "price": {
-            "amount": "64250.00",
-            "display": "$64,250.00"
-          },
-          "units": {
-            "display": "2.1",
-            "units": "2.10000000"
-          }
         },
         "symbol": "BTC",
         "trend": "up",
@@ -1253,7 +1253,7 @@
         {
           "binding": "container",
           "input": null,
-          "path": "shares",
+          "path": "holding",
           "presence": "required",
           "state": null,
           "type": "object"
@@ -1261,7 +1261,7 @@
         {
           "binding": "text",
           "input": null,
-          "path": "shares.label",
+          "path": "holding.label",
           "presence": "required",
           "state": null,
           "type": "string ≤64 chars"
@@ -1269,7 +1269,7 @@
         {
           "binding": "container",
           "input": null,
-          "path": "shares.units",
+          "path": "holding.units",
           "presence": "required",
           "state": null,
           "type": "object"
@@ -1277,7 +1277,7 @@
         {
           "binding": "raw",
           "input": null,
-          "path": "shares.units.units",
+          "path": "holding.units.units",
           "presence": "required",
           "state": null,
           "type": "decimal"
@@ -1285,7 +1285,7 @@
         {
           "binding": "display",
           "input": null,
-          "path": "shares.units.display",
+          "path": "holding.units.display",
           "presence": "required",
           "state": null,
           "type": "string ≤32 chars"
@@ -1293,7 +1293,7 @@
         {
           "binding": "container",
           "input": null,
-          "path": "shares.price",
+          "path": "holding.price",
           "presence": "required",
           "state": null,
           "type": "object"
@@ -1301,7 +1301,7 @@
         {
           "binding": "raw",
           "input": null,
-          "path": "shares.price.amount",
+          "path": "holding.price.amount",
           "presence": "required",
           "state": null,
           "type": "decimal"
@@ -1309,7 +1309,7 @@
         {
           "binding": "display",
           "input": null,
-          "path": "shares.price.display",
+          "path": "holding.price.display",
           "presence": "required",
           "state": null,
           "type": "string ≤32 chars"
@@ -1317,7 +1317,7 @@
         {
           "binding": "text",
           "input": null,
-          "path": "shares.caption",
+          "path": "holding.caption",
           "presence": "required",
           "state": null,
           "type": "string ≤40 chars"
@@ -1484,7 +1484,7 @@
         }
       ],
       "component": "AttributionWaterfall",
-      "digest": "af6abbaab603",
+      "digest": "d33d3882383f",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -1533,7 +1533,8 @@
               "amount": "47359.2000000000",
               "display": "$47,359.20"
             },
-            "detail": "+54.08% · 2.1 sh · $64,250.00",
+            "delta_label": "Contribution",
+            "detail": "+54.08% · 2.1 BTC · $64,250.00",
             "direction": "up",
             "key": "BTC",
             "label": "Bitcoin",
@@ -1545,7 +1546,6 @@
               "amount": "64250.00",
               "display": "$64,250.00"
             },
-            "selected_label": "BTC selected",
             "units": {
               "display": "2.1",
               "units": "2.10000000"
@@ -1560,7 +1560,8 @@
               "amount": "21000.0000000000",
               "display": "$21,000.00"
             },
-            "detail": "+25.18% · 30 sh · $3,480.00",
+            "delta_label": "Contribution",
+            "detail": "+25.18% · 30 ETH · $3,480.00",
             "direction": "up",
             "key": "ETH",
             "label": "Ethereum",
@@ -1572,7 +1573,6 @@
               "amount": "3480.00",
               "display": "$3,480.00"
             },
-            "selected_label": "ETH selected",
             "units": {
               "display": "30",
               "units": "30.00000000"
@@ -1587,7 +1587,8 @@
               "amount": "12005.0000000000",
               "display": "$12,005.00"
             },
-            "detail": "+38.24% · 175 sh · $248.00",
+            "delta_label": "Contribution",
+            "detail": "+38.24% · 175 AAVE · $248.00",
             "direction": "up",
             "key": "AAVE",
             "label": "Aave",
@@ -1599,7 +1600,6 @@
               "amount": "248.00",
               "display": "$248.00"
             },
-            "selected_label": "AAVE selected",
             "units": {
               "display": "175",
               "units": "175.00000000"
@@ -1614,7 +1614,8 @@
               "amount": "-9500.1500000000",
               "display": "-$9,500.15"
             },
-            "detail": "-14.24% · 375.5 sh · $152.40",
+            "delta_label": "Contribution",
+            "detail": "-14.24% · 375.5 SOL · $152.40",
             "direction": "down",
             "key": "SOL",
             "label": "Solana",
@@ -1626,7 +1627,6 @@
               "amount": "152.40",
               "display": "$152.40"
             },
-            "selected_label": "SOL selected",
             "units": {
               "display": "375.5",
               "units": "375.50000000"
@@ -1641,7 +1641,8 @@
               "amount": "-6825.0000000000",
               "display": "-$6,825.00"
             },
-            "detail": "-12.57% · 2100 sh · $22.60",
+            "delta_label": "Contribution",
+            "detail": "-12.57% · 2100 LINK · $22.60",
             "direction": "down",
             "key": "LINK",
             "label": "Chainlink",
@@ -1653,7 +1654,6 @@
               "amount": "22.60",
               "display": "$22.60"
             },
-            "selected_label": "LINK selected",
             "units": {
               "display": "2100",
               "units": "2100.00000000"
@@ -1668,7 +1668,8 @@
               "amount": "-2835.000000000000",
               "display": "-$2,835.00"
             },
-            "detail": "-6.09% · 50625 sh · $0.8640",
+            "delta_label": "Contribution",
+            "detail": "-6.09% · 50625 ARB · $0.8640",
             "direction": "down",
             "key": "ARB",
             "label": "Arbitrum",
@@ -1680,7 +1681,6 @@
               "amount": "0.8640",
               "display": "$0.8640"
             },
-            "selected_label": "ARB selected",
             "units": {
               "display": "50625",
               "units": "50625.00000000"
@@ -1695,7 +1695,8 @@
               "amount": "0E-10",
               "display": "$0.00"
             },
-            "detail": "0.00% · 51764 sh · $1.00",
+            "delta_label": "Contribution",
+            "detail": "0.00% · 51764 USDC · $1.00",
             "direction": "up",
             "key": "USDC",
             "label": "USD Coin",
@@ -1707,7 +1708,6 @@
               "amount": "1.00",
               "display": "$1.00"
             },
-            "selected_label": "USDC selected",
             "units": {
               "display": "51764",
               "units": "51764.00000000"
@@ -2075,10 +2075,10 @@
         {
           "binding": "text",
           "input": null,
-          "path": "buckets[].selected_label",
+          "path": "buckets[].delta_label",
           "presence": "required",
           "state": null,
-          "type": "string ≤48 chars"
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -2238,7 +2238,7 @@
     {
       "actions": [],
       "component": "AttributionWaterfall",
-      "digest": "4cdf45fbd636",
+      "digest": "abde9901e9d2",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -2272,6 +2272,7 @@
               "amount": "4767.0000000000",
               "display": "+$4,767.00"
             },
+            "delta_label": "Contribution",
             "detail": "+3.66% · $130,158.00 → $134,925.00",
             "direction": "up",
             "key": "BTC",
@@ -2283,8 +2284,7 @@
             "opened": {
               "amount": "130158.0000000000",
               "display": "$130,158.00"
-            },
-            "selected_label": "BTC selected"
+            }
           },
           {
             "closed": {
@@ -2299,6 +2299,7 @@
               "amount": "-2012.5000000000",
               "display": "-$2,012.50"
             },
+            "delta_label": "Contribution",
             "detail": "-4.43% · $45,412.50 → $43,400.00",
             "direction": "down",
             "key": "AAVE",
@@ -2310,8 +2311,7 @@
             "opened": {
               "amount": "45412.5000000000",
               "display": "$45,412.50"
-            },
-            "selected_label": "AAVE selected"
+            }
           },
           {
             "closed": {
@@ -2326,6 +2326,7 @@
               "amount": "-1652.2000000000",
               "display": "-$1,652.20"
             },
+            "delta_label": "Contribution",
             "detail": "-2.81% · $58,878.40 → $57,226.20",
             "direction": "down",
             "key": "SOL",
@@ -2337,8 +2338,7 @@
             "opened": {
               "amount": "58878.4000000000",
               "display": "$58,878.40"
-            },
-            "selected_label": "SOL selected"
+            }
           },
           {
             "closed": {
@@ -2353,6 +2353,7 @@
               "amount": "-1155.0000000000",
               "display": "-$1,155.00"
             },
+            "delta_label": "Contribution",
             "detail": "-2.38% · $48,615.00 → $47,460.00",
             "direction": "down",
             "key": "LINK",
@@ -2364,8 +2365,7 @@
             "opened": {
               "amount": "48615.0000000000",
               "display": "$48,615.00"
-            },
-            "selected_label": "LINK selected"
+            }
           },
           {
             "closed": {
@@ -2380,6 +2380,7 @@
               "amount": "1140.0000000000",
               "display": "+$1,140.00"
             },
+            "delta_label": "Contribution",
             "detail": "+1.10% · $103,260.00 → $104,400.00",
             "direction": "up",
             "key": "ETH",
@@ -2391,8 +2392,7 @@
             "opened": {
               "amount": "103260.0000000000",
               "display": "$103,260.00"
-            },
-            "selected_label": "ETH selected"
+            }
           },
           {
             "closed": {
@@ -2407,6 +2407,7 @@
               "amount": "1113.750000000000",
               "display": "+$1,113.75"
             },
+            "delta_label": "Contribution",
             "detail": "+2.61% · $42,626.25 → $43,740.00",
             "direction": "up",
             "key": "ARB",
@@ -2418,8 +2419,7 @@
             "opened": {
               "amount": "42626.250000000000",
               "display": "$42,626.25"
-            },
-            "selected_label": "ARB selected"
+            }
           },
           {
             "closed": {
@@ -2434,6 +2434,7 @@
               "amount": "0E-10",
               "display": "$0.00"
             },
+            "delta_label": "Contribution",
             "detail": "0.00% · $51,764.00 → $51,764.00",
             "direction": "up",
             "key": "USDC",
@@ -2445,8 +2446,7 @@
             "opened": {
               "amount": "51764.0000000000",
               "display": "$51,764.00"
-            },
-            "selected_label": "USDC selected"
+            }
           }
         ],
         "end": {
@@ -2828,10 +2828,10 @@
         {
           "binding": "text",
           "input": null,
-          "path": "buckets[].selected_label",
+          "path": "buckets[].delta_label",
           "presence": "required",
           "state": null,
-          "type": "string ≤48 chars"
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -3392,7 +3392,7 @@
     {
       "actions": [],
       "component": "PositionList",
-      "digest": "4c0e9857b789",
+      "digest": "9ff39ae83d7f",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -3449,7 +3449,7 @@
               "value": "0.03662471765085511455308163924"
             },
             "day_trend": "up",
-            "detail": "2.1 sh · avg $41,698.00",
+            "detail": "2.1 BTC · avg $41,698.00",
             "is_cash": false,
             "name": "Bitcoin",
             "price": {
@@ -3487,7 +3487,7 @@
               "value": "0.01104009296920395119116792562"
             },
             "day_trend": "up",
-            "detail": "30 sh · avg $2,780.00",
+            "detail": "30 ETH · avg $2,780.00",
             "is_cash": false,
             "name": "Ethereum",
             "price": {
@@ -3525,7 +3525,7 @@
               "value": "-0.02806122448979591836734693878"
             },
             "day_trend": "down",
-            "detail": "375.5 sh · avg $177.70",
+            "detail": "375.5 SOL · avg $177.70",
             "is_cash": false,
             "name": "Solana",
             "price": {
@@ -3563,7 +3563,7 @@
               "value": "-0.02375809935205183585313174946"
             },
             "day_trend": "down",
-            "detail": "2100 sh · avg $25.85",
+            "detail": "2100 LINK · avg $25.85",
             "is_cash": false,
             "name": "Chainlink",
             "price": {
@@ -3601,7 +3601,7 @@
               "value": "0.02612826603325415676959619952"
             },
             "day_trend": "up",
-            "detail": "50625 sh · avg $0.92",
+            "detail": "50625 ARB · avg $0.92",
             "is_cash": false,
             "name": "Arbitrum",
             "price": {
@@ -3639,7 +3639,7 @@
               "value": "-0.04431599229287090558766859345"
             },
             "day_trend": "down",
-            "detail": "175 sh · avg $179.40",
+            "detail": "175 AAVE · avg $179.40",
             "is_cash": false,
             "name": "Aave",
             "price": {
@@ -4154,8 +4154,8 @@
         "type": "object"
       },
       "payload_type": "HoldingsPositionsPayload",
-      "prompt": "- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: query (string of up to 24 characters, or omit it), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), asset_class (one of 'all', 'layer1', 'layer2', 'stablecoin', 'defi', 'infrastructure')",
-      "summary": "The Holdings tab: total value with the all-time gain, then one row per position — shares and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.",
+      "prompt": "- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: query (string of up to 24 characters, or omit it), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), asset_class (one of 'all', 'layer1', 'layer2', 'stablecoin', 'defi', 'infrastructure')",
+      "summary": "The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.",
       "view": "holdings.positions.v1"
     },
     {
@@ -4579,7 +4579,7 @@
     {
       "actions": [],
       "component": "MultiLegOrderTicket",
-      "digest": "f5f062ba3e24",
+      "digest": "8cd79663e799",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -4621,13 +4621,6 @@
               "display": "$9,773.40"
             },
             "label": "Total order"
-          },
-          "units": {
-            "label": "Est. shares",
-            "units": {
-              "display": "17.06",
-              "units": "17.06"
-            }
           },
           "weight_shifts": [
             {
@@ -4980,46 +4973,6 @@
         {
           "binding": "container",
           "input": null,
-          "path": "impact.units",
-          "presence": "required",
-          "state": null,
-          "type": "object"
-        },
-        {
-          "binding": "text",
-          "input": null,
-          "path": "impact.units.label",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤64 chars"
-        },
-        {
-          "binding": "container",
-          "input": null,
-          "path": "impact.units.units",
-          "presence": "required",
-          "state": null,
-          "type": "object"
-        },
-        {
-          "binding": "raw",
-          "input": null,
-          "path": "impact.units.units.units",
-          "presence": "required",
-          "state": null,
-          "type": "decimal"
-        },
-        {
-          "binding": "display",
-          "input": null,
-          "path": "impact.units.units.display",
-          "presence": "required",
-          "state": null,
-          "type": "string ≤32 chars"
-        },
-        {
-          "binding": "container",
-          "input": null,
           "path": "impact.fees",
           "presence": "required",
           "state": null,
@@ -5331,8 +5284,8 @@
         "type": "object"
       },
       "payload_type": "OrderTicketV2Payload",
-      "prompt": "- order.ticket.v2 — Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), legs (string matching ^[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?(,[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?){0,4}$), side (one of 'buy', 'sell')\n  use when: the user expresses buy or sell INTENT that resolves to a concrete, editable order — including vague intent such as \"put ~$10k into semis, keep it diversified\". Propose legs through `draft_order`; the impact (weights, cash, shares) is always shown so the consequences are visible before anything is confirmed, and the backend recomputes it on every edit.\n  do not use for: placing or confirming an order in prose — nothing here executes, and the ticket says so. A single asset with no impact panel is `order.ticket.v1`; what a proposed sale realises under each lot method is `scenario.comparison.v1`. Never recompute a figure the payload already carries.",
-      "summary": "Multi-leg draft order: each leg struck at its reference price with its share of the order, the order's impact — total, shares, fees, cash remaining, the sector's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.",
+      "prompt": "- order.ticket.v2 — Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), legs (string matching ^[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?(,[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?){0,4}$), side (one of 'buy', 'sell')\n  use when: the user expresses buy or sell INTENT that resolves to a concrete, editable order — including vague intent such as \"put ~$10k into semis, keep it diversified\". Propose legs through `draft_order`; the impact (weights, cash, shares) is always shown so the consequences are visible before anything is confirmed, and the backend recomputes it on every edit.\n  do not use for: placing or confirming an order in prose — nothing here executes, and the ticket says so. A single asset with no impact panel is `order.ticket.v1`; what a proposed sale realises under each lot method is `scenario.comparison.v1`. Never recompute a figure the payload already carries.",
+      "summary": "Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.",
       "view": "order.ticket.v2"
     },
     {

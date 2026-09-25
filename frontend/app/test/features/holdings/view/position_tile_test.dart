@@ -55,7 +55,7 @@ void main() {
         ),
       );
       expect(find.text('Solana'), findsOneWidget);
-      expect(find.text(r'375.5 sh · avg $177.70'), findsOneWidget);
+      expect(find.text(r'375.5 SOL · avg $177.70'), findsOneWidget);
       expect(find.text(r'$57,226.20'), findsOneWidget);
       expect(find.text(r'▼ -$9,500 (-14.2%)'), findsOneWidget);
       expect(find.text('Price'), findsNothing);

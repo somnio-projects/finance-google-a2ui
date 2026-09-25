@@ -68,7 +68,7 @@ FLOW_SCRIPTS: Final[Mapping[str, Script]] = {
         calls=(ScriptedCall(DRAFT, DESIGN_ORDER),),
         answer=(
             "Here is a draft across the majors basket: "
-            "{impact.totalDisplay} in {impact.unitsDisplay} units, fees "
+            "{impact.totalDisplay} across the legs below, fees "
             "{impact.feesDisplay}, leaving {impact.cashRemainingDisplay} in cash "
             "of {constraints.maxCashDisplay}. Edit the legs on the ticket; "
             "nothing is placed."

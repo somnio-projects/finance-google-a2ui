@@ -10,7 +10,16 @@ legs**: struck, weighed and formatted — an output of the render, like ``v1``'s
 
 The stepper is where the two meet, and ``order_ticket_v2_lines`` holds it:
 every line carries the whole ``legs`` value its ``+`` and ``-`` send, written
-server-side, because a client may not add one to a share count (N-2).
+server-side, because a client may not add one to a unit count (N-2).
+
+**There is no total quantity, and there is no value that would be one**
+(GGU-122 AC-1, spec 0046 OD-2). The panel used to carry ``impact.units``, the
+arithmetic sum of every leg's quantity under the label *Est. shares*: on the
+crypto portfolio that is ``0.05 + 1.0 + 16 = 17.05``, a figure of nothing,
+sitting beside a money total that is correct and therefore lending it credit.
+Units across different assets are not commensurable, so the field is gone
+rather than relabelled — the header already states the leg count, and each
+``lines[]`` entry carries its own quantity in its own asset.
 
 Nothing here places anything. ``effect`` names the only thing the ticket does,
 ``disclosure`` says it in words, and the blocked state is a declared field a
@@ -24,15 +33,15 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.domain.draft_legs import LEGS_PATTERN, MAX_LEGS, MAX_LEGS_TEXT
 from app.domain.payoff import Side
 from app.presentation.fragments import MoneyDisplay, ProjectionDto, Total
-from app.presentation.order_ticket_v2_lines import OrderLine, UnitTotal, WeightShift
+from app.presentation.order_ticket_v2_lines import OrderLine, WeightShift
 
 VIEW_ID: Final[str] = "order.ticket.v2"
 EFFECT: Final[str] = "recalculate"
 SUMMARY: Final[str] = (
     "Multi-leg draft order: each leg struck at its reference price with its "
-    "share of the order, the order's impact — total, shares, fees, cash "
-    "remaining, the sector's weight before and after — and whether the "
-    "available cash covers it. Editing a leg re-renders it; it places nothing."
+    "weight in the order, the order's impact — total, fees, cash remaining, "
+    "the group's weight before and after — and whether the available cash "
+    "covers it. Editing a leg re-renders it; it places nothing."
 )
 DISCLOSURE: Final[str] = (
     "Illustrative draft. This showcase has no broker and no execution: "
@@ -50,7 +59,6 @@ class OrderImpact(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     total: Total = Field(description="What the whole order is worth.")
-    units: UnitTotal = Field(description="Shares across every leg.")
     fees: Total = Field(description="Simulated fees — zero, and labelled so.")
     cash_remaining: Total = Field(
         description="Cash left after the order; negative when it is blocked."

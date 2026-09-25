@@ -63,7 +63,7 @@ void main() {
       expect(find.text('By sector'), findsOneWidget);
       expect(find.text('✓ By position'), findsOneWidget);
       expect(find.text('Bitcoin'), findsWidgets);
-      expect(find.text(r'2.1 sh · avg $41,698.00'), findsOneWidget);
+      expect(find.text(r'2.1 BTC · avg $41,698.00'), findsOneWidget);
       expect(find.text(r'▲ +$47,359 (+54.1%)'), findsOneWidget);
       // The expanded row shows its three stats and the hand-off.
       expect(find.text('Day'), findsOneWidget);
@@ -84,7 +84,7 @@ void main() {
         );
         await tester.tap(apple);
         await tester.pumpAndSettle();
-        expect(find.text(r'30 sh · avg $2,780.00'), findsOneWidget);
+        expect(find.text(r'30 ETH · avg $2,780.00'), findsOneWidget);
         expect(find.text(r'$3,480.00'), findsOneWidget);
         await tester.tap(apple);
         await tester.pumpAndSettle();

@@ -7,6 +7,71 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-09-25 — GGU-122/123/119 no equity vocabulary in a crypto payload · spec `specs/backend/0046-no-equity-vocabulary-in-a-crypto-payload.md`
+
+**Branch:** `fix/GGU-122_no_equity_vocabulary_in_a_crypto_payload`. Backend +
+frontend, because three of the four findings are renames a client binds.
+
+**What changed.** Spec 0044 made the portfolio crypto and left the *words*
+behind, in three shapes a ticker grep cannot see. `positions[].detail` and
+`buckets[].detail` now count in the asset's own ticker (`2.1 BTC · avg
+$41,698.00`, not `2.1 sh`). `attribution.driver.v1`'s `shares` tile is
+`holding`, labelled `{symbol} held` — projection, A2UI adapter, both catalog
+artefacts and the Dart binding in one release, because the field name is the
+client-breaking half. `order.ticket.v2`'s `impact.units` is **gone**, and so is
+`DraftImpact.units` behind it: it was `0.05 BTC + 1.0 ETH + 16 SOL = 17.05`
+under the label *Est. shares*, a figure of nothing sitting beside money totals
+that are correct. GGU-119 rode along because it is the same field slot:
+`buckets[].selected_label` (bound, drawn by nothing) became
+`buckets[].delta_label` (*Contribution*), on **both** walks, and the callout
+and the footer strip now draw it.
+
+**Three things worth carrying forward.**
+
+**A cross-asset sum is void, not imprecise, and the fix is subtraction.** The
+temptation was to relabel `impact.units` or replace it with a leg count. The
+header already states the leg count and every `lines[]` entry carries its own
+quantity in its own asset, so a fourth figure would restate something stated
+twice. Removing it from the **domain** rather than only from the presenter is
+the load-bearing half — a statement left on `DraftImpact` is a statement the
+next consumer prints, and this one had two consumers already.
+
+**`detail` is a sentence, so removing a word is a product decision.** Three
+candidates, all recorded in 0046 OD-1: drop the unit (ambiguous — a bare `2.1`
+beside a price is worse than a wrong unit), a generic noun (`2.1 units` — true
+and empty; "units" is what a system says when it does not know what it holds),
+or the asset's own ticker (chosen). The cost is written down rather than
+hidden: a Holdings row now shows its ticker twice, once in the chip and once in
+this line.
+
+**The AC-2 test is the third sweep of this defect, and the first two were both
+green while blind.** Sweep one hit the live API with an option no view
+declares, so all twelve answered 422 and it counted matches in *error bodies*.
+Sweep two used `shares?|stocks?|equity|dividends?|ticker` — and `sh` is not in
+it, so the Holdings tab and the attribution card were reported clean while
+every row of both carried it. `tests/unit/presentation/test_asset_vocabulary.py`
+therefore **renders** (`Projection.example` is a real render over the sample
+portfolio, so a 422 cannot be mistaken for a payload), **walks keys as well as
+values** (a field name is contract), **includes abbreviations as whole words**,
+**reports the field path** rather than a boolean, and cannot pass vacuously:
+the rendered set is compared against `tests.catalog.SHIPPED_VIEWS`, a floor is
+asserted on strings walked, and a fourth test shows the scanner rejecting
+planted copies of all four live findings. Shown failing first — 16 hits across
+exactly the four views the ticket names.
+
+**One harness note.** The forbidden-word pattern must contain the plural of
+`sh`, which codespell reads as a misspelling of `ssh`. Rather than weaken
+`repo.spelling` (a repo-wide gate) with an ignore entry in its two configs, the
+alternative is written as an explicit group so the token never appears in the
+file as a bare word. The inline `# codespell:ignore` directive does **not**
+work with this version's invocation — do not reach for it.
+
+**Next person:** `day_share`'s *216.58 % of day gain* is **correct** and left
+alone (0046 OD-5). The arithmetic is right because other assets lost that day,
+so one winner can exceed the net. It is a framing question for design —
+denominator caption, gross-gains denominator, or suppression above 100 % — and
+it must never be capped or rescaled in Dart. GGU-123 AC-3 stays open on it.
+
 ## 2026-09-21 — GGU-99 the contract serves what the designs draw · spec `specs/backend/0024-contract-serves-the-designs.md`
 
 **Branch:** `feat/GGU-99_contract_serves_the_designs`. Backend only. Seven TL

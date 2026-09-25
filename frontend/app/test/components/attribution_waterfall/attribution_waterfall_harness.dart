@@ -18,7 +18,7 @@ AttributionStep fixtureStep(WaterfallStepKind kind, {String? detail}) =>
       valueDisplay: r'$10,230.00',
       cumulativeDisplay: r'$67,155.00',
       detail: detail,
-      selectedLabel: 'NVDA selected',
+      deltaLabel: 'Contribution',
     );
 
 /// A copy of [example] whose first bucket reports [direction].
@@ -57,8 +57,12 @@ AttributionStep bucket(String key, WaterfallStepKind kind, double level) =>
       label: '$key Holdings Incorporated',
       valueDisplay: kind == WaterfallStepKind.gain ? r'+$1,000' : r'-$1,000',
       cumulativeDisplay: r'$100,000',
-      detail: r'+1.0% · 10 sh · $100.00',
-      selectedLabel: '$key selected',
+      // The unit word is the asset's own ticker, as the contract now
+      // composes it (backend spec 0046 OD-1).
+      detail:
+          '+1.0% · 10 $key · '
+          r'$100.00',
+      deltaLabel: 'Contribution',
     );
 
 /// A synthetic walk around [buckets]: an opening total, them, a closing one.

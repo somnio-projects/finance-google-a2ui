@@ -2,8 +2,12 @@ import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_figure_ti
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_model.dart';
 import 'package:flutter/material.dart';
 
-/// The panel's four figures in the design's two-column grid: 12 px apart
+/// The panel's money figures in the design's two-column grid: 12 px apart
 /// vertically, 18 px across.
+///
+/// The count is whatever the payload sent, not four: the cross-asset quantity
+/// tile left with `impact.units` (backend spec 0046 OD-2), so an odd last row
+/// pairs its tile with empty space rather than assuming a partner.
 class OrderTicketV2Grid extends StatelessWidget {
   /// Creates the grid.
   const OrderTicketV2Grid({

@@ -67,7 +67,7 @@ async def test_the_design_prompt_composes_the_design_legs(
     ]
     impact = block(outcome.data["impact"])
     assert impact["totalDisplay"] == "$9,773.40"
-    assert impact["unitsDisplay"] == "17.06"
+    assert "unitsDisplay" not in impact  # 0.06 BTC + 1 ETH + 16 SOL is not 17.06
     assert impact["cashRemainingDisplay"] == "$41,990.60"
     # Three rows, not one: the design's three legs settle on three different
     # chains, so the panel names three groups (spec 0044 OD-2).

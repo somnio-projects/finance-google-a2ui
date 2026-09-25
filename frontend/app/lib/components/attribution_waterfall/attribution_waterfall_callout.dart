@@ -80,12 +80,7 @@ class AttributionWaterfallCallout extends StatelessWidget {
                     Text(detail, style: ChartText.chip(palette.mutedLabel)),
                   ],
                   const SizedBox(height: 5),
-                  Text(
-                    step.valueDisplay,
-                    style: ChartText.headlineFigure(
-                      palette.labelFor(step.step.kind),
-                    ),
-                  ),
+                  _Contribution(step: step),
                 ],
               ),
             ),
@@ -97,6 +92,41 @@ class AttributionWaterfallCallout extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The kit's `Contribution +$2,980` line: the caption, then the figure.
+///
+/// The caption is `buckets[].delta_label`, a backend field — a Dart constant
+/// would not follow the view's `locale` option (GGU-119 BG-1). A total has
+/// none, and then the figure stands alone as it always did.
+class _Contribution extends StatelessWidget {
+  const _Contribution({required this.step});
+
+  final AttributionStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = ChartPalette.of(context);
+    final label = step.deltaLabel;
+    // A `Wrap`, not a `Row`: the caption is a server-supplied string whose
+    // length this build does not know — another locale's word for
+    // *Contribution* can be half again as long — and the callout's width is
+    // fixed at 232 because the chart has to place the pointer in one pass.
+    // Wrapping onto a second line is the honest failure; ellipsising a
+    // caption or overflowing the card are not.
+    return Wrap(
+      spacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        if (label != null)
+          Text(label, style: ChartText.chip(palette.mutedLabel)),
+        Text(
+          step.valueDisplay,
+          style: ChartText.headlineFigure(palette.labelFor(step.step.kind)),
+        ),
+      ],
     );
   }
 }
