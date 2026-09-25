@@ -100,7 +100,15 @@ decision before it is a contract one. They are listed in the PR under
   `Holding period`) stay client-authored, which is the existing arrangement
   and is recorded in the gap table rather than discovered later.
 
-- **OD-2 — the holding-period column keeps its slot and loses its text.**
+- **OD-2 — SUPERSEDED by [`backend/0049`](../backend/0049-the-taxlot-table-gains-its-missing-fields.md) OD-2.** The field exists;
+  the cell draws the pill and the duration side by side, as the artboard does.
+  The ruling is kept below because the reasoning for *keeping the slot* rather
+  than re-flowing five columns is what made the field cheap to land, and
+  because the artboard corrected the rule that replaced it: the first draft of
+  `holding_period_display` printed days (`363 d`) and the frame prints months
+  (`8 mo`).
+
+  ~~**the holding-period column keeps its slot and loses its text.**~~
   The alternative — dropping the column and re-flowing the other five — would
   make the table *look* like a different design and would have to be undone
   the day the field lands. The pill already lives in that column in the
@@ -279,10 +287,10 @@ decision before it is a contract one. They are listed in the PR under
 
 | # | Question | Owner | Default if nobody answers |
 |---|---|---|---|
-| OQ-1 | Does `taxlots.table.v1` gain a per-lot market value, or is `proceeds` the field the design means? | backend + design | `proceeds` stays in that column under its own label (OD-1) |
-| OQ-2 | Does a lot gain a holding-period display string (`5.5 yr`)? | backend | the column keeps its slot and shows the pill only (OD-2) |
-| OQ-3 | Does the view gain a header line — a symbol, a lot count — or does `title` keep that slot? | design | `title` + `subtitle`, two lines (OD-4) |
-| OQ-4 | Does `realized` gain a `trend`, so the footer total can take the design's green? | backend | primary text colour (0003 OD-4) |
+| ~~OQ-1~~ | Does `taxlots.table.v1` gain a per-lot market value, or is `proceeds` the field the design means? | backend + design | **closed** by [`backend/0049`](../backend/0049-the-taxlot-table-gains-its-missing-fields.md) OD-1: `proceeds` **is** `quantity × current price`, so it is the field the design means. No column added; OD-1 below is unchanged and is now the answer rather than the fallback |
+| ~~OQ-2~~ | Does a lot gain a holding-period display string (`5.5 yr`)? | backend | **closed** by `backend/0049` OD-2: `lots[].holding_period_display`. **OD-2 below is superseded** — the column no longer keeps an empty slot |
+| OQ-3 | Does the view gain a header line — a symbol, a lot count — or does `title` keep that slot? | **design** | **open.** The artboard reads `NVDA · 4 lots`, so the *content* is not in doubt; what is design's is whether the card says that instead of a sentence. Worth knowing before it is raised: satisfying it needs **no new field** — `title` is already a server string the client binds, so this is a wording decision, not a contract change (`backend/0049` OD-6) |
+| ~~OQ-4~~ | Does `realized` gain a `trend`, so the footer total can take the design's green? | backend | **closed** by `backend/0049` OD-4: `realized` is a `SignedTotal` carrying `direction`, and the footer binds it |
 | OQ-5 | Is lot selection a product feature? If so it needs an option and a re-rendered total, not client state | product, then backend | `fully_sold` is the only ticked state (OD-3) |
 | OQ-6 | Which term palette wins between this frame, `ChartTokens` and `ActivityTokens`? | design | each page keeps its own; the divergences are asserted (OD-6) |
 

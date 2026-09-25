@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
 
 /// Everything the card draws, read once from the payload.
@@ -13,6 +14,7 @@ class TaxLotsTableData extends Equatable {
     required this.subtitle,
     required this.realizedLabel,
     required this.realizedDisplay,
+    required this.realizedTrend,
     required this.costBasisLabel,
     required this.proceedsLabel,
     required this.lots,
@@ -38,6 +40,15 @@ class TaxLotsTableData extends Equatable {
   /// The payload's `realized.amount.display`, the footer's total.
   final String realizedDisplay;
 
+  /// The payload's `realized.direction` — which colour the footer total takes.
+  ///
+  /// The field spec `frontend/0027` OQ-4 asked the backend for. Until it
+  /// existed the total was drawn in the primary text colour, because the two
+  /// ways to get a direction without it — reading the `+` off the display
+  /// string, or taking the sign through the geometry seam — are the parse N-1
+  /// forbids and a use ADR-L D-14 reserves for canvas coordinates.
+  final TaxLotTrend realizedTrend;
+
   /// The payload's `cost_basis.label` — the caption over that column.
   ///
   /// Server-written, so it follows the view's `locale` option. A Dart
@@ -60,6 +71,7 @@ class TaxLotsTableData extends Equatable {
     subtitle,
     realizedLabel,
     realizedDisplay,
+    realizedTrend,
     costBasisLabel,
     proceedsLabel,
     lots,

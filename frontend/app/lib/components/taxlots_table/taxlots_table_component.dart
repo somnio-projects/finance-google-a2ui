@@ -49,7 +49,7 @@ class TaxLotsTableComponent extends ViewComponent {
     final splits = <TaxLotTermSplit>[
       for (final (index, half) in payload.rows('by_term').indexed)
         TaxLotTermSplit(
-          term: _termOf(half.text('term'), 'by_term[$index].term'),
+          term: TaxLotTerm.read(half.text('term'), 'by_term[$index].term'),
           label: half.text('label'),
           realizedDisplay: half.text('realized.display'),
         ),
@@ -59,6 +59,10 @@ class TaxLotsTableComponent extends ViewComponent {
       subtitle: payload.text('subtitle'),
       realizedLabel: payload.text('realized.label'),
       realizedDisplay: payload.text('realized.amount.display'),
+      realizedTrend: TaxLotTrend.read(
+        payload.text('realized.direction'),
+        'realized.direction',
+      ),
       costBasisLabel: payload.text('cost_basis.label'),
       proceedsLabel: payload.text('proceeds.label'),
       splits: splits,
@@ -70,17 +74,18 @@ class TaxLotsTableComponent extends ViewComponent {
   }
 
   TaxLot _lot(ViewPayload lot, int index, List<TaxLotTermSplit> splits) {
-    final term = _termOf(lot.text('term'), 'lots[$index].term');
+    final term = TaxLotTerm.read(lot.text('term'), 'lots[$index].term');
     return TaxLot(
       label: lot.text('label'),
       acquiredOnDisplay: lot.text('acquired_on_display'),
+      holdingPeriodDisplay: lot.text('holding_period_display'),
       unitsDisplay: lot.text('units_display'),
       costBasisDisplay: lot.text('cost_basis.display'),
       proceedsDisplay: lot.text('proceeds.display'),
       gainLossDisplay: lot.text('gain_loss.display'),
       term: term,
       termLabel: _labelFor(term, index, splits),
-      trend: _trendOf(lot, index),
+      trend: TaxLotTrend.read(lot.text('trend'), 'lots[$index].trend'),
       // The contract publishes this as a flag with `state: variant`, which
       // is what the kit's ticked, tinted row draws. Reading it is a
       // binding, not a decision (spec `frontend/0027` OD-3).
@@ -108,32 +113,6 @@ class TaxLotsTableComponent extends ViewComponent {
       ),
     );
   }
-
-  /// Maps the backend's `term` enum.
-  ///
-  /// A third spelling is a contract violation rather than a guess — the shape
-  /// the waterfall's `direction` established.
-  TaxLotTerm _termOf(String raw, String path) => switch (raw) {
-    'short' => TaxLotTerm.short,
-    'long' => TaxLotTerm.long,
-    _ => throw PayloadContractException(
-      ContractFailure(path, 'either "short" or "long"'),
-    ),
-  };
-
-  /// Maps the backend's `trend` enum — the only source of a gain/loss colour.
-  ///
-  /// The sign is baked into `"+$8,925.00"` and is never read back out of it:
-  /// choosing a colour by inspecting a display string is the client deriving
-  /// a fact the backend already stated.
-  TaxLotTrend _trendOf(ViewPayload lot, int index) =>
-      switch (lot.text('trend')) {
-        'up' => TaxLotTrend.up,
-        'down' => TaxLotTrend.down,
-        _ => throw PayloadContractException(
-          ContractFailure('lots[$index].trend', 'either "up" or "down"'),
-        ),
-      };
 }
 
 /// Adds this component to [registry].

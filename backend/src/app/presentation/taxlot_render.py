@@ -22,11 +22,12 @@ from decimal import Decimal
 
 from app.core.dates import date_display
 from app.core.display import quantity_display
+from app.core.period_display import holding_period_display
 from app.core.signed_display import signed_money_display
 from app.core.trend import trend_of
 from app.domain.sale_results import LotConsumption, SaleSimulation
 from app.domain.terms import LotTerm
-from app.presentation.fragments import MoneyDisplay
+from app.presentation.fragments import MoneyDisplay, SignedTotal
 from app.presentation.options import DisplayOptions
 from app.presentation.taxlots import TERM_LABELS, TaxLotRow, TermTotal
 
@@ -46,6 +47,20 @@ def units_of(value: Decimal, options: DisplayOptions) -> str:
     return quantity_display(value, locale=options.locale, trim=True)
 
 
+def realized_total(result: SaleSimulation, options: DisplayOptions) -> SignedTotal:
+    """Pair the realised result with the direction the footer is coloured from.
+
+    ``direction`` comes from ``trend_of``, which decides from the **rounded**
+    figure for the same reason the string signs from it: a green total beside a
+    ``$0.00`` is a contradiction the reader cannot resolve (spec 0049 OD-4).
+    """
+    return SignedTotal(
+        label="Realised P/L",
+        amount=signed_money(result.realized_pl, options),
+        direction=trend_of(result.realized_pl, precision=options.precision),
+    )
+
+
 def lot_row(row: LotConsumption, options: DisplayOptions) -> TaxLotRow:
     """Render one consumed lot, carrying the lot's own term through (0013 OD-7).
 
@@ -59,6 +74,7 @@ def lot_row(row: LotConsumption, options: DisplayOptions) -> TaxLotRow:
         acquired_on=row.acquired_on,
         acquired_on_display=date_display(row.acquired_on, locale=options.locale),
         term=row.term,
+        holding_period_display=holding_period_display(row.held_days),
         units=row.quantity,
         units_display=units_of(row.quantity, options),
         cost_basis=options.money(row.cost_basis),
@@ -103,6 +119,7 @@ def subtitle(result: SaleSimulation, options: DisplayOptions, *, method: str) ->
 
 __all__ = [
     "lot_row",
+    "realized_total",
     "signed_money",
     "subtitle",
     "term_split",

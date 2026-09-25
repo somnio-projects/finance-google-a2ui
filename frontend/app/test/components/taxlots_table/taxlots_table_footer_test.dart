@@ -6,7 +6,6 @@ import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/pump_app.dart';
 import 'taxlots_table_harness.dart' as harness;
 
 void main() {
@@ -16,20 +15,11 @@ void main() {
       Brightness brightness = Brightness.light,
       List<TaxLotTermSplit> splits = harness.splits,
       String label = 'Realised P/L',
-    }) => tester.pumpApp(
-      Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 600,
-            child: TaxLotsTableFooter(
-              label: label,
-              totalDisplay: r'+$9,505.00',
-              splits: splits,
-            ),
-          ),
-        ),
-      ),
+    }) => harness.pumpFooter(
+      tester,
       brightness: brightness,
+      halves: splits,
+      label: label,
     );
 
     Divider rule(WidgetTester tester) => tester.widget<Divider>(
@@ -101,19 +91,6 @@ void main() {
       // field with different content — the backend chooses, not the card.
       await pumpFooter(tester, label: 'Realized on selected sale');
       expect(find.text('Realized on selected sale'), findsOneWidget);
-    });
-
-    testWidgets('the total is not coloured by the sign in its string', (
-      tester,
-    ) async {
-      // `realized` carries no `direction`, and the two ways to recover one —
-      // parsing "+" off the display, or taking the sign through the geometry
-      // seam — are N-1 and a use ADR-L D-14 reserves for a canvas. Spec
-      // `frontend/0027` OQ-4 asks the backend for the field.
-      await pumpFooter(tester);
-      final total = tester.widget<Text>(find.text(r'+$9,505.00'));
-      expect(total.style!.color, TaxLotTokens.light.primaryText);
-      expect(total.style!.color, isNot(TaxLotTokens.light.gain));
     });
   });
 }

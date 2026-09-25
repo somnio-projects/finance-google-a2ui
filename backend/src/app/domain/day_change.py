@@ -21,6 +21,11 @@ from app.domain.market import MARKET_REFERENCE, MarketAsset, market_asset
 from app.domain.money import ZERO
 from app.domain.taxonomy import AssetClass
 
+#: The domain's half of the trend token. ``app.core.trend`` declares the same
+#: literal, because that module *produces* the token and ``core`` may not import
+#: ``domain`` — ``tests/unit/domain/test_package_boundaries.py`` refuses the
+#: single definition, and widening that whitelist for a type name would be a
+#: worse trade than two declarations a test compares (spec 0049 OD-5).
 Trend = Literal["up", "down", "flat"]
 
 #: How many names the Home page lists under *Top movers today*.

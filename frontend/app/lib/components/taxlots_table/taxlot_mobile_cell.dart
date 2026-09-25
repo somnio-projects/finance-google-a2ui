@@ -35,13 +35,9 @@ class TaxLotMobileCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final direction = trend;
-    final valueColor = direction == null
-        ? palette.primaryText
-        : switch (direction) {
-            TaxLotTrend.up => palette.gain,
-            TaxLotTrend.down => palette.loss,
-          };
+    // The lookup lives on the enum (`TaxLotTrendPalette`), so this cell and
+    // the desktop row cannot answer the same question differently.
+    final valueColor = trend?.colorFor(palette) ?? palette.primaryText;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -57,7 +53,7 @@ class TaxLotMobileCell extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: direction == null
+          style: trend == null
               ? TaxLotType.cell(valueColor)
               : TaxLotType.cellAccent(valueColor),
         ),

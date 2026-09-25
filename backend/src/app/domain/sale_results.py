@@ -30,6 +30,12 @@ class LotConsumption(BaseModel):
     )
     acquired_on: date = Field(description="The day that lot was bought (UTC).")
     term: LotTerm = Field(description="Short or long, at the portfolio's as_of.")
+    held_days: int = Field(
+        ge=0,
+        description="Calendar days held at ``as_of``. The figure the row's "
+        "holding-period string is worded from; it is not itself served, "
+        "because nothing plots a duration (spec 0049 OD-3).",
+    )
     quantity: Quantity = Field(gt=0, description="Units taken from the lot.")
     cost_basis: Money = Field(
         ge=0, description="What those units cost — the lot's basis, pro rata."

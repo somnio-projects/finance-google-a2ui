@@ -14,7 +14,7 @@ from app.domain.lot_selection import LotMethod
 from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
 from app.domain.sales import simulate_sale
-from app.domain.terms import LotTerm
+from app.domain.terms import LONG_TERM_DAYS, LotTerm, holding_period_days
 from tests.unit.domain.conftest import make_lot, make_portfolio
 
 BTC_PRICE = Decimal("64250.00")
@@ -110,3 +110,25 @@ def test_a_ticker_is_normalised_before_anything_else(portfolio: Portfolio) -> No
     result = simulate_sale(portfolio, symbol="  btc  ", quantity=Decimal("0.1"))
 
     assert result.symbol == "BTC"
+
+
+def test_every_consumed_lot_reports_how_long_it_was_held(
+    portfolio: Portfolio,
+) -> None:
+    """Spec 0049 — ``held_days`` is the lot's own arithmetic, not a copy.
+
+    Asserted against ``holding_period_days`` over the row's **own** dates
+    rather than against a literal, so the claim is the identity and not a
+    number that happens to match today's seed. The second assertion is the one
+    that matters: the term derived from the same pair of dates has to agree,
+    which is what lets the presenter word the duration and the pill from one
+    comparison (0049 OD-2).
+    """
+    result = simulate_sale(portfolio, symbol="BTC", quantity=Decimal("0.75"))
+
+    assert result.consumed, "a sale with no rows would prove nothing"
+    for row in result.consumed:
+        assert row.held_days == holding_period_days(
+            row.acquired_on, as_of=portfolio.as_of.date()
+        )
+        assert (row.held_days > LONG_TERM_DAYS) is (row.term is LotTerm.LONG)

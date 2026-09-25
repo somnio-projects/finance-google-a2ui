@@ -5606,3 +5606,48 @@ the picture true.
 not from your edits — it silently reverted the whole fix mid-mutation-check and
 the suite went green for the wrong reason for one run. Restore a mutation by
 re-applying the edit, or make the mutation with `sed` and reverse it with `sed`.
+
+## 2026-09-25 — GGU-117 · the tax-lot table gains its missing fields
+
+**Spec:** `specs/backend/0049-the-taxlot-table-gains-its-missing-fields.md`.
+Answers `specs/frontend/0027` §7 OQ-1, OQ-2 and OQ-4; leaves OQ-3 open and
+design-owned.
+
+**Code.** `lots[].holding_period_display` (a string; `held_days` stops at the
+domain boundary because nothing plots a duration) and `realized` as a new
+`SignedTotal` fragment carrying `direction`. `app/core/period_display.py` words
+the duration. The client binds both. Both catalog artefacts regenerated;
+diagram 06 updated for the split fragment vocabulary.
+
+**What the next person should know, in order of how much it cost:**
+
+1. **The design page is the declaration, for a formatting rule too.** The
+   first draft of `holding_period_display` printed days below the 365-day
+   boundary — `363 d` — from a defensible argument about the tax rule, written
+   without opening `specs/frontend/assets/0027-taxlot-uikit/`. The artboard
+   prints **months** (`8 mo`, `4 mo`) beside `5.5 yr`, and it also settles the
+   rounding: its *Jan 15, 2026* lot reads `8 mo` at 7.8 average months, so
+   truncation answers `7 mo` and only rounding draws what the designer drew.
+   `presentation.md` already says this about component names and guidance —
+   it applies to any rule with a picture of its output in the repository.
+2. **A layering test refused a tidy-looking refactor, and it was right.**
+   `Trend` was going to move to `app/core/trend.py` so `trend_of` could stop
+   returning `str`; `tests/unit/domain/test_package_boundaries.py` allows
+   `app.domain` exactly three `app.core` modules and went red. The fix is two
+   declarations plus a test comparing them, not a fourth entry in that
+   whitelist — the domain has its own `trend_of` and never needed core's.
+3. **The client rejected a token the contract always permitted.** `TaxLotTrend`
+   had `up` and `down`; `trend_of` answers `flat` for a figure that rounds to
+   zero, so a lot sold at exactly its basis raised `PayloadContractException`.
+   Written from the artboard, which never draws that state. **A design state
+   the frame does not draw is not a state the schema does not permit.**
+4. **Fourteen green goldens are not coverage of a string none of them
+   contains.** Every tax-lot golden is cropped to the row's left chrome and is
+   deliberately text-free, so neither new field is visible to one. Both are
+   asserted by widget tests instead, and spec 0049 OD-8 says so rather than
+   letting the green be read as evidence.
+5. `binding_rules_test.dart` greps `lib/` as plain text, **comments included** —
+   a doc comment naming a banned clock mechanism fails the gate. Say what the
+   mechanism is without spelling it.
+
+**Harness.** No rule file changed.

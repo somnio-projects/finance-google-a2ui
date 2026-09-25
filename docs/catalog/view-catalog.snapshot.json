@@ -7300,7 +7300,7 @@
     {
       "actions": [],
       "component": "TaxLotTable",
-      "digest": "535ba6e23bf0",
+      "digest": "0556567d7b94",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -7346,6 +7346,7 @@
               "amount": "7062.5000000000",
               "display": "+$7,062.50"
             },
+            "holding_period_display": "1.0 yr",
             "label": "lot-btc-01",
             "proceeds": {
               "amount": "16062.5000000000",
@@ -7368,6 +7369,7 @@
               "amount": "10891.0000000000",
               "display": "+$10,891.00"
             },
+            "holding_period_display": "12 mo",
             "label": "lot-btc-02",
             "proceeds": {
               "amount": "32125.0000000000",
@@ -7391,6 +7393,7 @@
             "amount": "17953.5000000000",
             "display": "+$17,953.50"
           },
+          "direction": "up",
           "label": "Realised P/L"
         },
         "subtitle": "Sell 0.75 BTC under FIFO",
@@ -7543,6 +7546,14 @@
           "type": "string ≤32 chars"
         },
         {
+          "binding": "enum",
+          "input": null,
+          "path": "realized.direction",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum up / down / flat"
+        },
+        {
           "binding": "container",
           "input": null,
           "path": "by_term",
@@ -7637,6 +7648,14 @@
           "presence": "required",
           "state": "variant",
           "type": "enum short / long"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lots[].holding_period_display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤16 chars"
         },
         {
           "binding": "raw",

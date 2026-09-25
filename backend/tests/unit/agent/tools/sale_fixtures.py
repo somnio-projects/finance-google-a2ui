@@ -83,6 +83,7 @@ def free_sale() -> SaleSimulation:
         lot_id="lot-air-01",
         acquired_on=FROZEN_NOW.date(),
         term=LotTerm.SHORT,
+        held_days=0,  # acquired on the frozen day itself, so short-term agrees
         quantity=Decimal(10),
         cost_basis=Decimal(0),
         proceeds=Decimal(500),
