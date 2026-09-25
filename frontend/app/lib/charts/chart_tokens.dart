@@ -11,9 +11,11 @@ import 'package:flutter/material.dart';
 /// neutral bar is `#6F7280`, not `#4B4D57`. `specs/frontend/0002` records the
 /// full table and how it was obtained.
 ///
-/// This is the only file in `app/lib/` that names a `Color`, which is the same
+/// Colour literals live in a `*_tokens.dart` and nowhere else — the same
 /// arrangement `AppTheme` has for the seed: literals live in the theme layer,
-/// and a widget reads [ChartPalette.of].
+/// and a widget reads [ChartPalette.of]. This was the only such file when it
+/// was written; each design-bound surface has since measured its own
+/// (`frontend/CLAUDE.md` § *Drawing a chart*).
 abstract final class ChartTokens {
   /// Light mode, as the `L1 · Light · 1024` artboard draws it.
   static const ChartPalette light = ChartPalette(

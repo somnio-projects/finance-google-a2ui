@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 ///
 /// Every value is **measured** from the rendered design
 /// (`.design-refs/Catalog_HoldingsSummary.dc.html`, served over HTTP — see
-/// `specs/frontend/0007` §1c). The literals live in `ChartTokens`, which stays
-/// the only file in `app/lib/` naming a `Color`.
+/// `specs/frontend/0007` §1c). The literals live in `ChartTokens`, because a
+/// `Color` may only be named in a `*_tokens.dart`.
 @immutable
 class AllocationPalette extends ThemeExtension<AllocationPalette> {
   /// Creates a palette.

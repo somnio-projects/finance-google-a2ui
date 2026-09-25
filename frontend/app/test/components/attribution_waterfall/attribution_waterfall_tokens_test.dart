@@ -1,3 +1,4 @@
+import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_tokens.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_tokens.dart';
@@ -61,17 +62,34 @@ void main() {
     test('keeps a selected bar on the hue its direction earned', () {
       // Selection must never move a bar between the gain and loss families:
       // the colour carries a meaning the payload stated (N-1).
-      for (final palette in <AttributionWaterfallPalette>[
-        AttributionWaterfallTokens.light,
-        AttributionWaterfallTokens.dark,
-      ]) {
+      //
+      // Compared against **`ChartTokens`**, not against this file's own
+      // column tints. An earlier version did the latter, and swapping both
+      // new gain tokens to the loss hue left it green while a tapped gain
+      // turned red — two literals authored together agree with each other by
+      // construction. The bar being deepened is the thing that must not move.
+      for (final (palette, marks)
+          in <(AttributionWaterfallPalette, ChartPalette)>[
+            (AttributionWaterfallTokens.light, ChartTokens.light),
+            (AttributionWaterfallTokens.dark, ChartTokens.dark),
+          ]) {
         expect(
           HSLColor.fromColor(palette.selectedGainBar).hue,
-          closeTo(HSLColor.fromColor(palette.gainColumn).hue, 30),
+          closeTo(HSLColor.fromColor(marks.barGain).hue, 30),
         );
         expect(
           HSLColor.fromColor(palette.selectedLossBar).hue,
-          closeTo(HSLColor.fromColor(palette.lossColumn).hue, 30),
+          closeTo(HSLColor.fromColor(marks.barLoss).hue, 30),
+        );
+        // The tint behind the band belongs to the same family as the bar in
+        // front of it, and that is a second claim, not the same one.
+        expect(
+          HSLColor.fromColor(palette.gainColumn).hue,
+          closeTo(HSLColor.fromColor(marks.barGain).hue, 30),
+        );
+        expect(
+          HSLColor.fromColor(palette.lossColumn).hue,
+          closeTo(HSLColor.fromColor(marks.barLoss).hue, 30),
         );
       }
     });

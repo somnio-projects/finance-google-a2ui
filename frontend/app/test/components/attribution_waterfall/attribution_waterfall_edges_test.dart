@@ -1,4 +1,5 @@
 import 'package:finance_app/charts/chart_tokens.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_callout.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_charts/finance_charts.dart';
@@ -91,6 +92,31 @@ void main() {
     final label = tester.widget<Text>(find.text('B0 Holdings Incorporated'));
     expect(label.overflow, TextOverflow.ellipsis);
     expect(label.maxLines, 1);
+  });
+
+  testWidgets('the callout of a peak bucket stays inside the card', (
+    tester,
+  ) async {
+    // AC-7, and the shape the defect actually needs. The catalog example's
+    // nice-rounded axis leaves headroom above its highest bar, so a callout
+    // there clears the card by a pixel and proves nothing; this walk ends at
+    // its own maximum, which puts the peak bar ≈38 px down and left ≈10 px
+    // of the callout under the card's `ClipRRect` before the vertical clamp.
+    final data = walk(<AttributionStep>[
+      bucket('AAA', WaterfallStepKind.gain, 101600),
+      bucket('PEAK', WaterfallStepKind.gain, 103240),
+      bucket('CCC', WaterfallStepKind.loss, 102000),
+    ]);
+    await pump(tester, data, selected: 'PEAK', width: 700);
+    expect(find.byType(AttributionWaterfallCallout), findsOneWidget);
+    final callout = tester.getRect(find.byType(AttributionWaterfallCallout));
+    final card = tester.getRect(find.byType(AttributionWaterfallCard));
+    expect(callout.top, greaterThanOrEqualTo(card.top - 0.01));
+    expect(callout.bottom, lessThanOrEqualTo(card.bottom + 0.01));
+    expect(callout.left, greaterThanOrEqualTo(card.left - 0.01));
+    expect(callout.right, lessThanOrEqualTo(card.right + 0.01));
+    // …and it is still readable: the name of what was tapped is on screen.
+    expect(find.text('PEAK · PEAK Holdings Incorporated'), findsOneWidget);
   });
 
   testWidgets('a net that did not move is muted and carries no glyph', (

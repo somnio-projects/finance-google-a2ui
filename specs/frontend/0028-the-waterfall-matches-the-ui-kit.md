@@ -60,12 +60,27 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
   pill, the `▲` glyph and the parentheses are gone with
   `attribution_waterfall_pill.dart`; 0014 OD-3 (the pill's fill) is superseded.
 
-  Two things the frame does not print are **not dropped**. `net.label` opens
-  the row's `Semantics` label, so a screen reader still hears *Net, +$3,240,
-  +0.68%* — a server-written label kept where the design has no room for it
-  (N-9). `buckets[].selected_label` no longer replaces the header while a bar
-  is selected, because the frame keeps the net there in every selected card;
-  it stays bound on the model and is the caption a future surface can use.
+  `net.label` is **not dropped**: it opens the row's `Semantics` label, so a
+  screen reader still hears *Net, +$3,240, +0.68%* — a server-written label
+  kept where the design has no room to print it (N-9).
+
+  **`buckets[].selected_label` is a declared deviation from N-9, and it is the
+  one thing in this spec that makes the client poorer than the contract.** The
+  old header swapped the net for *NVDA selected* while a bar was selected; the
+  frame keeps the net there in every selected card, and there is nowhere else
+  in the design that caption fits — the callout and the strip both open with
+  `key · label`, which says the same thing in the design's own words. So the
+  field is **read and bound and rendered nowhere**: `readWaterfall` still binds
+  it, `AttributionStep.selectedLabel` still carries it, and no widget prints
+  it.
+
+  It is recorded here rather than removed from the reader for two reasons.
+  N-9's subject is *disclosures and notes* — compliance text — and a state
+  caption is not one; and a field the model can see is a field the backend may
+  want back the moment a surface has room for it. **If design confirms the
+  caption is gone for good, the honest follow-up is to drop it from the
+  projection**, not to leave the client binding something nobody draws
+  (BG-4).
 
 - **OD-2 — the chart's marks follow the frame: four corners, solid runs, and
   two emphasised figures.** A contribution floats between two running totals
@@ -101,19 +116,44 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
   the footer strip; at or above it, the callout floating above the bar with a
   pointer aimed at it.
 
-  This app's standing rule is *responsive through `LayoutBuilder` alone, no
-  breakpoint* (ADR-L D-13), and this is the one exception. It is an exception
-  because **the design ships two different components for one state** and no
-  payload field distinguishes them — a chart that recomputed its own layout
-  cannot produce a footer strip on one width and a callout on another. The
-  threshold is a documented constant in one file, asserted as a constant, and
-  exercised at `520 - 1` and at `520`.
+  **The rule this sits beside is narrower than it first looks, and an earlier
+  draft of this spec overstated it.** *"Responsive through `LayoutBuilder`
+  alone — there is no breakpoint to keep in step with a design"* is
+  `frontend/CLAUDE.md` § *Drawing a chart*, and it is about **charts**;
+  ADR-L D-13 says nothing about breakpoints. `WaterfallChart` still honours it
+  — it lays itself out from the width it is given and nothing else. The
+  threshold is in the **card**, one layer up, and it is not this app's first:
+  `OrderTicketCard.wideBreakpoint = 600` does the same thing, and the catalog's
+  grid and detail view each carry one. What is new here is only that a
+  chart-bearing card now has one.
+
+  It is justified because **the design ships two different components for one
+  state** and no payload field distinguishes them — a chart that recomputed its
+  own layout cannot produce a footer strip on one width and a callout on
+  another. The threshold is a documented constant in one file, asserted as a
+  constant, and exercised at `520 - 1` and at `520`.
 
   The callout's width is **given** (`232`) rather than measured at layout
   time, and that is what makes the pointer possible: the chart clamps the
-  callout into the plot and hands the builder the bar's centre *inside* the
+  callout horizontally and hands the builder the bar's centre *inside* the
   callout, in one pass. A widget that sized itself would know its own width a
   layout too late.
+
+  **Vertically it is the opposite, and that is why the placement is a layout
+  delegate rather than a `Positioned`.** A callout's height depends on how far
+  its identity line wraps, so the vertical clamp needs the *measured* height —
+  which is exactly what `SingleChildLayoutDelegate.getPositionForChild` is
+  handed. The first build placed the callout at `bottom: plotHeight - barTop +
+  gap` with no lower bound, and the card clips: on the walk in AC-4's fixture,
+  whose peak bar tops out ≈38 px down, the callout was laid out at a negative
+  `y` and **≈10 px of it was sliced off** — the line carrying the name of what
+  was tapped. Nothing caught it, because the only wide-width selection in the
+  suite was `NVDA`, whose bar sits ≈120 px down and clears the card.
+
+  It **clamps rather than flips**. Pushed down to the plot's ceiling the
+  callout overlaps the top of its own bar and still points at it; flipping it
+  below would need a second pointer direction and a second artboard, and the
+  design has neither.
 
 - **OD-5 — one clamp, two callers, and the interesting one is the callout.**
   `clampedLabelLeft(center, width, plotWidth)` answers where a box of a given
@@ -184,9 +224,12 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
    holdings chart and the tax-lot table use, asserted against both.
 6. **AC-6** — the loading card draws the component's own shape, contains no
    `Text` at all, and holds still under `MediaQuery.disableAnimations`.
-7. **AC-7** — every figure on screen is a `*.display` string; no raw member
+7. **AC-7** — the desktop callout is wholly inside the card at every bar of a
+   walk, including the one with the least headroom above it, and still names
+   the bucket that was tapped.
+8. **AC-8** — every figure on screen is a `*.display` string; no raw member
    reaches a `Text`, and `geometry()` is read only for bar coordinates.
-8. **AC-8** — `cd frontend && make gate` green, 100 % line coverage per file.
+9. **AC-9** — `cd frontend && make gate` green, 100 % line coverage per file.
 
 ## 5. Test plan
 
@@ -195,10 +238,11 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
 | 1 | `attribution_waterfall_headline_test.dart` — the joined string, the three directions, the absent glyph, the semantic label |
 | 2 | `waterfall_chart_selection_test.dart` (the tint's rect against the chart's own height), `waterfall_painter_test.dart::gives the selected bar its own fill and leaves the rest alone`, `waterfall_axis_test.dart`, `attribution_waterfall_tokens_test.dart` (the direction, not the hex) |
 | 3 | `attribution_waterfall_detail_test.dart`, `attribution_waterfall_callout_test.dart`, `attribution_waterfall_widths_test.dart` (520 − 1 and 520), `waterfall_overlay_test.dart::clamps an overlay that would leave the plot, and still aims it` |
+| 7 | `waterfall_columns_test.dart::clampedOverlayTop` (five cases, two universally quantified over the bars of a walk), `waterfall_overlay_test.dart::clamps a callout that has no room above its bar`, and the card-level `attribution_waterfall_edges_test.dart::the callout of a peak bucket stays inside the card` |
 | 4 | `attribution_waterfall_edges_test.dart` — five shapes, built from literals because the backend publishes one example |
 | 5 | `attribution_waterfall_tokens_test.dart::agrees with the chart palette and the tax lots on gain and loss` — the `taxlot_tokens_test` idiom |
 | 6 | `attribution_waterfall_skeleton_test.dart` — `findsNothing` on `Text`, the `SkeletonPulse`, and the override reached through `ViewComponent.skeleton` |
-| 7 | `attribution_waterfall_card_test.dart::never shows a raw decimal`, `waterfall_chart_test.dart::never puts a raw figure on screen` |
+| 8 | `attribution_waterfall_card_test.dart::never shows a raw decimal`, `waterfall_chart_test.dart::never puts a raw figure on screen` |
 | geometry | `packages/finance_charts/test/src/waterfall_columns_test.dart` — the column tiles the plot with no gap, the clamp centres / pins left / pins right / degenerates on a label wider than the plot |
 | raster | six goldens: chart default and selected, light and dark; the loading card whole, light and dark. The loading card is the only **whole-card** golden in this suite, and it is one because it has no text — the drift ADR-L D-15 measured is entirely glyph edges |
 
@@ -208,12 +252,21 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
 |---|---|
 | `clampedLabelLeft` returns `center - width / 2` unconditionally | 3 of 5 `clampedLabelLeft` cases in `waterfall_columns_test.dart`, **and** `waterfall_overlay_test.dart::clamps an overlay that would leave the plot, and still aims it` |
 | `waterfallColumn` returns `band.barLeft/barRight` (the bar) instead of the band | 3 cases in `waterfall_columns_test.dart` (`spans its whole band`, `is wider than the bar it stands behind`, `tiles the plot with no gap`), **and** two widget tests: `waterfall_chart_selection_test.dart::tints the selected band across the plot and its label` and `waterfall_overlay_test.dart::spans the selected band` |
+| `clampedOverlayTop` returns `barTop - gap - height` unconditionally (the original defect, restored) | 3 cases in `waterfall_columns_test.dart`, `waterfall_overlay_test.dart::clamps a callout that has no room above its bar`, **and** the card-level `attribution_waterfall_edges_test.dart::the callout of a peak bucket stays inside the card` |
 
-The first mutation is also what found OD-5's real shape: the value-label
-suite stayed **green** under it, which is how the clamp turned out to be
-unreachable through that caller. The assertion that had been aimed at the two
-totals would have passed for the wrong reason, so it was rewritten as the
-property.
+Two of the three taught us something the assertions had not:
+
+- The **first** is how OD-5 found its real shape. The value-label suite stayed
+  **green** under it, which is how the clamp turned out to be unreachable
+  through that caller. The assertion that had been aimed at the two totals
+  would have passed for the wrong reason, so it was rewritten as the property.
+- The **third** is why the card-level test uses a *fixture* walk rather than
+  the catalog example. Measured under the mutation, the example's callout
+  lands at `top = 270.5` against a card at `269.5` — it clears by **one
+  pixel**, because `LinearScale.nice` rounds the axis outward and leaves
+  headroom above the highest bar. A test written there is green either way.
+  The fixture walk ends at its own maximum, so its peak bar tops out ≈38 px
+  down and ≈10 px of the callout goes under the clip.
 
 ## 6. Backend gaps — raise as tickets, do not compute
 
@@ -232,6 +285,12 @@ property.
   from one component's frame would silently restyle two other components and
   break AC-5's premise. The divergence is the same class as `specs/frontend/0007`
   OD-2 (the allocation ramp) and belongs in the same conversation.
+
+- **BG-4 — `buckets[].selected_label` is now rendered by nothing.** OD-1 has
+  the reasoning: the frame keeps the net in the header, so the caption has no
+  home. The client still binds it. Either design gives it a place or the
+  projection drops it — a field nobody draws is a field nobody maintains, and
+  this is the review that noticed.
 
 - **BG-3 — the dark loss-selected state was never exported.** The frame
   carries a selected loss on the light artboard only, so

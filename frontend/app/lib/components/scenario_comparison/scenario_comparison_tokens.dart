@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 /// obtained; `scenario_comparison_tokens_test.dart` pins all eight values so
 /// a future edit has to disagree with a test rather than with a memory.
 ///
-/// **Why a second colour file exists.** `chart_tokens.dart` says it is the
-/// only file in `app/lib/` naming a `Color`, and that was true while one
-/// component had been built. Three of this card's colours are simply not
+/// **Why a second colour file exists.** `chart_tokens.dart` used to say it
+/// was the only file in `app/lib/` naming a `Color`, and that was true while
+/// one component had been built. Three of this card's colours are simply not
 /// chart roles — a table's row rule, a column header's hairline, a caption —
 /// and `ChartPalette` has no field for them. Adding four would edit
 /// `chart_palette.dart` and `chart_tokens.dart`, and *adding a component

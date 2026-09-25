@@ -5039,9 +5039,31 @@ is the second design asset checked in beside a spec, after `0003-taxlot-table`
 — the frame is the source the measurements in §2 were read from, and a table
 of hexes with no image beside it cannot be re-checked.
 
-**Next person:** three backend gaps are named in §6 and none was computed
+- **A review found the defect the tests were shaped around, not into.** The
+  desktop callout had a horizontal clamp with a property test and **no
+  vertical one**: a bar near the top of a walk left less headroom than the
+  callout needed, it was laid out at a negative `y`, and the card's
+  `ClipRRect` took the first line off. The suite could not see it because the
+  only wide-width selection was `NVDA`, which sits ≈120 px down. Two things
+  were wrong at once — the missing clamp, and a test set whose one wide case
+  was the easy one.
+
+  Two lessons. **The vertical placement needs the child's measured height**,
+  which a `Positioned` never has, so it is a `SingleChildLayoutDelegate` —
+  the opposite of the width, which is *given* precisely so the pointer can be
+  placed in one pass. And **pick the adversarial fixture, then check it is
+  adversarial**: the catalog example's callout clears the card by *one pixel*
+  because `LinearScale.nice` rounds the axis outward, so a test written there
+  is green with or without the clamp. Measured under the mutation, and the
+  card-level test moved to the fixture walk that actually clips.
+
+**Next person:** four backend gaps are named in §6 and none was computed
 around. BG-1 is the one a viewer sees: the frame's detail reads *Contribution
 +$2,980* and `buckets[]` carries no caption for the figure, so the client
 prints the figure alone rather than inventing a word that would not follow
 the `locale` option. BG-2 is the palette. BG-3 is a dark artboard design
-never exported.
+never exported. BG-4 is `buckets[].selected_label`, which this ticket left
+bound and rendered nowhere: the frame keeps the net in the header, so the
+caption has no home. It is a **declared deviation from N-9** rather than a
+silent drop, and the honest follow-up is design either giving it a place or
+the projection dropping it.

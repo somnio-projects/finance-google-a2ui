@@ -101,7 +101,7 @@ class AttributionWaterfallData extends Equatable {
   /// The payload's `title`.
   final String title;
 
-  /// The payload's `net`: the headline pill.
+  /// The payload's `net`: the figure opposite the card's title.
   final AttributionNet net;
 
   /// The walk: the opening total, each contribution, the closing total — in

@@ -82,4 +82,66 @@ void main() {
       expect(clampedLabelLeft(center: 350, width: 700, plotWidth: 700), 0);
     });
   });
+
+  group('clampedOverlayTop', () {
+    test('sits the callout a gap above a bar with room for it', () {
+      expect(
+        clampedOverlayTop(barTop: 120, height: 80, gap: 6, plotHeight: 200),
+        34,
+      );
+    });
+
+    test('pushes a callout with no room above down to the ceiling', () {
+      // The defect this exists for: a walk whose peak bar tops out 38 px
+      // down leaves 32 px above it for an 80 px callout, so the ideal `y`
+      // is -48 and the card's clip takes the name off the top.
+      expect(
+        clampedOverlayTop(barTop: 38, height: 80, gap: 6, plotHeight: 200),
+        0,
+      );
+    });
+
+    test('never returns a negative top, for any bar in a real walk', () {
+      // Universally quantified: the clip is what turns a negative top into a
+      // visible defect, so what has to hold is the *sign*, at every bar.
+      for (final barTop in <double>[0, 1, 37.5, 60, 120, 199]) {
+        for (final height in <double>[40, 80, 140]) {
+          expect(
+            clampedOverlayTop(
+              barTop: barTop,
+              height: height,
+              gap: 6,
+              plotHeight: 200,
+            ),
+            greaterThanOrEqualTo(0),
+            reason: 'bar at $barTop with a $height callout',
+          );
+        }
+      }
+    });
+
+    test('keeps the callout inside the plot whenever one can fit', () {
+      for (final barTop in <double>[0, 37.5, 60, 120, 199]) {
+        const height = 80.0;
+        final top = clampedOverlayTop(
+          barTop: barTop,
+          height: height,
+          gap: 6,
+          plotHeight: 200,
+        );
+        expect(top + height, lessThanOrEqualTo(200.01), reason: '$barTop');
+      }
+    });
+
+    test('a callout taller than the plot starts at the ceiling', () {
+      expect(
+        clampedOverlayTop(barTop: 120, height: 200, gap: 6, plotHeight: 200),
+        0,
+      );
+      expect(
+        clampedOverlayTop(barTop: 120, height: 260, gap: 6, plotHeight: 200),
+        0,
+      );
+    });
+  });
 }

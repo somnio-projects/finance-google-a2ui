@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/charts/waterfall_overlay_layout.dart';
 import 'package:finance_app/charts/waterfall_selection.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
@@ -82,11 +83,16 @@ List<Widget> waterfallOverlayChildren(
     plotWidth: layout.bandScale.width,
   );
   return <Widget>[
-    Positioned(
-      left: left,
-      width: overlay.width,
-      bottom: plotHeight - bar.rect.top + WaterfallOverlay.gap,
-      child: overlay.builder(context, bar.rect.topCenter.x - left),
+    Positioned.fill(
+      child: CustomSingleChildLayout(
+        delegate: WaterfallOverlayLayout(
+          left: left,
+          width: overlay.width,
+          barTop: bar.rect.top,
+          plotHeight: plotHeight,
+        ),
+        child: overlay.builder(context, bar.rect.topCenter.x - left),
+      ),
     ),
   ];
 }
