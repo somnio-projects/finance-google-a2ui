@@ -26,10 +26,9 @@ places. None of them is a bug; all of them are visible from across a room.
 | the selected bucket's detail as a **footer strip** (mobile) or a **floating callout with a pointer** (desktop) | one rounded strip, on every width |
 | a **loading** card of grey columns | the Assistant's generic bars-and-pills placeholder |
 
-Two more things the old build did that the frame does not: the header swapped
-the net for `buckets[].selected_label` while a bar was selected, and a total's
-figure was dropped rather than pushed back inside the plot when it did not fit
-centred.
+One more thing the old build did that the frame does not: the header swapped
+the net for `buckets[].selected_label` while a bar was selected. The frame
+keeps the net there in every selected card.
 
 ## 2. Measured, not transcribed
 
@@ -180,7 +179,7 @@ be deepening. The bar marks themselves are **not** changed here (see §6).
    even when the callout is clamped against the plot's edge.
 4. **AC-4** — an all-positive walk, an all-negative walk, a single bucket,
    twenty buckets and a flat net all render without an overflow, and the
-   twenty-bucket case ellipsises its names.
+   twenty-bucket case truncates its names with an ellipsis.
 5. **AC-5** — the waterfall's gain and loss marks are the same values the
    holdings chart and the tax-lot table use, asserted against both.
 6. **AC-6** — the loading card draws the component's own shape, contains no
