@@ -5651,3 +5651,66 @@ diagram 06 updated for the split fragment vocabulary.
    mechanism is without spelling it.
 
 **Harness.** No rule file changed.
+
+## 2026-09-25 — GGU-128 · GGU-129 · the documentation corpus had drifted from the code in eight places
+
+**No spec.** Nothing here changes behaviour; both tickets correct sentences that
+were true when written and are false now — the defect class
+`.claude/rules/ci-conventions.md` §5 catalogues, in the prose rather than in a
+check. Two tickets because the root causes differ; **one PR** because every PR
+in this repository touches `.claude/harness-log.md`, so parallel branches
+conflict by construction.
+
+**GGU-128 — what the `client_flutter` retirement left behind.** The sweep was
+good: 44 files carry a dated pointer or a strikethrough. Three did not.
+
+1. `frontend/CLAUDE.md` told you to run with
+   `--dart-define=BACKEND_DEV_TOKEN=…` and called it *"a recorded gap
+   (`SECURITY.md` G-1)"*. `grep -c BACKEND_DEV_TOKEN app/lib/app/app_config.dart`
+   → **0**, so the flag was silently ignored, and `SECURITY.md` has G-1 **struck
+   and Closed** with *"`BACKEND_DEV_TOKEN` is gone"*. The sentence described the
+   security posture **in the unsafe direction** — asserting a compiled-in
+   credential that no longer exists. `README.md` was corrected; `CLAUDE.md` was
+   not.
+2. `ADR-H` **D-4** was the only ruling in that ADR `repo/0002` did not strike,
+   and it outlived its subject twice: the app whose shells it deferred was
+   retired, and its replacement never had shells (`.metadata` registers `root`
+   and `web`).
+3. `docs/specs/GGU-6/refinement-report.md` was the only surviving reference with
+   **no pointer at all**, and it is the origin of GGU-27's premise.
+
+**The shape worth keeping:** the 44 that were swept *mention* the app; these
+three *assume* it — a run command, a gate deferral, an inspection report. A grep
+finds the first kind. Only reading finds the second.
+
+**GGU-129 — five counting claims, four of them in `.claude/rules/frontend/*`.**
+Exemptions named the wrong file and omitted `speech_web.dart` (removing that
+exemption breaks the gate unfixably — the file cannot compile for the Dart VM);
+"six components" against a catalog of twelve views over eleven components, used
+as the premise of a chunking calculation; "four packages" / "three pure
+packages" against five, and the **layering table listed three**, which is a hole
+in the rule rather than a stale number; "four interpreter mechanisms" against
+five; and the gate enumerations omitted `openapi-check` and `csp` — the latter
+guarding the failure `ship-gate.json` records as *"served a white page while
+every gate was green"*.
+
+**The pattern, and the reason it matters more than the eight sentences:**
+`CLAUDE.md` was walked forward and `.claude/rules/*` was not. The rules files
+are the ones with `paths:` frontmatter, so **the stale half is the half that
+auto-loads when an agent edits the matching code**; the correct half is the one
+a human happens to open.
+
+**What was checked and found FALSE**, recorded so the next sweep does not
+re-raise it: there is no duplicate `specs/frontend/0002` (`a2ui-agent-path` is
+**0030**; `repo.spec-numbers` is right), `specs/README.md` no longer claims
+"ordered by area then number" (GGU-105 removed it), and
+`.claude/rules/frontend/architecture.md` links to **diagram 12**, correctly. Two
+of seven candidates were wrong — which is the argument for verifying a report
+before acting on it, not for skipping the sweep.
+
+**Not mechanised here, deliberately.** Three of these are checkable — the
+exemption list against `isExempt`, the gate enumerations against the `gate:`
+targets, the component count against the generated snapshot — in the shape
+`binding_rules_test.dart::the geometry seam is the only exemption` already uses.
+That is a decision about how much prose to put under a gate, and it belongs in
+its own ticket rather than riding along with the corrections.

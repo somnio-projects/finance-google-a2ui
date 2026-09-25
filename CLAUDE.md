@@ -56,8 +56,8 @@ Compose carries only the topology (hostnames, ports, origins); credentials and t
 
 ```bash
 pre-commit install && pre-commit install --hook-type pre-push   # once per clone
-cd backend && make gate                # lint · types · budget · catalog contract · quality (smells) · tests 100 % · audit
-cd frontend && make gate               # toolchain · format · analyze · budget · manifest · tests · 100 % line coverage
+cd backend && make gate                # lint · types · budget · catalog contract · OpenAPI contract · quality (smells) · tests 100 % · audit
+cd frontend && make gate               # toolchain (+ its suite) · release-verify suite · format · analyze · budget · manifest · CSP hashes · tests · 100 % line coverage
 ```
 
 Every PR carries a **`Verification` block** that names what was run *and what
