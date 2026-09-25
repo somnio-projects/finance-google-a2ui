@@ -1,20 +1,23 @@
 import 'package:finance_app/charts/chart_palette.dart';
-import 'package:finance_app/charts/waterfall_chart.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_body.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_callout.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
-import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_notes.dart';
-import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_tokens.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 
-/// Renders `attribution.waterfall.v1` as the design's card.
+/// Renders `attribution.waterfall.v1` as the UI Kit's card.
 ///
-/// The chrome is the design's, measured: a 16 px radius, a 1 px hairline, and
-/// 18/16/18/14 padding. Selection is **local state** — tapping a band marks
-/// it, swaps the header's pill for the bar's own *selected* caption and
-/// reveals its detail. Dispatching the catalog's `drill.attribution.v1`
-/// action back to the agent is the component's seam, not this card's, so the
-/// callback is exposed and the card does not know what it does.
+/// Selection is **local state** — tapping a band marks it and reveals the
+/// bucket's own detail. Which *shape* that detail takes is the one breakpoint
+/// in this app and it is deliberate: the UI Kit ships two presentations, a
+/// footer strip on a phone and a floating callout on a desktop, and no
+/// payload field distinguishes them. The threshold is [calloutMinWidth],
+/// measured off the two artboards (spec frontend/0028 OD-4).
+///
+/// Dispatching the catalog's `drill.attribution.v1` action back to the agent
+/// is the component's seam, not this card's, so the callback is exposed and
+/// the card does not know what it does.
 class AttributionWaterfallCard extends StatefulWidget {
   /// Creates the card.
   const AttributionWaterfallCard({
@@ -29,6 +32,13 @@ class AttributionWaterfallCard extends StatefulWidget {
 
   /// The card's padding, measured from the design.
   static const EdgeInsets padding = EdgeInsets.fromLTRB(18, 16, 18, 14);
+
+  /// The narrowest card that shows the callout instead of the footer strip.
+  ///
+  /// The desktop artboard is 642 px of card and the mobile one 362; a callout
+  /// is [AttributionWaterfallCallout.width] wide and stops being an
+  /// annotation once it covers most of the plot it points into.
+  static const double calloutMinWidth = 520;
 
   /// What to draw.
   final AttributionWaterfallData data;
@@ -57,47 +67,44 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
   @override
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
-    final steps = widget.data.steps;
-    final selected = _selectedIndex(steps);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.surface,
-        border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(AttributionWaterfallCard.radius),
-      ),
-      child: Padding(
-        padding: AttributionWaterfallCard.padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            AttributionWaterfallHeader(
-              title: widget.data.title,
-              net: widget.data.net,
-              selectedLabel: selected == null
-                  ? null
-                  : steps[selected].selectedLabel,
-            ),
-            const SizedBox(height: 14),
-            WaterfallChart(
-              steps: widget.data.waterfallSteps,
-              valueLabels: widget.data.valueDisplays,
-              axisLabels: widget.data.axisLabels,
-              selectedIndex: selected,
-              selectionColor: AttributionWaterfallTokens.of(context).selection,
-              onSegmentTap: _handleTap,
-            ),
-            if (selected != null) ...<Widget>[
-              const SizedBox(height: 12),
-              AttributionWaterfallDetail(step: steps[selected]),
-            ],
-            if (widget.data.annotations.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 12),
-              AttributionWaterfallNotes(annotations: widget.data.annotations),
-            ],
-          ],
+    final radius = BorderRadius.circular(AttributionWaterfallCard.radius);
+    return LayoutBuilder(
+      builder: (context, constraints) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: palette.surface,
+          border: Border.all(color: palette.border),
+          borderRadius: radius,
+        ),
+        // The footer strip runs to the card's edges, so the rounding has to
+        // be a clip and not only a border.
+        child: ClipRRect(
+          borderRadius: radius,
+          child: _body(constraints.maxWidth),
         ),
       ),
+    );
+  }
+
+  Widget _body(double width) {
+    final steps = widget.data.steps;
+    final index = _selectedIndex(steps);
+    final wide = width >= AttributionWaterfallCard.calloutMinWidth;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Padding(
+          padding: AttributionWaterfallCard.padding,
+          child: AttributionWaterfallBody(
+            data: widget.data,
+            selectedIndex: index,
+            showCallout: wide,
+            onSegmentTap: _handleTap,
+          ),
+        ),
+        if (!wide && index != null)
+          AttributionWaterfallDetail(step: steps[index]),
+      ],
     );
   }
 

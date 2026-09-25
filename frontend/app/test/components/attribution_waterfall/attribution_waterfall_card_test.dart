@@ -1,5 +1,5 @@
-import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/waterfall_chart.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_callout.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
@@ -19,6 +19,9 @@ Offset bandCentre(WidgetTester tester, int index) {
   return Offset(plot.left + band * (index + 0.5), plot.center.dy);
 }
 
+/// A card narrow enough to show the footer strip rather than the callout.
+const double phoneWidth = 380;
+
 void main() {
   group(AttributionWaterfallCard, () {
     late AttributionWaterfallData data;
@@ -34,9 +37,10 @@ void main() {
     Widget subject({
       void Function(String key)? onSegmentTap,
       String? initialSelectedKey,
+      double width = phoneWidth,
     }) => Center(
       child: SizedBox(
-        width: 571,
+        width: width,
         child: AttributionWaterfallCard(
           data: data,
           onSegmentTap: onSegmentTap,
@@ -46,14 +50,12 @@ void main() {
     );
 
     test('keeps the card chrome the design was measured at', () {
-      // Constants, asserted as constants. A raster golden would prove these
-      // too, and far less precisely — 16 px is exact, "looks the same" is
-      // not. See the golden suite for why the chrome is not in a golden.
       expect(AttributionWaterfallCard.radius, 16);
       expect(
         AttributionWaterfallCard.padding,
         const EdgeInsets.fromLTRB(18, 16, 18, 14),
       );
+      expect(AttributionWaterfallCard.calloutMinWidth, 520);
     });
 
     testWidgets('shows the title and every annotation verbatim', (
@@ -79,6 +81,7 @@ void main() {
     testWidgets('shows no detail until a band is tapped', (tester) async {
       await tester.pumpApp(subject());
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
+      expect(find.byType(AttributionWaterfallCallout), findsNothing);
     });
 
     testWidgets('reveals the tapped bucket and reports its key', (
@@ -91,7 +94,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tapped, <String>['NVDA']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
-      expect(find.text(r'$455,730.55'), findsOneWidget);
+      expect(find.text('NVDA · NVIDIA Corp'), findsOneWidget);
+      expect(find.text(r'+45.72% · 90 sh · $1,204.66'), findsOneWidget);
     });
 
     testWidgets('a second tap on the same bucket clears the selection', (
@@ -120,21 +124,6 @@ void main() {
     ) async {
       await tester.pumpApp(subject(initialSelectedKey: 'NOPE'));
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
-    });
-
-    testWidgets('colours a gain with the gain mark', (tester) async {
-      await tester.pumpApp(subject(initialSelectedKey: 'NVDA'));
-      final gain = tester.widget<Text>(find.text(r'$34,019.40'));
-      expect(gain.style?.color, ChartTokens.light.barGain);
-    });
-
-    testWidgets('colours a loss with the loss mark', (tester) async {
-      // A separate test rather than a second pump: the card's `State`
-      // survives a re-pump of the same widget type, so its selection would
-      // not change and the assertion would quietly read the first one.
-      await tester.pumpApp(subject(initialSelectedKey: 'GLD'));
-      final loss = tester.widget<Text>(find.text(r'-$10,500.00'));
-      expect(loss.style?.color, ChartTokens.light.barLoss);
     });
   });
 }

@@ -1,16 +1,23 @@
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/waterfall_marks.dart';
 import 'package:finance_app/charts/waterfall_painter.dart';
+import 'package:finance_app/charts/waterfall_selection.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'waterfall_harness.dart';
 
+const WaterfallSelection _selected = WaterfallSelection(
+  index: 1,
+  barFill: Color(0xFF0C6349),
+  column: Color(0xFFE8FEF3),
+);
+
 void main() {
   group(WaterfallPainter, () {
     WaterfallPainter build({
-      int? selectedIndex,
+      WaterfallSelection? selection,
       List<String>? labels,
       double width = 533.37,
     }) => WaterfallPainter(
@@ -22,7 +29,7 @@ void main() {
       palette: ChartTokens.light,
       valueLabels: labels ?? harnessValueDisplays,
       textDirection: TextDirection.ltr,
-      selectedIndex: selectedIndex,
+      selection: selection,
     );
 
     test('colours a bar by the direction the backend sent', () {
@@ -34,9 +41,6 @@ void main() {
     });
 
     test('mutes both totals in text, and only tints a contribution', () {
-      // Measured: the design draws both opening and closing figures in
-      // #5F6169. The closing total's *bar* is the accent, its *label* is
-      // not — deriving the label colour from the bar colour got that wrong.
       const p = ChartTokens.light;
       expect(p.labelFor(WaterfallStepKind.start), p.mutedLabel);
       expect(p.labelFor(WaterfallStepKind.total), p.mutedLabel);
@@ -44,16 +48,36 @@ void main() {
       expect(p.labelFor(WaterfallStepKind.loss), p.barLoss);
     });
 
+    test('gives the selected bar its own fill and leaves the rest alone', () {
+      // AC-2: the selection deepens the tapped bar. Every other bar keeps the
+      // mark its direction earned, which is the half that would be easy to
+      // break by recolouring the whole chart.
+      final painter = build(selection: _selected);
+      final bars = painter.layout.bars;
+      expect(painter.fillFor(bars[1]), _selected.barFill);
+      expect(painter.fillFor(bars[2]), ChartTokens.light.barLoss);
+      expect(painter.fillFor(bars.first), ChartTokens.light.barNeutral);
+      expect(painter.fillFor(bars.last), ChartTokens.light.barTotal);
+    });
+
+    test('leaves every bar its own mark when nothing is selected', () {
+      final painter = build();
+      for (final bar in painter.layout.bars) {
+        expect(painter.fillFor(bar), ChartTokens.light.barFor(bar.step.kind));
+      }
+    });
+
     test('keeps the design constants it was measured against', () {
+      // The UI Kit rounds all four corners and draws an unbroken connector;
+      // the first build did neither (0028 OD-2).
       expect(WaterfallPainter.barRadius, const Radius.circular(4));
-      expect(WaterfallPainter.connectorWidth, 1.5);
-      expect(WaterfallPainter.labelGap, 7.5);
+      expect(WaterfallPainter.connectorWidth, 1);
     });
 
     test('repaints when anything it draws changes', () {
       final painter = build();
       expect(painter.shouldRepaint(build()), isFalse);
-      expect(painter.shouldRepaint(build(selectedIndex: 2)), isTrue);
+      expect(painter.shouldRepaint(build(selection: _selected)), isTrue);
       expect(painter.shouldRepaint(build(width: 400)), isTrue);
       expect(
         painter.shouldRepaint(
@@ -82,7 +106,7 @@ void main() {
           textDirection: TextDirection.ltr,
           child: CustomPaint(
             size: const Size(533.37, 200),
-            painter: build(selectedIndex: 1),
+            painter: build(selection: _selected),
           ),
         ),
       );
@@ -99,23 +123,6 @@ void main() {
           child: CustomPaint(
             size: const Size(533.37, 200),
             painter: build(labels: const <String>['only one']),
-          ),
-        ),
-      );
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('drops a value label that will not fit its band', (
-      tester,
-    ) async {
-      // The design does the same thing: its 245 px artboard shows no value
-      // labels. The rule is the measured text width, not a breakpoint.
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: CustomPaint(
-            size: const Size(120, 200),
-            painter: build(width: 120),
           ),
         ),
       );

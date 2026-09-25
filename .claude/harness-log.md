@@ -4976,3 +4976,72 @@ catalog card and the standalone page are unchanged.
 is derived on the standalone page from the previous payload and is not yet
 drawn in the transcript. `AgentSurface` has the previous payload at the
 moment `rendered` replaces it; keeping it is a field, not a contract change.
+
+---
+
+## 2026-09-24 — The waterfall matches the UI Kit
+
+**Spec:** [`frontend/0028`](../specs/frontend/0028-the-waterfall-matches-the-ui-kit.md) ·
+**Ticket:** GGU-115 (design published the UI Kit A2UI *Waterfall* frame).
+
+`AttributionWaterfall` is the component Flow A streams, so it is the surface
+a viewer looks at longest in the demo. It had been built against the older
+**component catalog page**, and the new frame disagreed with it in seven
+visible places: a pill where the header should be two plain figures, dashed
+connectors where the frame draws hairlines, bars rounded on two corners
+instead of four, both totals muted where the frame bolds them, a dashed ring
+where the frame tints the whole band, one detail strip where the frame ships
+two presentations, and no loading card at all.
+
+**What changed.** The chart layer gained `waterfall_axis.dart`,
+`waterfall_value_label.dart`, `waterfall_overlay.dart` and
+`waterfall_selection.dart`; the component gained a header, a callout with a
+pointer, a footer strip and a skeleton; `finance_charts` gained
+`waterfall_columns.dart` (the band's full-height rect and one clamp).
+`attribution_waterfall_pill.dart` and `dashed_line.dart` were **deleted** —
+the pill because the design no longer has one, the dashed helper because the
+solid connector left it with no caller in `lib/`.
+
+**Three things worth carrying forward:**
+
+- **A design frame is measured in the palette it was drawn in, and that is
+  not always ours.** The frame draws the walk on a lighter base than this
+  app's catalog-page palette (`#2FA584` against our `#12805C`), so its
+  *selected* gain `#1D7059` is **lighter** than the bar we would be
+  deepening. Transcribing it would have made a tapped bar recede. The tokens
+  keep the frame's direction and contrast applied to our marks, and the test
+  asserts the **direction** — deeper in light, brighter in dark, same hue
+  family — rather than the hex. When the two palettes disagree, copy the
+  *relationship*, not the value, and raise the base (spec §6, BG-2).
+
+- **One documented breakpoint is better than a chart that guesses.** The
+  standing rule is *responsive through `LayoutBuilder` alone* (ADR-L D-13),
+  and this ticket is its one exception: the frame ships a footer strip on a
+  phone and a floating callout on a desktop, for the same state, and no
+  payload field distinguishes them. `calloutMinWidth = 520` is a constant in
+  one file, asserted as a constant and exercised at `520 - 1` and `520`. The
+  callout's **width is given rather than measured**, which is what lets the
+  chart place the card and its pointer in one pass — a widget that sized
+  itself would know its own width a layout too late.
+
+- **A mutation check told us a rule was unreachable, and that was the most
+  useful thing it did.** Removing the clamp from `clampedLabelLeft` turned
+  three package assertions and the callout's clamp test red — and left the
+  value-label suite **green**. A bar is centred in its band and a label is
+  centred on its bar, so a label that passes the drop rule is already inside
+  the plot: the clamp can only bite through the callout. The assertion that
+  had been aimed at the two totals would have passed for the wrong reason, so
+  it was rewritten as the property it actually is (*no figure ever leaves the
+  plot, at any width*). **A green test under a mutation is evidence too.**
+
+**Harness:** no rule changed. `specs/frontend/assets/0028-waterfall-uikit/`
+is the second design asset checked in beside a spec, after `0003-taxlot-table`
+— the frame is the source the measurements in §2 were read from, and a table
+of hexes with no image beside it cannot be re-checked.
+
+**Next person:** three backend gaps are named in §6 and none was computed
+around. BG-1 is the one a viewer sees: the frame's detail reads *Contribution
++$2,980* and `buckets[]` carries no caption for the figure, so the client
+prints the figure alone rather than inventing a word that would not follow
+the `locale` option. BG-2 is the palette. BG-3 is a dark artboard design
+never exported.

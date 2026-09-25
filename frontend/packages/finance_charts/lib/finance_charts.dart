@@ -19,5 +19,6 @@ export 'src/payoff_layout.dart';
 export 'src/payoff_point.dart';
 export 'src/sparkline_layout.dart';
 export 'src/tick_steps.dart';
+export 'src/waterfall_columns.dart';
 export 'src/waterfall_layout.dart';
 export 'src/waterfall_step.dart';

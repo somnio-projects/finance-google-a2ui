@@ -46,6 +46,17 @@ class AttributionStep extends Equatable {
   /// The payload's `key`, which a drill-down action takes as its argument.
   String get key => step.key;
 
+  /// The design's identity line for a selected bucket — *NVDA · NVIDIA Corp*.
+  ///
+  /// Both halves are the payload's `key` and `label`; the separator is
+  /// punctuation, which is layout and not formatting. A total's key is
+  /// synthetic — the contract gives neither endpoint one — so a total is its
+  /// label alone, and the card never selects one anyway.
+  String get identityLine => switch (step.kind) {
+    WaterfallStepKind.gain || WaterfallStepKind.loss => '$key · $label',
+    WaterfallStepKind.start || WaterfallStepKind.total => label,
+  };
+
   @override
   List<Object?> get props => <Object?>[
     step,
