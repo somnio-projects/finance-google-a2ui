@@ -52,23 +52,60 @@ def owners_from(values: Sequence[str]) -> list[str]:
     return owners
 
 
+def _require_one_selection(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> None:
+    """Refuse a selection that names both ways of choosing owners, or neither.
+
+    Both are refusals rather than a precedence rule: an operator who typed a
+    list *and* ``--all`` meant one of two very different runs, and guessing
+    which would be the difference between touching four accounts and touching
+    every one of them.
+
+    Raises:
+        SystemExit: Through ``parser.error``, which is how argparse refuses.
+    """
+    if args.all_owners and args.emails:
+        parser.error("name owners or pass --all, not both")
+    if not args.all_owners and not args.emails:
+        parser.error("name at least one owner, or pass --all")
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Read the owner list and the reset flag off the command line."""
+    """Read the owner selection and the reset flag off the command line.
+
+    Raises:
+        SystemExit: When the selection names both ways or neither; see
+            :func:`_require_one_selection`.
+    """
     parser = argparse.ArgumentParser(
         prog="python -m app.jobs.seed_portfolios",
         description="Give one or more owners the curated demo portfolio.",
     )
     parser.add_argument(
         "emails",
-        nargs="+",
+        nargs="*",
         help="Owner e-mail addresses; a comma inside one separates further ones.",
+    )
+    parser.add_argument(
+        "--all",
+        dest="all_owners",
+        action="store_true",
+        help=(
+            "Every admitted account in this environment, read from the "
+            "database instead of the command line. Excludes revoked and "
+            "requested accounts. Pair with --reset to re-seed accounts that "
+            "already have a portfolio."
+        ),
     )
     parser.add_argument(
         "--reset",
         action="store_true",
         help="Replace an existing portfolio instead of skipping that owner.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    _require_one_selection(parser, args)
+    return args
 
 
 __all__ = ["MAX_EMAIL", "owners_from", "parse_args"]
