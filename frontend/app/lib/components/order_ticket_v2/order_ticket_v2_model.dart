@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_control_model.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_line_model.dart';
 
+export 'order_ticket_v2_control_model.dart';
 export 'order_ticket_v2_line_model.dart';
 
 /// One figure of the impact panel, already formatted by the backend.
@@ -66,6 +68,7 @@ class OrderTicketV2Data extends Equatable {
     required this.lines,
     required this.figures,
     required this.shifts,
+    required this.controls,
     required this.breach,
     required this.message,
     required this.disclosure,
@@ -92,6 +95,10 @@ class OrderTicketV2Data extends Equatable {
   /// The weight rows, in arrival order.
   final List<OrderTicketV2Shift> shifts;
 
+  /// The buttons the design draws, in arrival order (N-10). Their words and
+  /// their enabled state are the backend's, not this client's.
+  final List<OrderTicketV2Control> controls;
+
   /// `constraints.breach`: `none`, or the bound the draft exceeds.
   final String breach;
 
@@ -114,6 +121,7 @@ class OrderTicketV2Data extends Equatable {
     lines,
     figures,
     shifts,
+    controls,
     breach,
     message,
     disclosure,
