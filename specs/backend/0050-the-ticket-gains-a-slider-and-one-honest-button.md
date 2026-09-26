@@ -41,7 +41,7 @@ No new route. `order.ticket.v2`'s payload gains three fields.
 
 | Path | Type | Meaning |
 |---|---|---|
-| `lines[].stops` | `tuple[str, …]`, ≤ `MAX_LADDER` (23) | Every `legs` option value this leg's track can land on, ascending by this leg's units. Each matches `LEGS_PATTERN` and is accepted by `OrderTicketV2Options`. |
+| `lines[].stops` | `tuple[str, …]`, ≤ `MAX_LADDER` (23) | Every `legs` option value this leg's track can land on, ascending by this leg's **weight**. Each matches `LEGS_PATTERN` and is accepted by `OrderTicketV2Options`. |
 | `lines[].position` | `int`, `0 ≤ n < MAX_LADDER` | Index into `stops` of the value this line is rendered at. |
 | `controls[]` | `tuple[TicketControl, …]`, ≤ 4 | `key` · `label` · `kind` · `enabled` · `reason`. |
 
@@ -50,19 +50,29 @@ keyboard-reachable control, and the slider is the coarse one.
 
 ### The ladder rule
 
-`app/domain/draft_ladder.py`, pure, no I/O:
+`app/domain/draft_ladder.py` and `draft_rebalance.py`, pure, no I/O:
 
-1. **Ceiling.** A **buy** is bounded by cash — what the available cash affords
-   for this leg once the *other* legs are paid for, floored to the asset's own
-   `step`. A **sell** raises cash and is never blocked (`draft_impact`), so it
-   is bounded by what the portfolio **holds**. Either way it is never below the
-   quantity on screen, so a draft already past its cash still sits on its own
-   track.
-2. **Stride.** The asset's `step`, coarsened by `ceil((span + 1) / MAX_STOPS)`
-   so the ladder fits its bound. A payload is not a place for an unbounded list.
-3. **Alignment.** The ladder is built around the **current** value, not around
-   zero, so the number on screen is always a stop. Zero and the ceiling are
-   added, so both ends are always reachable.
+1. **The slider sets the mix; the stepper sets the size.** A stop is the draft
+   rebalanced so this leg carries a chosen **share of the order**, with the
+   **total unchanged** and the rest of the basket keeping its own proportions.
+   That is what makes the weights the ticket prints sum to one.
+2. **Stride.** Five points of weight, so a track carries `MAX_STOPS` (21)
+   stops plus its two ends. A payload is not a place for an unbounded list.
+3. **Alignment.** The ladder is built around the **current** weight, so the
+   number on screen is always a stop — and that stop is the caller's own
+   string, **verbatim**, because rebalancing to a weight a leg already has
+   would round-trip through eight decimals and answer `BTC:0.06000000` where
+   the option in effect says `BTC:0.06`. Same number, different string, and
+   the client compares strings.
+4. **Both ends.** Zero and one are added, so a leg can be taken to nothing or
+   given the whole order. A quantity written by `quantize` is `0E-8`, which
+   the `legs` pattern refuses, so zero is normalised — and since both ends of
+   every ladder are a zero, that is two stops in every twenty-three rather
+   than an edge case.
+5. **No mix to move.** A draft worth nothing, a single-leg draft, or one whose
+   other legs are all zero has nothing to redistribute to. The ladder is the
+   single stop it already sits on, and the client draws a track that cannot be
+   dragged rather than one that redistributes nothing.
 
 ### `controls` is not `actions`, and the name is load-bearing
 
@@ -109,15 +119,13 @@ and the disclosure continues to say so.
 Mutation checks required: no. Nothing here touches auth, rate limiting or
 error masking.
 
-**One test failure is worth recording, because it corrected the spec rather
-than the code.** The first draft asserted `increment in line.stops` — "one
-ladder, two affordances, they cannot disagree" — and it failed: the stepper
-moves one asset step (`0.06 → 0.07`) while the ladder's stride is four
-(`0.02, 0.06, 0.10`). The claim was wrong. They are **two granularities of one
-quantity**, and the invariant that actually holds is the round trip: the ladder
-is aligned to the current value, so whichever control moved it, the next
-render's thumb sits on the new number. The assertion was rewritten to that, and
-three docstrings that had repeated the false claim were corrected with it.
+**The suite corrected this spec twice, which is the point of writing it
+first.** Under the units ladder, an assertion that `increment in line.stops`
+— *"one ladder, two affordances, they cannot disagree"* — failed, because the
+stepper moved one asset step while the ladder's stride was four. That claim was
+false and was rewritten. Then the **client** work produced the measurement in
+OD-1 and the ladder's whole subject changed from units to weight. Neither was
+found by re-reading the spec; both were found by making something run.
 
 ## 7b. A field the client cannot read is not a field
 
@@ -168,10 +176,10 @@ ticket would put two contracts in one PR.
 
 | # | Question | Owner | Default if unresolved |
 |---|---|---|---|
-| OD-1 | Does the slider set **units** or the leg's **weight in the order**? | design | **Units**, decided here. The frame's thumb sits at the weight (40/35/25, summing to 100), which reads as though the slider set the share. It does not: a weight control needs a second option, its edits are **non-local** — moving one leg redistributes the others — and the row would carry two controls governing two different quantities. Weight stays an output. |
+| OD-1 | Does the slider set **units** or the leg's **weight in the order**? | — | **Weight**, and this reversed a decision made earlier in the same ticket. The first answer was *units*: it is the smaller contract change, it matches the stepper, and a weight control's edits are **non-local** — moving one leg redistributes the others. Then the client work measured the consequence. In the frame the thumb sits at the weight (40 / 35 / 25, summing to 100); under a units ladder the same three legs weigh 39.44 / 35.61 / 24.95 % while their thumbs sit at 10.5 / 10.0 / 9.1 %. A handle at 10 % beside a label reading 39.44 % is a screen that contradicts itself. *"The thumb is the weight"* is not a detail of the artboard — it is what the control **is**, and the non-local edit is the feature: the stepper sets the size, the slider sets the mix. |
 | OD-2 | Does `Review order` ever become live? | design/product | **No.** There is no broker, and the disclosure says nothing is ever sent, placed or settled. It is served drawn, `enabled: false`, with the reason. **The frame needs a disabled state it does not yet have** — an enabled-looking dead button is what `frontend/0013` OD-3 refused. |
 | OD-3 | What happens to `Save as draft`? | design | **Dropped.** It was the second placeholder, the frame draws no second action, and a control with no contract behind it and no design asking for it is one nobody decided about. |
-| OD-4 | The thumb sits **low** on the track, and design should see it before the client is built. | design | Kept. The ceiling is affordability, so BTC's track runs `0 … 0.71` with the draft at `0.06` — the thumb at ~10 %, not the frame's 40 %. That is the honest meaning of "how much of this can I buy"; if design wants the thumb nearer the middle, the ceiling needs a different rule and that is a design decision, not an arithmetic one. |
+| OD-4 | ~~The thumb sits low on the track.~~ | — | **Closed by OD-1's reversal.** This was the symptom, not a separate question: the thumb sat low because the ladder walked the wrong quantity. Against the weight ladder it sits within one stride of the printed percentage, which `test_the_thumb_sits_where_the_weight_is` asserts on every leg. Kept struck rather than deleted, because the measurement in it is what changed OD-1. |
 | OD-6 | Should the three unreadable `int` fields in §7b become readable, or be removed? | GGU-136 / a tax-lot ticket | Left as they are here. A count nobody binds is a candidate for removal (`backend/0024` §7: *read the clients first*), and both views have an owner. |
 | OD-5 | Is the tinted/selected leg payload state or client focus? | — | **Client focus.** It carries no meaning the backend knows: no action selects a leg, no figure depends on which is highlighted, and no option names one. It is widget state, like a text field having focus — the opposite answer to the tax-lot table's `fully_sold` (`frontend/0027` OD-3), and for the opposite reason. **No field is added.** |
 

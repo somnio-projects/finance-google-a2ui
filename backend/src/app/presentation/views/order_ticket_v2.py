@@ -63,7 +63,7 @@ def render(portfolio: Portfolio, options: OrderTicketV2Options) -> OrderTicketV2
         badge=build.badge_of(breach),
         side=options.side,
         legs=options.legs,
-        lines=build.lines(portfolio, impact, requests, options),
+        lines=build.lines(impact, requests, options),
         impact=build.impact_block(impact, shifts, options),
         constraints=build.constraints_block(impact, options),
         controls=CONTROLS,

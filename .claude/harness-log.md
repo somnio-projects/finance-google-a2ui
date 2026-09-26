@@ -5890,6 +5890,21 @@ disclosed — but gitleaks reads **every commit in history**, not the working
 tree, so a follow-up commit deleting it would not have cleared the branch.
 The commit was rewritten and the rule widened to `.claude/settings*.json.bak*`.
 
-**Next.** GGU-139 binds this in the client (and deletes those constants).
-GGU-135 still owns the impact strip's fourth cell; GGU-134 still blocks the
-Comparison half of the epic.
+6. **The ladder's subject changed from units to weight, and the client work is
+what found it.** The first design walked units: smaller contract change,
+matches the stepper. Building the widget measured the consequence — in the
+frame the thumb is at the leg's weight (40 / 35 / 25, summing to 100), and a
+units ladder put the same three legs' thumbs at 10.5 / 10.0 / 9.1 % beside
+labels reading 39.44 / 35.61 / 24.95 %. A handle at 10 % next to a number
+saying 39 % is a screen that contradicts itself. The slider now sets the
+**mix** — one leg's share, total unchanged, the rest of the basket keeping its
+proportions — and the stepper still sets the **size**. `draft_ceiling.py` went
+with the old subject; `draft_rebalance.py` replaced it.
+
+**The lesson is about order, not about sliders.** Both times this spec was
+wrong, a spec review would not have caught it: the first error needed a test
+run, the second needed a widget. Write the contract, then build something that
+binds it, and expect the binding to argue back.
+
+**Next.** GGU-135 still owns the impact strip's fourth cell; GGU-134 still
+blocks the Comparison half of the epic.

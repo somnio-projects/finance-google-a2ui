@@ -18,7 +18,6 @@ from app.domain.draft_legs import LegRequest, stepped
 from app.domain.draft_weights import WeightShift as ShiftFigures
 from app.domain.money import ZERO
 from app.domain.payoff import Side
-from app.domain.portfolio import Portfolio
 from app.presentation.fragments import Total
 from app.presentation.order_ticket_v2_lines import OrderLine, WeightShift
 from app.presentation.order_ticket_v2_options import OrderTicketV2Options
@@ -47,22 +46,19 @@ def title(requests: tuple[LegRequest, ...], side: Side) -> str:
 
 
 def lines(
-    portfolio: Portfolio,
     impact: DraftImpact,
     requests: tuple[LegRequest, ...],
     options: OrderTicketV2Options,
 ) -> tuple[OrderLine, ...]:
     """Render every leg with its figures and every value its controls send.
 
-    The stepper's two neighbours and the slider's ladder come from the same
-    domain writer over the same option, at two granularities: a tap moves one
-    asset step, a drag moves one stride (spec 0050 OD-1). Whichever is used,
-    the next render's ladder is aligned to the value it sent.
+    The stepper sets the **size** and the slider sets the **mix**: a tap
+    moves this leg by one asset step and changes the order's total, a drag
+    moves this leg's share and leaves the total where it is (spec 0050 OD-1).
+    Both are written by the domain over the same option, and whichever is
+    used, the next render's ladder is aligned to the value it sent.
     """
-    rungs = {
-        leg.symbol: ladder(portfolio, impact, requests, leg.symbol, options.side)
-        for leg in impact.legs
-    }
+    rungs = {leg.symbol: ladder(requests, leg.symbol) for leg in impact.legs}
     return tuple(
         OrderLine(
             key=leg.symbol,
