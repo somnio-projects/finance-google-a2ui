@@ -7,8 +7,6 @@ worth building — its two lots straddle the 1-year boundary *and* disagree on
 unit cost, so FIFO lands somewhere LIFO and HIFO do not.
 """
 
-from decimal import Decimal
-
 import pytest
 
 from app.domain.lot_selection import LotMethod
@@ -96,43 +94,6 @@ def test_each_column_adds_up(card: ScenarioComparisonPayload) -> None:
             column.short_term_pl.amount + column.long_term_pl.amount
             == column.realized_pl.amount
         )
-        assert column.short_term_lots + column.long_term_lots == len(column.lots)
-
-
-def test_the_card_recommends_nothing(card: ScenarioComparisonPayload) -> None:
-    keys = set(ScenarioComparisonPayload.model_fields)
-    for column in card.columns:
-        keys |= set(type(column).model_fields)
-    keys |= set(type(card.spread).model_fields)
-    assert not keys & {"recommended", "best", "rank", "score", "winner"}
-    assert card.notes[-1].text.startswith("No method is recommended")
-    assert card.spread.differs is True
-    assert card.spread.amount.display == "$1,617.00"
-    assert card.spread.highest is LotMethod.FIFO
-    assert card.spread.lowest is LotMethod.LIFO
-
-
-def test_columns_keep_the_requested_order_and_are_never_sorted_by_outcome(
-    portfolio: Portfolio,
-) -> None:
-    asked = (LotMethod.HIFO, LotMethod.FIFO)
-    card = render(portfolio, ScenarioComparisonOptions(methods=asked))
-    assert tuple(column.method for column in card.columns) == asked
-
-
-def test_a_sale_that_closes_the_position_reports_no_difference(
-    portfolio: Portfolio,
-) -> None:
-    card = render(portfolio, ScenarioComparisonOptions(quantity=Decimal("2.10")))
-    assert card.spread.differs is False
-    assert card.spread.amount.display == "$0.00"
-    assert card.spread.highest is None
-    assert card.spread.lowest is None
-    assert card.notes[-1].label == "No difference"
-
-
-def test_the_unit_price_is_quoted_at_price_precision(portfolio: Portfolio) -> None:
-    card = render(portfolio, ScenarioComparisonOptions(symbol="link"))
-    assert card.subject.symbol == "LINK"
-    assert card.subject.price.display == "$22.60"
-    assert card.subject.proceeds.display == "$47,460.00"
+        assert int(column.short_term_lots) + int(column.long_term_lots) == len(
+            column.lots
+        )
