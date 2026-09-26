@@ -7,6 +7,7 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_t
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_track_row.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_value_cell.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_viewport.dart';
 import 'package:flutter/material.dart';
 
 /// The comparison grid: one header per scenario, one row per metric.
@@ -15,10 +16,17 @@ import 'package:flutter/material.dart';
 /// transposition happened in the component's `read`, so this widget only
 /// places what it is given. Columns keep their arrival order (N-10).
 ///
-/// **No cell is emphasised.** The design tints the better cell of each row
-/// green and marks it with a tick, driven by `metrics[].betterWhen`. The
-/// contract ships no such field — see [ScenarioComparisonHeaderRow] and
-/// `specs/frontend/0004` OD-3 for why it never will.
+/// **The better cell of each row is tinted and ticked**, as the design
+/// draws it. This paragraph said the opposite until GGU-136 — *"the contract
+/// ships no such field … for why it never will"* — and the ruling behind it
+/// was narrowed rather than reversed: `rows[].winner` names the winning
+/// column **key**, decided by the backend at the rates the card prints, and
+/// `ScenarioValueCell` compares two keys rather than two figures (N-2).
+///
+/// **It scrolls sideways when it has to.** The design gives the grid 533
+/// points and `AppShell` gives it about 340, where four tracks cannot hold
+/// their figures without breaking them mid-number. See
+/// [ScenarioGridViewport] for the three alternatives that were turned down.
 class ScenarioComparisonTable extends StatelessWidget {
   /// Creates the table.
   const ScenarioComparisonTable({
@@ -37,18 +45,20 @@ class ScenarioComparisonTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
     final tokens = ScenarioComparisonTokens.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        ScenarioComparisonHeaderRow(columns: columns),
-        for (final metric in metrics)
-          _MetricRow(
-            metric: metric,
-            columns: columns,
-            palette: palette,
-            tokens: tokens,
-          ),
-      ],
+    return ScenarioGridViewport(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ScenarioComparisonHeaderRow(columns: columns),
+          for (final metric in metrics)
+            _MetricRow(
+              metric: metric,
+              columns: columns,
+              palette: palette,
+              tokens: tokens,
+            ),
+        ],
+      ),
     );
   }
 }

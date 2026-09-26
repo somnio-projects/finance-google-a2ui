@@ -31,6 +31,21 @@ abstract final class ScenarioComparisonLayout {
   /// The gap between two grid tracks (`gap: 8px`).
   static const double columnGap = 8;
 
+  /// The width the metric grid refuses to go below, scrolling instead
+  /// (GGU-144, `ScenarioGridViewport`).
+  ///
+  /// It is the card's **content box on the design's artboard**: 571.367
+  /// outer, less two hairlines and two 18 pt paddings. Choosing that number
+  /// is a decision rather than a measurement — the design draws no narrow
+  /// artboard for this card, so *some* width had to be named — and it is the
+  /// one width the design can be said to endorse: at it, every track is
+  /// exactly what `getComputedStyle` reported.
+  ///
+  /// `scenario_comparison_viewport_test.dart` compares it against the test
+  /// harness's independently-measured `designContentWidth`, so the two
+  /// declarations of one design fact cannot drift apart.
+  static const double minGridWidth = 533.367;
+
   /// A column header's padding.
   static const EdgeInsets headerCellPadding = EdgeInsets.symmetric(
     horizontal: 10,
