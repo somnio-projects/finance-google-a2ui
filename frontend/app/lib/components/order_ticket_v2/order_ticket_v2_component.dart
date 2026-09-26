@@ -130,6 +130,8 @@ class OrderTicketV2Component extends ViewComponent {
     weight: row.geometry('weight.value'),
     increment: row.optionalText('increment'),
     decrement: row.optionalText('decrement'),
+    stops: row.strings('stops'),
+    position: row.geometry('position'),
   );
 }
 
