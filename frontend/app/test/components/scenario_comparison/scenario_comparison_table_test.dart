@@ -42,15 +42,19 @@ void main() {
       expect(find.text('HIFO — dearest lots first'), findsOneWidget);
     });
 
-    testWidgets('names the four metrics the contract carries', (tester) async {
-      await pumpScenarioCard(tester, scenarioData());
-      for (final label in <String>[
-        'Cost basis',
-        'Realized P/L',
-        'Short-term',
-        'Long-term',
-      ]) {
-        expect(find.text(label), findsOneWidget);
+    testWidgets('names every metric the contract carries', (tester) async {
+      // Read from the payload rather than listed here: the row names are the
+      // backend's since spec 0051, so a list in this file would assert that
+      // a Dart constant equals itself.
+      final data = scenarioData();
+      await pumpScenarioCard(tester, data);
+
+      expect(data.metrics, isNotEmpty);
+      for (final row in data.metrics) {
+        // Scoped to the table: `Proceeds` is also a caption in the subject
+        // strip above it, because one sale is the card's premise and the
+        // frame repeats it per column (backend spec 0051 OD-3).
+        expect(_inTable(find.text(row.label)), findsOneWidget);
       }
     });
 
@@ -71,7 +75,12 @@ void main() {
       );
       expect(_inTable(find.text('FIFO')), findsNothing);
       expect(find.text(r'$7,740.00'), findsNothing);
-      expect(find.text('Cost basis'), findsOneWidget);
+      // The row names survive an empty comparison: they are the backend's
+      // `rows[]`, which does not depend on how many columns there are.
+      // `Cost basis` used to be one of them and is not a drawn row any more
+      // — the frame's four are Proceeds, Realized gain, Est. tax and Net
+      // after tax (backend spec 0051). The field is still served.
+      expect(find.text('Realized gain'), findsOneWidget);
     });
   });
 }

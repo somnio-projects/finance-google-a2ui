@@ -2,19 +2,35 @@ import 'package:flutter/foundation.dart';
 
 /// One row of the comparison table: a figure, once per scenario.
 ///
-/// [label] is **client copy**, not payload text, and that is a gap rather
-/// than a shortcut. The design drives its rows from a server-sent
-/// `metrics[].label`; `scenario.comparison.v1` has no such list — it carries
-/// four fixed, named members per column instead. So the four row names are
-/// written here, beside the four paths they title, and
-/// `specs/frontend/0004` OD-1 records the divergence.
+/// **[label] used to be client copy, and that gap is now closed.** The design
+/// drives its rows from a server-sent list; `scenario.comparison.v1` had no
+/// such list, so the four row names were written in the component beside the
+/// four paths they titled, and `specs/frontend/0004` OD-1 recorded the
+/// divergence. Backend spec 0051 ships `rows[]`, so the label, the direction
+/// hint and the winner all arrive as server strings and follow the `locale`
+/// option — which a Dart constant never could (N-9).
 @immutable
 class ScenarioMetricRow {
   /// Creates a metric row.
-  const ScenarioMetricRow({required this.label, required this.valueDisplays});
+  const ScenarioMetricRow({
+    required this.label,
+    required this.directionLabel,
+    required this.winner,
+    required this.valueDisplays,
+  });
 
-  /// The row's name, e.g. `Cost basis`. Client copy — see the class doc.
+  /// The row's name, e.g. `Est. tax`. The payload's `rows[].label`.
   final String label;
+
+  /// `higher is better` / `lower is better`, as the backend worded it.
+  final String directionLabel;
+
+  /// The `columns[].key` of the winning cell, or null when the row ties.
+  ///
+  /// **Read, never decided.** Marking the best cell means comparing two
+  /// figures, and this card carries no raw member to compare — N-2 made
+  /// structural rather than remembered.
+  final String? winner;
 
   /// One `*.display` string per scenario, in column order (N-10).
   ///

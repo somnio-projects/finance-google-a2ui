@@ -73,19 +73,31 @@ void main() {
       expect(find.text('BTC'), findsOneWidget);
       expect(find.text('0.25'), findsOneWidget);
       expect(find.text(r'$64,250.00'), findsOneWidget);
-      expect(find.text(r'$16,062.50'), findsOneWidget);
+      // Four times over: once in the subject strip, once per column. The
+      // sale is the same in every column by construction, and the frame
+      // repeats it so the row-major table is uniform (backend spec 0051
+      // OD-3).
+      expect(find.text(r'$16,062.50'), findsNWidgets(4));
     });
 
     testWidgets('puts every display string on screen verbatim', (tester) async {
       // N-1: the figures are exactly the strings the backend formatted —
       // the sign is baked in and nothing here prepends one.
       await pumpScenarioCard(tester, scenarioData());
-      expect(find.text(r'$9,000.00'), findsOneWidget);
-      expect(find.text(r'$10,617.00'), findsNWidgets(2));
-      expect(find.text(r'+$7,062.50'), findsNWidgets(2));
-      expect(find.text(r'+$5,445.50'), findsNWidgets(4));
-      expect(find.text(r'$0.00'), findsNWidgets(3));
-      expect(find.text(r'$1,617.00'), findsOneWidget);
+      // FIFO's estimated tax at the declared default rates, as one literal
+      // the reader can check by hand.
+      expect(find.text(r'$1,059.38'), findsOneWidget);
+      // The rest is derived from the model rather than listed: the table's
+      // rows are the backend's since spec 0051, so a hand-counted list would
+      // have to be rewritten every time design adds one — and would be
+      // asserting the fixture rather than the binding.
+      final data = scenarioData();
+      for (final row in data.metrics) {
+        for (final display in row.valueDisplays) {
+          expect(find.text(display), findsWidgets, reason: display);
+        }
+      }
+      expect(find.text(data.spread.amountDisplay), findsWidgets);
     });
 
     testWidgets('never puts a raw figure on screen', (tester) async {
@@ -103,22 +115,6 @@ void main() {
         '0',
       ]) {
         expect(find.text(raw), findsNothing, reason: 'raw $raw reached a Text');
-      }
-    });
-
-    testWidgets('names no winner anywhere on the card', (tester) async {
-      // spec `backend/0017` OD-4 / `specs/frontend/0004` OD-3. The design
-      // ships a `★ Recommended` badge and a green "best on that row" cell;
-      // the contract ships neither field, and the card invents neither.
-      await pumpScenarioCard(tester, scenarioData());
-      for (final word in <String>[
-        'Recommended',
-        '★ Recommended',
-        'best on that row',
-        'higher is better ▲',
-        'lower is better ▼',
-      ]) {
-        expect(find.textContaining(word), findsNothing, reason: word);
       }
     });
   });

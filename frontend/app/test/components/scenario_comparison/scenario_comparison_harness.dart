@@ -92,3 +92,43 @@ Map<String, dynamic> withOneSpreadEnd(Map<String, dynamic> example) {
 /// The example with [path] removed from its root, for the N-3 path.
 Map<String, dynamic> without(Map<String, dynamic> example, String path) =>
     Map<String, dynamic>.from(example)..remove(path);
+
+/// The example with every row's `winner` cleared — the all-tie case.
+Map<String, dynamic> withoutWinners(Map<String, dynamic> example) {
+  final rows = (example['rows']! as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .map((row) => <String, dynamic>{...row, 'winner': null})
+      .toList();
+  return <String, dynamic>{...example, 'rows': rows};
+}
+
+/// The example with nothing marked at all: no winner, no recommendation.
+///
+/// The state the card must draw **silently**. It is the payload's right to
+/// name nobody — every column ties — and a client that filled the gap would
+/// be inventing the one claim this card is most careful about.
+Map<String, dynamic> withoutVerdict(Map<String, dynamic> example) {
+  final columns = (example['columns']! as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .map(
+        (column) => <String, dynamic>{
+          ...column,
+          'recommended': false,
+          'recommendation_label': null,
+        },
+      )
+      .toList();
+  return <String, dynamic>{...withoutWinners(example), 'columns': columns};
+}
+
+/// The example with a row key this component has no path for.
+///
+/// Not hypothetical: the backend could add a metric, and a client that
+/// skipped it would drop a row from the table without saying so.
+Map<String, dynamic> withUnknownRow(Map<String, dynamic> example) {
+  final rows = (example['rows']! as List<dynamic>)
+      .cast<Map<String, dynamic>>()
+      .toList();
+  rows.add(<String, dynamic>{...rows.first, 'key': 'a_metric_from_the_future'});
+  return <String, dynamic>{...example, 'rows': rows};
+}

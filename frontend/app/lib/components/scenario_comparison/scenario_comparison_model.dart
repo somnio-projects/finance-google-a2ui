@@ -1,5 +1,8 @@
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_summary.dart';
 import 'package:flutter/foundation.dart';
+
+export 'scenario_comparison_summary.dart';
 
 /// The sale every column of the card is costed against.
 ///
@@ -50,7 +53,21 @@ class ScenarioSubject {
 @immutable
 class ScenarioColumn {
   /// Creates a column.
-  const ScenarioColumn({required this.method, required this.label});
+  const ScenarioColumn({
+    required this.key,
+    required this.method,
+    required this.kind,
+    required this.label,
+    required this.caption,
+    required this.recommended,
+    required this.recommendationLabel,
+  });
+
+  /// The payload's `columns[].key` — what a row's `winner` names.
+  ///
+  /// Not `method`: the timing column shares a method with a lot-ordering one,
+  /// so a method is no longer unique across columns.
+  final String key;
 
   /// The payload's `columns[].method`: `FIFO`, `LIFO` or `HIFO`.
   ///
@@ -60,6 +77,22 @@ class ScenarioColumn {
 
   /// The payload's `columns[].label`, e.g. `FIFO — oldest lots first`.
   final String label;
+
+  /// The payload's `columns[].kind`: `lot_method` or `timing`.
+  ///
+  /// Waiting is not an ordering of lots, so it is not a fourth method
+  /// (backend spec 0051 OD-2).
+  final String kind;
+
+  /// The payload's `columns[].caption`, e.g. `tax-optimized`.
+  final String caption;
+
+  /// The payload's `columns[].recommended` — a declared flag, read with
+  /// `ViewPayload.flag` and never worked out here.
+  final bool recommended;
+
+  /// The tag drawn on the recommended column, or null on the rest.
+  final String? recommendationLabel;
 }
 
 /// Everything `scenario.comparison.v1` renders.
@@ -78,6 +111,7 @@ class ScenarioComparisonData {
     required this.subject,
     required this.columns,
     required this.metrics,
+    required this.summary,
     required this.spread,
     required this.notes,
   });
@@ -95,13 +129,18 @@ class ScenarioComparisonData {
   /// per entry of [columns], in the same order.
   final List<ScenarioMetricRow> metrics;
 
+  /// The header pill and the footer sentence.
+  final ScenarioSummary summary;
+
   /// The difference between the extremes, and which methods sit at each end.
   final ScenarioSpread spread;
 
   /// The payload's `notes`, rendered verbatim and never dropped (N-9).
   ///
-  /// One of them states in as many words that no method is recommended,
-  /// which is what makes this card's silence on the question legible to a
-  /// reader rather than merely absent (spec `backend/0017` OD-4).
+  /// One states the tax rates the card costed with and one says the
+  /// recommendation is arithmetic under them rather than advice. Both are
+  /// what make the card's ranking checkable instead of asserted — dropping
+  /// either would leave a tax claim with its disclaimer somewhere else
+  /// (backend spec 0051 OD-4).
   final List<ScenarioNote> notes;
 }

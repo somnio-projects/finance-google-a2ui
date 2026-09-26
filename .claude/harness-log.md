@@ -5998,3 +5998,37 @@ to `domain/scenario_tax.py` instead of being restated — the same drift
 
 **Next.** GGU-138 binds this in the client. GGU-135 still owns the order
 ticket's impact strip.
+
+## 2026-09-25 — GGU-138 · the comparison binds the verdict it is given
+
+**Spec:** `specs/backend/0051` (the client half). Epic 7 / GGU-133.
+
+**Code.** The card reads `rows[]` instead of building its own: the row name,
+the direction hint and the winner are all server strings now. Columns gain
+`key`, `caption`, `kind`, `recommended` and the tag; the header draws the
+caption and the recommended border; `ScenarioValueCell` tints and ticks the
+winning cell; the badge and the footer sentence are rendered verbatim.
+
+**Two closures worth naming.**
+
+1. **`specs/frontend/0004` OD-1 is closed.** `ScenarioMetricRow.label` was
+**client copy** — *"the contract has no metric list to take them from"* — so
+four row names lived in `_metrics` beside the four paths they titled. The
+contract ships that list now, and a renamed row is a changed contract rather
+than a changed constant. What stays in the component is the **mapping from a
+row key to a payload path**, as a `switch` over literals, because every
+payload path in this app opens with a quote (N-5).
+
+2. **`specs/frontend/0004` OD-3's test changed sides**, exactly as its backend
+twin did. `names no winner anywhere on the card` asserted that the words
+`Recommended`, `best on that row` and both direction hints appeared **nowhere**.
+It now pumps a payload that marks nobody and asserts the same silence — which
+is the half that survives. The card reads a ranking; it never invents one.
+
+**A nested `Row` broke a geometry helper, and the failure was unhelpful.**
+`_tracks` found the track row's `Row` by descendant, and the winning cell's
+tick sits beside its figure in a second one, so the finder matched two and
+threw *"Bad state: Too many elements"* rather than failing on geometry. It
+takes `.first` now and says why.
+
+**Next.** GGU-135 is the last open child: the order ticket's impact strip.

@@ -68,7 +68,11 @@ class _ColumnHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CustomPaint(
     painter: ScenarioHeaderBorderPainter(
-      color: tokens.headerBorder,
+      // The recommended column carries its own border, which is the design's
+      // way of saying *this one* without relying on the tag alone.
+      color: column.recommended
+          ? tokens.recommendedBorder
+          : tokens.headerBorder,
       radius: ScenarioComparisonLayout.headerCellRadius,
     ),
     child: Padding(
@@ -95,6 +99,21 @@ class _ColumnHeader extends StatelessWidget {
             column.label,
             style: ScenarioComparisonText.columnLabel(tokens.caption),
           ),
+          // The short line the frame writes under the head. Server-written,
+          // like the two above it (N-9).
+          Text(
+            column.caption,
+            style: ScenarioComparisonText.columnLabel(tokens.caption),
+          ),
+          // Drawn only when the backend tagged this column, and with the
+          // backend's own word — never one composed here.
+          if (column.recommendationLabel case final tag?)
+            Text(
+              tag,
+              style: ScenarioComparisonText.columnLabel(
+                tokens.recommendedBorder,
+              ),
+            ),
         ],
       ),
     ),
