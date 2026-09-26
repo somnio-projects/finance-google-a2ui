@@ -5,7 +5,18 @@ that was already there: what one **leg** carries, apart from what the
 **ticket** carries. Not promoted to ``fragments.py``: ADR-K D-16 promotes a
 primitive when a second consumer needs it, and a stepper has one.
 
-``increment`` and ``decrement`` are the stepper. A client may not add one to a
+``stops`` and ``position`` are the **slider**; ``increment`` and
+``decrement`` are the stepper. The design draws both, a slider is continuous
+and this contract is not, so the track is quantised: every stop is a whole
+``legs`` value written by ``domain.draft_ladder`` (spec 0050 OD-1).
+
+**They are two granularities of one quantity, not one ladder.** A stepper tap
+moves by the asset's own step; the slider's stride is that step coarsened
+until the ladder fits its bound, so an ``increment`` is generally not a stop
+of the track beside it. What holds instead is the invariant that matters: the
+ladder is aligned to the **current** value, so whatever either control sends,
+the render it produces puts the thumb on the new number. The stepper stays
+because it is the fine, keyboard-reachable control. A client may not add one to a
 unit count (N-2), so each is the whole ``legs`` option value the tap sends,
 written here from the same parser and bound the options model enforces. A
 ``null`` means the move would leave the published bound, and the control is
@@ -14,6 +25,7 @@ disabled rather than sending a value the backend refuses (spec 0031 OD-3).
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.domain.draft_ladder import MAX_LADDER, POSITION_PATTERN
 from app.domain.draft_legs import LEGS_PATTERN, MAX_LEGS_TEXT
 from app.presentation.fragments import Labelled, MoneyDisplay, PercentageDisplay
 from app.presentation.ticket_displays import QuantityDisplay
@@ -46,6 +58,26 @@ class OrderLine(BaseModel):
         pattern=LEGS_PATTERN,
         description="The `legs` value a `-` sends; null at zero units.",
         examples=["BTC:2,ETH:2,SOL:14"],
+    )
+    stops: tuple[str, ...] = Field(
+        max_length=MAX_LADDER,
+        description=(
+            "Every `legs` value this leg's slider can land on, ascending by "
+            "this leg's units and always including the value on screen. A "
+            "drag picks one and re-renders; the client interpolates nothing."
+        ),
+        examples=[["BTC:0.0,ETH:1.0,SOL:16", "BTC:0.06,ETH:1.0,SOL:16"]],
+    )
+    position: str = Field(
+        pattern=POSITION_PATTERN,
+        description=(
+            "Index into `stops` of the value this line is rendered at, as a "
+            "decimal string. A number reaches this client only as a string "
+            "— `text()` refuses a JSON number and `geometry()` parses a "
+            "decimal string (ADR-E D-5, ADR-L D-14) — and a thumb's index is "
+            "a position on a track, which is what that seam is for."
+        ),
+        examples=["1"],
     )
 
 

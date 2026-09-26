@@ -13,6 +13,7 @@ already there: *what is rendered* apart from *how the projection is wired*.
 from decimal import Decimal
 
 from app.domain.draft_impact import DraftImpact
+from app.domain.draft_ladder import ladder
 from app.domain.draft_legs import LegRequest, stepped
 from app.domain.draft_weights import WeightShift as ShiftFigures
 from app.domain.money import ZERO
@@ -49,7 +50,15 @@ def lines(
     requests: tuple[LegRequest, ...],
     options: OrderTicketV2Options,
 ) -> tuple[OrderLine, ...]:
-    """Render every leg with its figures and the option value each tap sends."""
+    """Render every leg with its figures and every value its controls send.
+
+    The stepper sets the **size** and the slider sets the **mix**: a tap
+    moves this leg by one asset step and changes the order's total, a drag
+    moves this leg's share and leaves the total where it is (spec 0050 OD-1).
+    Both are written by the domain over the same option, and whichever is
+    used, the next render's ladder is aligned to the value it sent.
+    """
+    rungs = {leg.symbol: ladder(requests, leg.symbol) for leg in impact.legs}
     return tuple(
         OrderLine(
             key=leg.symbol,
@@ -61,6 +70,8 @@ def lines(
             weight=options.percentage(leg.weight),
             increment=stepped(requests, leg.symbol, 1),
             decrement=stepped(requests, leg.symbol, -1),
+            stops=rungs[leg.symbol].stops,
+            position=rungs[leg.symbol].position,
         )
         for leg in impact.legs
     )
