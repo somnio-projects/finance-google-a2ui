@@ -149,7 +149,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `da6c79781962` | 67 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `f3cae9fd15c1` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `2b516749e0a9` | 62 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints. |
 | [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `0556567d7b94` | 45 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `activity.timeline.v1`
@@ -3644,9 +3644,9 @@ _This surface sends nothing back: tapping it starts no turn._
 
 ## `scenario.comparison.v1`
 
-> The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.
+> The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `f3cae9fd15c1`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `2b516749e0a9`
 - **Component:** `ScenarioComparison`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -3662,6 +3662,9 @@ _This surface sends nothing back: tapping it starts no turn._
 | `symbol` | string ≤10 chars | string matching ^[A-Za-z]{2,10}$, or omit it | `null` | Position to cost the sale against, in any case; omit for the one whose open tax lots are worth the most, ties broken by ticker. |
 | `quantity` | decimal | number 0.0..1000000000000.0 or string matching ^(?!^[-+.]*$)[+-]?0*\d*\.?\d{0,8}0*$, or omit it | `null` | Units the sale disposes of; omit for that position's smallest open lot — the smallest sale that still makes the methods differ. |
 | `methods` | array ≤3 items | list of up to 3 (an unrecognised shape — do not guess) | `["FIFO", "LIFO", "HIFO"]` | Lot-selection methods to compare, in the order they are shown. At least two, all distinct — two identical columns would claim a difference that does not exist. |
+| `short_term_rate` | string | string matching ^0(\.[0-9]{1,4})?$ | `"0.35"` | Rate applied to the short-term part of a gain, as a decimal string. A **declared assumption**, printed on the card beside the figure it produces — this demo knows no taxpayer, so a rate nobody chose would be a tax claim nobody could check (GGU-134). |
+| `long_term_rate` | string | string matching ^0(\.[0-9]{1,4})?$ | `"0.15"` | Rate applied to the long-term part of a gain, as a decimal string. The reason the short/long split is worth showing. |
+| `include_wait` | boolean | true or false | `false` | Add the *Wait for long-term* column: the same sale past every lot's first anniversary, so all of it is long-term. It varies the timing, not the lot ordering, and it holds the price still. |
 
 ### Field inventory
 
@@ -3680,8 +3683,14 @@ _This surface sends nothing back: tapping it starts no turn._
 | `subject.proceeds.amount` | decimal | required | `raw` | — | — |
 | `subject.proceeds.display` | string ≤32 chars | required | `display` | — | — |
 | `columns` | array | required | `container` | empty | — |
+| `columns[].key` | string ≤32 chars | required | `text` | — | — |
 | `columns[].method` | enum FIFO / LIFO / HIFO | required | `enum` | variant | — |
+| `columns[].kind` | enum lot_method / timing | default `"lot_method"` | `enum` | variant | — |
 | `columns[].label` | string ≤64 chars | required | `text` | — | — |
+| `columns[].caption` | string ≤48 chars | required | `text` | — | — |
+| `columns[].proceeds` | object | required | `container` | — | — |
+| `columns[].proceeds.amount` | decimal | required | `raw` | — | — |
+| `columns[].proceeds.display` | string ≤32 chars | required | `display` | — | — |
 | `columns[].cost_basis` | object | required | `container` | — | — |
 | `columns[].cost_basis.amount` | decimal | required | `raw` | — | — |
 | `columns[].cost_basis.display` | string ≤32 chars | required | `display` | — | — |
@@ -3694,9 +3703,25 @@ _This surface sends nothing back: tapping it starts no turn._
 | `columns[].long_term_pl` | object | required | `container` | — | — |
 | `columns[].long_term_pl.amount` | decimal | required | `raw` | — | — |
 | `columns[].long_term_pl.display` | string ≤32 chars | required | `display` | — | — |
-| `columns[].short_term_lots` | integer 0..None | required | `raw` | — | — |
-| `columns[].long_term_lots` | integer 0..None | required | `raw` | — | — |
+| `columns[].est_tax` | object | required | `container` | — | — |
+| `columns[].est_tax.amount` | decimal | required | `raw` | — | — |
+| `columns[].est_tax.display` | string ≤32 chars | required | `display` | — | — |
+| `columns[].net_after_tax` | object | required | `container` | — | — |
+| `columns[].net_after_tax.amount` | decimal | required | `raw` | — | — |
+| `columns[].net_after_tax.display` | string ≤32 chars | required | `display` | — | — |
+| `columns[].short_term_lots` | string | required | `text` | — | — |
+| `columns[].long_term_lots` | string | required | `text` | — | — |
+| `columns[].recommended` | boolean | default `false` | `flag` | variant | — |
+| `columns[].recommendation_label` | string ≤32 chars | default `null` | `text` | null | — |
 | `columns[].lots` | array | required | `container` | empty | — |
+| `rows` | array | required | `container` | empty | — |
+| `rows[].key` | enum proceeds / realized_pl / est_tax / net_after_tax | required | `enum` | variant | — |
+| `rows[].label` | string ≤48 chars | required | `text` | — | — |
+| `rows[].direction_label` | string ≤32 chars | required | `text` | — | — |
+| `rows[].winner` | string ≤32 chars | default `null` | `text` | null | — |
+| `summary` | object | required | `container` | — | — |
+| `summary.text` | string ≤240 chars | required | `text` | — | — |
+| `summary.badge` | string ≤32 chars | required | `text` | — | — |
 | `spread` | object | required | `container` | — | — |
 | `spread.amount` | object | required | `container` | — | — |
 | `spread.amount.amount` | decimal | required | `raw` | — | — |
@@ -3738,8 +3763,15 @@ _This surface sends nothing back: tapping it starts no turn._
   },
   "columns": [
     {
+      "key": "fifo",
       "method": "FIFO",
+      "kind": "lot_method",
       "label": "FIFO \u2014 oldest lots first",
+      "caption": "default order",
+      "proceeds": {
+        "amount": "16062.5000000000",
+        "display": "$16,062.50"
+      },
       "cost_basis": {
         "amount": "9000.00",
         "display": "$9,000.00"
@@ -3756,15 +3788,32 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "7062.5000000000",
         "display": "+$7,062.50"
       },
-      "short_term_lots": 0,
-      "long_term_lots": 1,
+      "est_tax": {
+        "amount": "1059.375000000000",
+        "display": "$1,059.38"
+      },
+      "net_after_tax": {
+        "amount": "6003.125000000000",
+        "display": "+$6,003.12"
+      },
+      "short_term_lots": "0",
+      "long_term_lots": "1",
+      "recommended": true,
+      "recommendation_label": "Recommended",
       "lots": [
         "lot-btc-01"
       ]
     },
     {
+      "key": "lifo",
       "method": "LIFO",
+      "kind": "lot_method",
       "label": "LIFO \u2014 newest lots first",
+      "caption": "newest first",
+      "proceeds": {
+        "amount": "16062.5000000000",
+        "display": "$16,062.50"
+      },
       "cost_basis": {
         "amount": "10617.00",
         "display": "$10,617.00"
@@ -3781,15 +3830,32 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "0",
         "display": "$0.00"
       },
-      "short_term_lots": 1,
-      "long_term_lots": 0,
+      "est_tax": {
+        "amount": "1905.925000000000",
+        "display": "$1,905.92"
+      },
+      "net_after_tax": {
+        "amount": "3539.575000000000",
+        "display": "+$3,539.58"
+      },
+      "short_term_lots": "1",
+      "long_term_lots": "0",
+      "recommended": false,
+      "recommendation_label": null,
       "lots": [
         "lot-btc-02"
       ]
     },
     {
+      "key": "hifo",
       "method": "HIFO",
+      "kind": "lot_method",
       "label": "HIFO \u2014 dearest lots first",
+      "caption": "tax-optimized",
+      "proceeds": {
+        "amount": "16062.5000000000",
+        "display": "$16,062.50"
+      },
       "cost_basis": {
         "amount": "10617.00",
         "display": "$10,617.00"
@@ -3806,13 +3872,53 @@ _This surface sends nothing back: tapping it starts no turn._
         "amount": "0",
         "display": "$0.00"
       },
-      "short_term_lots": 1,
-      "long_term_lots": 0,
+      "est_tax": {
+        "amount": "1905.925000000000",
+        "display": "$1,905.92"
+      },
+      "net_after_tax": {
+        "amount": "3539.575000000000",
+        "display": "+$3,539.58"
+      },
+      "short_term_lots": "1",
+      "long_term_lots": "0",
+      "recommended": false,
+      "recommendation_label": null,
       "lots": [
         "lot-btc-02"
       ]
     }
   ],
+  "rows": [
+    {
+      "key": "proceeds",
+      "label": "Proceeds",
+      "direction_label": "higher is better",
+      "winner": null
+    },
+    {
+      "key": "realized_pl",
+      "label": "Realized gain",
+      "direction_label": "lower is better",
+      "winner": null
+    },
+    {
+      "key": "est_tax",
+      "label": "Est. tax",
+      "direction_label": "lower is better",
+      "winner": "fifo"
+    },
+    {
+      "key": "net_after_tax",
+      "label": "Net after tax",
+      "direction_label": "higher is better",
+      "winner": "fifo"
+    }
+  ],
+  "summary": {
+    "text": "FIFO \u2014 oldest lots first already keeps the most after tax here.",
+    "badge": "Best result"
+  },
   "spread": {
     "amount": {
       "amount": "1617.0000000000",
@@ -3824,12 +3930,12 @@ _This surface sends nothing back: tapping it starts no turn._
   },
   "notes": [
     {
-      "label": "Before tax",
-      "text": "The realised result and its short/long split, before any tax rate, fee or wash-sale rule."
+      "label": "Illustrative rates",
+      "text": "Tax is estimated at 35.00% on the short-term part and 15.00% on the long-term part, on gains only. These rates are a declared assumption, not yours: no fee and no wash-sale rule is modelled."
     },
     {
       "label": "Not advice",
-      "text": "No method is recommended: which result is preferable depends on a tax situation this demo does not know."
+      "text": "The recommendation is arithmetic under the rates above, not advice: which result is preferable depends on a tax situation this demo does not know."
     }
   ]
 }

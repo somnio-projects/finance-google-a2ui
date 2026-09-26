@@ -30,6 +30,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from app.schemas.view_options_tabs import TabOptions
+from app.schemas.view_options_tax import TaxOptions
 
 #: Lot-selection strategies (`domain/lot_selection.py`).
 LotMethod = Literal["FIFO", "LIFO", "HIFO"]
@@ -49,7 +50,7 @@ LEGS_PATTERN = (
 )
 
 
-class ProjectionOptions(TabOptions):
+class ProjectionOptions(TaxOptions, TabOptions):
     """Options a projection may be asked for, as query parameters.
 
     The chart knobs are declared here; the screen knobs come from

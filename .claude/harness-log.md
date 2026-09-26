@@ -5953,3 +5953,48 @@ prose.
 
 **Next.** GGU-135 owns the impact strip's fourth cell; GGU-134 blocks the
 Comparison half of the epic.
+## 2026-09-25 — GGU-136 / GGU-134 · the comparison ranks what it can defend
+
+**Spec:** `specs/backend/0051-the-comparison-ranks-what-it-can-defend.md`
+(Epic 7 / GGU-133). It also **answers GGU-134**, which was filed as a blocker
+for product.
+
+**The answer to GGU-134 is "yes, at rates the card prints".** The ticket
+offered three options — a declared visible assumption, a user-supplied rate,
+or dropping the two rows. The shipped answer is the first *and* the second:
+`short_term_rate` and `long_term_rate` are bounded, defaulted, documented
+options, so a caller may set them, and whoever does not gets an illustrative
+default **stated on the surface** in the note beside the figure. Dropping the
+rows was free and would have left the frame's two strongest rows unbuildable.
+
+**Three things this turned up that are worth more than the feature.**
+
+1. **A test was defending a ruling the ticket overturned.**
+`test_the_card_recommends_nothing` asserted that no field named `recommended`,
+`best`, `rank`, `score` or `winner` existed anywhere on the payload — spec
+0017 OD-4, which was correct while the card had no rate to rank by. It was
+**inverted rather than deleted**: it now asserts the narrower thing that
+replaced it — the recommendation agrees with the `net_after_tax` winner, at
+most one column carries it, the rates are printed, and *Not advice* is still
+there. A superseded ruling keeps its test; the test changes sides.
+
+2. **The first render contradicted itself and no assertion caught it.** It
+marked FIFO `recommended` and printed *"every scenario leaves the same after
+tax"* beside it, because `summarise` treated *the baseline won* as *nobody
+won*. Both states have their own sentence now, and the assertion that would
+have caught it exists.
+
+3. **A per-column assertion was really testing the seed.**
+`test_changing_a_rate_changes_the_figure` read `columns[0].est_tax` and failed
+on the short rate: FIFO consumes a single **long-term** lot here, so its
+short-term part is zero. It reads the sum across columns now. If an assertion
+only holds for the lots the fixture happens to contain, it is a fixture test
+wearing a property's clothes.
+
+**Two homes for one bound, avoided once.** `RATE_PATTERN` was written on the
+projection's options and then needed by `schemas/view_options.py` too. It went
+to `domain/scenario_tax.py` instead of being restated — the same drift
+`ci-conventions.md` §5 is about, one layer down.
+
+**Next.** GGU-138 binds this in the client. GGU-135 still owns the order
+ticket's impact strip.

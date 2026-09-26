@@ -6880,7 +6880,7 @@
     {
       "actions": [],
       "component": "ScenarioComparison",
-      "digest": "f3cae9fd15c1",
+      "digest": "2b516749e0a9",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -6888,12 +6888,19 @@
       "example": {
         "columns": [
           {
+            "caption": "default order",
             "cost_basis": {
               "amount": "9000.00",
               "display": "$9,000.00"
             },
+            "est_tax": {
+              "amount": "1059.375000000000",
+              "display": "$1,059.38"
+            },
+            "key": "fifo",
+            "kind": "lot_method",
             "label": "FIFO — oldest lots first",
-            "long_term_lots": 1,
+            "long_term_lots": "1",
             "long_term_pl": {
               "amount": "7062.5000000000",
               "display": "+$7,062.50"
@@ -6902,23 +6909,40 @@
               "lot-btc-01"
             ],
             "method": "FIFO",
+            "net_after_tax": {
+              "amount": "6003.125000000000",
+              "display": "+$6,003.12"
+            },
+            "proceeds": {
+              "amount": "16062.5000000000",
+              "display": "$16,062.50"
+            },
             "realized_pl": {
               "amount": "7062.5000000000",
               "display": "+$7,062.50"
             },
-            "short_term_lots": 0,
+            "recommendation_label": "Recommended",
+            "recommended": true,
+            "short_term_lots": "0",
             "short_term_pl": {
               "amount": "0",
               "display": "$0.00"
             }
           },
           {
+            "caption": "newest first",
             "cost_basis": {
               "amount": "10617.00",
               "display": "$10,617.00"
             },
+            "est_tax": {
+              "amount": "1905.925000000000",
+              "display": "$1,905.92"
+            },
+            "key": "lifo",
+            "kind": "lot_method",
             "label": "LIFO — newest lots first",
-            "long_term_lots": 0,
+            "long_term_lots": "0",
             "long_term_pl": {
               "amount": "0",
               "display": "$0.00"
@@ -6927,23 +6951,40 @@
               "lot-btc-02"
             ],
             "method": "LIFO",
+            "net_after_tax": {
+              "amount": "3539.575000000000",
+              "display": "+$3,539.58"
+            },
+            "proceeds": {
+              "amount": "16062.5000000000",
+              "display": "$16,062.50"
+            },
             "realized_pl": {
               "amount": "5445.5000000000",
               "display": "+$5,445.50"
             },
-            "short_term_lots": 1,
+            "recommendation_label": null,
+            "recommended": false,
+            "short_term_lots": "1",
             "short_term_pl": {
               "amount": "5445.5000000000",
               "display": "+$5,445.50"
             }
           },
           {
+            "caption": "tax-optimized",
             "cost_basis": {
               "amount": "10617.00",
               "display": "$10,617.00"
             },
+            "est_tax": {
+              "amount": "1905.925000000000",
+              "display": "$1,905.92"
+            },
+            "key": "hifo",
+            "kind": "lot_method",
             "label": "HIFO — dearest lots first",
-            "long_term_lots": 0,
+            "long_term_lots": "0",
             "long_term_pl": {
               "amount": "0",
               "display": "$0.00"
@@ -6952,11 +6993,21 @@
               "lot-btc-02"
             ],
             "method": "HIFO",
+            "net_after_tax": {
+              "amount": "3539.575000000000",
+              "display": "+$3,539.58"
+            },
+            "proceeds": {
+              "amount": "16062.5000000000",
+              "display": "$16,062.50"
+            },
             "realized_pl": {
               "amount": "5445.5000000000",
               "display": "+$5,445.50"
             },
-            "short_term_lots": 1,
+            "recommendation_label": null,
+            "recommended": false,
+            "short_term_lots": "1",
             "short_term_pl": {
               "amount": "5445.5000000000",
               "display": "+$5,445.50"
@@ -6965,12 +7016,38 @@
         ],
         "notes": [
           {
-            "label": "Before tax",
-            "text": "The realised result and its short/long split, before any tax rate, fee or wash-sale rule."
+            "label": "Illustrative rates",
+            "text": "Tax is estimated at 35.00% on the short-term part and 15.00% on the long-term part, on gains only. These rates are a declared assumption, not yours: no fee and no wash-sale rule is modelled."
           },
           {
             "label": "Not advice",
-            "text": "No method is recommended: which result is preferable depends on a tax situation this demo does not know."
+            "text": "The recommendation is arithmetic under the rates above, not advice: which result is preferable depends on a tax situation this demo does not know."
+          }
+        ],
+        "rows": [
+          {
+            "direction_label": "higher is better",
+            "key": "proceeds",
+            "label": "Proceeds",
+            "winner": null
+          },
+          {
+            "direction_label": "lower is better",
+            "key": "realized_pl",
+            "label": "Realized gain",
+            "winner": null
+          },
+          {
+            "direction_label": "lower is better",
+            "key": "est_tax",
+            "label": "Est. tax",
+            "winner": "fifo"
+          },
+          {
+            "direction_label": "higher is better",
+            "key": "net_after_tax",
+            "label": "Net after tax",
+            "winner": "fifo"
           }
         ],
         "spread": {
@@ -6994,6 +7071,10 @@
           },
           "quantity_display": "0.25",
           "symbol": "BTC"
+        },
+        "summary": {
+          "badge": "Best result",
+          "text": "FIFO — oldest lots first already keeps the most after tax here."
         },
         "title": "Same sale, different lot method",
         "view": "scenario.comparison.v1"
@@ -7104,6 +7185,14 @@
           "type": "array"
         },
         {
+          "binding": "text",
+          "input": null,
+          "path": "columns[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
           "binding": "enum",
           "input": null,
           "path": "columns[].method",
@@ -7112,12 +7201,52 @@
           "type": "enum FIFO / LIFO / HIFO"
         },
         {
+          "binding": "enum",
+          "input": null,
+          "path": "columns[].kind",
+          "presence": "default `\"lot_method\"`",
+          "state": "variant",
+          "type": "enum lot_method / timing"
+        },
+        {
           "binding": "text",
           "input": null,
           "path": "columns[].label",
           "presence": "required",
           "state": null,
           "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "columns[].caption",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "columns[].proceeds",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "columns[].proceeds.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "columns[].proceeds.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -7216,20 +7345,84 @@
           "type": "string ≤32 chars"
         },
         {
-          "binding": "raw",
+          "binding": "container",
           "input": null,
-          "path": "columns[].short_term_lots",
+          "path": "columns[].est_tax",
           "presence": "required",
           "state": null,
-          "type": "integer 0..None"
+          "type": "object"
         },
         {
           "binding": "raw",
           "input": null,
+          "path": "columns[].est_tax.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "columns[].est_tax.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "columns[].net_after_tax",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "columns[].net_after_tax.amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "columns[].net_after_tax.display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "columns[].short_term_lots",
+          "presence": "required",
+          "state": null,
+          "type": "string"
+        },
+        {
+          "binding": "text",
+          "input": null,
           "path": "columns[].long_term_lots",
           "presence": "required",
           "state": null,
-          "type": "integer 0..None"
+          "type": "string"
+        },
+        {
+          "binding": "flag",
+          "input": null,
+          "path": "columns[].recommended",
+          "presence": "default `false`",
+          "state": "variant",
+          "type": "boolean"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "columns[].recommendation_label",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -7238,6 +7431,70 @@
           "presence": "required",
           "state": "empty",
           "type": "array"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "rows",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "rows[].key",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum proceeds / realized_pl / est_tax / net_after_tax"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "rows[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "rows[].direction_label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "rows[].winner",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "summary",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "summary.text",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤240 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "summary.badge",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
         },
         {
           "binding": "container",
@@ -7350,6 +7607,15 @@
             "title": "Currency",
             "type": "string"
           },
+          "include_wait": {
+            "default": false,
+            "description": "Add the *Wait for long-term* column: the same sale past every lot's first anniversary, so all of it is long-term. It varies the timing, not the lot ordering, and it holds the price still.",
+            "examples": [
+              true
+            ],
+            "title": "Include Wait",
+            "type": "boolean"
+          },
           "locale": {
             "default": "en-US",
             "description": "Formatting locale for every rendered string.",
@@ -7362,6 +7628,16 @@
               "en-US"
             ],
             "title": "Locale",
+            "type": "string"
+          },
+          "long_term_rate": {
+            "default": "0.15",
+            "description": "Rate applied to the long-term part of a gain, as a decimal string. The reason the short/long split is worth showing.",
+            "examples": [
+              "0.15"
+            ],
+            "pattern": "^0(\\.[0-9]{1,4})?$",
+            "title": "Long Term Rate",
             "type": "string"
           },
           "methods": {
@@ -7418,6 +7694,16 @@
             ],
             "title": "Quantity"
           },
+          "short_term_rate": {
+            "default": "0.35",
+            "description": "Rate applied to the short-term part of a gain, as a decimal string. A **declared assumption**, printed on the card beside the figure it produces — this demo knows no taxpayer, so a rate nobody chose would be a tax claim nobody could check (GGU-134).",
+            "examples": [
+              "0.35"
+            ],
+            "pattern": "^0(\\.[0-9]{1,4})?$",
+            "title": "Short Term Rate",
+            "type": "string"
+          },
           "symbol": {
             "anyOf": [
               {
@@ -7441,8 +7727,8 @@
         "type": "object"
       },
       "payload_type": "ScenarioComparisonPayload",
-      "prompt": "- scenario.comparison.v1 — The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$, or omit it), quantity (number 0.0..1000000000000.0 or string matching ^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,8}0*$, or omit it), methods (list of up to 3 (one of 'FIFO', 'LIFO', 'HIFO'))\n  use when: the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison.\n  do not use for: a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.",
-      "summary": "The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method.",
+      "prompt": "- scenario.comparison.v1 — The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$, or omit it), quantity (number 0.0..1000000000000.0 or string matching ^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,8}0*$, or omit it), methods (list of up to 3 (one of 'FIFO', 'LIFO', 'HIFO')), short_term_rate (string matching ^0(\\.[0-9]{1,4})?$), long_term_rate (string matching ^0(\\.[0-9]{1,4})?$), include_wait (true or false)\n  use when: the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison.\n  do not use for: a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.",
+      "summary": "The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.",
       "view": "scenario.comparison.v1"
     },
     {
