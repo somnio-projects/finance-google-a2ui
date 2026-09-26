@@ -25,6 +25,7 @@ from typing import Final, Literal, get_args
 SuggestionKey = Literal[
     "allocation",
     "biggest-drivers",
+    "lot-methods",
     "tax-lots",
     "why-did-i-move",
 ]
@@ -38,6 +39,17 @@ SUGGESTIONS: Final[dict[str, tuple[str, str]]] = {
     "biggest-drivers": (
         "Biggest drivers",
         "Which holdings drove my performance the most over the last week?",
+    ),
+    "lot-methods": (
+        "Which lot method?",
+        # The sale is **named**, and that is not decoration. The first draft
+        # read "…on the same sale", which is unambiguous only to the scripted
+        # table that supplies the arguments. Run against a live model the
+        # turn answered "please specify which holding and how much", drew the
+        # allocation surface and ended in `input_required` — a chip that
+        # cannot answer itself is not a chip. Found by the manual run; no
+        # test would have, because the scripted path never asks.
+        "Compare what each lot-selection method would cost on selling $20k of BTC.",
     ),
     "tax-lots": (
         "Tax lots",
