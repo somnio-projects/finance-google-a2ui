@@ -5,6 +5,7 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_m
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_track_row.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_value_cell.dart';
 import 'package:flutter/material.dart';
 
 /// The comparison grid: one header per scenario, one row per metric.
@@ -42,7 +43,7 @@ class ScenarioComparisonTable extends StatelessWidget {
         for (final metric in metrics)
           _MetricRow(
             metric: metric,
-            columnCount: columns.length,
+            columns: columns,
             palette: palette,
             tokens: tokens,
           ),
@@ -54,13 +55,13 @@ class ScenarioComparisonTable extends StatelessWidget {
 class _MetricRow extends StatelessWidget {
   const _MetricRow({
     required this.metric,
-    required this.columnCount,
+    required this.columns,
     required this.palette,
     required this.tokens,
   });
 
   final ScenarioMetricRow metric;
-  final int columnCount;
+  final List<ScenarioColumn> columns;
   final ChartPalette palette;
   final ScenarioComparisonTokens tokens;
 
@@ -75,23 +76,38 @@ class _MetricRow extends StatelessWidget {
           ScenarioComparisonLayout.rowPadding +
           const EdgeInsets.only(top: ScenarioComparisonLayout.hairline),
       child: ScenarioTrackRow(
-        columnCount: columnCount,
+        columnCount: columns.length,
         leading: Padding(
           padding: ScenarioComparisonLayout.metricCellPadding,
-          child: Text(
-            metric.label,
-            style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                metric.label,
+                style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+              ),
+              // Which way this row wins, in the backend's words. A Dart
+              // constant here would not follow the `locale` option (N-9).
+              Text(
+                metric.directionLabel,
+                style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+              ),
+            ],
           ),
         ),
         cells: <Widget>[
-          for (final display in metric.valueDisplays)
-            Padding(
-              padding: ScenarioComparisonLayout.valueCellPadding,
-              child: Text(
-                display,
-                textAlign: TextAlign.end,
-                style: ScenarioComparisonText.value(palette.title),
-              ),
+          for (final (index, display) in metric.valueDisplays.indexed)
+            ScenarioValueCell(
+              display: display,
+              // Read, never decided: the backend named the winning column
+              // and this compares two **keys**, never two figures (N-2).
+              isWinner:
+                  metric.winner != null &&
+                  index < columns.length &&
+                  columns[index].key == metric.winner,
+              palette: palette,
+              tokens: tokens,
             ),
         ],
       ),

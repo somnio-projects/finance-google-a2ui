@@ -9,12 +9,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'scenario_comparison_harness.dart';
 
 /// The widths of one grid row's tracks and gaps, as laid out.
+///
+/// `.first` is the track row's **own** `Row`, and it has to be said: a
+/// winning cell draws a tick beside its figure in a nested `Row`, so a bare
+/// descendant finder matches more than one and throws *"too many elements"*
+/// rather than failing on geometry.
 List<double> _tracks(WidgetTester tester, int index) {
   final row = tester.renderObject<RenderFlex>(
-    find.descendant(
-      of: find.byType(ScenarioTrackRow).at(index),
-      matching: find.byType(Row),
-    ),
+    find
+        .descendant(
+          of: find.byType(ScenarioTrackRow).at(index),
+          matching: find.byType(Row),
+        )
+        .first,
   );
   return row.getChildrenAsList().map((child) => child.size.width).toList();
 }

@@ -35,6 +35,9 @@ class ScenarioComparisonTokens {
     required this.metricLabel,
     required this.rowRule,
     required this.headerBorder,
+    required this.winnerSurface,
+    required this.winnerTick,
+    required this.recommendedBorder,
   });
 
   /// Light mode, as the `L1 · Light · 1024` artboard draws it.
@@ -43,6 +46,9 @@ class ScenarioComparisonTokens {
     metricLabel: Color(0xFF44464E),
     rowRule: Color(0xFFF0EDF5),
     headerBorder: Color(0xFFEAE7F0),
+    winnerSurface: Color(0xFFE6F6EC),
+    winnerTick: Color(0xFF1E9E5A),
+    recommendedBorder: Color(0xFF1E9E5A),
   );
 
   /// Dark mode, as the `D1 · Dark · 1024` artboard draws it.
@@ -54,6 +60,9 @@ class ScenarioComparisonTokens {
     metricLabel: Color(0xFFC9CBD4),
     rowRule: Color(0xFF202128),
     headerBorder: Color(0xFF2A2B33),
+    winnerSurface: Color(0xFF13291D),
+    winnerTick: Color(0xFF4ADE80),
+    recommendedBorder: Color(0xFF4ADE80),
   );
 
   /// The token set for [brightness].
@@ -89,4 +98,18 @@ class ScenarioComparisonTokens {
   /// in dark (`#2A2B33` against `#24252D`), which is why it is its own token
   /// rather than a reuse that happens to be right half the time.
   final Color headerBorder;
+
+  /// The tint behind the cell that wins its row.
+  ///
+  /// A **surface**, not a semantic green: it sits behind a figure that may
+  /// itself be a loss, so it says *"best in this row"* and never *"good"*.
+  /// Which row a tint means anything in is stated beside it — the backend
+  /// writes `higher is better` or `lower is better` per row (N-9).
+  final Color winnerSurface;
+
+  /// The tick drawn on that cell.
+  final Color winnerTick;
+
+  /// The border the recommended column's header carries.
+  final Color recommendedBorder;
 }

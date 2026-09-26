@@ -1,6 +1,7 @@
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_subject.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_summary_banner.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +22,7 @@ class ScenarioComparisonFooter extends StatelessWidget {
   const ScenarioComparisonFooter({
     required this.spread,
     required this.notes,
+    required this.summary,
     super.key,
   });
 
@@ -46,6 +48,11 @@ class ScenarioComparisonFooter extends StatelessWidget {
   /// The backend's notes, rendered verbatim and never dropped (N-9).
   final List<ScenarioNote> notes;
 
+  /// The frame's footer sentence, with its figures already in it. Composed
+  /// on the server and rendered verbatim — assembling prose around two
+  /// numbers here would be N-9 (backend spec 0051 OD-5).
+  final String summary;
+
   @override
   Widget build(BuildContext context) {
     final tokens = ScenarioComparisonTokens.of(context);
@@ -55,6 +62,7 @@ class ScenarioComparisonFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        ScenarioSummaryBanner(text: summary, tokens: tokens),
         DecoratedBox(
           decoration: BoxDecoration(
             border: Border(top: BorderSide(color: tokens.rowRule)),
