@@ -19,6 +19,8 @@ class OrderTicketV2Line extends Equatable {
     required this.weight,
     required this.increment,
     required this.decrement,
+    required this.stops,
+    required this.position,
   });
 
   /// Stable id: the ticker.
@@ -52,6 +54,20 @@ class OrderTicketV2Line extends Equatable {
   /// The `legs` value a `-` sends, or null at zero.
   final String? decrement;
 
+  /// Every `legs` value this leg's slider can land on, ascending by this
+  /// leg's **weight in the order** and written by the backend — a drag picks
+  /// one, it never computes one (N-2). A single entry means the draft has no
+  /// mix to move, and the track is not draggable.
+  final List<String> stops;
+
+  /// Index into [stops] of the value on screen, read as a coordinate.
+  ///
+  /// It travels as a decimal string because `ViewPayload` has no reader for a
+  /// JSON number, and it is read through `geometry` because that is what the
+  /// seam is for: a thumb's index is a position, and it never reaches a
+  /// `Text` (backend spec 0050 §7b, ADR-L D-14).
+  final double position;
+
   @override
   List<Object?> get props => <Object?>[
     key,
@@ -64,5 +80,7 @@ class OrderTicketV2Line extends Equatable {
     weight,
     increment,
     decrement,
+    stops,
+    position,
   ];
 }

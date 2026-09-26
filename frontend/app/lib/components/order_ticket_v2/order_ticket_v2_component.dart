@@ -98,9 +98,24 @@ class OrderTicketV2Component extends ViewComponent {
           afterDisplay: row.text('after.display'),
         ),
     ],
+    controls: <OrderTicketV2Control>[
+      for (final row in payload.rows('controls')) _control(row),
+    ],
     breach: payload.text('constraints.breach'),
     message: payload.optionalText('constraints.message'),
     disclosure: payload.text('disclosure'),
+  );
+
+  /// Reads one `controls[]` entry.
+  ///
+  /// `enabled` is read with `ViewPayload.flag` — the contract's reader for a
+  /// fact it states as a flag rather than as a word.
+  OrderTicketV2Control _control(ViewPayload row) => OrderTicketV2Control(
+    key: row.text('key'),
+    label: row.text('label'),
+    kind: row.text('kind'),
+    enabled: row.flag('enabled'),
+    reason: row.optionalText('reason'),
   );
 
   /// Reads one `lines[]` entry.
@@ -115,6 +130,8 @@ class OrderTicketV2Component extends ViewComponent {
     weight: row.geometry('weight.value'),
     increment: row.optionalText('increment'),
     decrement: row.optionalText('decrement'),
+    stops: row.strings('stops'),
+    position: row.geometry('position'),
   );
 }
 
