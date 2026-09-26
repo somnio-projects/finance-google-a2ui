@@ -20,6 +20,7 @@ from app.domain.sales import simulate_sale
 from app.presentation import scenario_after_tax as after_tax
 from app.presentation import scenario_build as build
 from app.presentation import scenario_spread as spread_of
+from app.presentation import scenario_summary as footer
 from app.presentation import scenario_verdict as verdict
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.registry import register
@@ -80,7 +81,7 @@ def render(
         ),
         columns=columns,
         rows=table,
-        summary=verdict.summarise(columns, table, options=options),
+        summary=footer.summarise(columns, table, options=options),
         spread=gap,
         notes=notes_for(options, differs=gap.differs),
     )

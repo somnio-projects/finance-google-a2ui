@@ -15,7 +15,7 @@ from app.domain.portfolio import Portfolio
 from app.presentation.displays import MoneyDisplay
 from app.presentation.scenario_columns import ScenarioColumn
 from app.presentation.scenario_rows import HIGHER
-from app.presentation.scenario_verdict import BEST_RESULT, LEVEL
+from app.presentation.scenario_summary import BEST_RESULT, LEVEL
 from app.presentation.views.scenario_comparison import (
     ScenarioComparisonOptions,
     render,
@@ -84,6 +84,26 @@ def test_a_summary_that_names_a_winner_never_claims_a_tie(
 
     assert payload.summary.badge == BEST_RESULT
     assert (payload.summary.text == LEVEL) is not winner
+
+
+def test_a_footer_that_cannot_name_a_winner_still_tells_the_truth(
+    portfolio: Portfolio,
+) -> None:
+    """AC-2 — "no winner" is two different facts and they read differently.
+
+    Found by a manual run, not by this suite. With the timing column added,
+    the baseline is already wholly long-term, so waiting changes nothing and
+    the two tie for best — while LIFO and HIFO trail by $2,463. The footer
+    said *"every scenario leaves the same after tax"*, which was false about
+    half the card.
+    """
+    payload = render(portfolio, ScenarioComparisonOptions(include_wait=True))
+    nets = {_amount(column, "net_after_tax") for column in payload.columns}
+
+    assert not any(column.recommended for column in payload.columns)
+    assert len(nets) > 1
+    assert payload.summary.text != LEVEL
+    assert "keep the most after tax" in payload.summary.text
 
 
 def test_waiting_is_a_timing_column_not_a_fourth_method(

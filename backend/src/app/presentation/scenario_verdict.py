@@ -14,25 +14,15 @@ from decimal import Decimal
 from typing import Final
 
 from app.presentation.displays import MoneyDisplay
-from app.presentation.options import DisplayOptions
 from app.presentation.scenario_columns import ScenarioColumn
 from app.presentation.scenario_rows import (
     HIGHER,
     ROWS,
     RowKey,
     ScenarioRow,
-    ScenarioSummary,
 )
 
-#: The tag on the winning column, and the pill in the header.
 RECOMMENDED: Final[str] = "Recommended"
-BEST_RESULT: Final[str] = "Best result"
-#: The footer, composed once so no client assembles a sentence from figures.
-SAVES: Final[str] = "{label} saves {tax} in tax and keeps {net} more after tax."
-#: The winner is the column a reader would have used anyway. Saying it "saves"
-#: something would be comparing it with itself.
-ALREADY: Final[str] = "{label} already keeps the most after tax here."
-LEVEL: Final[str] = "Every scenario leaves the same after tax, so none is better."
 
 
 def _amount(column: ScenarioColumn, key: RowKey) -> Decimal:
@@ -98,52 +88,4 @@ def recommended(
     )
 
 
-def summarise(
-    columns: tuple[ScenarioColumn, ...],
-    table: tuple[ScenarioRow, ...],
-    *,
-    options: DisplayOptions,
-) -> ScenarioSummary:
-    """Write the footer against the first column — the ordering used today.
-
-    Args:
-        columns: The rendered columns; ``columns[0]`` is the baseline.
-        table: The rows, already decided.
-        options: The precision and locale to format under.
-
-    Returns:
-        The sentence, with both figures in it, or a flat one when nothing wins.
-    """
-    net = next(row for row in table if row.key == "net_after_tax")
-    best = next((column for column in columns if column.key == net.winner), None)
-    if best is None:
-        return ScenarioSummary(text=LEVEL, badge=BEST_RESULT)
-    base = columns[0]
-    if best.key == base.key:
-        # Not a tie — the baseline won. `LEVEL` here would have been false,
-        # and was: the first render said "every scenario leaves the same"
-        # beside a column marked Recommended.
-        return ScenarioSummary(text=ALREADY.format(label=best.label), badge=BEST_RESULT)
-    saved = base.est_tax.amount - best.est_tax.amount
-    kept = best.net_after_tax.amount - base.net_after_tax.amount
-    return ScenarioSummary(
-        text=SAVES.format(
-            label=best.label,
-            tax=options.money(saved).display,
-            net=options.money(kept).display,
-        ),
-        badge=BEST_RESULT,
-    )
-
-
-__all__ = [
-    "ALREADY",
-    "BEST_RESULT",
-    "LEVEL",
-    "RECOMMENDED",
-    "SAVES",
-    "recommended",
-    "rows",
-    "summarise",
-    "winner_of",
-]
+__all__ = ["RECOMMENDED", "recommended", "rows", "winner_of"]
