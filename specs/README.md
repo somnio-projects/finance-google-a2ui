@@ -170,3 +170,4 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0007-allocation-summary.md](frontend/0007-allocation-summary.md) | Draft | GGU-65 (the Flutter half of GGU-21) |
 | [frontend/0029-the-conventions-are-checked.md](frontend/0029-the-conventions-are-checked.md) | In progress | GGU-105 · GGU-106 |
 | [frontend/0030-a2ui-agent-path.md](frontend/0030-a2ui-agent-path.md) | Implemented | GGU-79 — **renumbered from `0002`** by `frontend/0029` |
+| [frontend/0031-the-comparison-is-measured.md](frontend/0031-the-comparison-is-measured.md) | In progress | GGU-141 |

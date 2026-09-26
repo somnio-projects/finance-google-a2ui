@@ -1,20 +1,21 @@
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_verdict_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// The four colours this card needs that `ChartPalette` has no slot for,
+/// The colours this card needs that `ChartPalette` has no slot for,
 /// **measured from the design** rather than taken from a token list.
 ///
 /// Every value below was read out of the designer's
 /// `Catalog - Scenario Comparison` page with `getComputedStyle` on the
 /// rendered DOM, in both the `L1 · Light · 1024` and `D1 · Dark · 1024`
 /// artboards. `specs/frontend/0004` carries the full table and how it was
-/// obtained; `scenario_comparison_tokens_test.dart` pins all eight values so
-/// a future edit has to disagree with a test rather than with a memory.
+/// obtained; `scenario_comparison_tokens_test.dart` pins the values so a
+/// future edit has to disagree with a test rather than with a memory.
 ///
 /// **Why a second colour file exists.** `chart_tokens.dart` used to say it was
 /// the only file in `app/lib/` naming a `Color`, and that was true while one
 /// component had been built. Three of this card's colours are simply not
 /// chart roles — a table's row rule, a column header's hairline, a caption —
-/// and `ChartPalette` has no field for them. Adding four would edit
+/// and `ChartPalette` has no field for them. Adding them would edit
 /// `chart_palette.dart` and `chart_tokens.dart`, and *adding a component
 /// edits no existing file* (ADR-L D-3). So the card brings its own, and the
 /// stale sentence was raised in `specs/frontend/0004` OD-6 rather than fixed
@@ -35,9 +36,8 @@ class ScenarioComparisonTokens {
     required this.metricLabel,
     required this.rowRule,
     required this.headerBorder,
-    required this.winnerSurface,
-    required this.winnerTick,
-    required this.recommendedBorder,
+    required this.figure,
+    required this.verdict,
   });
 
   /// Light mode, as the `L1 · Light · 1024` artboard draws it.
@@ -46,9 +46,8 @@ class ScenarioComparisonTokens {
     metricLabel: Color(0xFF44464E),
     rowRule: Color(0xFFF0EDF5),
     headerBorder: Color(0xFFEAE7F0),
-    winnerSurface: Color(0xFFE6F6EC),
-    winnerTick: Color(0xFF1E9E5A),
-    recommendedBorder: Color(0xFF1E9E5A),
+    figure: Color(0xFF1A1B20),
+    verdict: ScenarioVerdictTokens.light,
   );
 
   /// Dark mode, as the `D1 · Dark · 1024` artboard draws it.
@@ -60,9 +59,8 @@ class ScenarioComparisonTokens {
     metricLabel: Color(0xFFC9CBD4),
     rowRule: Color(0xFF202128),
     headerBorder: Color(0xFF2A2B33),
-    winnerSurface: Color(0xFF13291D),
-    winnerTick: Color(0xFF4ADE80),
-    recommendedBorder: Color(0xFF4ADE80),
+    figure: Color(0xFFE5E1E9),
+    verdict: ScenarioVerdictTokens.dark,
   );
 
   /// The token set for [brightness].
@@ -99,17 +97,16 @@ class ScenarioComparisonTokens {
   /// rather than a reuse that happens to be right half the time.
   final Color headerBorder;
 
-  /// The tint behind the cell that wins its row.
+  /// A figure in a scenario track when it has not won its row.
   ///
-  /// A **surface**, not a semantic green: it sits behind a figure that may
-  /// itself be a loss, so it says *"best in this row"* and never *"good"*.
-  /// Which row a tint means anything in is stated beside it — the backend
-  /// writes `higher is better` or `lower is better` per row (N-9).
-  final Color winnerSurface;
+  /// Its own token rather than `ChartPalette.title`: this table's normal
+  /// figure is `#1a1b20` / `#e5e1e9` in the design's own palette, and a
+  /// chart's title colour is a different decision that happens to be close.
+  final Color figure;
 
-  /// The tick drawn on that cell.
-  final Color winnerTick;
-
-  /// The border the recommended column's header carries.
-  final Color recommendedBorder;
+  /// Which column the backend picked, and which cell won each row.
+  ///
+  /// Its own object because it answers a different question from everything
+  /// above — see [ScenarioVerdictTokens].
+  final ScenarioVerdictTokens verdict;
 }

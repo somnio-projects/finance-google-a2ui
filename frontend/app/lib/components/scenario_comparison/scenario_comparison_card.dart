@@ -5,6 +5,7 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_l
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_subject.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_table.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -125,14 +126,14 @@ class _TitleRow extends StatelessWidget {
       const SizedBox(width: 8),
       DecoratedBox(
         decoration: BoxDecoration(
-          color: tokens.winnerSurface,
+          color: tokens.verdict.winnerSurface,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           child: Text(
             badge,
-            style: ScenarioComparisonText.caption(tokens.winnerTick),
+            style: ScenarioComparisonText.caption(tokens.verdict.winnerAccent),
           ),
         ),
       ),

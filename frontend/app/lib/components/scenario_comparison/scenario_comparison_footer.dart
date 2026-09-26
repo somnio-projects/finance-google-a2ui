@@ -2,6 +2,7 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_l
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_subject.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_summary_banner.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 

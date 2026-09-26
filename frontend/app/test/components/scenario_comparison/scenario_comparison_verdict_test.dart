@@ -24,7 +24,7 @@ void main() {
 
       expect(marked, greaterThan(0));
       expect(find.byType(ScenarioValueCell), findsWidgets);
-      expect(find.byIcon(Icons.check_circle), findsNWidgets(marked));
+      expect(find.byIcon(Icons.check), findsNWidgets(marked));
     });
 
     testWidgets('marks nothing when every row ties', (tester) async {
@@ -35,7 +35,7 @@ void main() {
         const ScenarioComparisonComponent().read(payload),
       );
 
-      expect(find.byIcon(Icons.check_circle), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
     });
 
     testWidgets('a marked cell announces why it is marked', (tester) async {

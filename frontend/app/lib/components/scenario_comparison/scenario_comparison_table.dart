@@ -3,6 +3,7 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_h
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_track_row.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_value_cell.dart';
@@ -89,9 +90,13 @@ class _MetricRow extends StatelessWidget {
               ),
               // Which way this row wins, in the backend's words. A Dart
               // constant here would not follow the `locale` option (N-9).
+              // `higher is better ▲` — a step smaller and quieter than the
+              // name above it, and the arrow arrives inside the string.
               Text(
                 metric.directionLabel,
-                style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+                style: ScenarioComparisonText.directionHint(
+                  tokens.verdict.directionHint,
+                ),
               ),
             ],
           ),
@@ -106,7 +111,6 @@ class _MetricRow extends StatelessWidget {
                   metric.winner != null &&
                   index < columns.length &&
                   columns[index].key == metric.winner,
-              palette: palette,
               tokens: tokens,
             ),
         ],

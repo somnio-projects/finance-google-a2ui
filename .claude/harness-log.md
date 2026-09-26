@@ -6064,3 +6064,50 @@ wrote that "nothing is broken while it waits". The runtime was fine — the
 deployed client binds fields that are all still served — but the **gate** on
 `develop` was red, and I had not run it there. Running a gate on a branch is
 not running it on what the branch merged into.
+
+---
+
+## GGU-141 — the comparison card is measured, not remembered
+
+Spec [`frontend/0031`](../specs/frontend/0031-the-comparison-is-measured.md).
+
+GGU-138 taught the card to *read* the verdict; it drew it in values chosen
+from memory of a Figma frame. `.design-refs/Catalog_ScenarioComparison.dc.html`
+— the designer's **rendered** DOM, with inline CSS, for both 1024 artboards —
+is the measurement, and every colour, size and weight now comes from it.
+
+**The largest error was a colour that looked right.** The recommended column
+was drawn in the winner's green. The design spends green on `gain` — a figure
+that went up — and marks the recommendation in the lavender the order ticket
+uses to highlight a leg. Two different claims, one colour: *"this is good"*
+where the design says *"look here"*. Nothing failed; the card simply asserted
+something design never did.
+
+**Three things the design does that the client must not.** Its CSS uppercases
+the tag with `text-transform`, writes `★` into the label, and writes
+`higher is better ▲` with the arrow in the string. The first two would be the
+client editing a server-written value (N-1, N-9), so the label renders
+verbatim and the star is an icon. The third is the interesting one: it went
+into the **contract** instead. A Dart `if (label == 'higher is better') '▲'`
+is a second declaration of a fact `presentation/scenario_rows.py` already
+owns — §5's defect class, in a component.
+
+**One thing was raised rather than fixed.** The redesigned header is two
+lines, `method` over `caption`; `columns[].label` has no slot in it. Dropping
+a server-written label is N-9, so it is announced on the header cell rather
+than drawn, and spec 0031 OD-1 says plainly that making it visible again is a
+change to the *frame*, not to the client. The same for the subject strip and
+the spread block, which `backend/0051` chose to keep and the artboard does not
+show (OD-2).
+
+**A test that kept passing after its subject moved.** `_rowBorder` read the
+table's **first** `DecoratedBox`; the redesign put two above the rows — the
+recommendation pill and a winning cell's tint — and it silently started
+asserting the pill's border. It selects by the property that makes something
+a row rule now. A finder that survives the thing it was aimed at moving is
+worse than one that breaks.
+
+Three token files where there was one, because
+`scenario_comparison_tokens.dart` went to 179 lines: *where things sit*
+(layout), *what they look like* (text), *which column won* (verdict). Split by
+question, not by size.

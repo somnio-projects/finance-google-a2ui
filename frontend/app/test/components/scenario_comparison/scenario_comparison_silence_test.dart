@@ -29,16 +29,21 @@ void main() {
         const ScenarioComparisonComponent().read(payload),
       );
 
-      expect(find.byIcon(Icons.check_circle), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
       for (final word in <String>[
         'Recommended',
         '★ Recommended',
         'best on that row',
-        'higher is better ▲',
-        'lower is better ▼',
       ]) {
         expect(find.textContaining(word), findsNothing, reason: word);
       }
+      // `higher is better ▲` **is** drawn here, and used to be on the list
+      // above. It is not a verdict: it is `rows[].direction_label`, which
+      // the backend writes for every row whether or not anyone won it, and
+      // the arrow is part of that string rather than a glyph the client
+      // prepends (N-1). Silence is about marks the card would have had to
+      // invent, and this is one it was given.
+      expect(find.textContaining('higher is better ▲'), findsWidgets);
     });
   });
 }

@@ -17,6 +17,7 @@ class ScenarioHeaderBorderPainter extends CustomPainter {
   const ScenarioHeaderBorderPainter({
     required this.color,
     required this.radius,
+    this.fill,
   });
 
   /// The hairline colour.
@@ -24,6 +25,13 @@ class ScenarioHeaderBorderPainter extends CustomPainter {
 
   /// The radius of the two top corners.
   final double radius;
+
+  /// The cell's fill, or null for a column that carries none.
+  ///
+  /// The recommended column is filled **and** outlined; every other header
+  /// is outlined only, which is why this is nullable rather than
+  /// transparent-by-default.
+  final Color? fill;
 
   /// The hairline's width. CSS draws a 1 px border *inside* the box, so the
   /// path is inset by half of this and the stroke lands on the same pixels.
@@ -46,6 +54,12 @@ class ScenarioHeaderBorderPainter extends CustomPainter {
         radius: Radius.circular(radius),
       )
       ..lineTo(right, size.height);
+    // The fill goes down first, inside the same path: a recommended header
+    // is filled **and** outlined, and painting the fill separately would
+    // leave it square under the rounded top corners.
+    if (fill case final colour?) {
+      canvas.drawPath(path, Paint()..color = colour);
+    }
     canvas.drawPath(
       path,
       Paint()
@@ -57,5 +71,7 @@ class ScenarioHeaderBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(ScenarioHeaderBorderPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.radius != radius;
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.fill != fill;
 }

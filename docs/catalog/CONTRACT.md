@@ -149,7 +149,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `da6c79781962` | 67 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
-| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `2b516749e0a9` | 62 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints. |
+| [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `da83b01797ad` | 62 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints. |
 | [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `0556567d7b94` | 45 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `activity.timeline.v1`
@@ -3646,7 +3646,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.
 
-- **Frozen id:** `scenario.comparison.v1` · **digest:** `2b516749e0a9`
+- **Frozen id:** `scenario.comparison.v1` · **digest:** `da83b01797ad`
 - **Component:** `ScenarioComparison`
 - **Payload type:** `ScenarioComparisonPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -3893,25 +3893,25 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "key": "proceeds",
       "label": "Proceeds",
-      "direction_label": "higher is better",
+      "direction_label": "higher is better \u25b2",
       "winner": null
     },
     {
       "key": "realized_pl",
       "label": "Realized gain",
-      "direction_label": "lower is better",
+      "direction_label": "lower is better \u25bc",
       "winner": null
     },
     {
       "key": "est_tax",
       "label": "Est. tax",
-      "direction_label": "lower is better",
+      "direction_label": "lower is better \u25bc",
       "winner": "fifo"
     },
     {
       "key": "net_after_tax",
       "label": "Net after tax",
-      "direction_label": "higher is better",
+      "direction_label": "higher is better \u25b2",
       "winner": "fifo"
     }
   ],
