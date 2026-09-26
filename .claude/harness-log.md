@@ -6111,3 +6111,52 @@ Three token files where there was one, because
 `scenario_comparison_tokens.dart` went to 179 lines: *where things sit*
 (layout), *what they look like* (text), *which column won* (verdict). Split by
 question, not by size.
+
+
+---
+
+## GGU-143 — the comparison gets a turn
+
+Spec [`backend/0052`](../specs/backend/0052-the-comparison-gets-a-turn.md).
+
+`scenario.comparison.v1` was registered, served, bound by a component, covered
+to 100 %, published in both catalog artefacts and — one commit earlier —
+measured against the design. **Nothing drew it.** Asking the assistant to
+compare lot methods answered with the tax-lot table; the only place a person
+met the card was the catalog gallery's thumbnail, which crops it above the
+metric rows.
+
+**The repository had already written this down.** The view was a line in
+`catalog_reach_data.py::DECLARED_GAPS`, with a note ending *"Unowned — the
+next agent feature should take it"*, and it stayed there while three specs
+shipped around it. So the declaration worked exactly as designed and nobody
+read it. That is worth more than the fix: a gap a test *announces* still needs
+somebody to be looking, and the four specs that touched this component between
+0017 and 0141 each had a reason not to be.
+
+`compare_lot_methods` closes it — one sale, two or three methods, one render
+intent — plus a fifth curated chip so the flow runs with no model provider
+configured.
+
+**Two things the tool deliberately cannot do**, and both are the same rule:
+it cannot name a tax rate (the card prints the rate it costed with, and a rate
+the *model* chose would make that printed assumption model-authored — GGU-134
+one layer up), and it cannot name a winner (`scenario_verdict` already decides,
+and `app.agent` may not import `app.presentation` anyway). A second
+declaration of a fact is the defect; the layering rule is what makes it
+impossible rather than merely discouraged.
+
+**One check changed and it is not a loosening.** `_is_bounded` returned False
+for `type: boolean`, so `include_wait` — the first boolean argument any tool
+has published — failed it. The check's subject is *can the model make this
+arbitrarily large*, and a bool admits two values; falling through to `False`
+was the helper having no case for a shape no tool had used, not a bound it was
+enforcing. Nothing that used to fail now passes. Said out loud because §5 of
+`ci-conventions.md` is mostly a record of checks that were quietly weakened.
+
+**A latent order dependence, recorded rather than fixed.**
+`test_simulate_sale_render.py` resolves a view through the real registry and
+nothing in it imports the views package, so four of its five tests fail when
+the file is run alone. The new suites import it through their fixture. The old
+one is left as it is — it is a fragility, not a false claim, and fixing it
+belongs to whoever next touches that file.

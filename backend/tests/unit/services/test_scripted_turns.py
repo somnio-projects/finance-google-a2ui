@@ -30,6 +30,7 @@ SURFACE_OF: Mapping[str, str | None] = {
     "compute_attribution": "attribution.window.v1",
     "get_holdings_summary": "holdings.allocation.v1",
     "simulate_sale": "taxlots.table.v1",
+    "compare_lot_methods": "scenario.comparison.v1",
     "draft_order": "order.ticket.v2",
     "driver_detail": "attribution.driver.v1",
 }

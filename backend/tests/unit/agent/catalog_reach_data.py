@@ -48,14 +48,12 @@ DECLARED_GAPS: Final[dict[str, str]] = {
         "Spec backend/0035 gave this view `query` and `asset_class`, which "
         "the TABS send; it attached no tool, so the gap stands. Unowned."
     ),
-    "scenario.comparison.v1": (
-        "`simulate_sale` computes one scenario and attaches the tax-lot "
-        "table; comparing keep-against-trim is exactly this component and no "
-        "tool asks for it. Unowned — the next agent feature should take it."
-    ),
     "payoff.curve.v1": (
         "No tool produces an option payoff. Unowned; the demo script does not "
-        "reach it either, so it is the least urgent of the four."
+        "reach it either, so it is the least urgent of the three. It was the "
+        "least urgent of *four* until GGU-143 closed "
+        "`scenario.comparison.v1` — that entry said 'the next agent feature "
+        "should take it', and `compare_lot_methods` is that feature."
     ),
 }
 

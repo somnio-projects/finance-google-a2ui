@@ -14,6 +14,7 @@ from tests.unit.conftest import FakeTool
 #: list a commented-out ``register(...)`` leaves the suite fully green and the
 #: tool simply never reaches the model (spec 0013 AC-1).
 EXPECTED_TOOLS = (
+    "compare_lot_methods",
     "compute_attribution",
     "draft_order",
     "driver_detail",
