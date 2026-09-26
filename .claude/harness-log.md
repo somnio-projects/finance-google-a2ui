@@ -6160,3 +6160,46 @@ nothing in it imports the views package, so four of its five tests fail when
 the file is run alone. The new suites import it through their fixture. The old
 one is left as it is — it is a fragility, not a false claim, and fixing it
 belongs to whoever next touches that file.
+
+
+---
+
+## GGU-144 — the grid keeps its width and scrolls
+
+Spec [`frontend/0032`](../specs/frontend/0032-the-grid-keeps-its-width.md).
+
+The comparison card is drawn at 571 pt on a 1024 artboard and `AppShell` caps
+the app at 430, deliberately. So the grid laid four tracks out in 392 pt where
+the designer gave it 533, compressed every track by about a quarter, and broke
+the figures mid-number: `$20,000.` over `00`. It now keeps the design's width
+and scrolls sideways below it.
+
+**Nothing in the suite could have seen this.** Every test of this card pumps it
+at `designCardWidth` — precisely the width at which the layout is correct. A
+component checked only at the size its design was drawn at has been checked at
+the one size that cannot fail. That is the lesson, and it is not specific to
+this card: spec 0032 OD-2 records that no other catalog component has been
+pumped at 430 either.
+
+**The first test I wrote had to be thrown away, and it is the more useful
+half.** It asserted the symptom — *no figure is broken across two lines* — and
+failed **at the design's own width**, because `flutter test` renders every
+glyph in the test font as a full em square: `+$7,062.50` "needs" 135 pt there
+against a track the designer sized at 121. The assertion was measuring the
+test font. Geometry is what a widget test can prove about an all-text card;
+typography is what a golden cannot prove either (`frontend/testing.md` §6). The
+suite asserts the tracks.
+
+**Three alternatives were turned down and each is written where the next
+person will look** (the widget's doc comment, and spec 0032 §3): widening the
+shell contradicts a standing ruling; `FittedBox` preserves every measured
+proportion and defeats dynamic type, which is an accessibility regression;
+asking the backend for fewer columns is the client deciding what to compare.
+What the chosen answer costs — the metric names scroll away too — is written
+down beside it, with what pinning them would actually take.
+
+**And a citation turned out to point at the wrong document.** `app_shell.dart`
+cites "spec 0026" for a phone-shaped frame; ten files do. It resolves to
+`backend/0026`, the Home shell, which says nothing about a width — the 430 cap
+and the sentence justifying it exist **only** as a doc comment on the widget.
+Recorded in 0032 OD-1 rather than fixed from a frontend ticket.

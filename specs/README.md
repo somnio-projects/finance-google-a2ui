@@ -172,3 +172,4 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0029-the-conventions-are-checked.md](frontend/0029-the-conventions-are-checked.md) | In progress | GGU-105 · GGU-106 |
 | [frontend/0030-a2ui-agent-path.md](frontend/0030-a2ui-agent-path.md) | Implemented | GGU-79 — **renumbered from `0002`** by `frontend/0029` |
 | [frontend/0031-the-comparison-is-measured.md](frontend/0031-the-comparison-is-measured.md) | In progress | GGU-141 |
+| [frontend/0032-the-grid-keeps-its-width.md](frontend/0032-the-grid-keeps-its-width.md) | In progress | GGU-144 |
