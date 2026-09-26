@@ -413,6 +413,41 @@ records the nine mutations that show each rule rejecting, including the
 anti-vacuity ones — a Dockerfile that stops naming an interpreter fails rather
 than passing by finding nothing.
 
+**The eighth instance is §5's second question asked of a `paths:` filter, and
+it cost a red `develop` and a failed deploy (GGU-140).** `frontend-ci` was
+scoped to `frontend/**`, `docker-compose.yml` and its own file.
+`docs/catalog/view-catalog.snapshot.json` was not in that list — it is
+generated from `backend/` and `backend-ci` already claimed it, with a comment
+saying why.
+
+But the snapshot is **bound by the client**. Every component test reads its own
+example out of it through `catalog_snapshot.dart` rather than copying one —
+which is `frontend/testing.md` §5, and the right design. So it is a
+**cross-stack artefact**, and a filter that gives it to one stack is a filter
+that hides it from the other.
+
+Measured: GGU-136 renamed a `notes[]` label in the projection. `backend-ci`
+ran on that PR and passed. `frontend-ci` **never started**, because the PR
+touched no path it watches. `develop` then carried a frontend suite that
+asserted the old label, and nothing said so until `frontend-cd` ran the gate
+as a job and the **deploy** failed:
+
+| | on the PR that changed it | on `develop` afterwards |
+|---|---|---|
+| `backend-ci` | green | — |
+| `frontend-ci` | **did not run** | **did not run** |
+| `frontend-cd` | — | **red**, at the deploy |
+
+The fix is one line — `docs/catalog/**` in `frontend-ci`'s `paths:` — and the
+rule it comes from is §5's second question applied to the filter rather than
+to the command: *does this workflow's scope cover what its name claims?*
+`frontend-ci` claims to prove the frontend, and it could not see a file the
+frontend binds.
+
+**A stack workflow's `paths:` must list every file its gate reads, not every
+file its stack owns.** Generated artefacts are where the two differ, because
+ownership and consumption sit on opposite sides of them.
+
 So question 3 gets a clause it did not have: **ask it of every toolchain the
 repository runs, not only the one that last cost a day.** `infra/` is the open
 case at the time of writing — `infra-ci.yaml` pins `terraform_version: "1.9.8"`

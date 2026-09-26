@@ -28,6 +28,18 @@ on:
   pull_request:
     paths:
       - "frontend/**"
+      # The frozen catalog is **generated from backend/ and bound by this
+      # app**: every component test reads its own example out of
+      # `view-catalog.snapshot.json` through `catalog_snapshot.dart`, rather
+      # than copying one. So a projection change lands in a file this gate
+      # must be run against, and `backend/**` alone does not reach it.
+      #
+      # It was missing, and it cost a red `develop`. GGU-136 renamed a
+      # `notes[]` label in the snapshot; `backend-ci` ran and passed, this
+      # workflow never started, and the frontend suite — which asserts that
+      # label — stayed red on `develop` until the client PR landed. The
+      # symptom was a failed **deploy**, which is the worst place to learn it.
+      - "docs/catalog/**"
       # The A2UI client is a service in the root compose file now, so a change
       # to the stack's shape has to start the gate that proves the app it
       # builds (spec frontend/0017).
