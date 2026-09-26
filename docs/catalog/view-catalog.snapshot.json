@@ -4579,7 +4579,7 @@
     {
       "actions": [],
       "component": "MultiLegOrderTicket",
-      "digest": "8cd79663e799",
+      "digest": "714cf2e8d6dd",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -4598,6 +4598,15 @@
           "message": null,
           "shortfall": null
         },
+        "controls": [
+          {
+            "enabled": false,
+            "key": "review",
+            "kind": "primary",
+            "label": "Review order",
+            "reason": "This showcase has no broker: nothing is ever sent, placed or settled."
+          }
+        ],
         "disclosure": "Illustrative draft. This showcase has no broker and no execution: stepping a leg re-renders these figures, fees are simulated at zero, and nothing is ever sent, placed or settled.",
         "effect": "recalculate",
         "impact": {
@@ -4672,6 +4681,7 @@
               "amount": "3855.0000",
               "display": "$3,855.00"
             },
+            "position": "2",
             "price": {
               "amount": "64250.00",
               "display": "$64,250.00"
@@ -4680,6 +4690,28 @@
               "display": "0.06",
               "units": "0.06"
             },
+            "stops": [
+              "BTC:0,ETH:1.0,SOL:16",
+              "BTC:0.02,ETH:1.0,SOL:16",
+              "BTC:0.06,ETH:1.0,SOL:16",
+              "BTC:0.10,ETH:1.0,SOL:16",
+              "BTC:0.14,ETH:1.0,SOL:16",
+              "BTC:0.18,ETH:1.0,SOL:16",
+              "BTC:0.22,ETH:1.0,SOL:16",
+              "BTC:0.26,ETH:1.0,SOL:16",
+              "BTC:0.30,ETH:1.0,SOL:16",
+              "BTC:0.34,ETH:1.0,SOL:16",
+              "BTC:0.38,ETH:1.0,SOL:16",
+              "BTC:0.42,ETH:1.0,SOL:16",
+              "BTC:0.46,ETH:1.0,SOL:16",
+              "BTC:0.50,ETH:1.0,SOL:16",
+              "BTC:0.54,ETH:1.0,SOL:16",
+              "BTC:0.58,ETH:1.0,SOL:16",
+              "BTC:0.62,ETH:1.0,SOL:16",
+              "BTC:0.66,ETH:1.0,SOL:16",
+              "BTC:0.70,ETH:1.0,SOL:16",
+              "BTC:0.71,ETH:1.0,SOL:16"
+            ],
             "symbol": "BTC",
             "weight": {
               "display": "39.44%",
@@ -4695,6 +4727,7 @@
               "amount": "3480.000",
               "display": "$3,480.00"
             },
+            "position": "2",
             "price": {
               "amount": "3480.00",
               "display": "$3,480.00"
@@ -4703,6 +4736,29 @@
               "display": "1",
               "units": "1.0"
             },
+            "stops": [
+              "BTC:0.06,ETH:0,SOL:16",
+              "BTC:0.06,ETH:0.3,SOL:16",
+              "BTC:0.06,ETH:1.0,SOL:16",
+              "BTC:0.06,ETH:1.7,SOL:16",
+              "BTC:0.06,ETH:2.4,SOL:16",
+              "BTC:0.06,ETH:3.1,SOL:16",
+              "BTC:0.06,ETH:3.8,SOL:16",
+              "BTC:0.06,ETH:4.5,SOL:16",
+              "BTC:0.06,ETH:5.2,SOL:16",
+              "BTC:0.06,ETH:5.9,SOL:16",
+              "BTC:0.06,ETH:6.6,SOL:16",
+              "BTC:0.06,ETH:7.3,SOL:16",
+              "BTC:0.06,ETH:8.0,SOL:16",
+              "BTC:0.06,ETH:8.7,SOL:16",
+              "BTC:0.06,ETH:9.4,SOL:16",
+              "BTC:0.06,ETH:10.1,SOL:16",
+              "BTC:0.06,ETH:10.8,SOL:16",
+              "BTC:0.06,ETH:11.5,SOL:16",
+              "BTC:0.06,ETH:12.2,SOL:16",
+              "BTC:0.06,ETH:12.9,SOL:16",
+              "BTC:0.06,ETH:13.0,SOL:16"
+            ],
             "symbol": "ETH",
             "weight": {
               "display": "35.61%",
@@ -4718,6 +4774,7 @@
               "amount": "2438.40",
               "display": "$2,438.40"
             },
+            "position": "2",
             "price": {
               "amount": "152.40",
               "display": "$152.40"
@@ -4726,6 +4783,31 @@
               "display": "16",
               "units": "16"
             },
+            "stops": [
+              "BTC:0.06,ETH:1.0,SOL:0",
+              "BTC:0.06,ETH:1.0,SOL:2",
+              "BTC:0.06,ETH:1.0,SOL:16",
+              "BTC:0.06,ETH:1.0,SOL:30",
+              "BTC:0.06,ETH:1.0,SOL:44",
+              "BTC:0.06,ETH:1.0,SOL:58",
+              "BTC:0.06,ETH:1.0,SOL:72",
+              "BTC:0.06,ETH:1.0,SOL:86",
+              "BTC:0.06,ETH:1.0,SOL:100",
+              "BTC:0.06,ETH:1.0,SOL:114",
+              "BTC:0.06,ETH:1.0,SOL:128",
+              "BTC:0.06,ETH:1.0,SOL:142",
+              "BTC:0.06,ETH:1.0,SOL:156",
+              "BTC:0.06,ETH:1.0,SOL:170",
+              "BTC:0.06,ETH:1.0,SOL:184",
+              "BTC:0.06,ETH:1.0,SOL:198",
+              "BTC:0.06,ETH:1.0,SOL:212",
+              "BTC:0.06,ETH:1.0,SOL:226",
+              "BTC:0.06,ETH:1.0,SOL:240",
+              "BTC:0.06,ETH:1.0,SOL:254",
+              "BTC:0.06,ETH:1.0,SOL:268",
+              "BTC:0.06,ETH:1.0,SOL:282",
+              "BTC:0.06,ETH:1.0,SOL:291"
+            ],
             "symbol": "SOL",
             "weight": {
               "display": "24.95%",
@@ -4921,6 +5003,22 @@
           "presence": "required",
           "state": "null",
           "type": "string ≤149 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "lines[].stops",
+          "presence": "required",
+          "state": "empty",
+          "type": "array ≤23 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].position",
+          "presence": "required",
+          "state": null,
+          "type": "string"
         },
         {
           "binding": "container",
@@ -5201,6 +5299,54 @@
           "presence": "required",
           "state": null,
           "type": "string ≤300 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "controls",
+          "presence": "required",
+          "state": "empty",
+          "type": "array ≤4 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "controls[].key",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤24 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "controls[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤48 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "controls[].kind",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum primary / secondary"
+        },
+        {
+          "binding": "flag",
+          "input": null,
+          "path": "controls[].enabled",
+          "presence": "required",
+          "state": "variant",
+          "type": "boolean"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "controls[].reason",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤160 chars"
         },
         {
           "binding": "constant",

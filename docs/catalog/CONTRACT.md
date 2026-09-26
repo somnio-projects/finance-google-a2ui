@@ -146,7 +146,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `cc5bbfb7061b` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `9ff39ae83d7f` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `4f00c29a4c39` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
-| [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `8cd79663e799` | 59 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
+| [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `714cf2e8d6dd` | 67 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `f3cae9fd15c1` | 40 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It recommends no method. |
@@ -2514,7 +2514,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.
 
-- **Frozen id:** `order.ticket.v2` · **digest:** `8cd79663e799`
+- **Frozen id:** `order.ticket.v2` · **digest:** `714cf2e8d6dd`
 - **Component:** `MultiLegOrderTicket`
 - **Payload type:** `OrderTicketV2Payload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -2557,6 +2557,8 @@ _This surface sends nothing back: tapping it starts no turn._
 | `lines[].weight.display` | string ≤16 chars | required | `display` | — | — |
 | `lines[].increment` | string ≤149 chars | required | `text` | null | — |
 | `lines[].decrement` | string ≤149 chars | required | `text` | null | — |
+| `lines[].stops` | array ≤23 items | required | `container` | empty | — |
+| `lines[].position` | string | required | `text` | — | — |
 | `impact` | object | required | `container` | — | — |
 | `impact.total` | object | required | `container` | — | — |
 | `impact.total.label` | string ≤64 chars | required | `text` | — | — |
@@ -2592,6 +2594,12 @@ _This surface sends nothing back: tapping it starts no turn._
 | `constraints.shortfall` | object | default `null` | `text` | null | — |
 | `constraints.message` | string ≤160 chars | default `null` | `text` | null | — |
 | `disclosure` | string ≤300 chars | required | `text` | — | — |
+| `controls` | array ≤4 items | required | `container` | empty | — |
+| `controls[].key` | string ≤24 chars | required | `text` | — | — |
+| `controls[].label` | string ≤48 chars | required | `text` | — | — |
+| `controls[].kind` | enum primary / secondary | required | `enum` | variant | — |
+| `controls[].enabled` | boolean | required | `flag` | variant | — |
+| `controls[].reason` | string ≤160 chars | default `null` | `text` | null | — |
 | `effect` | const 'recalculate' | default `"recalculate"` | `constant` | — | — |
 
 ### When the agent picks this
@@ -2634,7 +2642,30 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "39.44%"
       },
       "increment": "BTC:0.07,ETH:1.0,SOL:16",
-      "decrement": "BTC:0.05,ETH:1.0,SOL:16"
+      "decrement": "BTC:0.05,ETH:1.0,SOL:16",
+      "stops": [
+        "BTC:0,ETH:1.0,SOL:16",
+        "BTC:0.02,ETH:1.0,SOL:16",
+        "BTC:0.06,ETH:1.0,SOL:16",
+        "BTC:0.10,ETH:1.0,SOL:16",
+        "BTC:0.14,ETH:1.0,SOL:16",
+        "BTC:0.18,ETH:1.0,SOL:16",
+        "BTC:0.22,ETH:1.0,SOL:16",
+        "BTC:0.26,ETH:1.0,SOL:16",
+        "BTC:0.30,ETH:1.0,SOL:16",
+        "BTC:0.34,ETH:1.0,SOL:16",
+        "BTC:0.38,ETH:1.0,SOL:16",
+        "BTC:0.42,ETH:1.0,SOL:16",
+        "BTC:0.46,ETH:1.0,SOL:16",
+        "BTC:0.50,ETH:1.0,SOL:16",
+        "BTC:0.54,ETH:1.0,SOL:16",
+        "BTC:0.58,ETH:1.0,SOL:16",
+        "BTC:0.62,ETH:1.0,SOL:16",
+        "BTC:0.66,ETH:1.0,SOL:16",
+        "BTC:0.70,ETH:1.0,SOL:16",
+        "BTC:0.71,ETH:1.0,SOL:16"
+      ],
+      "position": "2"
     },
     {
       "key": "ETH",
@@ -2657,7 +2688,31 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "35.61%"
       },
       "increment": "BTC:0.06,ETH:1.1,SOL:16",
-      "decrement": "BTC:0.06,ETH:0.9,SOL:16"
+      "decrement": "BTC:0.06,ETH:0.9,SOL:16",
+      "stops": [
+        "BTC:0.06,ETH:0,SOL:16",
+        "BTC:0.06,ETH:0.3,SOL:16",
+        "BTC:0.06,ETH:1.0,SOL:16",
+        "BTC:0.06,ETH:1.7,SOL:16",
+        "BTC:0.06,ETH:2.4,SOL:16",
+        "BTC:0.06,ETH:3.1,SOL:16",
+        "BTC:0.06,ETH:3.8,SOL:16",
+        "BTC:0.06,ETH:4.5,SOL:16",
+        "BTC:0.06,ETH:5.2,SOL:16",
+        "BTC:0.06,ETH:5.9,SOL:16",
+        "BTC:0.06,ETH:6.6,SOL:16",
+        "BTC:0.06,ETH:7.3,SOL:16",
+        "BTC:0.06,ETH:8.0,SOL:16",
+        "BTC:0.06,ETH:8.7,SOL:16",
+        "BTC:0.06,ETH:9.4,SOL:16",
+        "BTC:0.06,ETH:10.1,SOL:16",
+        "BTC:0.06,ETH:10.8,SOL:16",
+        "BTC:0.06,ETH:11.5,SOL:16",
+        "BTC:0.06,ETH:12.2,SOL:16",
+        "BTC:0.06,ETH:12.9,SOL:16",
+        "BTC:0.06,ETH:13.0,SOL:16"
+      ],
+      "position": "2"
     },
     {
       "key": "SOL",
@@ -2680,7 +2735,33 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "24.95%"
       },
       "increment": "BTC:0.06,ETH:1.0,SOL:17",
-      "decrement": "BTC:0.06,ETH:1.0,SOL:15"
+      "decrement": "BTC:0.06,ETH:1.0,SOL:15",
+      "stops": [
+        "BTC:0.06,ETH:1.0,SOL:0",
+        "BTC:0.06,ETH:1.0,SOL:2",
+        "BTC:0.06,ETH:1.0,SOL:16",
+        "BTC:0.06,ETH:1.0,SOL:30",
+        "BTC:0.06,ETH:1.0,SOL:44",
+        "BTC:0.06,ETH:1.0,SOL:58",
+        "BTC:0.06,ETH:1.0,SOL:72",
+        "BTC:0.06,ETH:1.0,SOL:86",
+        "BTC:0.06,ETH:1.0,SOL:100",
+        "BTC:0.06,ETH:1.0,SOL:114",
+        "BTC:0.06,ETH:1.0,SOL:128",
+        "BTC:0.06,ETH:1.0,SOL:142",
+        "BTC:0.06,ETH:1.0,SOL:156",
+        "BTC:0.06,ETH:1.0,SOL:170",
+        "BTC:0.06,ETH:1.0,SOL:184",
+        "BTC:0.06,ETH:1.0,SOL:198",
+        "BTC:0.06,ETH:1.0,SOL:212",
+        "BTC:0.06,ETH:1.0,SOL:226",
+        "BTC:0.06,ETH:1.0,SOL:240",
+        "BTC:0.06,ETH:1.0,SOL:254",
+        "BTC:0.06,ETH:1.0,SOL:268",
+        "BTC:0.06,ETH:1.0,SOL:282",
+        "BTC:0.06,ETH:1.0,SOL:291"
+      ],
+      "position": "2"
     }
   ],
   "impact": {
@@ -2757,6 +2838,15 @@ _This surface sends nothing back: tapping it starts no turn._
     "message": null
   },
   "disclosure": "Illustrative draft. This showcase has no broker and no execution: stepping a leg re-renders these figures, fees are simulated at zero, and nothing is ever sent, placed or settled.",
+  "controls": [
+    {
+      "key": "review",
+      "label": "Review order",
+      "kind": "primary",
+      "enabled": false,
+      "reason": "This showcase has no broker: nothing is ever sent, placed or settled."
+    }
+  ],
   "effect": "recalculate"
 }
 ```

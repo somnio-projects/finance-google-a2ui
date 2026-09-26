@@ -146,6 +146,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [backend/0047-the-db-backed-suite-cleans-up-after-itself.md](backend/0047-the-db-backed-suite-cleans-up-after-itself.md) | In progress | GGU-124 |
 | [backend/0048-the-metadata-knows-every-table.md](backend/0048-the-metadata-knows-every-table.md) | In progress | GGU-127 |
 | [backend/0049-the-taxlot-table-gains-its-missing-fields.md](backend/0049-the-taxlot-table-gains-its-missing-fields.md) | In progress | GGU-117 |
+| [backend/0050-the-ticket-gains-a-slider-and-one-honest-button.md](backend/0050-the-ticket-gains-a-slider-and-one-honest-button.md) | In progress | GGU-137 |
 | [client/0001-client-foundation.md](client/0001-client-foundation.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0002-client-delivery.md](client/0002-client-delivery.md) | **Superseded by repo/0002** | GGU-82 |
 | [client/0003-client-backend-contract.md](client/0003-client-backend-contract.md) | Draft — **live**, bound by `frontend/` | GGU-82 |

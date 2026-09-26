@@ -55,7 +55,12 @@ ruvector.db-*
 # somnio:harness:begin
 .claude/.harness/
 .claude/*.local.md
-.claude/settings.json.bak
+# Any backup of a settings file, however the tool that made it spelled the
+# suffix. This was `.claude/settings.json.bak` and was too narrow: a
+# `.claude/settings.local.json.bak-telemetry` slipped into a commit through a
+# `git add -A`, and gitleaks — which reads every commit in history, not the
+# working tree — failed the branch for the `Authorization: Bearer` lines in it.
+.claude/settings*.json.bak*
 # somnio:harness:end
 
 # Backend (Python) artifacts

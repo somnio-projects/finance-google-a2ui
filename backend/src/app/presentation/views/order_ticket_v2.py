@@ -21,6 +21,7 @@ from app.domain.draft_weights import weight_shifts
 from app.domain.portfolio import Portfolio
 from app.presentation import order_ticket_v2_build as build
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
+from app.presentation.order_ticket_v2_controls import CONTROLS
 from app.presentation.order_ticket_v2_guidance import GUIDANCE
 from app.presentation.order_ticket_v2_options import OrderTicketV2Options
 from app.presentation.order_ticket_v2_payload import (
@@ -62,9 +63,10 @@ def render(portfolio: Portfolio, options: OrderTicketV2Options) -> OrderTicketV2
         badge=build.badge_of(breach),
         side=options.side,
         legs=options.legs,
-        lines=build.lines(impact, requests, options),
+        lines=build.lines(portfolio, impact, requests, options),
         impact=build.impact_block(impact, shifts, options),
         constraints=build.constraints_block(impact, options),
+        controls=CONTROLS,
         disclosure=DISCLOSURE,
     )
 
@@ -73,7 +75,9 @@ def surface(payload: OrderTicketV2Payload) -> Surface:
     """Map the payload onto the A2UI component the client instantiates.
 
     The props carry no submit action, no endpoint and no callback: ``effect``
-    is the whole contract (spec 0018 OD-2, 0031 OD-4).
+    is the whole contract (spec 0018 OD-2, 0031 OD-4). ``controls`` is not an
+    exception — it describes a button the design draws, serves it
+    ``enabled: false``, and says why (spec 0050 OD-2).
     """
     return Surface(
         component=COMPONENT,
@@ -86,6 +90,7 @@ def surface(payload: OrderTicketV2Payload) -> Surface:
             "lines": [line.model_dump(mode="json") for line in payload.lines],
             "impact": payload.impact.model_dump(mode="json"),
             "constraints": payload.constraints.model_dump(mode="json"),
+            "controls": [c.model_dump(mode="json") for c in payload.controls],
             "effect": payload.effect,
             "disclosure": payload.disclosure,
         },

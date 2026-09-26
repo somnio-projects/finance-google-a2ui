@@ -5827,3 +5827,69 @@ therefore always loaded — `backend/api-design.md`, `backend/presentation.md`,
 `ci-conventions.md`, `diagrams.md`. The last two are marked *all* in the index
 and are fine. The first two are indexed as python-path-scoped and are not,
 which is GGU-129's defect class in the table that says when each rule loads.
+
+## 2026-09-25 — GGU-137 · the ticket gains a slider, and one honest button
+
+**Spec:** `specs/backend/0050-the-ticket-gains-a-slider-and-one-honest-button.md`
+(Epic 7 / GGU-133, the UI-Kit redesign).
+
+**Code.** `order.ticket.v2` gains `lines[].stops` / `lines[].position` (the
+quantised slider) and `controls[]` (the design's one button, served with its
+label, its `enabled: false` and its reason). New `app/domain/draft_ladder.py`
+writes the ladder; `order_ticket_v2_controls.py` holds the control.
+`order_ticket_v2_payload.py` went past the 150-line budget and was split along
+the seam that was already there — `order_ticket_v2_impact.py` now holds
+`OrderImpact`, `OrderConstraints` and the two badges, re-exported.
+
+**Three things worth carrying forward.**
+
+1. **`controls` is deliberately not `actions`.** `contract.py` and
+   `catalog_json.py` read a payload field named `actions` as the
+   `SurfaceActionRef` list — *what this surface sends back* — and render it
+   into the catalog's actions table. This ticket sends nothing back. A button
+   that is drawn and does not fire is a different claim, so it gets a
+   different word. Reusing `actions` would have put an inert button in the
+   table of live affordances.
+
+2. **A test corrected the spec, not the code.** The first suite asserted
+   `increment in line.stops` under the heading *"one ladder, two affordances,
+   they cannot disagree"*, and it failed: the stepper moves one asset step
+   (`0.06 → 0.07`), the ladder's stride is four (`0.02, 0.06, 0.10`). The claim
+   was false. They are **two granularities of one quantity**, and the invariant
+   that holds is the round trip — the ladder is aligned to the *current* value,
+   so whichever control moved it, the next render's thumb sits on the new
+   number. Three docstrings had already repeated the false claim and were
+   corrected with the assertion.
+
+3. **The label was in the client, which made it an N-9 breach nobody had
+   named.** `Review order` and `Save as draft` were Dart constants in
+   `order_ticket_v2_buttons.dart` — design's copy compiled into the bundle,
+   unable to follow `locale`. The fix is not to enable the button; it is to
+   serve the words. `Save as draft` is dropped: the frame draws no second
+   action and the contract has nothing for it to do.
+
+4. **Two fields were written the obvious way and one was unreadable.**
+`position: int` would have shipped a field that raises
+`PayloadContractException` on the first bind: `ViewPayload` has exactly six
+readers — `text`, `optionalText`, `geometry`, `strings`, `rows`, `flag` — and
+**none takes a JSON number**. It travels as a decimal string through
+`geometry`, which is what that seam is for. `enabled: bool` needed no change
+and was changed anyway, on the false reasoning that the client cannot read a
+bool; `flag` lives in `view_payload_flag.dart`, a `part` file a grep of
+`view_payload.dart` does not show. Reverted. **Walking the whole catalog for
+the same defect found three more**, all `int`, none bound:
+`scenario.comparison.v1 columns[].{short,long}_term_lots` and
+`taxlots.table.v1 by_term[].lots` — recorded in spec 0050 §7b and OD-6 rather
+than fixed here, because the first belongs to GGU-136.
+
+5. **`.gitignore` was too narrow and gitleaks caught it.** A `git add -A`
+committed `.claude/settings.local.json.bak-telemetry`; the ignore rule said
+`.claude/settings.json.bak` and matched nothing. The file held
+`Authorization: Bearer __TRACKED_VAR__` placeholders, so no credential was
+disclosed — but gitleaks reads **every commit in history**, not the working
+tree, so a follow-up commit deleting it would not have cleared the branch.
+The commit was rewritten and the rule widened to `.claude/settings*.json.bak*`.
+
+**Next.** GGU-139 binds this in the client (and deletes those constants).
+GGU-135 still owns the impact strip's fourth cell; GGU-134 still blocks the
+Comparison half of the epic.
