@@ -6032,3 +6032,35 @@ threw *"Bad state: Too many elements"* rather than failing on geometry. It
 takes `.first` now and says why.
 
 **Next.** GGU-135 is the last open child: the order ticket's impact strip.
+
+## 2026-09-26 — GGU-140 · a change to the catalog starts both gates
+
+**Found by a failed deploy, which is the worst place to find it.**
+
+`frontend-cd` on `develop` at `82de0f5` went red in its gate job: the frontend
+suite asserted a `notes[]` label that GGU-136 had renamed in
+`docs/catalog/view-catalog.snapshot.json`.
+
+**Why nothing caught it earlier.** `frontend-ci` is scoped to `frontend/**`,
+`docker-compose.yml` and its own file. The snapshot is generated from
+`backend/`, so `backend-ci` claims it — and `frontend-ci` never started on the
+PR that changed it. `develop` then carried a red frontend gate that no
+pull-request run would have reported, because the next PR to touch
+`frontend/**` would have had to fix it before it could go green.
+
+**The snapshot is a cross-stack artefact.** Every component test reads its own
+example out of it through `catalog_snapshot.dart` rather than copying one —
+`frontend/testing.md` §5, and the right design. Ownership and consumption sit
+on opposite sides of it, and a `paths:` filter written from ownership hides it
+from the consumer.
+
+One line fixes it: `docs/catalog/**` in `frontend-ci`'s `paths:`. Recorded in
+`ci-conventions.md` §5 as the eighth instance of that rule's defect class —
+this time asked of a **filter** rather than of a command: *does this
+workflow's scope cover what its name claims?*
+
+**I said the wrong thing about this while it was happening.** With #146 open I
+wrote that "nothing is broken while it waits". The runtime was fine — the
+deployed client binds fields that are all still served — but the **gate** on
+`develop` was red, and I had not run it there. Running a gate on a branch is
+not running it on what the branch merged into.
