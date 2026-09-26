@@ -1,6 +1,6 @@
 import 'package:finance_app/charts/chart_palette.dart';
-import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 

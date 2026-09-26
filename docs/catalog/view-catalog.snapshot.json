@@ -6880,7 +6880,7 @@
     {
       "actions": [],
       "component": "ScenarioComparison",
-      "digest": "2b516749e0a9",
+      "digest": "da83b01797ad",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -7026,25 +7026,25 @@
         ],
         "rows": [
           {
-            "direction_label": "higher is better",
+            "direction_label": "higher is better ▲",
             "key": "proceeds",
             "label": "Proceeds",
             "winner": null
           },
           {
-            "direction_label": "lower is better",
+            "direction_label": "lower is better ▼",
             "key": "realized_pl",
             "label": "Realized gain",
             "winner": null
           },
           {
-            "direction_label": "lower is better",
+            "direction_label": "lower is better ▼",
             "key": "est_tax",
             "label": "Est. tax",
             "winner": "fifo"
           },
           {
-            "direction_label": "higher is better",
+            "direction_label": "higher is better ▲",
             "key": "net_after_tax",
             "label": "Net after tax",
             "winner": "fifo"

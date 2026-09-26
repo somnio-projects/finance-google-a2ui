@@ -1,4 +1,5 @@
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -26,7 +27,7 @@ class ScenarioSummaryBanner extends StatelessWidget {
     padding: const EdgeInsets.only(top: 12, bottom: 4),
     child: DecoratedBox(
       decoration: BoxDecoration(
-        color: tokens.winnerSurface,
+        color: tokens.verdict.winnerSurface,
         borderRadius: BorderRadius.circular(
           ScenarioComparisonLayout.headerCellRadius,
         ),
@@ -35,7 +36,7 @@ class ScenarioSummaryBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Text(
           text,
-          style: ScenarioComparisonText.caption(tokens.winnerTick),
+          style: ScenarioComparisonText.caption(tokens.verdict.winnerAccent),
         ),
       ),
     ),

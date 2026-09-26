@@ -2,19 +2,24 @@ import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_header_border.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_recommended_tag.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_track_row.dart';
 import 'package:flutter/material.dart';
 
 /// The table's head: a `Metric` caption, then one tab per scenario.
 ///
-/// **No column is marked.** The design badges one header `★ Recommended`
-/// and tints it, driven by `scenarios[].recommended`. The contract has no
-/// such field and spec `backend/0017` OD-4 says it never will: choosing a
-/// lot-selection method for someone is tax advice, and which column is
-/// preferable depends on a marginal rate, carried-forward losses and a
-/// jurisdiction the backend does not know. `specs/frontend/0004` OD-3
-/// records the divergence and its reasoning in full.
+/// **One column may be marked, and the backend decides which.** This used to
+/// say no column ever would: spec `backend/0017` OD-4 declined to recommend a
+/// lot-selection method, because preferring one is tax advice that depends on
+/// a marginal rate, carried-forward losses and a jurisdiction the backend does
+/// not know. GGU-136 did not overturn that — it narrowed the claim until the
+/// backend could defend it. `recommended` now means *"this column wins the
+/// `net_after_tax` row at the rates printed on the card"*, which is
+/// arithmetic, and `recommendation_label` carries the word to draw. The
+/// header renders the tag when both arrive and nothing when they do not; it
+/// never derives the mark itself.
 class ScenarioComparisonHeaderRow extends StatelessWidget {
   /// Creates the header row.
   const ScenarioComparisonHeaderRow({required this.columns, super.key});
@@ -68,54 +73,74 @@ class _ColumnHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CustomPaint(
     painter: ScenarioHeaderBorderPainter(
-      // The recommended column carries its own border, which is the design's
-      // way of saying *this one* without relying on the tag alone.
+      // The recommended column is **filled**, not only outlined, and the
+      // fill is lavender rather than green: the design spends green on a
+      // gain and the accent lavender on the thing to look at. Drawing this
+      // green was the component's largest visual error.
       color: column.recommended
-          ? tokens.recommendedBorder
+          ? tokens.verdict.recommendedBorder
           : tokens.headerBorder,
       radius: ScenarioComparisonLayout.headerCellRadius,
+      fill: column.recommended ? tokens.verdict.recommendedSurface : null,
     ),
-    child: Padding(
-      // The three edges that carry a line; the bottom is open.
-      padding:
-          ScenarioComparisonLayout.headerCellPadding +
-          const EdgeInsets.only(
-            top: ScenarioComparisonLayout.hairline,
-            left: ScenarioComparisonLayout.hairline,
-            right: ScenarioComparisonLayout.hairline,
-          ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // The design's two lines, taken from the contract's two fields.
-          // `label` is never split on its dash to recover a description:
-          // reading structure out of a server string is N-5.
-          Text(
-            column.method,
-            style: ScenarioComparisonText.columnTitle(palette.title),
-          ),
-          Text(
-            column.label,
-            style: ScenarioComparisonText.columnLabel(tokens.caption),
-          ),
-          // The short line the frame writes under the head. Server-written,
-          // like the two above it (N-9).
-          Text(
-            column.caption,
-            style: ScenarioComparisonText.columnLabel(tokens.caption),
-          ),
-          // Drawn only when the backend tagged this column, and with the
-          // backend's own word — never one composed here.
-          if (column.recommendationLabel case final tag?)
-            Text(
-              tag,
-              style: ScenarioComparisonText.columnLabel(
-                tokens.recommendedBorder,
-              ),
+    child: Semantics(
+      // **`columns[].label` is announced here, and this is the whole of
+      // where it survives.** The design's header is two lines, `FIFO` over
+      // `default order`, which are `method` and `caption`; the long form
+      // `FIFO — oldest lots first` has no slot in the frame. Dropping a
+      // server-written label outright would be N-9, so it is spoken rather
+      // than drawn — and that is a decision recorded in
+      // `specs/frontend/0031`, not a silent omission. If it needs to be
+      // visible again, the frame is what has to change.
+      label: _announcement,
+      excludeSemantics: true,
+      child: Padding(
+        // The three edges that carry a line; the bottom is open.
+        padding:
+            ScenarioComparisonLayout.headerCellPadding +
+            const EdgeInsets.only(
+              top: ScenarioComparisonLayout.hairline,
+              left: ScenarioComparisonLayout.hairline,
+              right: ScenarioComparisonLayout.hairline,
             ),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            // The design's two lines, taken from the contract's two fields.
+            // `label` is never split on its dash to recover a description:
+            // reading structure out of a server string is N-5.
+            Text(
+              column.method,
+              style: ScenarioComparisonText.columnTitle(palette.title),
+            ),
+            // **Two lines, not three.** The redesign's header is the method
+            // and its caption; `columns[].label` — `FIFO — oldest lots first`
+            // — has no slot in it. It is still served and still rendered: the
+            // footer sentence names the winning column by it, which is where a
+            // reader meets the long form now.
+            Text(
+              column.caption,
+              style: ScenarioComparisonText.columnLabel(tokens.caption),
+            ),
+            // Drawn only when the backend tagged this column, and with the
+            // backend's own word — never one composed here, and never
+            // uppercased: the design's `text-transform` is CSS, and applying
+            // it to a server string would be the client reformatting a value
+            // the backend wrote (N-1, N-9).
+            if (column.recommendationLabel case final tag?)
+              ScenarioRecommendedTag(label: tag, tokens: tokens),
+          ],
+        ),
       ),
     ),
   );
+
+  /// Everything this header says, in reading order, for a screen reader.
+  String get _announcement => <String>[
+    column.method,
+    column.caption,
+    column.label,
+    ?column.recommendationLabel,
+  ].join('. ');
 }

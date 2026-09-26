@@ -26,8 +26,14 @@ RowKey = Literal["proceeds", "realized_pl", "est_tax", "net_after_tax"]
 
 #: Which way is better, per row. Server-written so it follows `locale`; a Dart
 #: constant beside the row label would not (N-9).
-HIGHER: Final[str] = "higher is better"
-LOWER: Final[str] = "lower is better"
+#:
+#: The arrow is **part of the string**, because the design draws one and the
+#: client may not add it: prepending a glyph to a server-written label is the
+#: client editing a formatted value (N-1). It also keeps the two halves from
+#: disagreeing — a Dart `if (label == 'higher is better') '▲'` is a second
+#: declaration of a fact this module already owns.
+HIGHER: Final[str] = "higher is better ▲"
+LOWER: Final[str] = "lower is better ▼"
 
 #: The rows, with their captions and which direction wins them. A tuple, so
 #: the order the frame draws is the order the payload arrives in (N-10).
