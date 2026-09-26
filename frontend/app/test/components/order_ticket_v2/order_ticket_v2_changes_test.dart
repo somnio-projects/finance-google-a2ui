@@ -75,6 +75,7 @@ void main() {
           OrderTicketV2Figure(name: 'invented', label: 'X', display: 'Y'),
         ],
         shifts: before.shifts,
+        controls: before.controls,
         breach: before.breach,
         message: before.message,
         disclosure: before.disclosure,

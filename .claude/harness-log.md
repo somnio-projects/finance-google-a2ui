@@ -5908,3 +5908,30 @@ binds it, and expect the binding to argue back.
 
 **Next.** GGU-135 still owns the impact strip's fourth cell; GGU-134 still
 blocks the Comparison half of the epic.
+
+## 2026-09-25 — GGU-139 · the ticket's buttons stop spelling their own words
+
+**Spec:** `specs/backend/0050` (the client half). Epic 7 / GGU-133.
+
+**Code.** `OrderTicketV2Buttons` renders from `controls[]` instead of from two
+`static const` strings. New `order_ticket_v2_control_model.dart`; the component
+reads each control with `text`/`flag`/`optionalText`.
+
+**What this closes.** `reviewLabel = 'Review order'` and `saveLabel = 'Save as
+draft'` were design's copy compiled into the bundle, unable to follow the
+`locale` option — N-9 with the sentence pointing the wrong way. The old suite
+asserted `find.text(OrderTicketV2Buttons.reviewLabel)`, which is a Dart
+constant equalling itself; it now reads the label out of the catalog example,
+so a renamed button is a changed contract rather than a changed constant, and
+one test drives a control with a Spanish label to prove the widget spells
+nothing.
+
+**And the measurement in it changed the backend.** The slider was going to be
+held here: spec 0050 had decided it walked **units**, and drawing the widget
+showed that a units thumb sits at 10.5 / 10.0 / 9.1 % beside labels reading
+39.44 / 35.61 / 24.95 %. Rather than ship a handle that disagrees with the
+number next to it, the ladder's subject changed — the slider sets the **mix**
+now, and the entry above records it.
+
+**Next.** GGU-135 owns the impact strip's fourth cell; GGU-134 blocks the
+Comparison half of the epic.

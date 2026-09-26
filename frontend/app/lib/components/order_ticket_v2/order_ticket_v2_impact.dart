@@ -96,7 +96,7 @@ class OrderTicketV2Impact extends StatelessWidget {
                 OrderTicketV2Notice(message: message),
               ],
               const SizedBox(height: 13),
-              const OrderTicketV2Buttons(),
+              OrderTicketV2Buttons(controls: data.controls),
             ],
           ),
         ),
