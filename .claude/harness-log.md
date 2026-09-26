@@ -5933,5 +5933,23 @@ showed that a units thumb sits at 10.5 / 10.0 / 9.1 % beside labels reading
 number next to it, the ladder's subject changed — the slider sets the **mix**
 now, and the entry above records it.
 
+**The bar is a slider, and one carve-out did not have to move to get there.**
+`order_ticket_v2_weight_bar.dart` used to say of itself *"it is not a slider:
+dragging one would turn a pixel into a share count"* — true of the contract as
+it stood, false once `stops` existed. But the first draft put the
+pixel-to-index step in the widget, and `binding_rules_compute_test.dart`
+rejected it, correctly: that file reads a payload. The question *"which step
+did this tap land on"* already had an owner — `BandScale.bandAt` in
+`finance_charts`, which takes coordinates, returns indices, sees no payload,
+and holds the one allowance the rule makes for exactly this. So the mapping
+moved there (`order_ticket_v2_track_gesture.dart`) instead of the allow-set
+moving to it.
+
+**And then the rule failed a second time on the comment explaining it**,
+because it greps `lib/` as plain text: a doc comment quoting `.round()` fails
+the gate it is describing. Same shape as the `DateTime.now(` docstring in
+GGU-117. When you write about a needled mechanism inside `lib/`, name it in
+prose.
+
 **Next.** GGU-135 owns the impact strip's fourth cell; GGU-134 blocks the
 Comparison half of the epic.

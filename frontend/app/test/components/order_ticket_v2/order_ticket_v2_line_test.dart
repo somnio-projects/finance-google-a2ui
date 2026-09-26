@@ -72,6 +72,8 @@ void main() {
         weight: 0,
         increment: line.increment,
         decrement: null,
+        stops: line.stops,
+        position: 0,
       );
       await pump(tester, subject: atZero, onLegsChanged: (_) {});
       final taps = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
