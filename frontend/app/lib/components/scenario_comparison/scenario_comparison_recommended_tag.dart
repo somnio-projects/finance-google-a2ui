@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// The `★ Recommended` pill on the recommended column's header.
 ///
-/// Measured from the design's rendered DOM: `border-radius:20px`,
+/// Measured from the catalog mock's rendered DOM: `border-radius:20px`,
 /// `padding:2px 8px`, `margin-top:2px`, and a `600 9px` label tracked at
 /// `.04em` — which is `letterSpacing: 0.36` at that size.
 ///

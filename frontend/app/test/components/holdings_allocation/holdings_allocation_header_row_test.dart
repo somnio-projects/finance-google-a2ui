@@ -7,44 +7,50 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/pump_app.dart';
 import 'holdings_allocation_toggle_harness.dart';
 
-/// Where the toggle sits relative to the header, at two widths (GGU-145).
+/// Where the toggle sits relative to the header (GGU-145).
 ///
-/// Its own file rather than a third group in the toggle's suite: this is
-/// about the **arrangement**, and it is the half that GGU-144 would have
-/// caught earlier — the first version shared one row at every width and
-/// ellipsised the total in the Assistant, whose column is nowhere near the
-/// artboard's.
+/// Its own file rather than a third group in the toggle's suite, because it
+/// is the half that kept being answered by guesswork. The first version put
+/// the two side by side and ellipsised the total in the Assistant; the second
+/// added a 480 px breakpoint to fix that, which was a number nobody had
+/// measured. Figma's `Header` frame is `Flujo Vertical` on **both** the 360
+/// and the 640 artboard, so there is no arrangement to switch between — which
+/// is what these two assert, at those two widths.
 void main() {
   group(HoldingsAllocationHeaderRow, () {
-    testWidgets('puts the toggle beside the header when there is room', (
+    for (final (name, size) in const <(String, Size)>[
+      ("the artboard's width", desktopSurface),
+      ("the Assistant's column", Size(420, 900)),
+    ]) {
+      testWidgets('keeps the toggle on its own line at $name', (tester) async {
+        await tester.pumpApp(
+          editableAllocation(<SentOption>[]),
+          surfaceSize: size,
+        );
+        final header = tester.getTopLeft(find.byType(HoldingsAllocationHeader));
+        final toggle = tester.getTopLeft(find.byType(HoldingsAllocationToggle));
+
+        expect(toggle.dy, greaterThan(header.dy));
+        expect(toggle.dx, header.dx);
+      });
+    }
+
+    testWidgets('leaves the title room to breathe beside the gain', (
       tester,
     ) async {
-      // The design's own arrangement, at the artboard's width.
-      await tester.pumpApp(
-        editableAllocation(<SentOption>[]),
-        surfaceSize: desktopSurface,
-      );
-      final header = tester.getTopLeft(find.byType(HoldingsAllocationHeader));
-      final toggle = tester.getTopLeft(find.byType(HoldingsAllocationToggle));
-
-      expect(toggle.dx, greaterThan(header.dx));
-    });
-
-    testWidgets('drops the toggle below the header when the column is narrow', (
-      tester,
-    ) async {
-      // GGU-144's lesson one component later: the first version of this row
-      // shared it at every width and ellipsised the total in the Assistant,
-      // whose column is nowhere near the artboard's.
+      // The one thing the title row can still get wrong: the gain is on the
+      // same line, and a title that took the whole width would push it off.
+      // Both are on screen, and neither overlaps the other.
       await tester.pumpApp(
         editableAllocation(<SentOption>[]),
         surfaceSize: const Size(420, 900),
       );
-      final header = tester.getTopLeft(find.byType(HoldingsAllocationHeader));
-      final toggle = tester.getTopLeft(find.byType(HoldingsAllocationToggle));
+      final title = tester.getRect(find.text(allocationData().title));
+      final gain = tester.getRect(
+        find.textContaining('all-time', findRichText: true),
+      );
 
-      expect(toggle.dy, greaterThan(header.dy));
-      expect(toggle.dx, header.dx);
+      expect(title.right, lessThanOrEqualTo(gain.left));
     });
   });
 }

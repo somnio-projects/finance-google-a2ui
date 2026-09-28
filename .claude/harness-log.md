@@ -6203,3 +6203,68 @@ cites "spec 0026" for a phone-shaped frame; ten files do. It resolves to
 `backend/0026`, the Home shell, which says nothing about a width — the 430 cap
 and the sentence justifying it exist **only** as a doc comment on the widget.
 Recorded in 0032 OD-1 rather than fixed from a frontend ticket.
+
+## GGU-145 — the donut offers its groupings, and the card is measured
+
+Spec `frontend/0033`. Two things, and the second is the one worth keeping.
+
+**The option was there all along and nobody could reach it.**
+`holdings.allocation.v1` has declared `group_by` since it shipped. The design
+draws a segmented control above the ring; the payload published no choices and
+the client drew no control. The fix is small and the shape is the one this
+repository keeps reaching for: the **server** publishes `groups[]` — value,
+label, selected — and the client draws one segment per entry and sends the
+value back through the option it came from. The words are server-written
+because a client that wrote *"By asset class"* beside a server enum would be
+authoring copy for a value it does not own and would not follow `locale`
+(N-1) — and because the design draws **two** segments while the option
+declares **three**, and only the server can say whether the third is missing
+on purpose.
+
+**The measurements were taken from our own mock, and eight files said
+otherwise.** Every value in this component — and in the comparison card
+shipped three days ago — came from `.design-refs/*.dc.html`, described in
+`frontend/0031` § 2 as *"the designer's exported, rendered DOM"*. Miriam read
+that and said: *"yo no hice los html / eso es lo que hizo Claude / osea lo que
+me pasaron a mi para que mejore."* They are a catalog mock **this repository
+generated and handed to her as a starting point**.
+
+Nothing was wrong with the *method* — measure, do not remember. What was wrong
+was the direction of the arrow: a measurement of our own output, described as
+a measurement of the design, is a loop that can never disagree with itself.
+Seven files now say what the file is and name Figma as the authority, and
+`frontend/0031` keeps the false sentence quoted above its correction rather
+than being edited into looking right.
+
+**A measured redesign is mostly deletions.** Re-reading the card against
+`figma.com/design/rFA8ZEEOOvnOyq7IrTObma` removed more than it added:
+
+- The **480 pt breakpoint** in the header went. It was added one day earlier
+  to stop the toggle ellipsising the total, and it was a number nobody had
+  looked up. Figma's `Header` frame is `Flujo Vertical` on **both** the 360
+  and the 640 artboard — there is no arrangement to switch between. The
+  invented breakpoint was a correct fix to a real bug, derived from a guess,
+  and the design had the answer the whole time.
+- `ChartText.subtag` and `ChartText.headline` lost their last caller when the
+  total moved into the ring, and were deleted. The **coverage gate** is what
+  surfaced them: two files at 94 % and 85 % that nothing in the diff had
+  touched.
+
+**Moving the total into the ring silently removed it from a card with no
+ring.** The empty-portfolio card draws no donut, so the figure simply
+vanished. What caught it was a test that named `$0.00` rather than asserting
+that "a total renders" — the argument for putting the actual string in the
+expectation, one more time.
+
+**A round trip through the inspector settled something a screenshot could
+not.** The gain figure reads `font-size/10` on one artboard and `font-size/13`
+on the other, and the title's style is literally named *"Title Mobile"* at 12
+against *"Title"* at 16. Design ships **two type scales**; there is no artboard
+between 360 and 640, so implementing a switch would mean inventing the
+boundary this same ticket just deleted. The client draws the Desktop scale
+everywhere and `0033` OD-2 says so, with both scales written down.
+
+One value could not be read at all — the Desktop period's size, whose layer
+would not select — and it is OD-3 rather than a plausible guess. Its Mobile
+counterpart sits one step *above* its figure, so the likely answer is written
+next to the one that shipped.

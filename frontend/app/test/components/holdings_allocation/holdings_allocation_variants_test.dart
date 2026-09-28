@@ -39,7 +39,7 @@ void main() {
       );
       expect(find.text('Holdings & allocation'), findsOneWidget);
       expect(
-        find.text(r'▲ +$61,204 (+14.5%)  all-time', findRichText: true),
+        find.text(r'+$61,204 (+14.5%) all-time', findRichText: true),
         findsOneWidget,
       );
     });

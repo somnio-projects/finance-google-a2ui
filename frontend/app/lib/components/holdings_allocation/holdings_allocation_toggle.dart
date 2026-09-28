@@ -1,5 +1,5 @@
 import 'package:finance_app/components/holdings_allocation/allocation_group.dart';
-import 'package:finance_app/theme/home_tokens.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_toggle_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// The grouping toggle the design draws above the donut (GGU-145).
@@ -8,14 +8,11 @@ import 'package:flutter/material.dart';
 /// own word and sending the backend's own value back. The client decides
 /// neither: which segment is lit is `selected`, and what it says is `label`.
 ///
-/// **It reuses the app's segment colours rather than inventing a palette.**
-/// `HomeTokens` already carries the four measured values for exactly this
-/// control — the Home range selector and the Holdings tab draw the same 38 pt
-/// bordered pill — and a second set of near-identical colours is the drift
-/// `frontend/0029` OD-4 exists to prevent. The **shape** is not measured yet:
-/// the design export we hold predates this toggle, so the geometry below is
-/// the app's existing one and `specs/frontend/0033` OD-1 records that it is
-/// borrowed rather than read.
+/// Every colour and every measurement comes from [AllocationToggleTokens],
+/// read off the Figma `SegmentedControl` — a filled pill with the selected
+/// segment floating inside it, which is a different control from the bordered
+/// one the Home range selector draws. It borrowed `HomeTokens` until the
+/// design was measured; `specs/frontend/0033` records the swap.
 class HoldingsAllocationToggle extends StatelessWidget {
   /// Creates the toggle.
   const HoldingsAllocationToggle({
@@ -24,15 +21,6 @@ class HoldingsAllocationToggle extends StatelessWidget {
     this.isBusy = false,
     super.key,
   });
-
-  /// The control's height, as the app's other segmented pills.
-  static const double height = 34;
-
-  /// Its corner radius.
-  static const double radius = 18;
-
-  /// Horizontal padding inside a segment.
-  static const double segmentPadding = 12;
 
   /// The segments, in the order the payload sent them (N-10).
   final List<AllocationGroup> groups;
@@ -46,15 +34,15 @@ class HoldingsAllocationToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = HomeTokens.of(context);
+    final tokens = AllocationToggleTokens.of(context);
     return Opacity(
       opacity: isBusy ? 0.5 : 1,
       child: Container(
-        height: height,
-        clipBehavior: Clip.antiAlias,
+        height: AllocationToggleTokens.trackHeight,
+        padding: const EdgeInsets.all(AllocationToggleTokens.trackPadding),
         decoration: BoxDecoration(
-          border: Border.all(color: tokens.segmentBorder),
-          borderRadius: BorderRadius.circular(radius),
+          color: tokens.track,
+          borderRadius: BorderRadius.circular(AllocationToggleTokens.radius),
         ),
         // Scrolls rather than squeezing, for the reason GGU-144 records one
         // component over: three segments do not fit a phone column, and a
@@ -64,13 +52,15 @@ class HoldingsAllocationToggle extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              for (final group in groups)
+              for (final group in groups) ...<Widget>[
+                if (group != groups.first)
+                  const SizedBox(width: AllocationToggleTokens.segmentGap),
                 _Segment(
                   group: group,
                   tokens: tokens,
-                  first: group == groups.first,
                   onTap: isBusy ? null : () => onSelected(group.value),
                 ),
+              ],
             ],
           ),
         ),
@@ -83,51 +73,53 @@ class _Segment extends StatelessWidget {
   const _Segment({
     required this.group,
     required this.tokens,
-    required this.first,
     required this.onTap,
   });
 
   final AllocationGroup group;
-  final HomeTokens tokens;
-  final bool first;
+  final AllocationToggleTokens tokens;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: group.selected,
-    label: group.label,
-    excludeSemantics: true,
-    child: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: group.selected ? tokens.segmentSelected : null,
-          border: first
-              ? null
-              : Border(left: BorderSide(color: tokens.segmentBorder)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: HoldingsAllocationToggle.segmentPadding,
+  Widget build(BuildContext context) {
+    final border = tokens.selectedBorder;
+    return Semantics(
+      button: true,
+      selected: group.selected,
+      label: group.label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: group.selected ? tokens.selectedSurface : null,
+            border: group.selected && border != null
+                ? Border.all(color: border)
+                : null,
+            borderRadius: BorderRadius.circular(AllocationToggleTokens.radius),
           ),
-          child: Center(
-            child: Text(
-              group.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: group.selected ? FontWeight.w600 : FontWeight.w400,
-                color: group.selected
-                    ? tokens.segmentSelectedText
-                    : tokens.segmentText,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AllocationToggleTokens.segmentPaddingX,
+              vertical: AllocationToggleTokens.segmentPaddingY,
+            ),
+            child: Center(
+              child: Text(
+                group.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: AllocationToggleTokens.labelSize,
+                  fontWeight: AllocationToggleTokens.labelWeight,
+                  height: AllocationToggleTokens.labelHeight,
+                  color: group.selected ? tokens.selectedText : tokens.text,
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -60,32 +60,10 @@ abstract final class ChartText {
     fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
   );
 
-  /// A small uppercase caption above a figure.
-  ///
-  /// The allocation card's `subtag`, measured: 600 weight, 10 px, uppercase
-  /// with `letter-spacing:.08em`. The design sets it in Roboto Mono for the
-  /// same digit-alignment reason recorded above, and this app bundles no mono
-  /// face — `tabularFigures` buys the alignment without the download.
-  static TextStyle subtag(Color color) => TextStyle(
-    color: color,
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.8,
-    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-  );
-
-  /// The headline figure on a summary card.
-  ///
-  /// Measured from the allocation card: 400 weight, 30 px, `line-height:1.05`,
-  /// `letter-spacing:-.5px`.
-  static TextStyle headline(Color color) => TextStyle(
-    color: color,
-    fontSize: 30,
-    fontWeight: FontWeight.w400,
-    height: 1.05,
-    letterSpacing: -0.5,
-    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-  );
+  // `subtag` and `headline` lived here and were the allocation card's title
+  // caption and its 30 px total. GGU-145 moved the total into the ring and
+  // dropped the caption, which left both with no caller — deleted rather than
+  // kept warm for a design that no longer draws them.
 
   /// A legend row's category name. Measured: 500 weight, 12.5 px.
   static TextStyle legendLabel(Color color) =>

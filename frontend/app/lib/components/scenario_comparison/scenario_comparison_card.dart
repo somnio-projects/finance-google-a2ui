@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 
 /// Renders `scenario.comparison.v1` as the design's card.
 ///
-/// The chrome is measured from the designer's rendered DOM and is the same
+/// The chrome is measured from the catalog mock's rendered DOM and is the same
 /// chrome `AttributionWaterfallCard` wears, to the pixel except for one: a
 /// 16 px radius, a 1 px hairline, and 18/16/18/**15** padding — the
 /// comparison card's bottom inset is a pixel deeper than the waterfall's.

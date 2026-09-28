@@ -20,8 +20,11 @@ class HoldingsAllocationCard extends StatefulWidget {
   /// Corner radius.
   static const double radius = 16;
 
-  /// Inner padding.
-  static const EdgeInsets padding = EdgeInsets.fromLTRB(18, 16, 18, 16);
+  /// Inner padding — the artboard's `Espaciado spacing/16`, all four sides.
+  static const EdgeInsets padding = EdgeInsets.all(16);
+
+  /// The gap between the header block and the body (`Espacio spacing/16`).
+  static const double headerGap = 16;
 
   /// Gap between ring and legend.
   static const double chartGap = 22;
@@ -67,7 +70,10 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
     final palette = ChartPalette.of(context);
     final data = widget.data;
     final body = data.isEmpty
-        ? const HoldingsAllocationEmpty()
+        ? HoldingsAllocationEmpty(
+            total: data.headline ? data.totalDisplay : null,
+            label: data.totalLabel,
+          )
         : LayoutBuilder(builder: _body);
     if (!data.headline) return body;
     return DecoratedBox(
@@ -87,7 +93,7 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
               onGroupChanged: widget.onGroupChanged,
               isBusy: widget.isBusy,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: HoldingsAllocationCard.headerGap),
             body,
           ],
         ),

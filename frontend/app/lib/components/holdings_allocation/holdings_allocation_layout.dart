@@ -48,10 +48,18 @@ class HoldingsAllocationLayout extends StatelessWidget {
       selectedIndex: selectedIndex,
       onSliceTap: onSelect,
       swatches: ramp,
-      center: HoldingsAllocationCenter(
-        count: data.centerCount,
-        unit: data.centerUnit,
-      ),
+      // Where this card draws its own header the total sits in the ring, as
+      // the design draws it; where a shell drew the header the total is
+      // already on screen, so the ring keeps the count (GGU-145).
+      center: data.headline
+          ? HoldingsAllocationTotalCenter(
+              display: data.totalDisplay,
+              label: data.totalLabel,
+            )
+          : HoldingsAllocationCenter(
+              count: data.centerCount,
+              unit: data.centerUnit,
+            ),
       diameter: stacked
           ? HoldingsAllocationCard.stackedDiameter
           : data.headline
