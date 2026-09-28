@@ -1,4 +1,5 @@
 import 'package:finance_app/charts/chart_extensions.dart';
+import 'package:finance_app/charts/chart_text.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
 import 'package:finance_app/theme/app_color_tokens.dart';
 import 'package:finance_app/theme/app_spacing.dart';
@@ -23,6 +24,22 @@ import 'package:flutter/material.dart';
 /// Colours are read from `Theme.of(context).colorScheme` at the point of use;
 /// a widget in this app never names a `Color` literal.
 abstract final class AppTheme {
+  /// The typeface every artboard of the design kit sets (GGU-147).
+  ///
+  /// Bundled in `assets/fonts/` under the SIL Open Font License, not fetched
+  /// through `google_fonts`: this client ships as static files to Firebase
+  /// Hosting, so a run-time lookup would be a network dependency on first
+  /// paint and a `connect-src` the CSP deliberately does not grant.
+  ///
+  /// Three weights are shipped because the measurements name exactly three —
+  /// 400, 500 and 600. A widget asking for 700 gets a synthesised bold, which
+  /// is the honest failure: the design does not use one.
+  ///
+  /// Read from `ChartText`, which has to name it anyway: a `CustomPainter`
+  /// inherits no theme, so this line reaches every `Text` and no painted
+  /// label (spec `frontend/0035` §3).
+  static const String fontFamily = designFontFamily;
+
   /// The light theme.
   static ThemeData get light => _build(Brightness.light);
 
@@ -34,6 +51,7 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
+      fontFamily: fontFamily,
       // The page behind every surface. `ColorScheme.surface` is the card, so
       // without this the two are the same colour and the design's cards stop
       // reading as cards.

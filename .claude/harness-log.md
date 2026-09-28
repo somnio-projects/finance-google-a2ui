@@ -6355,3 +6355,50 @@ reading went away mid-ticket and came back as an anonymous viewer, which has
 no inspector, so the colours could not be read. The structure is the design's
 and the colours are not, which is written down (`0034` OD-1) with the list of
 swatches still to take.
+
+## GGU-147 — the app sets the design's typeface
+
+Spec `frontend/0035`. Every artboard of the kit sets **IBM Plex Sans**; the
+app shipped Roboto and bundled no font at all.
+
+**It survived eleven components because nothing in this repository can see
+it.** `flutter test` renders every glyph of every family as the test font's em
+square, so typography is invisible to a widget test *and* to a golden —
+`frontend/testing.md` §6 says exactly that, and it was written as a caveat
+rather than read as a gap. The only things that could have caught it are a
+person looking at the running app and a measurement pass, which is how it was
+found: GGU-145's inspector run recorded `Fuente: IBM Plex Sans` on every text
+node it touched.
+
+It is not cosmetic. A typeface changes the width of every string, and a
+measured layout is measured *against* those widths — the payoff chart's
+gutter is sized from the widest rung label, and the donut's total was moved
+into a ring whose hole it has to fit.
+
+**The family has to be named twice, and the second one is the one that gets
+forgotten.** `ThemeData.fontFamily` reaches every `Text`, because a `Text`
+whose style inherits merges onto the default. It reaches **no glyph a
+`CustomPainter` draws**: a painter has no context and a `TextPainter` takes a
+complete style. Half-applied, that reads as a font bug rather than a missing
+line — every widget in Plex and every axis label in Roboto, on one card.
+
+**Where the constant lives was decided by the coverage gate, and the gate was
+right.** It started in `theme/app_typeface.dart`, a leaf importing nothing, so
+that `AppTheme` could keep reaching down into the chart palettes without a
+cycle. A file holding nothing but a `const` gets **no lcov record at all**, so
+the per-file contract reported it untested with no way to fix it. The tempting
+move is to loosen `hasExecutableCode`; the right one was to notice the
+constant already had a home — `chart_text.dart` is the file that must name it
+for the painters, so it is the file that should own it, and `AppTheme` reads
+it back from there.
+
+**And a doc comment two lines away was already false.** `ChartText`'s header
+read *"the design sets these in Roboto Mono, and this app bundles no font
+asset"*. The second half stopped being true in this commit. It now says which
+half closed and which did not — the mono face is still not shipped, and
+`tabularFigures` still buys the digit alignment a designer reaches for.
+
+**There is no test that the glyphs are Plex, and that is the finding rather
+than an omission.** What is asserted is the wiring: both themes carry the
+family, and every style `ChartText` builds names it. The second is the half a
+theme change cannot fix and the half nothing else would notice.
