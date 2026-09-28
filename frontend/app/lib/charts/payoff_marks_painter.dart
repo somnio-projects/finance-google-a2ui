@@ -31,6 +31,16 @@ const double currentHalo = 2;
 /// The clearance kept between a rung's label and the plot's left edge.
 const double rungGap = 8;
 
+/// Where a rung label of [labelWidth] starts, **in the plot's coordinates**.
+///
+/// Always negative, which is the whole claim: the labels live in the gutter,
+/// outside the plot's left edge, and the canvas is already translated by that
+/// gutter when they are drawn. Taking the gutter as an argument and
+/// subtracting from it counted the same offset twice and put every label
+/// inside the wash — a defect `--update-goldens` froze and a browser found
+/// (spec `frontend/0034` §5).
+double rungLabelLeft(double labelWidth) => -rungGap - labelWidth;
+
 /// The inset a region word is drawn at, inside its own corner.
 const double zoneInset = 6;
 
@@ -97,7 +107,7 @@ void paintValueRungs(
     );
     painter.paint(
       canvas,
-      Offset(-rungGap - painter.width, rungs[index] - painter.height / 2),
+      Offset(rungLabelLeft(painter.width), rungs[index] - painter.height / 2),
     );
   }
 }

@@ -91,6 +91,34 @@ committing it — and, where the defect is a position rather than a colour, look
 at the running app, because a golden's text is a row of em squares and an
 overlap with a label reads as normal there.
 
+**Then the goldens failed on the runner at 1.545 % against a 1.5 % tolerance**,
+identically in both themes at a largest channel delta of 163/255 — the
+signature of glyph rasterisation, not of colour. ADR-L D-15 calibrated that
+tolerance on a subject with a tick row and little else; this one now carries a
+rung ladder, a caption and two region words. The threshold goes **down**, never
+up to absorb a failure (`frontend/testing.md` §6), so the **subject** shrank
+instead: the goldens are cropped to a text-free band of the plot.
+
+Two things about that crop are worth copying:
+
+- **A pixel census of the committed PNG is the proof, not the constants it was
+  derived from.** Cropping vertically left 2 255 px of label ink; cropping 64
+  from the left still left a 16 px column of it; 96 leaves **zero**. The
+  constants looked right all three times.
+- **A translucent wash needs its background stated.** Captured over nothing,
+  the 7 % wash came back as its unpremultiplied saturated colour — a red and a
+  green filling 72 % of the raster — and the golden stopped resembling the
+  card. The subject now names the surface it composites over.
+
+What the crop can no longer see is asserted in
+`payoff_chart_gutter_test.dart`: `rungLabelLeft` is always negative, so a
+label cannot be inside the plot. It tests the **offset function** rather than
+the pixels — a census of the rendered chart was written first and `toImage`
+inside a widget test hangs rather than failing, and a check that cannot be run
+is worth less than a narrow one that can. It does catch the exact defect:
+`gutter - rungGap - width` is positive whenever the gutter exceeds the label,
+which is every real payload.
+
 ## 6. Test decision
 
 - Backend: `test_payoff_axis.py` asserts the ladder contains zero, is evenly

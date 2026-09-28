@@ -6331,6 +6331,24 @@ region reads as perfectly normal in the raster. On a ticket that regenerates
 goldens: look at the picture, and where the defect would be a *position*, look
 at the running app.
 
+**And then the goldens failed on the runner at 1.545 % against 1.5 %** —
+identically in both themes, at a largest channel delta of 163/255, which is
+glyph rasterisation rather than colour. The tolerance was calibrated on a
+subject with a tick row and little else; this one now carries a ladder, a
+caption and two region words. Thresholds go down, never up to absorb a
+failure, so the subject shrank: the goldens are cropped to a text-free band.
+
+Two things from that crop are worth carrying:
+
+- **The census is the proof, not the constants.** Cropping vertically left
+  2 255 px of label ink in the committed PNG; cropping 64 from the left still
+  left a 16 px column; 96 leaves zero. The constants looked right all three
+  times, which is exactly what the note on golden crops already said.
+- **A translucent wash needs its background stated.** Captured over nothing,
+  a 7 % wash returns its unpremultiplied saturated colour — a red and a green
+  filling 72 % of the raster. The golden now names the surface it composites
+  over instead of inheriting one.
+
 **What was not done, and it is in the spec rather than in a hope.** The
 payoff palette is still the mock's. The Figma session this session had been
 reading went away mid-ticket and came back as an anonymous viewer, which has
