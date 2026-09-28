@@ -32,7 +32,7 @@ answer is that the difference is `spread`, which the backend computed.
   the table, the shared track row, the footer, the header-border painter, and
   the measured tokens and layout. Why twelve and not one: OD-8.
 - Tests under `app/test/components/scenario_comparison/`, including the grid
-  geometry asserted against the designer's rendered DOM, and two goldens.
+  geometry asserted against the catalog mock's rendered DOM, and two goldens.
 - The regenerated `component_manifest.g.dart`.
 
 **Out**
@@ -85,10 +85,13 @@ legend draws `Short-term` / `Long-term` in the same two colours.
 `scenario_comparison_geometry_test.dart` asserts the laid-out tracks against
 the first two rows of that table to **0.1 px**.
 
-### Re-verified against the newer design export
+### Re-verified against the newer mock
 
-A fuller design project (fourteen screens, `.design-refs/`) landed after this
-card was built. `Catalog_ScenarioComparison.dc.html` was re-measured the same
+A fuller catalog mock (fourteen screens, `.design-refs/`) landed after this
+card was built. **It is not a design export**, which this section called it
+until 2026-09-28: those files were generated on this side and handed to the
+designer as a starting point (Miriam). The authority is her Figma; see
+`frontend/0031` § 2 and `frontend/0033`. `Catalog_ScenarioComparison.dc.html` was re-measured the same
 way, in both artboards, and **every value above is unchanged** — card surface,
 hairline, padding, radius and 571.367 px width; the row rule; the eyebrow; the
 metric name; the figure; both column-header lines; and the grid rules, which
@@ -152,7 +155,7 @@ widened: this card reads no raw member at all.
 8. **AC-8** — Every note is rendered verbatim and none is dropped. *(N-9)*
 9. **AC-9** — A missing field raises `PayloadContractException` naming the
    path, which `ComponentHost` shows, rather than being reconstructed. *(N-3)*
-10. **AC-10** — The laid-out grid matches the designer's rendered DOM to
+10. **AC-10** — The laid-out grid matches the catalog mock's rendered DOM to
     0.1 px on **both** artboards, and the measured colours are pinned.
 
 ## 7. Test plan

@@ -22,12 +22,27 @@ frame is a second declaration of a design decision.
 
 ## 2. Where the measurements come from
 
-`.design-refs/Catalog_ScenarioComparison.dc.html` — the designer's exported,
-**rendered** DOM, with inline CSS, for both the `L1 · Light · 1024` and
-`D1 · Dark · 1024` artboards. It is gitignored and local; the repository holds
-the values it yields, in `scenario_comparison_tokens.dart`,
-`scenario_comparison_verdict_tokens.dart` and `scenario_comparison_text.dart`,
-each pinned by a test.
+`.design-refs/Catalog_ScenarioComparison.dc.html` — a **rendered** DOM with
+inline CSS, for both the `L1 · Light · 1024` and `D1 · Dark · 1024` artboards.
+It is gitignored and local; the repository holds the values it yields, in
+`scenario_comparison_tokens.dart`, `scenario_comparison_verdict_tokens.dart`
+and `scenario_comparison_text.dart`, each pinned by a test.
+
+> **Corrected 2026-09-28, and the correction matters more than the fact.**
+> This section said that file was *"the designer's exported, rendered DOM"*,
+> and every token file repeated it. It is not. Miriam said so plainly in
+> `#finance-google-a2ui-dev`: *"yo no hice los html / eso es lo que hizo Claude
+> / osea lo que me pasaron a mi para que mejore."* Those files are a catalog
+> mock **this repository generated and handed to her as a starting point**, so
+> calling a measurement of one "measured from the design" inverts the direction
+> of the whole handoff.
+>
+> What survives is the *method* — measure, do not remember — and the values
+> themselves stand until the artboard says otherwise. What does not survive is
+> the authority: where this file and Miriam's Figma
+> (`figma.com/design/rFA8ZEEOOvnOyq7IrTObma/A2UI-FINANCE-UI-KIT`) disagree,
+> **Figma wins**, and a component is re-measured against it rather than against
+> the mock. Spec `frontend/0033` is the first one done that way.
 
 Read off that file:
 

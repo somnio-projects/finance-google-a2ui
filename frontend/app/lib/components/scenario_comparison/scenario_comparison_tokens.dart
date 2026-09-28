@@ -2,12 +2,14 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_v
 import 'package:flutter/material.dart';
 
 /// The colours this card needs that `ChartPalette` has no slot for,
-/// **measured from the design** rather than taken from a token list.
+/// **measured** rather than taken from a token list.
 ///
-/// Every value below was read out of the designer's
-/// `Catalog - Scenario Comparison` page with `getComputedStyle` on the
-/// rendered DOM, in both the `L1 · Light · 1024` and `D1 · Dark · 1024`
-/// artboards. `specs/frontend/0004` carries the full table and how it was
+/// Every value below was read with `getComputedStyle` on the rendered DOM of
+/// the `Catalog - Scenario Comparison` page, in both the `L1 · Light · 1024`
+/// and `D1 · Dark · 1024` artboards. That page is the catalog **mock** this
+/// repository generated and handed to the designer, not a designer export —
+/// the sentence here said the latter until 2026-09-28 (spec `frontend/0031`
+/// § 2). The authority is Figma; this card has not been re-measured there. `specs/frontend/0004` carries the full table and how it was
 /// obtained; `scenario_comparison_tokens_test.dart` pins the values so a
 /// future edit has to disagree with a test rather than with a memory.
 ///

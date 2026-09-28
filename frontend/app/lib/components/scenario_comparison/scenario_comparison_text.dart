@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The card's type scale, measured from the design's rendered DOM.
+/// The card's type scale, measured from the catalog mock's rendered DOM.
 ///
 /// Its own file since the redesign added the direction hint and the
 /// recommended tag and pushed `scenario_comparison_layout` past the budget.

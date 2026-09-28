@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 /// holds no figure it could compare — `display` is a string the backend
 /// formatted, and there is no raw member on this card at all (N-2, N-4).
 ///
-/// **Every value here is measured**, from the designer's rendered DOM
+/// **Every value here is measured**, from the catalog mock's rendered DOM
 /// (`Catalog_ScenarioComparison.dc.html`) at the 1024 artboard, the way
 /// `scenario_comparison_geometry_test.dart` measured the grid. The first
 /// version of this widget guessed them, and every one of the four was wrong:

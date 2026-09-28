@@ -1,3 +1,4 @@
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 
 /// The Home card's gain block, as `HoldingsSummary` example prints it.

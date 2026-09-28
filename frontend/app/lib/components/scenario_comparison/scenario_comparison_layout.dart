@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// The card's measured geometry.
 ///
-/// Every number is read from the designer's rendered DOM, not chosen: the
+/// Every number is read from the catalog mock's rendered DOM, not chosen: the
 /// card's chrome, the grid's track ratios and gap, and the padding of each
 /// kind of cell. `specs/frontend/0004` §3 carries the table.
 abstract final class ScenarioComparisonLayout {
@@ -18,7 +18,7 @@ abstract final class ScenarioComparisonLayout {
   /// value **plus** this, on the edges that carry a line.
   ///
   /// Not theoretical: the grid tracks came out 209.30 / 155.03 against the
-  /// designer's 208.48 / 154.44 until this was added, and
+  /// reference's 208.48 / 154.44 until this was added, and
   /// `scenario_comparison_table_test.dart` is what said so.
   static const double hairline = 1;
 

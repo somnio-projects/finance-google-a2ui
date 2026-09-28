@@ -1,6 +1,5 @@
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_header.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend_row.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,29 +25,38 @@ void main() {
   });
 
   group(HoldingsAllocationHeader, () {
-    testWidgets('prints the gain line, glyph first, when the payload has one', (
+    testWidgets('prints the gain beside the title, as the payload wrote it', (
       tester,
     ) async {
       await tester.pumpApp(HoldingsAllocationHeader(data: byClass()));
+
       expect(
-        find.text(r'▲ +$61,204 (+14.5%)  all-time', findRichText: true),
+        find.text(r'+$61,204 (+14.5%) all-time', findRichText: true),
         findsOneWidget,
       );
-      expect(find.text('Total value'), findsNothing);
     });
 
-    testWidgets('falls back to the total label without a gain block', (
+    testWidgets('prepends no glyph — the sign is already in the string', (
       tester,
     ) async {
-      await tester.pumpApp(const HoldingsAllocationHeader(data: twoCategories));
-      expect(find.text(twoCategories.totalLabel), findsOneWidget);
+      // The design draws none, and one added here would be the client
+      // restating the direction the backend already signed (N-1). The old
+      // header did add one, so this would have passed either way before.
+      await tester.pumpApp(HoldingsAllocationHeader(data: byClass()));
+
+      for (final glyph in <String>['▲', '▼', '—']) {
+        expect(find.textContaining(glyph, findRichText: true), findsNothing);
+      }
     });
 
-    for (final (trend, glyph) in <(String, String)>[
-      ('down', '▼'),
-      ('flat', '—'),
-    ]) {
-      testWidgets('a $trend gain takes the $glyph glyph', (tester) async {
+    testWidgets('takes its tone from the declared trend, never from the sign', (
+      tester,
+    ) async {
+      // N-1's other half: the direction is an enum the backend sent, and
+      // reading it off the `+`/`-` in the display string would be the client
+      // interpreting a formatted figure. Every payload below carries the same
+      // negative-looking figure, so only the trend can separate them.
+      Future<(Color?, Color?)> tones(String trend) async {
         await tester.pumpApp(
           HoldingsAllocationHeader(
             data: byClass(
@@ -61,55 +69,55 @@ void main() {
             ),
           ),
         );
-        expect(find.textContaining(glyph, findRichText: true), findsOneWidget);
-      });
-    }
-  });
-  group(AllocationLegendRow, () {
-    testWidgets('stacks the value over the signed day change', (tester) async {
-      final data = byClass();
-      await tester.pumpApp(
-        AllocationLegendRow(
-          // DeFi, the first row whose day is down: the glyph under test comes
-          // from the declared trend, so the row has to carry one.
-          category: data.categories[3],
-          index: 3,
-          selected: false,
-          onTap: null,
-          color: const Color(0xFF0F9D8F),
-        ),
-      );
-      expect(find.text(r'$43,400'), findsOneWidget);
-      expect(find.text('▼ -4.4%'), findsOneWidget);
-      expect(find.text('9.0%'), findsOneWidget);
+        final rich = tester.widget<RichText>(
+          find.textContaining('all-time', findRichText: true),
+        );
+        // `Text.rich` wraps the span in one carrying the inherited style, so
+        // the two the header wrote are a level down.
+        final spans =
+            ((rich.text as TextSpan).children!.first as TextSpan).children!;
+        return (spans.first.style?.color, spans.last.style?.color);
+      }
+
+      final up = await tones('up');
+      final down = await tones('down');
+      final flat = await tones('flat');
+
+      expect(up.$1, isNot(down.$1));
+      // A trend the design has no tone for falls back to the muted colour the
+      // period is already drawn in, rather than to a third invented one.
+      expect(flat.$1, flat.$2);
     });
 
-    testWidgets('a flat change takes the dash; no change draws no line', (
+    testWidgets('draws the title alone when the payload carries no gain', (
       tester,
     ) async {
-      final data = byClass();
-      await tester.pumpApp(
-        Column(
-          children: <Widget>[
-            AllocationLegendRow(
-              category: data.categories[2],
-              index: 2,
-              selected: true,
-              onTap: null,
-              color: const Color(0xFF9AA0AA),
-            ),
-            AllocationLegendRow(
-              category: twoCategories.categories.first,
-              index: 0,
-              selected: false,
-              onTap: null,
-              color: const Color(0xFF9AA0AA),
-            ),
-          ],
+      // `headline=false` is the case: a shell drew the header, so the card
+      // has neither a gain nor a total of its own to show here.
+      await tester.pumpApp(const HoldingsAllocationHeader(data: twoCategories));
+
+      expect(find.text(twoCategories.title), findsOneWidget);
+      expect(find.textContaining('all-time'), findsNothing);
+    });
+
+    testWidgets('speaks the total and the ring count it no longer draws', (
+      tester,
+    ) async {
+      // The total moved into the ring and `center.*` stopped being drawn on
+      // this variant; neither may stop reaching a person (N-9). The header is
+      // one semantics node, so this is where both are said.
+      final handle = tester.ensureSemantics();
+      await tester.pumpApp(HoldingsAllocationHeader(data: byClass()));
+
+      expect(
+        tester.getSemantics(find.byType(HoldingsAllocationHeader)).label,
+        allOf(
+          contains(byClass().totalDisplay),
+          contains(byClass().totalLabel),
+          contains(byClass().centerCount),
         ),
       );
-      expect(find.text('— 0.0%'), findsOneWidget);
-      expect(find.textContaining('▲'), findsNothing);
+      handle.dispose();
     });
   });
 }

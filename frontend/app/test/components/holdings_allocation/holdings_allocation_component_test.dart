@@ -34,7 +34,7 @@ void main() {
       );
       expect(find.text('Allocation by holding'), findsOneWidget);
       expect(
-        find.text(r'▲ +$61,204 (+14.5%)  all-time', findRichText: true),
+        find.text(r'+$61,204 (+14.5%) all-time', findRichText: true),
         findsOneWidget,
       );
       expect(find.text(r'$482,915.20'), findsOneWidget);

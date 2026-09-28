@@ -8,9 +8,12 @@ import 'package:flutter/material.dart';
 /// these eleven say *which column the backend picked and why*. Two different
 /// questions, and together they were over the 150-line budget.
 ///
-/// Every value was read out of the designer's `Catalog - Scenario Comparison`
-/// page with `getComputedStyle` on the rendered DOM, in both the
-/// `L1 · Light · 1024` and `D1 · Dark · 1024` artboards.
+/// Every value was read with `getComputedStyle` on the rendered DOM of the
+/// `Catalog - Scenario Comparison` page, in both the `L1 · Light · 1024` and
+/// `D1 · Dark · 1024` artboards. That page is the catalog **mock** this
+/// repository generated, not a designer export — the sentence here claimed
+/// otherwise until 2026-09-28 (spec `frontend/0031` § 2). The values stand;
+/// the authority is Figma, and this card has not been re-measured against it.
 ///
 /// **The distinction the palette itself makes**, and the component's largest
 /// visual error before it was measured: green means *a gain* and marks the

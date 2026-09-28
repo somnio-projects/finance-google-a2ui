@@ -28,10 +28,12 @@ class DonutChart extends StatelessWidget {
 
   /// The ring's diameter in the design's primary card, in logical pixels.
   ///
-  /// Measured: the catalog page's default state renders a 150 px ring. The
+  /// Measured from Miriam's Figma `HoldingsSummary` artboard (GGU-145); the
   /// hole follows from [DonutLayout.defaultThicknessRatio], which is the same
-  /// measurement's other half.
-  static const double designDiameter = 150;
+  /// measurement's other half. It was 150, from the catalog mock this
+  /// repository generated rather than from the design (spec `frontend/0031`
+  /// § 2).
+  static const double designDiameter = 160;
 
   /// One raw `weight.value` per category, in payload order (N-10).
   ///
@@ -63,7 +65,18 @@ class DonutChart extends StatelessWidget {
       alignment: Alignment.center,
       children: <Widget>[
         LayoutBuilder(builder: _plot),
-        if (center != null) IgnorePointer(child: center),
+        // The hole, not the ring, is what the centre has to fit inside. A
+        // caption long enough to reach the arcs wraps here; it is never
+        // ellipsised, because a `label` is the backend's word and dropping
+        // half of it is N-9 (GGU-145 — the design's own mock caption was
+        // "total value" and the payload's is "Total market value").
+        if (center != null)
+          IgnorePointer(
+            child: SizedBox(
+              width: diameter * DonutLayout.defaultThicknessRatio,
+              child: center,
+            ),
+          ),
       ],
     ),
   );

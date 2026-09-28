@@ -143,7 +143,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `aa0536008605` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `d33d3882383f` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
 | [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `abde9901e9d2` | 47 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
-| [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `cc5bbfb7061b` | 25 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
+| [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `f7f90b385bee` | 29 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `9ff39ae83d7f` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `4f00c29a4c39` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `da6c79781962` | 67 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
@@ -1776,7 +1776,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.
 
-- **Frozen id:** `holdings.allocation.v1` · **digest:** `cc5bbfb7061b`
+- **Frozen id:** `holdings.allocation.v1` · **digest:** `f7f90b385bee`
 - **Component:** `HoldingsSummary`
 - **Payload type:** `HoldingsAllocationPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1802,6 +1802,10 @@ _This surface sends nothing back: tapping it starts no turn._
 | `view` | const 'holdings.allocation.v1' | default `"holdings.allocation.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
 | `group_by` | enum holding / asset_class / sector | required | `enum` | variant | input · one of 'holding', 'asset_class', 'sector' |
+| `groups` | array | required | `container` | empty | — |
+| `groups[].value` | enum holding / asset_class / sector | required | `enum` | variant | — |
+| `groups[].label` | string ≤32 chars | required | `text` | — | — |
+| `groups[].selected` | boolean | required | `flag` | variant | — |
 | `total` | object | required | `container` | — | — |
 | `total.label` | string ≤64 chars | required | `text` | — | — |
 | `total.amount` | object | required | `container` | — | — |
@@ -1840,6 +1844,23 @@ _This surface sends nothing back: tapping it starts no turn._
   "view": "holdings.allocation.v1",
   "title": "Allocation by holding",
   "group_by": "holding",
+  "groups": [
+    {
+      "value": "holding",
+      "label": "By holding",
+      "selected": true
+    },
+    {
+      "value": "asset_class",
+      "label": "By asset class",
+      "selected": false
+    },
+    {
+      "value": "sector",
+      "label": "By sector",
+      "selected": false
+    }
+  ],
   "total": {
     "label": "Total market value",
     "amount": {
