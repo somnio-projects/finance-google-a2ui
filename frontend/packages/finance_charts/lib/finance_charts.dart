@@ -16,6 +16,7 @@ export 'src/donut_layout.dart';
 export 'src/linear_scale.dart';
 export 'src/payoff_axes.dart';
 export 'src/payoff_layout.dart';
+export 'src/payoff_marks.dart';
 export 'src/payoff_point.dart';
 export 'src/sparkline_layout.dart';
 export 'src/tick_steps.dart';

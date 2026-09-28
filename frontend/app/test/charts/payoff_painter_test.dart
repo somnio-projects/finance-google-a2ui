@@ -1,4 +1,4 @@
-import 'package:finance_app/charts/payoff_painter.dart';
+import 'package:finance_app/charts/payoff_plot_painter.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,9 +9,9 @@ void main() {
   group('PayoffPainter', () {
     test("carries the design's measured stroke widths", () {
       // `stroke-width` on the design's grid line, zero rule and curve.
-      expect(PayoffPainter.gridWidth, 1);
-      expect(PayoffPainter.zeroWidth, 1.5);
-      expect(PayoffPainter.curveWidth, 2.6);
+      expect(gridWidth, 1);
+      expect(zeroWidth, 1.5);
+      expect(curveWidth, 2.6);
     });
 
     test('does not repaint when nothing it draws changed', () {

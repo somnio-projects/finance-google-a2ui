@@ -5488,7 +5488,7 @@
     {
       "actions": [],
       "component": "RiskPayoffChart",
-      "digest": "922cd5dac6f0",
+      "digest": "b50b0e20f80b",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -5835,7 +5835,25 @@
             "label": "Notional"
           }
         ],
-        "view": "payoff.curve.v1"
+        "value_ticks": [
+          {
+            "amount": "-100",
+            "display": "-$100.00"
+          },
+          {
+            "amount": "0",
+            "display": "$0.00"
+          },
+          {
+            "amount": "100",
+            "display": "$100.00"
+          }
+        ],
+        "view": "payoff.curve.v1",
+        "zones": {
+          "gain": "Gain",
+          "loss": "Loss"
+        }
       },
       "fields": [
         {
@@ -5949,6 +5967,54 @@
           "presence": "required",
           "state": null,
           "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "value_ticks",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "raw",
+          "input": null,
+          "path": "value_ticks[].amount",
+          "presence": "required",
+          "state": null,
+          "type": "decimal"
+        },
+        {
+          "binding": "display",
+          "input": null,
+          "path": "value_ticks[].display",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "zones",
+          "presence": "required",
+          "state": null,
+          "type": "object"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "zones.loss",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤24 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "zones.gain",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤24 chars"
         },
         {
           "binding": "container",

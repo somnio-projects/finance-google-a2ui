@@ -39,11 +39,38 @@ class PayoffChartCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(data.title, style: ChartText.title(palette.title)),
+            // The design puts the legend opposite the title rather than
+            // under the plot: with two series the reader needs the key
+            // *before* looking, not after (GGU-146).
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    data.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: ChartText.title(palette.title),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                PayoffLegend(lines: data.lines),
+              ],
+            ),
             const SizedBox(height: 14),
-            PayoffChart(series: data.series, tickLabels: data.tickLabels),
-            const SizedBox(height: 12),
-            PayoffLegend(lines: data.lines),
+            PayoffChart(
+              series: data.series,
+              tickLabels: data.tickLabels,
+              valueLabels: <String>[
+                for (final rung in data.rungs) rung.display,
+              ],
+              valueTicks: <double>[for (final rung in data.rungs) rung.at],
+              breakEvenAt: data.breakEven?.at,
+              currentAt: data.current?.at,
+              breakEvenLabel: data.breakEven?.caption ?? '',
+              lossWord: data.lossWord,
+              gainWord: data.gainWord,
+            ),
             if (data.totals.isNotEmpty) ...<Widget>[
               const SizedBox(height: 12),
               PayoffFactRow(facts: data.totals),
