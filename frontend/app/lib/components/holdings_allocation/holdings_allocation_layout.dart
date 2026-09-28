@@ -42,7 +42,10 @@ class HoldingsAllocationLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final ramp = AllocationPalette.of(context).rampFor(data.groupBy);
     final stacked =
-        constraints.maxWidth < HoldingsAllocationCard.stackBelowWidth;
+        constraints.maxWidth <
+        (data.headline
+            ? HoldingsAllocationCard.stackBelowWidth
+            : HoldingsAllocationCard.shellStackBelowWidth);
     final chart = DonutChart(
       weights: data.weights,
       selectedIndex: selectedIndex,
@@ -60,11 +63,11 @@ class HoldingsAllocationLayout extends StatelessWidget {
               count: data.centerCount,
               unit: data.centerUnit,
             ),
-      diameter: stacked
-          ? HoldingsAllocationCard.stackedDiameter
-          : data.headline
-          ? DonutChart.designDiameter
-          : HoldingsAllocationCard.compactDiameter,
+      diameter: !data.headline
+          ? (stacked
+                ? HoldingsAllocationCard.shellStackedDiameter
+                : HoldingsAllocationCard.compactDiameter)
+          : HoldingsAllocationCard.stackedDiameter,
     );
     final legend = HoldingsAllocationLegend(
       categories: data.categories,

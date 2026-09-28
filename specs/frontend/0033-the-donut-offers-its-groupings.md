@@ -80,6 +80,17 @@ N-9, so the header's semantics node reads it out. The other variant
 (`headline=false`, where a shell drew the header and the total is already on
 screen) keeps drawing the count, so no field is unreachable in both.
 
+**The ring itself was mock-derived, and the design's own total proved it.**
+`DonutLayout.defaultThicknessRatio` was `92 / 150` — a hole 61 % of the
+diameter. Figma's `HoldingsSummary` donut is **160 px with a ~135 px hole**,
+84 %: a ring less than half as thick. At the mock's ratio the design's own
+`$482,915.20` at 18 px does not fit its own hole, which is exactly what
+happened on screen the first time the total was moved into the centre. The
+ratio is now the measured pair, the ring is the measured 160, and the centre
+is constrained to the hole so a caption longer than design's mock one wraps
+rather than being ellipsised (N-9 — `total.label` is *"Total market value"*,
+not design's *"total value"*).
+
 **The empty card draws the total where the ring would be.** Moving the total
 into the ring quietly removed it from a card that has no ring. An empty
 portfolio has a total and it is a real figure; the card test that named `$0.00`
@@ -144,6 +155,13 @@ arrangement at both widths.
 - **OD-5 — the app bundles no IBM Plex Sans.** Every artboard sets it; the app
   renders Roboto. Widget tests cannot see this at all (the test font draws a
   full em square per glyph), so it needs a font decision, not a test.
+- **OD-7 — the two shells keep the old ring and the old stacking rule.**
+  `Home` and `Holdings` ask for `headline=false`; their ring holds a short
+  count, not a currency total, and neither screen has been re-measured against
+  Figma. Applying this card's threshold to them would have moved a ring from
+  104 to 160 and put the legend under it on two screens this ticket did not
+  look at, so `shellStackBelowWidth` / `shellStackedDiameter` hold the old
+  values until somebody measures those boards.
 - **OD-6 — closed in this diff.** The false-provenance sentence was in seven
   other files (`frontend/0031` § 2, `frontend/0004`, and five
   `scenario_comparison_*` sources). All now say what the mock is, and point at

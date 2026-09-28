@@ -31,8 +31,16 @@ class HoldingsAllocationTotalCenter extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Text(display, style: HoldingsSummaryText.total(text.primary)),
-        Text(label, style: HoldingsSummaryText.totalLabel(text.secondary)),
+        Text(
+          display,
+          textAlign: TextAlign.center,
+          style: HoldingsSummaryText.total(text.primary),
+        ),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: HoldingsSummaryText.totalLabel(text.secondary),
+        ),
       ],
     );
   }

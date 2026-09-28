@@ -43,10 +43,16 @@ const List<double> designSectorStops = <double>[
 ];
 
 /// The primary card's ring diameter, in logical pixels, as rendered.
-const double designOuterDiameter = 150;
+///
+/// Read off Miriam's Figma `HoldingsSummary` artboard (GGU-145). It was 150
+/// until 2026-09-28, from the catalog mock this repository generated.
+const double designOuterDiameter = 160;
 
 /// The primary card's hole diameter, in logical pixels, as rendered.
-const double designHoleDiameter = 92;
+///
+/// See [designOuterDiameter]; it was 92, which is a ring more than twice as
+/// thick as the design draws and too small to hold the design's own total.
+const double designHoleDiameter = 135;
 
 /// The two secondary cards' ring and hole diameters.
 ///
