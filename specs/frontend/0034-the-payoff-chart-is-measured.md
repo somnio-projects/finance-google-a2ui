@@ -77,6 +77,20 @@ over a subject assembled from part of the model proves that part.* The subject
 now binds the whole model, and the regenerated rasters show the vertical
 regions, the dashed rule, the gutter, the dot and both region words.
 
+**And the first regeneration froze a bug.** `paintValueRungs` was called
+*after* the canvas had been translated by the gutter and then subtracted from
+the gutter again, so every rung label landed one gutter too far right —
+inside the wash rather than beside it. `--update-goldens` blessed it without
+complaint, the suite went green, and it was found by opening the card in a
+browser.
+
+`--update-goldens` is not a check, it is a **statement that what is on screen
+is correct**, and nothing in the gate distinguishes a deliberate visual change
+from a defect. On a ticket that regenerates goldens, look at the raster before
+committing it — and, where the defect is a position rather than a colour, look
+at the running app, because a golden's text is a row of em squares and an
+overlap with a label reads as normal there.
+
 ## 6. Test decision
 
 - Backend: `test_payoff_axis.py` asserts the ladder contains zero, is evenly

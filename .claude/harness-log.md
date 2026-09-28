@@ -6318,6 +6318,19 @@ The subject is a fixture like any other, and a fixture that drifts from the
 thing it stands for is the defect `frontend/testing.md` §5 already warns about
 one level up.
 
+**And regenerating the goldens froze a bug.** The rung labels were drawn one
+gutter too far right — inside the wash — because the call had moved inside a
+`canvas.translate` and kept subtracting the same offset. `--update-goldens`
+blessed it silently, the suite went green, and it was caught by opening the
+card in a browser.
+
+`--update-goldens` is not a check; it is a statement that what is on screen is
+correct. Nothing in the gate can tell a deliberate visual change from a
+defect, and a golden's text is a row of em squares, so a label overlapping a
+region reads as perfectly normal in the raster. On a ticket that regenerates
+goldens: look at the picture, and where the defect would be a *position*, look
+at the running app.
+
 **What was not done, and it is in the spec rather than in a hope.** The
 payoff palette is still the mock's. The Figma session this session had been
 reading went away mid-ticket and came back as an anonymous viewer, which has

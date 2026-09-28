@@ -72,18 +72,21 @@ void paintCurrentMark(
 
 /// Writes one rung label to the left of each gridline.
 ///
-/// Right-aligned against the plot's left edge, which is why the caller hands
-/// it a [gutter]: the labels live outside the plot and the plot is laid out
-/// in what is left. A label with no rule, or a rule with no label, is simply
-/// skipped — the two lists come from one payload field and cannot disagree,
-/// but a shorter one must not throw.
+/// **In the plot's own coordinates**, so every `x` here is negative: the
+/// caller has already translated the canvas by the gutter, and the labels
+/// live outside the plot's left edge. Taking a `gutter` argument and
+/// subtracting from it counted the same offset twice and put every label
+/// inside the wash — visible the first time the card was opened in a browser
+/// and invisible to a golden, whose text is a row of em squares anyway.
+///
+/// A rule with no label is skipped: the two lists come from one payload field
+/// and cannot disagree, but a shorter one must not throw.
 void paintValueRungs(
   Canvas canvas, {
   required List<double> rungs,
   required List<String> labels,
   required Color color,
   required TextDirection textDirection,
-  required double gutter,
 }) {
   for (final (index, label) in labels.indexed) {
     if (index >= rungs.length) return;
@@ -94,10 +97,7 @@ void paintValueRungs(
     );
     painter.paint(
       canvas,
-      Offset(
-        gutter - rungGap - painter.width,
-        rungs[index] - painter.height / 2,
-      ),
+      Offset(-rungGap - painter.width, rungs[index] - painter.height / 2),
     );
   }
 }

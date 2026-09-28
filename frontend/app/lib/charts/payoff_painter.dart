@@ -87,7 +87,6 @@ class PayoffPainter extends CustomPainter {
       labels: valueLabels,
       color: payoffPalette.axisLabel,
       textDirection: textDirection,
-      gutter: gutter,
     );
     paintPayoffRegions(canvas, layout, payoffPalette);
     paintZoneWords(
