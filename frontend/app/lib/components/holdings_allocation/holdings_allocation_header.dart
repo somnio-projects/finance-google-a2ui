@@ -1,6 +1,7 @@
 import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/chart_text.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
 

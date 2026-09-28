@@ -1,11 +1,7 @@
-import 'package:finance_app/charts/allocation_palette.dart';
 import 'package:finance_app/charts/chart_palette.dart';
-import 'package:finance_app/charts/donut_chart.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_bar.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_center.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_empty.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_header.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_header_row.dart';
+import 'package:finance_app/components/holdings_allocation/holdings_allocation_layout.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +11,8 @@ class HoldingsAllocationCard extends StatefulWidget {
   /// Creates the card.
   const HoldingsAllocationCard({
     required this.data,
+    this.onGroupChanged,
+    this.isBusy = false,
     this.initialSelectedIndex,
     super.key,
   });
@@ -35,11 +33,18 @@ class HoldingsAllocationCard extends StatefulWidget {
   static const double stackedDiameter = 112;
 
   /// Ring size beside a legend when a shell draws the header — the Home
-  /// card's 104. The catalog card keeps [DonutChart.designDiameter].
+  /// card's 104. The catalog card keeps `DonutChart.designDiameter`.
   static const double compactDiameter = 104;
 
   /// The model.
   final AllocationData data;
+
+  /// Called with a grouping's `value` when a segment is tapped, or null
+  /// where no host can re-request — in which case no toggle is drawn.
+  final ValueChanged<String>? onGroupChanged;
+
+  /// True while the re-render a tap asked for is in flight.
+  final bool isBusy;
 
   /// A slice to start selected, for goldens.
   final int? initialSelectedIndex;
@@ -77,7 +82,11 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            HoldingsAllocationHeader(data: data),
+            HoldingsAllocationHeaderRow(
+              data: data,
+              onGroupChanged: widget.onGroupChanged,
+              isBusy: widget.isBusy,
+            ),
             const SizedBox(height: 14),
             body,
           ],
@@ -86,63 +95,13 @@ class _HoldingsAllocationCardState extends State<HoldingsAllocationCard> {
     );
   }
 
-  Widget _body(BuildContext context, BoxConstraints constraints) {
-    final data = widget.data;
-    final ramp = AllocationPalette.of(context).rampFor(data.groupBy);
-    final stacked =
-        constraints.maxWidth < HoldingsAllocationCard.stackBelowWidth;
-    final chart = DonutChart(
-      weights: data.weights,
-      selectedIndex: _selectedIndex,
-      onSliceTap: _select,
-      swatches: ramp,
-      center: HoldingsAllocationCenter(
-        count: data.centerCount,
-        unit: data.centerUnit,
-      ),
-      diameter: stacked
-          ? HoldingsAllocationCard.stackedDiameter
-          : data.headline
-          ? DonutChart.designDiameter
-          : HoldingsAllocationCard.compactDiameter,
-    );
-    final legend = HoldingsAllocationLegend(
-      categories: data.categories,
-      selectedIndex: _selectedIndex,
-      onCategoryTap: _select,
-      swatches: ramp,
-    );
-    final bar = Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: HoldingsAllocationBar(weights: data.weights, colors: ramp),
-    );
-    if (stacked) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Center(child: chart),
-          const SizedBox(height: HoldingsAllocationCard.chartGap),
-          legend,
-          bar,
-        ],
+  Widget _body(BuildContext context, BoxConstraints constraints) =>
+      HoldingsAllocationLayout(
+        data: widget.data,
+        constraints: constraints,
+        selectedIndex: _selectedIndex,
+        onSelect: _select,
       );
-    }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            chart,
-            const SizedBox(width: HoldingsAllocationCard.chartGap),
-            Expanded(child: legend),
-          ],
-        ),
-        bar,
-      ],
-    );
-  }
 
   void _select(int index) =>
       setState(() => _selectedIndex = _selectedIndex == index ? null : index);

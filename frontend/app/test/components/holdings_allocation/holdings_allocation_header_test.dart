@@ -1,6 +1,6 @@
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_header.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_legend_row.dart';
-import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,10 @@
 import 'package:finance_app/components/component_registry.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_group.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_card.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_model.dart';
 import 'package:finance_app/components/holdings_allocation/holdings_allocation_skeleton.dart';
+import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -22,6 +25,12 @@ class HoldingsAllocationComponent extends ViewComponent {
   /// Creates the component.
   const HoldingsAllocationComponent();
 
+  /// The declared option the toggle edits.
+  ///
+  /// Named once here and asserted against the catalog's `options_schema` by
+  /// the contract test, so the client and the projection cannot drift.
+  static const String groupOption = 'group_by';
+
   @override
   String get viewId => 'holdings.allocation.v1';
 
@@ -29,8 +38,18 @@ class HoldingsAllocationComponent extends ViewComponent {
   String get a2uiComponent => 'HoldingsSummary';
 
   @override
-  Widget build(BuildContext context, ViewPayload payload) =>
-      HoldingsAllocationCard(data: read(payload));
+  Widget build(BuildContext context, ViewPayload payload) {
+    // Live inside a host that can re-request; read-only anywhere else, the
+    // shape `order_ticket_v2` uses for the same seam (GGU-113).
+    final edits = SurfaceEdits.maybeOf(context);
+    return HoldingsAllocationCard(
+      data: read(payload),
+      onGroupChanged: edits == null
+          ? null
+          : (value) => edits.onOptionChanged(groupOption, value),
+      isBusy: edits?.pendingOption == groupOption,
+    );
+  }
 
   @override
   Widget skeleton(BuildContext context) => const HoldingsAllocationSkeleton();
@@ -48,6 +67,16 @@ class HoldingsAllocationComponent extends ViewComponent {
       totalLabel: payload.text('total.label'),
       totalDisplay: payload.text('total.amount.display'),
       groupBy: payload.text('group_by'),
+      // The toggle's segments, read whole: the words and which one is lit
+      // are both the backend's (N-1, N-2).
+      groups: <AllocationGroup>[
+        for (final row in payload.rows('groups'))
+          AllocationGroup(
+            value: row.text('value'),
+            label: row.text('label'),
+            selected: row.flag('selected'),
+          ),
+      ],
       centerCount: payload.text('center.count'),
       centerUnit: payload.text('center.unit'),
       headline: gainPeriod != null,

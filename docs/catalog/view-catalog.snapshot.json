@@ -2944,7 +2944,7 @@
     {
       "actions": [],
       "component": "HoldingsSummary",
-      "digest": "cc5bbfb7061b",
+      "digest": "f7f90b385bee",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -3059,6 +3059,23 @@
           "unit": "Holdings"
         },
         "group_by": "holding",
+        "groups": [
+          {
+            "label": "By holding",
+            "selected": true,
+            "value": "holding"
+          },
+          {
+            "label": "By asset class",
+            "selected": false,
+            "value": "asset_class"
+          },
+          {
+            "label": "By sector",
+            "selected": false,
+            "value": "sector"
+          }
+        ],
         "title": "Allocation by holding",
         "total": {
           "amount": {
@@ -3105,6 +3122,38 @@
           "presence": "required",
           "state": "variant",
           "type": "enum holding / asset_class / sector"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "groups",
+          "presence": "required",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "groups[].value",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum holding / asset_class / sector"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "groups[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "flag",
+          "input": null,
+          "path": "groups[].selected",
+          "presence": "required",
+          "state": "variant",
+          "type": "boolean"
         },
         {
           "binding": "container",

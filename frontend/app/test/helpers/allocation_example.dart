@@ -1,3 +1,5 @@
+import 'allocation_groups_example.dart';
+
 /// The `holdings.allocation.v1` example, **verbatim** from the backend's
 /// generated catalog (`docs/catalog/view-catalog.snapshot.json`).
 ///
@@ -5,6 +7,10 @@
 /// copy, and `catalog_contract_test.dart` is what keeps the copy honest.
 /// Regenerated with the crypto portfolio of spec `backend/0044`.
 const Map<String, dynamic> holdingsAllocationExample = <String, dynamic>{
+  // The grouping toggle's segments (GGU-145), in their own file. A fixture
+  // missing them renders the contract error instead of the card, which is
+  // how this copy announced itself when `groups` was added.
+  'groups': allocationGroupsExample,
   'categories': <Map<String, dynamic>>[
     <String, dynamic>{
       'change': <String, dynamic>{
