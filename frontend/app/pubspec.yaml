@@ -48,3 +48,21 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    # IBM Plex Sans — the typeface every artboard of the design kit sets
+    # (GGU-147, spec `frontend/0035`). Bundled rather than fetched at run
+    # time: the client ships as static files to Firebase Hosting, so a
+    # `google_fonts` lookup would be a network dependency on first paint and
+    # a `connect-src` the CSP does not grant.
+    #
+    # Three weights, and only three, because the measurements name exactly
+    # those: 400 for body and captions, 500 for a segment label and a gain
+    # figure, 600 for a title and the total in the donut.
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
