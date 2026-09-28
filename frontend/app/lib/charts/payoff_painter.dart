@@ -1,5 +1,8 @@
 import 'package:finance_app/charts/chart_palette.dart';
+import 'package:finance_app/charts/payoff_marks_layer.dart';
+import 'package:finance_app/charts/payoff_marks_painter.dart';
 import 'package:finance_app/charts/payoff_palette.dart';
+import 'package:finance_app/charts/payoff_plot_painter.dart';
 import 'package:finance_app/charts/payoff_ticks.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/foundation.dart';
@@ -20,16 +23,13 @@ class PayoffPainter extends CustomPainter {
     required this.tickLabels,
     required this.textDirection,
     required this.plotHeight,
+    required this.valueLabels,
+    required this.gutter,
+    required this.topBand,
+    this.breakEvenLabel = '',
+    this.lossWord = '',
+    this.gainWord = '',
   });
-
-  /// A gridline, measured from the design's SVG template.
-  static const double gridWidth = 1;
-
-  /// The zero rule, heavier than a gridline (`stroke-width="1.5"`).
-  static const double zeroWidth = 1.5;
-
-  /// The curve (`stroke-width="2.6"`, round cap and join).
-  static const double curveWidth = 2.6;
 
   /// The gap between the plot floor and the tick row.
   static const double tickGap = 10;
@@ -55,12 +55,76 @@ class PayoffPainter extends CustomPainter {
   /// The height of the plot itself; the tick row is drawn below it.
   final double plotHeight;
 
+  /// One `value_ticks[].display` per rung, in the order the backend sent
+  /// them. The painter prints them and never writes one (N-1).
+  final List<String> valueLabels;
+
+  /// The band to the left of the plot the rung labels are written in. The
+  /// plot is laid out in what is left, so the two cannot overlap.
+  final double gutter;
+
+  /// The band above the plot the break-even's caption is written in.
+  final double topBand;
+
+  /// `markers.break_even.label` and its price, already joined by the caller.
+  final String breakEvenLabel;
+
+  /// `zones.loss` — the word written in the losing region.
+  final String lossWord;
+
+  /// `zones.gain`.
+  final String gainWord;
+
   @override
   void paint(Canvas canvas, Size size) {
-    _paintRegions(canvas);
-    _paintGrid(canvas, size.width);
-    _paintCurves(canvas);
-    _paintTicks(canvas, size.width);
+    final width = size.width - gutter;
+    canvas
+      ..save()
+      ..translate(gutter, topBand);
+    paintValueRungs(
+      canvas,
+      rungs: layout.gridLines,
+      labels: valueLabels,
+      color: payoffPalette.axisLabel,
+      textDirection: textDirection,
+      gutter: gutter,
+    );
+    paintPayoffRegions(canvas, layout, payoffPalette);
+    paintZoneWords(
+      canvas,
+      layout: layout,
+      payoff: payoffPalette,
+      loss: lossWord,
+      gain: gainWord,
+      textDirection: textDirection,
+    );
+    paintPayoffGrid(
+      canvas,
+      width,
+      layout: layout,
+      palette: palette,
+      payoffPalette: payoffPalette,
+    );
+    paintBreakEven(
+      canvas,
+      layout: layout,
+      payoff: payoffPalette,
+      plotHeight: plotHeight,
+      label: breakEvenLabel,
+      textDirection: textDirection,
+    );
+    paintPayoffCurves(canvas, layout, palette);
+    paintCurrent(canvas, layout: layout, palette: palette);
+    paintTickRow(
+      canvas,
+      layout: layout,
+      labels: tickLabels,
+      color: payoffPalette.axisLabel,
+      textDirection: textDirection,
+      width: width,
+      top: plotHeight + tickGap,
+    );
+    canvas.restore();
   }
 
   @override
@@ -69,70 +133,11 @@ class PayoffPainter extends CustomPainter {
       oldDelegate.palette != palette ||
       oldDelegate.payoffPalette != payoffPalette ||
       oldDelegate.plotHeight != plotHeight ||
+      oldDelegate.gutter != gutter ||
+      oldDelegate.topBand != topBand ||
+      oldDelegate.breakEvenLabel != breakEvenLabel ||
+      oldDelegate.lossWord != lossWord ||
+      oldDelegate.gainWord != gainWord ||
+      !listEquals(oldDelegate.valueLabels, valueLabels) ||
       !listEquals(oldDelegate.tickLabels, tickLabels);
-
-  /// Shades gain above the zero rule and loss below it.
-  ///
-  /// The split is `layout.zeroY`, a constant of the value scale — **not** a
-  /// crossing located in the data. The design shades the columns either side
-  /// of break-even, which needs a field the payload lacks (spec
-  /// `frontend/0005` OD-1).
-  void _paintRegions(Canvas canvas) {
-    final gain = Paint()..color = payoffPalette.gainRegion;
-    final loss = Paint()..color = payoffPalette.lossRegion;
-    canvas
-      ..drawRect(_rect(layout.gainRegion), gain)
-      ..drawRect(_rect(layout.lossRegion), loss);
-  }
-
-  static Rect _rect(ChartRect r) =>
-      Rect.fromLTRB(r.left, r.top, r.right, r.bottom);
-
-  void _paintGrid(Canvas canvas, double width) {
-    final grid = Paint()
-      ..color = palette.border
-      ..strokeWidth = gridWidth;
-    for (final y in layout.gridLines) {
-      canvas.drawLine(Offset(0, y), Offset(width, y), grid);
-    }
-    // No rule when zero is off the plot: `zeroY` is then the clamped edge,
-    // and a line there would claim a break-even the curve never reaches.
-    if (!layout.zeroInDomain) return;
-    canvas.drawLine(
-      Offset(0, layout.zeroY),
-      Offset(width, layout.zeroY),
-      Paint()
-        ..color = payoffPalette.zeroBaseline
-        ..strokeWidth = zeroWidth,
-    );
-  }
-
-  void _paintCurves(Canvas canvas) {
-    for (final (index, points) in layout.paths.indexed) {
-      if (points.isEmpty) continue;
-      final path = Path()..moveTo(points.first.x, points.first.y);
-      for (final point in points.skip(1)) {
-        path.lineTo(point.x, point.y);
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = index == 0 ? palette.barTotal : palette.barNeutral
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = curveWidth
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-  }
-
-  void _paintTicks(Canvas canvas, double width) => paintTickRow(
-    canvas,
-    layout: layout,
-    labels: tickLabels,
-    color: payoffPalette.axisLabel,
-    textDirection: textDirection,
-    width: width,
-    top: plotHeight + tickGap,
-  );
 }

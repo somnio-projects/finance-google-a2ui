@@ -6268,3 +6268,59 @@ One value could not be read at all — the Desktop period's size, whose layer
 would not select — and it is OD-3 rather than a plausible guess. Its Mobile
 counterpart sits one step *above* its figure, so the likely answer is written
 next to the one that shipped.
+
+## GGU-146 — the payoff chart draws what the design draws
+
+Spec `frontend/0034`. The second of the two new Figma sections.
+
+**Two of the four gaps were already closed and nobody had gone back to
+look.** The design draws seven things this card did not, and four of them the
+client was *forbidden* to add: a labelled value axis (picking rungs and
+formatting them is N-2 and N-1 in one step), the words *Loss* and *Gain*
+(copy the server owns), a dashed break-even rule and a marker at the current
+price. Spec `frontend/0005` recorded the last two as OD-1 — *"the payload
+lacks the field"* — and `payoff_layout.dart` repeated it in a doc comment.
+
+`markers {break_even, current}` had been added months earlier by spec
+`backend/0024` §4, for a different reason entirely: to stop the client placing
+a rule by matching the English string `"Break-even price"`. The field the note
+was waiting for arrived under another ticket's name, and the note went on
+saying it was missing. `payoff_tokens.dart` even carried a measured
+`breakEven` colour with a comment explaining it was kept for the day the
+backend sent a marker.
+
+**A recorded gap is a claim with a date on it.** Nothing re-reads an OD when
+the thing it waits for lands somewhere else, and the cost here was two
+features sitting one grep apart from being drawable.
+
+**The other two gaps were real, and the backend is where they were closed.**
+`value_ticks[]` and `zones {loss, gain}` are new fields. The ladder is chosen
+by a step search aiming for five rungs and never exceeding them, and it always
+contains zero, because zero is the line the whole chart is read against. Its
+one measured case is the artboard's own: a 20 k span in five rungs of 5 k.
+
+**The wash turned ninety degrees.** It used to mean *profit or loss* — above
+and below the zero rule. The design's means *how far the underlying moved*, so
+the boundary is a price and the regions are vertical. Which side loses is read
+from the curve's own sign at its lowest price, so a sale mirrors without a
+flag travelling down from the payload.
+
+**The golden had been proving the fallback.** Its subject was built from two
+fields of the model, `series` and `tickLabels`. So when the markers, the rungs
+and the region words arrived, both goldens re-rendered **byte-identically**
+and said nothing — and a golden's silence reads exactly like a pass. The
+regenerated rasters, after binding the whole model, show a different chart
+entirely.
+
+That generalises past this card, and it is the more useful half of the ticket:
+*a golden over a subject assembled from part of the model proves that part.*
+The subject is a fixture like any other, and a fixture that drifts from the
+thing it stands for is the defect `frontend/testing.md` §5 already warns about
+one level up.
+
+**What was not done, and it is in the spec rather than in a hope.** The
+payoff palette is still the mock's. The Figma session this session had been
+reading went away mid-ticket and came back as an anonymous viewer, which has
+no inspector, so the colours could not be read. The structure is the design's
+and the colours are not, which is written down (`0034` OD-1) with the list of
+swatches still to take.

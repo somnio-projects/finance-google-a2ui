@@ -17,6 +17,12 @@ import 'payoff_chart_harness.dart';
 /// D-15 records: glyph edges carry nearly all the cross-platform raster
 /// drift, and a card with three totals, four annotations and a four-line
 /// disclosure would push the noise floor towards the 1.5 % tolerance.
+///
+/// **It binds the whole payload, not two fields of it.** Until GGU-146 it
+/// passed only `series` and `tickLabels`, so when the design's markers, rungs
+/// and region words arrived the goldens re-rendered **identically** and said
+/// nothing — a golden over a subject built from part of the model proves the
+/// part, and its silence reads exactly like a pass.
 void main() {
   group('PayoffChart goldens', () {
     const boundary = Key('golden-subject');
@@ -27,9 +33,23 @@ void main() {
         child: SizedBox(
           // The design's plot width for a single card at 1024: `x` 44 → 486.
           width: 442,
-          child: PayoffChart(
-            series: payoffData().series,
-            tickLabels: payoffData().tickLabels,
+          child: Builder(
+            builder: (context) {
+              final data = payoffData();
+              return PayoffChart(
+                series: data.series,
+                tickLabels: data.tickLabels,
+                valueLabels: <String>[
+                  for (final rung in data.rungs) rung.display,
+                ],
+                valueTicks: <double>[for (final rung in data.rungs) rung.at],
+                breakEvenAt: data.breakEven?.at,
+                currentAt: data.current?.at,
+                breakEvenLabel: data.breakEven?.caption ?? '',
+                lossWord: data.lossWord,
+                gainWord: data.gainWord,
+              );
+            },
           ),
         ),
       ),

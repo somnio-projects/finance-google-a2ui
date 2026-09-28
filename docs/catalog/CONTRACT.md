@@ -147,7 +147,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `9ff39ae83d7f` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `4f00c29a4c39` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
 | [`order.ticket.v2`](#orderticketv2) | `MultiLegOrderTicket` | `da6c79781962` | 67 | `side`, `legs` | Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing. |
-| [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `922cd5dac6f0` | 32 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
+| [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `b50b0e20f80b` | 38 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `da83b01797ad` | 62 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints. |
 | [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `0556567d7b94` | 45 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
@@ -2878,7 +2878,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.
 
-- **Frozen id:** `payoff.curve.v1` · **digest:** `922cd5dac6f0`
+- **Frozen id:** `payoff.curve.v1` · **digest:** `b50b0e20f80b`
 - **Component:** `RiskPayoffChart`
 - **Payload type:** `PayoffCurvePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -2917,6 +2917,12 @@ _This surface sends nothing back: tapping it starts no turn._
 | `markers.current.at` | object | required | `container` | — | — |
 | `markers.current.at.amount` | decimal | required | `raw` | — | — |
 | `markers.current.at.display` | string ≤32 chars | required | `display` | — | — |
+| `value_ticks` | array | default `[]` | `container` | empty | — |
+| `value_ticks[].amount` | decimal | required | `raw` | — | — |
+| `value_ticks[].display` | string ≤32 chars | required | `display` | — | — |
+| `zones` | object | required | `container` | — | — |
+| `zones.loss` | string ≤24 chars | required | `text` | — | — |
+| `zones.gain` | string ≤24 chars | required | `text` | — | — |
 | `totals` | array | default `[]` | `container` | empty | — |
 | `totals[].label` | string ≤64 chars | required | `text` | — | — |
 | `totals[].amount` | object | required | `container` | — | — |
@@ -2966,6 +2972,24 @@ _This surface sends nothing back: tapping it starts no turn._
         "display": "$152.40"
       }
     }
+  },
+  "value_ticks": [
+    {
+      "amount": "-100",
+      "display": "-$100.00"
+    },
+    {
+      "amount": "0",
+      "display": "$0.00"
+    },
+    {
+      "amount": "100",
+      "display": "$100.00"
+    }
+  ],
+  "zones": {
+    "loss": "Loss",
+    "gain": "Gain"
   },
   "totals": [
     {

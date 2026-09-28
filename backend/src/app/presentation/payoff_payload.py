@@ -17,7 +17,14 @@ from typing import Final, Literal
 
 from pydantic import Field
 
-from app.presentation.fragments import Annotation, ProjectionDto, Series, Total
+from app.presentation.fragments import (
+    Annotation,
+    MoneyDisplay,
+    ProjectionDto,
+    Series,
+    Total,
+)
+from app.presentation.payoff_axis import PayoffZones
 from app.presentation.payoff_markers import PayoffMarkers
 
 VIEW_ID: Final[str] = "payoff.curve.v1"
@@ -59,6 +66,20 @@ class PayoffCurvePayload(ProjectionDto):
         description=(
             "The break-even and the current price, each under its own field "
             "name so a widget places them by path and never by label."
+        )
+    )
+    value_ticks: tuple[MoneyDisplay, ...] = Field(
+        default=(),
+        description=(
+            "Where the value axis draws a rule, ascending, each with the "
+            "string to print beside it. Chosen here because a client that "
+            "picked its own rungs would be computing a figure (N-2)."
+        ),
+    )
+    zones: PayoffZones = Field(
+        description=(
+            "What each side of the break-even is called, written here so the "
+            "words follow `locale`."
         )
     )
     totals: tuple[Total, ...] = Field(

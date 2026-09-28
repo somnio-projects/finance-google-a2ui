@@ -25,6 +25,7 @@ from typing import Final
 from app.domain.market import market_asset
 from app.domain.payoff_pricing import payoff_curve
 from app.domain.portfolio import Portfolio
+from app.presentation import payoff_axis as axis
 from app.presentation import payoff_figures as figures
 from app.presentation import payoff_markers as marks
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
@@ -77,6 +78,8 @@ def render(portfolio: Portfolio, options: PayoffCurveOptions) -> PayoffCurvePayl
         title=f"{TITLE}: {options.side} {asset.name}",
         disclosure=DISCLOSURE,
         markers=marks.markers(curve, shape),
+        value_ticks=axis.value_axis(curve, shape),
+        zones=axis.zones(),
         totals=figures.totals(curve, shape) if "totals" in sections else (),
         series=(figures.line(curve, shape),) if "series" in sections else (),
         annotations=figures.notes(curve, shape) if "annotations" in sections else (),
@@ -99,6 +102,10 @@ def surface(payload: PayoffCurvePayload) -> Surface:
             "lines": [row.model_dump(mode="json") for row in payload.series],
             "totals": [row.model_dump(mode="json") for row in payload.totals],
             "markers": payload.markers.model_dump(mode="json"),
+            "valueTicks": [
+                tick.model_dump(mode="json") for tick in payload.value_ticks
+            ],
+            "zones": payload.zones.model_dump(mode="json"),
             "annotations": [
                 note.model_dump(mode="json") for note in payload.annotations
             ],

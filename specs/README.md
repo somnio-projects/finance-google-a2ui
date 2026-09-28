@@ -174,3 +174,4 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0031-the-comparison-is-measured.md](frontend/0031-the-comparison-is-measured.md) | In progress | GGU-141 |
 | [frontend/0032-the-grid-keeps-its-width.md](frontend/0032-the-grid-keeps-its-width.md) | In progress | GGU-144 |
 | [frontend/0033-the-donut-offers-its-groupings.md](frontend/0033-the-donut-offers-its-groupings.md) | In progress | GGU-145 |
+| [frontend/0034-the-payoff-chart-is-measured.md](frontend/0034-the-payoff-chart-is-measured.md) | In progress | GGU-146 |

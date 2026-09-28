@@ -1,3 +1,4 @@
+import 'package:finance_charts/src/chart_geometry.dart';
 import 'package:finance_charts/src/linear_scale.dart';
 import 'package:finance_charts/src/payoff_point.dart';
 import 'package:finance_charts/src/tick_steps.dart';
@@ -64,4 +65,83 @@ List<double> payoffGridLines(NiceBounds bounds, LinearScale scale) {
     lines.add(scale(value));
   }
   return lines;
+}
+
+/// The two scales, the rounded value axis and the zero rule of one layout.
+typedef PayoffFrame = ({
+  NiceBounds value,
+  LinearScale priceScale,
+  LinearScale valueScale,
+  ZeroLine zero,
+  bool empty,
+});
+
+/// Builds the frame a `PayoffLayout` is drawn in.
+///
+/// Split out of the factory to keep that file inside the 150-line budget, and
+/// it is the same seam as [payoffBounds]: everything here is a function of
+/// the data and the box, with nothing the caller can decide.
+PayoffFrame payoffFrame({
+  required List<PayoffPoint> points,
+  required double width,
+  required double height,
+  required int targetTickCount,
+}) {
+  final empty = points.isEmpty;
+  final bounds = empty
+      ? (minAt: 0.0, maxAt: 1.0, minValue: 0.0, maxValue: 0.0)
+      : payoffBounds(points);
+  final value = niceBounds(
+    min: bounds.minValue,
+    max: bounds.maxValue,
+    targetCount: targetTickCount,
+  );
+  final priceScale = LinearScale(
+    domainMin: bounds.minAt,
+    // A single-sample curve has no width; widening by one unit keeps the
+    // scale from dividing by zero and draws the point at the left edge.
+    domainMax: bounds.maxAt > bounds.minAt ? bounds.maxAt : bounds.minAt + 1,
+    rangeMin: 0,
+    rangeMax: width,
+  );
+  final valueScale = LinearScale(
+    domainMin: empty ? 0 : value.min,
+    domainMax: empty ? 1 : value.max,
+    rangeMin: height,
+    rangeMax: 0,
+  );
+  return (
+    value: value,
+    priceScale: priceScale,
+    valueScale: valueScale,
+    zero: payoffZero(value, valueScale, height),
+    empty: empty,
+  );
+}
+
+/// Maps every series onto the plot, dropping the lines that carry no points.
+List<List<ChartPoint>> payoffPaths(
+  List<List<PayoffPoint>> series,
+  LinearScale priceScale,
+  LinearScale valueScale,
+) => <List<ChartPoint>>[
+  for (final line in series)
+    if (line.isNotEmpty)
+      <ChartPoint>[
+        for (final point in line)
+          ChartPoint(priceScale(point.at), valueScale(point.value)),
+      ],
+];
+
+/// The `y` of every horizontal rule, from the backend's ladder when it sent
+/// one and from the rounded axis when it did not.
+List<double> payoffRungs({
+  required List<double> valueTicks,
+  required NiceBounds bounds,
+  required LinearScale valueScale,
+  required bool empty,
+}) {
+  if (empty) return const <double>[];
+  if (valueTicks.isEmpty) return payoffGridLines(bounds, valueScale);
+  return <double>[for (final tick in valueTicks) valueScale(tick)];
 }

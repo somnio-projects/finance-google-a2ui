@@ -1,5 +1,6 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/payoff_chart/payoff_chart_card.dart';
+import 'package:finance_app/components/payoff_chart/payoff_chart_marks.dart';
 import 'package:finance_app/components/payoff_chart/payoff_chart_model.dart';
 import 'package:finance_app/components/payoff_chart/payoff_chart_skeleton.dart';
 import 'package:finance_app/components/view_component.dart';
@@ -53,6 +54,26 @@ class PayoffChartComponent extends ViewComponent {
       for (final note in payload.rows('annotations'))
         PayoffFact(label: note.text('label'), text: note.text('text')),
     ],
+    rungs: <PayoffRung>[
+      for (final rung in payload.rows('value_ticks'))
+        PayoffRung(at: rung.geometry('amount'), display: rung.text('display')),
+    ],
+    breakEven: _marker(payload, 'markers.break_even'),
+    current: _marker(payload, 'markers.current'),
+    lossWord: payload.text('zones.loss'),
+    gainWord: payload.text('zones.gain'),
+  );
+
+  /// Reads one marker by its **own field name**, never by matching a label.
+  ///
+  /// That is the whole reason `markers` is an object with named fields rather
+  /// than a list: the address is a literal this file writes, so a marker
+  /// relabelled by `locale` still lands in the same place (N-5, spec
+  /// `backend/0024` §4).
+  PayoffMarker _marker(ViewPayload payload, String path) => PayoffMarker(
+    label: payload.text('$path.label'),
+    display: payload.text('$path.at.display'),
+    at: payload.geometry('$path.at.amount'),
   );
 
   /// Reads one `series[]` entry.
