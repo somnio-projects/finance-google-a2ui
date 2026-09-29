@@ -143,15 +143,34 @@ which is every real payload.
 
 ## 7. Open decisions
 
-- **OD-1 — the payoff palette was not re-measured, and that is a gap this
-  ticket opened deliberately.** GGU-145 established that
-  `.design-refs/*.dc.html` is our own mock; `payoff_tokens.dart` still carries
-  values from it. The Figma session this session had been reading went away
-  mid-ticket and came back as an anonymous viewer, which has no inspector, so
-  the colours could not be read. **The structure here is the design's and the
-  colours are still the mock's**, which is stated rather than papered over.
-  What remains to read: the two region washes and their alphas, the break-even
-  amber, the axis-label grey, the marker dot and the two series colours.
+- **OD-1 — CLOSED.** It read: *"the payoff palette was not re-measured … the
+  structure here is the design's and the colours are still the mock's"*. The
+  Figma session had gone anonymous mid-ticket and an anonymous viewer has no
+  inspector. A **second connected browser** turned out to be signed in, which
+  is the thing worth carrying: `list_connected_browsers` is cheap and was
+  never checked. Everything below was then read node by node.
+
+  | role | mock | design |
+  |---|---|---|
+  | loss wash | `barLoss` at **7 %** / 10 % | `negative/surface` #FFEDEB · `surface/negative` #3F1D1D, both at **80 %** |
+  | gain wash | `barGain` at 7 % / 10 % | `positive/surface` #D8FDEB · `surface/positive` #132520, at 80 % |
+  | break-even | amber #C07A10 / #FFBF5C | `border/secondary` **#CBCDD0 / #474D58**, 1.5 px, dashes **5 / 4** |
+  | axis label | #9A9BA4 / #7F828C | `text/secondary` **#56575B / #B9BEC6** |
+  | series 1 | `barTotal` | `border/principal` **#5498E5 / #1763BA**, 2 px |
+  | series 2 | `barNeutral` | **#5F6169**, untokenised, same in both themes |
+  | marker | `barTotal` + surface | `action/principal/default` **#3C90F1 / #308CF5**, 12 px box, 2.5 px inner ring in `surface/primary` |
+  | curve width | 2.6 | **2** |
+
+  Three of those are not near misses. The wash alpha was out by **an order of
+  magnitude** *and* derived from a colour the design does not use here. The
+  break-even was **amber in a design that draws it grey** — a colour the mock
+  invented for a line it was drawing without one, carried unused for months
+  behind a comment explaining why it was being kept. And the dash pattern was
+  assumed rather than read.
+- **OD-5 — the zero baseline and the gridlines were not re-measured.** They
+  are the two roles the artboard's layer tree does not name separately, and
+  every other role on this card turned out to be wrong, so their silence is
+  not evidence. They keep the mock's values.
 - **OD-2 — the step search exists on both sides of the wire.** `_STEPS` in
   `payoff_axis.py` and `niceStep` in `finance_charts` are the same mantissa
   set, written twice, and nothing compares them. They decide different axes —

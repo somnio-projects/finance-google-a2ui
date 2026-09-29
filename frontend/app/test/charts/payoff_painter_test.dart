@@ -8,10 +8,11 @@ import 'payoff_harness.dart';
 void main() {
   group('PayoffPainter', () {
     test("carries the design's measured stroke widths", () {
-      // `stroke-width` on the design's grid line, zero rule and curve.
+      // Measured on the artboards (GGU-146). The curve was 2.6 from the
+      // mock; every `Borde` on a series in the kit reads 2px.
       expect(gridWidth, 1);
       expect(zeroWidth, 1.5);
-      expect(curveWidth, 2.6);
+      expect(curveWidth, 2);
     });
 
     test('does not repaint when nothing it draws changed', () {
