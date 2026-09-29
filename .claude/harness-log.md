@@ -6452,3 +6452,30 @@ is a red test rather than a surprise.
 What is still not measured is recorded rather than assumed: the zero baseline
 and the gridlines are the two roles the layer tree does not name separately,
 and after this they get no benefit of the doubt (`0034` OD-5).
+
+## GGU-148 — `Vary` is a list, so a dependency bump stopped being red
+
+Dependabot's starlette 1.6.0 → 1.7.0 (PR #154) turned the backend suite red on
+two assertions in `tests/unit/api/test_view_caching.py`:
+
+```
+assert 'Authorization, Origin' == 'Authorization'
+```
+
+1.7.0's CORS middleware appends `Origin` to `Vary`, which is **correct** — a
+CORS response does vary by origin. The test was wrong: `Vary` is a
+comma-separated list (RFC 9110 §12.5.5), and asserting equality on a list
+header couples the test to every middleware in the stack.
+
+**The split is the point, and it is not "relax both".** The same equality
+appears twice more in `tests/unit/api/test_caching.py` and **stays there**:
+that file drives `ConditionalResponse` against a bare `Response` with no
+middleware, so *"this helper writes exactly `Authorization`"* is the claim
+being made. The app-level test asserts what survives the stack; the unit test
+asserts what the helper writes. Two different questions that happened to share
+a syntax.
+
+A small second finding: the helper first took the response and annotated it
+`httpx.Response`, which basedpyright rejected — `TestClient` returns
+`httpx2._models.Response`. It takes the header string instead, so it is
+coupled to neither.

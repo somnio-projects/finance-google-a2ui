@@ -44,6 +44,27 @@ def other_views_client(
     )
 
 
+def vary_directives(header: str) -> list[str]:
+    """Return a ``Vary`` header as the list RFC 9110 §12.5.5 says it is.
+
+    **Read as a list rather than compared as a string**, because this client
+    goes through the whole application and any middleware in it may add a
+    directive of its own. Starlette 1.7.0 began appending ``Origin`` from the
+    CORS middleware — correct, since a CORS response does vary by origin — and
+    an equality assertion here turned a routine dependency bump red for a
+    reason that had nothing to do with caching (PR #154).
+
+    `tests/unit/api/test_caching.py` keeps its equality on purpose: it drives
+    `ConditionalResponse` against a bare `Response` with no middleware, and
+    there *"this helper writes exactly `Authorization`"* is the claim.
+
+    Takes the header rather than the response: the test client's response
+    type is `httpx2`'s, not `httpx`'s, and a helper that named either would be
+    coupled to which one the transport happens to vendor.
+    """
+    return [directive.strip() for directive in header.split(",")]
+
+
 def test_a_view_read_carries_a_strong_etag_and_a_cache_policy(
     views_client: TestClient,
 ) -> None:
@@ -52,7 +73,7 @@ def test_a_view_read_carries_a_strong_etag_and_a_cache_policy(
     assert response.status_code == 200
     assert response.headers["ETag"].startswith('"')
     assert response.headers["Cache-Control"] == CACHE_CONTROL
-    assert response.headers["Vary"] == VARY
+    assert VARY in vary_directives(response.headers["Vary"])
 
 
 def test_revalidating_a_view_read_answers_304_with_no_body(
@@ -70,7 +91,7 @@ def test_revalidating_a_view_read_answers_304_with_no_body(
     assert second.status_code == 304
     assert second.content == b""
     assert second.headers["ETag"] == etag
-    assert second.headers["Vary"] == VARY
+    assert VARY in vary_directives(second.headers["Vary"])
 
 
 def test_a_different_option_is_a_different_entity(views_client: TestClient) -> None:
