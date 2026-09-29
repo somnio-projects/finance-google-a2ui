@@ -6402,3 +6402,53 @@ half closed and which did not — the mono face is still not shipped, and
 than an omission.** What is asserted is the wiring: both themes carry the
 family, and every style `ChartText` builds names it. The second is the half a
 theme change cannot fix and the half nothing else would notice.
+
+## GGU-146 (follow-up) — the payoff palette is measured
+
+Spec `frontend/0034` OD-1, closed. The ticket had shipped the card's
+**structure** from the design and its **colours** from the mock, because the
+Figma session had gone anonymous mid-ticket and an anonymous viewer has no
+inspector.
+
+**A second connected browser was signed in the whole time.**
+`list_connected_browsers` is one call, costs nothing, and was never made — the
+first browser was simply assumed to be the only one. Before declaring a tool
+blocked, ask it what it has.
+
+Four other things were tried first and all are genuinely closed, which is
+worth recording so nobody repeats them: `drawImage` of Figma's canvas returns
+black (`preserveDrawingBuffer` is off), `captureStream` produces no frames for
+the same reason, `ImageCapture` is not available in that context, and the
+public viewer has no inspector by design.
+
+**Every value on this card was wrong, and three were not near misses.**
+
+| role | mock | design |
+|---|---|---|
+| region wash | `barLoss`/`barGain` at **7 %** | its own token at **80 %** |
+| break-even | amber `#C07A10` | grey `border/secondary` `#CBCDD0` |
+| axis label | `#9A9BA4` | `text/secondary` `#56575B` |
+| curve | 2.6 px | 2 px |
+| dash | 4 / 4 assumed | `Guiones 5, 4` |
+
+The wash alpha was out by an **order of magnitude** *and* derived from a
+colour the design does not use for this at all. The break-even was **amber in
+a design that draws it grey** — and that one had been sitting in
+`payoff_tokens.dart` for months behind a comment explaining that it was being
+kept, unused, against the day the payload could place the rule. The comment
+was about the *payload*; nobody asked whether the colour was right.
+
+**A field kept "for later" is a field nobody has checked.** It looks like
+foresight and reads like a measurement, and it had never been compared with
+anything.
+
+**And one finding is design's, not ours.** The first series is tokenised
+(`border/principal`, different per theme); the second is a **raw hex,
+`#5F6169`, identical on both artboards**. That is Miriam's own open note about
+the categorical palette showing up in one field. `PayoffPalette.seriesAlt`
+says so, and a test asserts the two themes agree — so the day it gets a token
+is a red test rather than a surprise.
+
+What is still not measured is recorded rather than assumed: the zero baseline
+and the gridlines are the two roles the layer tree does not name separately,
+and after this they get no benefit of the doubt (`0034` OD-5).

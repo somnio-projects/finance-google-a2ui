@@ -1,4 +1,3 @@
-import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/charts/chart_text.dart';
 import 'package:finance_app/charts/payoff_marks_painter.dart';
 import 'package:finance_app/charts/payoff_palette.dart';
@@ -70,14 +69,14 @@ void paintZoneWords(
 void paintCurrent(
   Canvas canvas, {
   required PayoffLayout layout,
-  required ChartPalette palette,
+  required PayoffPalette payoff,
 }) {
   final mark = layout.current;
   if (mark == null) return;
   paintCurrentMark(
     canvas,
     at: ChartPoint(mark.x, mark.y),
-    color: palette.barTotal,
-    halo: palette.surface,
+    color: payoff.marker,
+    halo: payoff.markerHalo,
   );
 }

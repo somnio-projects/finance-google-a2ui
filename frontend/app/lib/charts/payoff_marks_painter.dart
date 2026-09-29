@@ -11,10 +11,10 @@ import 'package:flutter/material.dart';
 /// that marker's `at.display`, and the two region words are `zones.loss` and
 /// `zones.gain` (N-1 — none of them is written here).
 ///
-/// The dash pattern is the one measurable thing that is **not** from the
-/// payload, and it is design: a break-even is a reference, not a reading, and
-/// the artboard draws it broken so it cannot be mistaken for a series.
-const double breakEvenDash = 4;
+/// The dash the artboard draws (`Guiones 5, 4`, GGU-146; it was 4 by
+/// assumption). A break-even is a reference, not a reading, so the design
+/// breaks the line rather than let it read as a series.
+const double breakEvenDash = 5;
 
 /// The gap between two dashes.
 const double breakEvenGap = 4;
@@ -23,10 +23,13 @@ const double breakEvenGap = 4;
 const double breakEvenWidth = 1.5;
 
 /// The radius of the dot on the curve at the current price.
+///
+/// The artboard's `CurrentDot` is a 12 px box with a 2.5 px stroke aligned
+/// **inside**, so the fill reaches 3.5 and the ring takes the outer 2.5.
 const double currentRadius = 3.5;
 
-/// The halo that lifts that dot off the line it sits on.
-const double currentHalo = 2;
+/// The ring around it, in the card's own surface.
+const double currentHalo = 2.5;
 
 /// The clearance kept between a rung's label and the plot's left edge.
 const double rungGap = 8;

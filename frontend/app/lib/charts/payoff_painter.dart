@@ -112,8 +112,8 @@ class PayoffPainter extends CustomPainter {
       label: breakEvenLabel,
       textDirection: textDirection,
     );
-    paintPayoffCurves(canvas, layout, palette);
-    paintCurrent(canvas, layout: layout, palette: palette);
+    paintPayoffCurves(canvas, layout, payoffPalette);
+    paintCurrent(canvas, layout: layout, payoff: payoffPalette);
     paintTickRow(
       canvas,
       layout: layout,

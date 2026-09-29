@@ -13,8 +13,8 @@ const double gridWidth = 1;
 /// The zero rule, heavier than a gridline (`stroke-width="1.5"`).
 const double zeroWidth = 1.5;
 
-/// The curve (`stroke-width="2.6"`, round cap and join).
-const double curveWidth = 2.6;
+/// The curve. **2 px, measured** — it was 2.6, from the mock (GGU-146).
+const double curveWidth = 2;
 
 /// Shades the two regions the break-even splits the plot into.
 ///
@@ -68,7 +68,7 @@ void paintPayoffGrid(
 void paintPayoffCurves(
   Canvas canvas,
   PayoffLayout layout,
-  ChartPalette palette,
+  PayoffPalette payoff,
 ) {
   for (final (index, points) in layout.paths.indexed) {
     if (points.isEmpty) continue;
@@ -79,7 +79,7 @@ void paintPayoffCurves(
     canvas.drawPath(
       path,
       Paint()
-        ..color = index == 0 ? palette.barTotal : palette.barNeutral
+        ..color = index == 0 ? payoff.series : payoff.seriesAlt
         ..style = PaintingStyle.stroke
         ..strokeWidth = curveWidth
         ..strokeCap = StrokeCap.round

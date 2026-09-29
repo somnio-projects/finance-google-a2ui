@@ -1,4 +1,3 @@
-import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/charts/payoff_palette.dart';
 import 'package:finance_app/charts/payoff_tokens.dart';
 import 'package:finance_app/theme/app_theme.dart';
@@ -8,45 +7,47 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('PayoffTokens', () {
     test("carries the design's measured light values", () {
-      // Read from the design's own SVG template, where each is a literal
-      // attribute: stroke="#c07a10", stroke="#b8bcc6", fill="#9a9ba4".
-      expect(PayoffTokens.light.breakEven, const Color(0xFFC07A10));
-      expect(PayoffTokens.light.zeroBaseline, const Color(0xFFB8BCC6));
-      expect(PayoffTokens.light.axisLabel, const Color(0xFF9A9BA4));
+      // Read through the Figma inspector from `Risk Payoff Chart /
+      // Comparison, Light, Desktop`, node by node (GGU-146). Every one of
+      // these was different before, and every previous value came from the
+      // catalog mock this repository generated.
+      expect(PayoffTokens.light.breakEven, const Color(0xFFCBCDD0));
+      expect(PayoffTokens.light.axisLabel, const Color(0xFF56575B));
+      expect(PayoffTokens.light.series, const Color(0xFF5498E5));
+      expect(PayoffTokens.light.marker, const Color(0xFF3C90F1));
+      expect(PayoffTokens.light.markerHalo, const Color(0xFFFFFFFF));
     });
 
     test("carries the design's measured dark values", () {
-      expect(PayoffTokens.dark.breakEven, const Color(0xFFFFBF5C));
-      expect(PayoffTokens.dark.zeroBaseline, const Color(0xFF3A3B44));
-      expect(PayoffTokens.dark.axisLabel, const Color(0xFF7F828C));
+      expect(PayoffTokens.dark.breakEven, const Color(0xFF474D58));
+      expect(PayoffTokens.dark.axisLabel, const Color(0xFFB9BEC6));
+      expect(PayoffTokens.dark.series, const Color(0xFF1763BA));
+      expect(PayoffTokens.dark.marker, const Color(0xFF308CF5));
+      expect(PayoffTokens.dark.markerHalo, const Color(0xFF17181C));
     });
 
-    test('tints each region at the alpha its own theme uses', () {
-      // The design shades at opacity .07 in light and .10 in dark — the one
-      // value that is *not* shared between the artboards, which is why the
-      // tint is a token rather than an alpha applied at the point of use.
-      expect(PayoffTokens.light.lossRegion.a, closeTo(0.07, 1e-6));
-      expect(PayoffTokens.light.gainRegion.a, closeTo(0.07, 1e-6));
-      expect(PayoffTokens.dark.lossRegion.a, closeTo(0.10, 1e-6));
-      expect(PayoffTokens.dark.gainRegion.a, closeTo(0.10, 1e-6));
-    });
-
-    test("tints the regions in the chart palette's own marks", () {
-      // The defect this catches: the tints were once transcribed hex literals
-      // that happened to agree with `barLoss`/`barGain`. Nothing held them
-      // together, so recolouring a bar left the wash on the old hue with a
-      // green gate. Asserted on the colour channels, since only the alpha
-      // may differ.
-      void sameHue(Color tint, Color source) {
-        expect(tint.r, source.r);
-        expect(tint.g, source.g);
-        expect(tint.b, source.b);
+    test('washes both regions at the one opacity the artboards share', () {
+      // The mock had .07 in light and .10 in dark and made a whole argument
+      // out of the difference. The kit changes the **token** between themes
+      // and leaves the opacity alone — so the interesting assertion is that
+      // the four alphas agree, which is what the old values could not do.
+      for (final wash in <Color>[
+        PayoffTokens.light.lossRegion,
+        PayoffTokens.light.gainRegion,
+        PayoffTokens.dark.lossRegion,
+        PayoffTokens.dark.gainRegion,
+      ]) {
+        expect(wash.a, closeTo(PayoffTokens.wash, 1e-6));
       }
+    });
 
-      sameHue(PayoffTokens.light.lossRegion, ChartTokens.light.barLoss);
-      sameHue(PayoffTokens.light.gainRegion, ChartTokens.light.barGain);
-      sameHue(PayoffTokens.dark.lossRegion, ChartTokens.dark.barLoss);
-      sameHue(PayoffTokens.dark.gainRegion, ChartTokens.dark.barGain);
+    test('the second series is the same colour in both themes', () {
+      // Not a copy-paste: it is a raw hex in the kit, bound to no token and
+      // identical on both artboards, which is Miriam's own open note about
+      // the categorical palette showing up in the code. Asserted so that a
+      // later pass giving it a token is a red test rather than a surprise.
+      expect(PayoffTokens.light.seriesAlt, PayoffTokens.dark.seriesAlt);
+      expect(PayoffTokens.light.series, isNot(PayoffTokens.dark.series));
     });
 
     test('answers a different palette per brightness', () {
@@ -108,6 +109,22 @@ void main() {
         PayoffTokens.light.copyWith(gainRegion: replacement).gainRegion,
         replacement,
       );
+      expect(
+        PayoffTokens.light.copyWith(series: replacement).series,
+        replacement,
+      );
+      expect(
+        PayoffTokens.light.copyWith(seriesAlt: replacement).seriesAlt,
+        replacement,
+      );
+      expect(
+        PayoffTokens.light.copyWith(marker: replacement).marker,
+        replacement,
+      );
+      expect(
+        PayoffTokens.light.copyWith(markerHalo: replacement).markerHalo,
+        replacement,
+      );
     });
 
     test('lerps to the other palette and back', () {
@@ -123,6 +140,9 @@ void main() {
       expect(mid.axisLabel, isNot(PayoffTokens.light.axisLabel));
       expect(mid.lossRegion, isNot(PayoffTokens.light.lossRegion));
       expect(mid.gainRegion, isNot(PayoffTokens.light.gainRegion));
+      expect(mid.series, isNot(PayoffTokens.light.series));
+      expect(mid.marker, isNot(PayoffTokens.light.marker));
+      expect(mid.markerHalo, isNot(PayoffTokens.light.markerHalo));
     });
   });
 }
