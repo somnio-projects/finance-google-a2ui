@@ -1,0 +1,20 @@
+{
+  "kind": "data",
+  "metadata": {
+    "mimeType": "application/a2ui+json"
+  },
+  "data": [
+    {
+      "version": "v1.0",
+      "action": {
+        "name": "drill_attribution",
+        "surfaceId": "turn-4b10-0",
+        "sourceComponentId": "root",
+        "timestamp": "2026-10-01T22:00:00Z",
+        "context": {
+          "driver": "LINK"
+        }
+      }
+    }
+  ]
+}

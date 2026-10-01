@@ -176,3 +176,5 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0033-the-donut-offers-its-groupings.md](frontend/0033-the-donut-offers-its-groupings.md) | In progress | GGU-145 |
 | [frontend/0034-the-payoff-chart-is-measured.md](frontend/0034-the-payoff-chart-is-measured.md) | In progress | GGU-146 |
 | [frontend/0035-the-app-sets-the-designs-typeface.md](frontend/0035-the-app-sets-the-designs-typeface.md) | In progress | GGU-147 |
+| [backend/0053-the-agent-speaks-a2ui-v1.md](backend/0053-the-agent-speaks-a2ui-v1.md) | Draft | *unassigned* |
+| [frontend_v1/0001-a-second-client-renders-a2ui-v1.md](frontend_v1/0001-a-second-client-renders-a2ui-v1.md) | Draft | *unassigned* |

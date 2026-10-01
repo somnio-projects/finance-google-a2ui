@@ -94,7 +94,7 @@ fi
 # and was happy" is the same sentence whether it opened them or not. A name that
 # stops resolving is a failure, and the fix is to edit this list in the pull
 # request that moves the directory.
-for area in backend frontend infra repo client; do
+for area in backend frontend frontend_v1 infra repo client; do
   if ! grep -q "^${area}/" <<<"$specs"; then
     note "nothing under specs/${area}/ reached this check"
     note "  if that area moved or closed, update the list in this script"
