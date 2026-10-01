@@ -30,6 +30,8 @@ PUBLIC = {
     "/health",
     "/readyz",
     "/.well-known/agent-card.json",
+    # Spec 0053 / ADR-M D-8: the v1.0 card, public for the v0.9 card's reason.
+    "/a2ui/v1/.well-known/agent-card.json",
     # Spec 0027: a person who cannot sign in yet has no token to present.
     "/v1/access-requests",
     "/v1/preview-sign-ins",
