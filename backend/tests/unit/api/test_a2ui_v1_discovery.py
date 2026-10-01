@@ -70,3 +70,19 @@ def test_the_catalog_serves_the_checked_in_bytes(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     assert response.text == committed(CATALOG_PATH)
+
+
+def test_the_catalog_carries_a_strong_etag(client: TestClient) -> None:
+    response = client.get(CATALOG, headers=AUTH)
+
+    assert response.headers["etag"].startswith('"')
+    assert response.headers["cache-control"] == "private, no-cache"
+
+
+def test_a_matching_etag_answers_304_with_no_body(client: TestClient) -> None:
+    etag = client.get(CATALOG, headers=AUTH).headers["etag"]
+
+    response = client.get(CATALOG, headers={**AUTH, "If-None-Match": etag})
+
+    assert response.status_code == 304
+    assert response.content == b""

@@ -7,6 +7,7 @@ host, the view service and the surface-action dispatcher are the v0.9 ones,
 which is what makes the two wires share one loop and one registry.
 """
 
+from functools import cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -58,8 +59,14 @@ def get_v1_agent_card(container: ContainerDep) -> V1AgentCard:
     return build_v1_card(container.agent.card)
 
 
+@cache
 def get_v1_catalog() -> str:
-    """Provide the generated v1.0 catalog document."""
+    """Provide the generated v1.0 catalog document, rendered once per process.
+
+    The registry is fixed once the views are imported, so the document cannot
+    change within a release; re-rendering it per request would be work with
+    no possible new answer (presentation.md §5).
+    """
     return v1_catalog(REGISTRY.all())
 
 

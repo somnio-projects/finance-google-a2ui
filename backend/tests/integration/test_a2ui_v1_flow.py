@@ -75,7 +75,7 @@ def test_a_demo_flow_streams_its_surface_as_v1(
     assert "renderIntents" not in stream[-2]
 
 
-def test_render_view_reaches_the_database_and_not_the_model(
+def test_render_view_reads_the_database_for_the_new_payload(
     integration_client: TestClient, headers: dict[str, str]
 ) -> None:
     response = integration_client.post(RPC, json=render_view(), headers=headers)

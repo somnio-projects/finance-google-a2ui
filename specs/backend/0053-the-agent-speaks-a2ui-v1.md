@@ -64,7 +64,7 @@ model (asserted with the null model client). RFC 9457 for HTTP faults.
 - **AC-3** A turn whose tools emit N intents streams N `createSurface` parts
   in order, each `dataModel.root.payload` equal to the REST payload for the
   same view and options.
-- **AC-4** Ticket + payoff in one turn → one surface, payoff as child.
+- **AC-4** Ticket + payoff in one turn → one surface, payoff as child; a second payoff, or a payoff with no ticket before it, is not drawn (the catalog forbids it at the root). **Dormant today:** no tool emits `payoff.curve.v1` (`agent/tools/payoff.py` emits no render intent), so this is proven with test tools only and becomes live the day one does.
 - **AC-5** `callAgentFunction(renderView)` answers `agentFunctionResponse` +
   `updateDataModel` matching the examples; invalid options and unknown
   function answer the error codes; the model is never called.
@@ -72,8 +72,7 @@ model (asserted with the null model client). RFC 9457 for HTTP faults.
   bad args are refused as today.
 - **AC-7** Missing/foreign `a2uiRendererCapabilities` → JSON-RPC error naming
   `CATALOG_ID`.
-- **AC-8** `POST /a2a`, its card and every v0.9 test are unchanged — no
-  existing test edited except to register the new router.
+- **AC-8** `POST /a2a`, its card and every v0.9 behaviour test are unchanged. The only existing tests edited are the three registration inventories that exist to fail on exactly this: `test_openapi_contract.py::PUBLIC` (+ the v1.0 card), `test_openapi_document.py` (24 → 27 operations) and `test_catalog_snapshot.py` (`ARTIFACTS` gains the catalog).
 
 ## 7. Test plan
 

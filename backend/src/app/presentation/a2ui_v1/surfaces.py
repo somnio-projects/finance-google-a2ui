@@ -106,14 +106,24 @@ class SurfaceComposer:
         Returns:
             Zero, one or two groups, each a root view and its children.
         """
-        if self._held and accepts(self._held[0].component, view.component):
+        if self._fits(view):
             self._held.append(view)
             return []
         ready = self.flush()
+        if nests_only(view.component):
+            # No container is held for it, and the catalog forbids it at the
+            # root (ADR-M D-4): a surface the renderer would refuse is not sent.
+            return ready
         if view.component in CONTAINERS:
             self._held = [view]
             return ready
         return [*ready, (view,)]
+
+    def _fits(self, view: RenderedView) -> bool:
+        """Say whether ``view`` nests in the held container, once per kind."""
+        if not self._held or not accepts(self._held[0].component, view.component):
+            return False
+        return all(held.component != view.component for held in self._held[1:])
 
     def flush(self) -> list[tuple[RenderedView, ...]]:
         """Release whatever is held, at the end of the turn or before a new view."""

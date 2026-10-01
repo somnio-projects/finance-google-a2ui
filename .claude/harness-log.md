@@ -7,6 +7,47 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-10-01 — A2UI v1.0 beside v0.9 · ADR-M · specs `backend/0053`, `frontend_v1/0001`
+
+**Branch:** `feat/a2ui-v1-wire` (no GGU ticket yet — none invented). Decided
+with Patricio on 2026-10-01: the showcase moves to A2UI **v1.0 RC**, and the
+TL ruled that **nothing on v0.9 changes** — same backend, database and
+Firebase project, a second client at a second URL, "only an A2UI version
+upgrade".
+
+**What changed.** Backend: an additive `/a2ui/v1/*` surface (A2A
+`message/stream` emitting `createSurface` DataParts, the v1.0 card, the
+generated catalog with ETag), reusing the turn, the tools, `ViewService` and
+`SurfaceActionService` unchanged. `renderView` answers `callAgentFunction`
+without the model. `docs/a2ui/v1.0/` holds the vendored upstream schemas
+(`e83e074`), the wire examples both sides bind, and `finance.catalog.json` (an
+`ARTIFACTS` entry, so the existing catalog-check gates it). `frontend_v1/` is a
+copy of `frontend/` with only the assistant's wire replaced. Infra: Hosting
+site `finance-a2ui-v1` created, its domains authorised in Firebase Auth, dev
+CORS widened. `pyjwt` 2.14.0 → 2.15.1 (PYSEC-2026-4141) was red on `develop`'s
+lock and rode along.
+
+**Harness.** `security.md` lists the v1.0 card as public. `check_spec_numbers.sh`
+knows the `frontend_v1` area. Diagram 14 added; 02 and 05 point at it.
+
+**Three things worth carrying forward.**
+
+1. **The blocker was a dependency, not a capability.** No public Flutter
+   renderer spoke v1.0 (`genui` 0.10.4 is v0.9; `a2ui_core` 0.2.2 validates
+   v1.0 but its processor still rejects it — a2ui-project/a2ui#2899). Owning
+   the small subset this catalog needs, and proving it against the *official*
+   schemas on both sides, removed the wait entirely. When `a2ui_flutter`
+   ships, it goes behind `a2ui_v1`'s API.
+2. **A schema-valid tree can still be one the catalog forbids.**
+   `allowedParents` is a custom keyword JSON Schema ignores, so the composer
+   built a lone `RiskPayoffChart` root and every conformance test was green.
+   The reviewer caught it by reading; the composer now drops what the catalog
+   would refuse.
+3. **`tests/unit/services/test_agent_telemetry.py` fails when any API test runs
+   before it in the same process** (reproduced with v0.9's
+   `test_openapi_document.py`, so it predates this branch). The full gate's
+   order hides it. Worth its own ticket.
+
 ## 2026-09-25 — GGU-122/123/119 no equity vocabulary in a crypto payload · spec `specs/backend/0046-no-equity-vocabulary-in-a-crypto-payload.md`
 
 **Branch:** `fix/GGU-122_no_equity_vocabulary_in_a_crypto_payload`. Backend +

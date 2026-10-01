@@ -53,8 +53,12 @@ def test_a_ticket_at_the_end_of_the_turn_is_flushed() -> None:
     assert _groups(SUMMARY, TICKET) == [(SUMMARY,), (TICKET,)]
 
 
-def test_a_payoff_with_no_ticket_before_it_stands_alone() -> None:
-    assert _groups(PAYOFF) == [(PAYOFF,)]
+def test_a_payoff_with_no_ticket_before_it_is_never_drawn() -> None:
+    assert _groups(PAYOFF) == []
+
+
+def test_a_ticket_holds_one_payoff_and_drops_a_second() -> None:
+    assert _groups(TICKET, PAYOFF, PAYOFF) == [(TICKET, PAYOFF)]
 
 
 def test_a_waterfall_is_never_held_back_for_a_driver_detail() -> None:

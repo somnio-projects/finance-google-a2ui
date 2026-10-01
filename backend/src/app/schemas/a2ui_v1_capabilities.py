@@ -8,6 +8,8 @@ rather than streaming surfaces nothing on the other side can draw.
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.presentation.a2ui_v1.wire import CAPABILITIES_KEY
+
 
 class RendererV1Capabilities(BaseModel):
     """The ``v1.0`` member of ``a2uiRendererCapabilities``."""
@@ -27,7 +29,7 @@ class RendererCapabilities(BaseModel):
     model_config = ConfigDict(frozen=True, extra="ignore", populate_by_name=True)
 
     v1: RendererV1Capabilities | None = Field(
-        default=None, alias="v1.0", description="Capabilities for A2UI v1.0."
+        default=None, alias=CAPABILITIES_KEY, description="Capabilities for A2UI v1.0."
     )
 
 

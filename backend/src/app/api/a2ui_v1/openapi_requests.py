@@ -7,13 +7,20 @@ wire constants, never transcribed.
 
 from typing import Any, Final
 
-from app.presentation.a2ui_v1.wire import CATALOG_ID, MIME_TYPE
+from app.presentation.a2ui_v1.wire import (
+    CAPABILITIES_KEY,
+    CATALOG_ID,
+    MESSAGE_VERSION,
+    MIME_TYPE,
+)
 
 #: The task id the documented examples share, so a request and its stream
 #: read as one exchange.
 TASK: Final[str] = "7b1e"
 _CAPABILITIES: Final[dict[str, Any]] = {
-    "a2uiRendererCapabilities": {"v1.0": {"supportedCatalogIds": [CATALOG_ID]}}
+    "a2uiRendererCapabilities": {
+        CAPABILITIES_KEY: {"supportedCatalogIds": [CATALOG_ID]}
+    }
 }
 
 
@@ -44,7 +51,7 @@ REQUEST_EXAMPLES: Final[dict[str, dict[str, Any]]] = {
         "value": _call(
             _renderer_part(
                 {
-                    "version": "v1.0",
+                    "version": MESSAGE_VERSION,
                     "callAgentFunction": {
                         "surfaceId": f"{TASK}-0",
                         "functionCallId": "call-01",

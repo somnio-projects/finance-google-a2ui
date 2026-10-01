@@ -59,7 +59,9 @@ with `children: ["payoff"]`, the curve is component `payoff` bound to
 [OrderTicket, MultiLegOrderTicket]`, `DriverDetail.allowedParents =
 [Surface, AttributionWaterfall]`, every other component `[Surface, Section]`,
 and `Section` (layout, `children`) `allowedParents = [Surface]`. The renderer
-enforces them and reports `UNALLOWED_PARENT` / `UNALLOWED_CHILD`.
+enforces them and reports `UNALLOWED_PARENT` / `UNALLOWED_CHILD`; the agent
+never sends a tree its own catalog forbids, so a payoff with no ticket before
+it — or a second one — is not drawn.
 
 **D-5 — The catalog is generated.** `CATALOG_ID =
 https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json`.
@@ -80,7 +82,9 @@ own options model (ADR-K D-3), renders deterministically **without the LLM**,
 and answers `agentFunctionResponse{value:{componentId, view}}` followed by
 `updateDataModel{path:"/<componentId>", value:{view, options, payload}}`.
 Invalid options → `agentFunctionResponse.error.code = "INVALID_FUNCTION_CALL"`;
-unknown function → `"UNKNOWN_FUNCTION"`.
+unknown function → `"UNKNOWN_FUNCTION"`. `renderView` is stateless: that
+the view fits the component it is written to is the **renderer's** check, since
+only it holds the surface.
 
 **D-7 — New turns are v1.0 `action`s.** `drill.attribution.v1` arrives as
 `action{name:"drill_attribution", context:{driver}}` and is resolved by the

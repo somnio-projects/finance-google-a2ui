@@ -2,8 +2,10 @@
 
 Every one of these is a literal some other party compares byte for byte — the
 renderer matches ``CATALOG_ID``, the A2A layer matches ``MIME_TYPE`` and
-``EXTENSION_URI``, the schemas pin ``MESSAGE_VERSION`` — so none of them is
-ever written a second time anywhere in ``src/``.
+``EXTENSION_URI``, the schemas pin ``MESSAGE_VERSION`` — so code reads them
+from here. The one exception is a pydantic ``Literal``, which must spell its
+value inline; those sit in ``schemas/a2ui_v1_*`` and the schema-conformance
+tests compare them against the vendored v1.0 schemas.
 """
 
 from typing import Final

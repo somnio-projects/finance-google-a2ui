@@ -12,6 +12,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response
 
 from app.api.a2ui_v1.openapi_shapes import CATALOG_RESPONSE
+from app.api.caching import (
+    CACHE_CONTROL,
+    NOT_MODIFIED_RESPONSE,
+    VARY,
+    ConditionalDep,
+    strong_etag,
+)
 from app.api.deps import get_current_principal
 from app.api.deps.a2ui_v1 import get_v1_agent_card, get_v1_catalog
 from app.api.openapi import problem_responses
@@ -57,11 +64,20 @@ def v1_agent_card(card: CardDep) -> V1AgentCard:
         "which `make catalog` generates from the projection registry. "
         "Requires a bearer token."
     ),
-    responses={200: CATALOG_RESPONSE, **problem_responses(401, 429, 500)},
+    responses={
+        200: CATALOG_RESPONSE,
+        **NOT_MODIFIED_RESPONSE,
+        **problem_responses(401, 429, 500),
+    },
 )
-def v1_catalog(document: CatalogDep) -> Response:
-    """Return the catalog document as served bytes."""
-    return Response(content=document, media_type="application/json")
+def v1_catalog(document: CatalogDep, conditional: ConditionalDep) -> Response:
+    """Return the catalog document as served bytes, revalidated by ETag."""
+    etag = strong_etag(document)
+    answer = conditional.resolve(document, etag=etag)
+    if isinstance(answer, Response):
+        return answer
+    validators = {"ETag": etag, "Cache-Control": CACHE_CONTROL, "Vary": VARY}
+    return Response(content=answer, media_type="application/json", headers=validators)
 
 
 __all__ = ["router"]
