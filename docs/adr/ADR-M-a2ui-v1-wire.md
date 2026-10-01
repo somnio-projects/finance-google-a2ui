@@ -95,10 +95,11 @@ text in an ordinary text part — no v1.0 message pretends a surface exists.
 A request on `/a2ui/v1/a2a` whose capabilities do not include `CATALOG_ID`
 is refused with a JSON-RPC error naming the catalog, never answered in prose.
 
-**D-9 — A second client, a second URL.** `frontend_v1/` is a separate Flutter
-app: own pub workspace, own `.fvmrc` (same pinned SDK), own gate part
+**D-9 — The same app, upgraded, at a second URL.** `frontend_v1/` is a copy of
+`frontend/` with only the assistant's wire moved to v1.0, on the same backend,
+database and Firebase project/web app. It is a separate Flutter app: own pub workspace, own `.fvmrc` (same pinned SDK), own gate part
 `frontend_v1.*`, own `frontend-v1-ci.yaml`, own specs area, own Firebase
-Hosting site. It may depend on `frontend/packages/*` **read-only** through
+Hosting site (`finance-a2ui-v1` → https://finance-a2ui-v1.web.app, created 2026-10-01). It may depend on `frontend/packages/*` **read-only** through
 path dependencies; it never edits `frontend/`. Widgets that live in
 `frontend/app/lib` are copied, not imported (an app cannot be a dependency),
 and the copy is recorded as such.
@@ -114,6 +115,6 @@ and the copy is recorded as such.
 
 ## Open
 
-- **OD-1** Firebase Hosting site id for `frontend_v1` (needs a console/CLI create by a human).
+- **OD-1** ~~Hosting site id~~ — resolved: `finance-a2ui-v1`, created 2026-10-01, auth domain authorized, dev CORS widened (`infra/environments/dev.tfvars`).
 - **OD-2** Does `genui` publish v1.0 before the video? Ask Google; D-1 holds either way.
-- **OD-3** SSO allow-list question from Patricio (2026-09-29) applies to this client too.
+- **OD-3** ~~SSO allow-list~~ — answered 2026-10-01: dev enrols any verified Google/e-mail-link identity as a member (`AUTH_OPEN_ENROLMENT=true`); the v1.0 client shares that auth.
