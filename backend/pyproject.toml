@@ -38,6 +38,8 @@ dev = [
     "deptry>=0.25.1",
     "pylint>=4.0.8",
     "codespell>=2.4.3",
+    "jsonschema>=4.26.0",
+    "referencing>=0.37.0",
 ]
 
 [build-system]
