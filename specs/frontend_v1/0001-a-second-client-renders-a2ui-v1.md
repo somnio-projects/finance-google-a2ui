@@ -1,6 +1,6 @@
 # 0001 — A second client renders A2UI v1.0
 
-**Status:** Draft — awaiting TL approval · **Ticket:** *unassigned* · **Area:** `frontend_v1/`
+**Status:** In progress — approved by the TL 2026-10-01 · **Ticket:** *unassigned* · **Area:** `frontend_v1/`
 **Decision:** [ADR-M](../../docs/adr/ADR-M-a2ui-v1-wire.md) · **Pair:** [`backend/0053`](../backend/0053-the-agent-speaks-a2ui-v1.md)
 
 ## 1. Problem

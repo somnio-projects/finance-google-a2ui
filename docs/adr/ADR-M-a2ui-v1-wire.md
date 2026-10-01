@@ -1,6 +1,6 @@
 # ADR-M — A2UI v1.0 wire, beside v0.9 and not instead of it
 
-**Status:** Proposed · **Date:** 2026-10-01 · **Deciders:** Lautaro Bertuzzi (TL), Patricio Burzaco (PM)
+**Status:** Accepted · **Date:** 2026-10-01 · **Deciders:** Lautaro Bertuzzi (TL), Patricio Burzaco (PM)
 **Specs:** [`backend/0053`](../../specs/backend/0053-the-agent-speaks-a2ui-v1.md) · [`frontend_v1/0001`](../../specs/frontend_v1/0001-a-second-client-renders-a2ui-v1.md)
 **Upstream:** A2UI v1.0 *Candidate*, `a2ui-project/a2ui` @ `e83e074` (2026-09-29), schemas vendored in [`docs/a2ui/v1.0/schemas/`](../a2ui/v1.0/schemas/) (Apache-2.0)
 

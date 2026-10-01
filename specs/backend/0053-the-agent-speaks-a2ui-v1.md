@@ -1,6 +1,6 @@
 # 0053 — The agent speaks A2UI v1.0, beside v0.9
 
-**Status:** Draft — awaiting TL approval · **Ticket:** *unassigned* (no GGU number yet) · **Area:** `backend/`
+**Status:** In progress — approved by the TL 2026-10-01 · **Ticket:** *unassigned* (no GGU number yet) · **Area:** `backend/`
 **Decision:** [ADR-M](../../docs/adr/ADR-M-a2ui-v1-wire.md) · **Pair:** [`frontend_v1/0001`](../frontend_v1/0001-a-second-client-renders-a2ui-v1.md)
 
 ## 1. Problem
@@ -43,6 +43,8 @@ the **contract** the client binds; a change to one is a change to this spec.
 None. No table, no migration.
 
 ## 5. Security notes
+
+**One new public route:** `GET /a2ui/v1/.well-known/agent-card.json`, public for the reason the v0.9 card is (spec 0010 OD-1 — a client cannot present a token before it bootstraps); it carries no subject data. Listed in `.claude/rules/backend/security.md` and `test_openapi_contract.py::PUBLIC`. `GET /a2ui/v1/catalog` and `POST /a2ui/v1/a2a` require a bearer.
 
 Same auth dependency as `/a2a`. `renderView` args are the projection's
 declared options only (ADR-K D-3): unknown view, unknown option, out of range
