@@ -10,6 +10,7 @@ the one case pinning the *verbatim* naming `FinanceCatalog` registers against.
 from json import loads
 from typing import Any
 
+from app.presentation.a2ui_v1.wire import CATALOG_PATH
 from app.presentation.catalog_artifacts import ARTIFACTS, FIX_COMMAND, render_all
 from app.presentation.catalog_doc import CONTRACT_PATH, contract_document, fields_of
 from app.presentation.catalog_json import (
@@ -137,8 +138,10 @@ def test_both_catalog_artifacts_come_from_one_render_pass() -> None:
     projections = REGISTRY.all()
     rendered = render_all(projections)
 
-    assert [artifact.path for artifact in ARTIFACTS] == [CONTRACT_PATH, SNAPSHOT_PATH]
-    assert [item.path for item in rendered] == [CONTRACT_PATH, SNAPSHOT_PATH]
+    # The v1.0 catalog is the third rendering of the same pass (spec 0053).
+    paths = [CONTRACT_PATH, SNAPSHOT_PATH, CATALOG_PATH]
+    assert [artifact.path for artifact in ARTIFACTS] == paths
+    assert [item.path for item in rendered] == paths
     assert rendered[0].generated == contract_document(projections)
     assert rendered[1].generated == snapshot_document(projections)
     assert rendered[1].drift(rendered[1].generated) == ""
