@@ -44,7 +44,7 @@ trap 'rm -rf "${WORK}"' EXIT
 # clears, or the suite would only ever exercise the vacuity guard.
 fixture() {
   local dir="$1"
-  mkdir -p "${dir}/specs"/{backend,frontend,infra,repo,client}
+  mkdir -p "${dir}/specs"/{backend,frontend,frontend_v1,infra,repo,client}
   : >"${dir}/specs/README.md"
   {
     echo "# Specs"
@@ -54,7 +54,8 @@ fixture() {
   } >>"${dir}/specs/README.md"
   local area number slug
   for spec in $(seq -f 'backend/%04.0f-a-backend-spec' 1 37) \
-    'frontend/0001-a-frontend-spec' 'infra/0001-an-infra-spec' \
+    'frontend/0001-a-frontend-spec' 'frontend_v1/0001-a-frontend-v1-spec' \
+    'infra/0001-an-infra-spec' \
     'repo/0001-a-repo-spec' 'client/0001-a-client-spec'; do
     area="${spec%%/*}"
     slug="${spec#*/}"
