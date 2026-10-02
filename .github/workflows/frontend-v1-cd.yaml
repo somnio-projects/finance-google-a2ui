@@ -1,0 +1,405 @@
+# Frontend v1 continuous delivery — the A2UI v1.0 client (`frontend_v1/`,
+# ADR-M D-9) to its own Firebase Hosting site, `finance-a2ui-v1`.
+#
+# A copy of frontend-cd.yaml with `frontend` read as `frontend_v1`: same
+# button, same gates called as jobs, same preview-channel proof, same
+# /release.json check on the live origin, same Workload Identity Federation.
+# Only the app directory, the Hosting site (read from frontend_v1/firebase.json)
+# and the live URL variable (FRONTEND_V1_SITE_URL_<ENV>) differ.
+# infra/scripts/tests/test_dev_environment.sh asserts the safety properties on
+# BOTH files, so this one cannot drift into a weaker copy.
+#
+# What follows is frontend-cd's own commentary, and applies here verbatim.
+#
+# (spec frontend/0017)
+#
+# Naming contract (.claude/rules/ci-conventions.md):
+#   job name  = "<Area> · <what it proves>"
+#   step name = "<Verb> <object> (<tool>)"
+#
+# Delivery is MANUAL, for the same reasons backend-cd is: there is no `push:`
+# trigger, merging to `develop` deploys nothing, and someone presses "Run
+# workflow" and picks the branch. The branch decides the environment —
+#
+#   run from `develop` -> dev
+#   run from `main`    -> production, behind that Environment's required
+#                         reviewer
+#
+# The button only appears once this file is on the repository's DEFAULT
+# branch. GitHub reads `workflow_dispatch` from the default branch only, so a
+# workflow that lives solely on `develop` is invisible in the Actions tab and
+# `gh workflow run` answers "not found on the default branch". Releasing
+# `develop` into `main` is what makes the button real. This is the same
+# footnote backend-cd carries, and it has caught people twice.
+#
+# ---------------------------------------------------------------------------
+# How this maps the backend's deploy-verify-shift onto a static host
+# ---------------------------------------------------------------------------
+# `backend-cd` deploys a Cloud Run revision with NO traffic, probes it, and
+# only then shifts. Hosting has no revisions and no traffic split, but it does
+# have PREVIEW CHANNELS: a full, separately-addressed deploy of the same
+# bundle that no user is sent to. So:
+#
+#   1. build the bundle for this environment
+#   2. deploy it to a preview channel and read /release.json BACK OFF IT over
+#      HTTP — the bundle is proven at a real URL before anything is live
+#   3. release to live
+#   4. read /release.json off the live origin and fail the run if it is not
+#      the commit this run built
+#
+# Step 4 is the honest part. Hosting rolls back from its own release history
+# (console, or `firebase hosting:clone`), and this workflow does NOT claim to
+# do it: a rollback path that has never executed is not a rollback path
+# (spec backend/0007, the same rule). What the run guarantees is that a failed
+# release is LOUD, and that nobody has to guess which build is live — which is
+# exactly the gap GGU-93 found on the backend, moved to a thing that has no
+# /health to ask.
+#
+# ---------------------------------------------------------------------------
+# Credentials
+# ---------------------------------------------------------------------------
+# Workload Identity Federation only, reusing the SAME pool, provider and
+# deployer identity as backend-cd: there is no service-account key in this
+# repository's secrets and `infra/scripts/tests/test_wif_conditions.sh` fails
+# the build if one is ever added. `google-github-actions/auth` writes an
+# external-account credential file and exports GOOGLE_APPLICATION_CREDENTIALS;
+# firebase-tools reads it as Application Default Credentials, which is what
+# lets this deploy without `firebase login` and without a CI token.
+#
+# The deployer needs `roles/firebasehosting.admin`, granted in
+# infra/delivery.tf. Terraform must be applied before the first run — that
+# apply is a human's button, like every other one here.
+#
+# The Firebase web config below lives in repository VARIABLES, not secrets.
+# It is public by design (ADR-B D-10): it is compiled into the bundle and
+# reaches every browser. Putting it in secrets would imply otherwise and would
+# also mask it out of the logs that make a build reviewable.
+name: frontend-v1-cd
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_only:
+        description: "Deploy to a preview channel and stop (rehearse without going live)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# Deploys are serialised per branch and never cancelled halfway — the same
+# deliberate departure from ci-conventions.md §3 that backend-cd makes, for
+# the same reason: a cancelled release is the state this pipeline exists to
+# avoid.
+concurrency:
+  group: frontend-v1-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Pinned, like every other tool here. A floating `@latest` is both a
+  # supply-chain risk and a cache miss, and firebase-tools is the process that
+  # publishes bytes to a public origin.
+  FIREBASE_TOOLS_VERSION: "15.30.2"
+
+jobs:
+  # The gate, on this commit, before anything is built or published. Calling
+  # the workflows (rather than duplicating their jobs) keeps one definition of
+  # the gate — `.claude/ship-gate.json` stays the single Definition of Done.
+  ci:
+    name: "Gate · the full frontend_v1 ship gate on the commit being released"
+    uses: ./.github/workflows/frontend-v1-ci.yaml
+    permissions:
+      contents: read
+
+  # The repository-wide half: spelling, secret scanning over the full history,
+  # shell lint, gate pairs. Called for the same reason backend-cd calls it —
+  # without this edge, a frontend-only release would reach a public origin
+  # having been scanned for secrets by nothing.
+  repo:
+    name: "Gate · the repository-wide checks on the commit being released"
+    uses: ./.github/workflows/repo-ci.yaml
+    permissions:
+      contents: read
+
+  settings:
+    name: "Target · resolve the environment and the public config for this ref"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+      project: ${{ steps.resolve.outputs.project }}
+      provider: ${{ steps.resolve.outputs.provider }}
+      deployer: ${{ steps.resolve.outputs.deployer }}
+      site_url: ${{ steps.resolve.outputs.site_url }}
+      backend_base_url: ${{ steps.resolve.outputs.backend_base_url }}
+      firebase_api_key: ${{ steps.resolve.outputs.firebase_api_key }}
+      firebase_app_id: ${{ steps.resolve.outputs.firebase_app_id }}
+      firebase_project_id: ${{ steps.resolve.outputs.firebase_project_id }}
+      firebase_auth_domain: ${{ steps.resolve.outputs.firebase_auth_domain }}
+      firebase_sender_id: ${{ steps.resolve.outputs.firebase_sender_id }}
+    steps:
+      # `develop` releases dev, `main` releases production — the same rule
+      # backend-cd uses, so one branch does not mean two different things
+      # depending on which pipeline you started. Every variable is suffixed
+      # per environment, and a missing one is named EXACTLY as a human must
+      # create it: "FIREBASE_API_KEY is not set" sends people looking for a
+      # variable that does not exist under that name.
+      - name: Resolve the per-environment variables for this ref (bash)
+        id: resolve
+        env:
+          IS_PRODUCTION: ${{ github.ref_name == 'main' }}
+          PROVIDER_DEV: ${{ vars.GCP_WIF_PROVIDER_DEV }}
+          PROVIDER_PRODUCTION: ${{ vars.GCP_WIF_PROVIDER_PRODUCTION }}
+          DEPLOYER_DEV: ${{ vars.GCP_DEPLOYER_SA_DEV }}
+          DEPLOYER_PRODUCTION: ${{ vars.GCP_DEPLOYER_SA_PRODUCTION }}
+          PROJECT_DEV: ${{ vars.GCP_PROJECT_ID_DEV }}
+          PROJECT_PRODUCTION: ${{ vars.GCP_PROJECT_ID_PRODUCTION }}
+          SITE_URL_DEV: ${{ vars.FRONTEND_V1_SITE_URL_DEV }}
+          SITE_URL_PRODUCTION: ${{ vars.FRONTEND_V1_SITE_URL_PRODUCTION }}
+          BACKEND_URL_DEV: ${{ vars.PUBLIC_URL_DEV }}
+          BACKEND_URL_PRODUCTION: ${{ vars.PUBLIC_URL_PRODUCTION }}
+          FB_API_KEY_DEV: ${{ vars.FIREBASE_API_KEY_DEV }}
+          FB_API_KEY_PRODUCTION: ${{ vars.FIREBASE_API_KEY_PRODUCTION }}
+          FB_APP_ID_DEV: ${{ vars.FIREBASE_APP_ID_DEV }}
+          FB_APP_ID_PRODUCTION: ${{ vars.FIREBASE_APP_ID_PRODUCTION }}
+          FB_AUTH_DOMAIN_DEV: ${{ vars.FIREBASE_AUTH_DOMAIN_DEV }}
+          FB_AUTH_DOMAIN_PRODUCTION: ${{ vars.FIREBASE_AUTH_DOMAIN_PRODUCTION }}
+          FB_SENDER_ID_DEV: ${{ vars.FIREBASE_MESSAGING_SENDER_ID_DEV }}
+          FB_SENDER_ID_PRODUCTION: ${{ vars.FIREBASE_MESSAGING_SENDER_ID_PRODUCTION }}
+        run: |
+          set -euo pipefail
+          if [ "${IS_PRODUCTION}" = "true" ]; then
+            environment=production
+            suffix=PRODUCTION
+          else
+            environment=dev
+            suffix=DEV
+          fi
+          # Indirect expansion, not `eval`: the names are built from a
+          # suffix this script chose, but a variable whose VALUE is shell
+          # syntax must never be a way in. `${!name}` cannot execute anything.
+          get() { local n="$1_${suffix}"; printf '%s' "${!n:-}"; }
+
+          provider="$(get PROVIDER)"
+          deployer="$(get DEPLOYER)"
+          project="$(get PROJECT)"
+          site_url="$(get SITE_URL)"
+          backend_base_url="$(get BACKEND_URL)"
+          api_key="$(get FB_API_KEY)"
+          app_id="$(get FB_APP_ID)"
+          auth_domain="$(get FB_AUTH_DOMAIN)"
+          sender_id="$(get FB_SENDER_ID)"
+
+          missing=""
+          [ -n "${provider}" ]         || missing="${missing} GCP_WIF_PROVIDER_${suffix}"
+          [ -n "${deployer}" ]         || missing="${missing} GCP_DEPLOYER_SA_${suffix}"
+          [ -n "${project}" ]          || missing="${missing} GCP_PROJECT_ID_${suffix}"
+          [ -n "${site_url}" ]         || missing="${missing} FRONTEND_V1_SITE_URL_${suffix}"
+          [ -n "${backend_base_url}" ] || missing="${missing} PUBLIC_URL_${suffix}"
+          [ -n "${api_key}" ]          || missing="${missing} FIREBASE_API_KEY_${suffix}"
+          [ -n "${app_id}" ]           || missing="${missing} FIREBASE_APP_ID_${suffix}"
+          [ -n "${auth_domain}" ]      || missing="${missing} FIREBASE_AUTH_DOMAIN_${suffix}"
+          [ -n "${sender_id}" ]        || missing="${missing} FIREBASE_MESSAGING_SENDER_ID_${suffix}"
+          if [ -n "${missing}" ]; then
+            echo "::error::repository variables not set for ${environment}:${missing} — create them under Settings → Secrets and variables → Actions → Variables. The Firebase values are the PUBLIC web config (Firebase console → Project settings → Your apps); they are variables and not secrets on purpose (ADR-B D-10)."
+            exit 1
+          fi
+          {
+            echo "environment=${environment}"
+            echo "provider=${provider}"
+            echo "deployer=${deployer}"
+            echo "project=${project}"
+            echo "site_url=${site_url%/}"
+            echo "backend_base_url=${backend_base_url%/}"
+            echo "firebase_api_key=${api_key}"
+            echo "firebase_app_id=${app_id}"
+            echo "firebase_project_id=${project}"
+            echo "firebase_auth_domain=${auth_domain}"
+            echo "firebase_sender_id=${sender_id}"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: "Bundle · compile it for this environment and stamp its release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [ci, repo, settings]
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - name: Check out the commit being released (actions/checkout)
+        uses: actions/checkout@v7
+
+      - name: Read the pinned SDK version (.fvmrc)
+        id: pin
+        working-directory: frontend_v1
+        run: echo "version=$(jq -r .flutter .fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up the pinned Flutter SDK (subosito/flutter-action)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.pin.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Prove the SDK on PATH is the pinned one (check_toolchain.sh)
+        working-directory: frontend_v1
+        run: bash tool/check_toolchain.sh
+
+      - name: Derive the release identifier from the version and the commit (bash)
+        id: release
+        working-directory: frontend_v1
+        run: |
+          set -euo pipefail
+          version="$(grep -m1 '^version:' app/pubspec.yaml | awk '{print $2}')"
+          echo "release=${version}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Install exactly the locked dependencies (flutter pub get --enforce-lockfile)
+        working-directory: frontend_v1
+        run: flutter pub get --enforce-lockfile
+
+      # The SAME script the container build runs (frontend/Dockerfile), so the
+      # bundle that reaches Hosting is compiled by the command a developer can
+      # run locally — not by a flag list that lives only in this file.
+      - name: Compile the bundle for this environment (build_web.sh)
+        working-directory: frontend_v1
+        env:
+          BACKEND_BASE_URL: ${{ needs.settings.outputs.backend_base_url }}
+          APP_RELEASE: ${{ steps.release.outputs.release }}
+          FIREBASE_API_KEY: ${{ needs.settings.outputs.firebase_api_key }}
+          FIREBASE_APP_ID: ${{ needs.settings.outputs.firebase_app_id }}
+          FIREBASE_PROJECT_ID: ${{ needs.settings.outputs.firebase_project_id }}
+          FIREBASE_AUTH_DOMAIN: ${{ needs.settings.outputs.firebase_auth_domain }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ needs.settings.outputs.firebase_sender_id }}
+        run: bash tool/build_web.sh
+
+      # Deploying what a later job re-compiled would mean the artifact this run
+      # verified is not the artifact it released — the same identity argument
+      # backend-cd makes by pushing an image and then deploying it BY DIGEST.
+      # One compile, one set of bytes, carried forward.
+      - name: Hand the exact bytes to the deploy job (actions/upload-artifact)
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-v1-bundle-${{ github.sha }}
+          path: frontend_v1/app/build/web
+          retention-days: 14
+          include-hidden-files: false
+
+  deploy:
+    name: "Deploy · prove it on a preview channel, then release it live"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [ci, repo, settings, publish]
+    permissions:
+      contents: read
+      id-token: write # mint the federated token; nothing else is granted
+    # The Environment carries the required reviewer for production and the
+    # deployment history for both.
+    environment:
+      name: ${{ needs.settings.outputs.environment }}
+    outputs:
+      preview_url: ${{ steps.preview.outputs.url }}
+    steps:
+      - name: Check out the hosting configuration (actions/checkout)
+        uses: actions/checkout@v7
+
+      - name: Take the bytes the gate verified (actions/download-artifact)
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-v1-bundle-${{ github.sha }}
+          path: frontend_v1/app/build/web
+
+      - name: Authenticate to Google Cloud without a key (google-github-actions/auth)
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ needs.settings.outputs.provider }}
+          service_account: ${{ needs.settings.outputs.deployer }}
+
+      - name: Install the pinned Firebase CLI (npm)
+        run: npm install -g "firebase-tools@${FIREBASE_TOOLS_VERSION}"
+
+      # A preview channel is a complete deploy of these exact bytes at an
+      # address no user is sent to — Hosting's nearest thing to the backend's
+      # `--no-traffic` revision. It expires on its own, so nothing accumulates.
+      - name: Deploy the bundle to a preview channel (firebase hosting:channel:deploy)
+        id: preview
+        # frontend_v1/firebase.json names the site, finance-a2ui-v1.
+        working-directory: frontend_v1
+        env:
+          PROJECT: ${{ needs.settings.outputs.project }}
+        run: |
+          set -euo pipefail
+          out="$(firebase hosting:channel:deploy "ci-${GITHUB_SHA::7}" \
+                   --project "${PROJECT}" --expires 7d --json --non-interactive)"
+          echo "${out}" | jq -r '.' > /tmp/channel.json
+          url="$(jq -r '.result | to_entries[0].value.url' /tmp/channel.json)"
+          if [ -z "${url}" ] || [ "${url}" = "null" ]; then
+            echo "::error::the preview deploy returned no URL — refusing to go live on an unverified bundle"
+            cat /tmp/channel.json
+            exit 1
+          fi
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          echo "preview channel: ${url}"
+
+      - name: Prove the preview serves this commit (curl)
+        env:
+          URL: ${{ steps.preview.outputs.url }}
+          RELEASE: ${{ needs.publish.outputs.release }}
+        run: ./frontend_v1/tool/verify_release.sh
+
+      - name: Release the same bundle to the live channel (firebase deploy)
+        if: ${{ inputs.preview_only == false }}
+        working-directory: frontend_v1
+        env:
+          PROJECT: ${{ needs.settings.outputs.project }}
+        run: |
+          set -euo pipefail
+          firebase deploy --only hosting --project "${PROJECT}" --non-interactive \
+            --message "${GITHUB_SHA::7} via frontend-v1-cd run ${GITHUB_RUN_ID}"
+
+      # The step GGU-93 is about: after the release, ASK THE ORIGIN which build
+      # it is serving. Without this, "the deploy job was green" and "the site
+      # runs this commit" are two different claims that look like one.
+      - name: Prove the live origin serves this commit (curl)
+        if: ${{ inputs.preview_only == false }}
+        env:
+          URL: ${{ needs.settings.outputs.site_url }}
+          RELEASE: ${{ needs.publish.outputs.release }}
+        run: ./frontend_v1/tool/verify_release.sh
+
+  report:
+    name: "Report · what was released and where"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [ci, repo, settings, publish, deploy]
+    if: always()
+    steps:
+      - name: Write the release record to the run summary (GITHUB_STEP_SUMMARY)
+        run: |
+          {
+            echo "## Frontend v1 delivery"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Environment | ${{ needs.settings.outputs.environment }} |"
+            echo "| Ship gate | ${{ needs.ci.result }} |"
+            echo "| Repository gate | ${{ needs.repo.result }} |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Release | \`${{ needs.publish.outputs.release }}\` |"
+            echo "| API origin compiled in | ${{ needs.settings.outputs.backend_base_url }} |"
+            echo "| Preview channel | ${{ needs.deploy.outputs.preview_url }} |"
+            echo "| Live site | ${{ needs.settings.outputs.site_url }} |"
+            echo "| Preview only | ${{ inputs.preview_only }} |"
+            echo "| Deploy | ${{ needs.deploy.result }} |"
+            echo ""
+            echo "Both URLs above serve \`/release.json\`; the deploy job failed the run unless it reported the release named here."
+            echo "Rollback is Hosting's own release history — console → Hosting → Release history → Rollback. This pipeline does not automate it, because an untested rollback path is not one."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run unless every job succeeded (bash)
+        # `skipped` counts as a failure: a rejected production approval leaves
+        # `deploy` skipped, and a run that released nothing must not be green.
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: |
+          echo "::error::delivery did not complete — gate=${{ needs.ci.result }} repo=${{ needs.repo.result }} publish=${{ needs.publish.result }} deploy=${{ needs.deploy.result }}"
+          exit 1

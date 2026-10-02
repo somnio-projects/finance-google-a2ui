@@ -140,6 +140,7 @@ repository-wide one is not, on purpose:
 | ~~`client-ci`~~ | — | `client_flutter/**` | **gone** — the app it gated was retired 2026-09-22 (spec `repo/0002`) |
 | `backend-cd` | **the button only** | — | yes |
 | `frontend-cd` | **the button only** | — | yes |
+| `frontend-v1-cd` | **the button only** | — | yes — the v1.0 client to Hosting site `finance-a2ui-v1`, the same shape as `frontend-cd` and asserted by the same suite |
 
 **`client-ci`'s row went yes → no → yes → gone, and the history is the
 lesson.** The table once listed it as though it were one of the scoped
