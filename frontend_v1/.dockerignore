@@ -1,0 +1,19 @@
+# Keep the build context to what the image is built FROM.
+#
+# Without this the context carries app/build/ (a previous web bundle, tens of
+# megabytes), every .dart_tool/ and every coverage/ directory — all of it
+# uploaded to the daemon on each build, and app/build/ in particular would be
+# COPYed over the one this image is about to compile.
+
+**/.dart_tool/
+**/build/
+**/coverage/
+**/.flutter-plugins-dependencies
+
+# One environment's public web config, for a developer's `flutter build web`.
+# The image takes its configuration from build args instead (Dockerfile,
+# Decision 1), so a file left over from somebody's Hosting build must not
+# reach the context and must never be mistaken for the image's input.
+app/config/firebase.json
+
+.git/

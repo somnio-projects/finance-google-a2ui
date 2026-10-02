@@ -23,9 +23,9 @@ void main() {
       );
       expect(find.text('Holdings & allocation'), findsNothing);
       expect(find.text('Classes'), findsOneWidget);
-      expect(find.text('4'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
       expect(find.byType(HoldingsAllocationBar), findsOneWidget);
-      expect(find.text('▲ +0.9%'), findsOneWidget);
+      expect(find.text('▲ +1.5%'), findsOneWidget);
       final donut = tester.widget<DonutChart>(find.byType(DonutChart));
       expect(donut.swatches, same(ChartTokens.allocationLight.classSwatches));
       expect(donut.diameter, HoldingsAllocationCard.compactDiameter);
@@ -39,7 +39,7 @@ void main() {
       );
       expect(find.text('Holdings & allocation'), findsOneWidget);
       expect(
-        find.text(r'▲ +$61,204 (+14.5%)  all-time', findRichText: true),
+        find.text(r'+$61,204 (+14.5%) all-time', findRichText: true),
         findsOneWidget,
       );
     });

@@ -4,36 +4,57 @@ import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 /// One lot the proposed sale consumes, already formatted by the backend.
 ///
 /// Every money field is a `String`. There is no `double` here to be tempted
-/// into arithmetic with, which is prohibition N-2 made structural rather
-/// than remembered — the shape `HoldingsAllocationRow` established.
+/// into arithmetic with, which is prohibition N-2 made structural rather than
+/// remembered — the shape `HoldingsAllocationRow` established.
 class TaxLot extends Equatable {
   /// Creates a lot.
   const TaxLot({
     required this.label,
-    required this.acquiredOn,
+    required this.acquiredOnDisplay,
+    required this.holdingPeriodDisplay,
+    required this.unitsDisplay,
     required this.costBasisDisplay,
     required this.proceedsDisplay,
     required this.gainLossDisplay,
     required this.term,
     required this.termLabel,
     required this.trend,
+    required this.fullySold,
   });
 
-  /// The payload's `label`, e.g. `lot-btc-01`. Row identity, not a figure.
+  /// The payload's `label`, e.g. `lot-nvda-01`. Row identity, not a figure.
   final String label;
 
-  /// The payload's `acquired_on`, e.g. `2025-01-13`.
+  /// The payload's `acquired_on_display`.
   ///
-  /// Rendered exactly as it arrives. The design shows `Mar 12, 2021`, and
-  /// re-spelling a date is formatting — `intl` is one of the mechanisms
-  /// `binding_rules_test.dart` fails on. Spec `frontend/0003` OD-1 asks the
-  /// backend for an `acquired_on_display` beside it.
-  final String acquiredOn;
+  /// The *display* twin, not the raw `acquired_on`: the backend added it
+  /// after spec `frontend/0003` OD-1 asked for it, and re-spelling a date
+  /// here would be formatting (N-1) — `intl` is one of the mechanisms
+  /// `binding_rules_test.dart` fails on.
+  final String acquiredOnDisplay;
+
+  /// The payload's `lots[].holding_period_display`, e.g. `5.5 yr`.
+  ///
+  /// The duration the kit draws beside the term pill. It arrives as a string
+  /// because a duration is `as_of - acquired_on` and this app has no clock to
+  /// subtract with — reading the device clock is N-13, and
+  /// `binding_rules_test.dart` fails on the three mechanisms for it, in
+  /// comments too. The backend words it, and the form it takes always agrees
+  /// with [term] (spec `backend/0049` OD-2).
+  final String holdingPeriodDisplay;
+
+  /// The payload's `units_display` — the *Shares* column.
+  ///
+  /// Again the display twin. The raw `units` (`60.0000`) is what N-4 forbids
+  /// putting on screen, and the column could not be drawn at all until this
+  /// field existed (`frontend/0003` OD-2).
+  final String unitsDisplay;
 
   /// The payload's `cost_basis.display`.
   final String costBasisDisplay;
 
-  /// The payload's `proceeds.display` — what the sale realises for this lot.
+  /// The payload's `proceeds.display` — what the design calls *Market value*
+  /// and the contract calls proceeds (spec `frontend/0027` OD-1).
   final String proceedsDisplay;
 
   /// The payload's `gain_loss.display`, sign already included.
@@ -45,22 +66,34 @@ class TaxLot extends Equatable {
   /// The human label for [term], read from the matching `by_term` entry.
   ///
   /// Server-written, never a constant in this app: the backend already says
-  /// `"Short-term"` / `"Long-term"` and the locale option can change it.
+  /// `"Short-term"` / `"Long-term"` and the `locale` option can change it.
   final String termLabel;
 
   /// The payload's `trend`, as an enum — which colour the gain/loss takes.
   final TaxLotTrend trend;
 
+  /// The payload's `fully_sold` — whether this sale consumes the lot whole.
+  ///
+  /// The contract publishes it as a flag with `state: variant`, which is the
+  /// catalog's own word for "this changes how the row looks", and it is what
+  /// the design's ticked, tinted row means. It is a **state, not a
+  /// control**: the view declares no action and no selection option, so
+  /// nothing on the card can change it (OD-3).
+  final bool fullySold;
+
   @override
   List<Object?> get props => <Object?>[
     label,
-    acquiredOn,
+    acquiredOnDisplay,
+    holdingPeriodDisplay,
+    unitsDisplay,
     costBasisDisplay,
     proceedsDisplay,
     gainLossDisplay,
     term,
     termLabel,
     trend,
+    fullySold,
   ];
 }
 
@@ -84,58 +117,4 @@ class TaxLotTermSplit extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[term, label, realizedDisplay];
-}
-
-/// Everything the card draws, read once from the payload.
-class TaxLotsTableData extends Equatable {
-  /// Creates the card's data.
-  const TaxLotsTableData({
-    required this.title,
-    required this.subtitle,
-    required this.realizedLabel,
-    required this.realizedDisplay,
-    required this.costBasisLabel,
-    required this.proceedsLabel,
-    required this.lots,
-    required this.splits,
-  });
-
-  /// The payload's `title`.
-  final String title;
-
-  /// The payload's `subtitle`, e.g. `Sell 0.5 BTC under FIFO`.
-  final String subtitle;
-
-  /// The payload's `realized.label`, the footer's caption.
-  final String realizedLabel;
-
-  /// The payload's `realized.amount.display`, the footer's total.
-  final String realizedDisplay;
-
-  /// The payload's `cost_basis.label` — the caption over that column.
-  ///
-  /// Server-written, so it follows the view's `locale` option. A Dart
-  /// constant here would not.
-  final String costBasisLabel;
-
-  /// The payload's `proceeds.label` — the caption over that column.
-  final String proceedsLabel;
-
-  /// The lots, **in the order the backend sent them** (N-10).
-  final List<TaxLot> lots;
-
-  /// The `by_term` halves, also in arrival order.
-  final List<TaxLotTermSplit> splits;
-
-  @override
-  List<Object?> get props => <Object?>[
-    title,
-    subtitle,
-    realizedLabel,
-    realizedDisplay,
-    costBasisLabel,
-    proceedsLabel,
-    lots,
-    splits,
-  ];
 }

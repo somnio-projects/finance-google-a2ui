@@ -13,7 +13,7 @@ from tests.conftest import FROZEN_NOW
 def _price_point(price: object) -> PricePoint:
     """Build a point the way raw data would arrive, bypassing static typing."""
     return PricePoint.model_validate(
-        {"symbol": "NVDA", "observed_on": FROZEN_NOW.date(), "price": price}
+        {"symbol": "BTC", "observed_on": FROZEN_NOW.date(), "price": price}
     )
 
 

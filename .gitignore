@@ -22,6 +22,8 @@
 # The lcov reports are gate input, never committed.
 frontend/app/coverage/
 frontend/packages/*/coverage/
+frontend_v1/app/coverage/
+frontend_v1/packages/*/coverage/
 # Golden *failure* output. `matchesGoldenFile` writes a failures/ directory
 # beside the suite when a comparison fails — four PNGs per golden, including a
 # byte-copy of the committed master. It is the debris of a red run, not an
@@ -55,7 +57,12 @@ ruvector.db-*
 # somnio:harness:begin
 .claude/.harness/
 .claude/*.local.md
-.claude/settings.json.bak
+# Any backup of a settings file, however the tool that made it spelled the
+# suffix. This was `.claude/settings.json.bak` and was too narrow: a
+# `.claude/settings.local.json.bak-telemetry` slipped into a commit through a
+# `git add -A`, and gitleaks — which reads every commit in history, not the
+# working tree — failed the branch for the `Authorization: Bearer` lines in it.
+.claude/settings*.json.bak*
 # somnio:harness:end
 
 # Backend (Python) artifacts

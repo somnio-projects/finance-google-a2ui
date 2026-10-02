@@ -6,10 +6,15 @@ import 'package:flutter/material.dart';
 
 /// What the card shows when the sale consumes no lots.
 ///
-/// The design's third zone-1 state: a dashed square and one sentence. The
-/// sentence is **chrome, not data** — the payload has no field for it, and
-/// a view with an empty `lots` array is a valid answer rather than a
-/// contract violation, so nothing is raised here.
+/// A dashed square and one sentence. The sentence is **chrome, not data** —
+/// the payload has no field for it, and a view with an empty `lots` array is
+/// a valid answer rather than a contract violation, so nothing is raised
+/// here.
+///
+/// The UI Kit's tax-lot frame draws no empty state, so this keeps the shape
+/// the earlier artboard gave it (spec `frontend/0003`) in the new palette.
+/// Inventing one from the kit's other pages would be a design decision made
+/// in Dart.
 class TaxLotsTableEmpty extends StatelessWidget {
   /// Creates the empty state.
   const TaxLotsTableEmpty({super.key});
@@ -35,7 +40,7 @@ class TaxLotsTableEmpty extends StatelessWidget {
             ),
           ),
           const SizedBox(height: TaxLotMetrics.placeholderGap),
-          Text(message, style: TaxLotType.placeholder(palette.labelText)),
+          Text(message, style: TaxLotType.placeholder(palette.mutedText)),
         ],
       ),
     );

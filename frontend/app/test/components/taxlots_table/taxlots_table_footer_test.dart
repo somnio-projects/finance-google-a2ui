@@ -6,7 +6,6 @@ import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/pump_app.dart';
 import 'taxlots_table_harness.dart' as harness;
 
 void main() {
@@ -15,20 +14,19 @@ void main() {
       WidgetTester tester, {
       Brightness brightness = Brightness.light,
       List<TaxLotTermSplit> splits = harness.splits,
-    }) => tester.pumpApp(
-      Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 533.37,
-            child: TaxLotsTableFooter(
-              label: 'Realised P/L',
-              totalDisplay: r'+$9,505.00',
-              splits: splits,
-            ),
-          ),
-        ),
-      ),
+      String label = 'Realised P/L',
+    }) => harness.pumpFooter(
+      tester,
       brightness: brightness,
+      halves: splits,
+      label: label,
+    );
+
+    Divider rule(WidgetTester tester) => tester.widget<Divider>(
+      find.descendant(
+        of: find.byType(TaxLotsTableFooter),
+        matching: find.byType(Divider),
+      ),
     );
 
     testWidgets('shows the caption, the total and both halves', (tester) async {
@@ -57,52 +55,42 @@ void main() {
       expect(chips.last.background, TaxLotTokens.light.longTerm.chipBackground);
     });
 
-    testWidgets('draws the bar the design measures', (tester) async {
-      await pumpFooter(tester);
-      final box =
-          tester
-                  .widget<Container>(
-                    find
-                        .descendant(
-                          of: find.byType(TaxLotsTableFooter),
-                          matching: find.byType(Container),
-                        )
-                        .first,
-                  )
-                  .decoration!
-              as BoxDecoration;
-      expect(box.color, TaxLotTokens.light.footerSurface);
-      expect(box.borderRadius, TaxLotMetrics.footerBorderRadius);
-    });
-
-    testWidgets('draws the bar in the dark theme too', (tester) async {
-      await pumpFooter(tester, brightness: Brightness.dark);
-      final box =
-          tester
-                  .widget<Container>(
-                    find
-                        .descendant(
-                          of: find.byType(TaxLotsTableFooter),
-                          matching: find.byType(Container),
-                        )
-                        .first,
-                  )
-                  .decoration!
-              as BoxDecoration;
-      expect(box.color, TaxLotTokens.dark.footerSurface);
-    });
-
-    testWidgets('the total is not coloured by the sign in its string', (
+    testWidgets('is a rule and a line of text, not a filled bar', (
       tester,
     ) async {
-      // `realized` carries no `direction`, and the two ways to recover one
-      // — parsing "+" off the display, or taking the sign through the
-      // geometry seam — are N-1 and a use ADR-L D-14 reserves for a canvas.
-      // Spec `frontend/0003` OD-4 asks the backend for the field.
+      // The kit dropped the earlier artboard's bordered footer bar; what
+      // separates the total from the last row is one hairline.
       await pumpFooter(tester);
-      final total = tester.widget<Text>(find.text(r'+$9,505.00'));
-      expect(total.style!.color, TaxLotTokens.light.primaryText);
-      expect(total.style!.color, isNot(TaxLotTokens.light.gain));
+      expect(rule(tester).color, TaxLotTokens.light.divider);
+      expect(rule(tester).thickness, TaxLotMetrics.dividerThickness);
+      // The only *fills* under the footer are the two split pills: the
+      // third decoration here is the rule's own hairline, which paints a
+      // border and no background. A bar would show up as a fourth.
+      final fills = tester
+          .widgetList<DecoratedBox>(
+            find.descendant(
+              of: find.byType(TaxLotsTableFooter),
+              matching: find.byType(DecoratedBox),
+            ),
+          )
+          .map((box) => box.decoration as BoxDecoration)
+          .where((decoration) => decoration.color != null)
+          .toList();
+      expect(fills, hasLength(harness.splits.length));
+    });
+
+    testWidgets('draws the rule in the dark theme too', (tester) async {
+      await pumpFooter(tester, brightness: Brightness.dark);
+      expect(rule(tester).color, TaxLotTokens.dark.divider);
+    });
+
+    testWidgets('takes its caption from the payload, both of the kit two', (
+      tester,
+    ) async {
+      // *Realized gain if sold* and *Realized on selected sale* are the same
+      // field with different content — the backend chooses, not the card.
+      await pumpFooter(tester, label: 'Realized on selected sale');
+      expect(find.text('Realized on selected sale'), findsOneWidget);
     });
   });
 }

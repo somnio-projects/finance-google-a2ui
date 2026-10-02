@@ -16,7 +16,11 @@ from typing import Final
 
 from app.domain.day_change import change_ratio, trend_of
 from app.domain.holdings import Holding
-from app.presentation.attribution_payload import NET_LABEL, HoldingStep
+from app.presentation.attribution_payload import (
+    DELTA_LABEL,
+    NET_LABEL,
+    HoldingStep,
+)
 from app.presentation.displays import PercentageDisplay, signed_money, signed_percentage
 from app.presentation.fragments import Annotation, Delta
 from app.presentation.options import DisplayOptions
@@ -63,8 +67,10 @@ def step_of(row: Holding, total: Decimal, options: DisplayOptions) -> HoldingSte
         move=move,
         units=units,
         price=unit_price,
-        detail=f"{move.display} · {units.display} sh · {unit_price.display}",
-        selected_label=f"{row.symbol} selected",
+        # The unit word is the asset's own ticker: there is no "sh" in a
+        # quantity of Bitcoin (GGU-122, spec 0046 OD-1).
+        detail=f"{move.display} · {units.display} {row.symbol} · {unit_price.display}",
+        delta_label=DELTA_LABEL,
     )
 
 

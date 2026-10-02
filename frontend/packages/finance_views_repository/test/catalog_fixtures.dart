@@ -55,7 +55,7 @@ Map<String, dynamic> catalogEntryJson({
       'label': 'Break this down',
       'arg': 'driver',
       'control': 'choice',
-      'choices': <String>['AAPL'],
+      'choices': <String>['ETH'],
       'pattern': null,
     },
   ],

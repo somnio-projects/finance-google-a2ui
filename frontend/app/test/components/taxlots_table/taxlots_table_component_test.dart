@@ -30,8 +30,8 @@ void main() {
     test('binds every lot the backend sent, in arrival order', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.lots.map((lot) => lot.label).toList(), <String>[
-        'lot-nvda-01',
-        'lot-nvda-02',
+        'lot-btc-01',
+        'lot-btc-02',
       ]);
       expect(data.lots.map((lot) => lot.term).toList(), <TaxLotTerm>[
         TaxLotTerm.long,
@@ -42,13 +42,14 @@ void main() {
     test('binds every figure from a display string', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.title, 'Tax lots this sale consumes');
-      expect(data.subtitle, 'Sell 75 NVDA under FIFO');
+      expect(data.subtitle, 'Sell 0.75 BTC under FIFO');
       expect(data.realizedLabel, 'Realised P/L');
-      expect(data.realizedDisplay, r'+$30,349.50');
-      expect(data.lots.first.costBasisDisplay, r'$45,600.00');
-      expect(data.lots.first.proceedsDisplay, r'$72,279.60');
-      expect(data.lots.first.gainLossDisplay, r'+$26,679.60');
-      expect(data.lots.first.acquiredOn, '2025-01-13');
+      expect(data.realizedDisplay, r'+$17,953.50');
+      expect(data.lots.first.costBasisDisplay, r'$9,000.00');
+      expect(data.lots.first.proceedsDisplay, r'$16,062.50');
+      expect(data.lots.first.gainLossDisplay, r'+$7,062.50');
+      expect(data.lots.first.acquiredOnDisplay, '01/13/2025');
+      expect(data.lots.first.unitsDisplay, '0.25');
     });
 
     test('takes the split straight from by_term, never adding it up', () {
@@ -59,7 +60,7 @@ void main() {
       ]);
       expect(
         data.splits.map((split) => split.realizedDisplay).toList(),
-        <String>[r'+$3,669.90', r'+$26,679.60'],
+        <String>[r'+$10,891.00', r'+$7,062.50'],
       );
     });
 
@@ -99,11 +100,23 @@ void main() {
       expect(falling.lots.first.trend, TaxLotTrend.down);
     });
 
+    test('binds fully_sold, which is a state and not a control', () {
+      // The contract publishes it as a flag with `state: variant`; the kit
+      // draws it as a ticked, tinted row. Nothing on the card can change it
+      // — the view declares no action (spec `frontend/0027` OD-3).
+      final data = component.read(ViewPayload.fromJson(example));
+      expect(data.lots.map((lot) => lot.fullySold).toList(), <bool>[
+        true,
+        false,
+      ]);
+    });
+
     test('never reads the raw units, which N-4 reserves for geometry', () {
       final data = component.read(ViewPayload.fromJson(example));
       final bound = <String>[
         for (final lot in data.lots) ...<String>[
-          lot.acquiredOn,
+          lot.acquiredOnDisplay,
+          lot.unitsDisplay,
           lot.costBasisDisplay,
           lot.proceedsDisplay,
           lot.gainLossDisplay,
@@ -111,9 +124,9 @@ void main() {
           lot.label,
         ],
       ];
-      expect(bound, isNot(contains('60.0000')));
-      expect(bound, isNot(contains('45600.00')));
-      expect(bound, isNot(contains('26679.600000')));
+      expect(bound, isNot(contains('0.25000000')));
+      expect(bound, isNot(contains('9000.00')));
+      expect(bound, isNot(contains('7062.5000000000')));
     });
 
     testWidgets('renders through the host the app really uses', (tester) async {

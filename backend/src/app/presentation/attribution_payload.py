@@ -12,9 +12,14 @@ What GGU-100 added, criterion by criterion (spec 0032):
   *▲ Net +$3,240 (+0.68%)*, is bound from it and nothing is computed.
 * **AC-3** — each step carries the figures the selected state shows: the
   step's own percentage move, the units held and the unit price, all pairs,
-  plus the sentence the detail strip prints and the caption the header shows
-  while that bar is selected (*NVDA selected*).
+  plus the sentence the detail strip prints.
 * **AC-6** — ``cumulative`` stays: design binds it.
+
+GGU-119 moved both captions of a step. ``delta_label`` **arrived**, because the
+kit's detail frame reads *Contribution +$2,980* and the payload sent the figure
+with no word in front of it; ``selected_label`` **left**, because spec
+frontend/0028 OD-1 keeps the net in the card header and left that caption with
+no place in the frame — a field nobody draws is a field nobody maintains.
 """
 
 from typing import Final, Literal
@@ -42,6 +47,10 @@ SUMMARY: Final[str] = (
 SECTIONS: Final[tuple[str, ...]] = ("buckets", "annotations")
 #: The headline's label, as the design's pill prints it.
 NET_LABEL: Final[str] = "Net"
+#: The word in front of a step's own figure, as the kit's detail frame prints
+#: it. Declared here rather than in ``fragments`` for the reason ``NET_LABEL``
+#: is: a payload module owns its own words (GGU-119 BG-1).
+DELTA_LABEL: Final[str] = "Contribution"
 
 
 class HoldingStep(Bucket):
@@ -50,7 +59,7 @@ class HoldingStep(Bucket):
     ``Bucket`` stays the generic primitive — a step of any walk. A holding's
     step knows more: how far *it* moved in its own terms, how many units
     carried the move and at what price. Design's selected tooltip reads
-    ``+4.2% · 90 sh · $1,204.66`` off exactly these (GGU-100 AC-3).
+    ``+54.08% · 2.1 BTC · $64,250.00`` off exactly these (GGU-100 AC-3).
     """
 
     move: PercentageDisplay = Field(
@@ -64,12 +73,12 @@ class HoldingStep(Bucket):
             "The selected state's sentence, written here: the move, the units "
             "and the price with their separators and unit word."
         ),
-        examples=["+45.73% · 90 sh · $1,204.66"],
+        examples=["+54.08% · 2.1 BTC · $64,250.00"],
     )
-    selected_label: str = Field(
-        max_length=48,
-        description="What the card's header says while this step is selected.",
-        examples=["NVDA selected"],
+    delta_label: str = Field(
+        max_length=32,
+        description="The caption the detail frame prints in front of `delta`.",
+        examples=[DELTA_LABEL],
     )
 
 
@@ -106,6 +115,7 @@ class AttributionWaterfallPayload(ProjectionDto):
 
 
 __all__ = [
+    "DELTA_LABEL",
     "NET_LABEL",
     "SECTIONS",
     "SUMMARY",

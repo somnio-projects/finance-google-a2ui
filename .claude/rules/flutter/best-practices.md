@@ -1,9 +1,10 @@
 ---
-description: Flutter principles, workflow, testing standards, documentation, and project-specific rules.
+description: "Flutter principles, workflow, testing standards, documentation, and project-specific rules."
 paths:
-  - "client_flutter/*/lib/**/*.dart"
-alwaysApply: false
+  - "frontend/app/lib/**/*.dart"
+  - "frontend/packages/*/lib/**/*.dart"
 ---
+
 # Flutter Best Practices
 
 ## Interaction Guidelines
@@ -141,7 +142,7 @@ These rules are enforced on every Flutter change in this repo.
 
 ### 1. Lint must be clean after every change
 
-Run from `mobile/`:
+Run from `frontend/app/`:
 
 ```bash
 dart fix --apply
@@ -158,19 +159,19 @@ or any other third-party service.
 
 ### 3. i18n is mandatory for every user-visible string
 
-All user-visible strings must live in `mobile/lib/l10n/arb/app_en.arb` and
+All user-visible strings must live in `frontend/app/lib/l10n/arb/app_en.arb` and
 be accessed via `context.l10n.<key>`. Never inline Spanish (or any other
 language) text literals in Dart widgets — not even short button labels or error
 messages.
 
 **How to add a new string:**
 1. Add the key + `@key` descriptor to `app_en.arb`.
-2. Run `flutter gen-l10n` from `mobile/` to regenerate the Dart classes.
+2. Run `flutter gen-l10n` from `frontend/app/` to regenerate the Dart classes.
 3. Reference it as `context.l10n.yourKey`.
 
 **Widgets in `packages/app_ui`** must stay language-agnostic: accept all
 user-visible strings as required constructor parameters. Callers in
-`mobile/lib/` resolve them from `context.l10n` and pass them in.
+`frontend/app/lib/` resolve them from `context.l10n` and pass them in.
 
 ### 4. Keyboard must be dismissible by tapping anywhere outside
 
@@ -191,8 +192,8 @@ child widgets. Applies to every screen in `lib/` and to reusable form widgets in
 
 ### 5. UI Design Specs are mandatory
 
-Before implementing or modifying **any** screen or widget under `mobile/lib/`
-or `mobile/packages/app_ui/`, always read the corresponding design spec first:
+Before implementing or modifying **any** screen or widget under `frontend/app/lib/`
+or `frontend/packages/app_ui/`, always read the corresponding design spec first:
 
 | What you need | Where to look |
 |---|---|

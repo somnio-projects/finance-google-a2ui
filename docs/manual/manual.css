@@ -11,7 +11,7 @@
  */
 
 :root {
-  /* app/lib/theme/app_colors.dart */
+  /* app/lib/theme/app_color_tokens.dart */
   --page: #f7f6fb;          /* backgroundLight   */
   --surface: #fdfbff;       /* surfaceLight      */
   --raised: #f0edf7;        /* surfaceRaisedLight*/

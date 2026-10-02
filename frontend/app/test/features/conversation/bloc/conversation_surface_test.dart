@@ -52,7 +52,17 @@ void main() {
       expect(surface.payload.view, equals(exampleView));
       // Compared, not just cast: an entry's equality is what a rebuilt state
       // is diffed by, and it is the only thing that exercises its `props`.
-      expect(surface, equals(AgentSurface(surface.payload)));
+      // The options are the intent's, kept so an edit can merge onto them
+      // (spec frontend/0026 OD-3).
+      expect(
+        surface,
+        equals(
+          AgentSurface(
+            surface.payload,
+            options: const <String, String>{'top_n': '5'},
+          ),
+        ),
+      );
     });
 
     test('degrades one surface without losing the turn', () async {

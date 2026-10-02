@@ -55,6 +55,15 @@ exist only to satisfy it, and they sort after the seven real ones.
 
 - **OD-2 — the crypto reference is replaced, not extended.** Two asset
   universes in one portfolio make every allocation figure meaningless.
+
+  > **Superseded by [backend/0044](0044-the-portfolio-is-crypto.md) (GGU-114,
+  > 2026-09-24).** The showcase's subject is crypto again; the *ruling* — one
+  > universe, replaced rather than extended — is the half that survives, and
+  > 0044 applies it in the other direction. What 0044 keeps of this spec is the
+  > design reconciliation: the portfolio still totals `$482,915.20` and still
+  > shows `+$61,204.05 (+14.51 %)` (0044 OD-4). OD-3's *sector* becomes the
+  > chain ecosystem (0044 OD-2) and OD-6's cash becomes the stablecoin, with
+  > OD-6's reasoning intact (0044 OD-1).
 - **OD-3 — `MarketAsset` gains `asset_class` and `sector`**, both closed
   vocabularies. A grouping the backend cannot express is one the client would
   have to invent.

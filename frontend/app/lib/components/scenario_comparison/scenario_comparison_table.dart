@@ -3,8 +3,11 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_h
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_rows.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_track_row.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_value_cell.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_viewport.dart';
 import 'package:flutter/material.dart';
 
 /// The comparison grid: one header per scenario, one row per metric.
@@ -13,10 +16,17 @@ import 'package:flutter/material.dart';
 /// transposition happened in the component's `read`, so this widget only
 /// places what it is given. Columns keep their arrival order (N-10).
 ///
-/// **No cell is emphasised.** The design tints the better cell of each row
-/// green and marks it with a tick, driven by `metrics[].betterWhen`. The
-/// contract ships no such field — see [ScenarioComparisonHeaderRow] and
-/// `specs/frontend/0004` OD-3 for why it never will.
+/// **The better cell of each row is tinted and ticked**, as the design
+/// draws it. This paragraph said the opposite until GGU-136 — *"the contract
+/// ships no such field … for why it never will"* — and the ruling behind it
+/// was narrowed rather than reversed: `rows[].winner` names the winning
+/// column **key**, decided by the backend at the rates the card prints, and
+/// `ScenarioValueCell` compares two keys rather than two figures (N-2).
+///
+/// **It scrolls sideways when it has to.** The design gives the grid 533
+/// points and `AppShell` gives it about 340, where four tracks cannot hold
+/// their figures without breaking them mid-number. See
+/// [ScenarioGridViewport] for the three alternatives that were turned down.
 class ScenarioComparisonTable extends StatelessWidget {
   /// Creates the table.
   const ScenarioComparisonTable({
@@ -35,18 +45,20 @@ class ScenarioComparisonTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = ChartPalette.of(context);
     final tokens = ScenarioComparisonTokens.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        ScenarioComparisonHeaderRow(columns: columns),
-        for (final metric in metrics)
-          _MetricRow(
-            metric: metric,
-            columnCount: columns.length,
-            palette: palette,
-            tokens: tokens,
-          ),
-      ],
+    return ScenarioGridViewport(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ScenarioComparisonHeaderRow(columns: columns),
+          for (final metric in metrics)
+            _MetricRow(
+              metric: metric,
+              columns: columns,
+              palette: palette,
+              tokens: tokens,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -54,13 +66,13 @@ class ScenarioComparisonTable extends StatelessWidget {
 class _MetricRow extends StatelessWidget {
   const _MetricRow({
     required this.metric,
-    required this.columnCount,
+    required this.columns,
     required this.palette,
     required this.tokens,
   });
 
   final ScenarioMetricRow metric;
-  final int columnCount;
+  final List<ScenarioColumn> columns;
   final ChartPalette palette;
   final ScenarioComparisonTokens tokens;
 
@@ -75,23 +87,41 @@ class _MetricRow extends StatelessWidget {
           ScenarioComparisonLayout.rowPadding +
           const EdgeInsets.only(top: ScenarioComparisonLayout.hairline),
       child: ScenarioTrackRow(
-        columnCount: columnCount,
+        columnCount: columns.length,
         leading: Padding(
           padding: ScenarioComparisonLayout.metricCellPadding,
-          child: Text(
-            metric.label,
-            style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                metric.label,
+                style: ScenarioComparisonText.metricLabel(tokens.metricLabel),
+              ),
+              // Which way this row wins, in the backend's words. A Dart
+              // constant here would not follow the `locale` option (N-9).
+              // `higher is better ▲` — a step smaller and quieter than the
+              // name above it, and the arrow arrives inside the string.
+              Text(
+                metric.directionLabel,
+                style: ScenarioComparisonText.directionHint(
+                  tokens.verdict.directionHint,
+                ),
+              ),
+            ],
           ),
         ),
         cells: <Widget>[
-          for (final display in metric.valueDisplays)
-            Padding(
-              padding: ScenarioComparisonLayout.valueCellPadding,
-              child: Text(
-                display,
-                textAlign: TextAlign.end,
-                style: ScenarioComparisonText.value(palette.title),
-              ),
+          for (final (index, display) in metric.valueDisplays.indexed)
+            ScenarioValueCell(
+              display: display,
+              // Read, never decided: the backend named the winning column
+              // and this compares two **keys**, never two figures (N-2).
+              isWinner:
+                  metric.winner != null &&
+                  index < columns.length &&
+                  columns[index].key == metric.winner,
+              tokens: tokens,
             ),
         ],
       ),

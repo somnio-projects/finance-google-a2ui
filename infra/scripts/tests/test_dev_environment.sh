@@ -165,45 +165,52 @@ echo "the client ships the same way, and only behind a green gate"
 # safe: a called gate rather than a completion trigger, `needs:` edges, an
 # Environment for the production approval, a run that cannot end green while a
 # job it depends on was skipped, and a button rather than a push.
-FCD="${ROOT}/.github/workflows/frontend-cd.yaml"
-FCI="${ROOT}/.github/workflows/frontend-ci.yaml"
+#
+# Two clients, one shape: `frontend/` (A2UI v0.9) and `frontend_v1/` (v1.0,
+# ADR-M D-9). Every assertion below runs against both, so the second pipeline
+# cannot be a weaker copy of the first.
+for client in frontend:frontend-cd:frontend-ci frontend_v1:frontend-v1-cd:frontend-v1-ci; do
+IFS=: read -r APP CD_NAME CI_NAME <<<"${client}"
+FCD="${ROOT}/.github/workflows/${CD_NAME}.yaml"
+FCI="${ROOT}/.github/workflows/${CI_NAME}.yaml"
 
-assert "the frontend gate is called as a job of the client's delivery run" \
-  'uses: \./\.github/workflows/frontend-ci\.yaml' "${FCD}"
-assert "the frontend gate accepts being called" '^  workflow_call:' "${FCI}"
-assert "the repository-wide gate is called by the client's delivery run too" \
+assert "[${APP}] the frontend gate is called as a job of the client's delivery run" \
+  "uses: \\./\\.github/workflows/${CI_NAME}\\.yaml" "${FCD}"
+assert "[${APP}] the frontend gate accepts being called" '^  workflow_call:' "${FCI}"
+assert "[${APP}] the repository-wide gate is called by the client's delivery run too" \
   'uses: \./\.github/workflows/repo-ci\.yaml' "${FCD}"
-assert "the bundle build waits for both gates" \
+assert "[${APP}] the bundle build waits for both gates" \
   '^    needs: \[ci, repo, settings\]$' "${FCD}"
-assert "the client deploy waits for both gates and the bundle" \
+assert "[${APP}] the client deploy waits for both gates and the bundle" \
   '^    needs: \[ci, repo, settings, publish\]$' "${FCD}"
-assert "a non-main ref publishes the client to dev" '^            environment=dev$' "${FCD}"
-assert "main publishes the client to production" \
+assert "[${APP}] a non-main ref publishes the client to dev" '^            environment=dev$' "${FCD}"
+assert "[${APP}] main publishes the client to production" \
   '^            environment=production$' "${FCD}"
-assert "the client deploy is behind its Environment approval" \
+assert "[${APP}] the client deploy is behind its Environment approval" \
   'name: \$\{\{ needs.settings.outputs.environment \}\}' "${FCD}"
-assert "a client run with any failed, cancelled or skipped job is red" \
+assert "[${APP}] a client run with any failed, cancelled or skipped job is red" \
   "contains\(needs\.\*\.result, 'skipped'\)" "${FCD}"
-refute "no push trigger — merging to develop publishes no client" '^  push:$' "${FCD}"
-assert "the client deploy is a button" '^  workflow_dispatch:$' "${FCD}"
+refute "[${APP}] no push trigger — merging to develop publishes no client" '^  push:$' "${FCD}"
+assert "[${APP}] the client deploy is a button" '^  workflow_dispatch:$' "${FCD}"
 
 # Hosting has no --no-traffic revision, so the equivalent is a preview
 # channel: a complete deploy of the same bytes at an address no user is sent
 # to. Losing either half — the preview, or reading /release.json back off the
 # live origin afterwards — turns "the deploy step exited 0" back into the only
 # evidence, which is the gap GGU-93 closed for the backend.
-assert "the client is proven on a preview channel before it goes live" \
+assert "[${APP}] the client is proven on a preview channel before it goes live" \
   'firebase hosting:channel:deploy' "${FCD}"
-assert "the live origin is asked which build it serves" \
-  './frontend/tool/verify_release.sh' "${FCD}"
-assert "the bundle carries the identity that check reads" \
-  'build/web/release.json' "${ROOT}/frontend/tool/build_web.sh"
+assert "[${APP}] the live origin is asked which build it serves" \
+  "./${APP}/tool/verify_release.sh" "${FCD}"
+assert "[${APP}] the bundle carries the identity that check reads" \
+  'build/web/release.json' "${ROOT}/${APP}/tool/build_web.sh"
 
 # One compile, one set of bytes. Re-compiling in the deploy job would mean the
 # artifact the run verified is not the artifact it released — the identity
 # argument backend-cd makes by deploying an image BY DIGEST.
-assert "the deploy job takes the bytes the publish job built" \
+assert "[${APP}] the deploy job takes the bytes the publish job built" \
   'actions/download-artifact' "${FCD}"
+done
 
 echo
 echo "delivery is manual, and the PR gate still covers what the push gate used to"

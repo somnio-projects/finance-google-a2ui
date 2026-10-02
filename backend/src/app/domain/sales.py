@@ -82,6 +82,7 @@ def _consume(
                 lot_id=lot.lot_id,
                 acquired_on=lot.acquired_on,
                 term=lot.term(as_of),
+                held_days=lot.held_days(as_of),
                 quantity=taken,
                 cost_basis=basis,
                 proceeds=taken * price,

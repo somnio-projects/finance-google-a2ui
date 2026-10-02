@@ -24,11 +24,11 @@ GAIN_PERIOD: Final[str] = "all-time unrealized"
 ASK_LABEL: Final[str] = "Ask the assistant about this"
 CASH_DETAIL: Final[str] = "Settlement fund"
 EMPTY: Final[str] = "No holdings match this filter."
-AssetFilter = Literal["all", "equities", "bonds", "alternatives", "cash"]
+AssetFilter = Literal["all", "layer1", "layer2", "stablecoin", "defi", "infrastructure"]
 ALL_CLASSES: Final[AssetFilter] = "all"
 SUMMARY: Final[str] = (
     "The Holdings tab: total value with the all-time gain, then one row per "
-    "position — shares and average cost, value, unrealised result, today's "
+    "position — units and average cost, value, unrealised result, today's "
     "move, price and weight — each with the question that hands it to the "
     "assistant."
 )
@@ -48,16 +48,18 @@ class ClassFilter(BaseModel):
     label: str = Field(max_length=16, description="The chip's words (N-9).")
 
 
-#: The chips, in the donut's order, with cash last where it always sits.
+#: The chips, in the donut's order, with the settlement asset where the
+#: taxonomy puts it.
 CLASS_FILTERS: Final[tuple[ClassFilter, ...]] = (
     ClassFilter(key=ALL_CLASSES, label="All"),
     *(
         ClassFilter(key=member.value, label=ASSET_CLASS_LABELS[member])
         for member in (
-            AssetClass.EQUITIES,
-            AssetClass.BONDS,
-            AssetClass.ALTERNATIVES,
-            AssetClass.CASH,
+            AssetClass.LAYER1,
+            AssetClass.LAYER2,
+            AssetClass.INFRASTRUCTURE,
+            AssetClass.DEFI,
+            AssetClass.STABLECOIN,
         )
     ),
 )
@@ -68,12 +70,15 @@ class Position(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    symbol: str = Field(max_length=10, description="Ticker.", examples=["NVDA"])
+    symbol: str = Field(max_length=10, description="Ticker.", examples=["BTC"])
     name: str = Field(max_length=64, description="Display name.")
     detail: str = Field(
         max_length=48,
-        description="The caption under the name: shares and average cost.",
-        examples=["90 sh · avg $826.67"],
+        description=(
+            "The caption under the name: the quantity in the asset's own "
+            "units, and the average cost."
+        ),
+        examples=["2.1 BTC · avg $41,698.00"],
     )
     value: MoneyDisplay = Field(description="Market value today.")
     unrealized: Change | None = Field(

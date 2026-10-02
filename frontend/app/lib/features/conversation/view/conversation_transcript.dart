@@ -1,6 +1,7 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/component_skeleton_host.dart';
+import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
 import 'package:finance_app/features/conversation/view/assistant_answer.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
@@ -66,7 +67,7 @@ class ConversationTranscript extends StatelessWidget {
                 AssistantLabel(streaming: streaming && last),
                 const SizedBox(height: 10),
               ],
-              ConversationEntryTile(entry: entry),
+              ConversationEntryTile(entry: entry, slot: index),
             ],
           ),
         );
@@ -77,11 +78,18 @@ class ConversationTranscript extends StatelessWidget {
 
 /// One entry of the transcript.
 class ConversationEntryTile extends StatelessWidget {
-  /// Renders [entry].
-  const ConversationEntryTile({required this.entry, super.key});
+  /// Renders [entry], which sits at [slot] in the transcript.
+  const ConversationEntryTile({
+    required this.entry,
+    required this.slot,
+    super.key,
+  });
 
   /// The entry to render.
   final ConversationEntry entry;
+
+  /// The entry's index — what an edit of its options names (GGU-113).
+  final int slot;
 
   @override
   Widget build(BuildContext context) {
@@ -100,10 +108,26 @@ class ConversationEntryTile extends StatelessWidget {
       // for is resolved by exactly the widget a `?view=` read goes through,
       // so an unregistered view degrades to the host's placeholder instead of
       // crashing the turn.
-      AgentSurface(:final payload) => ComponentHost(
-        registry: context.read<ComponentRegistry>(),
-        payload: payload,
-      ),
+      // **Editable, through the same bloc.** The scope is what lets a
+      // component with declared inputs render them live; an edit re-requests
+      // this one surface with the option changed (ADR-K D-11, GGU-113).
+      AgentSurface(:final payload, :final pendingOption, :final rejection) =>
+        SurfaceEdits(
+          pendingOption: pendingOption,
+          rejection: rejection,
+          onOptionChanged: (option, value) =>
+              context.read<ConversationBloc>().add(
+                ConversationSurfaceEdited(
+                  slot: slot,
+                  option: option,
+                  value: value,
+                ),
+              ),
+          child: ComponentHost(
+            registry: context.read<ComponentRegistry>(),
+            payload: payload,
+          ),
+        ),
       SurfaceUnavailable(:final view, :final message) => AssistantAnswer(
         text: 'Could not show "$view": $message',
       ),

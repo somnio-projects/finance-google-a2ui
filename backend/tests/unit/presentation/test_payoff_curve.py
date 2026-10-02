@@ -19,7 +19,7 @@ from app.presentation.views.payoff_curve import (
     surface,
 )
 
-ENTRY_SOL = "$528.00"
+ENTRY_SOL = "$152.40"
 
 
 def options(**overrides: object) -> PayoffCurveOptions:
@@ -38,7 +38,7 @@ def test_the_entry_price_is_a_grid_point_where_nothing_is_made_or_lost(
     points = payload.series[0].points
 
     assert payload.view == VIEW_ID
-    assert payload.title == "Payoff across a price range: buy Vanguard S&P 500 ETF"
+    assert payload.title == "Payoff across a price range: buy Solana"
     assert len(points) == 25
     assert points[12].label == ENTRY_SOL
     assert points[12].value.amount == Decimal(0)
@@ -60,20 +60,20 @@ def test_a_buy_rises_with_the_price_and_a_sell_is_its_mirror(
 
 def test_a_dollar_order_is_sized_at_the_entry_price(portfolio: Portfolio) -> None:
     """The quotient is left unrounded; the figure the reader sees closes."""
-    payload = render(portfolio, options(size=750, size_in="usd"))
+    payload = render(portfolio, options(size=500, size_in="usd"))
     notional = payload.totals[2]
 
-    assert notional.amount.display == "$750.00"
-    assert notional.amount.amount != Decimal(750)
-    assert profits(payload)[0] != Decimal(-225)
-    assert profits(payload)[0].quantize(Decimal("0.01")) == Decimal("-225.00")
+    assert notional.amount.display == "$500.00"
+    # The exact figure does not multiply back; the displayed one does (D-3).
+    assert notional.amount.amount != Decimal(500)
+    assert profits(payload)[0].quantize(Decimal("0.01")) == Decimal("-150.00")
 
 
 def test_a_size_in_units_is_priced_as_given(portfolio: Portfolio) -> None:
-    payload = render(portfolio, options(symbol="AAPL", size=2, size_in="units"))
+    payload = render(portfolio, options(symbol="ETH", size=2, size_in="units"))
     shown = [row.amount.display for row in payload.totals]
 
-    assert shown == ["$233.18", "$233.18", "$466.36"]
+    assert shown == ["$3,480.00", "$3,480.00", "$6,960.00"]
 
 
 def test_the_break_even_is_the_entry_price_for_a_fee_free_order(

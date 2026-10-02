@@ -42,7 +42,7 @@ def test_every_figure_the_reader_sees_is_a_display_string(
     assert all(pair["display"].lstrip("+-").startswith("$") for pair in numbers)
     # ADR-K D-5: the exact Decimal travels *beside* the string, never instead.
     assert all(set(pair) == {"amount", "display"} for pair in numbers)
-    assert body["subject"]["quantity_display"] == "30"
+    assert body["subject"]["quantity_display"] == "0.25"
 
 
 def test_the_surface_binds_the_payload_without_computing_anything(
@@ -51,7 +51,7 @@ def test_the_surface_binds_the_payload_without_computing_anything(
     rendered = surface(card)
     assert rendered.component == "ScenarioComparison"
     assert rendered.view == VIEW_ID
-    assert rendered.props["subject"]["symbol"] == "NVDA"
+    assert rendered.props["subject"]["symbol"] == "BTC"
     assert len(rendered.props["columns"]) == len(card.columns)
     assert rendered.props["spread"]["differs"] is True
     # Label included: N-9 makes both halves of a note compliance text, and the

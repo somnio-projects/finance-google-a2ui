@@ -5,12 +5,13 @@ import 'package:finance_app/components/scenario_comparison/scenario_comparison_l
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_model.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_subject.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_table.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Renders `scenario.comparison.v1` as the design's card.
 ///
-/// The chrome is measured from the designer's rendered DOM and is the same
+/// The chrome is measured from the catalog mock's rendered DOM and is the same
 /// chrome `AttributionWaterfallCard` wears, to the pixel except for one: a
 /// 16 px radius, a 1 px hairline, and 18/16/18/**15** padding — the
 /// comparison card's bottom inset is a pixel deeper than the waterfall's.
@@ -65,6 +66,7 @@ class ScenarioComparisonCard extends StatelessWidget {
             _TitleRow(
               title: data.title,
               subjectLabel: data.subject.label,
+              badge: data.summary.badge,
               palette: palette,
               tokens: tokens,
             ),
@@ -76,7 +78,11 @@ class ScenarioComparisonCard extends StatelessWidget {
               metrics: data.metrics,
             ),
             const SizedBox(height: 12),
-            ScenarioComparisonFooter(spread: data.spread, notes: data.notes),
+            ScenarioComparisonFooter(
+              spread: data.spread,
+              notes: data.notes,
+              summary: data.summary.text,
+            ),
           ],
         ),
       ),
@@ -96,12 +102,16 @@ class _TitleRow extends StatelessWidget {
   const _TitleRow({
     required this.title,
     required this.subjectLabel,
+    required this.badge,
     required this.palette,
     required this.tokens,
   });
 
   final String title;
   final String subjectLabel;
+
+  /// The pill the frame draws top-right, server-written (N-9).
+  final String badge;
   final ChartPalette palette;
   final ScenarioComparisonTokens tokens;
 
@@ -113,6 +123,20 @@ class _TitleRow extends StatelessWidget {
       Expanded(child: Text(title, style: ChartText.title(palette.title))),
       const SizedBox(width: 12),
       Text(subjectLabel, style: ScenarioComparisonText.caption(tokens.caption)),
+      const SizedBox(width: 8),
+      DecoratedBox(
+        decoration: BoxDecoration(
+          color: tokens.verdict.winnerSurface,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: Text(
+            badge,
+            style: ScenarioComparisonText.caption(tokens.verdict.winnerAccent),
+          ),
+        ),
+      ),
     ],
   );
 }

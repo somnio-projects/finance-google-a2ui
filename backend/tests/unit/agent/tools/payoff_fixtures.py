@@ -14,7 +14,7 @@ import pytest
 from app.agent.tools.payoff import PayoffTool
 
 #: The seeded symbol with an order story behind it (spec 0003 seed data).
-VOO: Final[str] = "VOO"
+SOL: Final[str] = "SOL"
 
 
 @pytest.fixture
@@ -49,4 +49,4 @@ def rows(payload: object) -> list[Mapping[str, object]]:
     return [block(row) for row in payload]
 
 
-__all__ = ["VOO", "block", "rows", "tool"]
+__all__ = ["SOL", "block", "rows", "tool"]

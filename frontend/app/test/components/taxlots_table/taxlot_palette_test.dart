@@ -15,12 +15,11 @@ import '../../helpers/pump_app.dart';
 /// brightness the theme already carries instead.
 void main() {
   group(TaxLotTermColors, () {
-    test('two terms with the same four colours are equal', () {
+    test('two terms with the same three colours are equal', () {
       const one = TaxLotTermColors(
-        accent: Color(0xFF0F9D8F),
-        chipForeground: Color(0xFF0C6A60),
-        chipBackground: Color(0xFFDCEFEC),
-        chipBorder: Color(0xFFB8DDD6),
+        accent: TaxLotTokens.longRail,
+        chipForeground: Color(0xFF026E4F),
+        chipBackground: Color(0xFFD8FDEB),
       );
       expect(one, TaxLotTokens.light.longTerm);
       expect(one.hashCode, TaxLotTokens.light.longTerm.hashCode);
@@ -29,23 +28,22 @@ void main() {
     });
 
     test('a term is equal to itself and to nothing of another type', () {
-      // The two short-circuits in `==`: the identity fast path, and the
-      // type guard. Neither is reached by comparing two distinct terms,
-      // so without this the operator is only two-thirds executed.
+      // The two short-circuits in `==`: the identity fast path, and the type
+      // guard. Neither is reached by comparing two distinct terms, so
+      // without this the operator is only two-thirds executed.
       final one = TaxLotTokens.light.longTerm;
       expect(one, same(one));
       expect(one == one, isTrue);
       expect(one == Object(), isFalse);
     });
 
-    test('a term differing only in its hairline is a different term', () {
+    test('a term differing only in its fill is a different term', () {
       // The last operand of the `&&` chain. A difference in `accent` alone
-      // short-circuits before the other three are ever compared.
+      // short-circuits before the other two are ever compared.
       const other = TaxLotTermColors(
-        accent: Color(0xFF0F9D8F),
-        chipForeground: Color(0xFF0C6A60),
-        chipBackground: Color(0xFFDCEFEC),
-        chipBorder: Color(0xFF000000),
+        accent: TaxLotTokens.longRail,
+        chipForeground: Color(0xFF026E4F),
+        chipBackground: Color(0xFF000000),
       );
       expect(other, isNot(TaxLotTokens.light.longTerm));
     });

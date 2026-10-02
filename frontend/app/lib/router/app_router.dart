@@ -8,6 +8,7 @@ import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_app/features/order_ticket/view/order_ticket_page.dart';
 import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_page.dart';
 import 'package:finance_app/features/shell/view/app_shell.dart';
+import 'package:finance_app/features/shell/view/not_found_page.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_app/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
@@ -40,7 +41,16 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
     // (ADR-I D-3). With no gate — the tests that pump one route — every path
     // is open; with one, `AuthGate.redirectFor` is the whole decision.
     redirect: (context, state) => gate?.redirectFor(state.matchedLocation),
+    // A location no route claims is drawn in the app's own theme with a way
+    // Home, instead of go_router's unstyled error widget (GGU-112 AC-1). The
+    // path is echoed; the exception is not.
+    errorBuilder: (context, state) => NotFoundPage(location: state.uri.path),
     routes: <RouteBase>[
+      // The guessable synonyms, each a redirect and nothing else (GGU-112
+      // AC-2). Declared as routes rather than handled in the error builder
+      // so that `/home` never renders a not-found frame on its way to `/`.
+      for (final alias in AppRoutes.aliases.entries)
+        GoRoute(path: alias.key, redirect: (context, state) => alias.value),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),

@@ -1,6 +1,7 @@
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_card.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_model.dart';
+import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -37,8 +38,19 @@ class OrderTicketV2Component extends ViewComponent {
   String get a2uiComponent => 'MultiLegOrderTicket';
 
   @override
-  Widget build(BuildContext context, ViewPayload payload) =>
-      OrderTicketV2Card(data: read(payload));
+  Widget build(BuildContext context, ViewPayload payload) {
+    // Live inside a host that can re-request (the Assistant's transcript,
+    // GGU-113); read-only anywhere else, as the v1 ticket.
+    final edits = SurfaceEdits.maybeOf(context);
+    return OrderTicketV2Card(
+      data: read(payload),
+      onLegsChanged: edits == null
+          ? null
+          : (legs) => edits.onOptionChanged(legsOption, legs),
+      isBusy: edits?.pendingOption != null,
+      rejection: edits?.rejection,
+    );
+  }
 
   /// Reads [payload] into the model the card renders.
   ///
@@ -61,11 +73,11 @@ class OrderTicketV2Component extends ViewComponent {
         label: payload.text('impact.total.label'),
         display: payload.text('impact.total.amount.display'),
       ),
-      OrderTicketV2Figure(
-        name: 'units',
-        label: payload.text('impact.units.label'),
-        display: payload.text('impact.units.units.display'),
-      ),
+      // No `units` tile. `impact.units` was the arithmetic sum of every leg's
+      // quantity under the label *Est. shares* — 0.05 BTC + 1 ETH + 16 SOL =
+      // 17.05, a figure of nothing — and the backend stopped sending it
+      // rather than relabelling it (GGU-122, backend spec 0046 OD-2). Each
+      // line carries its own quantity in its own asset.
       OrderTicketV2Figure(
         name: 'fees',
         label: payload.text('impact.fees.label'),
@@ -86,9 +98,24 @@ class OrderTicketV2Component extends ViewComponent {
           afterDisplay: row.text('after.display'),
         ),
     ],
+    controls: <OrderTicketV2Control>[
+      for (final row in payload.rows('controls')) _control(row),
+    ],
     breach: payload.text('constraints.breach'),
     message: payload.optionalText('constraints.message'),
     disclosure: payload.text('disclosure'),
+  );
+
+  /// Reads one `controls[]` entry.
+  ///
+  /// `enabled` is read with `ViewPayload.flag` — the contract's reader for a
+  /// fact it states as a flag rather than as a word.
+  OrderTicketV2Control _control(ViewPayload row) => OrderTicketV2Control(
+    key: row.text('key'),
+    label: row.text('label'),
+    kind: row.text('kind'),
+    enabled: row.flag('enabled'),
+    reason: row.optionalText('reason'),
   );
 
   /// Reads one `lines[]` entry.
@@ -103,6 +130,8 @@ class OrderTicketV2Component extends ViewComponent {
     weight: row.geometry('weight.value'),
     increment: row.optionalText('increment'),
     decrement: row.optionalText('decrement'),
+    stops: row.strings('stops'),
+    position: row.geometry('position'),
   );
 }
 

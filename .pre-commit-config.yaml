@@ -112,12 +112,16 @@ repos:
 
       # Runs when either half of a §5 pair moves — the gate file or any
       # workflow — because the property it guards spans the two, the same
-      # trigger shape as `infra-dev-environment` above.
+      # trigger shape as `infra-dev-environment` above. It also runs on every
+      # file that declares a TOOLCHAIN version, in both languages: the pin
+      # itself and each file that must agree with it (GGU-94, GGU-125). A
+      # `.python-version` bump that forgets `pyproject.toml` or the Dockerfile
+      # is exactly the commit this hook exists to stop at the laptop.
       - id: repo-gate-pairs
         name: Prove every gate command appears verbatim in its workflow (check_gate_pairs.sh)
         entry: bash scripts/check_gate_pairs.sh
         language: system
-        files: ^(\.claude/ship-gate\.json|\.github/workflows/|frontend/(Dockerfile|\.fvmrc)$)
+        files: ^(\.claude/ship-gate\.json|\.github/workflows/|frontend/(Dockerfile|\.fvmrc)$|backend/(Dockerfile|pyproject\.toml|\.python-version)$)
         pass_filenames: false
 
       # Runs when the check, its suite, or the rule that defines the manual-run
@@ -128,6 +132,25 @@ repos:
         entry: bash scripts/tests/test_check_manual_run.sh
         language: system
         files: ^(scripts/check_manual_run\.sh|scripts/tests/test_check_manual_run\.sh|\.claude/rules/backend/sdd\.md)$
+        pass_filenames: false
+
+      # Runs when a spec file, the index, or either half of the check moves —
+      # the property spans the directory and the README, so touching one
+      # without the other is exactly what it catches. Command strings copied
+      # from .claude/ship-gate.json (`repo.spec-numbers`, `repo.spec-numbers-test`)
+      # and repo-ci.yaml, not paraphrased (ci-conventions §5).
+      - id: repo-spec-numbers-test
+        name: Prove the spec-number check rejects a collision (test_check_spec_numbers.sh)
+        entry: bash scripts/tests/test_check_spec_numbers.sh
+        language: system
+        files: ^(specs/|scripts/(check_spec_numbers\.sh|tests/test_check_spec_numbers\.sh)$)
+        pass_filenames: false
+
+      - id: repo-spec-numbers
+        name: Check every spec's number, shape and index row (check_spec_numbers.sh)
+        entry: bash scripts/check_spec_numbers.sh
+        language: system
+        files: ^(specs/|scripts/check_spec_numbers\.sh$)
         pass_filenames: false
 
       - id: backend-typecheck

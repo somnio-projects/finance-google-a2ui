@@ -34,9 +34,9 @@ class DrillAttributionArgs(ActionArgs):
     """The one argument a drill takes; anything else is a rejection."""
 
     driver: Driver = Field(
-        default="NVDA",
+        default="BTC",
         description="Asset to break down further, from the market reference.",
-        examples=["XOM"],
+        examples=["LINK"],
     )
 
 

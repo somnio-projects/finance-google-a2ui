@@ -1,13 +1,15 @@
 import 'package:finance_app/charts/chart_palette.dart';
-import 'package:finance_app/charts/chart_text.dart';
+import 'package:finance_app/charts/waterfall_axis.dart';
+import 'package:finance_app/charts/waterfall_overlay.dart';
 import 'package:finance_app/charts/waterfall_painter.dart';
+import 'package:finance_app/charts/waterfall_selection.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
 
 /// A waterfall chart: a plot, a rule, and a row of category labels.
 ///
 /// Responsive through `LayoutBuilder` and nothing else — the layout is
-/// recomputed from the `Size` it is given, so there is no breakpoint to keep
+/// recomputed from the width it is given, so there is no breakpoint to keep
 /// in step with a design (ADR-L D-13). Every string it shows was formatted by
 /// the backend and is drawn verbatim.
 class WaterfallChart extends StatelessWidget {
@@ -17,8 +19,8 @@ class WaterfallChart extends StatelessWidget {
     required this.valueLabels,
     required this.axisLabels,
     this.onSegmentTap,
-    this.selectedIndex,
-    this.selectionColor,
+    this.selection,
+    this.overlay,
     super.key,
   });
 
@@ -29,9 +31,8 @@ class WaterfallChart extends StatelessWidget {
   /// The plot's height, measured from the design's 200 px artboard.
   static const double plotHeight = 200;
 
-  /// The space between the plot and the rule, and between the rule and the
-  /// axis labels. Both are 8 px in the design.
-  static const double axisGap = 8;
+  /// The selected column's corner radius, measured from the UI Kit.
+  static const double columnRadius = 6;
 
   /// The walk, in the order the backend sent it (N-10).
   final List<WaterfallStep> steps;
@@ -48,79 +49,78 @@ class WaterfallChart extends StatelessWidget {
   /// `drill.attribution.v1` takes.
   final void Function(String key)? onSegmentTap;
 
-  /// The step drawn as selected, if any.
-  final int? selectedIndex;
+  /// The step drawn as selected, and the colours the design gives it.
+  final WaterfallSelection? selection;
 
-  /// The colour of the selection: the dashed outline around the selected bar
-  /// and its axis label. Defaults to the palette's total mark, which is what
-  /// the catalog page rings a selected bar with in light; Flow A's D2 state
-  /// uses its own token and the card passes it in (GGU-100).
-  final Color? selectionColor;
+  /// What to float above the selected bar, on a card wide enough for it.
+  final WaterfallOverlay? overlay;
 
   @override
-  Widget build(BuildContext context) {
-    final palette = ChartPalette.of(context);
-    final selection = selectionColor ?? palette.barTotal;
-    return Column(
-      // Shrink-wrapped: a chart is as tall as its plot, its rule and its
-      // labels, and nothing more. Left greedy it would fill whatever it was
-      // given, which is invisible inside the card (its own column is already
-      // `min`) and wrong everywhere else.
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => _chart(context, constraints.maxWidth),
+  );
+
+  Widget _chart(BuildContext context, double width) {
+    final layout = WaterfallLayout.of(
+      steps: steps,
+      width: width,
+      height: plotHeight,
+    );
+    return Stack(
       children: <Widget>[
-        SizedBox(
-          height: plotHeight,
-          child: LayoutBuilder(builder: _plot),
+        ...waterfallColumnChildren(
+          bandScale: layout.bandScale,
+          selection: selection,
+          radius: columnRadius,
         ),
-        const SizedBox(height: axisGap),
-        Divider(height: 1, thickness: 1, color: palette.rule),
-        const SizedBox(height: axisGap),
-        Row(
+        Column(
+          // Shrink-wrapped: a chart is as tall as its plot, its rule and its
+          // labels, and nothing more.
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            for (var index = 0; index < axisLabels.length; index++)
-              Expanded(
-                child: Text(
-                  axisLabels[index],
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ChartText.axis(
-                    index == selectedIndex ? selection : palette.mutedLabel,
-                  ),
-                ),
-              ),
+            SizedBox(height: plotHeight, child: _plot(context, layout)),
+            WaterfallAxis(
+              steps: steps,
+              labels: axisLabels,
+              selectedIndex: selection?.index,
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _plot(BuildContext context, BoxConstraints constraints) {
-    final layout = WaterfallLayout.of(
-      steps: steps,
-      width: constraints.maxWidth,
-      height: constraints.maxHeight,
-    );
-    final palette = ChartPalette.of(context);
-    final painter = WaterfallPainter(
-      layout: layout,
-      palette: palette,
-      valueLabels: valueLabels,
-      textDirection: Directionality.of(context),
-      selectedIndex: selectedIndex,
-      selectionColor: selectionColor ?? palette.barTotal,
-    );
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapUp: (details) => _handleTap(layout, details.localPosition.dx),
-      child: CustomPaint(
-        key: plotKey,
-        size: constraints.biggest,
-        painter: painter,
-      ),
-    );
-  }
+  Widget _plot(BuildContext context, WaterfallLayout layout) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTapUp: (details) => _handleTap(layout, details.localPosition.dx),
+    child: Stack(
+      // The callout floats above the bar and out of the plot, exactly as the
+      // desktop artboard draws it over the header.
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        Positioned.fill(
+          child: CustomPaint(
+            key: plotKey,
+            painter: WaterfallPainter(
+              layout: layout,
+              palette: ChartPalette.of(context),
+              valueLabels: valueLabels,
+              textDirection: Directionality.of(context),
+              selection: selection,
+            ),
+          ),
+        ),
+        ...waterfallOverlayChildren(
+          context,
+          layout: layout,
+          selection: selection,
+          overlay: overlay,
+          plotHeight: plotHeight,
+        ),
+      ],
+    ),
+  );
 
   void _handleTap(WaterfallLayout layout, double dx) {
     final callback = onSegmentTap;

@@ -1,10 +1,10 @@
 ---
-description: Flutter layout patterns — Row/Column, Stack, Overlay, scrolling, LayoutBuilder.
+description: "Flutter layout patterns — Row/Column, Stack, Overlay, scrolling, LayoutBuilder."
 paths:
-  - "client_flutter/*/lib/**/view/**/*.dart"
-  - "client_flutter/*/lib/**/widgets/**/*.dart"
-alwaysApply: false
+  - "frontend/app/lib/**/view/**/*.dart"
+  - "frontend/app/lib/components/**/*.dart"
 ---
+
 # Flutter Layout Best Practices
 
 ## Layout Best Practices

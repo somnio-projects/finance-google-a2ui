@@ -31,6 +31,8 @@ on:
       # has to start the suite that holds them.
       - ".github/workflows/frontend-cd.yaml"
       - ".github/workflows/frontend-ci.yaml"
+      - ".github/workflows/frontend-v1-cd.yaml"
+      - ".github/workflows/frontend-v1-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
       - "backend/docs/SECURITY.md"
@@ -50,6 +52,8 @@ on:
       # has to start the suite that holds them.
       - ".github/workflows/frontend-cd.yaml"
       - ".github/workflows/frontend-ci.yaml"
+      - ".github/workflows/frontend-v1-cd.yaml"
+      - ".github/workflows/frontend-v1-ci.yaml"
       - "CLAUDE.md"
       - ".claude/rules/**"
       - "backend/docs/SECURITY.md"

@@ -40,22 +40,19 @@ void main() {
         await pump(tester);
         expect(find.text('Activity'), findsOneWidget);
         expect(find.text('✓ All'), findsOneWidget);
-        expect(find.text('Dividends'), findsOneWidget);
-        expect(
-          find.text('Simulated activity — resets each session.'),
-          findsOneWidget,
-        );
+        expect(find.text('Staking'), findsWidgets);
+        expect(find.text(simulationNote), findsOne);
         expect(find.text('TODAY'), findsOneWidget);
         expect(find.text('THIS WEEK'), findsOneWidget);
         // `findsWidgets` below: the seed repeats these rows (0035).
-        expect(find.text('Dividend — VOO'), findsWidgets);
-        expect(find.text(r'$1.62/sh · 85 sh · qualified'), findsOneWidget);
-        expect(find.text(r'+$137.70'), findsOneWidget);
-        expect(find.text('Deposit — Bank transfer'), findsWidgets);
-        expect(find.text('Sold 20 VOO'), findsOneWidget);
-        expect(find.text(r'+$1,738 realized'), findsOneWidget);
-        expect(find.text('Bought 300 PYPL'), findsOneWidget);
-        expect(find.text(r'-$26,580.00'), findsOneWidget);
+        expect(find.text('Staking — ETH'), findsWidgets);
+        expect(find.text(rewardDetail), findsOneWidget);
+        expect(find.text(r'+$261.00'), findsOneWidget);
+        expect(find.text('Deposit — Transfer in'), findsWidgets);
+        expect(find.text('Sold 900 AVAX'), findsOneWidget);
+        expect(find.text(r'+$19,800 realized'), findsOneWidget);
+        expect(find.text('Bought 12 ETH'), findsOneWidget);
+        expect(find.text(r'-$50,100.00'), findsOneWidget);
         expect(find.text('Buy'), findsWidgets);
         expect(find.byType(ActivityEntryTile), findsWidgets);
       },
@@ -101,7 +98,7 @@ void main() {
         final sell = _entry(const <String, dynamic>{
           'key': 't',
           'kind': 'sell',
-          'title': 'Sold 25 VOO',
+          'title': 'Sold 25 AAVE',
           'detail': r'25 sh @ $528.00 · Sep 8',
           'amount': <String, dynamic>{
             'amount': '13200',

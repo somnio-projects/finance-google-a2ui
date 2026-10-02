@@ -1,5 +1,6 @@
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_header_border.dart';
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_layout.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -69,6 +70,10 @@ void main() {
       expect(ScenarioComparisonText.columnLabel(black).fontSize, 10);
       expect(ScenarioComparisonText.metricLabel(black).fontSize, 12);
       expect(ScenarioComparisonText.value(black).fontSize, 13.5);
+      // The two slots the redesign added, measured from the same DOM.
+      expect(ScenarioComparisonText.directionHint(black).fontSize, 9.5);
+      expect(ScenarioComparisonText.recommendedTag(black).fontSize, 9);
+      expect(ScenarioComparisonText.recommendedTag(black).letterSpacing, 0.36);
     });
 
     test('draws the Metric caption at 500, not as an eyebrow', () {

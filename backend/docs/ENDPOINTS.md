@@ -34,6 +34,9 @@ in production.
 | `GET` | `/v1/views` | bearer | `views.catalog` | List every projection the backend can render | ADR-K, 0005, 0022, 0023 |
 | `GET` | `/.well-known/agent-card.json` | public | — | Describe this agent to a client | 0010 |
 | `POST` | `/` | bearer | `agent.a2a` | Call an A2A method (JSON-RPC) | ADR-J, 0010 |
+| `GET` | `/a2ui/v1/.well-known/agent-card.json` | public | — | Describe the A2UI v1.0 agent to a renderer | ADR-M, 0053 |
+| `GET` | `/a2ui/v1/catalog` | bearer | — | Read the generated A2UI v1.0 catalog | ADR-M, 0053 |
+| `POST` | `/a2ui/v1/a2a` | bearer | `agent.a2a` | Call an A2A method, answered in A2UI v1.0 | ADR-M, 0053 |
 | `POST` | `/v1/sessions` | bearer | `sessions.api` | Open a conversation session | 0004 |
 | `GET` | `/v1/sessions` | bearer | `sessions.api` | List my conversation sessions | 0004 |
 | `GET` | `/v1/sessions/{session_id}` | bearer | `sessions.api` | Read one of my sessions | ADR-A, 0004 |

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/payoff_chart/payoff_chart_marks.dart';
 import 'package:finance_charts/finance_charts.dart';
 
 /// A label/figure pair the backend wrote — a total or an annotation.
@@ -56,6 +57,11 @@ class PayoffChartData extends Equatable {
     required this.totals,
     required this.lines,
     required this.annotations,
+    this.rungs = const <PayoffRung>[],
+    this.breakEven,
+    this.current,
+    this.lossWord = '',
+    this.gainWord = '',
   });
 
   /// The payload's `title`.
@@ -77,6 +83,21 @@ class PayoffChartData extends Equatable {
   /// The payload's `annotations`, in arrival order.
   final List<PayoffFact> annotations;
 
+  /// The payload's `value_ticks`, ascending.
+  final List<PayoffRung> rungs;
+
+  /// The payload's `markers.break_even`.
+  final PayoffMarker? breakEven;
+
+  /// The payload's `markers.current`.
+  final PayoffMarker? current;
+
+  /// The payload's `zones.loss` — the word written in the losing region.
+  final String lossWord;
+
+  /// The payload's `zones.gain`.
+  final String gainWord;
+
   /// The geometry the chart lays out, one list per series.
   List<List<PayoffPoint>> get series => <List<PayoffPoint>>[
     for (final line in lines) line.points,
@@ -94,5 +115,10 @@ class PayoffChartData extends Equatable {
     totals,
     lines,
     annotations,
+    rungs,
+    breakEven,
+    current,
+    lossWord,
+    gainWord,
   ];
 }

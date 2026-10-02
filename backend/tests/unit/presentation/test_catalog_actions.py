@@ -25,7 +25,7 @@ def test_the_table_prints_the_bound_the_arguments_model_enforces() -> None:
     assert "`drill.attribution.v1`" in rendered
     assert "Break this down" in rendered
     assert "`driver`" in rendered
-    assert "'XOM'" in rendered
+    assert "'LINK'" in rendered
 
 
 def test_every_registered_action_renders_one_row() -> None:

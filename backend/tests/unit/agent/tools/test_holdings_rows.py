@@ -36,7 +36,7 @@ def test_totals_over_a_zero_cost_portfolio_report_no_percentage_return() -> None
 def test_a_sub_cent_price_multiplies_back_to_the_market_value_beside_it() -> None:
     """Spec 0013 S1 — the row must not contradict itself.
 
-    XOM is quoted at ``0.1273``. Rounded to cents the row reads ``$0.13``,
+    LINK is quoted at ``0.1273``. Rounded to cents the row reads ``$0.13``,
     and 12,000 times $0.13 is $1,560.00, which is $32.40 away from the market value in
     the same row. The tool that found this (`simulate_sale`) fixed its own
     block; this is the same bug in the holdings row, fixed with the same
@@ -44,7 +44,7 @@ def test_a_sub_cent_price_multiplies_back_to_the_market_value_beside_it() -> Non
     """
     doge = AIRDROP.model_copy(
         update={
-            "symbol": "XOM",
+            "symbol": "LINK",
             "name": "Exxon Mobil",
             "quantity": Decimal("130"),
             "price": Decimal("34.22"),
@@ -62,9 +62,9 @@ def test_a_sub_cent_price_multiplies_back_to_the_market_value_beside_it() -> Non
 
 
 def test_a_cent_exact_price_keeps_the_two_decimals_a_reader_expects() -> None:
-    """The helper widens only when it has to — NVDA stays ``$1,204.66``."""
+    """The helper widens only when it has to — BTC stays ``$1,204.66``."""
     btc = AIRDROP.model_copy(
-        update={"symbol": "NVDA", "price": Decimal("1204.66"), "quantity": Decimal("1")}
+        update={"symbol": "BTC", "price": Decimal("1204.66"), "quantity": Decimal("1")}
     )
 
     assert holdings_rows.row(btc)["priceDisplay"] == "$1,204.66"

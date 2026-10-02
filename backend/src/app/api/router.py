@@ -12,7 +12,7 @@ full recipe and the controller template.
 
 from fastapi import APIRouter
 
-from app.api import a2a, agent_card
+from app.api import a2a, a2ui_v1, agent_card
 from app.api.v1 import (
     access,
     feature_flags,
@@ -39,6 +39,8 @@ api_router.include_router(views.router)
 # only non-RESTful router here (ADR-J).
 api_router.include_router(agent_card.router)
 api_router.include_router(a2a.router)
+# The A2UI v1.0 wire, beside v0.9 under its own prefix (ADR-M D-2).
+api_router.include_router(a2ui_v1.router)
 api_router.include_router(sessions.router)
 api_router.include_router(session_messages.router)
 

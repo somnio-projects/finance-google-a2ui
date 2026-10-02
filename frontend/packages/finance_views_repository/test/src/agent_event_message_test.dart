@@ -8,7 +8,7 @@ void main() {
         'kind': 'message',
         'role': 'agent',
         'parts': <Map<String, dynamic>>[
-          <String, dynamic>{'kind': 'text', 'text': 'NVDA led the move.'},
+          <String, dynamic>{'kind': 'text', 'text': 'BTC led the move.'},
         ],
         'renderIntents': <Map<String, dynamic>>[
           <String, dynamic>{'view': 'attribution.waterfall.v1'},
@@ -19,7 +19,7 @@ void main() {
         event,
         equals(
           const AgentAnswered(
-            text: 'NVDA led the move.',
+            text: 'BTC led the move.',
             views: <String>[
               'attribution.waterfall.v1',
               'holdings.allocation.v1',

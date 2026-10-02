@@ -45,12 +45,12 @@ def test_an_emptied_position_reads_as_empty_rather_than_as_missing() -> None:
 def test_an_over_sell_reports_both_quantities_already_formatted() -> None:
     """OD-3 — the model copies the shortfall; it never works one out."""
     refusal = sale_rows.too_small(
-        symbol="NVDA", requested=Decimal("1.5"), held=Decimal("0.6")
+        symbol="BTC", requested=Decimal("1.5"), held=Decimal("0.6")
     )
 
     assert refusal == {
         "error": "position-too-small",
-        "symbol": "NVDA",
+        "symbol": "BTC",
         "requestedDisplay": "1.5",
         "heldDisplay": "0.6",
     }

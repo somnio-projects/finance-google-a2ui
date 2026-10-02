@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_note": "Definition of Done, in four parts — `py.*`, `infra.*`, `repo.*` and `frontend.*`, one row each in .claude/rules/ci-conventions.md §5. It read \"three\" while that rule read \"five\", which is this repository's own drift defect sitting in the file the rule is about; both were wrong and both are counted again whenever a part is added or removed. The `dart.*` / `client.*` / `flutter.*` part was the fifth: it gated `client_flutter/`, the older Flutter app, which was removed with its workflow on 2026-09-22 (spec `repo/0002`). Removing a part means editing the count in BOTH files in the same commit. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. `py.openapi` sits beside `py.catalog` for the same reason it exists (spec `backend/0038`): `GET /openapi.json` is how a client of this service is written, and it was being proven only by whatever a reviewer happened to look at. It audits every operation against what its route can really answer — read from the route's dependency tree, never from a list — and re-renders `backend/docs/ENDPOINTS.md` from the same document and diffs it, so a hand-written route list cannot drift. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). `infra.shell-lint` used to be here, and is now `repo.shell-lint`: the infra form named two globs under `infra/scripts/` and so proved nothing about the shell this repository ships anywhere else — both container entry points were outside it and both were red the first time a gate opened them (SC2086 in backend/docker/entrypoint.sh, SC2016 in client_flutter/docker/entrypoint.sh, a file this repository no longer ships — the finding is why the check is repository-wide, so the history stays). `repo.secrets` moved from backend-ci for the same reason in the other direction: that workflow is `paths:`-scoped to `backend/**`, while root SECURITY.md and docs/compliance/VULNERABILITY_MANAGEMENT.md both claimed secret scanning on every pull request, which was false for a frontend-only or client-only one. A check whose subject is any file in this repository cannot be correct in a scoped workflow. The `frontend.*` commands are exactly the steps of `cd frontend && make gate` and of the `quality` and `tests` jobs in .github/workflows/frontend-ci.yaml (GGU-91, spec `frontend/0001`). That workflow also has a `build` job that compiles the release web bundle, which is deliberately NOT in the gate for the same reason backend-ci's `image` job is not in `py.*`: it is slow and belongs on a runner. `frontend.test` and `frontend.coverage` are make targets for the same reason `py.quality` is — the command is a loop over four packages, and a paraphrase of a loop is exactly the drift §5 warns about. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes — exactly when it is least needed. `repo.spelling` runs through a script because the bare `codespell` form did not scan what it claimed: the tool's directory walk skips dot-entries, so `.claude/` and `.github/` were never opened while this note said they were. It is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. `frontend.toolchain` is first in that list on purpose (GGU-94): every check after it is read through `dart` and `flutter`, and a machine carrying a Dart below the declared SDK floor used to announce itself as three unformatted files and exit 65 — a red gate that looked like a red branch. The pinned version now lives in `frontend/.fvmrc`, read by that script and by every SDK-setup step in frontend-ci.yaml, instead of in a `FLUTTER_VERSION` env var no local command could reach. `repo.manual-run` is the suite over `scripts/check_manual_run.sh` (GGU-93), which reads a PR body and proves the manual run names the build that served it and that the build is this branch's head; the check itself needs a PR body, so what the gate runs is its test — the thing that proves it rejects. `frontend.verify-release-test` is the suite over `frontend/tool/verify_release.sh` (spec `frontend/0017`), the script `frontend-cd.yaml` uses to ask a deployed origin which build it is serving — /release.json, the static-hosting answer to the backend's /health. It is here for the same reason `repo.manual-run` is: the check itself needs a live origin and the gate has none, so what the gate runs is the thing that proves it REJECTS. On a runner the script can only ever be seen accepting, because the deploy it follows has just succeeded. `frontend.csp` is the newest of them and the only one whose subject is a **deployed** header: `firebase_core_web` boots the Firebase JS SDK from an inline script, a strict `script-src` blocked it, and the live site served a white page while every gate was green — no widget harness, no local static server and no `/release.json` probe sees a Content-Security-Policy. The check derives the hash from the resolved plugin and reads both policies (`firebase.json` and `frontend/docker/nginx.conf.template`), so a plugin bump fails the gate instead of the site (spec `frontend/0022`).",
+  "_note": "Definition of Done, in five parts — `py.*`, `infra.*`, `repo.*`, `frontend.*` and `frontend_v1.*`, one row each in .claude/rules/ci-conventions.md §5. It read \"three\" while that rule read \"five\", which is this repository's own drift defect sitting in the file the rule is about; both were wrong and both are counted again whenever a part is added or removed. The `dart.*` / `client.*` / `flutter.*` part was the fifth: it gated `client_flutter/`, the older Flutter app, which was removed with its workflow on 2026-09-22 (spec `repo/0002`). Removing a part means editing the count in BOTH files in the same commit. The `py.*` commands are exactly the steps of `cd backend && make gate` and the jobs of .github/workflows/backend-ci.yaml. `py.openapi` sits beside `py.catalog` for the same reason it exists (spec `backend/0038`): `GET /openapi.json` is how a client of this service is written, and it was being proven only by whatever a reviewer happened to look at. It audits every operation against what its route can really answer — read from the route's dependency tree, never from a list — and re-renders `backend/docs/ENDPOINTS.md` from the same document and diffs it, so a hand-written route list cannot drift. The `infra.*` commands run from the repository root (there is no root Makefile) and are exactly the delivery-scripts job of .github/workflows/infra-ci.yaml and the matching pre-commit hooks. Change one, change its pair (.claude/rules/ci-conventions.md §5). `infra.shell-lint` used to be here, and is now `repo.shell-lint`: the infra form named two globs under `infra/scripts/` and so proved nothing about the shell this repository ships anywhere else — both container entry points were outside it and both were red the first time a gate opened them (SC2086 in backend/docker/entrypoint.sh, SC2016 in client_flutter/docker/entrypoint.sh, a file this repository no longer ships — the finding is why the check is repository-wide, so the history stays). `repo.secrets` moved from backend-ci for the same reason in the other direction: that workflow is `paths:`-scoped to `backend/**`, while root SECURITY.md and docs/compliance/VULNERABILITY_MANAGEMENT.md both claimed secret scanning on every pull request, which was false for a frontend-only or client-only one. A check whose subject is any file in this repository cannot be correct in a scoped workflow. The `frontend.*` commands are exactly the steps of `cd frontend && make gate` and of the `quality` and `tests` jobs in .github/workflows/frontend-ci.yaml (GGU-91, spec `frontend/0001`). That workflow also has a `build` job that compiles the release web bundle, which is deliberately NOT in the gate for the same reason backend-ci's `image` job is not in `py.*`: it is slow and belongs on a runner. `frontend.test` and `frontend.coverage` are make targets for the same reason `py.quality` is — the command is a loop over four packages, and a paraphrase of a loop is exactly the drift §5 warns about. `repo.*` commands also run from the repository root and are the jobs of .github/workflows/repo-ci.yaml, which carries no `paths:` filter because a repository-wide check placed in a scoped workflow runs only when that scope changes — exactly when it is least needed. `repo.spelling` runs through a script because the bare `codespell` form did not scan what it claimed: the tool's directory walk skips dot-entries, so `.claude/` and `.github/` were never opened while this note said they were. It is here because `make gate` scanned only `backend/` while the pre-commit hook scanned everything: a typo in `specs/`, root `docs/` or `.claude/` passed the gate and was caught only at commit time, and only if the author had not bypassed the hook. `frontend.toolchain` is first in that list on purpose (GGU-94): every check after it is read through `dart` and `flutter`, and a machine carrying a Dart below the declared SDK floor used to announce itself as three unformatted files and exit 65 — a red gate that looked like a red branch. The pinned version now lives in `frontend/.fvmrc`, read by that script and by every SDK-setup step in frontend-ci.yaml, instead of in a `FLUTTER_VERSION` env var no local command could reach. `repo.manual-run` is the suite over `scripts/check_manual_run.sh` (GGU-93), which reads a PR body and proves the manual run names the build that served it and that the build is this branch's head; the check itself needs a PR body, so what the gate runs is its test — the thing that proves it rejects. `repo.spec-numbers` and `repo.spec-numbers-test` are the pair `frontend.toolchain` / `frontend.toolchain-test` already models, and they are here rather than as one entry because this check, unlike the manual-run one, needs nothing a laptop lacks: the first runs it over this repository, the second proves it REJECTS a collision, an unpadded number, an unindexed spec, an orphan row and a corpus too small to believe (GGU-105, spec `frontend/0029`). It closes a property `specs/README.md` asserted in prose and nothing enforced — two specs had shared `frontend/0002` from the day they merged, and nine spec files had no index row at all, so neither the duplicate nor the missing spec was \"visible at a glance\" to anyone. `frontend.verify-release-test` is the suite over `frontend/tool/verify_release.sh` (spec `frontend/0017`), the script `frontend-cd.yaml` uses to ask a deployed origin which build it is serving — /release.json, the static-hosting answer to the backend's /health. It is here for the same reason `repo.manual-run` is: the check itself needs a live origin and the gate has none, so what the gate runs is the thing that proves it REJECTS. On a runner the script can only ever be seen accepting, because the deploy it follows has just succeeded. `frontend.csp` is the newest of them and the only one whose subject is a **deployed** header: `firebase_core_web` boots the Firebase JS SDK from an inline script, a strict `script-src` blocked it, and the live site served a white page while every gate was green — no widget harness, no local static server and no `/release.json` probe sees a Content-Security-Policy. The check derives the hash from the resolved plugin and reads both policies (`firebase.json` and `frontend/docker/nginx.conf.template`), so a plugin bump fails the gate instead of the site (spec `frontend/0022`). `frontend_v1.*` is the fifth part (ADR-M D-9, spec `frontend_v1/0001`): the A2UI v1.0 client is a second deployable, so it gets its own part and its own workflow, `frontend-v1-ci.yaml`, rather than jobs bolted onto `frontend-ci`. Its commands are `frontend.*`'s run from `frontend_v1/`, plus `frontend_v1.catalog`, which proves the catalog the renderer enforces is a byte-for-byte copy of the backend's generated `docs/a2ui/v1.0/finance.catalog.json`.",
   "required": [
     {
       "id": "py.lint",
@@ -93,6 +93,16 @@
       "cmd": "bash scripts/tests/test_check_manual_run.sh"
     },
     {
+      "id": "repo.spec-numbers",
+      "cwd": ".",
+      "cmd": "bash scripts/check_spec_numbers.sh"
+    },
+    {
+      "id": "repo.spec-numbers-test",
+      "cwd": ".",
+      "cmd": "bash scripts/tests/test_check_spec_numbers.sh"
+    },
+    {
       "id": "repo.secrets",
       "cwd": ".",
       "cmd": "docker run --rm -v \"$PWD:/repo\" -w /repo zricethezav/gitleaks:v8.24.3 git --config=/repo/.gitleaks.toml --redact --no-banner --exit-code 1"
@@ -145,6 +155,61 @@
     {
       "id": "frontend.coverage",
       "cwd": "frontend",
+      "cmd": "make coverage"
+    },
+    {
+      "id": "frontend_v1.toolchain",
+      "cwd": "frontend_v1",
+      "cmd": "bash tool/check_toolchain.sh"
+    },
+    {
+      "id": "frontend_v1.toolchain-test",
+      "cwd": "frontend_v1",
+      "cmd": "bash tool/tests/test_check_toolchain.sh"
+    },
+    {
+      "id": "frontend_v1.verify-release-test",
+      "cwd": "frontend_v1",
+      "cmd": "bash tool/tests/test_verify_release.sh"
+    },
+    {
+      "id": "frontend_v1.format",
+      "cwd": "frontend_v1",
+      "cmd": "dart format --output=none --set-exit-if-changed ."
+    },
+    {
+      "id": "frontend_v1.analyze",
+      "cwd": "frontend_v1",
+      "cmd": "dart analyze --fatal-infos --fatal-warnings"
+    },
+    {
+      "id": "frontend_v1.budget",
+      "cwd": "frontend_v1",
+      "cmd": "dart run tool/check_file_budget.dart"
+    },
+    {
+      "id": "frontend_v1.manifest",
+      "cwd": "frontend_v1",
+      "cmd": "dart run tool/generate_component_manifest.dart --check"
+    },
+    {
+      "id": "frontend_v1.catalog",
+      "cwd": "frontend_v1",
+      "cmd": "bash tool/sync_catalog.sh --check"
+    },
+    {
+      "id": "frontend_v1.csp",
+      "cwd": "frontend_v1",
+      "cmd": "bash tool/check_csp_hashes.sh"
+    },
+    {
+      "id": "frontend_v1.test",
+      "cwd": "frontend_v1",
+      "cmd": "make test"
+    },
+    {
+      "id": "frontend_v1.coverage",
+      "cwd": "frontend_v1",
       "cmd": "make coverage"
     }
   ],

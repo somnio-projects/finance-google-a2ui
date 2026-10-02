@@ -90,9 +90,20 @@ void main() {
       );
       expect(layout.outerRadius, equals(designOuterDiameter / 2));
       expect(layout.innerRadius, closeTo(designHoleDiameter / 2, 0.001));
-      expect(layout.thickness, closeTo((150 - 92) / 2, 0.001));
-      expect(layout.strokeRadius, closeTo((75 + 46) / 2, 0.001));
-      expect(layout.center, equals(const ChartPoint(75, 75)));
+      expect(
+        layout.thickness,
+        closeTo((designOuterDiameter - designHoleDiameter) / 2, 0.001),
+      );
+      expect(
+        layout.strokeRadius,
+        closeTo((designOuterDiameter + designHoleDiameter) / 4, 0.001),
+      );
+      expect(
+        layout.center,
+        equals(
+          const ChartPoint(designOuterDiameter / 2, designOuterDiameter / 2),
+        ),
+      );
     });
 
     test('fits a ring into a non-square plot, and collapses a flat one', () {

@@ -1,6 +1,7 @@
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_reader.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_skeleton.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/components/surface_actions.dart';
 import 'package:finance_app/components/view_component.dart';
@@ -65,6 +66,9 @@ class AttributionWaterfallComponent extends ViewComponent {
     }
     return null;
   }
+
+  @override
+  Widget skeleton(BuildContext context) => const AttributionWaterfallSkeleton();
 
   /// Reads [payload] into the model the card draws.
   ///

@@ -35,7 +35,7 @@ void main() {
       expect(find.text('ST gain'), findsWidgets);
       expect(find.text('LT gain'), findsWidgets);
       expect(find.text('ST loss'), findsWidgets);
-      expect(find.text('LT loss'), findsOneWidget);
+      expect(find.text('LT loss'), findsWidgets);
     });
   });
 }

@@ -36,6 +36,7 @@ review and the ship gate cite them by number.
 | [ADR-H](ADR-H-ci-ship-gate.md) | CI and ship-gate contract | Proposed · **D-2 and D-6 struck (2026-09-22)** — they named `client_flutter/`, retired by spec `repo/0002` | GGU-45 |
 | [ADR-I](ADR-I-client-routing.md) | Client routing and auth gating (`client_flutter/` only) | **Superseded by ADR-L** (2026-09-22) — the app it governed was retired (spec `repo/0002`); D-3 survives, restated by ADR-L D-5 | GGU-1, GGU-2 |
 | [ADR-L](ADR-L-client-architecture.md) | The `frontend/` client architecture | Proposed | GGU-91 |
+| [ADR-M](ADR-M-a2ui-v1-wire.md) | A2UI v1.0 wire beside v0.9 — our own renderer, an additive `/a2ui/v1/*` route, the `frontend_v1/` copy | Accepted (2026-10-01) | — |
 
 Letters are provisional identifiers from the refinement pass. Renumber to `ADR-0001…` on first
 amendment if the team prefers sequential numbering; update the citations in the GGU-6 tickets at the

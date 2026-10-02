@@ -3,6 +3,7 @@ import 'package:finance_app/features/activity/view/activity_chips.dart';
 import 'package:finance_app/features/activity/view/activity_first_run.dart';
 import 'package:finance_app/features/activity/view/activity_sections.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
+import 'package:finance_app/features/shell/view/tab_failure.dart';
 import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/skeleton/skeleton_rows.dart';
 import 'package:finance_app/skeleton/skeleton_switcher.dart';
@@ -32,6 +33,8 @@ class ActivityView extends StatelessWidget {
         if (state.status == ActivityStatus.failure) {
           return TabFailure(
             message: state.failure?.message ?? 'The request failed.',
+            onRetry: () =>
+                context.read<ActivityBloc>().add(const ActivityRequested()),
           );
         }
         if (timeline == null) return const ActivityFirstRun();

@@ -28,7 +28,7 @@ from app.domain.money import ZERO
 #: model says around the numbers, the surface can state what they are not.
 DISCLOSURE: Final[str] = (
     "Illustrative draft on the demo portfolio's simulated prices: whole "
-    "shares at the reference price, fees simulated at zero, nothing placed, "
+    "units at the reference price, fees simulated at zero, nothing placed, "
     "sent or settled. The user edits the legs on the ticket; nothing is "
     "confirmed in prose."
 )
@@ -53,7 +53,8 @@ def impact_block(
     """Describe the order's consequences, every figure formatted."""
     return {
         "totalDisplay": money_display(impact.total),
-        "unitsDisplay": quantity_display(impact.units, trim=True),
+        # No total quantity: the legs are different assets, so their counts do
+        # not add. Each leg's own count is in `line()` (GGU-122, spec 0046).
         "feesDisplay": money_display(impact.fees),
         "cashRemainingDisplay": money_display(impact.cash_after),
         "weightShifts": [

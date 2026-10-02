@@ -45,15 +45,56 @@ final class AgentSaid extends ConversationEntry {
 /// It carries the payload and **not** a widget: which component renders it is
 /// decided by the one `ComponentRegistry`, at build time, exactly as it is for
 /// a surface the user navigated to. There is no second rendering path.
+///
+/// It also carries the **options it was rendered with**, so an edit of one
+/// declared option re-requests the view with the others intact (ADR-K D-11,
+/// GGU-113), and the host's answer to the last edit: the option in flight and
+/// the backend's sentence when it refused one.
 final class AgentSurface extends ConversationEntry {
-  /// Records [payload] for the view the agent chose.
-  const AgentSurface(this.payload);
+  /// Records [payload] for the view the agent chose, rendered with [options].
+  const AgentSurface(
+    this.payload, {
+    this.options = const <String, String>{},
+    this.pendingOption,
+    this.rejection,
+  });
 
   /// The rendered projection, shaped entirely by the backend.
   final ViewPayload payload;
 
+  /// The declared options this payload was rendered with — the agent's
+  /// intent, plus every edit since.
+  final Map<String, String> options;
+
+  /// The option being re-rendered, or null when none is.
+  final String? pendingOption;
+
+  /// The backend's own sentence for the last refused edit, or null.
+  final String? rejection;
+
+  /// The same surface while [option] is being re-rendered under [options] —
+  /// the merged map, so a second edit made before this one lands merges onto
+  /// the newest intent rather than the last rendered one (spec 0026 OD-3).
+  AgentSurface editing(String option, Map<String, String> options) =>
+      AgentSurface(payload, options: options, pendingOption: option);
+
+  /// The re-rendered surface: a new payload under the [options] that made it.
+  AgentSurface rendered(ViewPayload payload, Map<String, String> options) =>
+      AgentSurface(payload, options: options);
+
+  /// The edit was refused: the previous payload stays under [options] — the
+  /// intent that payload was rendered with, so the refused value is not
+  /// re-sent by the next edit — with [message] under it.
+  AgentSurface refused(String message, Map<String, String> options) =>
+      AgentSurface(payload, options: options, rejection: message);
+
   @override
-  List<Object?> get props => <Object?>[payload];
+  List<Object?> get props => <Object?>[
+    payload,
+    options,
+    pendingOption,
+    rejection,
+  ];
 }
 
 /// A surface the agent asked for that could not be fetched.

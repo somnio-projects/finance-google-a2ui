@@ -41,7 +41,7 @@ class PayoffCurveOptions(opt.DisplayOptions, opt.FieldSelection):
     """Declared knobs of ``payoff.curve.v1``; nothing else is accepted."""
 
     symbol: Symbol = Field(
-        default="VOO", description="Asset the order is for.", examples=["VOO"]
+        default="SOL", description="Asset the order is for.", examples=["SOL"]
     )
     size: int = Field(
         default=500,

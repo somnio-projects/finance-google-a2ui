@@ -61,14 +61,28 @@ doing so. Nothing requires fvm; the file is read as plain JSON.
 ```bash
 cd frontend && flutter pub get --enforce-lockfile      # once per clone
 cd frontend/app && flutter run -d chrome \
-  --dart-define=BACKEND_BASE_URL=http://localhost:8000 \
-  --dart-define=BACKEND_DEV_TOKEN="$(cd ../../backend && make token SUBJECT=alice)"
+  --dart-define=BACKEND_BASE_URL=http://localhost:8000
 ```
 
 The backend comes from `docker compose up --build` at the repository root.
-`BACKEND_DEV_TOKEN` is a **local-development affordance and a recorded gap**
-(`SECURITY.md` G-1): a `--dart-define` is compiled into the bundle, so it never
-carries a credential for a deployed environment.
+
+**There is no `BACKEND_DEV_TOKEN`, and this block used to say there was.** It
+told you to mint one with `make token SUBJECT=alice` and pass it as a
+`--dart-define`, and called it *"a local-development affordance and a recorded
+gap (`SECURITY.md` G-1)"*. Every part of that is now false:
+`AppConfig` does not read the name (`grep -c BACKEND_DEV_TOKEN
+app/lib/app/app_config.dart` → **0**), so the flag was silently ignored, and
+`SECURITY.md` G-1 is **struck and Closed** — *"`BACKEND_DEV_TOKEN` is gone"* —
+since spec `frontend/0008`. The bearer is whatever `AuthRepository.token()`
+answers at run time: Firebase's refreshed ID token, or the local stack's
+preview token minted by the backend for a provisioned e-mail (spec
+`backend/0027` OD-3). **Nothing in the bundle can call the API on its own.**
+
+That is the failure mode worth naming: the sentence did not merely go stale, it
+described the security posture **in the unsafe direction** — claiming a
+compiled-in credential that no longer exists. `frontend/README.md` § *Run* was
+corrected and this file was not, which is what two homes for one instruction
+buys you.
 
 ## Verify — a change is not done without this
 
@@ -169,7 +183,7 @@ Dependencies point one way: `view → bloc → repository → api client → cor
 
 - **150 lines per file** (`tool/check_file_budget.dart`), sources *and* tests. Over budget → split by responsibility, never "part 1 / part 2".
 - **Layering** (`app/test/architecture/layering_test.dart`, the counterpart of the backend's `test_package_boundaries.py`): no Flutter under `packages/`; blocs never import the api client or `http`; components never import a feature; **only `bootstrap.dart` constructs** an `http.Client`, a `FinanceApiClient` or a `ViewsRepository`; **only a `*_page.dart` reads a repository from the tree** (the page/view split — a page builds its bloc, a `_View` reads state).
-- **The numbers rule, as a test** (`app/test/architecture/binding_rules_test.dart`). Twelve number mechanisms — including **both** `double.parse` and `double.tryParse`, and the same for `num` and `int` — plus three clock reads and four interpreter mechanisms are absent from `lib/`, and the test fails on any of them. **One file is allow-listed**, by path: `finance_views_repository/lib/src/raw_decimal.dart`, which turns the contract's raw `amount` into a canvas coordinate for a chart and nothing else (ADR-L D-14). It is not exported from the package barrel, so `ViewPayload.geometry` is its only caller, and `::the geometry seam is the only exemption` asserts the allow set has exactly one member. Payload paths must be string literals, never variables. Every figure on screen is a `*Display` string the backend formatted. If you need one the payload does not carry, **the payload is missing a field — raise it** (spec `client/0003` N-3).
+- **The numbers rule, as a test** (`app/test/architecture/binding_rules_test.dart`). Twelve number mechanisms — including **both** `double.parse` and `double.tryParse`, and the same for `num` and `int` — plus three clock reads and five interpreter mechanisms are absent from `lib/`, and the test fails on any of them. **One file is allow-listed**, by path: `finance_views_repository/lib/src/raw_decimal.dart`, which turns the contract's raw `amount` into a canvas coordinate for a chart and nothing else (ADR-L D-14). It is not exported from the package barrel, so `ViewPayload.geometry` is its only caller, and `::the geometry seam is the only exemption` asserts the allow set has exactly one member. Payload paths must be string literals, never variables. Every figure on screen is a `*Display` string the backend formatted. If you need one the payload does not carry, **the payload is missing a field — raise it** (spec `client/0003` N-3).
 - **Documentation on every public symbol** — `public_member_api_docs` from `very_good_analysis`, made fatal by `dart analyze --fatal-infos`. This is the analyzer doing what `interrogate` does for the backend.
 - **The browser is behind a seam.** `app/lib/speech/` holds the `SpeechRecognizer` interface; `speech_web.dart` is the only file that may import `dart:js_interop` or `package:web`, and `bootstrap.dart` — through a conditional import — is the only file that names either implementation. `app/test/architecture/speech_rules_test.dart` fails on the mechanism, and the allowance's *size* is asserted, like the geometry seam's. A platform API a test cannot start belongs behind an interface a test can fake (spec `frontend/0023`).
 - **100 % line coverage per file, and no `lib/` file without a record** (`tool/check_coverage.dart`). Dart's lcov carries no branch data, so the backend's 100 % *branch* contract cannot be reproduced literally; per-file 100 % line is the honest equivalent and is strictly above the `≥80 %` floor in `.claude/rules/flutter/testing.md`. The script also cross-checks the records against the files on disk, because lcov writes **nothing** for a library no test imports — without that, the rule would have meant "100 % of the files the tests happened to load" and a new untested file would have passed silently. Exemptions are listed in that script with a reason each; there are **two** — `lib/main.dart` and `lib/speech/speech_web.dart`, both boundaries to something a test cannot start, never merely hard-to-test code.
@@ -189,15 +203,30 @@ own axis labels, which breaks the one product invariant this showcase exists
 to demonstrate. The reasoning is ADR-L D-13; the chart's measured design values
 are in `app/lib/charts/chart_tokens.dart`.
 
-**Colour literals live in a `*_tokens.dart` and nowhere else.** `AppTheme`
-names the seed; each design-bound surface names its own measured palette —
-`charts/chart_tokens.dart`, `components/taxlots_table/taxlot_tokens.dart` —
-and every other file reads it through a palette object. A component's palette
-stays in the component's directory on purpose: registering a `ThemeExtension`
-would mean editing `AppTheme` to add one, which ADR-L D-3 forbids. Where two
-palettes share a semantic role, a test pins them to each other
+**Colour literals live in a `*_tokens.dart` or a `*_palettes.dart`, and
+nowhere else — and that is now a test, not a sentence**
+(`app/test/architecture/color_rules_test.dart`, spec `frontend/0029` OD-4).
+`AppTheme` names the seed; each design-bound surface names its own measured
+palette — `charts/chart_tokens.dart`,
+`components/taxlots_table/taxlot_tokens.dart` — and every other file reads it
+through a palette object. A component's palette stays in the component's
+directory on purpose: registering a `ThemeExtension` would mean editing
+`AppTheme` to add one, which ADR-L D-3 forbids. Where two palettes share a
+semantic role, a test pins them to each other
 (`taxlot_tokens_test.dart::agrees with the chart palette on every shared
 role`) so they cannot drift while staying separate.
+
+The rule is a **naming convention** rather than a list of allowed paths, for
+that same reason: a path list would have to be edited every time a component is
+added, so the check would be the seam violation it protects. The exception set
+is empty and the test asserts it. Four files used to claim *"this is the only
+file in `app/lib/` naming a `Color`"* and all four sentences were false when
+GGU-105 read them — twenty-one files named one, five of them widgets. A value
+that is the same on both artboards is a `static const` on the token class
+(`LoginTokens.logoGradient`, `HoldingsTokens.toggleShadow`), not a
+`ThemeExtension` field. `Colors.white` is **not** covered: nine occurrences in
+four files, left alone on purpose because moving them is a design decision
+about dark mode rather than a file-location one (0029 OD-5).
 
 Responsive through `LayoutBuilder` alone — the painter takes the `Size` and
 the scales recompute. There is no breakpoint to keep in step with a design.

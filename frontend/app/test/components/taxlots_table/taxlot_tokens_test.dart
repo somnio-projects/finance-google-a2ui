@@ -1,91 +1,96 @@
 import 'package:finance_app/charts/chart_tokens.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_tokens.dart';
+import 'package:finance_app/theme/activity_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Pins every value measured off the design's two artboards.
+/// Pins every value measured off the UI Kit's artboards (AC-5).
 ///
-/// GGU-55 found two of five informally circulated colours wrong, so these
-/// were read with `getComputedStyle` on the rendered page and are asserted
-/// here as literals. A literal is the point: if it drifts, someone changed
-/// a colour and has to say so.
+/// A literal is the point: if one drifts, somebody changed a colour and has
+/// to say so. They were read out of the Figma export's own fills, which is
+/// exact — the file this replaces was measured with `getComputedStyle` on a
+/// rendered page, honestly, and most of those values are no longer in the
+/// design at all (spec `frontend/0027` OD-5).
 void main() {
   group('TaxLotTokens', () {
-    test('light matches the L1 artboard', () {
+    test('light matches the kit', () {
       const light = TaxLotTokens.light;
-      expect(light.surface, const Color(0xFFFDFBFF));
-      expect(light.border, const Color(0xFFEAE7F0));
-      expect(light.selectedSurface, const Color(0xFFEEF0FF));
-      expect(light.selectedAccent, const Color(0xFF4F5DFF));
-      expect(light.footerSurface, const Color(0xFFF5F3FB));
-      expect(light.primaryText, const Color(0xFF1A1B20));
-      expect(light.figureText, const Color(0xFF44464E));
-      expect(light.labelText, const Color(0xFF5F6169));
-      expect(light.mutedText, const Color(0xFF8A8D96));
-      expect(light.checkboxBorder, const Color(0xFFC4C6D0));
-      expect(light.placeholderBorder, const Color(0xFFC4C6D0));
+      expect(light.surface, const Color(0xFFFFFFFF));
+      expect(light.divider, const Color(0xFFE1E2E3));
+      expect(light.selectedRow, const Color(0xFFEBF1FF));
+      expect(light.checkedBox, const Color(0xFF3C90F1));
+      expect(light.checkGlyph, const Color(0xFFFFFFFF));
+      expect(light.checkboxBorder, const Color(0xFFCBCDD0));
+      expect(light.primaryText, const Color(0xFF242425));
+      expect(light.mutedText, const Color(0xFF56575B));
+      expect(light.gain, const Color(0xFF026E4F));
+      expect(light.placeholderBorder, light.checkboxBorder);
     });
 
     test('light draws short-term amber and long-term teal', () {
       const light = TaxLotTokens.light;
-      expect(light.shortTerm.accent, const Color(0xFFF0A52E));
-      expect(light.shortTerm.chipForeground, const Color(0xFF8A5A10));
-      expect(light.shortTerm.chipBackground, const Color(0xFFFDF0DC));
-      expect(light.shortTerm.chipBorder, const Color(0xFFF0D9A8));
-      expect(light.longTerm.accent, const Color(0xFF0F9D8F));
-      expect(light.longTerm.chipForeground, const Color(0xFF0C6A60));
-      expect(light.longTerm.chipBackground, const Color(0xFFDCEFEC));
-      expect(light.longTerm.chipBorder, const Color(0xFFB8DDD6));
+      expect(light.shortTerm.chipForeground, const Color(0xFF855807));
+      expect(light.shortTerm.chipBackground, const Color(0xFFFFF4E0));
+      expect(light.longTerm.chipForeground, const Color(0xFF026E4F));
+      expect(light.longTerm.chipBackground, const Color(0xFFD8FDEB));
     });
 
-    test('dark matches the D1 artboard', () {
+    test('dark matches the kit', () {
       const dark = TaxLotTokens.dark;
-      expect(dark.surface, const Color(0xFF15161C));
-      expect(dark.border, const Color(0xFF24252D));
-      expect(dark.selectedSurface, const Color(0xFF20223A));
-      expect(dark.selectedAccent, const Color(0xFF7A83FF));
-      expect(dark.footerSurface, const Color(0xFF101017));
-      expect(dark.primaryText, const Color(0xFFE5E1E9));
-      expect(dark.figureText, const Color(0xFFC9CBD4));
-      expect(dark.labelText, const Color(0xFFA4A6B0));
-      expect(dark.checkboxBorder, const Color(0xFF45464F));
-      expect(dark.checkboxGlyph, const Color(0xFF0B0C10));
-      expect(dark.placeholderBorder, const Color(0xFF3A3B44));
+      expect(dark.surface, const Color(0xFF17181C));
+      expect(dark.divider, const Color(0xFF353A42));
+      expect(dark.selectedRow, const Color(0xFF17283C));
+      expect(dark.checkedBox, const Color(0xFF308CF5));
+      expect(dark.checkboxBorder, const Color(0xFF474D58));
+      expect(dark.primaryText, const Color(0xFFE8E8E9));
+      expect(dark.mutedText, const Color(0xFFB9BEC6));
+      expect(dark.gain, const Color(0xFF4ADE9E));
+      expect(dark.placeholderBorder, dark.checkboxBorder);
     });
 
     test('dark draws short-term amber and long-term teal', () {
       const dark = TaxLotTokens.dark;
-      expect(dark.shortTerm.accent, const Color(0xFFFFBF5C));
-      expect(dark.shortTerm.chipForeground, const Color(0xFFFFCF7A));
-      expect(dark.shortTerm.chipBackground, const Color(0xFF2E2410));
-      expect(dark.shortTerm.chipBorder, const Color(0xFF4A3A18));
-      expect(dark.longTerm.accent, const Color(0xFF3FC8B8));
-      expect(dark.longTerm.chipForeground, const Color(0xFF6FE0D2));
-      expect(dark.longTerm.chipBackground, const Color(0xFF12302C));
-      expect(dark.longTerm.chipBorder, const Color(0xFF1F4A44));
+      expect(dark.shortTerm.chipForeground, const Color(0xFFF2BD62));
+      expect(dark.shortTerm.chipBackground, const Color(0xFF513F1D));
+      expect(dark.longTerm.chipForeground, const Color(0xFF4ADE9E));
+      expect(dark.longTerm.chipBackground, const Color(0xFF25483E));
     });
 
-    test('holds the column header at one value across both themes', () {
-      // Not an oversight in the measurement: the designer keeps #8A8D96 on
-      // both artboards, which is the one colour that does not flip.
-      expect(TaxLotTokens.dark.mutedText, TaxLotTokens.light.mutedText);
+    test('holds both term rails at one value across the two themes', () {
+      // Not an oversight in the measurement: the kit draws `#2FA584` and
+      // `#B8790A` on the light and the dark artboard alike, which is why
+      // they are constants both palettes read (OD-5).
+      expect(TaxLotTokens.light.longTerm.accent, TaxLotTokens.longRail);
+      expect(TaxLotTokens.dark.longTerm.accent, TaxLotTokens.longRail);
+      expect(TaxLotTokens.light.shortTerm.accent, TaxLotTokens.shortRail);
+      expect(TaxLotTokens.dark.shortTerm.accent, TaxLotTokens.shortRail);
+      expect(TaxLotTokens.longRail, const Color(0xFF2FA584));
+      expect(TaxLotTokens.shortRail, const Color(0xFFB8790A));
     });
 
-    test('agrees with the chart palette on every shared role', () {
-      // The two palettes are separate files on purpose — coupling them
-      // would mean editing a chart's file to add a component (ADR-L D-3) —
-      // and they were measured independently, off two different pages.
-      // This is what stops them drifting while staying separate.
-      expect(TaxLotTokens.light.gain, ChartTokens.light.barGain);
+    test('agrees with the chart palette on loss, which this frame omits', () {
+      // The kit's tax-lot frame draws four gains and no loss, so the loss
+      // colour is borrowed rather than measured. This is what keeps the
+      // borrowing honest while the two files stay separate — coupling them
+      // would mean editing a chart's file to change a component (ADR-L D-3).
       expect(TaxLotTokens.light.loss, ChartTokens.light.barLoss);
-      expect(TaxLotTokens.light.surface, ChartTokens.light.surface);
-      expect(TaxLotTokens.light.border, ChartTokens.light.border);
-      expect(TaxLotTokens.light.selectedAccent, ChartTokens.light.barTotal);
-      expect(TaxLotTokens.dark.gain, ChartTokens.dark.barGain);
       expect(TaxLotTokens.dark.loss, ChartTokens.dark.barLoss);
-      expect(TaxLotTokens.dark.surface, ChartTokens.dark.surface);
-      expect(TaxLotTokens.dark.border, ChartTokens.dark.border);
-      expect(TaxLotTokens.dark.selectedAccent, ChartTokens.dark.barTotal);
+    });
+
+    test('names the two places the kit and the chart page disagree', () {
+      // Asserted, not deleted: `frontend/0007` OD-2 records the same shape
+      // for the allocation ramp. Design owns the merge (OQ-6); the client
+      // does not get to pick a winner by editing another page's tokens.
+      expect(TaxLotTokens.light.gain, isNot(ChartTokens.light.barGain));
+      expect(TaxLotTokens.dark.gain, ChartTokens.dark.barGain);
+      expect(
+        TaxLotTokens.light.longTerm.chipBackground,
+        isNot(activityTokensLight.longBadge),
+      );
+      expect(
+        TaxLotTokens.dark.longTerm.chipForeground,
+        activityTokensDark.longBadgeText,
+      );
     });
 
     test('forBrightness picks the artboard the theme is in', () {

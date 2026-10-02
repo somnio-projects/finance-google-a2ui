@@ -48,23 +48,14 @@ def normalize_symbol(symbol: str) -> str:
 #: may name. One declaration, shared by both options models: an unknown ticker
 #: is a 422 at the boundary, not a lookup miss deeper in.
 Symbol = Literal[
-    "AAPL",
-    "AGG",
-    "AMD",
-    "AVGO",
-    "BND",
-    "GLD",
-    "JNJ",
-    "MSFT",
-    "NVDA",
-    "PG",
-    "PYPL",
-    "TIP",
-    "TSLA",
-    "USD",
-    "VNQ",
-    "VOO",
-    "XOM",
+    "AAVE",
+    "ARB",
+    "AVAX",
+    "BTC",
+    "ETH",
+    "LINK",
+    "SOL",
+    "USDC",
 ]
 
 __all__ = [

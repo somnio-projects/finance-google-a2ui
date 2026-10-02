@@ -75,7 +75,7 @@ class MoverRow(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    symbol: str = Field(max_length=10, description="Ticker.", examples=["NVDA"])
+    symbol: str = Field(max_length=10, description="Ticker.", examples=["BTC"])
     name: str = Field(
         max_length=64, description="Display name.", examples=["NVIDIA Corp"]
     )

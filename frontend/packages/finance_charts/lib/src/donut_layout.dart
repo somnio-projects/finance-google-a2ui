@@ -97,14 +97,15 @@ class DonutLayout extends Equatable {
   /// The hole's radius as a fraction of the ring's, which is what makes this
   /// a donut rather than a pie.
   ///
-  /// **Measured**, from the rendered design rather than chosen: the catalog
-  /// page's primary card draws a 150 px ring with a 92 px hole, so the ratio
-  /// is written as those two numbers instead of the decimal they produce.
-  /// Its two secondary cards give 68/112 = 0.607 and the `Holdings` screen
-  /// gives 60/96 = 0.625, so the design is consistent to about ±1.5 % and the
-  /// primary state is the one worth pinning. `specs/frontend/0007` records
-  /// all three measurements.
-  static const double defaultThicknessRatio = 92 / 150;
+  /// **Measured from Miriam's Figma** (GGU-145): the `HoldingsSummary`
+  /// artboard draws a 160 px ring with a 135 px hole, written as those two
+  /// numbers rather than the decimal they produce.
+  /// It was `92 / 150` until 2026-09-28, from `.design-refs/*.dc.html` — a
+  /// catalog mock this repository generated, not a design export (spec
+  /// `frontend/0031` § 2). They disagree a lot — 0.613 against 0.844 — and the
+  /// mock's fat ring overflowed the design's own total when GGU-145 moved it
+  /// into the centre.
+  static const double defaultThicknessRatio = 135 / 160;
 
   /// One arc per weight, in the order the backend sent them.
   final List<DonutArc> arcs;

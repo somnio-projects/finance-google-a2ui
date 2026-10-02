@@ -36,7 +36,7 @@ class SearchOptions(ProjectionOptions):
             "Narrow the rows to those whose symbol or description contains "
             "this text, case-insensitively. Blank or omitted is no filter."
         ),
-        examples=["nvda"],
+        examples=["btc"],
     )
 
     @property

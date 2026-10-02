@@ -1,0 +1,18 @@
+{
+  "kind": "data",
+  "metadata": {
+    "mimeType": "application/a2ui+json"
+  },
+  "data": [
+    {
+      "version": "v1.0",
+      "agentFunctionResponse": {
+        "functionCallId": "call-02",
+        "error": {
+          "code": "INVALID_FUNCTION_CALL",
+          "message": "Option 'range' must be one of: 1d, 1w, 1m, ytd, 1y, all."
+        }
+      }
+    }
+  ]
+}

@@ -67,25 +67,25 @@ void main() {
       build: build,
       act: (bloc) async {
         bloc
-          ..add(const HoldingsAssetClassChanged('bonds'))
+          ..add(const HoldingsAssetClassChanged('layer2'))
           ..add(const HoldingsQueryChanged('vanguard'));
         await awaitRequest(calls, <String, String>{
-          'asset_class': 'bonds',
+          'asset_class': 'layer2',
           'query': 'vanguard',
         });
         bloc.add(const HoldingsQueryChanged(''));
         // The second time this exact request is made: the chip fired it once
         // already, so "it happened" is not enough to tell the two apart.
         await awaitRequest(calls, <String, String>{
-          'asset_class': 'bonds',
+          'asset_class': 'layer2',
         }, times: 2);
       },
       verify: (_) {
         verifyPositions(<String, String>{
-          'asset_class': 'bonds',
+          'asset_class': 'layer2',
           'query': 'vanguard',
         });
-        verifyPositions(<String, String>{'asset_class': 'bonds'}, times: 2);
+        verifyPositions(<String, String>{'asset_class': 'layer2'}, times: 2);
       },
     );
 
@@ -98,10 +98,10 @@ void main() {
           HoldingsBloc.positionsView,
           const TransportFailure('offline'),
         );
-        bloc.add(const HoldingsAssetClassChanged('cash'));
+        bloc.add(const HoldingsAssetClassChanged('defi'));
       },
       expect: () => <dynamic>[
-        isA<HoldingsState>().having((s) => s.assetClass, 'class', 'cash'),
+        isA<HoldingsState>().having((s) => s.assetClass, 'class', 'defi'),
         isA<HoldingsState>()
             .having((s) => s.status, 'status', HoldingsStatus.failure)
             .having((s) => s.failure?.message, 'message', 'offline'),

@@ -1,15 +1,17 @@
 """Curated market reference — the backend's single source of price (OD-5).
 
 This package owns the reference list: symbol, display name, current price,
-**previous close**, **asset class**, **sector** and a placeholder logo. Every
-price is declared as a **string** and parsed to ``Decimal`` (ADR-E D-5), so a
-holding's price and the asset list's price are the same object, not two
-roundings of the same idea.
+**previous close**, **asset class**, **ecosystem**, a stepper step and a
+placeholder logo. Every price is declared as a **string** and parsed to
+``Decimal`` (ADR-E D-5), so a holding's price and the asset list's price are
+the same object, not two roundings of the same idea.
 
-**These are equities, and they used to be crypto (spec 0025 OD-2).** The design
-is a US equities portfolio; this backend held eight crypto assets, so no
-component could be made to match by styling — the numbers on screen come from
-here and were different numbers. Replaced rather than extended: two asset
+**These are crypto assets, and they were equities (spec 0044, superseding
+0025 OD-2).** Spec 0025 replaced a crypto list with a US equities one to match
+the design pages it was drawing; GGU-114 turns the showcase's subject back to
+crypto, and the design match is kept where it is a *figure* rather than a
+ticker — the portfolio still totals what `Holdings.dc.html` states and still
+shows its all-time gain (OD-4). Replaced rather than extended: two asset
 universes in one demo portfolio would make every allocation figure meaningless.
 
 ``previous_close`` is a second *price*, not a derived figure, because the
@@ -57,14 +59,15 @@ class MarketAsset(BaseModel):
     )
     sector: Sector | None = Field(
         default=None,
-        description="Economic sector; only equities carry one.",
+        description="Chain family; a multi-chain stablecoin carries none.",
     )
-    is_fund: bool = Field(
-        default=False,
+    step: Money = Field(
+        gt=0,
         description=(
-            "A pooled vehicle (ETF, bond fund) rather than a single name. The "
-            "Home page's *Top movers* lists single names only, so this is what "
-            "keeps a fund out of it (spec 0026 OD-4)."
+            "What one tap of the order ticket's stepper moves a leg of this "
+            "asset by (spec 0044 OD-6). A property of the asset: a single "
+            "step cannot serve both a $64,000 coin and an 86-cent token, and "
+            "the client may not derive one (N-2)."
         ),
     )
     logo_url: str = Field(
@@ -80,10 +83,10 @@ MARKET_REFERENCE: Final[tuple[MarketAsset, ...]] = tuple(
         previous_close=Decimal(previous_close),
         asset_class=asset_class,
         sector=sector,
-        is_fund=is_fund,
+        step=Decimal(step),
         logo_url=_LOGO_TEMPLATE.format(slug=symbol.lower()),
     )
-    for symbol, name, price, previous_close, asset_class, sector, is_fund in (
+    for symbol, name, price, previous_close, asset_class, sector, step in (
         REFERENCE_ROWS
     )
 )
