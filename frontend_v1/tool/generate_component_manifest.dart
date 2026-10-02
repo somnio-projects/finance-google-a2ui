@@ -20,7 +20,7 @@ import 'dart:io';
 const String _componentsDir = 'app/lib/components';
 const String _manifestPath = '$_componentsDir/component_manifest.g.dart';
 const String _regenerate =
-    'cd frontend && dart run tool/generate_component_manifest.dart';
+    'cd frontend_v1 && dart run tool/generate_component_manifest.dart';
 
 void main(List<String> args) {
   final check = args.contains('--check');

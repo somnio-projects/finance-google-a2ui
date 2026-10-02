@@ -1,5 +1,5 @@
 // GENERATED FILE — do not edit by hand.
-// Regenerate with: cd frontend && dart run tool/generate_component_manifest.dart
+// Regenerate with: cd frontend_v1 && dart run tool/generate_component_manifest.dart
 //
 // One entry per directory under app/lib/components. Adding a component means
 // adding its directory and running the command above; no hand-written file
