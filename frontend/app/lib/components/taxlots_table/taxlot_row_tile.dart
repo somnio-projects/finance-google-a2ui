@@ -1,9 +1,9 @@
-import 'package:finance_app/components/taxlots_table/taxlot_check_box.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_chip.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_columns.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_palette.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_row_cells.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_sold_mark.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term_colors.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_type.dart';
@@ -33,7 +33,7 @@ class TaxLotRowTile extends StatelessWidget {
     final term = lot.term.colorsIn(palette);
     return Semantics(
       container: true,
-      label: TaxLotCheckBox.rowLabel(lot),
+      label: TaxLotSoldMark.rowLabel(lot),
       child: ExcludeSemantics(
         child: Container(
           height: TaxLotMetrics.rowHeight,
@@ -53,7 +53,7 @@ class TaxLotRowTile extends StatelessWidget {
           child: ColoredBox(color: term.accent),
         ),
         const SizedBox(width: TaxLotMetrics.railGap),
-        TaxLotCheckBox(ticked: lot.fullySold),
+        TaxLotSoldMark(fullySold: lot.fullySold),
       ],
     ),
     cells: <Widget>[

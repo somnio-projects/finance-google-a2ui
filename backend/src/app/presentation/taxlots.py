@@ -73,6 +73,12 @@ class TaxLotsTablePayload(ProjectionDto):
         "figure of its own.",
         examples=["Sell 0.5 BTC under FIFO"],
     )
+    units_label: str = Field(
+        max_length=64,
+        description="Caption of the quantity column. Asset-neutral, because a "
+        "crypto lot holds units, not shares (GGU-148).",
+        examples=["Quantity"],
+    )
     proceeds: Total = Field(
         description="What the sale raises; its `label` captions that column."
     )

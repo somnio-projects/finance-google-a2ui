@@ -30,7 +30,7 @@ class TaxLotColumns extends StatelessWidget {
   static const double leadingWidth =
       TaxLotMetrics.railWidth +
       TaxLotMetrics.railGap +
-      TaxLotMetrics.checkBoxSize;
+      TaxLotMetrics.soldMarkSize;
 
   @override
   Widget build(BuildContext context) {

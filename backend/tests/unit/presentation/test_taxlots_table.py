@@ -42,6 +42,12 @@ def test_render_walks_the_lots_the_sale_consumes(portfolio: Portfolio) -> None:
     ]
 
 
+def test_the_quantity_caption_is_asset_neutral(portfolio: Portfolio) -> None:
+    """GGU-148 AC-4: a crypto lot holds units, so the caption is not "Shares"."""
+    payload = render(portfolio, TaxLotsTableOptions())
+    assert payload.units_label == "Quantity"
+
+
 def test_render_is_pure_over_the_same_portfolio(portfolio: Portfolio) -> None:
     assert render(portfolio, TaxLotsTableOptions()) == render(
         portfolio, TaxLotsTableOptions()

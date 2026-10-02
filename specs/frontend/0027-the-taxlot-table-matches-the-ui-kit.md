@@ -136,6 +136,18 @@ decision before it is a contract one. They are listed in the PR under
   option and a re-rendered total arrive, the round trip is a projection
   option, not client state (N-7, N-10).
 
+  **Amended by GGU-148 (2026-10-02): the state is no longer drawn as a box.**
+  A demo run showed the kit's square tick box — hairline-empty on a partial
+  lot, filled on a consumed one — reading as a checkbox that ignores taps,
+  the very affordance this decision refuses. The binding is unchanged
+  (`fully_sold`, nothing tappable); the drawing is now `TaxLotSoldMark`: a
+  round filled mark on a fully sold lot and an empty slot of the same size on
+  any other, announced as status text in the row's label, never as a checked
+  state. The same ticket made every figure cell scale-to-fit instead of
+  ellipsising (`TaxLotFigure`), and moved the quantity caption from a
+  *Shares* constant to the payload's `units_label`. Whether lots become
+  selectable is still GGU-118.
+
 - **OD-4 — the header is two lines because the payload is two strings.** The
   artboard's `NVDA · 4 lots` is a symbol and a count, and the contract serves
   neither. `title` and `subtitle` are both required, server-written strings and

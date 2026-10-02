@@ -1,8 +1,8 @@
-import 'package:finance_app/components/taxlots_table/taxlot_check_box.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_column_headers.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_cell.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_tile.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_sold_mark.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_tokens.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +27,7 @@ void main() {
             width: 328,
             child: TaxLotMobileTile(
               lot: lot(term: term, trend: trend, fullySold: fullySold),
+              unitsLabel: 'Quantity',
               costBasisLabel: 'Cost basis',
               proceedsLabel: 'Proceeds',
             ),
@@ -45,7 +46,7 @@ void main() {
       expect(find.text('03/12/2021'), findsOneWidget);
       expect(find.byType(TaxLotMobileCell), findsNWidgets(4));
       for (final caption in <String>[
-        TaxLotColumnHeaders.shares,
+        'Quantity',
         'Cost basis',
         'Proceeds',
         TaxLotColumnHeaders.gainLoss,
@@ -83,7 +84,7 @@ void main() {
       );
       expect(tile.color, TaxLotTokens.light.selectedRow);
       expect(
-        find.bySemanticsLabel(RegExp(TaxLotCheckBox.tickedLabel)),
+        find.bySemanticsLabel(RegExp(TaxLotSoldMark.tickedLabel)),
         findsOneWidget,
       );
     });

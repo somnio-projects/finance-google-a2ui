@@ -1,10 +1,13 @@
+import 'package:finance_app/components/taxlots_table/taxlot_figure.dart';
 import 'package:flutter/material.dart';
 
 /// One text cell of a table row, or of the phone card's grid.
 ///
 /// Always one line: the kit's rows are a fixed height and a cell that wrapped
-/// would push its neighbours out of alignment. [text] is always a string the
-/// backend wrote — nothing here formats, joins or trims a figure (N-1).
+/// would push its neighbours out of alignment. A value too wide for its
+/// column is scaled down by [TaxLotFigure], never ellipsised (GGU-148).
+/// [text] is always a string the backend wrote — nothing here formats,
+/// joins or trims a figure (N-1).
 class TaxLotCell extends StatelessWidget {
   /// Creates a cell.
   const TaxLotCell(this.text, {required this.style, this.align, super.key});
@@ -20,11 +23,6 @@ class TaxLotCell extends StatelessWidget {
   final TextAlign? align;
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    textAlign: align,
-    style: style,
-  );
+  Widget build(BuildContext context) =>
+      TaxLotFigure(text, style: style, align: align);
 }

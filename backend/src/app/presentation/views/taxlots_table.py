@@ -67,6 +67,7 @@ def render(portfolio: Portfolio, options: TaxLotsTableOptions) -> TaxLotsTablePa
     return TaxLotsTablePayload(
         title=TITLE,
         subtitle=build.subtitle(result, options, method=options.lot_method),
+        units_label="Quantity",
         proceeds=Total(label="Proceeds", amount=options.money(result.proceeds)),
         cost_basis=Total(label="Cost basis", amount=options.money(result.cost_basis)),
         realized=build.realized_total(result, options),

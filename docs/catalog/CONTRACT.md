@@ -150,7 +150,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`payoff.curve.v1`](#payoffcurvev1) | `RiskPayoffChart` | `b50b0e20f80b` | 38 | read-only | Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff. |
 | [`portfolio.summary.v1`](#portfoliosummaryv1) | `PortfolioSummary` | `191db33e1a5f` | 39 | read-only | The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers. |
 | [`scenario.comparison.v1`](#scenariocomparisonv1) | `ScenarioComparison` | `da83b01797ad` | 62 | `subject.symbol` | The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints. |
-| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `0556567d7b94` | 45 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
+| [`taxlots.table.v1`](#taxlotstablev1) | `TaxLotTable` | `10fdfd66dff1` | 46 | read-only | Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded. |
 
 ## `activity.timeline.v1`
 
@@ -3990,7 +3990,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.
 
-- **Frozen id:** `taxlots.table.v1` · **digest:** `0556567d7b94`
+- **Frozen id:** `taxlots.table.v1` · **digest:** `10fdfd66dff1`
 - **Component:** `TaxLotTable`
 - **Payload type:** `TaxLotsTablePayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -4015,6 +4015,7 @@ _This surface sends nothing back: tapping it starts no turn._
 | `view` | const 'taxlots.table.v1' | default `"taxlots.table.v1"` | `constant` | — | — |
 | `title` | string ≤120 chars | required | `text` | — | — |
 | `subtitle` | string ≤200 chars | required | `text` | — | — |
+| `units_label` | string ≤64 chars | required | `text` | — | — |
 | `proceeds` | object | required | `container` | — | — |
 | `proceeds.label` | string ≤64 chars | required | `text` | — | — |
 | `proceeds.amount` | object | required | `container` | — | — |
@@ -4074,6 +4075,7 @@ _This surface sends nothing back: tapping it starts no turn._
   "view": "taxlots.table.v1",
   "title": "Tax lots this sale consumes",
   "subtitle": "Sell 0.75 BTC under FIFO",
+  "units_label": "Quantity",
   "proceeds": {
     "label": "Proceeds",
     "amount": {
