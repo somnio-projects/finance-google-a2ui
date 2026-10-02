@@ -16,6 +16,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Final
 
+from app.presentation.a2ui_v1.catalog import catalog_document
+from app.presentation.a2ui_v1.wire import CATALOG_PATH
 from app.presentation.catalog_doc import (
     CONTRACT_PATH,
     contract_document,
@@ -59,10 +61,12 @@ class Rendered:
         )
 
 
-#: Both renderings of the frozen contract, in the order the script writes them.
+#: Every rendering of the registry, in the order the script writes them: both
+#: renderings of the frozen contract, then the A2UI v1.0 catalog (ADR-M D-5).
 ARTIFACTS: Final[tuple[Artifact, ...]] = (
     Artifact(path=CONTRACT_PATH, render=contract_document),
     Artifact(path=SNAPSHOT_PATH, render=snapshot_document),
+    Artifact(path=CATALOG_PATH, render=catalog_document),
 )
 
 

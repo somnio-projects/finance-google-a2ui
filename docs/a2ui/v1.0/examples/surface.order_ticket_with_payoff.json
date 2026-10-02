@@ -1,0 +1,649 @@
+{
+  "kind": "data",
+  "metadata": {
+    "mimeType": "application/a2ui+json"
+  },
+  "data": [
+    {
+      "version": "v1.0",
+      "createSurface": {
+        "surfaceId": "turn-9c21-0",
+        "catalogId": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
+        "components": [
+          {
+            "id": "root",
+            "component": "MultiLegOrderTicket",
+            "data": {
+              "path": "/root"
+            },
+            "accessibility": {
+              "label": "Multi leg order ticket"
+            },
+            "children": [
+              "payoff"
+            ]
+          },
+          {
+            "id": "payoff",
+            "component": "RiskPayoffChart",
+            "data": {
+              "path": "/payoff"
+            },
+            "accessibility": {
+              "label": "Risk payoff chart"
+            }
+          }
+        ],
+        "dataModel": {
+          "root": {
+            "view": "order.ticket.v2",
+            "options": {},
+            "payload": {
+              "badge": "editable",
+              "constraints": {
+                "breach": "none",
+                "max_cash": {
+                  "amount": {
+                    "amount": "51764.0000000000",
+                    "display": "$51,764.00"
+                  },
+                  "label": "Available cash"
+                },
+                "message": null,
+                "shortfall": null
+              },
+              "controls": [
+                {
+                  "enabled": false,
+                  "key": "review",
+                  "kind": "primary",
+                  "label": "Review order",
+                  "reason": "This showcase has no broker: nothing is ever sent, placed or settled."
+                }
+              ],
+              "disclosure": "Illustrative draft. This showcase has no broker and no execution: stepping a leg re-renders these figures, fees are simulated at zero, and nothing is ever sent, placed or settled.",
+              "effect": "recalculate",
+              "impact": {
+                "cash_remaining": {
+                  "amount": {
+                    "amount": "41990.6000000000",
+                    "display": "$41,990.60"
+                  },
+                  "label": "Cash remaining"
+                },
+                "fees": {
+                  "amount": {
+                    "amount": "0",
+                    "display": "$0.00"
+                  },
+                  "label": "Est. fees · sim"
+                },
+                "total": {
+                  "amount": {
+                    "amount": "9773.4000",
+                    "display": "$9,773.40"
+                  },
+                  "label": "Total order"
+                },
+                "weight_shifts": [
+                  {
+                    "after": {
+                      "display": "28.74%",
+                      "value": "0.2873796476068676239637932291"
+                    },
+                    "before": {
+                      "display": "27.94%",
+                      "value": "0.2793968796177879677425767505"
+                    },
+                    "key": "bitcoin",
+                    "label": "Portfolio weight · Bitcoin"
+                  },
+                  {
+                    "after": {
+                      "display": "50.21%",
+                      "value": "0.5021171418915784800312767128"
+                    },
+                    "before": {
+                      "display": "49.49%",
+                      "value": "0.4949109077535766113802174792"
+                    },
+                    "key": "ethereum",
+                    "label": "Portfolio weight · Ethereum"
+                  },
+                  {
+                    "after": {
+                      "display": "12.36%",
+                      "value": "0.1235508842960420380224105599"
+                    },
+                    "before": {
+                      "display": "11.85%",
+                      "value": "0.1185015505827938321262200900"
+                    },
+                    "key": "solana",
+                    "label": "Portfolio weight · Solana"
+                  }
+                ]
+              },
+              "legs": "BTC:0.06,ETH:1.0,SOL:16",
+              "lines": [
+                {
+                  "decrement": "BTC:0.05,ETH:1.0,SOL:16",
+                  "increment": "BTC:0.07,ETH:1.0,SOL:16",
+                  "key": "BTC",
+                  "name": "Bitcoin",
+                  "notional": {
+                    "amount": "3855.0000",
+                    "display": "$3,855.00"
+                  },
+                  "position": "8",
+                  "price": {
+                    "amount": "64250.00",
+                    "display": "$64,250.00"
+                  },
+                  "quantity": {
+                    "display": "0.06",
+                    "units": "0.06"
+                  },
+                  "stops": [
+                    "BTC:0,ETH:1.65135848,SOL:26.42173560",
+                    "BTC:0.00675969,ETH:1.57797547,SOL:25.24760746",
+                    "BTC:0.01436545,ETH:1.49540754,SOL:23.92652068",
+                    "BTC:0.02197121,ETH:1.41283962,SOL:22.60543390",
+                    "BTC:0.02957696,ETH:1.33027170,SOL:21.28434712",
+                    "BTC:0.03718272,ETH:1.24770377,SOL:19.96326034",
+                    "BTC:0.04478848,ETH:1.16513585,SOL:18.64217356",
+                    "BTC:0.05239424,ETH:1.08256792,SOL:17.32108678",
+                    "BTC:0.06,ETH:1.0,SOL:16",
+                    "BTC:0.06760576,ETH:0.91743208,SOL:14.67891322",
+                    "BTC:0.07521152,ETH:0.83486415,SOL:13.35782644",
+                    "BTC:0.08281728,ETH:0.75229623,SOL:12.03673966",
+                    "BTC:0.09042304,ETH:0.66972830,SOL:10.71565288",
+                    "BTC:0.09802879,ETH:0.58716038,SOL:9.39456610",
+                    "BTC:0.10563455,ETH:0.50459246,SOL:8.07347932",
+                    "BTC:0.11324031,ETH:0.42202453,SOL:6.75239254",
+                    "BTC:0.12084607,ETH:0.33945661,SOL:5.43130576",
+                    "BTC:0.12845183,ETH:0.25688869,SOL:4.11021898",
+                    "BTC:0.13605759,ETH:0.17432076,SOL:2.78913220",
+                    "BTC:0.14366335,ETH:0.09175284,SOL:1.46804542",
+                    "BTC:0.15126911,ETH:0.00918491,SOL:0.14695864",
+                    "BTC:0.15211518,ETH:0,SOL:0"
+                  ],
+                  "symbol": "BTC",
+                  "weight": {
+                    "display": "39.44%",
+                    "value": "0.3944379642703665050033765118"
+                  }
+                },
+                {
+                  "decrement": "BTC:0.06,ETH:0.9,SOL:16",
+                  "increment": "BTC:0.06,ETH:1.1,SOL:16",
+                  "key": "ETH",
+                  "name": "Ethereum",
+                  "notional": {
+                    "amount": "3480.000",
+                    "display": "$3,480.00"
+                  },
+                  "position": "8",
+                  "price": {
+                    "amount": "3480.00",
+                    "display": "$3,480.00"
+                  },
+                  "quantity": {
+                    "display": "1",
+                    "units": "1.0"
+                  },
+                  "stops": [
+                    "BTC:0.09317761,ETH:0,SOL:24.84736391",
+                    "BTC:0.09261217,ETH:0.01704310,SOL:24.69657737",
+                    "BTC:0.08795328,ETH:0.15746552,SOL:23.45420917",
+                    "BTC:0.08329440,ETH:0.29788793,SOL:22.21184098",
+                    "BTC:0.07863552,ETH:0.43831034,SOL:20.96947278",
+                    "BTC:0.07397664,ETH:0.57873276,SOL:19.72710459",
+                    "BTC:0.06931776,ETH:0.71915517,SOL:18.48473639",
+                    "BTC:0.06465888,ETH:0.85957759,SOL:17.24236820",
+                    "BTC:0.06,ETH:1.0,SOL:16",
+                    "BTC:0.05534112,ETH:1.14042241,SOL:14.75763180",
+                    "BTC:0.05068224,ETH:1.28084483,SOL:13.51526361",
+                    "BTC:0.04602336,ETH:1.42126724,SOL:12.27289541",
+                    "BTC:0.04136448,ETH:1.56168966,SOL:11.03052722",
+                    "BTC:0.03670560,ETH:1.70211207,SOL:9.78815902",
+                    "BTC:0.03204672,ETH:1.84253448,SOL:8.54579083",
+                    "BTC:0.02738783,ETH:1.98295690,SOL:7.30342263",
+                    "BTC:0.02272895,ETH:2.12337931,SOL:6.06105444",
+                    "BTC:0.01807007,ETH:2.26380172,SOL:4.81868624",
+                    "BTC:0.01341119,ETH:2.40422414,SOL:3.57631805",
+                    "BTC:0.00875231,ETH:2.54464655,SOL:2.33394985",
+                    "BTC:0.00409343,ETH:2.68506897,SOL:1.09158166",
+                    "BTC:0,ETH:2.80844828,SOL:0"
+                  ],
+                  "symbol": "ETH",
+                  "weight": {
+                    "display": "35.61%",
+                    "value": "0.3560685124930934986800908589"
+                  }
+                },
+                {
+                  "decrement": "BTC:0.06,ETH:1.0,SOL:15",
+                  "increment": "BTC:0.06,ETH:1.0,SOL:17",
+                  "key": "SOL",
+                  "name": "Solana",
+                  "notional": {
+                    "amount": "2438.40",
+                    "display": "$2,438.40"
+                  },
+                  "position": "5",
+                  "price": {
+                    "amount": "152.40",
+                    "display": "$152.40"
+                  },
+                  "quantity": {
+                    "display": "16",
+                    "units": "16"
+                  },
+                  "stops": [
+                    "BTC:0.07994601,ETH:1.33243354,SOL:0",
+                    "BTC:0.07598920,ETH:1.26648671,SOL:3.17401575",
+                    "BTC:0.07199190,ETH:1.19986503,SOL:6.38051181",
+                    "BTC:0.06799460,ETH:1.13324335,SOL:9.58700787",
+                    "BTC:0.06399730,ETH:1.06662168,SOL:12.79350394",
+                    "BTC:0.06,ETH:1.0,SOL:16",
+                    "BTC:0.05600270,ETH:0.93337832,SOL:19.20649606",
+                    "BTC:0.05200540,ETH:0.86675665,SOL:22.41299213",
+                    "BTC:0.04800810,ETH:0.80013497,SOL:25.61948819",
+                    "BTC:0.04401080,ETH:0.73351329,SOL:28.82598425",
+                    "BTC:0.04001350,ETH:0.66689162,SOL:32.03248031",
+                    "BTC:0.03601620,ETH:0.60026994,SOL:35.23897638",
+                    "BTC:0.03201890,ETH:0.53364826,SOL:38.44547244",
+                    "BTC:0.02802160,ETH:0.46702658,SOL:41.65196850",
+                    "BTC:0.02402429,ETH:0.40040491,SOL:44.85846457",
+                    "BTC:0.02002699,ETH:0.33378323,SOL:48.06496063",
+                    "BTC:0.01602969,ETH:0.26716155,SOL:51.27145669",
+                    "BTC:0.01203239,ETH:0.20053988,SOL:54.47795276",
+                    "BTC:0.00803509,ETH:0.13391820,SOL:57.68444882",
+                    "BTC:0.00403779,ETH:0.06729652,SOL:60.89094488",
+                    "BTC:0.00004049,ETH:0.00067485,SOL:64.09744094",
+                    "BTC:0,ETH:0,SOL:64.12992126"
+                  ],
+                  "symbol": "SOL",
+                  "weight": {
+                    "display": "24.95%",
+                    "value": "0.2494935232365399963165326294"
+                  }
+                }
+              ],
+              "side": "buy",
+              "title": "Draft order · Buy · 3 legs",
+              "view": "order.ticket.v2"
+            }
+          },
+          "payoff": {
+            "view": "payoff.curve.v1",
+            "options": {},
+            "payload": {
+              "annotations": [
+                {
+                  "label": "Entry",
+                  "text": "$152.40"
+                },
+                {
+                  "label": "Break-even",
+                  "text": "$152.40"
+                },
+                {
+                  "label": "Low",
+                  "text": "at $106.68: -$150.00"
+                },
+                {
+                  "label": "High",
+                  "text": "at $198.12: $150.00"
+                }
+              ],
+              "disclosure": "Illustrative linear spot payoff on the demo portfolio's simulated prices: profit or loss is (price - entry) x quantity, with no fees, no slippage and no financing. There is no strike, no expiry, no implied volatility and no time decay behind this line. A sell is the mirror of the position and leaves no position to value.",
+              "markers": {
+                "break_even": {
+                  "at": {
+                    "amount": "152.40",
+                    "display": "$152.40"
+                  },
+                  "label": "Break-even"
+                },
+                "current": {
+                  "at": {
+                    "amount": "152.40",
+                    "display": "$152.40"
+                  },
+                  "label": "Current price"
+                }
+              },
+              "series": [
+                {
+                  "name": "Profit / loss",
+                  "points": [
+                    {
+                      "at": {
+                        "amount": "106.680",
+                        "display": "$106.68"
+                      },
+                      "label": "$106.68",
+                      "value": {
+                        "amount": "-150.0000000000000000000000000",
+                        "display": "-$150.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "110.49000",
+                        "display": "$110.49"
+                      },
+                      "label": "$110.49",
+                      "value": {
+                        "amount": "-137.5000000000000000000000000",
+                        "display": "-$137.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "114.3000",
+                        "display": "$114.30"
+                      },
+                      "label": "$114.30",
+                      "value": {
+                        "amount": "-125.0000000000000000000000000",
+                        "display": "-$125.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "118.11000",
+                        "display": "$118.11"
+                      },
+                      "label": "$118.11",
+                      "value": {
+                        "amount": "-112.5000000000000000000000000",
+                        "display": "-$112.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "121.920",
+                        "display": "$121.92"
+                      },
+                      "label": "$121.92",
+                      "value": {
+                        "amount": "-99.99999999999999999999999999",
+                        "display": "-$100.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "125.73000",
+                        "display": "$125.73"
+                      },
+                      "label": "$125.73",
+                      "value": {
+                        "amount": "-87.49999999999999999999999999",
+                        "display": "-$87.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "129.5400",
+                        "display": "$129.54"
+                      },
+                      "label": "$129.54",
+                      "value": {
+                        "amount": "-74.99999999999999999999999999",
+                        "display": "-$75.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "133.35000",
+                        "display": "$133.35"
+                      },
+                      "label": "$133.35",
+                      "value": {
+                        "amount": "-62.49999999999999999999999999",
+                        "display": "-$62.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "137.160",
+                        "display": "$137.16"
+                      },
+                      "label": "$137.16",
+                      "value": {
+                        "amount": "-49.99999999999999999999999999",
+                        "display": "-$50.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "140.97000",
+                        "display": "$140.97"
+                      },
+                      "label": "$140.97",
+                      "value": {
+                        "amount": "-37.49999999999999999999999999",
+                        "display": "-$37.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "144.7800",
+                        "display": "$144.78"
+                      },
+                      "label": "$144.78",
+                      "value": {
+                        "amount": "-25.00000000000000000000000000",
+                        "display": "-$25.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "148.59000",
+                        "display": "$148.59"
+                      },
+                      "label": "$148.59",
+                      "value": {
+                        "amount": "-12.50000000000000000000000000",
+                        "display": "-$12.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "152.400",
+                        "display": "$152.40"
+                      },
+                      "label": "$152.40",
+                      "value": {
+                        "amount": "0E-30",
+                        "display": "$0.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "156.21000",
+                        "display": "$156.21"
+                      },
+                      "label": "$156.21",
+                      "value": {
+                        "amount": "12.50000000000000000000000000",
+                        "display": "$12.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "160.0200",
+                        "display": "$160.02"
+                      },
+                      "label": "$160.02",
+                      "value": {
+                        "amount": "25.00000000000000000000000000",
+                        "display": "$25.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "163.83000",
+                        "display": "$163.83"
+                      },
+                      "label": "$163.83",
+                      "value": {
+                        "amount": "37.49999999999999999999999999",
+                        "display": "$37.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "167.640",
+                        "display": "$167.64"
+                      },
+                      "label": "$167.64",
+                      "value": {
+                        "amount": "49.99999999999999999999999999",
+                        "display": "$50.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "171.45000",
+                        "display": "$171.45"
+                      },
+                      "label": "$171.45",
+                      "value": {
+                        "amount": "62.49999999999999999999999999",
+                        "display": "$62.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "175.2600",
+                        "display": "$175.26"
+                      },
+                      "label": "$175.26",
+                      "value": {
+                        "amount": "74.99999999999999999999999999",
+                        "display": "$75.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "179.07000",
+                        "display": "$179.07"
+                      },
+                      "label": "$179.07",
+                      "value": {
+                        "amount": "87.49999999999999999999999999",
+                        "display": "$87.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "182.880",
+                        "display": "$182.88"
+                      },
+                      "label": "$182.88",
+                      "value": {
+                        "amount": "99.99999999999999999999999999",
+                        "display": "$100.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "186.69000",
+                        "display": "$186.69"
+                      },
+                      "label": "$186.69",
+                      "value": {
+                        "amount": "112.5000000000000000000000000",
+                        "display": "$112.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "190.5000",
+                        "display": "$190.50"
+                      },
+                      "label": "$190.50",
+                      "value": {
+                        "amount": "125.0000000000000000000000000",
+                        "display": "$125.00"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "194.31000",
+                        "display": "$194.31"
+                      },
+                      "label": "$194.31",
+                      "value": {
+                        "amount": "137.5000000000000000000000000",
+                        "display": "$137.50"
+                      }
+                    },
+                    {
+                      "at": {
+                        "amount": "198.120",
+                        "display": "$198.12"
+                      },
+                      "label": "$198.12",
+                      "value": {
+                        "amount": "150.0000000000000000000000000",
+                        "display": "$150.00"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "title": "Payoff across a price range: buy Solana",
+              "totals": [
+                {
+                  "amount": {
+                    "amount": "152.40",
+                    "display": "$152.40"
+                  },
+                  "label": "Entry price"
+                },
+                {
+                  "amount": {
+                    "amount": "152.40",
+                    "display": "$152.40"
+                  },
+                  "label": "Break-even price"
+                },
+                {
+                  "amount": {
+                    "amount": "499.9999999999999999999999999",
+                    "display": "$500.00"
+                  },
+                  "label": "Notional"
+                }
+              ],
+              "value_ticks": [
+                {
+                  "amount": "-100",
+                  "display": "-$100.00"
+                },
+                {
+                  "amount": "0",
+                  "display": "$0.00"
+                },
+                {
+                  "amount": "100",
+                  "display": "$100.00"
+                }
+              ],
+              "view": "payoff.curve.v1",
+              "zones": {
+                "gain": "Gain",
+                "loss": "Loss"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

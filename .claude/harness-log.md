@@ -7,6 +7,69 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-10-01 — A2UI v1.0 beside v0.9 · ADR-M · specs `backend/0053`, `frontend_v1/0001`
+
+**Branch:** `feat/a2ui-v1-wire` (no GGU ticket yet — none invented). Decided
+with Patricio on 2026-10-01: the showcase moves to A2UI **v1.0 RC**, and the
+TL ruled that **nothing on v0.9 changes** — same backend, database and
+Firebase project, a second client at a second URL, "only an A2UI version
+upgrade".
+
+**What changed.** Backend: an additive `/a2ui/v1/*` surface (A2A
+`message/stream` emitting `createSurface` DataParts, the v1.0 card, the
+generated catalog with ETag), reusing the turn, the tools, `ViewService` and
+`SurfaceActionService` unchanged. `renderView` answers `callAgentFunction`
+without the model. `docs/a2ui/v1.0/` holds the vendored upstream schemas
+(`e83e074`), the wire examples both sides bind, and `finance.catalog.json` (an
+`ARTIFACTS` entry, so the existing catalog-check gates it). `frontend_v1/` is a
+copy of `frontend/` with only the assistant's wire replaced. Infra: Hosting
+site `finance-a2ui-v1` created, its domains authorised in Firebase Auth, dev
+CORS widened. `pyjwt` 2.14.0 → 2.15.1 (PYSEC-2026-4141) was red on `develop`'s
+lock and rode along.
+
+**Harness.** `security.md` lists the v1.0 card as public. `check_spec_numbers.sh`
+knows the `frontend_v1` area. Diagram 14 added; 02 and 05 point at it.
+
+**Three things worth carrying forward.**
+
+1. **The blocker was a dependency, not a capability.** No public Flutter
+   renderer spoke v1.0 (`genui` 0.10.4 is v0.9; `a2ui_core` 0.2.2 validates
+   v1.0 but its processor still rejects it — a2ui-project/a2ui#2899). Owning
+   the small subset this catalog needs, and proving it against the *official*
+   schemas on both sides, removed the wait entirely. When `a2ui_flutter`
+   ships, it goes behind `a2ui_v1`'s API.
+2. **A schema-valid tree can still be one the catalog forbids.**
+   `allowedParents` is a custom keyword JSON Schema ignores, so the composer
+   built a lone `RiskPayoffChart` root and every conformance test was green.
+   The reviewer caught it by reading; the composer now drops what the catalog
+   would refuse.
+3. **`tests/unit/services/test_agent_telemetry.py` fails when any API test runs
+   before it in the same process** (reproduced with v0.9's
+   `test_openapi_document.py`, so it predates this branch). The full gate's
+   order hides it. Worth its own ticket.
+
+**The frontend half (`frontend_v1/`).** A copy of `frontend/` at `537aaa0`
+whose assistant speaks v1.0: `A2aClient` → `POST /a2ui/v1/a2a` with the
+extension header and `a2uiRendererCapabilities`, the bloc feeding each
+`artifact-update` into `a2ui_v1`'s `SurfaceProcessor`, a `SurfaceHost` that
+walks the tree with `Semantics` per node, edits as
+`callAgentFunction(renderView)`, bar taps as `action(drill_attribution)`,
+chips as text. Its own gate part `frontend_v1.*` (the fifth), its own
+`frontend-v1-ci.yaml`, `pin_apps` widened; `make gate` green once at the end.
+
+4. **The provisional catalog fixture outlived its reason.** The renderer's
+   suite and the bundle's asset both read a hand-written fixture "until the
+   backend generates the catalog" — and the backend had. `sync_catalog.sh`
+   silently preferred the generated file when present, so the fixture was
+   only still alive in the tests. It is deleted; the suite reads
+   `docs/a2ui/v1.0/finance.catalog.json` in place and the sync **fails**
+   rather than falling back when that file is missing.
+5. **A copied Dockerfile copies its blind spot.** `frontend_v1/Dockerfile`
+   listed every package's `pubspec.yaml` for the cached `pub get` layer —
+   except the one package `frontend/` does not have. `--enforce-lockfile`
+   would have failed the container build; no gate builds the container, so
+   it was found by reading.
+
 ## 2026-09-25 — GGU-122/123/119 no equity vocabulary in a crypto payload · spec `specs/backend/0046-no-equity-vocabulary-in-a-crypto-payload.md`
 
 **Branch:** `fix/GGU-122_no_equity_vocabulary_in_a_crypto_payload`. Backend +

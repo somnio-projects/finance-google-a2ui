@@ -1,0 +1,8 @@
+{
+  "BACKEND_BASE_URL": "https://finance-a2ui-dev-api-crqogdubva-uc.a.run.app",
+  "FIREBASE_API_KEY": "<web apiKey \u2014 Firebase console \u203a Project settings \u203a Your apps \u203a Default Web App>",
+  "FIREBASE_APP_ID": "1:926074544023:web:456982d76281171cce2ed2",
+  "FIREBASE_PROJECT_ID": "finance-a2ui",
+  "FIREBASE_AUTH_DOMAIN": "finance-a2ui.firebaseapp.com",
+  "FIREBASE_MESSAGING_SENDER_ID": "926074544023"
+}

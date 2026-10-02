@@ -1,0 +1,325 @@
+{
+  "kind": "data",
+  "metadata": {
+    "mimeType": "application/a2ui+json"
+  },
+  "data": [
+    {
+      "version": "v1.0",
+      "agentFunctionResponse": {
+        "functionCallId": "call-01",
+        "value": {
+          "componentId": "root",
+          "view": "portfolio.summary.v1"
+        }
+      }
+    },
+    {
+      "version": "v1.0",
+      "updateDataModel": {
+        "surfaceId": "turn-7f3a-0",
+        "path": "/root",
+        "value": {
+          "view": "portfolio.summary.v1",
+          "options": {
+            "range": "1y"
+          },
+          "payload": {
+            "account": {
+              "initial": "A",
+              "name": "Alex Chen"
+            },
+            "badge": "Simulated portfolio",
+            "change": {
+              "amount": {
+                "amount": "2201.050000000000",
+                "display": "+$2,201.05"
+              },
+              "percent": {
+                "display": "+0.46%",
+                "value": "0.004578708573483846897371338039"
+              },
+              "period": "today",
+              "trend": "up"
+            },
+            "greeting": "Good afternoon",
+            "movers": [
+              {
+                "change": {
+                  "display": "-6.3%",
+                  "value": "-0.06278026905829596412556053812"
+                },
+                "name": "Avalanche",
+                "price": {
+                  "amount": "41.80",
+                  "display": "$41.80"
+                },
+                "symbol": "AVAX",
+                "trend": "down"
+              },
+              {
+                "change": {
+                  "display": "-4.4%",
+                  "value": "-0.04431599229287090558766859345"
+                },
+                "name": "Aave",
+                "price": {
+                  "amount": "248.00",
+                  "display": "$248.00"
+                },
+                "symbol": "AAVE",
+                "trend": "down"
+              },
+              {
+                "change": {
+                  "display": "+3.7%",
+                  "value": "0.03662471765085511455308163924"
+                },
+                "name": "Bitcoin",
+                "price": {
+                  "amount": "64250.00",
+                  "display": "$64,250.00"
+                },
+                "symbol": "BTC",
+                "trend": "up"
+              }
+            ],
+            "movers_title": "Top movers today",
+            "questions": [
+              {
+                "text": "What moved my portfolio today?"
+              },
+              {
+                "text": "Tax impact of selling BTC?"
+              },
+              {
+                "text": "Build a $10k order in tech"
+              }
+            ],
+            "questions_title": "Suggested questions",
+            "spark": [
+              {
+                "label": "12/17/2025",
+                "value": {
+                  "amount": "480484.095000000000",
+                  "display": "$480,484.10"
+                }
+              },
+              {
+                "label": "12/18/2025",
+                "value": {
+                  "amount": "486915.890000000000",
+                  "display": "$486,915.89"
+                }
+              },
+              {
+                "label": "12/19/2025",
+                "value": {
+                  "amount": "491036.508000000000",
+                  "display": "$491,036.51"
+                }
+              },
+              {
+                "label": "12/20/2025",
+                "value": {
+                  "amount": "485883.030500000000",
+                  "display": "$485,883.03"
+                }
+              },
+              {
+                "label": "12/21/2025",
+                "value": {
+                  "amount": "482892.777500000000",
+                  "display": "$482,892.78"
+                }
+              },
+              {
+                "label": "12/22/2025",
+                "value": {
+                  "amount": "492427.372500000000",
+                  "display": "$492,427.37"
+                }
+              },
+              {
+                "label": "12/23/2025",
+                "value": {
+                  "amount": "488710.588000000000",
+                  "display": "$488,710.59"
+                }
+              },
+              {
+                "label": "12/24/2025",
+                "value": {
+                  "amount": "480551.703000000000",
+                  "display": "$480,551.70"
+                }
+              },
+              {
+                "label": "12/25/2025",
+                "value": {
+                  "amount": "488339.434500000000",
+                  "display": "$488,339.43"
+                }
+              },
+              {
+                "label": "12/26/2025",
+                "value": {
+                  "amount": "490297.782500000000",
+                  "display": "$490,297.78"
+                }
+              },
+              {
+                "label": "12/27/2025",
+                "value": {
+                  "amount": "493649.927000000000",
+                  "display": "$493,649.93"
+                }
+              },
+              {
+                "label": "12/28/2025",
+                "value": {
+                  "amount": "494705.473000000000",
+                  "display": "$494,705.47"
+                }
+              },
+              {
+                "label": "12/29/2025",
+                "value": {
+                  "amount": "474839.212500000000",
+                  "display": "$474,839.21"
+                }
+              },
+              {
+                "label": "12/30/2025",
+                "value": {
+                  "amount": "481748.042500000000",
+                  "display": "$481,748.04"
+                }
+              },
+              {
+                "label": "12/31/2025",
+                "value": {
+                  "amount": "501149.487500000000",
+                  "display": "$501,149.49"
+                }
+              },
+              {
+                "label": "01/01/2026",
+                "value": {
+                  "amount": "463009.932000000000",
+                  "display": "$463,009.93"
+                }
+              },
+              {
+                "label": "01/02/2026",
+                "value": {
+                  "amount": "467125.702500000000",
+                  "display": "$467,125.70"
+                }
+              },
+              {
+                "label": "01/03/2026",
+                "value": {
+                  "amount": "491060.220000000000",
+                  "display": "$491,060.22"
+                }
+              },
+              {
+                "label": "01/04/2026",
+                "value": {
+                  "amount": "468240.230500000000",
+                  "display": "$468,240.23"
+                }
+              },
+              {
+                "label": "01/05/2026",
+                "value": {
+                  "amount": "494488.317500000000",
+                  "display": "$494,488.32"
+                }
+              },
+              {
+                "label": "01/06/2026",
+                "value": {
+                  "amount": "479833.165000000000",
+                  "display": "$479,833.16"
+                }
+              },
+              {
+                "label": "01/07/2026",
+                "value": {
+                  "amount": "481395.398000000000",
+                  "display": "$481,395.40"
+                }
+              },
+              {
+                "label": "01/08/2026",
+                "value": {
+                  "amount": "496046.592500000000",
+                  "display": "$496,046.59"
+                }
+              },
+              {
+                "label": "01/09/2026",
+                "value": {
+                  "amount": "492122.335500000000",
+                  "display": "$492,122.34"
+                }
+              },
+              {
+                "label": "01/10/2026",
+                "value": {
+                  "amount": "487632.935000000000",
+                  "display": "$487,632.94"
+                }
+              },
+              {
+                "label": "01/11/2026",
+                "value": {
+                  "amount": "489503.603000000000",
+                  "display": "$489,503.60"
+                }
+              },
+              {
+                "label": "01/12/2026",
+                "value": {
+                  "amount": "472249.773000000000",
+                  "display": "$472,249.77"
+                }
+              },
+              {
+                "label": "01/13/2026",
+                "value": {
+                  "amount": "483591.415000000000",
+                  "display": "$483,591.42"
+                }
+              },
+              {
+                "label": "01/14/2026",
+                "value": {
+                  "amount": "480714.150000000000",
+                  "display": "$480,714.15"
+                }
+              },
+              {
+                "label": "01/15/2026",
+                "value": {
+                  "amount": "482915.200000000000",
+                  "display": "$482,915.20"
+                }
+              }
+            ],
+            "total": {
+              "amount": {
+                "amount": "482915.200000000000",
+                "display": "$482,915.20"
+              },
+              "label": "Total portfolio value"
+            },
+            "view": "portfolio.summary.v1"
+          }
+        }
+      }
+    }
+  ]
+}

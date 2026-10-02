@@ -106,7 +106,7 @@ echo "repo.gate-pairs: ${checked} gate command(s) found verbatim in ${workflow_d
 # together or the two disagree silently", which is the GGU-94 defect rebuilt in
 # the second app. Rule 1 below is repository-wide for that reason and does not
 # need the app to still exist to keep catching it.
-pin_apps="frontend"
+pin_apps="frontend frontend_v1"
 pin_failed=0
 
 for app in $pin_apps; do

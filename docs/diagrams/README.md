@@ -20,6 +20,7 @@ no tooling, and can never drift silently from the code that a screenshot would.
 | [10-branching.md](10-branching.md) | How work flows from a ticket to production | `docs/compliance/CHANGE_MANAGEMENT.md` |
 | [12-frontend-layers.md](12-frontend-layers.md) | What may import what in the `frontend/` client | ADR-L, `frontend/app/test/architecture/layering_test.dart` |
 | [13-client-delivery.md](13-client-delivery.md) | How the A2UI client reaches a browser | `specs/frontend/0017`, `.github/workflows/frontend-cd.yaml`, `infra/scripts/tests/test_dev_environment.sh` |
+| [14-a2ui-v1-wire.md](14-a2ui-v1-wire.md) | How an agent turn reaches the v1.0 client, beside v0.9 | ADR-M, `specs/backend/0053`, `specs/frontend_v1/0001` |
 
 **11 is missing on purpose.** `11-client-architecture.md` drew `client_flutter/`,
 the older of two Flutter apps. That app was retired on 2026-09-22 (spec
@@ -28,7 +29,7 @@ diagram was **deleted rather than superseded**: rule 1 below says a diagram
 draws what is there, and a picture of a directory that does not exist has no
 honest form. The question it answered — what may import what in the Flutter
 client — is [12](12-frontend-layers.md)'s for the app that remains. Numbers are
-reading order and are **never reused**, so the next diagram is 14.
+reading order and are **never reused**, so the next diagram is 15.
 
 ## Rules
 

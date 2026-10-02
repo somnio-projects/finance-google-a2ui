@@ -1,0 +1,3 @@
+
+# One environment's public web config + backend URL (frontend/README.md § Run).
+app/config/firebase.json

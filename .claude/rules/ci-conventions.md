@@ -85,7 +85,7 @@ that shape rather than relying on a reviewer remembering to look.
 was the older of two Flutter apps. It had its own gate here (`dart.*`,
 `client.*`, `flutter.*`), its own two grep gates and its own workflow
 (`client-ci.yaml`). All of it was removed with the directory (spec
-`repo/0002`); `frontend/` is the only Flutter app this repository ships.
+`repo/0002`); `frontend/` was then the only Flutter app; since 2026-10-01 `frontend_v1/` (ADR-M D-9) is the second, with its own part and workflow.
 
 What survives that deletion is §5's third question, because it was found in
 that app: `client_flutter/Dockerfile` carried `ARG FLUTTER_VERSION=3.47.5`
@@ -135,6 +135,7 @@ repository-wide one is not, on purpose:
 | `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, spec numbering, manual-run check | yes |
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
+| `frontend-v1-ci` | pull requests | `frontend_v1/**`, `docs/a2ui/**`, `docs/catalog/**`, its own file | yes — the A2UI v1.0 client (ADR-M D-9), added 2026-10-01 |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
 | ~~`client-ci`~~ | — | `client_flutter/**` | **gone** — the app it gated was retired 2026-09-22 (spec `repo/0002`) |
 | `backend-cd` | **the button only** | — | yes |
@@ -186,7 +187,7 @@ the button appear.
 
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done. It has **four** parts,
+`.claude/ship-gate.json` is the Definition of Done. It has **five** parts,
 each with a runner and a workflow that must stay identical to it.
 
 **The count in that sentence has been wrong twice, in both directions, which
@@ -204,6 +205,7 @@ the row below, and that `_note`, in the same commit.**
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
+| `frontend_v1.*` | `cd frontend_v1 && make gate` | `frontend-v1-ci.yaml` | — (ADR-M D-9: the A2UI v1.0 client, a second deployable with its own part) |
 
 **This table is now checked by a machine.** `repo.gate-pairs`
 (`scripts/check_gate_pairs.sh`) parses `ship-gate.json` and greps each `cmd`,
