@@ -80,8 +80,10 @@ not take this as the whole set of pipelines.
 a button, gate-first, publishing to Firebase Hosting — and it is drawn on its
 own in [13 — How the A2UI client reaches a browser](13-client-delivery.md),
 because it answers a different question and this diagram is already at its node
-budget. `infra/scripts/tests/test_dev_environment.sh` asserts both pipelines'
-`needs:` edges, so neither can lose its gate quietly.
+budget. The A2UI v1.0 client (`frontend_v1/`, ADR-M D-9) ships through
+`frontend-v1-cd`, the same shape to its own Hosting site.
+`infra/scripts/tests/test_dev_environment.sh` asserts every pipeline's
+`needs:` edges, so none can lose its gate quietly.
 
 **Why the frontend gate opens with a toolchain preflight.** `frontend.toolchain`
 (`frontend/tool/check_toolchain.sh`) runs first, locally and on the runner,
