@@ -11,7 +11,7 @@ ComponentNode _node(String id, String type, [List<String> kids = const []]) =>
 
 /// Spec `frontend_v1/0001` AC-3 and ADR-M D-4.
 void main() {
-  final catalog = provisionalCatalog();
+  final catalog = financeCatalog();
 
   group('composeTree', () {
     test('admits the ticket with its payoff child', () {

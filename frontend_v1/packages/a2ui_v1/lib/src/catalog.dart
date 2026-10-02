@@ -28,10 +28,9 @@ final class CompositionRules extends Equatable {
 /// The parts of a catalog document the renderer enforces.
 ///
 /// Read from the **generated** `docs/a2ui/v1.0/finance.catalog.json`
-/// (ADR-M D-5) — or, until it lands, a provisional fixture with the same
-/// shape. Only names and composition rules are read; the JSON Schemas of each
-/// component's properties are the agent's business (it validates what it
-/// emits, spec `backend/0053` AC-1).
+/// (ADR-M D-5). Only names and composition rules are read; the JSON
+/// Schemas of each component's properties are the agent's business (it
+/// validates what it emits, spec `backend/0053` AC-1).
 final class Catalog extends Equatable {
   /// Creates the catalog.
   const Catalog({

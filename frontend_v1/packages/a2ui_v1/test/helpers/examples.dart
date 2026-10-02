@@ -46,9 +46,9 @@ bool isRendererToAgent(String name) {
   return first.keys.any(rendererKeys.contains);
 }
 
-/// The provisional catalog fixture (ADR-M D-4).
-Catalog provisionalCatalog() => Catalog.fromJson(
-  _decode(File('test/fixtures/finance.catalog.provisional.json')),
+/// The catalog the backend generates (ADR-M D-4/D-5), read in place.
+Catalog financeCatalog() => Catalog.fromJson(
+  _decode(File('../../../docs/a2ui/v1.0/finance.catalog.json')),
 );
 
 /// The messages of [name], decoded, failing the test on any failure.

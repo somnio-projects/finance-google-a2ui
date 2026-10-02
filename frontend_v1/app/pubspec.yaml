@@ -50,9 +50,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   # The A2UI v1.0 catalog the renderer enforces (ADR-M D-4/D-5). A COPY,
-  # written by `make catalog` and diffed by `make catalog-check`: the
-  # generated `docs/a2ui/v1.0/finance.catalog.json` when it exists, the
-  # provisional fixture in packages/a2ui_v1 until then.
+  # written by `make catalog` and diffed by `make catalog-check` against the
+  # generated `docs/a2ui/v1.0/finance.catalog.json`.
   assets:
     - assets/a2ui/finance.catalog.json
   fonts:

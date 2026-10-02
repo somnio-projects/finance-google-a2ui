@@ -165,6 +165,7 @@ RUN flutter config --no-analytics >/dev/null \
 # stops. It is the same flag `frontend/Makefile` uses for the same reason.
 COPY pubspec.yaml pubspec.lock ./
 COPY app/pubspec.yaml ./app/
+COPY packages/a2ui_v1/pubspec.yaml ./packages/a2ui_v1/
 COPY packages/finance_core/pubspec.yaml ./packages/finance_core/
 COPY packages/finance_api_client/pubspec.yaml ./packages/finance_api_client/
 COPY packages/finance_views_repository/pubspec.yaml ./packages/finance_views_repository/

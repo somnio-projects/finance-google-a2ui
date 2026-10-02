@@ -1,14 +1,34 @@
-# frontend — the A2UI finance client
+# frontend_v1 — the A2UI finance client on the v1.0 wire
 
-A Flutter web-first client for the Somnio × Google A2UI showcase. The backend
-shapes every payload; this app **binds what it receives** and transforms
-nothing — no formatting, no arithmetic, no re-ordering
-([ADR-K](../docs/adr/ADR-K-response-shaping.md)).
+**A copy of [`frontend/`](../frontend/README.md), upgraded to A2UI v1.0**
+([ADR-M](../docs/adr/ADR-M-a2ui-v1-wire.md), spec
+[`frontend_v1/0001`](../specs/frontend_v1/0001-a-second-client-renders-a2ui-v1.md)).
 
-> This is the only Flutter app in the repository. A second one,
-> `client_flutter/`, lived here until 2026-09-22 and was retired in full (spec
-> [`repo/0002`](../specs/repo/0002-retire-the-client-flutter-app.md)); the two
-> shared no code, no pipeline and no specs. This one is GGU-91.
+- **Copied from** `frontend/` at `develop` **`537aaa0`** (2026-10-01). Every
+  screen, route, theme, auth flow and widget under `app/lib` is that copy —
+  an app cannot be a dependency, so the widgets are duplicated, not imported,
+  and `frontend/` is never edited from here (ADR-M D-9).
+- **The one behavioural change is the assistant's wire.** v0.9
+  `render-intent` + REST fetch becomes A2UI v1.0: `POST /a2ui/v1/a2a`,
+  surfaces drawn from `createSurface` / `updateComponents` /
+  `updateDataModel` by our own pure-Dart renderer
+  [`packages/a2ui_v1`](packages/a2ui_v1) (no public Flutter renderer speaks
+  v1.0 yet — a2ui-project/a2ui#2899), edits through
+  `callAgentFunction(renderView)`, drills as `action(drill_attribution)`.
+- **Same backend, database and Firebase project/web app**, a second URL:
+  https://finance-a2ui-v1.web.app (Hosting site `finance-a2ui-v1`).
+- The catalog the renderer enforces is the backend's generated
+  `docs/a2ui/v1.0/finance.catalog.json`, copied into `app/assets/a2ui/` by
+  `make catalog` and gated by `make catalog-check`.
+
+Everything below is `frontend/`'s README with `frontend` read as
+`frontend_v1`, except the container, which runs on **:3002**:
+
+```bash
+# from the repository root — an override of the root compose file
+APP_RELEASE="local+$(git rev-parse --short HEAD)" \
+  docker compose -f docker-compose.yml -f frontend_v1/docker-compose.yml up --build
+```
 
 ## Quick start
 

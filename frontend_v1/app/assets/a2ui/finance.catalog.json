@@ -1,33 +1,401 @@
 {
-  "$comment": "PROVISIONAL test fixture, hand-written from ADR-M D-4/D-6 until the backend generates docs/a2ui/v1.0/finance.catalog.json (spec backend/0053 AC-2). Only names, composition rules and the function name are encoded; once the generated file lands, `make catalog-sync` copies it into app/assets and this file can go.",
-  "catalogId": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
   "protocolVersion": "1.0",
+  "title": "Finance showcase catalog",
+  "description": "The A2UI v1.0 catalog of the Somnio x Google finance showcase: one component per projection family, plus Section. GENERATED from the projection registry — do not edit by hand. Regenerate with: cd backend && make catalog",
+  "catalogId": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
+  "instructions": "Views the client can draw. You do not choose one and you never write a view id, an options object or JSON in your answer: a surface is attached by the tool you call, and your lever is which tool you call and which arguments you give it. Read this catalog to know what a tool's arguments can produce, then answer in plain prose about what the reader is seeing. An unknown view, an undeclared option or an out-of-range value is rejected and the default view is rendered instead. Never invent a payload shape, a field or a formatted number.\n- activity.timeline.v1 — The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.\n  options: query (string of up to 24 characters, or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), kind (one of 'all', 'buy', 'sell', 'staking_reward', 'deposit'), limit (integer 1..200)\n- attribution.driver.v1 — One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (one of 'AAVE', 'ARB', 'AVAX', 'BTC', 'ETH', 'LINK', 'SOL', 'USDC')\n- attribution.waterfall.v1 — Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD')\n  use when: the user asks WHY a value changed and the answer decomposes into signed contributions that sum to a net delta — what drove the portfolio's result, profit and loss by position. The steps arrive largest move first; do not reorder them.\n  do not use for: a static breakdown of what is held now — `holdings.allocation.v1` answers that. Never write the figures yourself: render this view and copy the `display` strings it returns.\n- attribution.window.v1 — The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), window (string matching ^(1d|7d|30d)$)\n- holdings.allocation.v1 — Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.\n  options: top_n (integer 1..20), include_other (true or false), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), group_by (one of 'holding', 'asset_class', 'sector'), headline (true or false)\n- holdings.positions.v1 — The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.\n  options: query (string of up to 24 characters, or omit it), sort (one of 'value_desc', 'value_asc', 'label'), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), asset_class (one of 'all', 'layer1', 'layer2', 'stablecoin', 'defi', 'infrastructure')\n- order.ticket.v1 — Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (one of 'AAVE', 'ARB', 'AVAX', 'BTC', 'ETH', 'LINK', 'SOL', 'USDC'), side (one of 'buy', 'sell'), size (string matching ^[0-9]{1,9}(\\.[0-9]{1,8})?$), size_in (one of 'units', 'usd')\n- order.ticket.v2 — Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), legs (string matching ^[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?(,[A-Z]{2,10}:[0-9]{1,9}(\\.[0-9]{1,8})?){0,4}$), side (one of 'buy', 'sell')\n  use when: the user expresses buy or sell INTENT that resolves to a concrete, editable order — including vague intent such as \"put ~$10k into semis, keep it diversified\". Propose legs through `draft_order`; the impact (weights, cash, shares) is always shown so the consequences are visible before anything is confirmed, and the backend recomputes it on every edit.\n  do not use for: placing or confirming an order in prose — nothing here executes, and the ticket says so. A single asset with no impact panel is `order.ticket.v1`; what a proposed sale realises under each lot method is `scenario.comparison.v1`. Never recompute a figure the payload already carries.\n- payoff.curve.v1 — Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (one of 'AAVE', 'ARB', 'AVAX', 'BTC', 'ETH', 'LINK', 'SOL', 'USDC'), size (integer 1..1000000000), size_in (one of 'units', 'usd'), side (one of 'buy', 'sell'), range_pct (integer 5..90), steps (integer 1..25)\n- portfolio.summary.v1 — The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), range (one of '1d', '1w', '1m', 'ytd', '1y', 'all')\n- scenario.comparison.v1 — The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.\n  options: locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$, or omit it), quantity (number 0.0..1000000000000.0 or string matching ^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,8}0*$, or omit it), methods (list of up to 3 (one of 'FIFO', 'LIFO', 'HIFO')), short_term_rate (string matching ^0(\\.[0-9]{1,4})?$), long_term_rate (string matching ^0(\\.[0-9]{1,4})?$), include_wait (true or false)\n  use when: the user faces a choice between strategies and the decision hinges on comparing the same metrics across them — which lots to sell, selling now or waiting. Every column's figures come from this render; never fabricate the comparison.\n  do not use for: a single option, where there is nothing to compare — `taxlots.table.v1` shows one sale in detail. Do not rank or bold the values in prose: this card names the spread and recommends no method.\n- taxlots.table.v1 — Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.\n  options: fields (list of up to 8 (text), or omit it), locale (one of 'en-US', 'es-AR', 'de-DE'), precision (integer 0..8), currency (only 'USD'), symbol (string matching ^[A-Za-z]{2,10}$), quantity (string matching ^\\d{1,12}(\\.\\d{1,8})?$), lot_method (one of 'FIFO', 'LIFO', 'HIFO')\n  use when: the user asks about selling a position and the answer depends on WHICH lots go — the realised result always splits into its short-term and long-term halves, which is the point of the surface.\n  do not use for: comparing several lot-selection methods — `scenario.comparison.v1` puts those side by side. Never estimate a tax rate in prose: this view stops at the realised split, before any rate, fee or wash sale.",
   "components": {
-    "ActivityTimeline": {"allowedParents": ["Surface", "Section"]},
-    "AttributionWaterfall": {"allowedParents": ["Surface", "Section"]},
-    "DriverDetail": {"allowedParents": ["Surface", "AttributionWaterfall"]},
-    "HoldingsSummary": {"allowedParents": ["Surface", "Section"]},
-    "MultiLegOrderTicket": {"allowedParents": ["Surface", "Section"]},
-    "OrderTicket": {"allowedParents": ["Surface", "Section"]},
-    "PortfolioSummary": {"allowedParents": ["Surface", "Section"]},
-    "PositionList": {"allowedParents": ["Surface", "Section"]},
-    "RiskPayoffChart": {
-      "allowedParents": ["OrderTicket", "MultiLegOrderTicket"]
+    "ActivityTimeline": {
+      "type": "object",
+      "description": "`activity.timeline.v1`: The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "ActivityTimeline"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
     },
-    "ScenarioComparison": {"allowedParents": ["Surface", "Section"]},
-    "Section": {"allowedParents": ["Surface"]},
-    "TaxLotTable": {"allowedParents": ["Surface", "Section"]}
+    "AttributionWaterfall": {
+      "type": "object",
+      "description": "`attribution.waterfall.v1`: Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. `attribution.window.v1`: The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "AttributionWaterfall"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "Ids of the components drawn inside this one (ADR-M D-4)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ],
+      "allowedChildren": [
+        "DriverDetail"
+      ]
+    },
+    "DriverDetail": {
+      "type": "object",
+      "description": "`attribution.driver.v1`: One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens.",
+      "allowedParents": [
+        "Surface",
+        "AttributionWaterfall"
+      ],
+      "properties": {
+        "component": {
+          "const": "DriverDetail"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "HoldingsSummary": {
+      "type": "object",
+      "description": "`holdings.allocation.v1`: Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "HoldingsSummary"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "MultiLegOrderTicket": {
+      "type": "object",
+      "description": "`order.ticket.v2`: Multi-leg draft order: each leg struck at its reference price with its weight in the order, the order's impact — total, fees, cash remaining, the group's weight before and after — and whether the available cash covers it. Editing a leg re-renders it; it places nothing.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "MultiLegOrderTicket"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "Ids of the components drawn inside this one (ADR-M D-4)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ],
+      "allowedChildren": [
+        "RiskPayoffChart"
+      ]
+    },
+    "OrderTicket": {
+      "type": "object",
+      "description": "`order.ticket.v1`: Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "OrderTicket"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "Ids of the components drawn inside this one (ADR-M D-4)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ],
+      "allowedChildren": [
+        "RiskPayoffChart"
+      ]
+    },
+    "PortfolioSummary": {
+      "type": "object",
+      "description": "`portfolio.summary.v1`: The Home hero: total value, the change over a selected period with its direction, a thirty-day sparkline, the owner's greeting, suggested questions for the assistant and the day's top movers.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "PortfolioSummary"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "PositionList": {
+      "type": "object",
+      "description": "`holdings.positions.v1`: The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "PositionList"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "RiskPayoffChart": {
+      "type": "object",
+      "description": "`payoff.curve.v1`: Profit and loss of a proposed buy or sell across a bounded range of future prices, entry and break-even marked. An illustrative linear spot payoff, never an options payoff.",
+      "allowedParents": [
+        "OrderTicket",
+        "MultiLegOrderTicket"
+      ],
+      "properties": {
+        "component": {
+          "const": "RiskPayoffChart"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "ScenarioComparison": {
+      "type": "object",
+      "description": "`scenario.comparison.v1`: The same proposed sale costed under each lot-selection method, so the realised result and the short/long split can be compared side by side. It marks which column keeps the most after tax, at rates the caller declares and the card prints.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "ScenarioComparison"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    },
+    "Section": {
+      "type": "object",
+      "description": "A plain vertical group of components at the top of a surface. Layout only: it binds no data and formats nothing.",
+      "allowedParents": [
+        "Surface"
+      ],
+      "properties": {
+        "component": {
+          "const": "Section"
+        },
+        "children": {
+          "$ref": "common_types.json#/$defs/ChildList",
+          "description": "Ids of the components drawn inside this one (ADR-M D-4)."
+        }
+      },
+      "required": [
+        "component",
+        "children"
+      ],
+      "allowedChildren": [
+        "ActivityTimeline",
+        "AttributionWaterfall",
+        "HoldingsSummary",
+        "MultiLegOrderTicket",
+        "OrderTicket",
+        "PortfolioSummary",
+        "PositionList",
+        "ScenarioComparison",
+        "TaxLotTable"
+      ]
+    },
+    "TaxLotTable": {
+      "type": "object",
+      "description": "`taxlots.table.v1`: Tax-lot table for a proposed sale: the lots it consumes under FIFO, LIFO or HIFO, each with its holding period, and the realised result split short-term vs long-term. Nothing is traded.",
+      "allowedParents": [
+        "Surface",
+        "Section"
+      ],
+      "properties": {
+        "component": {
+          "const": "TaxLotTable"
+        },
+        "data": {
+          "$ref": "common_types.json#/$defs/DataBinding",
+          "description": "JSON Pointer to `{view, options, payload}` in the surface data model: the projection id, the options it was rendered with and its DTO, exactly as `GET /v1/portfolios/current/views` serves it. The renderer binds the payload and computes nothing (ADR-K, ADR-M D-3)."
+        }
+      },
+      "required": [
+        "component",
+        "data"
+      ]
+    }
   },
   "functions": {
     "renderView": {
       "type": "object",
+      "description": "Re-render one component of this surface with new declared options. The agent validates `options` against the view's own options model and answers `{componentId, view}`, then an `updateDataModel` at `/<componentId>`; it never asks the model. An undeclared or out-of-range option answers `INVALID_FUNCTION_CALL`.",
       "returnType": "object",
       "allowedCallers": "rendererOnly",
       "properties": {
-        "call": {"const": "renderView"},
-        "args": {"type": "object"}
+        "call": {
+          "const": "renderView"
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "componentId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,31}$",
+              "description": "The component to re-render; its data path."
+            },
+            "view": {
+              "type": "string",
+              "enum": [
+                "activity.timeline.v1",
+                "attribution.driver.v1",
+                "attribution.waterfall.v1",
+                "attribution.window.v1",
+                "holdings.allocation.v1",
+                "holdings.positions.v1",
+                "order.ticket.v1",
+                "order.ticket.v2",
+                "payoff.curve.v1",
+                "portfolio.summary.v1",
+                "scenario.comparison.v1",
+                "taxlots.table.v1"
+              ],
+              "description": "The registered projection to render."
+            },
+            "options": {
+              "type": "object",
+              "description": "The view's declared options, and only those."
+            }
+          },
+          "required": [
+            "componentId",
+            "view",
+            "options"
+          ],
+          "additionalProperties": false
+        }
       },
-      "required": ["call"]
+      "required": [
+        "call",
+        "args"
+      ]
+    }
+  },
+  "$defs": {
+    "anyComponent": {
+      "oneOf": [
+        {
+          "$ref": "#/components/ActivityTimeline"
+        },
+        {
+          "$ref": "#/components/AttributionWaterfall"
+        },
+        {
+          "$ref": "#/components/DriverDetail"
+        },
+        {
+          "$ref": "#/components/HoldingsSummary"
+        },
+        {
+          "$ref": "#/components/MultiLegOrderTicket"
+        },
+        {
+          "$ref": "#/components/OrderTicket"
+        },
+        {
+          "$ref": "#/components/PortfolioSummary"
+        },
+        {
+          "$ref": "#/components/PositionList"
+        },
+        {
+          "$ref": "#/components/RiskPayoffChart"
+        },
+        {
+          "$ref": "#/components/ScenarioComparison"
+        },
+        {
+          "$ref": "#/components/Section"
+        },
+        {
+          "$ref": "#/components/TaxLotTable"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "component"
+      }
+    },
+    "anyFunction": {
+      "oneOf": [
+        {
+          "$ref": "#/functions/renderView"
+        }
+      ]
     }
   }
 }

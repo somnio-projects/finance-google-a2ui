@@ -84,8 +84,8 @@ manifest-check:
 	dart run tool/generate_component_manifest.dart --check
 
 # The bundle's copy of the A2UI v1.0 catalog (ADR-M D-4/D-5). `catalog`
-# copies the backend's generated docs/a2ui/v1.0/finance.catalog.json — or,
-# until it exists, the provisional fixture — into app/assets; `catalog-check`
+# copies the backend's generated docs/a2ui/v1.0/finance.catalog.json into
+# app/assets; `catalog-check`
 # fails when the copy is stale, so the renderer never enforces rules the
 # backend no longer emits.
 catalog:

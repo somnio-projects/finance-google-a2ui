@@ -110,14 +110,14 @@ void main() {
 
   group('Catalog', () {
     test('reads rules, functions and the omitted-means-any default', () {
-      final catalog = provisionalCatalog();
+      final catalog = financeCatalog();
       expect(catalog.functions, <String>{'renderView'});
       final payoff = catalog.components['RiskPayoffChart']!;
       expect(payoff.acceptsParent('OrderTicket'), isTrue);
       expect(payoff.acceptsParent('Section'), isFalse);
       expect(payoff.acceptsChild('anything'), isTrue);
       expect(const CompositionRules().acceptsParent('x'), isTrue);
-      expect(catalog, provisionalCatalog());
+      expect(catalog, financeCatalog());
     });
 
     test('refuses a document with no id or a malformed component', () {

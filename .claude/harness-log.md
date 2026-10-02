@@ -48,6 +48,28 @@ knows the `frontend_v1` area. Diagram 14 added; 02 and 05 point at it.
    `test_openapi_document.py`, so it predates this branch). The full gate's
    order hides it. Worth its own ticket.
 
+**The frontend half (`frontend_v1/`).** A copy of `frontend/` at `537aaa0`
+whose assistant speaks v1.0: `A2aClient` → `POST /a2ui/v1/a2a` with the
+extension header and `a2uiRendererCapabilities`, the bloc feeding each
+`artifact-update` into `a2ui_v1`'s `SurfaceProcessor`, a `SurfaceHost` that
+walks the tree with `Semantics` per node, edits as
+`callAgentFunction(renderView)`, bar taps as `action(drill_attribution)`,
+chips as text. Its own gate part `frontend_v1.*` (the fifth), its own
+`frontend-v1-ci.yaml`, `pin_apps` widened; `make gate` green once at the end.
+
+4. **The provisional catalog fixture outlived its reason.** The renderer's
+   suite and the bundle's asset both read a hand-written fixture "until the
+   backend generates the catalog" — and the backend had. `sync_catalog.sh`
+   silently preferred the generated file when present, so the fixture was
+   only still alive in the tests. It is deleted; the suite reads
+   `docs/a2ui/v1.0/finance.catalog.json` in place and the sync **fails**
+   rather than falling back when that file is missing.
+5. **A copied Dockerfile copies its blind spot.** `frontend_v1/Dockerfile`
+   listed every package's `pubspec.yaml` for the cached `pub get` layer —
+   except the one package `frontend/` does not have. `--enforce-lockfile`
+   would have failed the container build; no gate builds the container, so
+   it was found by reading.
+
 ## 2026-09-25 — GGU-122/123/119 no equity vocabulary in a crypto payload · spec `specs/backend/0046-no-equity-vocabulary-in-a-crypto-payload.md`
 
 **Branch:** `fix/GGU-122_no_equity_vocabulary_in_a_crypto_payload`. Backend +
