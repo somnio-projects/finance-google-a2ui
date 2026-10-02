@@ -7,6 +7,7 @@ flowchart LR
     client["Browser<br/>(runs a Flutter web bundle)"]
     a2ui["A2UI client<br/>nginx · uid 101 · read-only FS<br/>config compiled in + /release.json"]
     host["Firebase Hosting<br/>finance-a2ui.web.app<br/>the A2UI client's deployable"]
+    host1["Firebase Hosting<br/>finance-a2ui-v1.web.app<br/>the same client on A2UI v1.0 (ADR-M, diagram 14)"]
     subgraph edge["Edge (planned — infra/edge.tf)"]
         lb["HTTPS Load Balancer<br/>managed cert · TLS 1.2+"]
         waf["Cloud Armor<br/>OWASP · per-IP throttle"]
@@ -26,6 +27,7 @@ flowchart LR
 
     client -- "GET / · the bundle + /release.json" --> a2ui
     client -- "GET / · the released bundle" --> host
+    client -- "GET / · the v1.0 bundle" --> host1
     a2ui -- "same bytes, same build script<br/>(frontend/tool/build_web.sh)" --> host
     client -- "GET /.well-known/agent-card.json (public)" --> lb
     client -- "POST / · JSON-RPC message/stream · SSE" --> lb

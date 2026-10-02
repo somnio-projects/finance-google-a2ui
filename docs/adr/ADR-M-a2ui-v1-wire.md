@@ -1,6 +1,6 @@
 # ADR-M — A2UI v1.0 wire, beside v0.9 and not instead of it
 
-**Status:** Proposed · **Date:** 2026-10-01 · **Deciders:** Lautaro Bertuzzi (TL), Patricio Burzaco (PM)
+**Status:** Accepted · **Date:** 2026-10-01 · **Deciders:** Lautaro Bertuzzi (TL), Patricio Burzaco (PM)
 **Specs:** [`backend/0053`](../../specs/backend/0053-the-agent-speaks-a2ui-v1.md) · [`frontend_v1/0001`](../../specs/frontend_v1/0001-a-second-client-renders-a2ui-v1.md)
 **Upstream:** A2UI v1.0 *Candidate*, `a2ui-project/a2ui` @ `e83e074` (2026-09-29), schemas vendored in [`docs/a2ui/v1.0/schemas/`](../a2ui/v1.0/schemas/) (Apache-2.0)
 
@@ -59,7 +59,9 @@ with `children: ["payoff"]`, the curve is component `payoff` bound to
 [OrderTicket, MultiLegOrderTicket]`, `DriverDetail.allowedParents =
 [Surface, AttributionWaterfall]`, every other component `[Surface, Section]`,
 and `Section` (layout, `children`) `allowedParents = [Surface]`. The renderer
-enforces them and reports `UNALLOWED_PARENT` / `UNALLOWED_CHILD`.
+enforces them and reports `UNALLOWED_PARENT` / `UNALLOWED_CHILD`; the agent
+never sends a tree its own catalog forbids, so a payoff with no ticket before
+it — or a second one — is not drawn.
 
 **D-5 — The catalog is generated.** `CATALOG_ID =
 https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json`.
@@ -80,7 +82,9 @@ own options model (ADR-K D-3), renders deterministically **without the LLM**,
 and answers `agentFunctionResponse{value:{componentId, view}}` followed by
 `updateDataModel{path:"/<componentId>", value:{view, options, payload}}`.
 Invalid options → `agentFunctionResponse.error.code = "INVALID_FUNCTION_CALL"`;
-unknown function → `"UNKNOWN_FUNCTION"`.
+unknown function → `"UNKNOWN_FUNCTION"`. `renderView` is stateless: that
+the view fits the component it is written to is the **renderer's** check, since
+only it holds the surface.
 
 **D-7 — New turns are v1.0 `action`s.** `drill.attribution.v1` arrives as
 `action{name:"drill_attribution", context:{driver}}` and is resolved by the
@@ -95,10 +99,11 @@ text in an ordinary text part — no v1.0 message pretends a surface exists.
 A request on `/a2ui/v1/a2a` whose capabilities do not include `CATALOG_ID`
 is refused with a JSON-RPC error naming the catalog, never answered in prose.
 
-**D-9 — A second client, a second URL.** `frontend_v1/` is a separate Flutter
-app: own pub workspace, own `.fvmrc` (same pinned SDK), own gate part
+**D-9 — The same app, upgraded, at a second URL.** `frontend_v1/` is a copy of
+`frontend/` with only the assistant's wire moved to v1.0, on the same backend,
+database and Firebase project/web app. It is a separate Flutter app: own pub workspace, own `.fvmrc` (same pinned SDK), own gate part
 `frontend_v1.*`, own `frontend-v1-ci.yaml`, own specs area, own Firebase
-Hosting site. It may depend on `frontend/packages/*` **read-only** through
+Hosting site (`finance-a2ui-v1` → https://finance-a2ui-v1.web.app, created 2026-10-01). It may depend on `frontend/packages/*` **read-only** through
 path dependencies; it never edits `frontend/`. Widgets that live in
 `frontend/app/lib` are copied, not imported (an app cannot be a dependency),
 and the copy is recorded as such.
@@ -114,6 +119,6 @@ and the copy is recorded as such.
 
 ## Open
 
-- **OD-1** Firebase Hosting site id for `frontend_v1` (needs a console/CLI create by a human).
+- **OD-1** ~~Hosting site id~~ — resolved: `finance-a2ui-v1`, created 2026-10-01, auth domain authorized, dev CORS widened (`infra/environments/dev.tfvars`).
 - **OD-2** Does `genui` publish v1.0 before the video? Ask Google; D-1 holds either way.
-- **OD-3** SSO allow-list question from Patricio (2026-09-29) applies to this client too.
+- **OD-3** ~~SSO allow-list~~ — answered 2026-10-01: dev enrols any verified Google/e-mail-link identity as a member (`AUTH_OPEN_ENROLMENT=true`); the v1.0 client shares that auth.

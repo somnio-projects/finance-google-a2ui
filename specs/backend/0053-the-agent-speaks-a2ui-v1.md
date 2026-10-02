@@ -1,6 +1,6 @@
 # 0053 — The agent speaks A2UI v1.0, beside v0.9
 
-**Status:** Draft — awaiting TL approval · **Ticket:** *unassigned* (no GGU number yet) · **Area:** `backend/`
+**Status:** In progress — approved by the TL 2026-10-01 · **Ticket:** *unassigned* (no GGU number yet) · **Area:** `backend/`
 **Decision:** [ADR-M](../../docs/adr/ADR-M-a2ui-v1-wire.md) · **Pair:** [`frontend_v1/0001`](../frontend_v1/0001-a-second-client-renders-a2ui-v1.md)
 
 ## 1. Problem
@@ -44,6 +44,8 @@ None. No table, no migration.
 
 ## 5. Security notes
 
+**One new public route:** `GET /a2ui/v1/.well-known/agent-card.json`, public for the reason the v0.9 card is (spec 0010 OD-1 — a client cannot present a token before it bootstraps); it carries no subject data. Listed in `.claude/rules/backend/security.md` and `test_openapi_contract.py::PUBLIC`. `GET /a2ui/v1/catalog` and `POST /a2ui/v1/a2a` require a bearer.
+
 Same auth dependency as `/a2a`. `renderView` args are the projection's
 declared options only (ADR-K D-3): unknown view, unknown option, out of range
 → `INVALID_FUNCTION_CALL`, logged without the args. `componentId` is bounded
@@ -62,7 +64,7 @@ model (asserted with the null model client). RFC 9457 for HTTP faults.
 - **AC-3** A turn whose tools emit N intents streams N `createSurface` parts
   in order, each `dataModel.root.payload` equal to the REST payload for the
   same view and options.
-- **AC-4** Ticket + payoff in one turn → one surface, payoff as child.
+- **AC-4** Ticket + payoff in one turn → one surface, payoff as child; a second payoff, or a payoff with no ticket before it, is not drawn (the catalog forbids it at the root). **Dormant today:** no tool emits `payoff.curve.v1` (`agent/tools/payoff.py` emits no render intent), so this is proven with test tools only and becomes live the day one does.
 - **AC-5** `callAgentFunction(renderView)` answers `agentFunctionResponse` +
   `updateDataModel` matching the examples; invalid options and unknown
   function answer the error codes; the model is never called.
@@ -70,8 +72,7 @@ model (asserted with the null model client). RFC 9457 for HTTP faults.
   bad args are refused as today.
 - **AC-7** Missing/foreign `a2uiRendererCapabilities` → JSON-RPC error naming
   `CATALOG_ID`.
-- **AC-8** `POST /a2a`, its card and every v0.9 test are unchanged — no
-  existing test edited except to register the new router.
+- **AC-8** `POST /a2a`, its card and every v0.9 behaviour test are unchanged. The only existing tests edited are the three registration inventories that exist to fail on exactly this: `test_openapi_contract.py::PUBLIC` (+ the v1.0 card), `test_openapi_document.py` (24 → 27 operations) and `test_catalog_snapshot.py` (`ARTIFACTS` gains the catalog).
 
 ## 7. Test plan
 

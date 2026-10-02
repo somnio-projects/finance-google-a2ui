@@ -1,6 +1,6 @@
 # 0001 — A second client renders A2UI v1.0
 
-**Status:** Draft — awaiting TL approval · **Ticket:** *unassigned* · **Area:** `frontend_v1/`
+**Status:** In progress — approved by the TL 2026-10-01 · **Ticket:** *unassigned* · **Area:** `frontend_v1/`
 **Decision:** [ADR-M](../../docs/adr/ADR-M-a2ui-v1-wire.md) · **Pair:** [`backend/0053`](../backend/0053-the-agent-speaks-a2ui-v1.md)
 
 ## 1. Problem
@@ -20,8 +20,7 @@ No public Flutter renderer supports v1.0 (a2ui-project/a2ui#2899), and
   catalog composition validation (`UNALLOWED_PARENT` / `UNALLOWED_CHILD`)
   read from the generated catalog, and the `callAgentFunction` / `action`
   builders.
-- `app/` — the chat-first assistant screen: sign in (Firebase, same project),
-  ask, render each surface as it streams, edits through `renderView`, drill as
+- `app/` — the copied app; its assistant screen now asks over v1.0: render each surface as it streams, edits through `renderView`, drill as
   `action`, chips as text, the designed error state. A `SurfaceHost` walks the
   tree, wraps every node in `Semantics` from `accessibility`, and maps
   component name → widget through a generated manifest.
@@ -35,8 +34,16 @@ No public Flutter renderer supports v1.0 (a2ui-project/a2ui#2899), and
   (toolchain · format · analyze · budget · manifest · tests · 100 % line
   coverage), `Dockerfile`, `firebase.json` for its own Hosting site.
 
-**Out:** REST screens (home, holdings tabs) — the v1.0 claim is the agent
-path. Mobile builds. Moving to `a2ui_flutter` (later, behind `a2ui_v1`'s API).
+**It is the same app, upgraded.** `frontend_v1/` starts as a copy of the
+whole `frontend/` workspace at the `develop` sha recorded in its README —
+every screen, route, theme, auth flow and REST screen identical, connected to
+the same backend, database and Firebase project and web app. The **only**
+behavioural change is the assistant's wire: v0.9 `render-intent` + REST fetch
+becomes A2UI v1.0 through `a2ui_v1` and `POST /a2ui/v1/a2a`. The list above
+describes that change; everything else is the copy.
+
+**Out:** any edit to `frontend/`. Mobile builds. Moving to `a2ui_flutter`
+(later, behind `a2ui_v1`'s API).
 
 ## 3. API contract
 
