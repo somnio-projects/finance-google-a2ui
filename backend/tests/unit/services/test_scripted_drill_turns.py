@@ -23,26 +23,30 @@ async def test_a_tapped_bar_opens_the_drivers_card_for_today(
     tool_context: ToolContext,
 ) -> None:
     """Flow A's D2: the drill composes ``attribution.driver.v1`` (spec 0032)."""
-    result, _, _ = await run(composed("NVDA"), tool_context)
+    result, _, _ = await run(composed("BTC"), tool_context)
 
     (intent,) = result.render_intents
     assert intent.view == "attribution.driver.v1"
-    assert intent.options == {"symbol": "NVDA"}
-    assert result.message.startswith("NVIDIA Corp (NVDA) contributed ")
+    assert intent.options == {"symbol": "BTC"}
+    assert result.message.startswith("Bitcoin (BTC) contributed ")
     assert "today" in result.message
 
 
 async def test_a_drill_on_a_symbol_the_seed_does_not_hold_says_so(
     tool_context: ToolContext,
 ) -> None:
-    """The tool answers ``held: false``; the script's ``otherwise`` is said."""
-    script = DEMO_SCRIPTS[normalise(composed("AMD"))]
+    """The tool answers ``held: false``; the script's ``otherwise`` is said.
 
-    result, _, reporter = await run(composed("AMD"), tool_context)
+    AVAX is the reference's round trip — bought and fully sold — so it is the
+    symbol a drill can name and the holdings correctly do not carry (0044).
+    """
+    script = DEMO_SCRIPTS[normalise(composed("AVAX"))]
+
+    result, _, reporter = await run(composed("AVAX"), tool_context)
 
     assert result.render_intents == ()
     assert result.tool_calls == 1
     assert result.message == script.otherwise
     assert result.message != TOOLS_FAILED_MESSAGE
-    assert "AMD is not held" in result.message
+    assert "AVAX is not held" in result.message
     assert reporter.exceptions == []

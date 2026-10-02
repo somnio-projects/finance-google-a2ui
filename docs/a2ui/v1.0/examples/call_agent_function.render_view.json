@@ -1,0 +1,26 @@
+{
+  "kind": "data",
+  "metadata": {
+    "mimeType": "application/a2ui+json"
+  },
+  "data": [
+    {
+      "version": "v1.0",
+      "callAgentFunction": {
+        "surfaceId": "turn-7f3a-0",
+        "functionCallId": "call-01",
+        "callFunction": {
+          "call": "renderView",
+          "catalogId": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
+          "args": {
+            "componentId": "root",
+            "view": "portfolio.summary.v1",
+            "options": {
+              "range": "1y"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

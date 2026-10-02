@@ -60,18 +60,21 @@ void main() {
     blocTest<ActivityBloc, ActivityState>(
       'a chip refetches with its kind',
       build: build,
-      act: (bloc) => bloc.add(const ActivityKindChanged('dividend')),
+      act: (bloc) => bloc.add(const ActivityKindChanged('staking_reward')),
       expect: () => <dynamic>[
-        const ActivityState(status: ActivityStatus.loading, kind: 'dividend'),
+        const ActivityState(
+          status: ActivityStatus.loading,
+          kind: 'staking_reward',
+        ),
         isA<ActivityState>()
-            .having((s) => s.kind, 'kind', 'dividend')
+            .having((s) => s.kind, 'kind', 'staking_reward')
             .having((s) => s.status, 'status', ActivityStatus.success),
       ],
       verify: (_) => verify(
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[ActivityBloc.timelineView],
-          options: <String, String>{'kind': 'dividend'},
+          options: <String, String>{'kind': 'staking_reward'},
         ),
       ).called(1),
     );

@@ -21,6 +21,11 @@ from app.domain.market import MARKET_REFERENCE, MarketAsset, market_asset
 from app.domain.money import ZERO
 from app.domain.taxonomy import AssetClass
 
+#: The domain's half of the trend token. ``app.core.trend`` declares the same
+#: literal, because that module *produces* the token and ``core`` may not import
+#: ``domain`` — ``tests/unit/domain/test_package_boundaries.py`` refuses the
+#: single definition, and widening that whitelist for a type name would be a
+#: worse trade than two declarations a test compares (spec 0049 OD-5).
 Trend = Literal["up", "down", "flat"]
 
 #: How many names the Home page lists under *Top movers today*.
@@ -71,22 +76,29 @@ class Mover(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    symbol: str = Field(description="Ticker.", examples=["NVDA"])
-    name: str = Field(description="Display name.", examples=["NVIDIA Corp"])
+    symbol: str = Field(description="Ticker.", examples=["BTC"])
+    name: str = Field(description="Display name.", examples=["Bitcoin"])
     price: Decimal = Field(gt=0, description="Today's price.")
     ratio: Decimal = Field(description="Signed day change as a ratio.")
 
 
-def _is_single_name(asset: MarketAsset) -> bool:
-    """A fund or a cash balance is never a *mover* on the design's list."""
-    return not asset.is_fund and asset.asset_class is not AssetClass.CASH
+def _is_tradable_mover(asset: MarketAsset) -> bool:
+    """The settlement asset is never a *mover* on the design's list.
+
+    It was ``not asset.is_fund and ...`` while the reference held pooled
+    vehicles (spec 0026 OD-4). A crypto universe of eight single names holds
+    none, and a flag that is false in every row is a claim the data does not
+    support, so the filter now names its only real subject: a dollar-pegged
+    token does not move (spec 0044 OD-2).
+    """
+    return asset.asset_class is not AssetClass.STABLECOIN
 
 
 def top_movers(*, limit: int = MOVERS) -> tuple[Mover, ...]:
     """Return the ``limit`` single names that moved most today, largest first.
 
     Drawn from the whole market reference, not from the portfolio: the design
-    lists TSLA, which the portfolio does not hold. Ties break on the ticker so
+    lists AVAX, which the portfolio traded out of. Ties break on the ticker so
     the order is stable.
 
     Args:
@@ -103,7 +115,7 @@ def top_movers(*, limit: int = MOVERS) -> tuple[Mover, ...]:
             ratio=change_ratio(asset.price, asset.previous_close),
         )
         for asset in MARKET_REFERENCE
-        if _is_single_name(asset)
+        if _is_tradable_mover(asset)
     ]
     rows.sort(key=lambda row: (-abs(row.ratio), row.symbol))
     return tuple(rows[:limit])

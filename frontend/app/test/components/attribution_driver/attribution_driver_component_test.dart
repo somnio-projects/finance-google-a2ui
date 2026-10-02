@@ -25,10 +25,10 @@ void main() {
 
     test('binds the header from written strings', () {
       final data = component.read(ViewPayload.fromJson(example));
-      expect(data.symbol, 'NVDA');
-      expect(data.name, 'NVIDIA Corp');
+      expect(data.symbol, 'BTC');
+      expect(data.name, 'Bitcoin');
       expect(data.caption, 'Top contributor today');
-      expect(data.contributionDisplay, r'+$4,370.40');
+      expect(data.contributionDisplay, r'+$4,767.00');
       expect(data.trend, DriverTrend.up);
     });
 
@@ -38,19 +38,21 @@ void main() {
       expect(data.tiles, <DriverTile>[
         const DriverTile(
           label: 'Price move',
-          figure: '+4.20%',
-          caption: r'+$48.56',
+          figure: '+3.66%',
+          caption: r'+$2,270.00',
           trend: DriverTrend.up,
         ),
+        // `holding`, labelled with the asset the payload already knows:
+        // 2.1 Bitcoin was tiled as "Shares" until GGU-123.
         const DriverTile(
-          label: 'Shares',
-          figure: '90',
-          caption: r'@ $1,204.66',
+          label: 'BTC held',
+          figure: '2.1',
+          caption: r'@ $64,250.00',
         ),
         const DriverTile(
           label: 'Of day gain',
-          figure: '134.88%',
-          caption: r'of +$3,240.18',
+          figure: '216.58%',
+          caption: r'of +$2,201.05',
         ),
       ]);
     });
@@ -65,22 +67,22 @@ void main() {
         ),
       );
       expect(find.byType(AttributionDriverCard), findsOneWidget);
-      expect(find.text('NVIDIA Corp'), findsOneWidget);
+      expect(find.text('Bitcoin'), findsOneWidget);
       // N-4: no raw member reaches the screen.
-      expect(find.textContaining('4370.4'), findsNothing);
-      expect(find.textContaining('0.0420'), findsNothing);
-      expect(find.textContaining('90.0000'), findsNothing);
+      expect(find.textContaining('4767.0'), findsNothing);
+      expect(find.textContaining('0.0366'), findsNothing);
+      expect(find.textContaining('2.10000000'), findsNothing);
     });
 
     test('raises the missing field instead of reconstructing it', () {
-      final broken = Map<String, dynamic>.from(example)..remove('shares');
+      final broken = Map<String, dynamic>.from(example)..remove('holding');
       expect(
         () => component.read(ViewPayload.fromJson(broken)),
         throwsA(
           isA<PayloadContractException>().having(
             (error) => error.failure.path,
             'path',
-            'shares.label',
+            'holding.label',
           ),
         ),
       );

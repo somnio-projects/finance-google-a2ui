@@ -49,7 +49,7 @@ AttributionWaterfallData readWaterfall(ViewPayload payload) {
           valueDisplay: bucket.text('delta.display'),
           cumulativeDisplay: bucket.text('cumulative.display'),
           detail: bucket.text('detail'),
-          selectedLabel: bucket.text('selected_label'),
+          deltaLabel: bucket.text('delta_label'),
         ),
       AttributionStep(
         step: WaterfallStep(

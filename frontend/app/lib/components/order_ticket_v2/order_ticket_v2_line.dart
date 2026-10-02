@@ -121,6 +121,8 @@ class OrderTicketV2LineTile extends StatelessWidget {
                                 fraction: line.weight,
                                 display: line.weightDisplay,
                                 isChanged: weightChanged,
+                                stops: line.stops,
+                                onLegsChanged: onLegsChanged,
                                 ringColor: isStepped
                                     ? palette.changedSurface
                                     : palette.legSurface,

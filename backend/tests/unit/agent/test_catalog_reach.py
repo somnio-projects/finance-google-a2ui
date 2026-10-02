@@ -11,7 +11,7 @@ Two of the day's symptoms were that, and neither looked like it:
 
 - *"Show me my biggest winners and losers"* answered in prose, because
   `holdings.positions.v1` is unreachable;
-- *"Compare keeping NVDA against trimming it by a third"* drew a tax-lot
+- *"Compare keeping BTC against trimming it by a third"* drew a tax-lot
   table, because `scenario.comparison.v1` is unreachable and the model
   reached for the nearest thing it could actually get.
 
@@ -95,7 +95,7 @@ def test_a_declared_gap_is_not_also_reachable() -> None:
 
 
 def test_the_agent_reaches_the_views_the_demo_depends_on() -> None:
-    """The five the scripted flows and the live battery actually produce.
+    """The six the scripted flows and the live battery actually produce.
 
     Named literally rather than counted: a count goes green when a view is
     added and another is lost, which is the failure mode of every "N of M"
@@ -109,5 +109,9 @@ def test_the_agent_reaches_the_views_the_demo_depends_on() -> None:
         "attribution.window.v1",
         "holdings.allocation.v1",
         "order.ticket.v2",
+        # Closed by GGU-143. It was a DECLARED_GAP for four specs' worth of
+        # work — registered, served, bound and measured, with no turn that
+        # drew it — and `compare_lot_methods` is what moved it across.
+        "scenario.comparison.v1",
         "taxlots.table.v1",
     }

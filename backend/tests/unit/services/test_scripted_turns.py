@@ -30,13 +30,14 @@ SURFACE_OF: Mapping[str, str | None] = {
     "compute_attribution": "attribution.window.v1",
     "get_holdings_summary": "holdings.allocation.v1",
     "simulate_sale": "taxlots.table.v1",
+    "compare_lot_methods": "scenario.comparison.v1",
     "draft_order": "order.ticket.v2",
     "driver_detail": "attribution.driver.v1",
 }
 
 #: The design's Flow A sentence, with the seed's own figures (spec 0025 §2):
 #: the one literal oracle, hand-checked against the artboard's +$3,240 (0.68%).
-FLOW_A_OPENING = "Your portfolio is up +$3,240.18 (0.68%) today. Here's what drove it:"
+FLOW_A_OPENING = "Your portfolio is up +$2,201.05 (0.46%) today. Here's what drove it:"
 
 
 async def run(
@@ -114,9 +115,9 @@ async def test_flow_b_costs_the_designs_sale_and_draws_the_lots(
 
     (intent,) = result.render_intents
     assert intent.view == "taxlots.table.v1"
-    assert intent.options["symbol"] == "NVDA"
+    assert intent.options["symbol"] == "BTC"
     assert intent.options["lot_method"] == "FIFO"
-    assert "NVDA sold under FIFO raises $20,000.00" in result.message
+    assert "BTC sold under FIFO raises $20,000.00" in result.message
 
 
 async def test_flow_c_drafts_the_designs_basket_and_draws_the_ticket(
@@ -126,8 +127,8 @@ async def test_flow_c_drafts_the_designs_basket_and_draws_the_ticket(
 
     (intent,) = result.render_intents
     assert intent.view == "order.ticket.v2"
-    assert intent.options == {"legs": "NVDA:3,AVGO:2,AMD:14", "side": "buy"}
-    assert result.message.startswith("Here is a draft across the semiconductor basket:")
+    assert intent.options == {"legs": "BTC:0.06,ETH:1.0,SOL:16", "side": "buy"}
+    assert result.message.startswith("Here is a draft across the majors basket:")
     assert "nothing is placed" in result.message
 
 

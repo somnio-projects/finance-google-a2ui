@@ -25,11 +25,11 @@ void main() {
     test('binds the subject once, outside the columns', () {
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.title, 'Same sale, different lot method');
-      expect(data.subject.label, 'NVIDIA Corp');
-      expect(data.subject.symbol, 'NVDA');
-      expect(data.subject.quantityDisplay, '30');
-      expect(data.subject.priceDisplay, r'$1,204.66');
-      expect(data.subject.proceedsDisplay, r'$36,139.80');
+      expect(data.subject.label, 'Bitcoin');
+      expect(data.subject.symbol, 'BTC');
+      expect(data.subject.quantityDisplay, '0.25');
+      expect(data.subject.priceDisplay, r'$64,250.00');
+      expect(data.subject.proceedsDisplay, r'$16,062.50');
     });
 
     test('keeps the columns in the order the backend sent them', () {
@@ -44,39 +44,22 @@ void main() {
       expect(data.columns.first.label, 'FIFO — oldest lots first');
     });
 
-    test('transposes the columns into four metric rows', () {
-      final data = component.read(ViewPayload.fromJson(example));
-      expect(data.metrics.map((row) => row.label), <String>[
-        'Cost basis',
-        'Realized P/L',
-        'Short-term',
-        'Long-term',
-      ]);
-      // Every cell is the backend's own display string, in column order.
-      expect(data.metrics[0].valueDisplays, <String>[
-        r'$22,800.00',
-        r'$28,800.00',
-        r'$28,800.00',
-      ]);
-      expect(data.metrics[1].valueDisplays, <String>[
-        r'+$13,339.80',
-        r'+$7,339.80',
-        r'+$7,339.80',
-      ]);
-      expect(data.metrics[2].valueDisplays.first, r'$0.00');
-      expect(data.metrics[3].valueDisplays.first, r'+$13,339.80');
-    });
-
     // `spread` has a suite of its own: `scenario_comparison_spread_test.dart`.
 
     test('keeps every note the backend attached', () {
-      // N-9: a compliance note is never dropped. One of these is the
-      // sentence that says no method is recommended.
+      // N-9: a compliance note is never dropped. One states the rates the
+      // card costed with and one says the recommendation is arithmetic under
+      // them rather than advice — together they are what make the ranking
+      // checkable (backend spec 0051 OD-4).
       final data = component.read(ViewPayload.fromJson(example));
       expect(data.notes, hasLength(2));
-      expect(data.notes.first.label, 'Before tax');
+      expect(data.notes.first.label, 'Illustrative rates');
       expect(data.notes.last.label, 'Not advice');
-      expect(data.notes.last.text, contains('No method is recommended'));
+      expect(data.notes.first.text, contains('estimated at'));
+      expect(
+        data.notes.last.text,
+        contains('arithmetic under the rates above, not advice'),
+      );
     });
 
     test('raises the missing field instead of reconstructing it', () {

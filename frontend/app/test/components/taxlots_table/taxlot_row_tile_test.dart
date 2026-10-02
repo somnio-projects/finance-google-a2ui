@@ -9,14 +9,15 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/pump_app.dart';
 import 'taxlots_table_harness.dart';
 
-/// The row's pixels, asserted from the widget tree rather than a raster.
+/// The row's pixels, asserted from the widget tree rather than a raster
+/// (AC-1, AC-3).
 ///
 /// ADR-L D-15 measured that glyph edges carry nearly all cross-platform
-/// raster noise, and a tax-lot row is mostly glyphs — a golden of one would
-/// sit close to its own tolerance and prove less than these do. Reading the
-/// decoration names the defect ("the rail is the wrong colour") where a
-/// golden would say only that something moved. Spec `frontend/0003` §7
-/// records the trade.
+/// raster noise, and a tax-lot row is mostly glyphs. Reading the decoration
+/// names the defect — "the rail is the wrong colour" — where a golden says
+/// only that something moved. The tick and the tint are the same kind of
+/// claim about the same row and live in `taxlot_check_box_test.dart`, which
+/// is where AC-3 is proved.
 void main() {
   group(TaxLotRowTile, () {
     Future<void> pumpRow(
@@ -28,7 +29,7 @@ void main() {
       Scaffold(
         body: Center(
           child: SizedBox(
-            width: 533.37,
+            width: 600,
             child: TaxLotRowTile(
               lot: lot(
                 term: term,
@@ -42,18 +43,14 @@ void main() {
       brightness: brightness,
     );
 
-    BoxDecoration rowBox(WidgetTester tester) =>
-        tester
-                .widget<Container>(
-                  find
-                      .descendant(
-                        of: find.byType(TaxLotRowTile),
-                        matching: find.byType(Container),
-                      )
-                      .first,
-                )
-                .decoration!
-            as BoxDecoration;
+    Container rowBox(WidgetTester tester) => tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(TaxLotRowTile),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
 
     Color railColor(WidgetTester tester) => tester
         .widget<ColoredBox>(
@@ -66,35 +63,46 @@ void main() {
         )
         .color;
 
-    testWidgets('is 48 px tall with a 10 px radius, as the design draws it', (
+    testWidgets('is 41 px tall and carries no hairline of its own', (
       tester,
     ) async {
+      // The kit's row is a band on the card, not the bordered box the
+      // earlier artboard drew.
       await pumpRow(tester, TaxLotTerm.long);
       expect(
         tester.getSize(find.byType(TaxLotRowTile)).height,
         TaxLotMetrics.rowHeight,
       );
-      expect(rowBox(tester).borderRadius, TaxLotMetrics.rowBorderRadius);
-      expect(rowBox(tester).color, TaxLotTokens.light.surface);
-      expect(rowBox(tester).border!.top.color, TaxLotTokens.light.border);
+      expect(rowBox(tester).decoration, isNull);
+      expect(rowBox(tester).color, isNull);
     });
 
     testWidgets('rails a long-term lot teal', (tester) async {
       await pumpRow(tester, TaxLotTerm.long);
-      expect(railColor(tester), TaxLotTokens.light.longTerm.accent);
+      expect(railColor(tester), TaxLotTokens.longRail);
+      expect(
+        tester
+            .getSize(
+              find
+                  .descendant(
+                    of: find.byType(TaxLotRowTile),
+                    matching: find.byType(ColoredBox),
+                  )
+                  .first,
+            )
+            .width,
+        TaxLotMetrics.railWidth,
+      );
     });
 
     testWidgets('rails a short-term lot amber', (tester) async {
       await pumpRow(tester, TaxLotTerm.short);
-      expect(railColor(tester), TaxLotTokens.light.shortTerm.accent);
+      expect(railColor(tester), TaxLotTokens.shortRail);
     });
 
-    testWidgets('rails a long-term lot teal in the dark theme too', (
-      tester,
-    ) async {
+    testWidgets('keeps the rail colour in the dark theme', (tester) async {
       await pumpRow(tester, TaxLotTerm.long, brightness: Brightness.dark);
-      expect(railColor(tester), TaxLotTokens.dark.longTerm.accent);
-      expect(rowBox(tester).color, TaxLotTokens.dark.surface);
+      expect(railColor(tester), TaxLotTokens.longRail);
     });
 
     testWidgets('colours a rising lot with the gain token', (tester) async {
@@ -115,19 +123,21 @@ void main() {
       expect(cell.style.color, TaxLotTokens.light.loss);
     });
 
-    testWidgets('draws an empty tick box on every row', (tester) async {
+    testWidgets('prints the holding period the backend worded', (tester) async {
+      // The goldens here are cropped to the left chrome and are deliberately
+      // text-free (`taxlot_golden_frame.dart`), so **nothing else in this
+      // suite can see this string reach the screen**. The duration is a
+      // server string — the client has no clock to derive one with (N-13) —
+      // and it sits beside the pill, as the artboard draws it.
       await pumpRow(tester, TaxLotTerm.long);
-      expect(find.byType(TaxLotCheckBox), findsOneWidget);
-      // The box is 16 px inside the design's fixed 26 px column, so the
-      // size is read off the box and not off the cell that holds it.
+
+      expect(find.text('5.5 yr'), findsOneWidget);
       expect(
-        tester.getSize(
-          find.descendant(
-            of: find.byType(TaxLotCheckBox),
-            matching: find.byType(Container),
-          ),
+        find.descendant(
+          of: find.byType(TaxLotRowTile),
+          matching: find.text('Long-term'),
         ),
-        const Size.square(TaxLotMetrics.checkBoxSize),
+        findsOneWidget,
       );
     });
   });

@@ -24,7 +24,7 @@ def test_to_gemini_schema_drops_the_keys_the_api_refuses() -> None:
                 "symbol": {
                     "type": "string",
                     "maxLength": 10,
-                    "examples": ["NVDA"],
+                    "examples": ["BTC"],
                     "readOnly": True,
                 }
             },
@@ -48,7 +48,7 @@ def test_to_gemini_schema_keeps_every_bound_it_is_given() -> None:
         "maxLength": 10,
         "pattern": "^[A-Z]{2,10}$",
         "description": "Ticker.",
-        "default": "NVDA",
+        "default": "BTC",
         "format": "date-time",
         "nullable": True,
     }
@@ -63,7 +63,7 @@ def test_to_gemini_schema_walks_into_a_capped_array() -> None:
             "type": "array",
             "maxItems": 20,
             "uniqueItems": True,
-            "items": {"type": "string", "maxLength": 10, "examples": ["NVDA"]},
+            "items": {"type": "string", "maxLength": 10, "examples": ["BTC"]},
         }
     )
 

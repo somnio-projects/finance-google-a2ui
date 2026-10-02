@@ -8,7 +8,7 @@ void main() {
   group(HomeQuestionsRail, () {
     const questions = <String>[
       'What moved my portfolio today?',
-      'Tax impact of selling NVDA?',
+      'Tax impact of selling BTC?',
       r'Build a $10k order in tech',
     ];
 
@@ -24,12 +24,12 @@ void main() {
         await tester.pump();
         expect(find.byKey(HomeQuestionsRail.arrowKey), findsOneWidget);
         final before = tester
-            .getTopLeft(find.text('💬 Tax impact of selling NVDA?'))
+            .getTopLeft(find.text('💬 Tax impact of selling BTC?'))
             .dx;
         await tester.tap(find.byKey(HomeQuestionsRail.arrowKey));
         await tester.pumpAndSettle();
         final after = tester
-            .getTopLeft(find.text('💬 Tax impact of selling NVDA?'))
+            .getTopLeft(find.text('💬 Tax impact of selling BTC?'))
             .dx;
         expect(after, lessThan(before));
         // Keep advancing; at the end nothing is off-screen and the arrow

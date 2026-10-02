@@ -1,6 +1,6 @@
 # 05 — An agent turn: question to streamed surfaces
 
-How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md). Dashed = planned.
+How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md). Dashed = planned. The v1.0 route (`/a2ui/v1/a2a`) runs this same turn and differs only in how a validated intent becomes bytes — diagram [14](14-a2ui-v1-wire.md).
 
 The turn is everything between `run_turn_events(...)` and `TurnCompleted`. It
 is **session-free**: it takes the history as an argument, bounds itself to

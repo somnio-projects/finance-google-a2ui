@@ -11,9 +11,9 @@ from typing import Final, Literal
 
 from pydantic import Field
 
-from app.core.signed_display import signed_money_display, signed_percentage_display
-from app.domain.day_change import change_ratio, trend_of
 from app.domain.portfolio import Portfolio
+from app.presentation.allocation_gain import gain
+from app.presentation.allocation_groups import GroupChoice, choices
 from app.presentation.allocation_options import HoldingsAllocationOptions
 from app.presentation.allocation_rows import (
     CENTER_UNITS,
@@ -24,7 +24,7 @@ from app.presentation.allocation_rows import (
     GroupBy,
     rows_for,
 )
-from app.presentation.displays import MoneyDisplay, PercentageDisplay, money
+from app.presentation.displays import money
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
 from app.presentation.fragments import ProjectionDto, Total
 from app.presentation.registry import register
@@ -38,7 +38,6 @@ SUMMARY: Final[str] = (
     "sector — with weight and day change per slice, the count in the donut's "
     "centre, and the all-time gain under the total."
 )
-ALL_TIME: Final[str] = "all-time"
 
 
 class HoldingsAllocationPayload(ProjectionDto):
@@ -49,6 +48,14 @@ class HoldingsAllocationPayload(ProjectionDto):
     )
     title: str = Field(max_length=120, description="Title the widget shows.")
     group_by: GroupBy = Field(description="Which grouping the slices are.")
+    groups: tuple[GroupChoice, ...] = Field(
+        description=(
+            "Every grouping the `group_by` option declares, in the order the "
+            "toggle shows them, with the one this render used marked. The "
+            "client draws a segment per entry and sends `value` back as "
+            "`group_by`; it never writes the words itself (GGU-145)."
+        )
+    )
     total: Total = Field(description="Total market value of the portfolio.")
     total_gain: Change | None = Field(
         default=None, description="All-time gain; absent when `headline` is off."
@@ -56,27 +63,6 @@ class HoldingsAllocationPayload(ProjectionDto):
     center: Center = Field(description="What the donut prints in its hole.")
     categories: tuple[AllocationSlice, ...] = Field(
         description="One slice per group, in the design's order, `Other` last."
-    )
-
-
-def _gain(portfolio: Portfolio, options: HoldingsAllocationOptions) -> Change:
-    """The all-time gain the design prints under the total."""
-    cost = portfolio.total_cost_basis()
-    delta = portfolio.total_unrealized_pl()
-    ratio = change_ratio(portfolio.total_market_value(), cost)
-    return Change(
-        amount=MoneyDisplay(
-            amount=delta,
-            display=signed_money_display(delta, precision=0, locale=options.locale),
-        ),
-        percent=PercentageDisplay(
-            value=ratio,
-            display=signed_percentage_display(
-                ratio, precision=1, locale=options.locale
-            ),
-        ),
-        trend=trend_of(delta),
-        period=ALL_TIME,
     )
 
 
@@ -98,11 +84,12 @@ def render(
     return HoldingsAllocationPayload(
         title=TITLES[options.group_by],
         group_by=options.group_by,
+        groups=choices(options.group_by),
         total=Total(
             label="Total market value",
             amount=money(total, precision=options.precision, locale=options.locale),
         ),
-        total_gain=_gain(portfolio, options) if options.headline else None,
+        total_gain=gain(portfolio, options) if options.headline else None,
         # The hole counts the groups, not the slices ``top_n`` left to draw.
         center=Center(
             count=str(len(GROUPERS[options.group_by](holdings))),
@@ -121,6 +108,7 @@ def surface(payload: HoldingsAllocationPayload) -> Surface:
         title=payload.title,
         props={
             "groupBy": payload.group_by,
+            "groups": [choice.model_dump(mode="json") for choice in payload.groups],
             "center": payload.center.model_dump(mode="json"),
             "total": payload.total.model_dump(mode="json"),
             "totalGain": None if gain is None else gain.model_dump(mode="json"),
@@ -147,4 +135,4 @@ PROJECTION: Final = register(
     )
 )
 
-__all__ = ["ALL_TIME", "PROJECTION", "VIEW_ID", "render", "surface"]
+__all__ = ["PROJECTION", "VIEW_ID", "render", "surface"]

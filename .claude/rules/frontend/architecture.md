@@ -32,12 +32,23 @@ app/lib/components/   bind a payload to widgets. Import ViewPayload (a type);
                       never read a repository instance; never a feature.
 packages/finance_views_repository/   composes the api client. Pure Dart.
 packages/finance_api_client/         the ONLY HTTP speaker. Pure Dart.
+packages/finance_auth/               session, IdentityProvider seam, AccessGateway,
+                                     AuthRepository. Never a widget, never Firebase —
+                                     the Firebase implementation lives in app/lib/auth/.
+packages/finance_charts/             chart GEOMETRY only: scales, nice ticks,
+                                     (steps, size) → rects. Never dart:ui — the painter
+                                     that needs it is app/lib/charts/ (ADR-L D-13).
 packages/finance_core/               Result, failures, problem details. Depends on nothing.
 ```
 
-Dependencies point one way, and never skip a layer. The first three packages
-are **pure Dart**, so importing Flutter into them is a compile error rather
-than a review note — that is the point of the workspace.
+Dependencies point one way, and never skip a layer. **All five** packages are
+**pure Dart**, so importing Flutter into them is a compile error rather than a
+review note — that is the point of the workspace.
+
+This block listed **three** of the five until GGU-129, which made it a hole in
+the rule rather than a stale count: the table that governs what may import what
+was silent on `finance_charts` — the package the root `CLAUDE.md` calls out as
+load-bearing for the numbers invariant — and on `finance_auth`.
 
 The **page/view split** is the shape `.claude/rules/flutter/architecture.md`
 prescribes and its own example uses: a page builds the bloc, so it needs the
@@ -45,7 +56,7 @@ repository the bloc takes. A widget that is not a page has no business
 holding one — `layering_test.dart::only a page resolves a repository from
 the widget tree` allows `context.read<ViewsRepository>()` **only** in a file
 named `*_page.dart`, and it is drawn in
-[diagram 11](../../../docs/diagrams/11-frontend-layers.md).
+[diagram 12](../../../docs/diagrams/12-frontend-layers.md).
 
 Two test files hold all of this, split to stay inside the budget:
 `app/test/architecture/layering_test.dart` (imports, the composition root,
@@ -137,6 +148,19 @@ contract violation, not a cosmetic one.
   `Result`. Do not add a second exception that crosses a boundary.
 - A failure shown to a user is the backend's own safe `detail`. Never a library
   message, never a stack trace, never an exception's `toString()`.
+- **One narrow exception, and it branches on `code`.** The Assistant's failure
+  card (`turn_failure_notice.dart`) shows its own sentence for exactly one
+  code, `dependency-unavailable`, because the detail behind it (`model
+  provider unavailable`) is written for an operator and was reaching the
+  screen in red (GGU-111, spec frontend/0025 OD-4). Every other code shows the
+  failure's own `message` — for `transport-unavailable` that is already this
+  client's copy, written where the failure happened. Choosing copy by `code`
+  is the contract's own rule (`contract-binding.md` §4); choosing it by
+  `detail` would not be, and inventing a sentence for a code nobody has met is
+  neither.
+- **A failure state has a way out.** `TabFailure` and the Assistant's card each
+  carry a *Try again* that re-issues the request through the same bloc that
+  failed — never a second path (GGU-110/111, spec frontend/0025 OD-2).
 
 ## 5. The budget and the documentation
 

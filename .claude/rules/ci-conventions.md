@@ -29,7 +29,17 @@ clean checkout.
 
 ## 3. Cost rules
 
-- `concurrency: cancel-in-progress` on every workflow, keyed by ref.
+- `concurrency: cancel-in-progress` on every workflow, keyed by ref — **and by
+  `github.workflow` too on any workflow that declares `workflow_call:`**. A
+  reusable workflow evaluates `concurrency` in the **caller's** context, so a
+  key of `${{ github.ref }}` alone puts every caller on one branch into one
+  group and `cancel-in-progress` makes the second caller cancel the first
+  one's gate. This rule said "keyed by ref" until GGU-130, and following it
+  literally is what broke a delivery: `repo-ci` is called by both `backend-cd`
+  and `frontend-cd`, the two were dispatched 23 s apart on `develop`, and the
+  frontend's call cancelled the backend's `repo` job — leaving `publish` and
+  `deploy` skipped, the client shipped and the API not. `repo.gate-pairs`
+  rule 4 now fails a callable workflow whose key is not per-caller.
 - `paths:` filters so a docs-only change does not start a build.
 - `timeout-minutes` on every job (no runaway runners).
 - Expensive jobs (`image`, deploy) declare `needs:` on the cheap ones — a branch that fails lint never pays for a build.
@@ -41,11 +51,22 @@ clean checkout.
 ## 4. Quality gates the project keeps
 
 **Backend.** `make gate` == pre-push == CI, in this order: `lint` (ruff check +
-format), `typecheck` (basedpyright strict), `budget` (150 lines), `quality`
-(xenon complexity · vulture dead code · interrogate 100 % docstrings · deptry
-dependency hygiene · pylint duplication and design limits · codespell), `test`
-(pytest, 100 % branch coverage), `audit` (pip-audit). Thresholds live in
-`backend/pyproject.toml`; they go **up**, never down, and never in a feature PR.
+format), `typecheck` (basedpyright strict), `budget` (150 lines),
+`catalog-check`, `openapi-check`, `quality` (xenon complexity · vulture dead
+code · interrogate 100 % docstrings · deptry dependency hygiene · pylint
+duplication and design limits · codespell), `test` (pytest, 100 % branch
+coverage), `audit` (pip-audit). Thresholds live in `backend/pyproject.toml`;
+they go **up**, never down, and never in a feature PR.
+
+**That list omitted `openapi-check` entirely until GGU-129**, which is worth
+more than a correction, because of *where* it sat: this section also carries the
+ruling that *"a new artefact is an entry in
+`presentation/catalog_artifacts.ARTIFACTS`, **not a new gate step**"* — and
+`openapi-check` is exactly a second regenerate-and-diff artefact check that
+arrived as a new gate step, in the paragraph that says not to. Whether that was
+the right call is a separate question; the section describing the gate must at
+least name it. `repo.gate-pairs` cannot catch this: it compares command strings
+against workflows, and an enumeration in prose is neither.
 
 `catalog-check` sits between `budget` and `quality`: it re-renders **every**
 generated catalog artefact — `docs/catalog/CONTRACT.md` (GGU-41, spec
@@ -64,7 +85,7 @@ that shape rather than relying on a reviewer remembering to look.
 was the older of two Flutter apps. It had its own gate here (`dart.*`,
 `client.*`, `flutter.*`), its own two grep gates and its own workflow
 (`client-ci.yaml`). All of it was removed with the directory (spec
-`repo/0002`); `frontend/` is the only Flutter app this repository ships.
+`repo/0002`); `frontend/` was then the only Flutter app; since 2026-10-01 `frontend_v1/` (ADR-M D-9) is the second, with its own part and workflow.
 
 What survives that deletion is §5's third question, because it was found in
 that app: `client_flutter/Dockerfile` carried `ARG FLUTTER_VERSION=3.47.5`
@@ -111,13 +132,15 @@ repository-wide one is not, on purpose:
 
 | workflow | runs on | scope | exists? |
 |---|---|---|---|
-| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, manual-run check | yes |
+| `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, spec numbering, manual-run check | yes |
 | `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
+| `frontend-v1-ci` | pull requests | `frontend_v1/**`, `docs/a2ui/**`, `docs/catalog/**`, its own file | yes — the A2UI v1.0 client (ADR-M D-9), added 2026-10-01 |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |
 | ~~`client-ci`~~ | — | `client_flutter/**` | **gone** — the app it gated was retired 2026-09-22 (spec `repo/0002`) |
 | `backend-cd` | **the button only** | — | yes |
 | `frontend-cd` | **the button only** | — | yes |
+| `frontend-v1-cd` | **the button only** | — | yes — the v1.0 client to Hosting site `finance-a2ui-v1`, the same shape as `frontend-cd` and asserted by the same suite |
 
 **`client-ci`'s row went yes → no → yes → gone, and the history is the
 lesson.** The table once listed it as though it were one of the scoped
@@ -165,7 +188,7 @@ the button appear.
 
 ## 5. When you change one, change its pair
 
-`.claude/ship-gate.json` is the Definition of Done. It has **four** parts,
+`.claude/ship-gate.json` is the Definition of Done. It has **five** parts,
 each with a runner and a workflow that must stay identical to it.
 
 **The count in that sentence has been wrong twice, in both directions, which
@@ -183,6 +206,7 @@ the row below, and that `_note`, in the same commit.**
 | `infra.*` | the `infra.*` commands from the repository root — there is no root Makefile | `infra-ci.yaml` (`delivery-scripts`) | pre-commit |
 | `repo.*` | the `repo.*` commands from the repository root | `repo-ci.yaml` | pre-commit |
 | `frontend.*` | `cd frontend && make gate` | `frontend-ci.yaml` | pre-commit (the cheap steps) |
+| `frontend_v1.*` | `cd frontend_v1 && make gate` | `frontend-v1-ci.yaml` | — (ADR-M D-9: the A2UI v1.0 client, a second deployable with its own part) |
 
 **This table is now checked by a machine.** `repo.gate-pairs`
 (`scripts/check_gate_pairs.sh`) parses `ship-gate.json` and greps each `cmd`,
@@ -323,6 +347,117 @@ PR body and compares the `<version>+<sha>` on `/health` with the branch head;
 what the gate runs is its **suite**, because the check needs a PR body and the
 gate has none. A check that has never been shown to reject is the same defect
 one level up, so the suite asserts the four rejections and only one pass.
+
+**The sixth instance is the one §5 was always going to reach: a property with
+no command at all (GGU-105).** `specs/README.md` says *"Numbers are per area,
+zero-padded, never reused"* and *"One row per file … so a missing spec and a
+duplicated one are both visible at a glance."* Both halves were false on
+`develop`: two files were numbered `frontend/0002` and **nine** spec files had
+no index row, including both halves of that collision. There was nothing to
+compare, because only one half existed — the sentence was doing a check's job.
+
+`repo.spec-numbers` (`scripts/check_spec_numbers.sh`) is the other half:
+filename shape, uniqueness per area (naming **both** files), and one index row
+per spec in both directions. `repo.spec-numbers-test` is its suite, the
+`frontend.toolchain` / `frontend.toolchain-test` pair applied here, and it
+plants a collision, an unpadded number, an unindexed spec, an orphan row, a
+duplicated row, an emptied area and a corpus too small to believe.
+
+Two things it deliberately does **not** claim, because §5's second question
+has to be answered *before* the name is chosen rather than after:
+
+- **"Never reused" is not machine-checkable here.** In git history a
+  renumbering is a delete plus an add, indistinguishable from a reuse, and the
+  check would have failed on GGU-59's own legitimate rename. It is protected by
+  the index rule instead — a superseded spec keeps its file and its row.
+- **Ordering is not asserted, and the claim was removed rather than enforced.**
+  The index said it was "ordered by area then number" and was not. A claim this
+  repository cannot keep is the whole subject of the ticket, so the sentence
+  went; reordering seventy rows is not what makes a collision fail.
+
+The frontend half of GGU-105 needed no gate entry at all, which is also §5
+working: *"the Color-in-lib rule"* proves one stack, so it is a test
+(`app/test/architecture/color_rules_test.dart`) inside `frontend.test`, beside
+the four architecture tests that already fail on a mechanism. A check whose
+subject is one directory does not belong in `repo-ci`, in either direction.
+
+**The seventh instance is the third question in a second language, and the
+lesson is that a rule written from one stack quietly exempts the others
+(GGU-125).** Question 3 above was answered for Flutter and the answer was made
+machine-checkable — `repo.gate-pairs` ends by printing that `frontend/.fvmrc` is
+the only home of the Flutter pin. Nothing was watching Python, and it carried
+the same defect from the day the backend was written: `backend-ci.yaml` and
+`repo-ci.yaml` each set `PYTHON_VERSION` in an `env:` block, handed to
+`astral-sh/setup-uv`, while `backend/.python-version`, `backend/pyproject.toml`
+(`requires-python` **and** `pythonVersion`) and `backend/Dockerfile` (two `FROM`
+lines) declared the same fact. **Six declarations, one of them readable only by
+GitHub Actions.** It was found by hand during the 3.14 upgrade (#130): five were
+bumped, the sixth still said `3.12`, and CI failed pointing somewhere else.
+
+Two things make this instance worth more than "do it for Python too":
+
+- **The CI-only pin was not even winning.** Measured on uv 0.11.19, a
+  `.python-version` of 3.14 beats `UV_PYTHON=3.12`, so the workflow pin sat
+  there for months being *inert while reading as authoritative* — and a uv bump
+  or a stray `--python` flag turns it back on. A pin whose effect depends on the
+  tool's version is a claim, not a pin. The check therefore fails on the
+  **line**, not on the value: `PYTHON_VERSION: "3.14"`, the correct value, is
+  red, because the defect is the second home.
+- **The drift is removed, not policed.** `uv` reads `backend/.python-version`
+  from the project directory and installs what it names, so no workflow needs to
+  say anything; `python-version-file:` stays allowed, because a step that
+  *reads* the pin is the fix. Where a declaration cannot be deleted —
+  `requires-python`, `pythonVersion`, `FROM python:X.Y` — it is **compared**,
+  and the failure prints every offending file with both values.
+
+`py_pin_dirs` is a list, exactly as `pin_apps` is, for the same reason: one pin
+per *solution*. Spec [`repo/0003`](../../specs/repo/0003-the-interpreter-pin-has-one-home.md)
+records the nine mutations that show each rule rejecting, including the
+anti-vacuity ones — a Dockerfile that stops naming an interpreter fails rather
+than passing by finding nothing.
+
+**The eighth instance is §5's second question asked of a `paths:` filter, and
+it cost a red `develop` and a failed deploy (GGU-140).** `frontend-ci` was
+scoped to `frontend/**`, `docker-compose.yml` and its own file.
+`docs/catalog/view-catalog.snapshot.json` was not in that list — it is
+generated from `backend/` and `backend-ci` already claimed it, with a comment
+saying why.
+
+But the snapshot is **bound by the client**. Every component test reads its own
+example out of it through `catalog_snapshot.dart` rather than copying one —
+which is `frontend/testing.md` §5, and the right design. So it is a
+**cross-stack artefact**, and a filter that gives it to one stack is a filter
+that hides it from the other.
+
+Measured: GGU-136 renamed a `notes[]` label in the projection. `backend-ci`
+ran on that PR and passed. `frontend-ci` **never started**, because the PR
+touched no path it watches. `develop` then carried a frontend suite that
+asserted the old label, and nothing said so until `frontend-cd` ran the gate
+as a job and the **deploy** failed:
+
+| | on the PR that changed it | on `develop` afterwards |
+|---|---|---|
+| `backend-ci` | green | — |
+| `frontend-ci` | **did not run** | **did not run** |
+| `frontend-cd` | — | **red**, at the deploy |
+
+The fix is one line — `docs/catalog/**` in `frontend-ci`'s `paths:` — and the
+rule it comes from is §5's second question applied to the filter rather than
+to the command: *does this workflow's scope cover what its name claims?*
+`frontend-ci` claims to prove the frontend, and it could not see a file the
+frontend binds.
+
+**A stack workflow's `paths:` must list every file its gate reads, not every
+file its stack owns.** Generated artefacts are where the two differ, because
+ownership and consumption sit on opposite sides of them.
+
+So question 3 gets a clause it did not have: **ask it of every toolchain the
+repository runs, not only the one that last cost a day.** `infra/` is the open
+case at the time of writing — `infra-ci.yaml` pins `terraform_version: "1.9.8"`
+in a workflow input, `infra/versions.tf` declares `required_version = ">= 1.9"`,
+and no tracked file pins it for a laptop at all. It is recorded in
+`repo/0003` §6 rather than fixed there, because a rule that lists its own
+unfinished cases is what this section is for.
 
 A PR that changes one without its pair is incomplete. A new runner goes in
 this table rather than in a comment — and the count in the sentence above it

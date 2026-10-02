@@ -92,12 +92,35 @@ void main() {
       // 0020 OD-7: reduced motion is inherited by composing the primitives,
       // which each read `MediaQuery.disableAnimations`. A new skeleton with
       // its own controller would be an animation nobody can turn off.
+      //
+      // **The walk covers the components too, and that is the fix for a hole
+      // this rule had.** It used to scan `app/lib/skeleton` alone, so the
+      // four skeletons that live beside their component — the ones a design
+      // page actually draws — could compose `SkeletonPulse` *and* declare a
+      // controller of their own and pass (spec frontend/0028). A rule whose
+      // subject is "a new skeleton" has to look where new skeletons go.
+      // Matched on `AnimationController(` — the **constructor call**, not the
+      // name. A bare substring also hits the prose in a doc comment that
+      // promises the file declares none, which is how this rule first came
+      // up red against a skeleton that was obeying it.
       final offenders = <String>[];
-      sources.under('app/lib/skeleton').forEach((path, text) {
-        if (motionPrimitives.contains(path)) return;
-        if (text.contains('AnimationController')) offenders.add(path);
-      });
+      void scan(Map<String, String> files) {
+        files.forEach((path, text) {
+          if (motionPrimitives.contains(path)) return;
+          if (text.contains('AnimationController(')) offenders.add(path);
+        });
+      }
+
+      scan(sources.under('app/lib/skeleton'));
+      final componentSkeletons = <String, String>{
+        for (final entry in sources.under('app/lib/components').entries)
+          if (entry.key.endsWith('_skeleton.dart')) entry.key: entry.value,
+      };
+      scan(componentSkeletons);
       expect(offenders, isEmpty);
+      // Anti-vacuity: a walk that found nothing satisfies the assertion
+      // above for the wrong reason (`testing.md` §7).
+      expect(componentSkeletons, hasLength(5));
       expect(motionPrimitives, hasLength(3));
       final paths = sources.under('app/lib/skeleton').keys;
       for (final primitive in motionPrimitives) {

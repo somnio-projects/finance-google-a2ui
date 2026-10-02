@@ -37,20 +37,37 @@ void main() {
         // as `spread.highest` and `spread.lowest`.
         expect(_inTable(find.text(method)), findsOneWidget);
       }
-      // Rendered whole: splitting the label on its dash would be N-5.
-      expect(find.text('FIFO — oldest lots first'), findsOneWidget);
-      expect(find.text('HIFO — dearest lots first'), findsOneWidget);
+      // `columns[].caption` is the design's second line.
+      expect(_inTable(find.text('default order')), findsOneWidget);
+      // And `columns[].label` — which the redesigned frame has no slot for
+      // — is still on the screen, announced whole rather than drawn. It is
+      // never split on its dash; reading structure out of a server string
+      // would be N-5.
+      // `findsWidgets`, not `findsOneWidget`: a semantics label matches
+      // every element carrying it, and a `Semantics` node is two.
+      expect(
+        find.bySemanticsLabel(RegExp('FIFO — oldest lots first')),
+        findsWidgets,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('HIFO — dearest lots first')),
+        findsWidgets,
+      );
     });
 
-    testWidgets('names the four metrics the contract carries', (tester) async {
-      await pumpScenarioCard(tester, scenarioData());
-      for (final label in <String>[
-        'Cost basis',
-        'Realized P/L',
-        'Short-term',
-        'Long-term',
-      ]) {
-        expect(find.text(label), findsOneWidget);
+    testWidgets('names every metric the contract carries', (tester) async {
+      // Read from the payload rather than listed here: the row names are the
+      // backend's since spec 0051, so a list in this file would assert that
+      // a Dart constant equals itself.
+      final data = scenarioData();
+      await pumpScenarioCard(tester, data);
+
+      expect(data.metrics, isNotEmpty);
+      for (final row in data.metrics) {
+        // Scoped to the table: `Proceeds` is also a caption in the subject
+        // strip above it, because one sale is the card's premise and the
+        // frame repeats it per column (backend spec 0051 OD-3).
+        expect(_inTable(find.text(row.label)), findsOneWidget);
       }
     });
 
@@ -71,7 +88,12 @@ void main() {
       );
       expect(_inTable(find.text('FIFO')), findsNothing);
       expect(find.text(r'$7,740.00'), findsNothing);
-      expect(find.text('Cost basis'), findsOneWidget);
+      // The row names survive an empty comparison: they are the backend's
+      // `rows[]`, which does not depend on how many columns there are.
+      // `Cost basis` used to be one of them and is not a drawn row any more
+      // — the frame's four are Proceeds, Realized gain, Est. tax and Net
+      // after tax (backend spec 0051). The field is still served.
+      expect(find.text('Realized gain'), findsOneWidget);
     });
   });
 }
@@ -81,14 +103,29 @@ Finder _inTable(Finder matching) => find.descendant(
   matching: matching,
 );
 
+/// The hairline above the first metric row.
+///
+/// Selected by the property that makes it a row rule — a border on the top
+/// edge and nothing else — rather than by being the table's first
+/// `DecoratedBox`. The redesign put two decorated boxes *above* the rows,
+/// the recommendation pill and a winning cell's tint, and `.first` silently
+/// started reading the pill's border. A finder that keeps matching after the
+/// thing it was aimed at moved is worse than one that breaks.
 Border _rowBorder(WidgetTester tester) {
-  final decorated = tester.widget<DecoratedBox>(
-    find
-        .descendant(
+  final boxes = tester
+      .widgetList<DecoratedBox>(
+        find.descendant(
           of: find.byType(ScenarioComparisonTable),
           matching: find.byType(DecoratedBox),
-        )
-        .first,
-  );
-  return (decorated.decoration as BoxDecoration).border! as Border;
+        ),
+      )
+      .map((box) => box.decoration)
+      .whereType<BoxDecoration>()
+      .map((decoration) => decoration.border)
+      .whereType<Border>()
+      .where(
+        (border) =>
+            border.top != BorderSide.none && border.left == BorderSide.none,
+      );
+  return boxes.first;
 }

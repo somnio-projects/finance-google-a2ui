@@ -6,15 +6,13 @@ session was opened with (ADR-A D-1), and every query in
 same reason — the scoped query is the only query.
 """
 
-from datetime import datetime
-
-from sqlalchemy import DateTime, Index, String, func
+from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, UpdatedAtMixin
 
 
-class ConversationSession(TimestampMixin, Base):
+class ConversationSession(TimestampMixin, UpdatedAtMixin, Base):
     """One conversation between a subject and the agent."""
 
     __tablename__ = "sessions"
@@ -23,12 +21,6 @@ class ConversationSession(TimestampMixin, Base):
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     provider: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
 
 
 __all__ = ["ConversationSession"]

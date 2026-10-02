@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// The card's measured geometry.
 ///
-/// Every number is read from the designer's rendered DOM, not chosen: the
+/// Every number is read from the catalog mock's rendered DOM, not chosen: the
 /// card's chrome, the grid's track ratios and gap, and the padding of each
 /// kind of cell. `specs/frontend/0004` §3 carries the table.
 abstract final class ScenarioComparisonLayout {
@@ -18,7 +18,7 @@ abstract final class ScenarioComparisonLayout {
   /// value **plus** this, on the edges that carry a line.
   ///
   /// Not theoretical: the grid tracks came out 209.30 / 155.03 against the
-  /// designer's 208.48 / 154.44 until this was added, and
+  /// reference's 208.48 / 154.44 until this was added, and
   /// `scenario_comparison_table_test.dart` is what said so.
   static const double hairline = 1;
 
@@ -30,6 +30,21 @@ abstract final class ScenarioComparisonLayout {
 
   /// The gap between two grid tracks (`gap: 8px`).
   static const double columnGap = 8;
+
+  /// The width the metric grid refuses to go below, scrolling instead
+  /// (GGU-144, `ScenarioGridViewport`).
+  ///
+  /// It is the card's **content box on the design's artboard**: 571.367
+  /// outer, less two hairlines and two 18 pt paddings. Choosing that number
+  /// is a decision rather than a measurement — the design draws no narrow
+  /// artboard for this card, so *some* width had to be named — and it is the
+  /// one width the design can be said to endorse: at it, every track is
+  /// exactly what `getComputedStyle` reported.
+  ///
+  /// `scenario_comparison_viewport_test.dart` compares it against the test
+  /// harness's independently-measured `designContentWidth`, so the two
+  /// declarations of one design fact cannot drift apart.
+  static const double minGridWidth = 533.367;
 
   /// A column header's padding.
   static const EdgeInsets headerCellPadding = EdgeInsets.symmetric(
@@ -94,46 +109,3 @@ abstract final class ScenarioComparisonLayout {
 /// in a column, and `tabularFigures` buys exactly that from the bundled font
 /// without a 60 kB download. `specs/frontend/0004` OD-5 keeps it open with
 /// design.
-abstract final class ScenarioComparisonText {
-  /// An eyebrow: a subject caption, or a column's secondary line.
-  ///
-  /// The design also uppercases its eyebrows with a CSS `text-transform`.
-  /// This style does **not**, and callers must not: the strings in those
-  /// slots are server-written labels, and `toUpperCase()` on one is the
-  /// client altering a value the backend formatted (N-1, N-9).
-  static TextStyle caption(Color color) => TextStyle(
-    color: color,
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.8,
-  );
-
-  /// The `Metric` caption over the left-hand track.
-  ///
-  /// **Not [caption], though it looks like one.** Both artboards of both
-  /// design exports draw it at weight **500 with normal tracking**, while an
-  /// eyebrow is 600 at `0.08em`. Reusing [caption] here was a real fidelity
-  /// miss, caught by re-measuring against the newer design export.
-  static TextStyle metricHeading(Color color) =>
-      TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500);
-
-  /// A column header's first line: the lot-selection method.
-  static TextStyle columnTitle(Color color) =>
-      TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w500);
-
-  /// A column header's second line: the backend's descriptive label.
-  static TextStyle columnLabel(Color color) =>
-      TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w400);
-
-  /// A metric's name in the left-hand track.
-  static TextStyle metricLabel(Color color) =>
-      TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w400);
-
-  /// A figure in a scenario track.
-  static TextStyle value(Color color) => TextStyle(
-    color: color,
-    fontSize: 13.5,
-    fontWeight: FontWeight.w400,
-    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-  );
-}

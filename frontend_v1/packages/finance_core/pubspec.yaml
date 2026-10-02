@@ -1,0 +1,20 @@
+name: finance_core
+description: Framework-free kernel shared by every layer — Result, failures and the RFC 9457 problem document.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+# equatable is the only runtime dependency, and it is pure Dart. finance_core
+# must never gain one that is not: nothing it exposes may leak a framework type
+# into the layers above it.
+dependencies:
+  equatable: ^3.0.0
+
+dev_dependencies:
+  coverage: ^1.15.0
+  test: ^1.27.0
+  very_good_analysis: ^11.0.0

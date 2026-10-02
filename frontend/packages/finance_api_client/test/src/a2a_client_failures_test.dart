@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 import '../a2a_harness.dart';
@@ -90,5 +91,43 @@ void main() {
       final failure = await failureOf(harness);
       expect(failure.message, equals('the agent timed out'));
     });
+
+    test('bounds the open itself, not only a transport that says slow', () {
+      // GGU-110 AC-3: with no limit of its own a connection that never
+      // answered was a turn that never ended.
+      final client = A2aClient(
+        baseUrl: Uri.parse('http://localhost:8000'),
+        tokenProvider: anonymousToken,
+        timeout: const Duration(milliseconds: 20),
+        httpClient: MockClient.streaming(
+          (_, _) => Future<http.StreamedResponse>.delayed(
+            const Duration(seconds: 5),
+            () => eventStream(capturedTurn),
+          ),
+        ),
+      );
+      expect(
+        client
+            .startTurn(text: 'hi', messageId: 'm-1')
+            .then(
+              (r) => (r as Err<Stream<Map<String, dynamic>>>).failure.message,
+            ),
+        completion(equals('the agent timed out')),
+      );
+    });
+
+    test(
+      'a credential that cannot be read is a failure, not a throw',
+      () async {
+        final harness = A2aHarness(
+          (_) async => eventStream(capturedTurn),
+          tokenProvider: () async => throw StateError('refresh failed'),
+        );
+        final failure = await failureOf(harness);
+        expect(failure, isA<TransportFailure>());
+        expect(failure.message, equals(credentialUnavailable));
+        expect(harness.sent, isEmpty);
+      },
+    );
   });
 }

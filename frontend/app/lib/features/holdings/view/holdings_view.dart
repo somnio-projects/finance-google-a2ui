@@ -8,6 +8,7 @@ import 'package:finance_app/features/holdings/view/holdings_header_card.dart';
 import 'package:finance_app/features/holdings/view/holdings_segment.dart';
 import 'package:finance_app/features/holdings/view/position_tile.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
+import 'package:finance_app/features/shell/view/tab_failure.dart';
 import 'package:finance_app/features/shell/view/tab_search_field.dart';
 import 'package:finance_app/skeleton/skeleton_rows.dart';
 import 'package:finance_app/skeleton/skeleton_switcher.dart';
@@ -52,8 +53,13 @@ class HoldingsView extends StatelessWidget {
       builder: (context, state) {
         final positions = state.positions;
         if (state.status == HoldingsStatus.failure) {
+          // The way out is the tab's own first request, not a reload
+          // (GGU-110 AC-1). The bottom bar stays where it is: this widget is
+          // the branch's body and never the shell.
           return TabFailure(
             message: state.failure?.message ?? 'The request failed.',
+            onRetry: () =>
+                context.read<HoldingsBloc>().add(const HoldingsRequested()),
           );
         }
         // Before the first payload the tab is drawn in its own shape, as

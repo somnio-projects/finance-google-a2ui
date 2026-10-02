@@ -1,4 +1,5 @@
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
+import 'package:finance_app/components/taxlots_table/taxlots_table_data.dart';
 import 'package:finance_app/components/taxlots_table/taxlots_table_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,6 +19,14 @@ void main() {
       expect(harness.lot(), isNot(harness.lot(trend: TaxLotTrend.down)));
       expect(harness.lot(), isNot(harness.lot(termLabel: 'Other')));
       expect(harness.lot(), isNot(harness.lot(gainLossDisplay: r'-$1.00')));
+      expect(harness.lot(), isNot(harness.lot(unitsDisplay: '31')));
+      expect(harness.lot(), isNot(harness.lot(acquiredOnDisplay: '1/1/2020')));
+    });
+
+    test('a lot the sale consumes whole is a different lot', () {
+      // `fully_sold` is what the kit's ticked, tinted row draws, so a card
+      // that ignored it in equality would not rebuild when it changed.
+      expect(harness.lot(), isNot(harness.lot(fullySold: true)));
     });
   });
 
@@ -34,25 +43,21 @@ void main() {
   });
 
   group(TaxLotsTableData, () {
-    TaxLotsTableData data({String title = 'Tax lots this sale consumes'}) =>
-        TaxLotsTableData(
-          title: title,
-          subtitle: 'Sell 0.5 BTC under FIFO',
-          realizedLabel: 'Realised P/L',
-          realizedDisplay: r'+$9,505.00',
-          costBasisLabel: 'Cost basis',
-          proceedsLabel: 'Proceeds',
-          lots: <TaxLot>[harness.lot()],
-          splits: harness.splits,
-        );
-
     test('two cards with the same payload are equal', () {
-      expect(data(), data());
-      expect(data().hashCode, data().hashCode);
+      final lots = <TaxLot>[harness.lot()];
+      expect(harness.cardData(lots: lots), harness.cardData(lots: lots));
+      expect(
+        harness.cardData(lots: lots).hashCode,
+        harness.cardData(lots: lots).hashCode,
+      );
     });
 
     test('a different title is a different card', () {
-      expect(data(), isNot(data(title: 'Something else')));
+      final lots = <TaxLot>[harness.lot()];
+      expect(
+        harness.cardData(lots: lots),
+        isNot(harness.cardData(lots: lots, title: 'Something else')),
+      );
     });
   });
 }

@@ -27,7 +27,7 @@ class ActivityOptions(DisplayOptions, SearchOptions):
     """The display knobs, which kinds to show, what to search, how many."""
 
     kind: Kind = Field(
-        default="all", description="Which rows to show.", examples=["dividend"]
+        default="all", description="Which rows to show.", examples=["staking_reward"]
     )
     limit: int = Field(default=100, ge=1, le=200, description="Newest rows kept.")
 
@@ -35,8 +35,8 @@ class ActivityOptions(DisplayOptions, SearchOptions):
 def kept(row: Transaction, *, options: ActivityOptions, needle: str) -> bool:
     """Whether the chip and the search between them keep ``row``.
 
-    The two compose with **and**: `Sells` plus `voo` is the VOO sale, not
-    every sell and every VOO row. The needle is matched against the domain's
+    The two compose with **and**: `Sells` plus `btc` is the BTC sale, not
+    every sell and every BTC row. The needle is matched against the domain's
     own fields — the symbol and the memo — never against the caption this
     module is about to write (spec 0035 OD-6).
     """

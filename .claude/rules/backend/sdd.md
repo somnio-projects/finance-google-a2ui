@@ -101,6 +101,29 @@ and the identity had been sitting on `/health` the whole time.
 `repo-ci` runs this on every pull request, against the real body and the real
 head sha, so it does not depend on a reviewer remembering.
 
+**Fixing the body and re-running the job does not work, and the failure looks
+identical to the real one.** The check reads
+`${{ github.event.pull_request.body }}`, which comes from the event payload
+**frozen when the run was created**. *Re-run failed jobs* replays that payload,
+so it re-reads the body you just corrected as it was before you corrected it,
+and fails again naming the same stale identity. Measured on 2026-09-25
+(GGU-130): the body was edited and verified locally — `repo.manual-run: a
+manual run names 8dc3ea9…, the head of HEAD` — while the re-run job, two
+minutes later, still reported `found: 0f46807`.
+
+**Push an empty commit** (or any commit) to get a fresh event. And do not reach
+for `--admin` on the strength of "it passes locally": that is the reasoning
+this whole section exists to distrust. Establish *why* the check is red before
+merging, not after.
+
+**A corollary worth having: quoting a `/health` response as narrative evidence
+makes your body carry a build identity.** A PR that has no runtime change and
+therefore exits 3 stops exiting 3 the moment it quotes one — the check then
+finds identities and requires one of them to be the head. Both are then needed:
+the quoted one as context, and one from this branch as evidence. That is what
+*"paste it as well, never instead"* means when the deployed environment appears
+in your prose rather than in your testing.
+
 ### 4. Say what was NOT run — one template for both halves
 
 > GGU-93 and GGU-94 each asked for this, in the same words: *"decide and record

@@ -69,9 +69,7 @@ def render(portfolio: Portfolio, options: TaxLotsTableOptions) -> TaxLotsTablePa
         subtitle=build.subtitle(result, options, method=options.lot_method),
         proceeds=Total(label="Proceeds", amount=options.money(result.proceeds)),
         cost_basis=Total(label="Cost basis", amount=options.money(result.cost_basis)),
-        realized=Total(
-            label="Realised P/L", amount=build.signed_money(result.realized_pl, options)
-        ),
+        realized=build.realized_total(result, options),
         by_term=build.term_split(result, options),
         lots=tuple(build.lot_row(row, options) for row in result.consumed)
         if "lots" in sections

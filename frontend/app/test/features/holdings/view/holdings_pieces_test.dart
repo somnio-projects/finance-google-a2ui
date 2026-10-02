@@ -70,8 +70,8 @@ void main() {
         'group_by': 'asset_class',
         'categories': <Map<String, dynamic>>[
           <String, dynamic>{
-            'key': 'cash',
-            'label': 'Cash',
+            'key': 'defi',
+            'label': 'DeFi',
             'trend': 'flat',
             'change': <String, dynamic>{'display': '0.0%', 'value': '0'},
             'value': <String, dynamic>{
@@ -86,7 +86,7 @@ void main() {
         SizedBox(width: 390, child: HoldingsClassRows(payload: payload)),
       );
       expect(find.text('— 0.0%'), findsOneWidget);
-      expect(find.text('Cash'), findsOneWidget);
+      expect(find.text('DeFi'), findsOneWidget);
     });
   });
 
@@ -98,7 +98,7 @@ void main() {
           <String, dynamic>{
             'symbol': 'PG',
             'name': 'Procter & Gamble',
-            'detail': r'25 sh · avg $180.00',
+            'detail': r'25 PG · avg $180.00',
             'value': <String, dynamic>{
               'amount': '4200',
               'display': r'$4,200.00',

@@ -1,6 +1,6 @@
 """Spec 0031 — what a draft costs, buys and leaves, stated by the domain.
 
-The figures are literals over the seeded portfolio (spec 0025): the design's
+The figures are literals over the seeded portfolio (spec 0044): the design's
 own three legs at the seeded prices. A derivation that recomputed them from
 the code under test could not fail.
 """
@@ -12,12 +12,13 @@ from app.domain.draft_legs import LegRequest, parse_legs
 from app.domain.money import ZERO
 from app.domain.portfolio import Portfolio
 
-DESIGN_LEGS = parse_legs("NVDA:3,AVGO:2,AMD:14")
+DESIGN_LEGS = parse_legs("BTC:0.06,ETH:1.0,SOL:16")
+BEYOND_CASH = parse_legs("BTC:1.0,ETH:1.0,SOL:16")
 
 
 def test_the_portfolio_holds_the_design_cash(portfolio: Portfolio) -> None:
-    """The bound a buy is checked against is the seeded `USD · Cash & sweep`."""
-    assert cash_available(portfolio) == Decimal("38633.22")
+    """The bound a buy is checked against is the seeded `USDC` balance."""
+    assert cash_available(portfolio) == Decimal("51764.00")
 
 
 def test_price_legs_strikes_each_at_its_reference_price() -> None:
@@ -25,46 +26,48 @@ def test_price_legs_strikes_each_at_its_reference_price() -> None:
     legs = price_legs(DESIGN_LEGS)
 
     assert [(leg.symbol, leg.notional) for leg in legs] == [
-        ("NVDA", Decimal("3613.98")),
-        ("AVGO", Decimal("3480.00")),
-        ("AMD", Decimal("2333.80")),
+        ("BTC", Decimal("3855.00")),
+        ("ETH", Decimal("3480.00")),
+        ("SOL", Decimal("2438.40")),
     ]
-    assert legs[0].name == "NVIDIA Corp"
+    assert legs[0].name == "Bitcoin"
     assert sum((leg.weight for leg in legs), ZERO) == Decimal(1)
 
 
 def test_an_order_for_nothing_weighs_every_leg_at_zero() -> None:
-    """Zero shares everywhere is representable, not a division by nothing."""
-    legs = price_legs((LegRequest(symbol="NVDA", quantity=0),))
+    """Zero units everywhere is representable, not a division by nothing."""
+    legs = price_legs((LegRequest(symbol="BTC", quantity=Decimal(0)),))
 
     assert legs[0].notional == ZERO
     assert legs[0].weight == ZERO
 
 
 def test_a_buy_within_cash_spends_it_and_is_not_short(portfolio: Portfolio) -> None:
-    """AC-5 — total, shares and cash remaining, from one statement."""
+    """AC-5 — total, fees and cash remaining, from one statement."""
     impact = draft_impact(portfolio, DESIGN_LEGS, "buy")
 
-    assert impact.total == Decimal("9427.78")
-    assert impact.units == Decimal(19)
+    assert impact.total == Decimal("9773.40")
+    # `units` is gone rather than corrected: a multi-asset order has no
+    # quantity to state (GGU-122, spec 0046 OD-2).
+    assert not hasattr(impact, "units")
     assert impact.fees == ZERO
-    assert impact.cash_available == Decimal("38633.22")
-    assert impact.cash_after == Decimal("29205.44")
+    assert impact.cash_available == Decimal("51764.00")
+    assert impact.cash_after == Decimal("41990.60")
     assert impact.shortfall == ZERO
 
 
 def test_a_buy_beyond_cash_names_the_shortfall(portfolio: Portfolio) -> None:
     """AC-6 — the blocked state is a figure, not a comparison the client makes."""
-    impact = draft_impact(portfolio, parse_legs("NVDA:40,AVGO:2,AMD:14"), "buy")
+    impact = draft_impact(portfolio, BEYOND_CASH, "buy")
 
-    assert impact.total == Decimal("54000.20")
-    assert impact.cash_after == Decimal("-15366.98")
-    assert impact.shortfall == Decimal("15366.98")
+    assert impact.total == Decimal("70168.40")
+    assert impact.cash_after == Decimal("-18404.40")
+    assert impact.shortfall == Decimal("18404.40")
 
 
 def test_a_sell_raises_cash_and_is_never_short(portfolio: Portfolio) -> None:
     """OD-7 — sufficiency of a sale is `simulate_sale`'s question, not this one."""
-    impact = draft_impact(portfolio, parse_legs("NVDA:40,AVGO:2,AMD:14"), "sell")
+    impact = draft_impact(portfolio, BEYOND_CASH, "sell")
 
-    assert impact.cash_after == Decimal("92633.42")
+    assert impact.cash_after == Decimal("121932.40")
     assert impact.shortfall == ZERO

@@ -15,11 +15,15 @@ from typing import Annotated, Final
 
 from pydantic import Field, field_validator
 
-from app.core.errors import ValidationFailedError
 from app.domain.lot_selection import LotMethod
-from app.domain.money import ZERO
-from app.domain.portfolio import Portfolio
-from app.domain.symbols import Ticker, normalize_symbol
+from app.domain.scenario_tax import (
+    DEFAULT_LONG_RATE,
+    DEFAULT_SHORT_RATE,
+    MAX_RATE,
+    RATE_PATTERN,
+    TaxRates,
+)
+from app.domain.symbols import Ticker
 from app.presentation.options import DisplayOptions
 
 #: One column per method the domain offers. Derived from the enum, so a fourth
@@ -41,7 +45,7 @@ class ScenarioComparisonOptions(DisplayOptions):
             "Position to cost the sale against, in any case; omit for the one "
             "whose open tax lots are worth the most, ties broken by ticker."
         ),
-        examples=["NVDA"],
+        examples=["BTC"],
     )
     quantity: Units | None = Field(
         default=None,
@@ -63,6 +67,57 @@ class ScenarioComparisonOptions(DisplayOptions):
         examples=[["FIFO", "HIFO"]],
     )
 
+    short_term_rate: str = Field(
+        default=str(DEFAULT_SHORT_RATE),
+        pattern=RATE_PATTERN,
+        description=(
+            "Rate applied to the short-term part of a gain, as a decimal "
+            "string. A **declared assumption**, printed on the card beside "
+            "the figure it produces — this demo knows no taxpayer, so a rate "
+            "nobody chose would be a tax claim nobody could check (GGU-134)."
+        ),
+        examples=["0.35"],
+    )
+    long_term_rate: str = Field(
+        default=str(DEFAULT_LONG_RATE),
+        pattern=RATE_PATTERN,
+        description=(
+            "Rate applied to the long-term part of a gain, as a decimal "
+            "string. The reason the short/long split is worth showing."
+        ),
+        examples=["0.15"],
+    )
+    include_wait: bool = Field(
+        default=False,
+        description=(
+            "Add the *Wait for long-term* column: the same sale past every "
+            "lot's first anniversary, so all of it is long-term. It varies "
+            "the timing, not the lot ordering, and it holds the price still."
+        ),
+        examples=[True],
+    )
+
+    def rates(self) -> TaxRates:
+        """The declared rates for this render, as exact decimals."""
+        return TaxRates(
+            short_term=Decimal(self.short_term_rate),
+            long_term=Decimal(self.long_term_rate),
+        )
+
+    @field_validator("short_term_rate", "long_term_rate")
+    @classmethod
+    def _within_bound(cls, value: str) -> str:
+        """Reject a rate above the published bound.
+
+        The pattern admits four decimals but cannot state a maximum, so the
+        bound is said here — as the option's own error, so both callers see a
+        422 naming the field (ADR-K D-3).
+        """
+        if Decimal(value) > MAX_RATE:
+            msg = f"rate must not exceed {MAX_RATE}"
+            raise ValueError(msg)
+        return value
+
     @field_validator("methods")
     @classmethod
     def _distinct(cls, value: tuple[LotMethod, ...]) -> tuple[LotMethod, ...]:
@@ -73,63 +128,4 @@ class ScenarioComparisonOptions(DisplayOptions):
         return value
 
 
-def _largest_position(portfolio: Portfolio) -> str:
-    """Return the ticker whose open lots are worth the most at ``as_of``.
-
-    Args:
-        portfolio: The portfolio to read.
-
-    Returns:
-        The canonical ticker; ties break on ascending symbol, so the rule is
-        total and the documented example is byte-stable.
-
-    Raises:
-        ValidationFailedError: When the portfolio holds no open tax lots at
-            all, so there is no sale to compare (spec 0017 OD-5).
-    """
-    worth: dict[str, Decimal] = {}
-    for lot in portfolio.lots:
-        value = lot.market_value(portfolio.price(lot.symbol))
-        worth[lot.symbol] = worth.get(lot.symbol, ZERO) + value
-    if not worth:
-        msg = "this portfolio holds no open tax lots to compare a sale against"
-        raise ValidationFailedError(msg)
-    return min(worth, key=lambda symbol: (-worth[symbol], symbol))
-
-
-def resolve(
-    portfolio: Portfolio, options: ScenarioComparisonOptions
-) -> tuple[str, Decimal]:
-    """Turn the caller's options into the one scenario every column shares.
-
-    Args:
-        portfolio: The data the defaults resolve against.
-        options: The validated options.
-
-    Returns:
-        The canonical ticker and the units to sell (spec 0017 OD-2).
-
-    Raises:
-        ValidationFailedError: When the named position holds no open lots —
-            there is nothing to compare, so nothing is rendered.
-    """
-    symbol = (
-        normalize_symbol(options.symbol)
-        if options.symbol
-        else _largest_position(portfolio)
-    )
-    lots = portfolio.tax_lots(symbol)
-    if not lots:
-        msg = f"no open tax lots in {symbol} to compare a sale against"
-        raise ValidationFailedError(msg)
-    return symbol, options.quantity or min(lot.quantity for lot in lots)
-
-
-__all__ = [
-    "DEFAULT_METHODS",
-    "MAX_QUANTITY",
-    "MAX_SCENARIOS",
-    "ScenarioComparisonOptions",
-    "Units",
-    "resolve",
-]
+__all__ = ["ScenarioComparisonOptions"]

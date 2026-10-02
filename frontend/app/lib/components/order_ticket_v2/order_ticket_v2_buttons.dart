@@ -1,32 +1,36 @@
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_chrome.dart';
+import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_control_model.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_text.dart';
 import 'package:flutter/material.dart';
 
-/// `Review order` and `Save as draft`, as honest placeholders.
+/// The ticket's buttons, drawn from `controls[]` — every word the backend's.
 ///
-/// The design draws both; the contract declares no action for either —
-/// `effect: "recalculate"` is the whole of what this ticket does, and the
-/// disclosure under the card says nothing is ever sent, placed or settled
-/// (spec backend/0018 OD-2). So both are drawn **disabled**, in the colours
-/// the catalog page gives a button that cannot be pressed, and each says so
-/// to a screen reader. When `onSubmit` arrives as a declared surface action
-/// (spec backend/0022), the host enables them; until then a button that
-/// looked live would be the showcase's worst bug (spec frontend/0013 OD-3).
+/// **This widget used to carry the copy.** `Review order` and `Save as draft`
+/// were `static const` strings here: design's words compiled into the bundle,
+/// unable to follow the `locale` option, which is N-9 with the sentence
+/// pointing the wrong way. The backend serves them now (spec backend/0050),
+/// with the enabled state and the reason beside each, and this widget spells
+/// nothing.
+///
+/// It still draws every control **disabled**, and that is the payload's
+/// statement rather than this widget's: `enabled` is a declared flag, false
+/// on everything the ticket serves, because `effect: "recalculate"` is the
+/// whole contract and the disclosure says nothing is ever sent, placed or
+/// settled (spec backend/0018 OD-2). A button that looked live would be the
+/// showcase's worst bug (spec frontend/0013 OD-3) — so when one does become
+/// live, it becomes live *in the payload*, and this widget follows.
 class OrderTicketV2Buttons extends StatelessWidget {
-  /// Creates the buttons.
-  const OrderTicketV2Buttons({super.key});
-
-  /// The primary button's label, as the design writes it.
-  static const String reviewLabel = 'Review order';
-
-  /// The secondary link's label, as the design writes it.
-  static const String saveLabel = 'Save as draft';
-
-  /// What a screen reader hears instead of a promise.
-  static const String unavailable = 'Not available in this showcase';
+  /// Creates the buttons for [controls], in arrival order (N-10).
+  const OrderTicketV2Buttons({required this.controls, super.key});
 
   /// The button's height, measured from the design.
   static const double height = 44;
+
+  /// The gap between a button and whatever follows it.
+  static const double gap = 8;
+
+  /// What the ticket declared, rendered in the order it arrived.
+  final List<OrderTicketV2Control> controls;
 
   @override
   Widget build(BuildContext context) {
@@ -35,43 +39,52 @@ class OrderTicketV2Buttons extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Semantics(
-          button: true,
-          enabled: false,
-          label: reviewLabel,
-          hint: unavailable,
-          excludeSemantics: true,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: chrome.buttonSurface,
-              borderRadius: BorderRadius.circular(height / 2),
-            ),
-            child: SizedBox(
-              height: height,
-              child: Center(
-                child: Text(
-                  reviewLabel,
-                  style: OrderTicketV2Text.button(chrome.buttonText),
+        for (final control in controls) ...<Widget>[
+          _Control(control: control, chrome: chrome),
+          if (control != controls.last) const SizedBox(height: gap),
+        ],
+      ],
+    );
+  }
+}
+
+/// One declared control, primary or secondary.
+class _Control extends StatelessWidget {
+  const _Control({required this.control, required this.chrome});
+
+  final OrderTicketV2Control control;
+  final OrderTicketV2Chrome chrome;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(
+      control.label,
+      style: control.isPrimary
+          ? OrderTicketV2Text.button(chrome.buttonText)
+          : OrderTicketV2Text.link(chrome.buttonText),
+    );
+    return Semantics(
+      button: true,
+      enabled: control.enabled,
+      label: control.label,
+      // The reason travels with the control, so what a screen reader hears is
+      // the sentence the backend wrote rather than one composed here.
+      hint: control.reason,
+      excludeSemantics: true,
+      child: control.isPrimary
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: chrome.buttonSurface,
+                borderRadius: BorderRadius.circular(
+                  OrderTicketV2Buttons.height / 2,
                 ),
               ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Semantics(
-          button: true,
-          enabled: false,
-          label: saveLabel,
-          hint: unavailable,
-          excludeSemantics: true,
-          child: Center(
-            child: Text(
-              saveLabel,
-              style: OrderTicketV2Text.link(chrome.buttonText),
-            ),
-          ),
-        ),
-      ],
+              child: SizedBox(
+                height: OrderTicketV2Buttons.height,
+                child: Center(child: label),
+              ),
+            )
+          : Center(child: label),
     );
   }
 }

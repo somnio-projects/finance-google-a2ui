@@ -22,17 +22,17 @@ void main() {
     'view': 'holdings.positions.v1',
     'positions': <Map<String, dynamic>>[
       <String, dynamic>{
-        'symbol': 'USD',
-        'name': 'Cash & sweep',
+        'symbol': 'USDC',
+        'name': 'USD Coin',
         'detail': 'Settlement fund',
         'value': <String, dynamic>{
-          'amount': '38633.22',
-          'display': r'$38,633.22',
+          'amount': '51764.00',
+          'display': r'$51,764.00',
         },
         'day': <String, dynamic>{'value': '0', 'display': '0.0%'},
         'day_trend': 'flat',
         'price': <String, dynamic>{'amount': '1', 'display': r'$1.00'},
-        'weight': <String, dynamic>{'value': '0.08', 'display': '8.0%'},
+        'weight': <String, dynamic>{'value': '0.107', 'display': '10.7%'},
         'is_cash': true,
         'ask': <String, dynamic>{'text': 'What is my cash doing?'},
       },
@@ -54,31 +54,32 @@ void main() {
           ),
         ),
       );
-      expect(find.text('SPDR Gold Shares'), findsOneWidget);
-      expect(find.text(r'250 sh · avg $240.00'), findsOneWidget);
-      expect(find.text(r'$49,500.00'), findsOneWidget);
-      expect(find.text(r'▼ -$10,500 (-17.5%)'), findsOneWidget);
+      expect(find.text('Solana'), findsOneWidget);
+      expect(find.text(r'375.5 SOL · avg $177.70'), findsOneWidget);
+      expect(find.text(r'$57,226.20'), findsOneWidget);
+      expect(find.text(r'▼ -$9,500 (-14.2%)'), findsOneWidget);
       expect(find.text('Price'), findsNothing);
     });
 
-    testWidgets('the cash row prints the day move muted and never expands', (
-      tester,
-    ) async {
-      await tester.pumpApp(
-        SizedBox(
-          width: 390,
-          child: PositionTile(
-            row: cashRow(),
-            askLabel: 'Ask',
-            expanded: true,
-            onTap: () {},
+    testWidgets(
+      'the settlement row prints the day move muted and never expands',
+      (tester) async {
+        await tester.pumpApp(
+          SizedBox(
+            width: 390,
+            child: PositionTile(
+              row: cashRow(),
+              askLabel: 'Ask',
+              expanded: true,
+              onTap: () {},
+            ),
           ),
-        ),
-      );
-      expect(find.text('Settlement fund'), findsOneWidget);
-      expect(find.text('— 0.0%'), findsOneWidget);
-      expect(find.text('Ask'), findsNothing);
-    });
+        );
+        expect(find.text('Settlement fund'), findsOneWidget);
+        expect(find.text('— 0.0%'), findsOneWidget);
+        expect(find.text('Ask'), findsNothing);
+      },
+    );
 
     testWidgets('a down day takes the loss glyph in the stats', (tester) async {
       await tester.pumpApp(
@@ -92,7 +93,7 @@ void main() {
           ),
         ),
       );
-      expect(find.text('▼ -0.1%'), findsWidgets);
+      expect(find.text('▼ -2.4%'), findsWidgets);
     });
 
     testWidgets("the hand-off opens the assistant with the row's question", (
@@ -130,7 +131,7 @@ void main() {
       );
       await tester.tap(find.text('Ask the assistant'));
       await tester.pumpAndSettle();
-      expect(opened, 'Tell me about my NVDA position');
+      expect(opened, 'Tell me about my BTC position');
     });
   });
 }

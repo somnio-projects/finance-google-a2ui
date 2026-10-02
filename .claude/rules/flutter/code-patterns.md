@@ -1,9 +1,10 @@
 ---
-description: Dart and Flutter implementation patterns — null safety, async/await, const constructors, pattern matching, routing, serialization, logging, code generation.
+description: "Dart and Flutter implementation patterns — null safety, async/await, const constructors, pattern matching, routing, serialization, logging, code generation."
 paths:
-  - "client_flutter/*/lib/**/*.dart"
-alwaysApply: false
+  - "frontend/app/lib/**/*.dart"
+  - "frontend/packages/*/lib/**/*.dart"
 ---
+
 # Dart & Flutter Code Patterns
 
 ## Dart Best Practices

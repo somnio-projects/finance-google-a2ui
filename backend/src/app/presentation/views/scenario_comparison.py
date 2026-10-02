@@ -12,55 +12,30 @@ in ``presentation.scenarios``, its options in ``presentation.scenario_options``
 and its builders in ``presentation.scenario_build`` (OD-8).
 """
 
-from typing import Final, Literal
-
-from pydantic import Field
+from typing import Final
 
 from app.domain.market import market_asset
 from app.domain.portfolio import Portfolio
 from app.domain.sales import simulate_sale
+from app.presentation import scenario_after_tax as after_tax
 from app.presentation import scenario_build as build
+from app.presentation import scenario_spread as spread_of
+from app.presentation import scenario_summary as footer
+from app.presentation import scenario_verdict as verdict
 from app.presentation.endpoints import PORTFOLIO_ENDPOINTS
-from app.presentation.fragments import Annotation, ProjectionDto
 from app.presentation.registry import register
 from app.presentation.scenario_guidance import GUIDANCE
-from app.presentation.scenario_options import ScenarioComparisonOptions, resolve
-from app.presentation.scenarios import (
-    NOTES,
-    SAME,
-    ScenarioColumn,
-    ScenarioSpread,
-    ScenarioSubject,
+from app.presentation.scenario_options import ScenarioComparisonOptions
+from app.presentation.scenario_payload import (
+    SUMMARY,
+    TITLE,
+    VIEW_ID,
+    ScenarioComparisonPayload,
+    notes_for,
 )
+from app.presentation.scenario_resolve import resolve
 from app.presentation.spec import ProjectionSpec
 from app.presentation.surfaces import Surface
-
-VIEW_ID: Final[str] = "scenario.comparison.v1"
-TITLE: Final[str] = "Same sale, different lot method"
-SUMMARY: Final[str] = (
-    "The same proposed sale costed under each lot-selection method, so the "
-    "realised result and the short/long split can be compared side by side. "
-    "It recommends no method."
-)
-
-
-class ScenarioComparisonPayload(ProjectionDto):
-    """One proposed sale, costed under each method the caller asked for."""
-
-    view: Literal["scenario.comparison.v1"] = Field(
-        default=VIEW_ID, description="Projection discriminator.", examples=[VIEW_ID]
-    )
-    title: str = Field(
-        max_length=120, description="Title the widget shows.", examples=[TITLE]
-    )
-    subject: ScenarioSubject = Field(description="What every column holds fixed.")
-    columns: tuple[ScenarioColumn, ...] = Field(
-        description="One column per method, in the requested order — never sorted."
-    )
-    spread: ScenarioSpread = Field(description="The gap between the extremes.")
-    notes: tuple[Annotation, ...] = Field(
-        default=(), description="Sentences shown beside the card, written here."
-    )
 
 
 def render(
@@ -85,18 +60,30 @@ def render(
         (method, simulate_sale(portfolio, symbol=symbol, quantity=units, method=method))
         for method in options.methods
     ]
-    columns = tuple(
-        build.column(run, method=method, options=options) for method, run in runs
+    rates = options.rates()
+    costed = tuple(
+        after_tax.taxed(
+            build.column(run, method=method, options=options),
+            rates=rates,
+            options=options,
+        )
+        for method, run in runs
     )
-    gap = build.spread(columns, options=options)
+    if options.include_wait:
+        costed = (*costed, after_tax.waited(costed[0], rates=rates, options=options))
+    table = verdict.rows(costed)
+    columns = verdict.recommended(costed, table)
+    gap = spread_of.spread(columns, options=options)
     return ScenarioComparisonPayload(
         title=TITLE,
         subject=build.subject(
             runs[0][1], name=market_asset(symbol).name, options=options
         ),
         columns=columns,
+        rows=table,
+        summary=footer.summarise(columns, table, options=options),
         spread=gap,
-        notes=NOTES if gap.differs else (*NOTES, SAME),
+        notes=notes_for(options, differs=gap.differs),
     )
 
 
@@ -116,6 +103,8 @@ def surface(payload: ScenarioComparisonPayload) -> Surface:
         props={
             "subject": payload.subject.model_dump(mode="json"),
             "columns": [row.model_dump(mode="json") for row in payload.columns],
+            "rows": [row.model_dump(mode="json") for row in payload.rows],
+            "summary": payload.summary.model_dump(mode="json"),
             "spread": payload.spread.model_dump(mode="json"),
             "notes": [note.model_dump(mode="json") for note in payload.notes],
         },

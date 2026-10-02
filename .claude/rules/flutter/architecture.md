@@ -1,9 +1,10 @@
 ---
-description: General architecture guidelines when using Flutter.
+description: "General architecture guidelines when using Flutter."
 paths:
-  - "client_flutter/*/lib/**/*.dart"
-alwaysApply: false
+  - "frontend/app/lib/**/*.dart"
+  - "frontend/packages/*/lib/**/*.dart"
 ---
+
 # Flutter Layered Architecture
 
 How to build highly scalable, maintainable, and testable Flutter apps using layered architecture. This architecture consists of four layers with clear boundaries and single responsibilities.
@@ -48,7 +49,7 @@ Data Layer (External Sources)
 // api_client.dart
 class ApiClient {
   final http.Client _client;
-
+  
   Future<Map<String, dynamic>> makeRequest({
     required String url,
     Map<String, dynamic>? data,
@@ -79,10 +80,10 @@ class ApiClient {
 // user_repository.dart
 class UserRepository {
   const UserRepository(this.apiClient);
-
+  
   final ApiClient apiClient;
   final String loginUrl = '/login';
-
+  
   Future<void> logIn(String email, String password) async {
     await apiClient.makeRequest(
       url: loginUrl,
@@ -385,7 +386,7 @@ abstract class UserRepository {
 class UserRepositoryImpl implements UserRepository {
   const UserRepositoryImpl(this.apiClient);
   final ApiClient apiClient;
-
+  
   @override
   Future<void> logIn(String email, String password) async {
     // Implementation
@@ -403,7 +404,7 @@ abstract class LoginEvent extends Equatable {
 
 class LoginSubmitted extends LoginEvent {
   const LoginSubmitted();
-
+  
   @override
   List<Object?> get props => [];
 }
@@ -415,11 +416,11 @@ class LoginState extends Equatable {
     this.email = '',
     this.password = '',
   });
-
+  
   final LoginStatus status;
   final String email;
   final String password;
-
+  
   @override
   List<Object?> get props => [status, email, password];
 }

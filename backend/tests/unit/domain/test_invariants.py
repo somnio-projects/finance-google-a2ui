@@ -28,28 +28,28 @@ def test_validate_holding_accepts_a_consistent_holding() -> None:
 
 
 def test_validate_holding_quantity_mismatch_names_the_holding() -> None:
-    holding = make_holding(symbol="AAPL", quantity="2.0000", market_value="128500.0000")
+    holding = make_holding(symbol="ETH", quantity="2.0000", market_value="128500.0000")
     with pytest.raises(
-        PortfolioInvariantError, match=r"holding AAPL: quantity must equal the sum"
+        PortfolioInvariantError, match=r"holding ETH: quantity must equal the sum"
     ):
-        validate_holding(holding, lots=[make_lot(symbol="AAPL")], price=PRICE)
+        validate_holding(holding, lots=[make_lot(symbol="ETH")], price=PRICE)
 
 
 def test_validate_holding_cost_basis_mismatch_names_the_holding() -> None:
-    holding = make_holding(symbol="VOO", cost_basis="39999.99")
+    holding = make_holding(symbol="SOL", cost_basis="39999.99")
     with pytest.raises(
-        PortfolioInvariantError, match=r"holding VOO: cost_basis must equal the sum"
+        PortfolioInvariantError, match=r"holding SOL: cost_basis must equal the sum"
     ):
-        validate_holding(holding, lots=[make_lot(symbol="VOO")], price=PRICE)
+        validate_holding(holding, lots=[make_lot(symbol="SOL")], price=PRICE)
 
 
 def test_validate_holding_market_value_mismatch_names_the_holding() -> None:
-    holding = make_holding(symbol="XOM", market_value="64250.01")
+    holding = make_holding(symbol="LINK", market_value="64250.01")
     with pytest.raises(
         PortfolioInvariantError,
-        match=r"holding XOM: market_value must equal quantity times price",
+        match=r"holding LINK: market_value must equal quantity times price",
     ):
-        validate_holding(holding, lots=[make_lot(symbol="XOM")], price=PRICE)
+        validate_holding(holding, lots=[make_lot(symbol="LINK")], price=PRICE)
 
 
 def test_validate_holding_tolerates_no_epsilon_on_market_value() -> None:
@@ -65,7 +65,7 @@ def test_validate_lot_dates_accepts_lots_acquired_before_as_of() -> None:
 def test_validate_lot_dates_rejects_a_lot_from_the_future() -> None:
     future: TaxLot = make_lot(lot_id="lot-btc-99", days_before=-1)
     with pytest.raises(
-        PortfolioInvariantError, match=r"holding NVDA: lot lot-btc-99 was acquired"
+        PortfolioInvariantError, match=r"holding BTC: lot lot-btc-99 was acquired"
     ):
         validate_lot_dates([future], as_of=FROZEN_NOW.date())
 
@@ -73,8 +73,8 @@ def test_validate_lot_dates_rejects_a_lot_from_the_future() -> None:
 def test_validate_weights_inside_tolerance_is_accepted() -> None:
     validate_weights(
         [
-            make_holding(symbol="NVDA", weight="0.5"),
-            make_holding(symbol="AAPL", weight=str(Decimal("0.5") - WEIGHT_TOLERANCE)),
+            make_holding(symbol="BTC", weight="0.5"),
+            make_holding(symbol="ETH", weight=str(Decimal("0.5") - WEIGHT_TOLERANCE)),
         ]
     )
 

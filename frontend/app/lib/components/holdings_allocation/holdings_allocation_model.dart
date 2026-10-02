@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_gain.dart';
+import 'package:finance_app/components/holdings_allocation/allocation_group.dart';
 
 /// One slice of the allocation, exactly as the payload's `categories[]` says.
 ///
@@ -49,37 +51,6 @@ class AllocationCategory extends Equatable {
   ];
 }
 
-/// The all-time gain block under the total (`total_gain`).
-class AllocationGain extends Equatable {
-  /// Creates the block.
-  const AllocationGain({
-    required this.amountDisplay,
-    required this.percentDisplay,
-    required this.trend,
-    required this.period,
-  });
-
-  /// `total_gain.amount.display`, e.g. `+$61,204`.
-  final String amountDisplay;
-
-  /// `total_gain.percent.display`, e.g. `+14.5%`.
-  final String percentDisplay;
-
-  /// `total_gain.trend`.
-  final String trend;
-
-  /// `total_gain.period`, e.g. `all-time`.
-  final String period;
-
-  @override
-  List<Object?> get props => <Object?>[
-    amountDisplay,
-    percentDisplay,
-    trend,
-    period,
-  ];
-}
-
 /// Everything `holdings.allocation.v1` puts on screen.
 class AllocationData extends Equatable {
   /// Creates the model.
@@ -88,6 +59,7 @@ class AllocationData extends Equatable {
     required this.totalLabel,
     required this.totalDisplay,
     required this.categories,
+    this.groups = const <AllocationGroup>[],
     this.groupBy = 'holding',
     this.centerCount = '',
     this.centerUnit = '',
@@ -106,6 +78,12 @@ class AllocationData extends Equatable {
 
   /// `categories[]`, in the backend's order.
   final List<AllocationCategory> categories;
+
+  /// `groups[]` — every grouping the toggle offers, in the backend's order.
+  ///
+  /// Empty is a legitimate payload: a host that cannot re-request draws no
+  /// toggle, and a card built from a literal in a test carries none.
+  final List<AllocationGroup> groups;
 
   /// `group_by` — which ramp the slices take.
   final String groupBy;
@@ -137,6 +115,7 @@ class AllocationData extends Equatable {
     totalLabel,
     totalDisplay,
     categories,
+    groups,
     groupBy,
     centerCount,
     centerUnit,

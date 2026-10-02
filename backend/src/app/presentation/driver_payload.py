@@ -4,8 +4,15 @@ What `FlowA-Assistant.dc.html`'s D2 state draws below the waterfall once a
 bar is tapped: the ticker chip, the name, a caption placing the holding among
 the day's movers, its contribution, and three tiles — the price move, the
 units held at their price, and the share of the day's gain. Every number is
-an ADR-E pair; every word, including the tile captions ``@ $1,204.66`` and
-``of +$3,240.18``, is written here (N-9).
+an ADR-E pair; every word, including the tile captions ``@ $64,250.00`` and
+``of +$2,201.05``, is written here (N-9).
+
+**The second tile was called** ``shares`` **and labelled "Shares"** while it
+held 2.1 Bitcoin (GGU-123). Both are gone: the field is ``holding`` and the
+label is the asset's own ticker, which the payload already knows — so the tile
+names a unit the asset class actually has instead of one it does not. The
+rename is client-breaking, which is why it shipped as one release across the
+projection, the A2UI adapter, both catalog artefacts and the Dart binding.
 """
 
 from typing import Final, Literal
@@ -29,7 +36,9 @@ SUMMARY: Final[str] = (
 )
 #: The tile labels, as the design prints them.
 PRICE_MOVE_LABEL: Final[str] = "Price move"
-SHARES_LABEL: Final[str] = "Shares"
+#: The units tile's label, per asset: ``BTC held``. A template rather than a
+#: noun, because the honest unit word is the asset's own (GGU-123 AC-1).
+HOLDING_LABEL: Final[str] = "{symbol} held"
 DAY_GAIN_LABEL: Final[str] = "Of day gain"
 DAY_LOSS_LABEL: Final[str] = "Of day loss"
 
@@ -42,7 +51,7 @@ class PriceMove(Labelled):
     trend: Trend = Field(description="Direction, so the widget picks the glyph.")
 
 
-class SharesHeld(Labelled):
+class HoldingUnits(Labelled):
     """How many units carried the move, and at what price."""
 
     units: QuantityDisplay = Field(description="Units held.")
@@ -50,7 +59,7 @@ class SharesHeld(Labelled):
     caption: str = Field(
         max_length=40,
         description="The line under the count, written here.",
-        examples=["@ $1,204.66"],
+        examples=["@ $64,250.00"],
     )
 
 
@@ -80,7 +89,7 @@ class DriverDetailPayload(ProjectionDto):
     symbol: str = Field(
         max_length=10,
         description="Ticker, as the chip prints it. Also the option that selects it.",
-        examples=["NVDA"],
+        examples=["BTC"],
     )
     name: str = Field(
         max_length=64, description="Display name.", examples=["NVIDIA Corp"]
@@ -93,7 +102,7 @@ class DriverDetailPayload(ProjectionDto):
     contribution: MoneyDisplay = Field(description="What it added today, signed.")
     trend: Trend = Field(description="Direction of the contribution.")
     price_move: PriceMove = Field(description="The first tile.")
-    shares: SharesHeld = Field(description="The second tile.")
+    holding: HoldingUnits = Field(description="The second tile.")
     day_share: DayShare = Field(description="The third tile.")
 
 
@@ -110,12 +119,12 @@ __all__ = [
     "CAPTIONS",
     "DAY_GAIN_LABEL",
     "DAY_LOSS_LABEL",
+    "HOLDING_LABEL",
     "PRICE_MOVE_LABEL",
-    "SHARES_LABEL",
     "SUMMARY",
     "VIEW_ID",
     "DayShare",
     "DriverDetailPayload",
+    "HoldingUnits",
     "PriceMove",
-    "SharesHeld",
 ]

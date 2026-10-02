@@ -75,7 +75,7 @@ class AttributionDriverData extends Equatable {
   /// The payload's `trend`, which colours the contribution.
   final DriverTrend trend;
 
-  /// The three tiles, in the design's order: price move, shares, day share.
+  /// The three tiles, in the design's order: price move, holding, day share.
   final List<DriverTile> tiles;
 
   @override

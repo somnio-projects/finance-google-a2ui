@@ -13,12 +13,13 @@ already there: *what is rendered* apart from *how the projection is wired*.
 from decimal import Decimal
 
 from app.domain.draft_impact import DraftImpact
+from app.domain.draft_ladder import ladder
 from app.domain.draft_legs import LegRequest, stepped
 from app.domain.draft_weights import WeightShift as ShiftFigures
 from app.domain.money import ZERO
 from app.domain.payoff import Side
 from app.presentation.fragments import Total
-from app.presentation.order_ticket_v2_lines import OrderLine, UnitTotal, WeightShift
+from app.presentation.order_ticket_v2_lines import OrderLine, WeightShift
 from app.presentation.order_ticket_v2_options import OrderTicketV2Options
 from app.presentation.order_ticket_v2_payload import (
     Badge,
@@ -30,7 +31,6 @@ from app.presentation.ticket_displays import price, quantity
 
 #: The panel's captions, server-written so the client spells none (N-9).
 TOTAL_LABEL = "Total order"
-UNITS_LABEL = "Est. shares"
 FEES_LABEL = "Est. fees · sim"
 CASH_LABEL = "Cash remaining"
 MAX_CASH_LABEL = "Available cash"
@@ -50,7 +50,15 @@ def lines(
     requests: tuple[LegRequest, ...],
     options: OrderTicketV2Options,
 ) -> tuple[OrderLine, ...]:
-    """Render every leg with its figures and the option value each tap sends."""
+    """Render every leg with its figures and every value its controls send.
+
+    The stepper sets the **size** and the slider sets the **mix**: a tap
+    moves this leg by one asset step and changes the order's total, a drag
+    moves this leg's share and leaves the total where it is (spec 0050 OD-1).
+    Both are written by the domain over the same option, and whichever is
+    used, the next render's ladder is aligned to the value it sent.
+    """
+    rungs = {leg.symbol: ladder(requests, leg.symbol) for leg in impact.legs}
     return tuple(
         OrderLine(
             key=leg.symbol,
@@ -62,6 +70,8 @@ def lines(
             weight=options.percentage(leg.weight),
             increment=stepped(requests, leg.symbol, 1),
             decrement=stepped(requests, leg.symbol, -1),
+            stops=rungs[leg.symbol].stops,
+            position=rungs[leg.symbol].position,
         )
         for leg in impact.legs
     )
@@ -75,9 +85,6 @@ def impact_block(
     """Render the *Order impact* panel."""
     return OrderImpact(
         total=Total(label=TOTAL_LABEL, amount=options.money(impact.total)),
-        units=UnitTotal(
-            label=UNITS_LABEL, units=quantity(impact.units, locale=options.locale)
-        ),
         fees=Total(label=FEES_LABEL, amount=options.money(impact.fees)),
         cash_remaining=Total(label=CASH_LABEL, amount=options.money(impact.cash_after)),
         weight_shifts=tuple(
@@ -125,7 +132,6 @@ __all__ = [
     "MAX_CASH_LABEL",
     "OVER_CASH",
     "TOTAL_LABEL",
-    "UNITS_LABEL",
     "WEIGHT_LABEL",
     "badge_of",
     "breach_of",

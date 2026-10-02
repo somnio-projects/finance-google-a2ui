@@ -11,9 +11,10 @@ backend_image      = "us-central1-docker.pkg.dev/finance-a2ui/finance-a2ui-dev/b
 auth_issuer        = "https://securetoken.google.com/finance-a2ui"
 auth_audience      = "finance-a2ui"
 auth_oidc_jwks_url = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
-# Firebase Hosting's two origins for the web client (firebase.json), the local
+# Firebase Hosting origins for both web clients — v0.9 (firebase.json) and the
+# v1.0 client (frontend_v1/firebase.json, ADR-M D-9, port 3002 locally) — the local
 # Flutter dev server, and the local static preview.
-cors_allowed_origins  = "https://finance-a2ui.web.app,https://finance-a2ui.firebaseapp.com,http://localhost:8080,http://localhost:5173"
+cors_allowed_origins  = "https://finance-a2ui.web.app,https://finance-a2ui.firebaseapp.com,http://localhost:8080,http://localhost:5173,https://finance-a2ui-v1.web.app,https://finance-a2ui-v1.firebaseapp.com,http://localhost:3002"
 auth_bootstrap_admins = "lbertuzzi@somniosoftware.com"
 # The preview is open on dev: anyone who can sign in with Google gets an
 # account (spec backend/0040). Not a shortcut around the registry — the row

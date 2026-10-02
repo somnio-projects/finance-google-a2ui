@@ -31,7 +31,7 @@ def test_a_card_cannot_be_asked_to_compare_two_symbols_or_two_sizes() -> None:
     assert fields["symbol"].annotation is not tuple
     assert fields["quantity"].annotation is not tuple
     with pytest.raises(ValidationError, match="symbol"):
-        ScenarioComparisonOptions(symbol=["NVDA", "AAPL"])  # type: ignore[arg-type]
+        ScenarioComparisonOptions(symbol=["BTC", "ETH"])  # type: ignore[arg-type]
     with pytest.raises(ValidationError, match="quantity"):
         ScenarioComparisonOptions(quantity=["1", "2"])  # type: ignore[arg-type]
 
@@ -77,25 +77,25 @@ def test_the_cap_is_the_number_of_methods_the_domain_offers() -> None:
 
 def test_selling_more_than_is_held_is_refused(portfolio: Portfolio) -> None:
     """It fails every column identically, so there is no card (OD-5)."""
-    options = ScenarioComparisonOptions(symbol="NVDA", quantity=Decimal("500"))
-    with pytest.raises(PositionTooSmallError, match="NVDA holds fewer units"):
+    options = ScenarioComparisonOptions(symbol="BTC", quantity=Decimal("5"))
+    with pytest.raises(PositionTooSmallError, match="BTC holds fewer units"):
         render(portfolio, options)
 
 
 def test_the_refusal_names_the_symbol_but_no_quantity(portfolio: Portfolio) -> None:
-    options = ScenarioComparisonOptions(symbol="NVDA", quantity=Decimal("500"))
+    options = ScenarioComparisonOptions(symbol="BTC", quantity=Decimal("5"))
     with pytest.raises(PositionTooSmallError) as caught:
         render(portfolio, options)
-    assert caught.value.requested == Decimal("500")
-    assert caught.value.held == Decimal("90.0000")
-    assert "500" not in str(caught.value)
-    assert "90" not in str(caught.value)
+    assert caught.value.requested == Decimal("5")
+    assert caught.value.held == Decimal("2.10000000")
+    assert "5" not in str(caught.value)
+    assert "2.1" not in str(caught.value)
 
 
 def test_a_symbol_with_no_open_lots_is_refused(portfolio: Portfolio) -> None:
-    """AVGO is in the market reference; the demo portfolio holds none of it."""
-    with pytest.raises(ValidationFailedError, match="no open tax lots in AVGO"):
-        render(portfolio, ScenarioComparisonOptions(symbol="AVGO"))
+    """AVAX is in the market reference; the portfolio traded out of it (0044)."""
+    with pytest.raises(ValidationFailedError, match="no open tax lots in AVAX"):
+        render(portfolio, ScenarioComparisonOptions(symbol="AVAX"))
 
 
 def test_a_portfolio_with_no_lots_at_all_is_refused(
@@ -110,8 +110,8 @@ def test_an_explicit_quantity_and_symbol_skip_both_default_rules(
 ) -> None:
     card = render(
         portfolio,
-        ScenarioComparisonOptions(symbol=" voo ", quantity=Decimal("10")),
+        ScenarioComparisonOptions(symbol=" sol ", quantity=Decimal("10")),
     )
-    assert card.subject.symbol == "VOO"
+    assert card.subject.symbol == "SOL"
     assert card.subject.quantity_display == "10"
     assert card.spread.differs is False

@@ -1,3 +1,4 @@
+import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlots_table_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,8 +54,37 @@ void main() {
       expectRaises(withTermField(example, 'term', '?'), 'by_term[0].term');
     });
 
+    test('raises a fully_sold that is not a boolean', () {
+      // `flag` is as strict as `text`: a contract that publishes a boolean
+      // and sends a word is a contract violation, not a truthy string.
+      expectRaises(withLotField(example, 'fully_sold', 'yes'), 'fully_sold');
+    });
+
     test('raises a trend the contract does not declare', () {
       expectRaises(withLotField(example, 'trend', 'sideways'), 'lots[0].trend');
+    });
+
+    test('raises a direction the contract does not declare', () {
+      // The footer total's colour comes through the same reader as a row's,
+      // so the same three tokens are the only ones either accepts.
+      expectRaises(<String, dynamic>{
+        ...example,
+        'realized': <String, dynamic>{
+          ...example['realized']! as Map<String, dynamic>,
+          'direction': 'sideways',
+        },
+      }, 'realized.direction');
+    });
+
+    test('accepts the flat the contract does declare', () {
+      // `flat` is what `trend_of` answers for a figure that rounds to zero —
+      // a lot sold at exactly its basis. The kit never draws it, the contract
+      // permits it, and rejecting it was a crash on a valid payload
+      // (`backend/0049` OD-7).
+      final read = const TaxLotsTableComponent().read(
+        ViewPayload.fromJson(withLotField(example, 'trend', 'flat')),
+      );
+      expect(read.lots.first.trend, TaxLotTrend.flat);
     });
 
     test('raises a lot whose display string is missing', () {

@@ -26,6 +26,24 @@ class HoldingsTokens extends ThemeExtension<HoldingsTokens> {
   static HoldingsTokens of(BuildContext context) =>
       Theme.of(context).extension<HoldingsTokens>()!;
 
+  /// The selected toggle pill's drop shadow, the same on both artboards.
+  ///
+  /// A `static const`, like `LoginTokens.logoGradient`: the artboards draw one
+  /// value, so a brightness-keyed field would be the same colour twice. It is
+  /// here rather than in `holdings_toggle.dart` because a colour literal lives
+  /// in a `*_tokens.dart` and nowhere else — asserted by
+  /// `app/test/architecture/color_rules_test.dart` (spec frontend/0029 OD-4).
+  static const Color toggleShadow = Color(0x14000000);
+
+  /// The indigo glow under an expanded position tile.
+  static const Color expandedGlow = Color(0x2E4F5DFF);
+
+  /// The `Ask about this position` icon's gradient, top-left to bottom-right.
+  static const List<Color> askIconGradient = <Color>[
+    Color(0xFF4F5DFF),
+    Color(0xFF7A5CFF),
+  ];
+
   /// `By asset class | By sector`: track.
   final Color toggle;
 

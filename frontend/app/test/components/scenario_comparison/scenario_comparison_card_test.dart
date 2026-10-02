@@ -60,7 +60,7 @@ void main() {
     testWidgets('shows the title and the position it is about', (tester) async {
       await pumpScenarioCard(tester, scenarioData());
       expect(find.text('Same sale, different lot method'), findsOneWidget);
-      expect(find.text('NVIDIA Corp'), findsOneWidget);
+      expect(find.text('Bitcoin'), findsOneWidget);
     });
 
     testWidgets('states the sale once, as caption and figure', (tester) async {
@@ -70,22 +70,34 @@ void main() {
         find.text(ScenarioComparisonSubject.symbolCaption),
         findsOneWidget,
       );
-      expect(find.text('NVDA'), findsOneWidget);
-      expect(find.text('30'), findsOneWidget);
-      expect(find.text(r'$1,204.66'), findsOneWidget);
-      expect(find.text(r'$36,139.80'), findsOneWidget);
+      expect(find.text('BTC'), findsOneWidget);
+      expect(find.text('0.25'), findsOneWidget);
+      expect(find.text(r'$64,250.00'), findsOneWidget);
+      // Four times over: once in the subject strip, once per column. The
+      // sale is the same in every column by construction, and the frame
+      // repeats it so the row-major table is uniform (backend spec 0051
+      // OD-3).
+      expect(find.text(r'$16,062.50'), findsNWidgets(4));
     });
 
     testWidgets('puts every display string on screen verbatim', (tester) async {
       // N-1: the figures are exactly the strings the backend formatted —
       // the sign is baked in and nothing here prepends one.
       await pumpScenarioCard(tester, scenarioData());
-      expect(find.text(r'$22,800.00'), findsOneWidget);
-      expect(find.text(r'$28,800.00'), findsNWidgets(2));
-      expect(find.text(r'+$13,339.80'), findsNWidgets(2));
-      expect(find.text(r'+$7,339.80'), findsNWidgets(4));
-      expect(find.text(r'$0.00'), findsNWidgets(3));
-      expect(find.text(r'$6,000.00'), findsOneWidget);
+      // FIFO's estimated tax at the declared default rates, as one literal
+      // the reader can check by hand.
+      expect(find.text(r'$1,059.38'), findsOneWidget);
+      // The rest is derived from the model rather than listed: the table's
+      // rows are the backend's since spec 0051, so a hand-counted list would
+      // have to be rewritten every time design adds one — and would be
+      // asserting the fixture rather than the binding.
+      final data = scenarioData();
+      for (final row in data.metrics) {
+        for (final display in row.valueDisplays) {
+          expect(find.text(display), findsWidgets, reason: display);
+        }
+      }
+      expect(find.text(data.spread.amountDisplay), findsWidgets);
     });
 
     testWidgets('never puts a raw figure on screen', (tester) async {
@@ -93,32 +105,16 @@ void main() {
       // so it reads no raw member at all.
       await pumpScenarioCard(tester, scenarioData());
       for (final raw in <String>[
-        '22800.00',
-        '28800.00',
-        '13339.800000',
-        '7339.800000',
-        '1204.66',
-        '36139.800000',
-        '6000.000000',
+        '9000.00',
+        '10617.00',
+        '7062.5000000000',
+        '5445.5000000000',
+        '64250.00',
+        '16062.5000000000',
+        '1617.0000000000',
         '0',
       ]) {
         expect(find.text(raw), findsNothing, reason: 'raw $raw reached a Text');
-      }
-    });
-
-    testWidgets('names no winner anywhere on the card', (tester) async {
-      // spec `backend/0017` OD-4 / `specs/frontend/0004` OD-3. The design
-      // ships a `★ Recommended` badge and a green "best on that row" cell;
-      // the contract ships neither field, and the card invents neither.
-      await pumpScenarioCard(tester, scenarioData());
-      for (final word in <String>[
-        'Recommended',
-        '★ Recommended',
-        'best on that row',
-        'higher is better ▲',
-        'lower is better ▼',
-      ]) {
-        expect(find.textContaining(word), findsNothing, reason: word);
       }
     });
   });

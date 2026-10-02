@@ -71,7 +71,7 @@ void main() {
 
   group('$ConversationBloc and its chips', () {
     blocTest<ConversationBloc, ConversationState>(
-      'an answer stores the recommended chips; opening a turn clears them',
+      'an answer replaces the chips of the answer before it',
       build: build,
       act: (bloc) => bloc.add(const ConversationMessageSent('hi')),
       verify: (bloc) => expect(bloc.state.suggestions, chips),
@@ -107,7 +107,7 @@ void main() {
         const ConversationActionSent(
           SurfaceActionRequest(
             action: 'drill.attribution.v1',
-            args: <String, String>{'driver': 'NVDA'},
+            args: <String, String>{'driver': 'BTC'},
           ),
         ),
       ),
@@ -122,7 +122,7 @@ void main() {
                   ),
                 ).captured.single
                 as SurfaceActionRequest;
-        expect(sent.args, <String, String>{'driver': 'NVDA'});
+        expect(sent.args, <String, String>{'driver': 'BTC'});
       },
     );
 

@@ -194,7 +194,7 @@ CVE scan of the Dart dependency graph — are listed with their owners in
 
 | Path | What | Start at |
 |---|---|---|
-| `backend/` | FastAPI · Python 3.12 · PostgreSQL · uv — the API, the presentation layer and the agent host | [`backend/README.md`](backend/README.md) |
+| `backend/` | FastAPI · Python 3.14 · PostgreSQL · uv — the API, the presentation layer and the agent host | [`backend/README.md`](backend/README.md) |
 | `frontend/` | The A2UI client — a Flutter pub workspace (`app/` plus pure-Dart packages, one of them the chart geometry) | [`frontend/README.md`](frontend/README.md) |
 | `infra/` | Terraform for the Google Cloud topology | [`infra/README.md`](infra/README.md) |
 | `specs/` | One spec per feature, written before the code | [`specs/README.md`](specs/README.md) |

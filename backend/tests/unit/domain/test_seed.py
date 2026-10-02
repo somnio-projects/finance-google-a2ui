@@ -25,7 +25,7 @@ def test_seed_portfolio_at_fixed_as_of_validates(portfolio: Portfolio) -> None:
     assert portfolio.holdings()
     assert portfolio.lots
     assert portfolio.transactions()
-    assert portfolio.price_series("NVDA", timedelta(days=30))
+    assert portfolio.price_series("BTC", timedelta(days=30))
 
 
 def test_seed_portfolio_is_deterministic_for_the_same_as_of() -> None:
@@ -48,10 +48,10 @@ def test_every_seeded_symbol_reconciles_with_the_market_reference(
 
 def test_seed_aggregates_tie_out_by_hand(portfolio: Portfolio) -> None:
     btc = portfolio.holdings()[0]
-    lots = portfolio.tax_lots("NVDA")
+    lots = portfolio.tax_lots("BTC")
     assert btc.quantity == sum((lot.quantity for lot in lots), ZERO)
     assert btc.cost_basis == sum((lot.cost_basis for lot in lots), ZERO)
-    assert btc.market_value == btc.quantity * portfolio.price("NVDA")
+    assert btc.market_value == btc.quantity * portfolio.price("BTC")
     assert btc.unrealized_pl == btc.market_value - btc.cost_basis
 
 
@@ -86,4 +86,4 @@ def test_seed_contains_a_holding_with_lots_of_differing_term(
         for holding in portfolio.holdings()
         if len({lot.term(as_of) for lot in portfolio.tax_lots(holding.symbol)}) > 1
     ]
-    assert "NVDA" in mixed
+    assert "BTC" in mixed

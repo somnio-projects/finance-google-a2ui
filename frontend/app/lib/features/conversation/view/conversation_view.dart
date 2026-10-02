@@ -3,6 +3,7 @@ import 'package:finance_app/features/conversation/view/assistant_chips.dart';
 import 'package:finance_app/features/conversation/view/assistant_composer.dart';
 import 'package:finance_app/features/conversation/view/assistant_header.dart';
 import 'package:finance_app/features/conversation/view/conversation_transcript.dart';
+import 'package:finance_app/features/conversation/view/turn_failure_card.dart';
 import 'package:finance_app/features/conversation/view/voice_input_listener.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
@@ -53,9 +54,12 @@ class _ConversationViewState extends State<ConversationView> {
                 ),
               ),
               if (state.status == ConversationStatus.failed)
-                _Failure(failure: state.failure),
+                TurnFailureCard(failure: state.failure),
+              // Hidden while a turn runs, kept in state across a failed one:
+              // the chips are the last answer's, and a person whose question
+              // just failed still has them to fall back on (GGU-111 AC-2).
               SuggestionChips(
-                suggestions: state.suggestions,
+                suggestions: running ? const <Suggestion>[] : state.suggestions,
                 onTap: (chip) => context.read<ConversationBloc>().add(
                   ConversationSuggestionTapped(chip),
                 ),
@@ -75,35 +79,6 @@ class _ConversationViewState extends State<ConversationView> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-/// Why the last turn failed: the backend's own safe code and detail, shown
-/// verbatim — never a library message and never a stack trace.
-class _Failure extends StatelessWidget {
-  const _Failure({required this.failure});
-
-  final AgentFailed? failure;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = HomeTokens.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 4, 15, 10),
-      child: Column(
-        children: <Widget>[
-          Text(
-            failure?.message ?? 'The turn failed.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: tokens.loss),
-          ),
-          Text(
-            failure?.code ?? 'unknown',
-            style: TextStyle(fontSize: 11, color: tokens.muted),
-          ),
-        ],
       ),
     );
   }

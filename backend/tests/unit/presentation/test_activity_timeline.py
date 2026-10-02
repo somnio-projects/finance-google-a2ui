@@ -41,7 +41,7 @@ def test_sections_run_from_today_through_the_week_into_the_months(
         "All",
         "Buys",
         "Sells",
-        "Dividends",
+        "Staking",
         "Deposits",
     ]
     labels = [group.label for group in payload.groups]
@@ -52,34 +52,34 @@ def test_sections_run_from_today_through_the_week_into_the_months(
 def test_each_kind_is_written_the_way_the_design_draws_it(portfolio: Portfolio) -> None:
     payload = render(portfolio, ActivityOptions())
     rows = {entry.key: entry for group in payload.groups for entry in group.entries}
-    dividend = rows["txn-0017"]
-    assert (dividend.title, dividend.detail) == (
-        "Dividend — VOO",
-        "$1.62/sh · 85 sh · qualified",
+    reward = rows["txn-0017"]
+    assert (reward.title, reward.detail) == (
+        "Staking — ETH",
+        "$3,480.00/unit · 0.075 units · protocol reward",
     )
-    assert (dividend.amount.display, dividend.tone, dividend.badge) == (
-        "+$137.70",
+    assert (reward.amount.display, reward.tone, reward.badge) == (
+        "+$261.00",
         "up",
-        "Dividend",
+        "Staking",
     )
-    deposit = rows["txn-0018"]
+    deposit = rows["txn-0033"]
     assert (deposit.title, deposit.detail) == (
-        "Deposit — Bank transfer",
-        "Chase ••4021 · Wed",
+        "Deposit — Transfer in",
+        "Coinbase ••4021 · Wed",
     )
     assert (deposit.amount.display, deposit.tone) == ("+$5,000.00", "up")
-    payroll = rows["txn-0020"]
+    payroll = rows["txn-0034"]
     assert (payroll.title, payroll.detail) == ("Deposit — Payroll", "Recurring · Sep 4")
-    buy = rows["txn-0011"]
-    assert (buy.title, buy.detail) == ("Bought 60 NVDA", "60 sh @ $760.00 · Sep 16")
-    assert (buy.amount.display, buy.tone, buy.badge) == ("-$45,600.00", "flat", "Buy")
+    buy = rows["txn-0009"]
+    assert (buy.title, buy.detail) == ("Bought 12 ETH", "12 units @ $4,175.00 · Nov 22")
+    assert (buy.amount.display, buy.tone, buy.badge) == ("-$50,100.00", "flat", "Buy")
     assert buy.realized is None and buy.term is None
 
 
 @pytest.mark.parametrize(
     ("kind", "count"),
-    [("buy", 16), ("dividend", 16), ("deposit", 9)],
-    ids=["buys", "dividends", "deposits"],
+    [("buy", 9), ("staking_reward", 16), ("deposit", 9)],
+    ids=["buys", "staking-rewards", "deposits"],
 )
 def test_the_filter_keeps_one_kind(portfolio: Portfolio, kind: str, count: int) -> None:
     payload = render(portfolio, ActivityOptions(kind=kind))  # pyright: ignore[reportArgumentType]
@@ -91,7 +91,7 @@ def test_the_filter_keeps_one_kind(portfolio: Portfolio, kind: str, count: int) 
 
 def test_the_limit_keeps_the_newest_rows(portfolio: Portfolio) -> None:
     assert len(_entries(portfolio, limit=3)) == 3
-    assert [title for _, title in _entries(portfolio, limit=1)] == ["Dividend — VOO"]
+    assert [title for _, title in _entries(portfolio, limit=1)] == ["Staking — ETH"]
 
 
 def test_the_labels_follow_the_locale(portfolio: Portfolio) -> None:

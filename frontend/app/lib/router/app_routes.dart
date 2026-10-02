@@ -47,6 +47,26 @@ abstract final class AppRoutes {
   /// The query key that carries a question into the assistant.
   static const String askParameter = 'ask';
 
+  /// Paths a person plausibly types, bookmarks or is sent, that name a
+  /// screen this app has under another path (GGU-112).
+  ///
+  /// `/home` is the obvious guess for a landing route that is really `/`,
+  /// and it used to answer with go_router's raw "no routes for location"
+  /// widget. Each alias is a route that only redirects, so the auth gate
+  /// still runs first and a stranger still lands on sign-in. Anything not
+  /// listed here reaches the themed `NotFoundPage` instead — an alias is a
+  /// declared synonym, never a guess about what the person meant.
+  static const Map<String, String> aliases = <String, String>{
+    '/home': home,
+    '/index': home,
+    '/dashboard': home,
+    '/portfolio': portfolio,
+    '/positions': portfolio,
+    '/assistant': conversation,
+    '/chat': conversation,
+    '/transactions': activity,
+  };
+
   /// Whether [location] is the sign-in screen — the one path the gate treats
   /// differently from every other.
   static bool isSignIn(String location) => location == signIn;

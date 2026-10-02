@@ -47,10 +47,14 @@ class AttributionDriverComponent extends ViewComponent {
           path: 'price_move.trend',
         ),
       ),
+      // `holding`, not `shares`: the tile held 2.1 Bitcoin under the label
+      // "Shares" until GGU-123, and both the field name and the label moved
+      // in one release (backend spec 0046 OD-3). The label arrives naming the
+      // asset — *BTC held* — so this reads it like every other word.
       DriverTile(
-        label: payload.text('shares.label'),
-        figure: payload.text('shares.units.display'),
-        caption: payload.text('shares.caption'),
+        label: payload.text('holding.label'),
+        figure: payload.text('holding.units.display'),
+        caption: payload.text('holding.caption'),
       ),
       DriverTile(
         label: payload.text('day_share.label'),

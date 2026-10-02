@@ -44,10 +44,10 @@ void main() {
       // Every word here came out of `holdings.positions.v1`'s `filters[]`.
       expect(find.text('✓ All'), findsOneWidget);
       for (final label in <String>[
-        'Equities',
-        'Bonds',
-        'Alternatives',
-        'Cash',
+        'Layer 1',
+        'Layer 2',
+        'Infrastructure',
+        'DeFi',
       ]) {
         expect(find.text(label), findsOneWidget);
       }
@@ -60,7 +60,7 @@ void main() {
       await tester.tap(find.byTooltip('Filter Holdings'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Bonds'));
+      await tester.tap(find.text('Layer 2'));
       await tester.pumpAndSettle();
 
       expect(find.text(HoldingsFilterSheet.title), findsNothing);
@@ -68,7 +68,7 @@ void main() {
         () => repository.fetchPortfolioViews(
           portfolioId: 'current',
           views: <String>[HoldingsBloc.positionsView],
-          options: <String, String>{'asset_class': 'bonds'},
+          options: <String, String>{'asset_class': 'layer2'},
         ),
       ).called(1);
     });
@@ -77,13 +77,13 @@ void main() {
       await pump(tester);
       await tester.tap(find.byTooltip('Filter Holdings'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Cash'));
+      await tester.tap(find.text('DeFi'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byTooltip('Filter Holdings'));
       await tester.pumpAndSettle();
 
-      expect(find.text('✓ Cash'), findsOneWidget);
+      expect(find.text('✓ DeFi'), findsOneWidget);
       expect(find.text('✓ All'), findsNothing);
     });
   });

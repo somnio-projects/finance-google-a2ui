@@ -10,7 +10,7 @@ void main() {
     testWidgets('reports the spread and names both ends', (tester) async {
       await pumpScenarioCard(tester, scenarioData());
       expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
-      expect(find.text(r'$6,000.00'), findsOneWidget);
+      expect(find.text(r'$1,617.00'), findsOneWidget);
       expect(
         find.text(ScenarioComparisonFooter.highestCaption),
         findsOneWidget,
@@ -76,19 +76,21 @@ void main() {
       // N-9. The second note is the sentence that makes the card's silence
       // on "which method" legible rather than merely absent.
       await pumpScenarioCard(tester, scenarioData());
-      expect(find.text('Before tax'), findsOneWidget);
+      expect(find.text('Illustrative rates'), findsOneWidget);
       expect(find.text('Not advice'), findsOneWidget);
       expect(
         find.text(
-          'The realised result and its short/long split, before any tax '
-          'rate, fee or wash-sale rule.',
+          'Tax is estimated at 35.00% on the short-term part and 15.00% '
+          'on the long-term part, on gains only. These rates are a declared '
+          'assumption, not yours: no fee and no wash-sale rule is modelled.',
         ),
         findsOneWidget,
       );
       expect(
         find.text(
-          'No method is recommended: which result is preferable depends on '
-          'a tax situation this demo does not know.',
+          'The recommendation is arithmetic under the rates above, not '
+          'advice: which result is preferable depends on a tax situation '
+          'this demo does not know.',
         ),
         findsOneWidget,
       );
@@ -104,14 +106,16 @@ void main() {
         tester,
         const ScenarioComparisonComponent().read(ViewPayload.fromJson(example)),
       );
-      expect(find.text('Before tax'), findsNothing);
+      expect(find.text('Illustrative rates'), findsNothing);
       expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
     });
 
     testWidgets('announces a note as one label-and-text unit', (tester) async {
       await pumpScenarioCard(tester, scenarioData());
       expect(
-        find.bySemanticsLabel(RegExp('^Before tax[.] The realised result')),
+        find.bySemanticsLabel(
+          RegExp('^Illustrative rates[.] Tax is estimated'),
+        ),
         findsOneWidget,
       );
     });

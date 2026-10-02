@@ -33,7 +33,11 @@ make audit                      # pip-audit
 
 Integration tests need Docker (testcontainers pulls `postgres:16-alpine`).
 Alternative: `docker compose up -d db` at the repo root, then
-`TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance make test`.
+`TEST_DATABASE_URL=postgresql+asyncpg://app:app@localhost:5432/finance make test`
+— but **that run empties the compose database**, because the fixtures delete
+every row of every migrated table before each test so the suite is runnable
+twice against one database (GGU-124, spec `backend/0047`). Re-seed with
+`make seed` afterwards, or give the suite its own container.
 
 ### The frontend half
 
@@ -46,7 +50,7 @@ make gate                            # toolchain · format · analyze · budget 
 Flutter **3.47.5** (Dart 3.13.4), pinned in `frontend/.fvmrc` — the one home,
 read by `frontend/tool/check_toolchain.sh` and by `frontend-ci.yaml`, which no
 longer carries a version of its own (GGU-94). `make gate` proves it first.
-Needs no Docker and no database: the three pure-Dart packages run under `dart
+Needs no Docker and no database: the five pure-Dart packages run under `dart
 test` in about a second, and the widget suite drives the transport with
 `MockClient`.
 

@@ -63,13 +63,30 @@ on:
 permissions:
   contents: read
 
+# `github.workflow` is in the key, and it is load-bearing rather than
+# decorative (GGU-130). This workflow is **called** by both `backend-cd` and
+# `frontend-cd`, and a reusable workflow evaluates `concurrency` in the
+# CALLER's context — so keyed by ref alone, two delivery runs on one branch
+# land in one group, and `cancel-in-progress: true` makes the second kill the
+# first's gate. That is not hypothetical: on 2026-09-25 `frontend-cd` started
+# 23 s after `backend-cd` on `develop`, cancelled its `repo` job, and left
+# `publish` and `deploy` skipped — the client shipped and the API did not.
+# `backend-ci` and `frontend-ci` are also called by their `-cd` counterparts
+# and both already carry `github.workflow`; this file was the one that did not.
 concurrency:
-  group: repo-ci-${{ github.ref }}
+  group: repo-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# uv's own version is pinned here; the interpreter's is not, and must not be.
+# `backend/.python-version` is its one home, and the `uv run --project backend`
+# inside `scripts/check_spelling.sh` reads it from this repository root —
+# measured, not assumed: `uv python find --project backend` answers 3.14 here
+# with no env var set. A `PYTHON_VERSION` handed to `setup-uv`'s
+# `python-version` input is the same fact declared a second time, in the one
+# place no laptop can read, which is GGU-94's defect in the other language
+# (GGU-125). `repo.gate-pairs` fails on a workflow that restates it.
 env:
   UV_VERSION: "0.11.19"
-  PYTHON_VERSION: "3.12"
 
 jobs:
   spelling:
@@ -84,7 +101,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
+          # No `python-version:` — see the `env:` block above.
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
 
@@ -130,6 +147,24 @@ jobs:
 
       - name: "Compare every gate command with its workflow step (check_gate_pairs.sh)"
         run: bash scripts/check_gate_pairs.sh
+
+  # One job, two steps, in this order: the suite proves the check rejects, then
+  # the check is pointed at the real corpus. Two steps rather than two jobs
+  # because both need only a shallow checkout and nothing else — a second runner
+  # would pay for a second checkout to run a one-second script (§3).
+  spec-numbers:
+    name: "Repository · every spec is numbered once and indexed once"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: "Check out the repository (actions/checkout)"
+        uses: actions/checkout@v7
+
+      - name: "Prove the spec-number check rejects a collision (test_check_spec_numbers.sh)"
+        run: bash scripts/tests/test_check_spec_numbers.sh
+
+      - name: "Check every spec's number, shape and index row (check_spec_numbers.sh)"
+        run: bash scripts/check_spec_numbers.sh
 
   manual-run:
     name: "Repository · a manual run names the build that served it"
@@ -202,7 +237,8 @@ jobs:
   report:
     name: "Report · repository gate summary"
     runs-on: ubuntu-latest
-    needs: [spelling, secrets, shell, gate-pairs, manual-run, manual-run-body]
+    needs:
+      [spelling, secrets, shell, gate-pairs, spec-numbers, manual-run, manual-run-body]
     if: always()
     timeout-minutes: 5
     steps:
@@ -217,6 +253,7 @@ jobs:
             echo "| Secrets | no credential in any commit, in any stack — including a client-only pull request | ${{ needs.secrets.result }} |"
             echo "| Shell | every tracked shell script passes shellcheck, entry points included | ${{ needs.shell.result }} |"
             echo "| Gate pairs | every ship-gate command appears verbatim in the workflow that runs it | ${{ needs.gate-pairs.result }} |"
+            echo "| Spec numbers | no two specs share a number, every spec has one index row, and the check is shown to reject | ${{ needs.spec-numbers.result }} |"
             echo "| Manual run | the manual-run check rejects a build that is stale, foreign, unknown or unnamed | ${{ needs.manual-run.result }} |"
             echo "| Manual run · this PR | the pasted manual run names this branch's head | ${{ needs.manual-run-body.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"

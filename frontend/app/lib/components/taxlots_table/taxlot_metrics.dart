@@ -1,148 +1,140 @@
 import 'package:flutter/widgets.dart';
 
-/// Every distance, radius and type size the tax-lot table draws with,
-/// **measured from the design** rather than chosen.
+/// Every distance and radius the tax-lot **table** draws with, measured from
+/// the UI Kit's desktop artboards (`specs/frontend/assets/0027-taxlot-uikit/`).
 ///
 /// They live as named constants for the reason ADR-L D-15 gives: a
-/// cross-platform raster cannot resolve a 1 px radius change, so the values a
-/// golden would miss are asserted from the widget tree instead — by
-/// `taxlot_row_tile_test.dart` and `taxlot_parts_test.dart`. A widget that
-/// reached for a literal `10` would put the design value somewhere no test
-/// is looking.
+/// cross-platform raster cannot resolve a 1 px change, so the values a golden
+/// would miss are asserted from the widget tree instead. A widget that reached
+/// for a literal `41` would put a design value somewhere no test is looking.
+///
+/// The phone form's numbers are in `TaxLotMobileMetrics`; the two are separate
+/// files because they are separate measurements, and one table of forty
+/// constants is not a table anybody reads.
 abstract final class TaxLotMetrics {
-  /// The card: `border-radius: 16px`, `padding: 16px 18px 14px`.
+  /// The card: 640 × 346 with a 16 px radius, on a 600 px content column.
   static const double cardRadius = 16;
 
-  /// The card's rounding, ready to hand to a `BoxDecoration`.
-  ///
-  /// The five radii below are *always* wanted as a `BorderRadius`, so each
-  /// is offered as one. It keeps `BorderRadius.circular(...)` out of six
-  /// call sites and off both sides of the assertions that pin them.
+  /// The card's rounding, ready for a `BoxDecoration`.
   static BorderRadius get cardBorderRadius => BorderRadius.circular(cardRadius);
 
-  /// A row's rounding.
-  static BorderRadius get rowBorderRadius => BorderRadius.circular(rowRadius);
+  /// The card's padding: `20` at the sides, `24` above the header. The foot
+  /// is `0` because the footer carries its own inset — the kit's rule runs
+  /// the full content width and the line under it is the card's last 56 px.
+  static const EdgeInsets cardPadding = EdgeInsets.fromLTRB(20, 24, 20, 0);
 
-  /// A row's rounding measured *inside* its 1 px hairline, so the term rail
-  /// follows the corner instead of squaring it off.
-  static BorderRadius get rowInnerBorderRadius =>
-      BorderRadius.circular(rowRadius - 1);
+  /// The gap under the header line, above the column captions.
+  static const double headerGap = 18;
 
-  /// The footer bar's rounding.
-  static BorderRadius get footerBorderRadius =>
-      BorderRadius.circular(footerRadius);
+  /// The gap under the column captions, above the first row.
+  static const double captionGap = 12;
 
-  /// Any pill's rounding.
-  static BorderRadius get chipBorderRadius => BorderRadius.circular(chipRadius);
-
-  /// The tick box's rounding.
-  static BorderRadius get checkBoxBorderRadius =>
-      BorderRadius.circular(checkBoxRadius);
-
-  /// The card's padding. The foot is tighter than the head because the
-  /// footer bar already carries 12 px of its own top margin.
-  static const EdgeInsets cardPadding = EdgeInsets.fromLTRB(18, 16, 18, 14);
-
-  /// The gap under the card's header line, and above the footer bar.
-  static const double headerGap = 12;
-
-  /// A row: `border-radius: 10px`, `height: 48px`, `gap: 7px`.
-  static const double rowRadius = 10;
-
-  /// The row's fixed height.
+  /// Below this **content** width the card stacks its lots as phone cards.
   ///
-  /// Fixed, not intrinsic: the design's rows are a constant 48 px and a row
-  /// that grew with its text would drift from the artboard on the first
-  /// long date. Every cell is one line.
-  static const double rowHeight = 48;
+  /// A property of the card, not of the screen: it is laid out by whatever
+  /// column the Assistant, the catalog or Home puts it in, so `LayoutBuilder`
+  /// asks the constraint rather than the media query (spec `frontend/0027`
+  /// OD-7). It is measured *inside* [cardPadding], where the `LayoutBuilder`
+  /// sits, because that is the width the columns actually get: 420 sits
+  /// between the kit's two artboards, which give the table 600 of content and
+  /// the phone form 328.
+  static const double stackBelow = 420;
+
+  /// A row's height. Fixed, not intrinsic: the kit's rows are a constant
+  /// 41 px and a row that grew with its text would drift from the artboard on
+  /// the first long date. Every cell is one line.
+  static const double rowHeight = 41;
 
   /// The vertical gap between two rows.
-  static const double rowGap = 7;
+  static const double rowGap = 8;
 
-  /// The rail down the left of a row that marks its term.
-  static const double rowAccentWidth = 3;
+  /// The rail that marks a row's term, flush with the content's left edge.
+  static const double railWidth = 4;
 
-  /// The row's inner padding, measured from *inside* the 1 px hairline and
-  /// the 3 px rail: the design's `padding: 9px 10px` on a `1px 1px 1px 3px`
-  /// border puts text 13 px from the left edge and 11 px from the right.
-  static const EdgeInsets rowPadding = EdgeInsets.fromLTRB(9, 0, 10, 0);
+  /// The gap after the rail, and again after the tick box.
+  static const double railGap = 9;
 
-  /// The column-header line: `padding: 0 10px 6px`.
-  static const EdgeInsets columnHeaderPadding = EdgeInsets.fromLTRB(
-    10,
-    0,
-    10,
-    6,
-  );
-
-  /// The gap between two columns, in a row and in the header.
-  static const double columnGap = 8;
-
-  /// The fixed first column, which holds the 16 px box.
-  static const double checkColumnWidth = 26;
-
-  /// The tick box: `16 × 16`, `border-radius: 4px`, `border-width: 1.5px`.
+  /// The tick box: 16 × 16, radius 4, a 1.5 px hairline when empty.
   static const double checkBoxSize = 16;
 
   /// That box's corner radius.
   static const double checkBoxRadius = 4;
 
+  /// The tick box's rounding.
+  static BorderRadius get checkBoxBorderRadius =>
+      BorderRadius.circular(checkBoxRadius);
+
   /// That box's hairline.
   static const double checkBoxBorderWidth = 1.5;
 
-  /// The design's `grid-template-columns` after the first, fixed column:
-  /// `1.05fr 0.95fr 0.95fr 1fr 1.02fr`, as integer flex weights.
+  /// The six columns' widths, as integer flex weights.
   ///
-  /// The design has a sixth, `0.55fr` **Shares** column that this build does
-  /// not draw — the contract's only per-lot quantity is the raw `units`
-  /// string, which N-4 forbids putting on screen (spec `frontend/0003`
-  /// OD-2). The remaining weights are the design's, untouched.
-  static const List<int> columnFlex = <int>[105, 95, 95, 100, 102];
+  /// Derived from the artboard's own ink: the right-aligned columns end at
+  /// 1442, 1530, 1626 and 1716 on a content column running 1300 → 1863, which
+  /// fixes every boundary once the 8 px gap is known. In order: acquired,
+  /// shares, cost basis, market value, gain/loss, holding period.
+  static const List<int> columnFlex = <int>[80, 54, 80, 88, 82, 139];
 
-  /// The footer bar: `border-radius: 12px`, `padding: 11px 14px`, `gap: 12px`.
-  static const double footerRadius = 12;
+  /// The gap between two columns, in a row and in the caption line.
+  static const double columnGap = 8;
 
-  /// The footer bar's padding.
-  static const EdgeInsets footerPadding = EdgeInsets.symmetric(
-    horizontal: 14,
-    vertical: 11,
-  );
+  /// How each column's content sits in its cell.
+  ///
+  /// The date reads left, the four figures right, and the holding period is
+  /// **centred** — which is what the artboard does: its caption's ink centres
+  /// in that cell to within 2 px. See OD-2 for what is missing from it.
+  static const List<TextAlign> columnAlign = <TextAlign>[
+    TextAlign.left,
+    TextAlign.right,
+    TextAlign.right,
+    TextAlign.right,
+    TextAlign.right,
+    TextAlign.center,
+  ];
 
-  /// The gap between the footer's caption, total and split pills.
-  static const double footerGap = 12;
+  /// A term pill: radius 8.5, `padding: 2px 9px`, 17 px tall.
+  static const double chipRadius = 8.5;
 
-  /// A pill inside a row: `border-radius: 20px`, `padding: 2px 7px`.
-  static const EdgeInsets rowChipPadding = EdgeInsets.symmetric(
-    horizontal: 7,
-    vertical: 2,
-  );
+  /// Any pill's rounding.
+  static BorderRadius get chipBorderRadius => BorderRadius.circular(chipRadius);
 
-  /// A pill in the legend: `padding: 2px 8px`, plus a hairline.
-  static const EdgeInsets legendChipPadding = EdgeInsets.symmetric(
-    horizontal: 8,
-    vertical: 2,
-  );
-
-  /// A pill in the footer: `padding: 3px 9px`.
-  static const EdgeInsets footerChipPadding = EdgeInsets.symmetric(
+  /// A pill's inset inside a row or the legend.
+  static const EdgeInsets chipPadding = EdgeInsets.symmetric(
     horizontal: 9,
+    vertical: 2,
+  );
+
+  /// A pill in the footer, which the kit sets a shade roomier.
+  static const EdgeInsets footerChipPadding = EdgeInsets.symmetric(
+    horizontal: 10,
     vertical: 3,
   );
 
-  /// Every pill's corner radius.
-  static const double chipRadius = 20;
-
-  /// The gap between two legend pills, and between a row's pill and the
-  /// holding-period text beside it.
+  /// The gap between the two legend pills, and between the footer's.
   static const double chipGap = 8;
 
-  /// The dashed square the empty state draws: `40 × 40`, radius 10.
+  /// The gap between the last row and the card's one rule.
+  static const double dividerGap = 12;
+
+  /// That rule.
+  static const double dividerThickness = 1;
+
+  /// The footer band under the rule: `16` above the line of text, `17` below.
+  static const EdgeInsets footerPadding = EdgeInsets.fromLTRB(0, 16, 0, 17);
+
+  /// The gap between the footer's caption, its total and the split pills.
+  static const double footerGap = 12;
+
+  /// The dashed square the empty state draws: 40 × 40, radius 10.
+  ///
+  /// Not in this frame — the kit draws no empty tax-lot card — so it keeps
+  /// the geometry the earlier artboard gave it (spec `frontend/0003`).
   static const double placeholderSize = 40;
 
   /// That square's corner radius.
   static const double placeholderRadius = 10;
 
-  /// The empty state's `padding: 22px 0` and its `gap: 10px`.
+  /// The empty state's vertical padding.
   static const double placeholderPadding = 22;
 
   /// The gap between the dashed square and the sentence under it.

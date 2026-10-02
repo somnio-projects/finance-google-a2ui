@@ -20,10 +20,10 @@ from app.domain.sale_results import SaleSimulation
 from app.domain.terms import LotTerm
 from app.presentation.displays import MoneyDisplay
 from app.presentation.options import DisplayOptions
+from app.presentation.scenario_captions import CAPTIONS
+from app.presentation.scenario_columns import ScenarioColumn
 from app.presentation.scenarios import (
     METHOD_LABELS,
-    ScenarioColumn,
-    ScenarioSpread,
     ScenarioSubject,
 )
 
@@ -74,17 +74,25 @@ def column(
         options: The precision and locale to format under.
 
     Returns:
-        The column, every figure already formatted.
+        The column, every figure already formatted. ``est_tax`` and
+        ``net_after_tax`` land at zero here and are filled by
+        ``scenario_after_tax.taxed``: they depend on the declared rates, which
+        are not this function's business (spec 0051).
     """
     return ScenarioColumn(
+        key=method.value.lower(),
         method=method,
         label=METHOD_LABELS[method],
+        caption=CAPTIONS[method],
+        proceeds=options.money(simulation.proceeds),
         cost_basis=options.money(simulation.cost_basis),
         realized_pl=signed_money(simulation.realized_pl, options=options),
         short_term_pl=signed_money(simulation.pl_in(LotTerm.SHORT), options=options),
         long_term_pl=signed_money(simulation.pl_in(LotTerm.LONG), options=options),
-        short_term_lots=simulation.lots_in(LotTerm.SHORT),
-        long_term_lots=simulation.lots_in(LotTerm.LONG),
+        est_tax=options.money(ZERO),
+        net_after_tax=signed_money(ZERO, options=options),
+        short_term_lots=str(simulation.lots_in(LotTerm.SHORT)),
+        long_term_lots=str(simulation.lots_in(LotTerm.LONG)),
         lots=tuple(row.lot_id for row in simulation.consumed),
     )
 
@@ -113,30 +121,4 @@ def subject(
     )
 
 
-def spread(
-    columns: tuple[ScenarioColumn, ...], *, options: DisplayOptions
-) -> ScenarioSpread:
-    """Report the distance between the extremes, naming neither as better.
-
-    Args:
-        columns: The rendered columns, in the caller's requested order.
-        options: The precision and locale to format under.
-
-    Returns:
-        The gap and the two methods at its ends, or a flat spread naming
-        nobody when every method realises the same (spec 0017 OD-4).
-    """
-    best = max(columns, key=lambda row: row.realized_pl.amount)
-    worst = min(columns, key=lambda row: row.realized_pl.amount)
-    gap = best.realized_pl.amount - worst.realized_pl.amount
-    if gap == ZERO:
-        return ScenarioSpread(amount=options.money(ZERO), differs=False)
-    return ScenarioSpread(
-        amount=options.money(gap),
-        differs=True,
-        highest=best.method,
-        lowest=worst.method,
-    )
-
-
-__all__ = ["column", "price_pair", "signed_money", "spread", "subject"]
+__all__ = ["column", "price_pair", "signed_money", "subject"]

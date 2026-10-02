@@ -73,10 +73,13 @@ def test_every_advertised_option_is_a_real_query_parameter(
     # projection requires at least two distinct entries, so one of them is a
     # legitimate 422 from the view rather than the gap this test is about.
     fragment = {
-        "symbol": "symbol=NVDA",
+        "symbol": "symbol=BTC",
         "quantity": "quantity=0.5",
         "lot_method": "lot_method=FIFO",
         "methods": "methods=FIFO&methods=LIFO",
+        "short_term_rate": "short_term_rate=0.35",
+        "long_term_rate": "long_term_rate=0.15",
+        "include_wait": "include_wait=true",
         "side": "side=buy",
         "size": "size=1",
         "size_in": "size_in=units",
@@ -93,11 +96,11 @@ def test_every_advertised_option_is_a_real_query_parameter(
         "window": "window=7d",
         "group_by": "group_by=asset_class",
         "headline": "headline=false",
-        "kind": "kind=dividend",
+        "kind": "kind=staking_reward",
         "limit": "limit=50",
-        "legs": "legs=NVDA:1",
-        "asset_class": "asset_class=bonds",
-        "query": "query=nvda",
+        "legs": "legs=BTC:1",
+        "asset_class": "asset_class=layer1",
+        "query": "query=btc",
     }[option]
 
     response = client.get(

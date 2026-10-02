@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// The Home shell's colours, **measured** from `Home.dc.html` (spec 0026 §2).
 ///
 /// Every value was read out of the rendered page with `getComputedStyle`,
-/// light and dark, the way `chart_tokens.dart` and `app_colors.dart` were.
+/// light and dark, the way `chart_tokens.dart` and `app_color_tokens.dart`
+/// were.
 /// They are a `ThemeExtension` rather than more `ColorScheme` slots because
 /// Material has no role for "the pill behind a selected tab" or "the dot in
 /// the simulation badge", and inventing one would put a guess where a

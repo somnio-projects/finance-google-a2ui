@@ -20,7 +20,7 @@ flowchart TB
         vn["…the next one: one new file"]
     end
     filt["search.py · positions_filter.py<br/>query · kind · asset_class<br/><i>the rows a list keeps, decided HERE</i>"]
-    frag["fragments.py · displays.py<br/>series · bucket · category · total · *Display<br/>every figure: display string + raw for geometry"]
+    frag["fragments.py · labels.py · plot_fragments.py · displays.py<br/>series · bucket · category · total · signed total · *Display<br/>every figure: display string + raw for geometry"]
     decl["actions/declared.py<br/>SurfaceActionRef, derived from the<br/>action's own args schema"]
     pub["published.py<br/>component_of · guidance_of<br/><i>derived once, read by all four renderings</i>"]
     out["Payload the widget binds<br/>discriminated by `view`<br/>+ inputs[] (editable options)<br/>+ actions[] (what it may send back)"]
@@ -105,7 +105,7 @@ flowchart TB
 | The shared search option and its matcher | `presentation/search.py` (domain fields only — spec 0035 OD-6) |
 | The Holdings class filter | `presentation/positions_filter.py` |
 | The same knobs as query parameters | `schemas/view_options.py` (chart knobs) · `view_options_tabs.py` (screen knobs) |
-| Fragments, `*Display` pairs | `presentation/fragments.py`, `displays.py`, `formatting.py` |
+| Fragments, `*Display` pairs | `presentation/fragments.py` (re-exports the whole vocabulary), `labels.py`, `plot_fragments.py`, `displays.py`, `formatting.py` |
 | Selection rule | `presentation/selection.py` (ranks each view's own `fitness`) |
 | Serving endpoints, named once | `presentation/endpoints.py` |
 | OpenAPI union, examples, catalog entry | `presentation/contract.py` |

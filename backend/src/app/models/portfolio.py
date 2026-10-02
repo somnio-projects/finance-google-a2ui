@@ -30,7 +30,7 @@ from uuid import UUID
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, UpdatedAtMixin
 
 #: Money and quantity are stored exactly, never as a float (ADR-E D-5). The
 #: scale is wide enough for a crypto quantity and a sub-cent price; a `Decimal`
@@ -38,7 +38,7 @@ from app.models.base import Base, TimestampMixin
 EXACT = Numeric(38, 18)
 
 
-class Portfolio(TimestampMixin, Base):
+class Portfolio(TimestampMixin, UpdatedAtMixin, Base):
     """One owner's portfolio, read back at the ``as_of`` it was seeded with."""
 
     __tablename__ = "portfolios"
@@ -50,7 +50,7 @@ class Portfolio(TimestampMixin, Base):
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
-class PortfolioLot(TimestampMixin, Base):
+class PortfolioLot(TimestampMixin, UpdatedAtMixin, Base):
     """One open acquisition lot, cascading from its portfolio."""
 
     __tablename__ = "portfolio_lots"
@@ -65,8 +65,8 @@ class PortfolioLot(TimestampMixin, Base):
     cost_basis: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
 
 
-class PortfolioTransaction(TimestampMixin, Base):
-    """One ledger row — trade, dividend or deposit — cascading from its portfolio."""
+class PortfolioTransaction(TimestampMixin, UpdatedAtMixin, Base):
+    """One ledger row — trade, reward or deposit — cascading from its portfolio."""
 
     __tablename__ = "portfolio_transactions"
 
@@ -75,7 +75,10 @@ class PortfolioTransaction(TimestampMixin, Base):
     )
     transaction_id: Mapped[str] = mapped_column(String(32), nullable=False)
     occurred_on: Mapped[date] = mapped_column(Date(), nullable=False)
-    kind: Mapped[str] = mapped_column(String(8), nullable=False)
+    # 16, not 8: ``staking_reward`` is fourteen characters and ``dividend``
+    # was exactly eight, so the column that fitted the equities ledger would
+    # have truncated the one that replaced it (spec 0044 OD-7, AC-6).
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
     symbol: Mapped[str] = mapped_column(String(10), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(EXACT, nullable=False)
     price: Mapped[Decimal] = mapped_column(EXACT, nullable=False)

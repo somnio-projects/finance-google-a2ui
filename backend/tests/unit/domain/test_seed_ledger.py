@@ -22,10 +22,10 @@ from app.domain.transactions import TransactionType
 
 #: Spec 0035 AC-3. Not "more than a few": the numbers are the deliverable —
 #: every chip has to come back with a list worth looking at.
-EXPECTED_KINDS = {"buy": 16, "sell": 7, "dividend": 16, "deposit": 9}
+EXPECTED_KINDS = {"buy": 9, "sell": 7, "staking_reward": 16, "deposit": 9}
 #: Bought and fully sold on purpose (OD-7), so the timeline shows a closed
 #: position the holdings list correctly does not carry.
-ROUND_TRIP = "TSLA"
+ROUND_TRIP = "AVAX"
 
 
 def test_the_ledger_has_enough_of_every_kind_to_be_worth_filtering(
@@ -33,7 +33,7 @@ def test_the_ledger_has_enough_of_every_kind_to_be_worth_filtering(
 ) -> None:
     counted = Counter(row.kind.value for row in portfolio.ledger)
     assert dict(counted) == EXPECTED_KINDS
-    assert sum(EXPECTED_KINDS.values()) == len(portfolio.ledger) == 48
+    assert sum(EXPECTED_KINDS.values()) == len(portfolio.ledger) == 41
 
 
 def test_every_transaction_id_is_unique(portfolio: Portfolio) -> None:
@@ -94,7 +94,7 @@ def test_the_remaining_cost_basis_is_what_the_sale_did_not_consume(
     portfolio: Portfolio,
 ) -> None:
     """The cent half of AC-4, which the quantity half cannot catch."""
-    for symbol in sorted({lot.symbol for lot in portfolio.lots} - {"USD"}):
+    for symbol in sorted({lot.symbol for lot in portfolio.lots} - {"USDC"}):
         paid = sum(
             (
                 row.amount

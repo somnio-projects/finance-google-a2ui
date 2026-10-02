@@ -10,77 +10,61 @@ legs**: struck, weighed and formatted — an output of the render, like ``v1``'s
 
 The stepper is where the two meet, and ``order_ticket_v2_lines`` holds it:
 every line carries the whole ``legs`` value its ``+`` and ``-`` send, written
-server-side, because a client may not add one to a share count (N-2).
+server-side, because a client may not add one to a unit count (N-2).
+
+**There is no total quantity, and there is no value that would be one**
+(GGU-122 AC-1, spec 0046 OD-2). The panel used to carry ``impact.units``, the
+arithmetic sum of every leg's quantity under the label *Est. shares*: on the
+crypto portfolio that is ``0.05 + 1.0 + 16 = 17.05``, a figure of nothing,
+sitting beside a money total that is correct and therefore lending it credit.
+Units across different assets are not commensurable, so the field is gone
+rather than relabelled — the header already states the leg count, and each
+``lines[]`` entry carries its own quantity in its own asset.
 
 Nothing here places anything. ``effect`` names the only thing the ticket does,
 ``disclosure`` says it in words, and the blocked state is a declared field a
 client reads rather than a comparison it performs (spec 0018 OD-2, 0031 OD-4).
+
+``controls`` is the same statement made to the one button that looked as
+though it disagreed. It is deliberately **not** called ``actions``, which
+``contract.py`` reads as the list of things a surface may send back; this one
+sends nothing, and its single entry is served ``enabled: false`` with the
+reason in words (spec 0050 OD-2).
 """
 
 from typing import Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from app.domain.draft_legs import LEGS_PATTERN, MAX_LEGS, MAX_LEGS_TEXT
 from app.domain.payoff import Side
-from app.presentation.fragments import MoneyDisplay, ProjectionDto, Total
-from app.presentation.order_ticket_v2_lines import OrderLine, UnitTotal, WeightShift
+from app.presentation.fragments import ProjectionDto
+from app.presentation.order_ticket_v2_controls import MAX_CONTROLS, TicketControl
+
+# Re-exported: `Badge`, `Breach` and the two blocks moved out for the file
+# budget and are imported from here by everything that was already importing
+# them. One home for the names, two files for the bodies.
+from app.presentation.order_ticket_v2_impact import (
+    Badge,
+    Breach,
+    OrderConstraints,
+    OrderImpact,
+)
+from app.presentation.order_ticket_v2_lines import OrderLine
 
 VIEW_ID: Final[str] = "order.ticket.v2"
 EFFECT: Final[str] = "recalculate"
 SUMMARY: Final[str] = (
     "Multi-leg draft order: each leg struck at its reference price with its "
-    "share of the order, the order's impact — total, shares, fees, cash "
-    "remaining, the sector's weight before and after — and whether the "
-    "available cash covers it. Editing a leg re-renders it; it places nothing."
+    "weight in the order, the order's impact — total, fees, cash remaining, "
+    "the group's weight before and after — and whether the available cash "
+    "covers it. Editing a leg re-renders it; it places nothing."
 )
 DISCLOSURE: Final[str] = (
     "Illustrative draft. This showcase has no broker and no execution: "
     "stepping a leg re-renders these figures, fees are simulated at zero, "
     "and nothing is ever sent, placed or settled."
 )
-
-Breach = Literal["none", "over_cash"]
-Badge = Literal["editable", "blocked"]
-
-
-class OrderImpact(BaseModel):
-    """The design's *Order impact* panel, every figure pre-formatted."""
-
-    model_config = ConfigDict(frozen=True)
-
-    total: Total = Field(description="What the whole order is worth.")
-    units: UnitTotal = Field(description="Shares across every leg.")
-    fees: Total = Field(description="Simulated fees — zero, and labelled so.")
-    cash_remaining: Total = Field(
-        description="Cash left after the order; negative when it is blocked."
-    )
-    weight_shifts: tuple[WeightShift, ...] = Field(
-        max_length=MAX_LEGS,
-        description="One row per group the legs touch, first-leg order.",
-    )
-
-
-class OrderConstraints(BaseModel):
-    """The bound a draft is checked against, and whether it breached it."""
-
-    model_config = ConfigDict(frozen=True)
-
-    max_cash: Total = Field(description="Cash available to a buy.")
-    breach: Breach = Field(
-        description="Which bound the draft exceeds; `none` when it is fillable.",
-        examples=["none"],
-    )
-    shortfall: MoneyDisplay | None = Field(
-        default=None,
-        description="How far over the bound the draft is; null when it is not.",
-    )
-    message: str | None = Field(
-        default=None,
-        max_length=160,
-        description="The validation sentence to show verbatim; null when none.",
-        examples=["Exceeds available cash — reduce order by $2,300.00."],
-    )
 
 
 class OrderTicketV2Payload(ProjectionDto):
@@ -103,7 +87,7 @@ class OrderTicketV2Payload(ProjectionDto):
         max_length=MAX_LEGS_TEXT,
         pattern=LEGS_PATTERN,
         description="The `legs` option as sent, ready to be sent back unchanged.",
-        examples=["NVDA:3,AVGO:2,AMD:14"],
+        examples=["BTC:3,ETH:2,SOL:14"],
     )
     lines: tuple[OrderLine, ...] = Field(
         max_length=MAX_LEGS,
@@ -115,6 +99,13 @@ class OrderTicketV2Payload(ProjectionDto):
         max_length=300,
         examples=[DISCLOSURE],
         description="What this draft is and is not, in words the client shows.",
+    )
+    controls: tuple[TicketControl, ...] = Field(
+        max_length=MAX_CONTROLS,
+        description=(
+            "The buttons the design draws, each with its label and whether it "
+            "is live. Not `actions`: this surface sends nothing back."
+        ),
     )
     effect: Literal["recalculate"] = Field(
         default=EFFECT,

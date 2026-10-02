@@ -17,7 +17,7 @@ from app.presentation.views.order_ticket_v2 import (
 def test_render_strikes_the_design_legs_at_the_seeded_prices(
     portfolio: Portfolio,
 ) -> None:
-    """AC-2 — three legs, each with its shares, price, value and weight."""
+    """AC-2 — three legs, each with its units, price, value and weight."""
     payload = render(portfolio, OrderTicketV2Options())
 
     assert payload.view == VIEW_ID
@@ -34,44 +34,53 @@ def test_render_strikes_the_design_legs_at_the_seeded_prices(
         )
         for line in payload.lines
     ] == [
-        ("NVDA", "NVIDIA Corp", "3", "$1,204.66", "$3,613.98", "38.33%"),
-        ("AVGO", "Broadcom Inc.", "2", "$1,740.00", "$3,480.00", "36.91%"),
-        ("AMD", "Advanced Micro Devices", "14", "$166.70", "$2,333.80", "24.75%"),
+        ("BTC", "Bitcoin", "0.06", "$64,250.00", "$3,855.00", "39.44%"),
+        ("ETH", "Ethereum", "1", "$3,480.00", "$3,480.00", "35.61%"),
+        ("SOL", "Solana", "16", "$152.40", "$2,438.40", "24.95%"),
     ]
 
 
 def test_render_states_the_impact_pre_formatted(portfolio: Portfolio) -> None:
-    """AC-5 — the panel: total, shares, fees, cash and the sector's shift."""
+    """AC-5 — the panel: total, fees, cash and each group's shift."""
     impact = render(portfolio, OrderTicketV2Options()).impact
 
     assert (impact.total.label, impact.total.amount.display) == (
         "Total order",
-        "$9,427.78",
+        "$9,773.40",
     )
-    assert (impact.units.label, impact.units.units.display) == ("Est. shares", "19")
+    # No quantity, under any label: the panel showed "Est. shares 17.06" for
+    # 0.06 BTC + 1 ETH + 16 SOL, a figure of nothing beside money totals that
+    # are right. The field is gone rather than renamed (GGU-122, spec 0046
+    # OD-2); each `lines[]` entry carries its own quantity in its own asset.
+    assert "units" not in type(impact).model_fields
     assert (impact.fees.label, impact.fees.amount.display) == (
         "Est. fees · sim",
         "$0.00",
     )
-    assert impact.cash_remaining.amount.display == "$29,205.44"
-    (shift,) = impact.weight_shifts
-    assert shift.label == "Portfolio weight · Technology"
-    assert (shift.before.display, shift.after.display) == ("46.57%", "48.52%")
+    assert impact.cash_remaining.amount.display == "$41,990.60"
+    # Three groups, not one: the design's legs settle on three chains (0044).
+    assert [
+        (s.label, s.before.display, s.after.display) for s in impact.weight_shifts
+    ] == [
+        ("Portfolio weight · Bitcoin", "27.94%", "28.74%"),
+        ("Portfolio weight · Ethereum", "49.49%", "50.21%"),
+        ("Portfolio weight · Solana", "11.85%", "12.36%"),
+    ]
 
 
 def test_the_legs_option_is_echoed_under_its_own_name(portfolio: Portfolio) -> None:
     """AC-3 — the naming *is* the interactivity declaration (0019 OD-3)."""
-    payload = render(portfolio, OrderTicketV2Options(legs="AMD:5,NVDA:1"))
+    payload = render(portfolio, OrderTicketV2Options(legs="SOL:5,BTC:1"))
 
-    assert payload.legs == "AMD:5,NVDA:1"
-    assert [line.symbol for line in payload.lines] == ["AMD", "NVDA"]
+    assert payload.legs == "SOL:5,BTC:1"
+    assert [line.symbol for line in payload.lines] == ["SOL", "BTC"]
 
 
 def test_a_buy_within_cash_is_not_blocked(portfolio: Portfolio) -> None:
     """AC-6 — the fillable case declares `none` and carries no sentence."""
     constraints = render(portfolio, OrderTicketV2Options()).constraints
 
-    assert constraints.max_cash.amount.display == "$38,633.22"
+    assert constraints.max_cash.amount.display == "$51,764.00"
     assert constraints.breach == "none"
     assert constraints.shortfall is None
     assert constraints.message is None
@@ -81,26 +90,26 @@ def test_a_buy_beyond_cash_is_blocked_with_the_shortfall_written(
     portfolio: Portfolio,
 ) -> None:
     """AC-6 — the client reads a flag and a string; it subtracts nothing."""
-    payload = render(portfolio, OrderTicketV2Options(legs="NVDA:40,AVGO:2,AMD:14"))
+    payload = render(portfolio, OrderTicketV2Options(legs="BTC:1.0,ETH:1.0,SOL:16"))
 
     assert payload.badge == "blocked"
-    assert payload.impact.total.amount.display == "$54,000.20"
-    assert payload.impact.cash_remaining.amount.display == "-$15,366.98"
+    assert payload.impact.total.amount.display == "$70,168.40"
+    assert payload.impact.cash_remaining.amount.display == "-$18,404.40"
     assert payload.constraints.breach == "over_cash"
     assert payload.constraints.shortfall is not None
-    assert payload.constraints.shortfall.display == "$15,366.98"
+    assert payload.constraints.shortfall.display == "$18,404.40"
     assert payload.constraints.message == (
-        "Exceeds available cash — reduce order by $15,366.98."
+        "Exceeds available cash — reduce order by $18,404.40."
     )
 
 
-def test_a_sell_raises_cash_and_moves_the_sector_down(portfolio: Portfolio) -> None:
+def test_a_sell_raises_cash_and_moves_the_group_down(portfolio: Portfolio) -> None:
     """OD-7 — the mirror; never blocked here."""
     payload = render(portfolio, OrderTicketV2Options(side="sell"))
 
     assert payload.title == "Draft order · Sell · 3 legs"
-    assert payload.impact.cash_remaining.amount.display == "$48,061.00"
-    assert payload.impact.weight_shifts[0].after.display == "44.62%"
+    assert payload.impact.cash_remaining.amount.display == "$61,537.40"
+    assert payload.impact.weight_shifts[0].after.display == "27.14%"
     assert payload.constraints.breach == "none"
 
 
@@ -110,6 +119,6 @@ def test_render_formats_every_figure_under_the_requested_locale(
     """Locale and precision are declared options like any other."""
     payload = render(portfolio, OrderTicketV2Options(locale="de-DE", precision=1))
 
-    assert payload.impact.total.amount.display == "9.427,8 $"
-    assert payload.lines[0].price.display == "1.204,66 $"
-    assert payload.lines[0].weight.display == "38,3%"
+    assert payload.impact.total.amount.display == "9.773,4 $"
+    assert payload.lines[0].price.display == "64.250,00 $"
+    assert payload.lines[0].weight.display == "39,4%"

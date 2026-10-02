@@ -57,9 +57,9 @@ PARAMETERS: Final[Mapping[str, object]] = {
             "description": (
                 "How to slice the allocation chart that comes with an "
                 "unfiltered answer: 'holding' is one slice per position, "
-                "'asset_class' folds them into Equities, Bonds, Cash and "
-                "Alternatives, 'sector' folds the equities by sector. Ask "
-                "for the one the question asks about."
+                "'asset_class' folds them into Layer 1, Layer 2, "
+                "Infrastructure, DeFi and Stablecoins, 'sector' folds them by "
+                "chain ecosystem. Ask for the one the question asks about."
             ),
         },
     },

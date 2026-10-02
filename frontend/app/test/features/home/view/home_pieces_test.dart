@@ -50,7 +50,7 @@ void main() {
           ),
         );
         expect(
-          find.text('$glyph +\$3,240.18 (+0.68%)  today', findRichText: true),
+          find.text('$glyph +\$2,201.05 (+0.46%)  today', findRichText: true),
           findsOneWidget,
         );
       });
@@ -64,7 +64,7 @@ void main() {
       await tester.pumpApp(
         HomeMovers(payload: ViewPayload.fromJson(moversWithTrend('flat'))),
       );
-      final change = tester.widget<Text>(find.text('— +4.2%'));
+      final change = tester.widget<Text>(find.text('— -6.3%'));
       expect(
         change.style?.color,
         AppTheme.light.extension<HomeTokens>()!.muted,
@@ -94,7 +94,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       );
-      await tester.tap(find.text('💬 Tax impact of selling NVDA?'));
+      await tester.tap(find.text('💬 Tax impact of selling BTC?'));
       await tester.pumpAndSettle();
       expect(find.text('assistant'), findsOneWidget);
     });

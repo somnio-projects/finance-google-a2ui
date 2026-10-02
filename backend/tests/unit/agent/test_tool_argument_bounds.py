@@ -41,13 +41,21 @@ def _pattern_is_bounded(pattern: str) -> bool:
 
 
 def _is_bounded(schema: dict[str, Any]) -> bool:
-    """Return True when this JSON Schema leaf constrains its input's size."""
+    """Return True when this JSON Schema leaf constrains its input's size.
+
+    ``boolean`` joined ``null`` when ``compare_lot_methods`` published the
+    first boolean argument (GGU-143). That is not a loosening and the
+    distinction is worth stating: this check's subject is *can the model make
+    this argument arbitrarily large*, and ``type: boolean`` admits exactly two
+    values. A bool falling through to ``return False`` was the helper having
+    no case for a shape no tool had used yet, not a bound it was enforcing.
+    """
     if "anyOf" in schema:
         return all(_is_bounded(branch) for branch in schema["anyOf"])
     if "enum" in schema:
         return True
     kind = schema.get("type")
-    if kind == "null":
+    if kind in {"null", "boolean"}:
         return True
     if kind == "string":
         return "maxLength" in schema or _pattern_is_bounded(schema.get("pattern", ""))

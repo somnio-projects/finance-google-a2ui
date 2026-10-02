@@ -8,8 +8,8 @@ void main() {
     label: 'Bitcoin',
     valueDisplay: r'$10,230.00',
     cumulativeDisplay: r'$67,155.00',
-    detail: r'+18.00% · 1.5 sh · $44,770.00',
-    selectedLabel: 'BTC selected',
+    detail: r'+18.00% · 1.5 BTC · $44,770.00',
+    deltaLabel: 'Contribution',
   );
   const net = AttributionNet(
     label: 'Net',
@@ -23,9 +23,11 @@ void main() {
       expect(step.key, 'BTC');
     });
 
-    test('carries the written detail and the selected caption', () {
-      expect(step.detail, r'+18.00% · 1.5 sh · $44,770.00');
-      expect(step.selectedLabel, 'BTC selected');
+    test('carries the written detail and the contribution caption', () {
+      expect(step.detail, r'+18.00% · 1.5 BTC · $44,770.00');
+      // `delta_label`, the caption the kit prints in front of the figure.
+      // It replaced `selected_label`, which nothing drew (GGU-119 BG-4).
+      expect(step.deltaLabel, 'Contribution');
     });
 
     test('differs when a display string differs', () {
@@ -44,8 +46,8 @@ void main() {
               label: 'Bitcoin',
               valueDisplay: r'$10,230.01',
               cumulativeDisplay: r'$67,155.00',
-              detail: r'+18.00% · 1.5 sh · $44,770.00',
-              selectedLabel: 'BTC selected',
+              detail: r'+18.00% · 1.5 BTC · $44,770.00',
+              deltaLabel: 'Contribution',
             ),
           ),
         ),

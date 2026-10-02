@@ -1,38 +1,51 @@
 """The legs of a draft order, as the one string a caller sends back (spec 0031).
 
 A multi-leg order is edited leg by leg, and every edit has to travel as a
-**declared option** (ADR-K D-3): one bounded string, ``NVDA:3,AVGO:2,AMD:14``,
-rather than one option per ticker — seventeen optional integers would make
+**declared option** (ADR-K D-3): one bounded string, ``BTC:0.06,ETH:1.0,SOL:16``,
+rather than one option per ticker — one optional decimal per asset would make
 most combinations illegal states and would put the reference list into the
 options schema a second time (spec 0031 OD-2).
 
 The stepper the design draws is the reason this module also *writes* the
-string. A client may not add one to a share count (N-2), so each rendered leg
+string. A client may not add to a unit count (N-2), so each rendered leg
 carries the whole option value a ``+`` or a ``-`` sends — composed here, from
 the same parser and the same bound the options model enforces.
 
-Whole shares only. The design steps in units of one, and a fractional leg has
-no stepper to draw it.
+**Fractional units, stepped by the asset's own step (spec 0044 OD-6).** The
+legs were whole shares while the portfolio was equities. One whole unit of BTC
+is a third of this portfolio, so a stepper that moved by one would take a
+$9,773 draft past its cash on a single tap, and a basket that floored to one
+would compose a leg of **zero**. The digits a leg may carry are therefore the
+same as an order ticket's ``size`` — nine integers and eight decimals — and how
+far one tap moves is a property of the asset, read from the market reference.
 """
 
 from dataclasses import dataclass, replace
+from decimal import Decimal
 from typing import Final
 
 from app.domain.errors import SymbolNotFoundError
 from app.domain.market import market_asset
+from app.domain.money import ZERO
 
 #: The most legs one draft carries. Five is two more than the design draws
-#: and one more than its chips propose (`Add TSM`).
+#: and one more than its chips propose (`Add LINK`).
 MAX_LEGS: Final[int] = 5
-#: Six digits of shares: nothing in this portfolio is priced so low that a
-#: seventh digit is an order anyone would draft.
-MAX_LEG_QUANTITY: Final[int] = 999_999
+#: Nine integer digits of units: a token quoted in fractions of a cent is still
+#: not one anybody drafts a ten-digit order in.
+MAX_LEG_QUANTITY: Final[Decimal] = Decimal("999999999")
+#: One quantity, spelled once: nine integer digits and up to eight decimals,
+#: the same shape ``presentation.order_sizing.SIZE_PATTERN`` publishes for a
+#: single-leg ticket. Two spellings of "a quantity" is where they drift.
+_QUANTITY_DIGITS: Final[str] = r"[0-9]{1,9}(\.[0-9]{1,8})?"
+_LEG: Final[str] = rf"[A-Z]{{2,10}}:{_QUANTITY_DIGITS}"
 #: The **whole** truth about what ``legs`` accepts, published to the model and
-#: enforced by the options model from this one literal: ``TICKER:SHARES``
+#: enforced by the options model from this one literal: ``TICKER:UNITS``
 #: pairs, comma-separated, one to ``MAX_LEGS`` of them.
-LEGS_PATTERN: Final[str] = r"^[A-Z]{2,10}:[0-9]{1,6}(,[A-Z]{2,10}:[0-9]{1,6}){0,4}$"
-#: Five legs of a ten-letter ticker and six digits, with their separators.
-MAX_LEGS_TEXT: Final[int] = MAX_LEGS * 17 + (MAX_LEGS - 1)
+LEGS_PATTERN: Final[str] = rf"^{_LEG}(,{_LEG}){{0,{MAX_LEGS - 1}}}$"
+#: Five legs of a ten-letter ticker and eighteen quantity characters, with
+#: their separators.
+MAX_LEGS_TEXT: Final[int] = MAX_LEGS * 29 + (MAX_LEGS - 1)
 
 LEG_SEPARATOR: Final[str] = ","
 QUANTITY_SEPARATOR: Final[str] = ":"
@@ -40,10 +53,10 @@ QUANTITY_SEPARATOR: Final[str] = ":"
 
 @dataclass(frozen=True, slots=True)
 class LegRequest:
-    """One leg as asked for: a ticker and a whole number of shares."""
+    """One leg as asked for: a ticker and an exact number of units."""
 
     symbol: str
-    quantity: int
+    quantity: Decimal
 
 
 def parse_legs(text: str) -> tuple[LegRequest, ...]:
@@ -73,7 +86,7 @@ def parse_legs(text: str) -> tuple[LegRequest, ...]:
             msg = f"leg {symbol!r} is not in the market reference"
             raise ValueError(msg) from exc
         seen.add(symbol)
-        legs.append(LegRequest(symbol=symbol, quantity=int(quantity)))
+        legs.append(LegRequest(symbol=symbol, quantity=Decimal(quantity)))
     return tuple(legs)
 
 
@@ -85,30 +98,32 @@ def format_legs(legs: tuple[LegRequest, ...]) -> str:
 
 
 def with_quantity(
-    legs: tuple[LegRequest, ...], symbol: str, quantity: int
+    legs: tuple[LegRequest, ...], symbol: str, quantity: Decimal
 ) -> tuple[LegRequest, ...]:
-    """Return ``legs`` with one leg's share count replaced, order kept."""
+    """Return ``legs`` with one leg's unit count replaced, order kept."""
     return tuple(
         replace(leg, quantity=quantity) if leg.symbol == symbol else leg for leg in legs
     )
 
 
-def stepped(legs: tuple[LegRequest, ...], symbol: str, step: int) -> str | None:
+def stepped(legs: tuple[LegRequest, ...], symbol: str, direction: int) -> str | None:
     """Return the option value one stepper tap on ``symbol`` sends.
 
     Args:
         legs: The legs as rendered.
         symbol: The leg being stepped.
-        step: ``+1`` or ``-1``.
+        direction: ``+1`` or ``-1``. How far that is in units comes from the
+            asset's own ``step``, not from the caller — the client may not
+            derive it (N-2) and one step cannot serve BTC and ARB alike.
 
     Returns:
-        The whole ``legs`` string with that leg moved by ``step``, or ``None``
+        The whole ``legs`` string with that leg moved by one step, or ``None``
         when the move would leave the published bound — the client disables
         the control rather than sending a value the backend refuses.
     """
     current = next(leg.quantity for leg in legs if leg.symbol == symbol)
-    target = current + step
-    if target < 0 or target > MAX_LEG_QUANTITY:
+    target = current + direction * market_asset(symbol).step
+    if target < ZERO or target > MAX_LEG_QUANTITY:
         return None
     return format_legs(with_quantity(legs, symbol, target))
 

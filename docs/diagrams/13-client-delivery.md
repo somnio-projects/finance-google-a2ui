@@ -2,6 +2,8 @@
 
 One bundle, built once, proven at a URL before anyone is sent to it. Source of truth: [`specs/frontend/0017`](../../specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md), [`.github/workflows/frontend-cd.yaml`](../../.github/workflows/frontend-cd.yaml), [`frontend/tool/build_web.sh`](../../frontend/tool/build_web.sh). Diagram [09](09-delivery-pipeline.md) answers *where each check runs*; this one answers only *how the client ships*.
 
+The A2UI v1.0 client ships the **same way**: [`frontend-v1-cd.yaml`](../../.github/workflows/frontend-v1-cd.yaml) is this picture with `frontend-ci` read as `frontend-v1-ci`, `tool/build_web.sh` as `frontend_v1/tool/build_web.sh`, and the live site as `finance-a2ui-v1` (ADR-M D-9). `infra/scripts/tests/test_dev_environment.sh` asserts every edge below on both files.
+
 ```mermaid
 flowchart LR
     btn["Run workflow<br/>(a human presses it)"]

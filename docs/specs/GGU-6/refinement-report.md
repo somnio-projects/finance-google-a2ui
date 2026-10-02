@@ -1,5 +1,21 @@
 # Epic refinement report — GGU-6
 
+> ⚠️ **HISTORICAL — read the date before you act on this.** This report was
+> written on 2026-09-18 against `410bb9d`, and it describes a repository that no
+> longer exists. `client_flutter/` — the app it inspects, and whose missing
+> `ios/` and `android/` targets it files a task for — was **retired on
+> 2026-09-22** (spec [`repo/0002`](../../../specs/repo/0002-retire-the-client-flutter-app.md)).
+> The only Flutter app now is `frontend/`, which is web-first by construction.
+> It also states *"no CI workflow exists"*; seven workflows exist today.
+>
+> It is kept because it is the record of a refinement pass, and because it is
+> the **origin of GGU-27's premise** — that ticket's implementation plan is
+> descended from this document's §584. Nothing here is current guidance.
+> (Banner added 2026-09-25, GGU-128: every other surviving `client_flutter`
+> reference in the repository carries a pointer like this one, and this file was
+> the only one that carried none.)
+
+
 - Run date: 2026-09-18 · Mode: **dry-run, then FULL RUN executed** · Integration branch SHA: **`410bb9d`** (local `main`)
 - Operator: `/dev-epic-refinement` (harness) · Hardening engine: `jira-ticket-hardening` (**executed** — 7 rewritten, 1 commented)
 - Epic: [GGU-6 "Epic 0 — Foundation"](https://somniosoftware.atlassian.net/browse/GGU-6) · project GGU (Google Gen UI) · **8 children** (GGU-46 created this run) · ~22h estimated after revisions

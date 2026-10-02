@@ -1,4 +1,4 @@
-"""The curated asset rows, as data (spec 0025 OD-2).
+"""The curated asset rows, as data (spec 0044 OD-1, OD-2).
 
 Split from ``market.py`` for the reason ``seed_data.py`` is split from
 ``seed.py``: a table that never changes at runtime is data, and keeping it
@@ -7,9 +7,21 @@ beside the model that parses it pushed that module past the 150-line budget.
 Every figure is a **string**, parsed to ``Decimal`` by ``MarketAsset``
 (ADR-E D-5).
 
-**The previous closes were solved, not chosen** — spec 0026 §3 records the
-six constraints and the two rules (no fund among movers, no non-mover moving
-more than the third) that fixed them together.
+**Eight assets, and the universe is the argument (spec 0044 OD-1).** Three
+layer 1s, one layer 2, one stablecoin, one DeFi protocol, one oracle network,
+and one more layer 1 that the portfolio traded out of. Eight is what gives the
+donut five distinct slices, the waterfall both signs and the tax-lot table two
+terms; a shorter list makes an empty-looking chart and a longer one makes
+every slice a sliver.
+
+**Prices are a static fixture, not a feed (OD-3).** The catalog examples and
+the client goldens are re-rendered and diffed by the gate, so a live price
+would make the gate fail on a quiet market rather than on a defect.
+
+**The previous closes were solved, not chosen.** The portfolio keeps the
+design's total market value and all-time gain (spec 0044 OD-4), and the day's
+movers have to read as a list: two down and one up, clearly ordered, with the
+settlement asset never in it.
 """
 
 # ruff: noqa: E501 -- the reference rows are a table a reader compares against
@@ -18,38 +30,33 @@ from typing import Final
 
 from app.domain.taxonomy import AssetClass, Sector
 
-# symbol, name, price, previous close, asset class, sector, is_fund
-# (ADR-E D-5 — never a float). The seven rows the design draws in
-# `Holdings.dc.html` come first, in its order; the rest close the gap between
-# that visible list and the class totals it also states (spec 0025 §2.1, OD-1).
 # fmt: off
-# symbol, name, price, previous close, asset class, sector, is_fund
+# symbol, name, price, previous close, asset class, ecosystem, stepper step
 # (ADR-E D-5 — never a float). One row per line on purpose: this is a table a
 # reader compares against the design page, and a formatter that wraps each
 # tuple over eight lines turns it into something nobody can compare.
+#
+# ``step`` is what one tap of the order ticket's stepper moves this leg by
+# (spec 0044 OD-6). It is a property of the asset, not of the widget: one unit
+# of BTC is four months of the demo portfolio's cash, and one unit of ARB is
+# eighty-six cents, so a single step size cannot serve both.
 REFERENCE_ROWS: Final[
-    tuple[tuple[str, str, str, str, AssetClass, Sector | None, bool], ...]
+    tuple[tuple[str, str, str, str, AssetClass, Sector | None, str], ...]
 ] = (
-    # Drawn in the design, exactly as drawn, in its order.
-    ("NVDA", "NVIDIA Corp", "1204.66", "1156.10", AssetClass.EQUITIES, Sector.TECHNOLOGY, False),
-    ("AAPL", "Apple Inc.", "233.18", "230.64", AssetClass.EQUITIES, Sector.TECHNOLOGY, False),
-    ("MSFT", "Microsoft Corp", "423.00", "423.22", AssetClass.EQUITIES, Sector.TECHNOLOGY, False),
-    ("VOO", "Vanguard S&P 500 ETF", "528.00", "555.00", AssetClass.EQUITIES, Sector.OTHER, True),
-    ("BND", "Vanguard Total Bond", "71.40", "71.55", AssetClass.BONDS, None, True),
-    ("PYPL", "PayPal Holdings", "65.30", "65.55", AssetClass.EQUITIES, Sector.FINANCIALS, False),
-    ("USD", "Cash & sweep", "1.00", "1.00", AssetClass.CASH, None, False),
-    # Below the fold of the design's scrollable list (spec 0025 OD-1).
-    ("JNJ", "Johnson & Johnson", "155.00", "156.55", AssetClass.EQUITIES, Sector.HEALTHCARE, False),
-    ("PG", "Procter & Gamble", "168.00", "169.70", AssetClass.EQUITIES, Sector.CONSUMER, False),
-    ("XOM", "Exxon Mobil", "34.22", "34.57", AssetClass.EQUITIES, Sector.ENERGY, False),
-    ("AGG", "iShares Core US Aggregate Bond", "97.50", "97.70", AssetClass.BONDS, None, True),
-    ("TIP", "iShares TIPS Bond", "121.90", "122.05", AssetClass.BONDS, None, True),
-    ("GLD", "SPDR Gold Shares", "198.00", "195.30", AssetClass.ALTERNATIVES, None, True),
-    ("VNQ", "Vanguard Real Estate", "90.86", "89.50", AssetClass.ALTERNATIVES, None, True),
-    # Tradable but not held: Flow C's order (AVGO, AMD) and Home's movers (TSLA).
-    ("AVGO", "Broadcom Inc.", "1740.00", "1722.50", AssetClass.EQUITIES, Sector.TECHNOLOGY, False),
-    ("AMD", "Advanced Micro Devices", "166.70", "167.90", AssetClass.EQUITIES, Sector.TECHNOLOGY, False),
-    ("TSLA", "Tesla, Inc.", "298.04", "305.06", AssetClass.EQUITIES, Sector.CONSUMER, False),
+    # Held, in the order the design's scrollable list draws them: largest
+    # first, the settlement asset last.
+    ("BTC", "Bitcoin", "64250.00", "61980.00", AssetClass.LAYER1, Sector.BITCOIN, "0.01"),
+    ("ETH", "Ethereum", "3480.00", "3442.00", AssetClass.LAYER1, Sector.ETHEREUM, "0.1"),
+    ("SOL", "Solana", "152.40", "156.80", AssetClass.LAYER1, Sector.SOLANA, "1"),
+    ("LINK", "Chainlink", "22.60", "23.15", AssetClass.INFRASTRUCTURE, Sector.ETHEREUM, "10"),
+    ("AAVE", "Aave", "248.00", "259.50", AssetClass.DEFI, Sector.ETHEREUM, "0.1"),
+    ("ARB", "Arbitrum", "0.8640", "0.8420", AssetClass.LAYER2, Sector.ETHEREUM, "100"),
+    # The settlement asset. No ecosystem on purpose: USDC is natively issued on
+    # every chain above, so naming one would be a false denominator (OD-2).
+    ("USDC", "USD Coin", "1.00", "1.00", AssetClass.STABLECOIN, None, "100"),
+    # Tradable but not held: the round trip the ledger remembers and the
+    # holdings list correctly does not carry, and the day's largest mover.
+    ("AVAX", "Avalanche", "41.80", "44.60", AssetClass.LAYER1, Sector.AVALANCHE, "1"),
 )
 # fmt: on
 
