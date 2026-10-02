@@ -19,14 +19,15 @@ void main() {
   });
 
   group(ConversationSurfaceEdited, () {
-    test('is equal by slot, option and value', () {
+    test('is equal by surface, component, option and value', () {
       expect(
         const ConversationSurfaceEdited(
-          slot: 1,
+          surfaceId: 's',
+          componentId: 'root',
           option: 'size',
           value: '3',
         ).props,
-        equals(<Object?>[1, 'size', '3']),
+        equals(<Object?>['s', 'root', 'size', '3']),
       );
     });
   });

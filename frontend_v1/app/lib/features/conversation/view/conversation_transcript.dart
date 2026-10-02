@@ -1,12 +1,8 @@
-import 'package:finance_app/components/component_host.dart';
-import 'package:finance_app/components/component_registry.dart';
-import 'package:finance_app/components/component_skeleton_host.dart';
-import 'package:finance_app/components/surface_edits.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
+import 'package:finance_app/features/conversation/view/agent_surface_tile.dart';
 import 'package:finance_app/features/conversation/view/assistant_answer.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Everything the turn has produced so far, oldest first, in the design's
 /// frame: bubbles on the right, the `Assistant` label before the agent's
@@ -67,7 +63,7 @@ class ConversationTranscript extends StatelessWidget {
                 AssistantLabel(streaming: streaming && last),
                 const SizedBox(height: 10),
               ],
-              ConversationEntryTile(entry: entry, slot: index),
+              ConversationEntryTile(entry: entry),
             ],
           ),
         );
@@ -78,18 +74,11 @@ class ConversationTranscript extends StatelessWidget {
 
 /// One entry of the transcript.
 class ConversationEntryTile extends StatelessWidget {
-  /// Renders [entry], which sits at [slot] in the transcript.
-  const ConversationEntryTile({
-    required this.entry,
-    required this.slot,
-    super.key,
-  });
+  /// Renders [entry].
+  const ConversationEntryTile({required this.entry, super.key});
 
   /// The entry to render.
   final ConversationEntry entry;
-
-  /// The entry's index — what an edit of its options names (GGU-113).
-  final int slot;
 
   @override
   Widget build(BuildContext context) {
@@ -98,39 +87,9 @@ class ConversationEntryTile extends StatelessWidget {
       // Verbatim. The backend wrote this text and the client never rewrites,
       // truncates or reformats it (N-9).
       AgentSaid(:final text) => AssistantAnswer(text: text),
-      // The skeleton is the component's own, found through the same
-      // registry the surface will resolve through (spec 0015 OD-3).
-      SurfacePending(:final view) => ComponentSkeletonHost(
-        registry: context.read<ComponentRegistry>(),
-        view: view,
-      ),
-      // **The same registry, not a parallel path.** A surface the agent asked
-      // for is resolved by exactly the widget a `?view=` read goes through,
-      // so an unregistered view degrades to the host's placeholder instead of
-      // crashing the turn.
-      // **Editable, through the same bloc.** The scope is what lets a
-      // component with declared inputs render them live; an edit re-requests
-      // this one surface with the option changed (ADR-K D-11, GGU-113).
-      AgentSurface(:final payload, :final pendingOption, :final rejection) =>
-        SurfaceEdits(
-          pendingOption: pendingOption,
-          rejection: rejection,
-          onOptionChanged: (option, value) =>
-              context.read<ConversationBloc>().add(
-                ConversationSurfaceEdited(
-                  slot: slot,
-                  option: option,
-                  value: value,
-                ),
-              ),
-          child: ComponentHost(
-            registry: context.read<ComponentRegistry>(),
-            payload: payload,
-          ),
-        ),
-      SurfaceUnavailable(:final view, :final message) => AssistantAnswer(
-        text: 'Could not show "$view": $message',
-      ),
+      // The surface lives in the bloc's state and is drawn — and kept
+      // current as `updateDataModel` arrives — by its own tile.
+      AgentSurface(:final surfaceId) => AgentSurfaceTile(surfaceId: surfaceId),
     };
   }
 }

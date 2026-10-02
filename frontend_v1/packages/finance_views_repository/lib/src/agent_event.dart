@@ -1,3 +1,4 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:equatable/equatable.dart';
 
 /// How a turn ended (spec `client/0003` §8.3).
@@ -8,9 +9,9 @@ enum AgentTurnState {
   /// The turn produced a surface the user may act on.
   ///
   /// **A normal terminal state, not an error** (ADR-D D-3, N-11). It is
-  /// emitted whenever the turn carried any render intent, which is the common
-  /// case for this app — a client that treats it as a failure shows an error
-  /// on every successful widget-bearing turn.
+  /// emitted whenever the turn carried any surface, which is the common case
+  /// for this app — a client that treats it as a failure shows an error on
+  /// every successful widget-bearing turn.
   inputRequired,
 
   /// The turn could not be completed; an [AgentFailed] follows it.
@@ -36,42 +37,28 @@ final class AgentTurnStarted extends AgentEvent {
   const AgentTurnStarted();
 }
 
-/// A surface is ready, **while the turn is still running** (ADR-K D-19).
+/// A2UI v1.0 messages, **while the turn is still running** (ADR-M D-3).
 ///
-/// It names a registered view and carries no payload: the client resolves the
-/// view through the same component registry a REST read goes through, and
-/// fetches the payload itself. That is what makes the first widget appear
-/// before the answer text arrives.
-final class AgentSurfaceReady extends AgentEvent {
-  /// Creates the event for the surface at [index].
-  const AgentSurfaceReady({
-    required this.index,
-    required this.view,
-    required this.options,
-  });
+/// One `artifact-update` carries one `DataPart` per surface or function
+/// response; its messages arrive here already decoded, one outcome each, so a
+/// malformed message is reported by the processor and its neighbours still
+/// apply (the extension spec's processing rules). Unlike the v0.9 wire there
+/// is nothing left to fetch: the payload is in the surface's data model.
+final class AgentSurfaceMessages extends AgentEvent {
+  /// Creates the event for [messages], in wire order.
+  const AgentSurfaceMessages(this.messages);
 
-  /// Position of this surface in the turn, from zero.
-  final int index;
-
-  /// The registered view id the agent chose. Never invented by the client,
-  /// and validated against the registry before it is rendered (N-6).
-  final String view;
-
-  /// The declared options the agent chose, as query values.
-  ///
-  /// The server sends them as JSON (`{"top_n": 5}`) and they travel back as
-  /// query parameters, so each value is rendered with `toString`. That is a
-  /// transport encoding of the server's own choice, not a formatting decision
-  /// about a figure — nothing here reaches a label (N-1, N-7).
-  final Map<String, String> options;
+  /// The decoded messages of every A2UI part of the artifact.
+  final List<Decoded> messages;
 
   @override
-  List<Object?> get props => <Object?>[index, view, options];
+  List<Object?> get props => <Object?>[messages];
 }
 
-/// One follow-up the turn recommends: a registered key and the words the
-/// backend wrote for it (spec backend/0029). The client shows [label] and
-/// sends [key] back through `ask.suggested.v1`; it never sends the words.
+/// One follow-up the turn recommends (spec backend/0029). The client shows
+/// [label] and, on the v1.0 wire, sends that same text back as an ordinary
+/// text part — a chip lives outside any surface, so no A2UI message pretends
+/// one exists (ADR-M D-7). [key] is kept for identity and tests.
 final class Suggestion extends Equatable {
   /// Creates the suggestion.
   const Suggestion({required this.key, required this.label});
@@ -86,12 +73,11 @@ final class Suggestion extends Equatable {
   List<Object?> get props => <Object?>[key, label];
 }
 
-/// The assistant's answer, with every surface of the turn repeated.
+/// The assistant's answer and the follow-ups it recommends.
 final class AgentAnswered extends AgentEvent {
   /// Creates the event.
   const AgentAnswered({
     required this.text,
-    required this.views,
     this.suggestions = const <Suggestion>[],
   });
 
@@ -99,16 +85,11 @@ final class AgentAnswered extends AgentEvent {
   /// never rewrites or reformats it.
   final String text;
 
-  /// Every view id the turn produced, in order. Repeats what the incremental
-  /// [AgentSurfaceReady] events already carried, so a consumer that ignores
-  /// them still receives everything.
-  final List<String> views;
-
   /// The follow-ups the turn recommends, in the backend's order (N-10).
   final List<Suggestion> suggestions;
 
   @override
-  List<Object?> get props => <Object?>[text, views, suggestions];
+  List<Object?> get props => <Object?>[text, suggestions];
 }
 
 /// The turn reached a terminal state.

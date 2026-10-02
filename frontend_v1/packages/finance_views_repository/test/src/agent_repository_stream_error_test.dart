@@ -21,6 +21,7 @@ AgentRepository _repositoryThatFailsMidStream(
 ) => AgentRepository(
   a2aClient: A2aClient(
     baseUrl: Uri.parse('http://localhost:8000'),
+    catalogIds: const <String>['https://example.test/catalog.json'],
     tokenProvider: anonymousToken,
     httpClient: MockClient.streaming((_, _) async {
       final controller = StreamController<List<int>>();

@@ -41,15 +41,13 @@ void main() {
         when(
           () => agent.startTurn(
             text: any(named: 'text'),
-            action: any(named: 'action'),
+            messages: any(named: 'messages'),
             messageId: any(named: 'messageId'),
             contextId: any(named: 'contextId'),
           ),
         ).thenAnswer((_) => Stream<AgentEvent>.fromIterable(failed));
-        final bloc = ConversationBloc(
-          agentRepository: agent,
-          viewsRepository: MockViewsRepository(),
-        )..add(const ConversationMessageSent('what moved?'));
+        final bloc = buildBloc(events: failed, agent: agent)
+          ..add(const ConversationMessageSent('what moved?'));
         // On the reason, not the status: the status turns `failed` one event
         // before the reason lands, and a retry sent in that gap would race
         // the first turn's last emission.
@@ -58,17 +56,13 @@ void main() {
         when(
           () => agent.startTurn(
             text: any(named: 'text'),
-            action: any(named: 'action'),
+            messages: any(named: 'messages'),
             messageId: any(named: 'messageId'),
             contextId: any(named: 'contextId'),
           ),
         ).thenAnswer(
           (_) => Stream<AgentEvent>.fromIterable(const <AgentEvent>[
-            AgentAnswered(
-              text: 'BTC led.',
-              views: <String>[],
-              suggestions: chips,
-            ),
+            AgentAnswered(text: 'BTC led.', suggestions: chips),
             AgentTurnEnded(AgentTurnState.completed),
           ]),
         );
@@ -81,7 +75,7 @@ void main() {
         verify(
           () => agent.startTurn(
             text: 'what moved?',
-            action: any(named: 'action'),
+            messages: any(named: 'messages'),
             messageId: any(named: 'messageId'),
             contextId: any(named: 'contextId'),
           ),

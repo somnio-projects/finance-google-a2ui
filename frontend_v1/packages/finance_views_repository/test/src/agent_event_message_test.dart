@@ -3,30 +3,15 @@ import 'package:test/test.dart';
 
 void main() {
   group('parseAgentEvent message', () {
-    test('reads the answer text and every surface of the turn', () {
+    test('reads the answer text', () {
       final event = parseAgentEvent(<String, dynamic>{
         'kind': 'message',
         'role': 'agent',
         'parts': <Map<String, dynamic>>[
           <String, dynamic>{'kind': 'text', 'text': 'BTC led the move.'},
         ],
-        'renderIntents': <Map<String, dynamic>>[
-          <String, dynamic>{'view': 'attribution.waterfall.v1'},
-          <String, dynamic>{'view': 'holdings.allocation.v1'},
-        ],
       });
-      expect(
-        event,
-        equals(
-          const AgentAnswered(
-            text: 'BTC led the move.',
-            views: <String>[
-              'attribution.waterfall.v1',
-              'holdings.allocation.v1',
-            ],
-          ),
-        ),
-      );
+      expect(event, equals(const AgentAnswered(text: 'BTC led the move.')));
     });
 
     test('reads the recommended chips, and drops a half-formed one', () {
@@ -35,7 +20,6 @@ void main() {
         'parts': <Map<String, dynamic>>[
           <String, dynamic>{'kind': 'text', 'text': 'up'},
         ],
-        'renderIntents': <Map<String, dynamic>>[],
         'suggestions': <dynamic>[
           <String, dynamic>{'key': 'tax-lots', 'label': 'Tax lots'},
           <String, dynamic>{'key': 'allocation'},
@@ -59,16 +43,15 @@ void main() {
       expect((event! as AgentAnswered).text, equals('up on the month'));
     });
 
-    test('reads a turn that produced no surface', () {
-      // The null-model path: renderIntents is [] and the turn completes.
+    test('reads a turn that recommended no chip', () {
+      // The null-model path: an answer and nothing else.
       final event = parseAgentEvent(<String, dynamic>{
         'kind': 'message',
         'parts': <Map<String, dynamic>>[
           <String, dynamic>{'kind': 'text', 'text': 'No provider.'},
         ],
-        'renderIntents': <Map<String, dynamic>>[],
       });
-      expect((event! as AgentAnswered).views, isEmpty);
+      expect((event! as AgentAnswered).suggestions, isEmpty);
     });
 
     test('ignores a message with no parts list', () {

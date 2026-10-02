@@ -1,37 +1,29 @@
 import 'dart:async';
 
-import 'package:finance_app/components/component_skeleton_host.dart';
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:finance_app/features/conversation/view/assistant_composer.dart';
 import 'package:finance_app/features/conversation/view/voice_notice.dart';
-import 'package:finance_core/finance_core.dart';
+import 'package:finance_app/skeleton/surface_skeleton.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/a2ui_fixtures.dart';
 import '../../../helpers/fixtures.dart';
 import 'conversation_harness.dart';
 
 void main() {
   group('the Assistant frame', () {
     late MockAgentRepository agent;
-    late MockViewsRepository views;
 
     setUp(() {
       agent = MockAgentRepository();
-      views = MockViewsRepository();
-      when(
-        () => views.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: any(named: 'views'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
     });
 
     testWidgets('wears the header the artboards draw', (tester) async {
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       expect(find.text('Assistant'), findsOneWidget);
       expect(find.text('Gemini · A2UI'), findsOneWidget);
       // "portfolio", not bare "Simulated": next to the model pill, the
@@ -50,14 +42,13 @@ void main() {
         AgentTurnStarted(),
         AgentAnswered(
           text: 'Up today.',
-          views: <String>[],
           suggestions: <Suggestion>[
             Suggestion(key: 'tax-lots', label: 'Tax lots'),
           ],
         ),
         AgentTurnEnded(AgentTurnState.completed),
       ]);
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, 'what moved?');
 
       final bubble = tester.getRect(find.byType(UserBubble));
@@ -76,45 +67,62 @@ void main() {
       expect(find.text('Tax lots'), findsNWidgets(2));
     });
 
-    testWidgets('a surface being composed shows the skeleton', (tester) async {
-      scriptTurn(agent, const <AgentEvent>[
-        AgentTurnStarted(),
-        AgentSurfaceReady(
-          index: 0,
-          view: 'holdings.allocation.v1',
-          options: <String, String>{},
-        ),
-        AgentTurnEnded(AgentTurnState.inputRequired),
-      ]);
-      // A fetch that never answers keeps the skeleton on screen. A completer,
-      // not a delay: a pending timer fails the test at teardown.
-      final never = Completer<Result<RenderedViews>>();
+    testWidgets('a surface buffered until its root shows the skeleton', (
+      tester,
+    ) async {
+      // The adjacency-list rule: nothing is visible before `root` arrives.
+      // A controller, not a delay: a pending timer fails at teardown.
+      final turn = StreamController<AgentEvent>();
       when(
-        () => views.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: any(named: 'views'),
-          options: any(named: 'options'),
+        () => agent.startTurn(
+          text: any(named: 'text'),
+          messages: any(named: 'messages'),
+          messageId: any(named: 'messageId'),
+          contextId: any(named: 'contextId'),
         ),
-      ).thenAnswer((_) => never.future);
-      await pumpConversation(tester, agent: agent, views: views);
+      ).thenAnswer((_) => turn.stream);
+      await pumpConversation(tester, agent: agent);
       await tester.enterText(find.byType(TextField), 'what moved?');
       await tester.tap(find.byTooltip('Send'));
       await tester.pump();
+      turn.add(
+        const AgentSurfaceMessages(<Decoded>[
+          DecodedMessage(CreateSurface(surfaceId: 's-0')),
+        ]),
+      );
       await tester.pump();
-      // The skeleton is the holdings component's own (spec 0015 OD-3).
-      expect(find.byType(ComponentSkeletonHost), findsOneWidget);
-      expect(find.text('get_holdings()…'), findsOneWidget);
+      expect(find.byType(SurfaceSkeleton), findsOneWidget);
       expect(find.byType(StreamingDots), findsOneWidget);
       // The send button is quiet while the turn runs.
       await tester.enterText(find.byType(TextField), 'again');
       await tester.tap(find.byTooltip('Send'));
       await tester.pump();
       expect(find.byType(UserBubble), findsOneWidget);
-      // The payload lands: the skeleton's slot becomes the surface, the turn
-      // ends and the dots go quiet.
-      never.complete(Ok<RenderedViews>(renderedViews()));
+      // The root lands with its data: the skeleton becomes the surface, the
+      // turn ends and the dots go quiet.
+      final rooted =
+          surfaceEvent(
+                surfaceId: 's-0',
+                component: 'HoldingsSummary',
+                payload: holdingsAllocationExample,
+              ).messages.single
+              as DecodedMessage;
+      final create = rooted.message as CreateSurface;
+      turn
+        ..add(
+          AgentSurfaceMessages(<Decoded>[
+            DecodedMessage(
+              UpdateDataModel(surfaceId: 's-0', value: create.dataModel),
+            ),
+            DecodedMessage(
+              UpdateComponents(surfaceId: 's-0', components: create.components),
+            ),
+          ]),
+        )
+        ..add(const AgentTurnEnded(AgentTurnState.inputRequired));
+      await turn.close();
       await tester.pumpAndSettle();
-      expect(find.byType(ComponentSkeletonHost), findsNothing);
+      expect(find.byType(SurfaceSkeleton), findsNothing);
       expect(find.byType(StreamingDots), findsNothing);
       expect(find.text(r'$482,915.20'), findsOneWidget);
     });
@@ -126,7 +134,7 @@ void main() {
       // what stayed is the half that mattered: on a build with no engine —
       // which is every build a test runs — the tooltip says so and the tap
       // still produces a sentence. `voice_composer_test.dart` owns the rest.
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       expect(find.byTooltip(voiceUnavailableTooltip), findsOneWidget);
       await tester.tap(find.byTooltip(voiceUnavailableTooltip));
       await tester.pump();

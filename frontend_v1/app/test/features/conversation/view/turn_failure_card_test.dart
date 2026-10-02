@@ -38,7 +38,7 @@ void main() {
     /// One good turn, so the chips exist, then a failed one.
     Future<void> failAfterAnAnswer(WidgetTester tester) async {
       scriptTurn(agent, const <AgentEvent>[
-        AgentAnswered(text: 'BTC led.', views: <String>[], suggestions: chips),
+        AgentAnswered(text: 'BTC led.', suggestions: chips),
         AgentTurnEnded(AgentTurnState.completed),
       ]);
       await pumpConversation(tester, agent: agent, views: views);
@@ -83,7 +83,7 @@ void main() {
     ) async {
       await failAfterAnAnswer(tester);
       scriptTurn(agent, const <AgentEvent>[
-        AgentAnswered(text: 'Chips and SOL.', views: <String>[]),
+        AgentAnswered(text: 'Chips and SOL.'),
         AgentTurnEnded(AgentTurnState.completed),
       ]);
 
@@ -97,7 +97,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'and the drivers?',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),

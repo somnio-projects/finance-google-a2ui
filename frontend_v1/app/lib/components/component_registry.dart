@@ -1,3 +1,4 @@
+import 'package:finance_app/components/layout_component.dart';
 import 'package:finance_app/components/view_component.dart';
 
 /// Maps a frozen view id to the component that renders it.
@@ -40,4 +41,22 @@ class ComponentRegistry {
 
   /// Every registered view id, in registration order.
   Iterable<String> get viewIds => _components.keys;
+
+  final Map<String, LayoutComponent> _layouts = <String, LayoutComponent>{};
+
+  /// Adds [layout] under its catalog name. Throws [StateError] on a
+  /// duplicate, for the reason [register] does.
+  void registerLayout(LayoutComponent layout) {
+    if (_layouts.containsKey(layout.a2uiComponent)) {
+      throw StateError(
+        'layout "${layout.a2uiComponent}" is already registered',
+      );
+    }
+    _layouts[layout.a2uiComponent] = layout;
+  }
+
+  /// The layout registered as [a2uiComponent], or `null` when the node is
+  /// not a layout — which is how a v1.0 host tells a container from a
+  /// payload-bound component.
+  LayoutComponent? layout(String a2uiComponent) => _layouts[a2uiComponent];
 }

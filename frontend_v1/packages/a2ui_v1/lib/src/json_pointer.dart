@@ -123,7 +123,8 @@ int? _index(String token, int length, bool appending) {
 /// RFC 6901's `array-index` (`0` or a digit run without a leading zero),
 /// read digit by digit.
 ///
-/// Not `int.parse`: the binding rules ban every number-parsing mechanism in
+/// Not the core library's integer parser: the binding rules ban every
+/// number-parsing mechanism in
 /// `lib/` so a payload figure can never be turned into arithmetic, and a
 /// pointer token is the one integer this package has to read. Spelling it out
 /// keeps the ban mechanical instead of granting this file an exemption.

@@ -1,4 +1,5 @@
-# Developer entry points for the A2UI finance client.
+# Developer entry points for the A2UI v1.0 finance client (frontend_v1/,
+# ADR-M D-9) — a copy of frontend/'s Makefile plus `catalog`/`catalog-check`.
 #
 # `make gate` is the ship gate — identical to the `quality` and `tests` jobs
 # of .github/workflows/frontend-ci.yaml and to the `frontend.*` entries in
@@ -17,7 +18,7 @@ LCOV := app/coverage/lcov.info \
 	packages/finance_auth/coverage/lcov.info
 
 .PHONY: install toolchain toolchain-test verify-release-test format format-check \
-	analyze budget manifest manifest-check csp test test-tool test-packages test-app \
+	analyze budget manifest manifest-check catalog catalog-check csp test test-tool test-packages test-app \
 	coverage gate clean
 
 # The first thing the gate proves, because everything after it is read through
@@ -82,6 +83,17 @@ manifest:
 manifest-check:
 	dart run tool/generate_component_manifest.dart --check
 
+# The bundle's copy of the A2UI v1.0 catalog (ADR-M D-4/D-5). `catalog`
+# copies the backend's generated docs/a2ui/v1.0/finance.catalog.json — or,
+# until it exists, the provisional fixture — into app/assets; `catalog-check`
+# fails when the copy is stale, so the renderer never enforces rules the
+# backend no longer emits.
+catalog:
+	bash tool/sync_catalog.sh
+
+catalog-check:
+	bash tool/sync_catalog.sh --check
+
 test: test-tool test-packages test-app
 
 # The gate's own scripts. They are not under lib/, so the coverage contract
@@ -110,8 +122,8 @@ coverage:
 	dart run tool/check_coverage.dart $(LCOV)
 
 gate: toolchain toolchain-test verify-release-test format-check analyze budget \
-	manifest-check csp test coverage
-	@echo "frontend ship gate green"
+	manifest-check catalog-check csp test coverage
+	@echo "frontend_v1 ship gate green"
 
 clean:
 	flutter clean

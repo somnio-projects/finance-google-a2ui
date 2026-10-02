@@ -1,3 +1,4 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:test/test.dart';
 
@@ -51,76 +52,56 @@ void main() {
     });
   });
 
-  group('parseAgentEvent render-intent', () {
-    test('reads the view and its options', () {
-      final event = parseAgentEvent(<String, dynamic>{
-        'kind': 'render-intent',
-        'index': 0,
-        'renderIntent': <String, dynamic>{
-          'view': 'holdings.allocation.v1',
-          'options': <String, dynamic>{'top_n': 5},
-        },
-      });
+  group('parseAgentEvent artifact-update', () {
+    Map<String, dynamic> artifact(List<dynamic> parts) => <String, dynamic>{
+      'kind': 'artifact-update',
+      'taskId': 't-1',
+      'artifact': <String, dynamic>{'artifactId': 'a-1', 'parts': parts},
+    };
+    const a2ui = <String, dynamic>{'mimeType': 'application/a2ui+json'};
+
+    test('decodes every message of every A2UI part, in order', () {
+      final event = parseAgentEvent(
+        artifact(<dynamic>[
+          <String, dynamic>{
+            'kind': 'data',
+            'metadata': a2ui,
+            'data': <dynamic>[
+              <String, dynamic>{
+                'version': 'v1.0',
+                'deleteSurface': <String, dynamic>{'surfaceId': 'a'},
+              },
+              'not a message',
+            ],
+          },
+          <String, dynamic>{'kind': 'text', 'text': 'not A2UI'},
+        ]),
+      );
+      final messages = (event! as AgentSurfaceMessages).messages;
+      expect(messages.first, const DecodedMessage(DeleteSurface('a')));
+      expect(messages.last, isA<DecodeFailure>());
+    });
+
+    test('ignores an artifact with no A2UI part, or no parts at all', () {
       expect(
-        event,
-        equals(
-          const AgentSurfaceReady(
-            index: 0,
-            view: 'holdings.allocation.v1',
-            options: <String, String>{'top_n': '5'},
-          ),
+        parseAgentEvent(
+          artifact(<dynamic>[
+            <String, dynamic>{'kind': 'text', 'text': 'x'},
+          ]),
         ),
-      );
-    });
-
-    test('defaults to no options when the intent carries none', () {
-      final event = parseAgentEvent(<String, dynamic>{
-        'kind': 'render-intent',
-        'index': 1,
-        'renderIntent': <String, dynamic>{'view': 'payoff.curve.v1'},
-      });
-      expect((event! as AgentSurfaceReady).options, isEmpty);
-    });
-
-    test('ignores an intent with no view, no index or no object', () {
-      expect(
-        parseAgentEvent(<String, dynamic>{
-          'kind': 'render-intent',
-          'index': 0,
-          'renderIntent': <String, dynamic>{'options': <String, dynamic>{}},
-        }),
         isNull,
       );
       expect(
         parseAgentEvent(<String, dynamic>{
-          'kind': 'render-intent',
-          'renderIntent': <String, dynamic>{'view': 'a.b.v1'},
+          'kind': 'artifact-update',
+          'artifact': <String, dynamic>{'artifactId': 'a'},
         }),
         isNull,
       );
-    });
-  });
-
-  group('readOptions', () {
-    test('keeps scalars and drops what has no query encoding', () {
-      // N-7: the options schema is the server's. A nested value has no
-      // encoding this client is allowed to invent, so it is dropped rather
-      // than guessed — a guess would be a 422 for the whole request.
       expect(
-        readOptions(<String, dynamic>{
-          'top_n': 5,
-          'sort': 'weight',
-          'raw': true,
-          'nested': <String, dynamic>{'a': 1},
-          'list': <int>[1, 2],
-        }),
-        equals(<String, String>{'top_n': '5', 'sort': 'weight', 'raw': 'true'}),
+        parseAgentEvent(<String, dynamic>{'kind': 'artifact-update'}),
+        isNull,
       );
-    });
-
-    test('returns nothing when options are absent or not an object', () {
-      expect(readOptions(null), isEmpty);
-      expect(readOptions('top_n=5'), isEmpty);
     });
   });
 }

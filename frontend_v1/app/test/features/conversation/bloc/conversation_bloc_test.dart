@@ -9,14 +9,14 @@ void main() {
   group(ConversationBloc, () {
     blocTest<ConversationBloc, ConversationState>(
       'shows the question, then the surface, then the answer',
-      // The order is the point: the surface is appended when the intent
-      // lands, before the answer text (ADR-K D-19).
+      // The order is the point: the surface is appended when its
+      // createSurface lands, before the answer text (ADR-K D-19).
       build: () => buildBloc(
-        events: const <AgentEvent>[
-          AgentTurnStarted(),
+        events: <AgentEvent>[
+          const AgentTurnStarted(),
           exampleSurface,
-          AgentAnswered(text: 'BTC led it.', views: <String>[exampleView]),
-          AgentTurnEnded(AgentTurnState.inputRequired),
+          const AgentAnswered(text: 'BTC led it.'),
+          const AgentTurnEnded(AgentTurnState.inputRequired),
         ],
       ),
       act: (bloc) => bloc.add(const ConversationMessageSent('what moved?')),

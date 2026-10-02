@@ -34,7 +34,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 readonly LOCK="pubspec.lock"
-readonly POLICIES=("../firebase.json" "docker/nginx.conf.template")
+# frontend_v1 ships to its own Hosting site, so it reads its own
+# firebase.json — a copy of the root one's headers (same CSP).
+readonly POLICIES=("firebase.json" "docker/nginx.conf.template")
 
 fail() {
   echo "frontend.csp: $*" >&2
@@ -50,7 +52,7 @@ readonly EXPECTED_PLUGINS=("firebase_auth_web" "firebase_core_web")
 
 pub_cache="${PUB_CACHE:-$HOME/.pub-cache}"
 
-[ -f "$LOCK" ] || fail "no $LOCK here — run this from frontend/"
+[ -f "$LOCK" ] || fail "no $LOCK here — run this from frontend_v1/"
 
 # 1. The plugin set must be the one the literal above covers.
 found="$(grep -oE '^  firebase_[a-z_]+_web:' "$LOCK" | tr -d ' :' | sort -u | tr '\n' ' ')"

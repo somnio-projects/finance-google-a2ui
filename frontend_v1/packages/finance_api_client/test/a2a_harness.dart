@@ -18,6 +18,7 @@ class A2aHarness {
     client = A2aClient(
       baseUrl: Uri.parse('http://localhost:8000'),
       tokenProvider: tokenProvider,
+      catalogIds: const <String>[testCatalogId],
       httpClient: MockClient.streaming((request, _) {
         sent.add(request);
         return respond(request);
@@ -44,6 +45,9 @@ class A2aHarness {
       );
 }
 
+/// The catalog every harness client advertises.
+const String testCatalogId = 'https://example.test/catalog.json';
+
 /// A 200 answering `text/event-stream` with [body].
 http.StreamedResponse eventStream(String body) => http.StreamedResponse(
   Stream<List<int>>.value(utf8.encode(body)),
@@ -62,7 +66,7 @@ http.StreamedResponse jsonBody(String body, {int status = 200}) =>
       headers: <String, String>{'content-type': 'application/json'},
     );
 
-/// The captured happy-path transcript from spec `client/0003` §8.3.
+/// A happy-path transcript in the shape spec `backend/0053` §3 streams.
 ///
 /// Each continuation begins after a `,` or `:` and the break carries a space,
 /// which is insignificant everywhere JSON allows it — the frames stay byte-
@@ -70,10 +74,9 @@ http.StreamedResponse jsonBody(String body, {int status = 200}) =>
 const String capturedTurn =
     'data: {"kind":"status-update","status":{"state":"working"}, '
     '"final":false}\n\n'
-    'data: {"kind":"render-intent","index":0,"renderIntent": '
-    '{"view":"holdings.allocation.v1","options":{"top_n":5}}}\n\n'
+    'data: {"kind":"artifact-update","taskId":"t","artifact": '
+    '{"artifactId":"a","parts":[]}}\n\n'
     'data: {"kind":"message","role":"agent","parts":[{"kind":"text", '
-    '"text":"BTC is the biggest contributor."}],"renderIntents": '
-    '[{"view":"holdings.allocation.v1","options":{"top_n":5}}]}\n\n'
+    '"text":"BTC is the biggest contributor."}]}\n\n'
     'data: {"kind":"status-update","status":{"state":"input_required"}, '
     '"final":true}\n\n';

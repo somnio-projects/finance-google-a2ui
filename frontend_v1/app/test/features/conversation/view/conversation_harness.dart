@@ -18,7 +18,8 @@ import '../../../helpers/pump_app.dart';
 /// A stand-in for the agent repository the conversation page streams from.
 class MockAgentRepository extends Mock implements AgentRepository;
 
-/// A stand-in for the views repository the surfaces are fetched through.
+/// A stand-in for the views repository. The v1.0 Assistant reads none —
+/// the payload is in the surface's data model — so this is never stubbed.
 class MockViewsRepository extends Mock implements ViewsRepository;
 
 /// Scripts [agent] to answer one turn with [events].
@@ -26,7 +27,7 @@ void scriptTurn(AgentRepository agent, List<AgentEvent> events) {
   when(
     () => agent.startTurn(
       text: any(named: 'text'),
-      action: any(named: 'action'),
+      messages: any(named: 'messages'),
       messageId: any(named: 'messageId'),
       contextId: any(named: 'contextId'),
     ),
@@ -43,7 +44,7 @@ void scriptTurn(AgentRepository agent, List<AgentEvent> events) {
 Future<void> pumpConversation(
   WidgetTester tester, {
   required AgentRepository agent,
-  required ViewsRepository views,
+  ViewsRepository? views,
   SpeechRecognizer? speech,
 }) {
   tester.view.physicalSize = const Size(1200, 3000);

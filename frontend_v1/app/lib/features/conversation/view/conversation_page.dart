@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:finance_app/components/surface_actions.dart';
+import 'package:a2ui_v1/a2ui_v1.dart';
+import 'package:finance_app/a2ui/action_clock.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
 import 'package:finance_app/features/conversation/bloc/voice_input_bloc.dart';
 import 'package:finance_app/features/conversation/view/conversation_view.dart';
@@ -44,7 +45,8 @@ class _ConversationPageState extends State<ConversationPage> {
 
   ConversationBloc get _conversation => _bloc ??= ConversationBloc(
     agentRepository: context.read<AgentRepository>(),
-    viewsRepository: context.read<ViewsRepository>(),
+    catalogId: context.read<Catalog>().catalogId,
+    clock: context.read<ActionClock>(),
   );
 
   /// The dictation bloc, built here for the same reason the conversation's
@@ -96,16 +98,9 @@ class _ConversationPageState extends State<ConversationPage> {
         BlocProvider<ConversationBloc>.value(value: _conversation),
         BlocProvider<VoiceInputBloc>.value(value: _voiceInput),
       ],
-      // A surface's tap becomes a turn through the one bloc that owns the
-      // conversation (spec frontend/0011 OD-4).
-      child: Builder(
-        builder: (context) => SurfaceActions(
-          onAction: (request) => context.read<ConversationBloc>().add(
-            ConversationActionSent(request),
-          ),
-          child: const ConversationView(),
-        ),
-      ),
+      // A surface's tap and edit reach the bloc through the surface host,
+      // scoped to the component that raised them (ADR-M D-6, D-7).
+      child: const ConversationView(),
     );
   }
 }

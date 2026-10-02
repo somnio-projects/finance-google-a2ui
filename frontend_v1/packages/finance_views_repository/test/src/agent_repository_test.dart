@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +13,7 @@ AgentRepository repositoryReplaying(String body, {int status = 200}) {
   return AgentRepository(
     a2aClient: A2aClient(
       baseUrl: Uri.parse('http://localhost:8000'),
+      catalogIds: const <String>['https://example.test/catalog.json'],
       tokenProvider: anonymousToken,
       httpClient: MockClient.streaming(
         (_, _) async => http.StreamedResponse(
@@ -33,15 +35,16 @@ Future<List<AgentEvent>> run(AgentRepository repository) =>
 void main() {
   group('$AgentRepository', () {
     test('reports the captured turn as typed events, in order', () async {
-      // The transcript from spec client/0003 §8.3: working, a surface while
+      // The shape spec backend/0053 §3 streams: working, A2UI messages while
       // the turn is still running, the answer, then the terminal state.
       final events = await run(
         repositoryReplaying(
           'data: {"kind":"status-update","status":{"state":"working"}}\n\n'
-          'data: {"kind":"render-intent","index":0,"renderIntent": '
-          '{"view":"holdings.allocation.v1","options":{"top_n":5}}}\n\n'
-          'data: {"kind":"message","parts":[{"kind":"text","text":"up"}], '
-          '"renderIntents":[{"view":"holdings.allocation.v1"}]}\n\n'
+          'data: {"kind":"artifact-update","artifact":{"parts":[{"kind": '
+          '"data","metadata":{"mimeType":"application/a2ui+json"}, '
+          '"data":[{"version":"v1.0","deleteSurface": '
+          '{"surfaceId":"s-0"}}]}]}}\n\n'
+          'data: {"kind":"message","parts":[{"kind":"text","text":"up"}]}\n\n'
           'data: {"kind":"status-update","status":{"state":"input_required"}}'
           '\n\n',
         ),
@@ -51,11 +54,9 @@ void main() {
       expect(
         events[1],
         equals(
-          const AgentSurfaceReady(
-            index: 0,
-            view: 'holdings.allocation.v1',
-            options: <String, String>{'top_n': '5'},
-          ),
+          const AgentSurfaceMessages(<Decoded>[
+            DecodedMessage(DeleteSurface('s-0')),
+          ]),
         ),
       );
       expect((events[2] as AgentAnswered).text, equals('up'));
@@ -71,12 +72,14 @@ void main() {
       // first-pixel-early behaviour to speak of.
       final events = await run(
         repositoryReplaying(
-          'data: {"kind":"render-intent","index":0,"renderIntent": '
-          '{"view":"payoff.curve.v1"}}\n\n'
+          'data: {"kind":"artifact-update","artifact":{"parts":[{"kind": '
+          '"data","metadata":{"mimeType":"application/a2ui+json"}, '
+          '"data":[{"version":"v1.0","deleteSurface": '
+          '{"surfaceId":"s-0"}}]}]}}\n\n'
           'data: {"kind":"message","parts":[]}\n\n',
         ),
       );
-      expect(events.first, isA<AgentSurfaceReady>());
+      expect(events.first, isA<AgentSurfaceMessages>());
       expect(events.last, isA<AgentAnswered>());
     });
 

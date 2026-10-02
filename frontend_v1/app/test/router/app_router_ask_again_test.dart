@@ -39,7 +39,7 @@ void main() {
       when(
         () => agent.startTurn(
           text: any(named: 'text'),
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -71,7 +71,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'first question',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -79,7 +79,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'second question',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -100,7 +100,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'a question',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -118,7 +118,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'only once',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),

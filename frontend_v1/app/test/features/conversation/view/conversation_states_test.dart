@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:finance_app/bootstrap.dart';
 import 'package:finance_app/features/conversation/view/assistant_bubbles.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +27,7 @@ void main() {
       when(
         () => agent.startTurn(
           text: any(named: 'text'),
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -88,7 +87,7 @@ void main() {
       verify(
         () => agent.startTurn(
           text: 'what moved?',
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
@@ -97,38 +96,28 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('shows a surface that could not be fetched', (tester) async {
-      // One widget degrades; the transcript around it stays readable.
-      when(
-        () => views.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: any(named: 'views'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => const Err<RenderedViews>(
-          TransportFailure('the server could not be reached'),
-        ),
-      );
+    testWidgets('shows the part of a surface the catalog refuses (AC-3)', (
+      tester,
+    ) async {
+      // A payoff chart directly under the surface breaks ADR-M D-4: it may
+      // only sit under a ticket. Nothing is drawn for it, and the code the
+      // renderer would report is on screen instead of a blank space.
       await pump(tester);
       await tester.enterText(find.byType(TextField), 'what moved?');
       await tester.tap(find.byTooltip('Send'));
       await tester.pump();
 
       turn.add(
-        const AgentSurfaceReady(
-          index: 0,
-          view: 'holdings.allocation.v1',
-          options: <String, String>{},
+        surfaceEvent(
+          surfaceId: 's-0',
+          component: 'RiskPayoffChart',
+          payload: const <String, Object?>{'view': 'payoff.curve.v1'},
         ),
       );
       await turn.close();
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Could not show "holdings.allocation.v1"'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('UNALLOWED_PARENT'), findsOneWidget);
     });
   });
 }

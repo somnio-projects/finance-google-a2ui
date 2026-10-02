@@ -39,8 +39,9 @@ void main() {
     late String container;
 
     setUp(() {
-      // Run from `frontend/`, which is where `dart test test` runs.
-      hosting = policyIn(File('../firebase.json').readAsStringSync());
+      // Run from `frontend_v1/`, which is where `dart test test` runs
+      // and which carries its own Hosting config (`finance-a2ui-v1`).
+      hosting = policyIn(File('firebase.json').readAsStringSync());
       container = policyIn(
         File('docker/nginx.conf.template').readAsStringSync(),
       );

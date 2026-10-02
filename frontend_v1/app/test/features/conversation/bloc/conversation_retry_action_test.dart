@@ -1,3 +1,4 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,30 +18,29 @@ void main() {
     ),
   ];
 
-  group('$ConversationBloc retrying a chip', () {
-    test("Try again repeats a chip's action, never its label", () async {
+  group('$ConversationBloc retrying a surface action', () {
+    test('Try again repeats the same action, timestamp and all', () async {
       const request = SurfaceActionRequest(
-        action: 'ask.suggested.v1',
-        args: <String, String>{'suggestion': 'drivers'},
+        action: 'drill_attribution',
+        args: <String, String>{'driver': 'LINK'},
       );
       final agent = MockAgentRepository();
       when(
         () => agent.startTurn(
           text: any(named: 'text'),
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),
       ).thenAnswer((_) => Stream<AgentEvent>.fromIterable(failed));
-      final bloc =
-          ConversationBloc(
-            agentRepository: agent,
-            viewsRepository: MockViewsRepository(),
-          )..add(
-            const ConversationSuggestionTapped(
-              Suggestion(key: 'drivers', label: 'Drivers'),
-            ),
-          );
+      final bloc = buildBloc(events: failed, agent: agent)
+        ..add(
+          const ConversationActionSent(
+            surfaceId: 'turn-4b10-0',
+            componentId: 'root',
+            request: request,
+          ),
+        );
       await bloc.stream.firstWhere((s) => s.failure != null);
 
       bloc.add(const ConversationRetried());
@@ -49,27 +49,13 @@ void main() {
       );
       await bloc.stream.firstWhere((s) => s.failure != null);
 
-      // Twice with the action, never once with the label as a sentence.
-      verify(
-        () => agent.startTurn(
-          text: any(named: 'text'),
-          action: request,
-          messageId: any(named: 'messageId'),
-          contextId: any(named: 'contextId'),
-        ),
-      ).called(2);
-      verifyNever(
-        () => agent.startTurn(
-          text: 'Drivers',
-          action: any(named: 'action'),
-          messageId: any(named: 'messageId'),
-          contextId: any(named: 'contextId'),
-        ),
-      );
-      // The chip's label was echoed once, by the tap — not again by the retry.
-      expect(bloc.state.entries, const <ConversationEntry>[
-        UserSaid('Drivers'),
-      ]);
+      // Twice, the same message both times: a retry is the same tap.
+      final sent = sentMessages(agent);
+      expect(sent, hasLength(2));
+      expect(sent.first, sent.last);
+      expect((sent.first as ActionMessage).context, request.args);
+      // A tap echoes nothing, and neither does its retry.
+      expect(bloc.state.entries, isEmpty);
       await bloc.close();
     });
   });

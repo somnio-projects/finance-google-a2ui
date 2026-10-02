@@ -1,7 +1,12 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:a2ui_v1/a2ui_v1.dart';
+// The transport's decoder, not a second one: the binding rules allow a JSON
+// decoder in exactly the transport, and a fixture reader is no reason to
+// widen that allowance (`binding_rules_test.dart::nothing interprets a
+// server-supplied string`).
+import 'package:finance_api_client/finance_api_client.dart'
+    show decodeJsonObject;
 
 /// The wire contract, read from the repository rather than copied: a copy
 /// is the thing that goes stale (`.claude/rules/frontend/testing.md` §5).
@@ -15,16 +20,14 @@ const Set<String> rendererKeys = <String>{
   'error',
 };
 
-/// Every example file, sorted, by base name.
+/// Every example file, by base name, in directory order.
 List<String> exampleNames() {
-  final names =
-      Directory(examplesDir)
-          .listSync()
-          .whereType<File>()
-          .where((file) => file.path.endsWith('.json'))
-          .map((file) => file.uri.pathSegments.last)
-          .toList()
-        ..sort();
+  final names = Directory(examplesDir)
+      .listSync()
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.json'))
+      .map((file) => file.uri.pathSegments.last)
+      .toList();
   if (names.length < 6) {
     // Anti-vacuity: an empty walk would pass every quantified assertion.
     throw StateError('expected the six v1.0 examples, found $names');
@@ -34,8 +37,7 @@ List<String> exampleNames() {
 
 /// The decoded DataPart in [name].
 Map<String, Object?> example(String name) =>
-    jsonDecode(File('$examplesDir/$name').readAsStringSync())
-        as Map<String, Object?>;
+    _decode(File('$examplesDir/$name'));
 
 /// Whether [name] holds renderer-to-agent messages.
 bool isRendererToAgent(String name) {
@@ -46,9 +48,7 @@ bool isRendererToAgent(String name) {
 
 /// The provisional catalog fixture (ADR-M D-4).
 Catalog provisionalCatalog() => Catalog.fromJson(
-  jsonDecode(
-    File('test/fixtures/finance.catalog.provisional.json').readAsStringSync(),
-  ),
+  _decode(File('test/fixtures/finance.catalog.provisional.json')),
 );
 
 /// The messages of [name], decoded, failing the test on any failure.
@@ -59,3 +59,7 @@ List<AgentMessage> agentMessages(String name) => <AgentMessage>[
       DecodeFailure(:final error) => throw StateError('$name: $error'),
     },
 ];
+
+Map<String, Object?> _decode(File file) =>
+    decodeJsonObject(file.readAsStringSync()) ??
+    (throw StateError('${file.path} is not a JSON object'));

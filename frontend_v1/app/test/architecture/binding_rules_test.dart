@@ -51,8 +51,17 @@ void main() {
     });
 
     test('nothing reads the device clock', () {
-      // `as_of` is the backend's and travels in the envelope.
-      expect(sources.offenders('app/lib', clockMechanisms), isEmpty);
+      // `as_of` is the backend's and travels in the envelope. The one
+      // allowance is the A2UI v1.0 `action.timestamp`, which the schema
+      // requires and nobody reads as a figure (ADR-M D-7) — allowed by path,
+      // and the allowance's size pinned like the geometry seam's.
+      const clockAllowed = <String>{'app/lib/a2ui/action_clock.dart'};
+      expect(clockAllowed, hasLength(1));
+      expect(sources.under('app/lib').keys, contains(clockAllowed.single));
+      expect(
+        sources.offenders('app/lib', clockMechanisms, allow: clockAllowed),
+        isEmpty,
+      );
       expect(sources.offenders('packages', clockMechanisms), isEmpty);
     });
 

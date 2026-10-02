@@ -1,3 +1,4 @@
+import 'package:a2ui_v1/a2ui_v1.dart' show drillAttributionAction;
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_reader.dart';
@@ -46,8 +47,10 @@ class AttributionWaterfallComponent extends ViewComponent {
           : (key) {
               if (drivers.contains(key)) {
                 scope!.onAction(
+                  // The v1.0 action name (ADR-M D-7); the payload still
+                  // declares the drill by its v0.9 id, read above.
                   SurfaceActionRequest(
-                    action: drillAction,
+                    action: drillAttributionAction,
                     args: <String, String>{'driver': key},
                   ),
                 );

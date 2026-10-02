@@ -17,25 +17,6 @@ enum ConversationStatus {
   failed,
 }
 
-/// What opened a turn, kept so a failed one can be sent again (GGU-111).
-///
-/// Exactly what `_run` was given: a sentence **or** a surface action, never
-/// both. The retry sends the same thing and echoes nothing — the bubble that
-/// asked is already in the transcript.
-final class TurnRequest extends Equatable {
-  /// Creates the record.
-  const TurnRequest({this.text, this.action});
-
-  /// The typed sentence, when that is what was sent.
-  final String? text;
-
-  /// The registered action and its scalars, when a chip or a surface sent it.
-  final SurfaceActionRequest? action;
-
-  @override
-  List<Object?> get props => <Object?>[text, action];
-}
-
 /// What the conversation screen renders.
 final class ConversationState extends Equatable {
   /// Creates a state.
@@ -45,6 +26,9 @@ final class ConversationState extends Equatable {
     this.suggestions = const <Suggestion>[],
     this.failure,
     this.lastTurn,
+    this.surfaces = const SurfaceSet(),
+    this.edits = const <String, SurfaceEditState>{},
+    this.rendererErrors = const <RendererError>[],
   });
 
   /// Whether a turn is running.
@@ -61,14 +45,22 @@ final class ConversationState extends Equatable {
   /// answer replaces them.
   final List<Suggestion> suggestions;
 
-  /// Why the last turn failed, when it did.
-  ///
-  /// Carries the backend's own safe `code` and `message` — never a library
-  /// string and never a stack trace.
+  /// Why the last turn failed, when it did — the backend's own safe `code`
+  /// and `message`, never a library string and never a stack trace.
   final AgentFailed? failure;
 
   /// What the most recent turn sent, so *Try again* can send it once more.
   final TurnRequest? lastTurn;
+
+  /// Every live A2UI surface, as the processor left it.
+  final SurfaceSet surfaces;
+
+  /// Each component's last edit, by `editKey(surfaceId, componentId)`.
+  final Map<String, SurfaceEditState> edits;
+
+  /// What the processor could not apply, in order — the per-message errors
+  /// the extension spec says to report and move past.
+  final List<RendererError> rendererErrors;
 
   /// Copies this state, replacing only the fields whose getter is supplied.
   ///
@@ -80,12 +72,20 @@ final class ConversationState extends Equatable {
     List<Suggestion> Function()? suggestions,
     AgentFailed? Function()? failure,
     TurnRequest? Function()? lastTurn,
+    SurfaceSet Function()? surfaces,
+    Map<String, SurfaceEditState> Function()? edits,
+    List<RendererError> Function()? rendererErrors,
   }) => ConversationState(
     status: status != null ? status() : this.status,
     entries: entries != null ? entries() : this.entries,
     suggestions: suggestions != null ? suggestions() : this.suggestions,
     failure: failure != null ? failure() : this.failure,
     lastTurn: lastTurn != null ? lastTurn() : this.lastTurn,
+    surfaces: surfaces != null ? surfaces() : this.surfaces,
+    edits: edits != null ? edits() : this.edits,
+    rendererErrors: rendererErrors != null
+        ? rendererErrors()
+        : this.rendererErrors,
   );
 
   @override
@@ -95,5 +95,8 @@ final class ConversationState extends Equatable {
     suggestions,
     failure,
     lastTurn,
+    surfaces,
+    edits,
+    rendererErrors,
   ];
 }

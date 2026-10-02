@@ -5,6 +5,8 @@
 /// rather than trimming the comments that explain why its assertions exist.
 library;
 
+import 'package:a2ui_v1/a2ui_v1.dart';
+import 'package:finance_app/a2ui/action_clock.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
@@ -15,6 +17,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../helpers/a2ui_fixtures.dart';
 
 /// A stand-in for the views repository the portfolio page reads.
 class MockViewsRepository extends Mock implements ViewsRepository;
@@ -48,6 +52,10 @@ Future<void> pumpRouter(
       RepositoryProvider<ComponentRegistry>.value(
         value: registry ?? ComponentRegistry(),
       ),
+      // The Assistant's A2UI v1.0 catalog and action clock, as the app
+      // provides them (ADR-M D-4, D-7).
+      RepositoryProvider<Catalog>.value(value: bundledCatalog()),
+      RepositoryProvider<ActionClock>.value(value: const FixedActionClock()),
       // The Assistant's mic resolves this on every route that reaches it.
       // Unconditional and unsupported: a router test is not about voice, and
       // the VM really has no engine (spec frontend/0023 OD-2).

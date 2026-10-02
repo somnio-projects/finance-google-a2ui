@@ -1,3 +1,5 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
+import 'package:finance_app/a2ui/action_clock.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
@@ -8,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'a2ui_fixtures.dart';
+
+export 'a2ui_fixtures.dart';
 export 'fixtures.dart';
 
 /// Pumps [widget] inside the app's theme and providers.
@@ -41,6 +46,8 @@ extension PumpApp on WidgetTester {
     AgentRepository? agentRepository,
     AuthRepository? authRepository,
     ComponentRegistry? componentRegistry,
+    Catalog? catalog,
+    ActionClock actionClock = const FixedActionClock(),
     SpeechRecognizer? speechRecognizer,
     Brightness brightness = Brightness.light,
     Size? surfaceSize,
@@ -64,6 +71,11 @@ extension PumpApp on WidgetTester {
           RepositoryProvider<ComponentRegistry>.value(
             value: componentRegistry ?? ComponentRegistry(),
           ),
+          // The A2UI v1.0 catalog and the action clock the Assistant's
+          // surfaces resolve: the bundled catalog unless a test brings its
+          // own, and a clock a test can predict.
+          RepositoryProvider<Catalog>.value(value: catalog ?? bundledCatalog()),
+          RepositoryProvider<ActionClock>.value(value: actionClock),
           // Always provided, never optional: the composer's mic resolves it
           // on every Assistant pump, and the default is the honest no-op
           // rather than an engine no test could drive (spec 0022 OD-2).

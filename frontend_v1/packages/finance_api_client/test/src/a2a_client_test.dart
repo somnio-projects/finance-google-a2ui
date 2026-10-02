@@ -6,10 +6,10 @@ import '../a2a_harness.dart';
 
 void main() {
   group('$A2aClient startTurn', () {
-    test('posts message/stream to the service root', () async {
+    test('posts message/stream to the v1.0 route', () async {
       final harness = A2aHarness((_) async => eventStream(capturedTurn));
       await harness.start();
-      expect(harness.sent.single.url.path, equals('/'));
+      expect(harness.sent.single.url.path, equals('/a2ui/v1/a2a'));
       expect(harness.sent.single.method, equals('POST'));
       expect(harness.envelope['method'], equals('message/stream'));
       expect(harness.envelope['jsonrpc'], equals('2.0'));
@@ -54,6 +54,24 @@ void main() {
       expect(body['parts'], hasLength(1));
     });
 
+    test('advertises the v1.0 renderer capabilities (ADR-M D-8)', () async {
+      final harness = A2aHarness((_) async => eventStream(capturedTurn));
+      await harness.start();
+      final params = harness.envelope['params']! as Map<String, dynamic>;
+      final body = params['message']! as Map<String, dynamic>;
+      expect(body['metadata'], <String, dynamic>{
+        'a2uiRendererCapabilities': <String, dynamic>{
+          'v1.0': <String, dynamic>{
+            'supportedCatalogIds': <String>[testCatalogId],
+          },
+        },
+      });
+      expect(
+        A2aClient.a2uiExtension,
+        'https://a2ui.org/a2a-extension/a2ui/v1.0',
+      );
+    });
+
     test('echoes contextId when one is supplied', () async {
       final harness = A2aHarness((_) async => eventStream(capturedTurn));
       await harness.start(contextId: 'c2f1b8a4');
@@ -71,7 +89,7 @@ void main() {
         frames.map((frame) => frame['kind']),
         equals(<String>[
           'status-update',
-          'render-intent',
+          'artifact-update',
           'message',
           'status-update',
         ]),

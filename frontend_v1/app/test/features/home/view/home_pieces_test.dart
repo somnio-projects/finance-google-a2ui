@@ -1,5 +1,5 @@
-import 'package:finance_app/features/home/view/home_hero.dart';
-import 'package:finance_app/features/home/view/home_movers.dart';
+import 'package:finance_app/components/portfolio_summary/home_hero.dart';
+import 'package:finance_app/components/portfolio_summary/home_movers.dart';
 import 'package:finance_app/features/home/view/home_questions.dart';
 import 'package:finance_app/router/app_router.dart';
 import 'package:finance_app/theme/app_theme.dart';

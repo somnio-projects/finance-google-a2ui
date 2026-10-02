@@ -11,6 +11,7 @@ environment:
 resolution: workspace
 
 dependencies:
+  a2ui_v1: ^0.1.0
   bloc: ^9.2.1
   # The Flutter template dependency. Present because the framework and
   # go_router reference CupertinoIcons on code paths this web-first app does
@@ -48,6 +49,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # The A2UI v1.0 catalog the renderer enforces (ADR-M D-4/D-5). A COPY,
+  # written by `make catalog` and diffed by `make catalog-check`: the
+  # generated `docs/a2ui/v1.0/finance.catalog.json` when it exists, the
+  # provisional fixture in packages/a2ui_v1 until then.
+  assets:
+    - assets/a2ui/finance.catalog.json
   fonts:
     # IBM Plex Sans — the typeface every artboard of the design kit sets
     # (GGU-147, spec `frontend/0035`). Bundled rather than fetched at run

@@ -21,8 +21,12 @@ import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_component
     as order_ticket_v2;
 import 'package:finance_app/components/payoff_chart/payoff_chart_component.dart'
     as payoff_chart;
+import 'package:finance_app/components/portfolio_summary/portfolio_summary_component.dart'
+    as portfolio_summary;
 import 'package:finance_app/components/scenario_comparison/scenario_comparison_component.dart'
     as scenario_comparison;
+import 'package:finance_app/components/section/section_component.dart'
+    as section;
 import 'package:finance_app/components/taxlots_table/taxlots_table_component.dart'
     as taxlots_table;
 
@@ -35,6 +39,8 @@ void registerCatalogComponents(ComponentRegistry registry) {
   order_ticket.register(registry);
   order_ticket_v2.register(registry);
   payoff_chart.register(registry);
+  portfolio_summary.register(registry);
   scenario_comparison.register(registry);
+  section.register(registry);
   taxlots_table.register(registry);
 }

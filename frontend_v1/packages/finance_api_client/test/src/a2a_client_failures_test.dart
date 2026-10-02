@@ -98,6 +98,7 @@ void main() {
       final client = A2aClient(
         baseUrl: Uri.parse('http://localhost:8000'),
         tokenProvider: anonymousToken,
+        catalogIds: const <String>[testCatalogId],
         timeout: const Duration(milliseconds: 20),
         httpClient: MockClient.streaming(
           (_, _) => Future<http.StreamedResponse>.delayed(

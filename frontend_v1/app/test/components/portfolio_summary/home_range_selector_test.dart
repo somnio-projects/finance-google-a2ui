@@ -1,8 +1,8 @@
-import 'package:finance_app/features/home/view/home_range_selector.dart';
+import 'package:finance_app/components/portfolio_summary/home_range_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../helpers/pump_app.dart';
+import '../../helpers/pump_app.dart';
 
 void main() {
   group(HomeRangeSelector, () {

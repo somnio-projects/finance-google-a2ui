@@ -22,6 +22,7 @@ class SurfaceEdits extends InheritedWidget {
     required super.child,
     this.pendingOption,
     this.rejection,
+    this.options = const <String, Object?>{},
     super.key,
   });
 
@@ -34,6 +35,14 @@ class SurfaceEdits extends InheritedWidget {
   /// The backend's own sentence for the last refused edit, or null.
   final String? rejection;
 
+  /// The options the surface was last rendered with, as the A2UI data model
+  /// holds them (`dataModel[<componentId>].options`, ADR-M D-3).
+  ///
+  /// For a component whose payload does not echo an option back — the
+  /// summary's `range` is the case — this is the only place the selected
+  /// value lives. Read, never computed (N-2).
+  final Map<String, Object?> options;
+
   /// The nearest scope, or null where no host can honour an edit.
   static SurfaceEdits? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<SurfaceEdits>();
@@ -42,5 +51,6 @@ class SurfaceEdits extends InheritedWidget {
   bool updateShouldNotify(SurfaceEdits oldWidget) =>
       onOptionChanged != oldWidget.onOptionChanged ||
       pendingOption != oldWidget.pendingOption ||
-      rejection != oldWidget.rejection;
+      rejection != oldWidget.rejection ||
+      options != oldWidget.options;
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:finance_app/charts/sparkline_chart.dart';
+import 'package:finance_app/components/portfolio_summary/home_hero_loading.dart';
 import 'package:finance_app/features/home/view/home_first_run.dart';
-import 'package:finance_app/features/home/view/home_hero_loading.dart';
 import 'package:finance_app/features/home/view/home_page.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';

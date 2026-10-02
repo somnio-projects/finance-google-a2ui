@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_api_client/finance_api_client.dart';
+import 'package:finance_app/a2ui/action_clock.dart';
+import 'package:finance_app/a2ui/finance_catalog.dart';
 import 'package:finance_app/app/app_config.dart';
 import 'package:finance_app/app/finance_app.dart';
 import 'package:finance_app/auth/auth_gate.dart';
@@ -29,11 +32,17 @@ import 'package:http/http.dart' as http;
 /// is the [NullIdentityProvider] and the e-mail path is the backend's preview
 /// sign-in (spec backend/0027 OD-3). There is no development token any more:
 /// the bearer is whatever [AuthRepository.token] answers (`SECURITY.md` G-1).
+///
+/// [catalogJson] is the bundled A2UI v1.0 catalog (`main.dart` reads the
+/// asset); it is both what the renderer enforces and the catalog id this
+/// client advertises to the agent (ADR-M D-4, D-8).
 Widget bootstrap({
   AppConfig? config,
   http.Client? httpClient,
   FirebaseAuth? firebaseAuth,
+  String? catalogJson,
 }) {
+  final catalog = readFinanceCatalog(catalogJson);
   final resolved = config ?? AppConfig.fromEnvironment();
   final client = httpClient ?? http.Client();
   final identity = firebaseAuth == null
@@ -59,12 +68,14 @@ Widget bootstrap({
     baseUrl: resolved.backendBaseUrl,
     httpClient: client,
     tokenProvider: token,
+    catalogIds: <String>[catalog.catalogId],
   );
   unawaited(auth.restore());
   return buildApp(
     viewsRepository: views,
     agentRepository: AgentRepository(a2aClient: a2aClient),
     authRepository: auth,
+    catalog: catalog,
     speechRecognizer: createSpeechRecognizer(),
   );
 }
@@ -81,6 +92,8 @@ Widget buildApp({
   required ViewsRepository viewsRepository,
   required AgentRepository agentRepository,
   required AuthRepository authRepository,
+  Catalog? catalog,
+  ActionClock actionClock = const ActionClock(),
   ComponentRegistry? componentRegistry,
   ThemeModeController? themeMode,
   SpeechRecognizer? speechRecognizer,
@@ -95,6 +108,10 @@ Widget buildApp({
     viewsRepository: viewsRepository,
     agentRepository: agentRepository,
     authRepository: authRepository,
+    // Without one — the tests that pump a route — the catalog is the empty
+    // one, which refuses every component rather than enforcing nothing.
+    catalog: catalog ?? readFinanceCatalog(null),
+    actionClock: actionClock,
     componentRegistry: componentRegistry ?? buildComponentRegistry(),
     themeMode: themeMode ?? ThemeModeController(),
     // A tree pumped without one gets the honest no-op: the mic is drawn,

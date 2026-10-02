@@ -1,6 +1,6 @@
 import 'package:finance_app/charts/sparkline_chart.dart';
-import 'package:finance_app/features/home/view/home_hero_loading.dart';
-import 'package:finance_app/features/home/view/home_range_selector.dart';
+import 'package:finance_app/components/portfolio_summary/home_hero_loading.dart';
+import 'package:finance_app/components/portfolio_summary/home_range_selector.dart';
 import 'package:finance_app/theme/home_tokens.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';

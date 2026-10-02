@@ -9,6 +9,7 @@ environment:
 resolution: workspace
 
 dependencies:
+  a2ui_v1: ^0.1.0
   equatable: ^3.0.0
   finance_api_client: ^0.1.0
   finance_core: ^0.1.0

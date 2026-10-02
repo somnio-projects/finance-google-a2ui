@@ -6,6 +6,7 @@
 // ignore_for_file: missing_whitespace_between_adjacent_strings
 import 'dart:convert';
 
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:http/http.dart' as http;
@@ -13,12 +14,13 @@ import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('$AgentRepository with a surface action', () {
-    test("forwards the id and its scalars as the turn's one part", () async {
+  group('$AgentRepository with A2UI messages', () {
+    test("sends them as the request's one DataPart (ADR-M D-7)", () async {
       final sent = <http.Request>[];
       final repository = AgentRepository(
         a2aClient: A2aClient(
           baseUrl: Uri.parse('http://localhost:8000'),
+          catalogIds: const <String>['https://example.test/catalog.json'],
           tokenProvider: anonymousToken,
           httpClient: MockClient.streaming((request, _) async {
             sent.add(request as http.Request);
@@ -38,20 +40,30 @@ void main() {
       // Built at run time on purpose, so the constructor and `props` are
       // exercised rather than folded at compile time.
       final request = SurfaceActionRequest(
-        action: 'ask.suggested.v1',
-        args: <String, String>{'suggestion': 'tax-lots'},
+        action: 'drill_attribution',
+        args: <String, String>{'driver': 'LINK'},
       );
       expect(
         request,
         SurfaceActionRequest(
-          action: 'ask.suggested.v1',
-          args: <String, String>{'suggestion': 'tax-lots'},
+          action: 'drill_attribution',
+          args: <String, String>{'driver': 'LINK'},
         ),
       );
-      expect(request.props.first, 'ask.suggested.v1');
+      expect(request.props.first, 'drill_attribution');
 
       final events = await repository
-          .startTurn(action: request, messageId: 'm-9')
+          .startTurn(
+            messages: <RendererMessage>[
+              drillAttribution(
+                surfaceId: 's-0',
+                sourceComponentId: 'root',
+                timestamp: '2026-10-01T22:00:00Z',
+                driver: request.args['driver']!,
+              ),
+            ],
+            messageId: 'm-9',
+          )
           .toList();
 
       expect(events, const <AgentEvent>[
@@ -60,15 +72,8 @@ void main() {
       final body = decodeJsonObject(sent.single.body)!;
       final params = body['params'] as Map<String, dynamic>;
       final message = params['message'] as Map<String, dynamic>;
-      expect(message['parts'], <Map<String, dynamic>>[
-        <String, dynamic>{
-          'kind': 'data',
-          'data': <String, dynamic>{
-            'action': 'ask.suggested.v1',
-            'args': <String, String>{'suggestion': 'tax-lots'},
-          },
-        },
-      ]);
+      final parts = message['parts'] as List<dynamic>;
+      expect(decodeRendererDataPart(parts.single).single, isA<ActionMessage>());
     });
   });
 }

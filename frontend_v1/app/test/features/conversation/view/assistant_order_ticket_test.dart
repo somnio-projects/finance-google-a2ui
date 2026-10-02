@@ -1,53 +1,39 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_app/components/order_ticket/order_ticket_card.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../components/order_ticket/order_ticket_harness.dart';
-import '../../../helpers/pump_app.dart';
+import '../../../helpers/a2ui_fixtures.dart';
 import 'conversation_harness.dart';
 
-/// GGU-113 AC-4: the ticket rendered **from an agent-streamed surface**, not
-/// from the catalog example pumped on its own — the gap the bug came through.
+/// GGU-113 AC-4 on the v1.0 wire: the ticket rendered **from an
+/// agent-streamed surface**, and an edit sent as `callAgentFunction` with
+/// the surface's options merged (spec `frontend_v1/0001` AC-5).
 void main() {
   group('the order ticket the Assistant returns', () {
     late MockAgentRepository agent;
-    late MockViewsRepository views;
-    final viewId = orderTicketViewId();
 
     setUp(() {
       agent = MockAgentRepository();
-      views = MockViewsRepository();
-      when(
-        () => views.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: <String>[viewId],
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer(
-        (_) async => Ok<RenderedViews>(
-          renderedViews(
-            extraViews: <String, dynamic>{viewId: orderTicketExample()},
-          ),
-        ),
-      );
       scriptTurn(agent, <AgentEvent>[
-        AgentSurfaceReady(
-          index: 0,
-          view: viewId,
-          options: const <String, String>{'symbol': 'BTC'},
+        surfaceEvent(
+          surfaceId: 'turn-1-0',
+          component: 'OrderTicket',
+          payload: orderTicketExample(),
+          options: const <String, Object?>{'symbol': 'BTC'},
         ),
-        const AgentAnswered(text: 'Here is the ticket.', views: <String>[]),
+        const AgentAnswered(text: 'Here is the ticket.'),
         const AgentTurnEnded(AgentTurnState.inputRequired),
       ]);
     });
 
-    testWidgets('is editable, and an edit re-renders it (AC-1, AC-2)', (
+    testWidgets('is editable, and an edit is a renderView call (AC-5)', (
       tester,
     ) async {
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, 'buy 0.1 BTC');
 
       final card = tester.widget<OrderTicketCard>(find.byType(OrderTicketCard));
@@ -71,15 +57,21 @@ void main() {
       await tester.tap(find.text(other).last);
       await tester.pumpAndSettle();
 
-      // The edit re-requested THIS view with the agent's options intact and
-      // the edited one merged — through the read path, never as text.
-      verify(
-        () => views.fetchPortfolioViews(
-          portfolioId: 'current',
-          views: <String>[viewId],
-          options: <String, String>{'symbol': 'BTC', 'side': other},
+      final sent = verify(
+        () => agent.startTurn(
+          text: any(named: 'text'),
+          messages: captureAny(named: 'messages'),
+          messageId: any(named: 'messageId'),
+          contextId: any(named: 'contextId'),
         ),
-      ).called(1);
+      ).captured.cast<List<RendererMessage>>().expand((m) => m).toList();
+      final call = sent.single as CallAgentFunction;
+      expect(call.surfaceId, 'turn-1-0');
+      expect(call.args, <String, Object?>{
+        'componentId': 'root',
+        'view': orderTicketViewId(),
+        'options': <String, Object?>{'symbol': 'BTC', 'side': other},
+      });
       expect(find.byType(OrderTicketCard), findsOneWidget);
       expect(find.text('Here is the ticket.'), findsOneWidget);
     });

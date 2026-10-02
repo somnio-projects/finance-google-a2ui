@@ -8,71 +8,63 @@ import 'package:finance_api_client/src/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:http/http.dart' as http;
 
-/// Speaks A2A to the agent: JSON-RPC posted to the service **root**.
+/// Speaks A2A to the A2UI **v1.0** agent: JSON-RPC posted to
+/// `/a2ui/v1/a2a` (spec `backend/0053` §3, ADR-M D-2).
 ///
-/// Separate from `FinanceApiClient` because the two surfaces answer
-/// differently and deliberately so (ADR-J D-3): `/v1/**` returns a JSON body
-/// and RFC 9457 problems, while this one returns an **event stream** and
-/// reports some failures at HTTP 200. Keeping them apart is what stops the
-/// REST client growing a streaming branch it would take on every call.
+/// Separate from `FinanceApiClient` (ADR-J D-3): this surface answers with
+/// an **event stream** and reports some failures at HTTP 200. `frontend/`
+/// keeps v0.9 on `POST /`; only route, extension and metadata differ here.
 class A2aClient {
-  /// Creates a client against [baseUrl] — the service root, not `/v1`.
+  /// Creates a client against [baseUrl] — the service root, not `/v1` —
+  /// advertising [catalogIds] as the catalogs this renderer supports.
   A2aClient({
     required Uri baseUrl,
     required http.Client httpClient,
     required AuthTokenProvider tokenProvider,
+    required List<String> catalogIds,
     this.timeout = FinanceApiClient.defaultTimeout,
   }) : _baseUrl = baseUrl,
        _httpClient = httpClient,
-       _tokenProvider = tokenProvider;
+       _tokenProvider = tokenProvider,
+       _catalogIds = catalogIds;
 
   /// How long the open may take — headers back, not the stream (GGU-110).
   final Duration timeout;
 
-  /// The A2UI extension this client negotiates, echoed on every turn.
-  ///
-  /// **This backend never reads it** — nothing under `backend/src/app/api/`
-  /// or `services/` inspects the header. It is sent because spec
-  /// `client/0003` AC-1 requires it and because the *protocol* defines it, not
-  /// because omitting it would degrade anything here. The "omit it and A2UI
-  /// silently falls back to a text agent" warning in the older GGU-2/GGU-3
-  /// notes is about genui's `A2uiAgentConnector` against the upstream sample
-  /// service, and does not describe this stack.
+  /// The route every turn and every function call is posted to.
+  static const String endpoint = '/a2ui/v1/a2a';
+
+  /// The A2UI extension this client activates, on every request (ADR-M D-8).
   static const String a2uiExtension =
-      'https://a2ui.org/a2a-extension/a2ui/v0.9';
+      'https://a2ui.org/a2a-extension/a2ui/v1.0';
 
   final Uri _baseUrl;
   final http.Client _httpClient;
   final AuthTokenProvider _tokenProvider;
+  final List<String> _catalogIds;
 
-  /// Opens one agent turn for [text] and yields its events as they arrive.
+  /// Opens one request — a sentence in [text], or A2UI messages in
+  /// [dataPart] — and yields its events as they arrive.
   ///
-  /// The three shapes this surface can answer with are all handled here
-  /// (spec `client/0003` §8.5, AC-16): a 401 RFC 9457 problem document, a
-  /// JSON-RPC error object **at HTTP 200**, and an event stream. A 200 is
-  /// therefore never assumed to mean success (N-12).
+  /// Three answers are handled (spec `client/0003` §8.5): a 401 problem
+  /// document, a JSON-RPC error **at HTTP 200** (also how the agent refuses
+  /// a renderer lacking its catalog, ADR-M D-8), and an event stream (N-12).
   ///
   /// [contextId] is echoed by the server for correlation and nothing more; it
   /// is omitted when null, which is not an error.
   Future<Result<Stream<Map<String, dynamic>>>> startTurn({
     required String messageId,
     String? text,
-    String? action,
-    Map<String, String> actionArgs = const <String, String>{},
+    Map<String, dynamic>? dataPart,
     String? contextId,
     String requestId = 'req-1',
   }) async {
-    // One part per turn: a sentence, or a tap (spec 0022 §3.2).
+    // One part per request: a sentence, or A2UI messages (ADR-M D-6, D-7).
     assert(
-      (text == null) != (action == null),
-      'a turn is either a text or a surface action',
+      (text == null) != (dataPart == null),
+      'a request is either a text or an A2UI DataPart',
     );
-    final part = action == null
-        ? <String, dynamic>{'kind': 'text', 'text': text}
-        : <String, dynamic>{
-            'kind': 'data',
-            'data': <String, dynamic>{'action': action, 'args': actionArgs},
-          };
+    final part = dataPart ?? <String, dynamic>{'kind': 'text', 'text': text};
     final String? token;
     try {
       token = await _tokenProvider();
@@ -81,9 +73,17 @@ class A2aClient {
         TransportFailure(credentialUnavailable),
       );
     }
-    final request = http.Request('POST', _baseUrl.resolve('/'))
+    final request = http.Request('POST', _baseUrl.resolve(endpoint))
       ..headers.addAll(_headers(token))
-      ..body = jsonEncode(a2aEnvelope(part, messageId, contextId, requestId));
+      ..body = jsonEncode(
+        a2aEnvelope(
+          part,
+          messageId,
+          contextId,
+          requestId,
+          metadata: rendererMetadata(_catalogIds),
+        ),
+      );
     try {
       final response = await _httpClient.send(request).timeout(timeout);
       return await _interpret(response);

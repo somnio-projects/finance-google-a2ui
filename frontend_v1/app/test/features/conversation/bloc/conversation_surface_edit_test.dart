@@ -1,105 +1,104 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
+import 'package:finance_app/a2ui/finance_catalog.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-import '../../../helpers/fixtures.dart';
 import 'conversation_harness.dart';
 import 'surface_edit_harness.dart';
 
-/// GGU-113: an edit of a surface's declared option re-requests that one view
-/// with the option changed, and the transcript keeps its order (ADR-K D-11).
+/// Spec `frontend_v1/0001` AC-5: an edit is `callAgentFunction(renderView)`
+/// and the widget updates from the `updateDataModel` that follows it.
 void main() {
-  const view = editedView;
-  final payload = renderedViews().views.values.single;
+  late MockAgentRepository agent;
+  late ConversationBloc bloc;
 
-  group('$ConversationBloc editing a surface', () {
-    test(
-      're-requests the view with the option merged and replaces the slot',
-      () async {
-        final views = MockViewsRepository();
-        final subject = editBloc(views)
-          ..emit(editSeed)
-          ..add(
-            const ConversationSurfaceEdited(
-              slot: 1,
-              option: 'top_n',
-              value: '3',
-            ),
-          );
-        // First the option is marked in flight, then the new payload lands.
-        final pending = await subject.stream.first;
-        expect(
-          pending.entries[1],
-          const AgentSurface(
-            ViewPayload(view, <String, dynamic>{
-              'view': view,
-              'title': 'before',
-            }),
-            // The merged intent is written on the edit itself (OD-3).
-            options: <String, String>{'top_n': '3'},
-            pendingOption: 'top_n',
-          ),
-        );
-        final done = await subject.stream.first;
-        expect(
-          done.entries[1],
-          AgentSurface(payload, options: const <String, String>{'top_n': '3'}),
-        );
-        expect(done.entries.first, const UserSaid('what moved?'));
-        verify(
-          () => views.fetchPortfolioViews(
-            portfolioId: 'current',
-            views: <String>[view],
-            options: <String, String>{'top_n': '3'},
-          ),
-        ).called(1);
-        await subject.close();
-      },
-    );
+  setUp(() async {
+    agent = MockAgentRepository();
+    bloc = await editableBloc(agent);
+  });
 
-    test(
-      'a refused edit keeps the payload and shows the sentence (AC-3)',
-      () async {
-        final views = MockViewsRepository();
-        final subject = editBloc(views)..emit(editSeed);
-        when(
-          () => views.fetchPortfolioViews(
-            portfolioId: any(named: 'portfolioId'),
-            views: any(named: 'views'),
-            options: any(named: 'options'),
-          ),
-        ).thenAnswer(
-          (_) async => Err<RenderedViews>(
-            ProblemFailure(
-              ProblemDetails.tryParse(<String, dynamic>{
-                'type': 'https://errors.finance-a2ui/validation-error',
-                'title': 'Unprocessable',
-                'status': 422,
-                'detail': 'size must be a positive number',
-              })!,
-            ),
-          ),
-        );
-        subject.add(
-          const ConversationSurfaceEdited(slot: 1, option: 'size', value: '-1'),
-        );
-        await subject.stream.first;
-        final done = await subject.stream.first;
-        expect(
-          done.entries[1],
-          const AgentSurface(
-            ViewPayload(view, <String, dynamic>{
-              'view': view,
-              'title': 'before',
-            }),
-            options: <String, String>{'top_n': '5'},
-            rejection: 'size must be a positive number',
-          ),
-        );
-        await subject.close();
-      },
+  tearDown(() => bloc.close());
+
+  Future<ConversationState> edit(List<AgentEvent> answer) async {
+    scriptAgent(agent, answer);
+    bloc.add(topNEdit);
+    final pending = await bloc.stream.first;
+    expect(pending.edits[exampleEditKey]?.pendingOption, 'top_n');
+    return await bloc.stream.firstWhere(
+      (state) => state.edits[exampleEditKey]?.pendingOption == null,
     );
+  }
+
+  test('sends renderView with the merged options, then applies it', () async {
+    final done = await edit(<AgentEvent>[
+      const AgentTurnStarted(),
+      success('call-0', const <String, Object?>{'top_n': '3'}),
+      const AgentAnswered(text: 'ignored'),
+      const AgentTurnEnded(AgentTurnState.completed),
+    ]);
+    final call = sentMessages(agent).single as CallAgentFunction;
+    expect(call.call, 'renderView');
+    expect(call.catalogId, financeCatalogId);
+    expect(call.functionCallId, 'call-0');
+    expect(call.args, <String, Object?>{
+      'componentId': 'root',
+      'view': exampleView,
+      // The option the surface had (a number) plus the edit, verbatim.
+      'options': <String, Object?>{'top_n': '3'},
+    });
+    final surface = done.surfaces[exampleSurfaceId]!;
+    expect(surface.read('/root/payload/title'), 'after');
+    expect(done.edits, isEmpty);
+    // An edit re-renders the entry it came from; it appends nothing.
+    expect(done.entries, hasLength(2));
+  });
+
+  test('a refused call shows the agent sentence and keeps the data', () async {
+    final done = await edit(<AgentEvent>[refusal('call-0')]);
+    expect(
+      done.edits[exampleEditKey],
+      const SurfaceEditState(
+        rejection: "Option 'top_n' must be between 1 and 20.",
+      ),
+    );
+    expect(done.surfaces[exampleSurfaceId]!.read('/root/options/top_n'), 5);
+  });
+
+  test('a failed request is refused with its own message', () async {
+    final done = await edit(const <AgentEvent>[
+      AgentFailed(code: 'transport-unavailable', message: 'unreachable'),
+    ]);
+    expect(done.edits[exampleEditKey]?.rejection, 'unreachable');
+  });
+
+  test('a request that ends unanswered says so', () async {
+    final done = await edit(const <AgentEvent>[
+      AgentTurnEnded(AgentTurnState.completed),
+    ]);
+    expect(done.edits[exampleEditKey]?.rejection, editUnanswered);
+  });
+
+  test('an edit of nothing bound sends nothing', () async {
+    bloc
+      ..add(
+        const ConversationSurfaceEdited(
+          surfaceId: 'unknown',
+          componentId: 'root',
+          option: 'x',
+          value: 'y',
+        ),
+      )
+      ..add(
+        const ConversationSurfaceEdited(
+          surfaceId: exampleSurfaceId,
+          componentId: 'not-a-component',
+          option: 'x',
+          value: 'y',
+        ),
+      );
+    await pumpEventQueue();
+    // Only the question that rendered the surface was ever sent.
+    expect(sentMessages(agent), isEmpty);
   });
 }

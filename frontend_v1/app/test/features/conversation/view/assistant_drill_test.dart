@@ -1,62 +1,51 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../components/attribution_waterfall/attribution_waterfall_card_test.dart'
     show bandCentre;
+import '../../../helpers/a2ui_fixtures.dart';
 import '../../../helpers/catalog_snapshot.dart';
-import '../../../helpers/fixtures.dart';
 import 'conversation_harness.dart';
 
 void main() {
-  testWidgets('a tapped waterfall bar in the transcript opens the drill turn '
-      '(frontend/0011 OD-4)', (tester) async {
+  testWidgets('a tapped waterfall bar sends action(drill_attribution) '
+      '(spec frontend_v1/0001 AC-6)', (tester) async {
     final agent = MockAgentRepository();
-    final views = MockViewsRepository();
     final waterfall = CatalogSnapshot.load().exampleForView(
       'attribution.waterfall.v1',
     );
-    when(
-      () => views.fetchPortfolioViews(
-        portfolioId: any(named: 'portfolioId'),
-        views: any(named: 'views'),
-        options: any(named: 'options'),
+    scriptTurn(agent, <AgentEvent>[
+      const AgentTurnStarted(),
+      surfaceEvent(
+        surfaceId: 'turn-4b10-0',
+        component: 'AttributionWaterfall',
+        payload: waterfall,
       ),
-    ).thenAnswer(
-      (_) async => Ok<RenderedViews>(
-        renderedViews(
-          extraViews: <String, dynamic>{'attribution.waterfall.v1': waterfall},
-        ),
-      ),
-    );
-    scriptTurn(agent, const <AgentEvent>[
-      AgentTurnStarted(),
-      AgentSurfaceReady(
-        index: 0,
-        view: 'attribution.waterfall.v1',
-        options: <String, String>{},
-      ),
-      AgentTurnEnded(AgentTurnState.inputRequired),
+      const AgentTurnEnded(AgentTurnState.inputRequired),
     ]);
-    await pumpConversation(tester, agent: agent, views: views);
+    await pumpConversation(tester, agent: agent);
     await ask(tester, 'what moved?');
     expect(find.byType(AttributionWaterfallCard), findsOneWidget);
 
     await tester.tapAt(bandCentre(tester, 1));
     await tester.pumpAndSettle();
 
-    final sent =
-        verify(
-              () => agent.startTurn(
-                action: captureAny(named: 'action'),
-                messageId: any(named: 'messageId'),
-                contextId: any(named: 'contextId'),
-              ),
-            ).captured.single
-            as SurfaceActionRequest;
-    expect(sent.action, 'drill.attribution.v1');
-    expect(sent.args.keys, <String>['driver']);
+    final sent = verify(
+      () => agent.startTurn(
+        text: any(named: 'text'),
+        messages: captureAny(named: 'messages'),
+        messageId: any(named: 'messageId'),
+        contextId: any(named: 'contextId'),
+      ),
+    ).captured.cast<List<RendererMessage>>().expand((m) => m).toList();
+    final action = sent.single as ActionMessage;
+    expect(action.name, 'drill_attribution');
+    expect(action.surfaceId, 'turn-4b10-0');
+    expect(action.sourceComponentId, 'root');
+    expect(action.timestamp, FixedActionClock.instant);
+    expect(action.context.keys, <String>['driver']);
   });
 }

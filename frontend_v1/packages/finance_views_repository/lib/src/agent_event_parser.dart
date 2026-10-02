@@ -1,19 +1,20 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_views_repository/src/agent_event.dart';
 
-/// Turns one decoded A2A event into an [AgentEvent].
+/// Turns one decoded A2A event of the v1.0 surface into an [AgentEvent].
 ///
 /// Returns `null` for anything this client does not model — an unknown
 /// `kind`, or a known kind whose required fields are missing. **Ignoring is
-/// the right answer, not raising**: the surface adds event kinds additively
-/// (`a2a_events.py` says so of `render-intent` itself), so a client that
-/// failed on an unrecognised event would break every time the server grew
-/// one. A malformed *known* event is dropped for the same reason a malformed
-/// frame is: there is no caller left to hand a `Result` to mid-stream, and the
-/// turn then ends without its terminal event, which the bloc reports.
+/// the right answer, not raising**: the surface adds event kinds additively,
+/// so a client that failed on an unrecognised event would break every time
+/// the server grew one. A malformed *known* event is dropped for the same
+/// reason a malformed frame is: there is no caller left to hand a `Result` to
+/// mid-stream, and the turn then ends without its terminal event, which the
+/// bloc reports.
 AgentEvent? parseAgentEvent(Map<String, dynamic> event) {
   return switch (event['kind']) {
     'status-update' => _status(event),
-    'render-intent' => _surface(event),
+    'artifact-update' => _artifact(event),
     'message' => _answer(event),
     'error' => _failure(event),
     _ => null,
@@ -33,34 +34,28 @@ AgentEvent? _status(Map<String, dynamic> event) {
   };
 }
 
-AgentEvent? _surface(Map<String, dynamic> event) {
-  final intent = event['renderIntent'];
-  final index = event['index'];
-  if (intent is! Map<String, dynamic> || index is! int) return null;
-  final view = intent['view'];
-  if (view is! String) return null;
-  return AgentSurfaceReady(
-    index: index,
-    view: view,
-    options: readOptions(intent['options']),
-  );
+/// `artifact-update` → the A2UI messages of every A2UI `DataPart` it carries
+/// (spec `backend/0053` §3). A part of any other kind is not ours to read.
+AgentEvent? _artifact(Map<String, dynamic> event) {
+  final artifact = event['artifact'];
+  if (artifact is! Map<String, dynamic>) return null;
+  final parts = artifact['parts'];
+  if (parts is! List) return null;
+  final messages = <Decoded>[
+    for (final part in parts)
+      if (isA2uiDataPart(part)) ...decodeAgentDataPart(part),
+  ];
+  return messages.isEmpty ? null : AgentSurfaceMessages(messages);
 }
 
 AgentEvent? _answer(Map<String, dynamic> event) {
   final parts = event['parts'];
-  final intents = event['renderIntents'];
   if (parts is! List) return null;
   final suggestions = event['suggestions'];
   return AgentAnswered(
     text: _text(parts),
-    views: <String>[
-      if (intents is List)
-        for (final intent in intents)
-          if (intent is Map<String, dynamic> && intent['view'] is String)
-            intent['view'] as String,
-    ],
-    // A chip needs both halves: the key to send and the words to show. One
-    // without the other is dropped rather than half-drawn.
+    // A chip needs both halves: the key that identifies it and the words to
+    // show. One without the other is dropped rather than half-drawn.
     suggestions: <Suggestion>[
       if (suggestions is List)
         for (final chip in suggestions)
@@ -90,19 +85,3 @@ String _text(List<dynamic> parts) => <String>[
         part['text'] is String)
       part['text'] as String,
 ].join();
-
-/// Reads a render intent's `options` as query values.
-///
-/// Only scalars survive: the read endpoint takes flat query parameters, so a
-/// nested object or list has no query encoding this client is allowed to
-/// invent (N-7 — options are the server's schema, not ours to extend). A
-/// dropped option is safer than a guessed one, which would be a 422 for the
-/// whole request.
-Map<String, String> readOptions(Object? options) {
-  if (options is! Map<String, dynamic>) return const <String, String>{};
-  return <String, String>{
-    for (final entry in options.entries)
-      if (entry.value is String || entry.value is num || entry.value is bool)
-        entry.key: '${entry.value}',
-  };
-}

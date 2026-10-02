@@ -1,4 +1,4 @@
-import 'package:finance_app/features/home/view/home_hero_loading.dart';
+import 'package:finance_app/components/portfolio_summary/home_hero_loading.dart';
 import 'package:finance_app/features/home/view/home_view.dart';
 import 'package:finance_app/features/shell/view/pinned_header.dart';
 import 'package:finance_app/skeleton/skeleton_shimmer.dart';

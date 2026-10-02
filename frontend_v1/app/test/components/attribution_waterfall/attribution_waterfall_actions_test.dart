@@ -50,7 +50,9 @@ void main() {
       await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();
       expect(sent, hasLength(1));
-      expect(sent.single.action, 'drill.attribution.v1');
+      // The v1.0 action name (ADR-M D-7); the payload declares the drill by
+      // its registered id, which is what decides the bar is tappable.
+      expect(sent.single.action, 'drill_attribution');
       expect(sent.single.args.keys, <String>['driver']);
       expect(
         AttributionWaterfallComponent.drillableDrivers(

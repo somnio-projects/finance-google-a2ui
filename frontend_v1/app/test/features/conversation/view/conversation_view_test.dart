@@ -1,7 +1,6 @@
 import 'package:finance_app/components/component_host.dart';
 import 'package:finance_app/features/conversation/view/conversation_page.dart';
 import 'package:finance_app/features/conversation/view/turn_failure_card.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,45 +12,33 @@ import 'conversation_harness.dart';
 void main() {
   group(ConversationPage, () {
     late MockAgentRepository agent;
-    late MockViewsRepository views;
 
     setUp(() {
       agent = MockAgentRepository();
-      views = MockViewsRepository();
-      when(
-        () => views.fetchPortfolioViews(
-          portfolioId: any(named: 'portfolioId'),
-          views: any(named: 'views'),
-          options: any(named: 'options'),
-        ),
-      ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
     });
 
     testWidgets('invites a question before anything has been asked', (
       tester,
     ) async {
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       expect(find.text('Ask about the portfolio.'), findsOneWidget);
     });
 
     testWidgets('answers in an interface, not only in text', (tester) async {
       // The whole point of the product, as one assertion: the agent's render
-      // intent resolves through the SAME component registry a `?view=` read
+      // surface resolves through the SAME component registry a `?view=` read
       // uses, and a figure the backend formatted lands on screen verbatim.
-      scriptTurn(agent, const <AgentEvent>[
-        AgentTurnStarted(),
-        AgentSurfaceReady(
-          index: 0,
-          view: 'holdings.allocation.v1',
-          options: <String, String>{},
+      scriptTurn(agent, <AgentEvent>[
+        const AgentTurnStarted(),
+        surfaceEvent(
+          surfaceId: 's-0',
+          component: 'HoldingsSummary',
+          payload: holdingsAllocationExample,
         ),
-        AgentAnswered(
-          text: 'Bitcoin is the largest holding.',
-          views: <String>['holdings.allocation.v1'],
-        ),
-        AgentTurnEnded(AgentTurnState.inputRequired),
+        const AgentAnswered(text: 'Bitcoin is the largest holding.'),
+        const AgentTurnEnded(AgentTurnState.inputRequired),
       ]);
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, 'what moved?');
 
       expect(find.text('what moved?'), findsOneWidget);
@@ -73,7 +60,7 @@ void main() {
           message: 'model provider unavailable',
         ),
       ]);
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, 'what moved?');
 
       expect(find.byType(TurnFailureCard), findsOneWidget);
@@ -91,10 +78,10 @@ void main() {
       // error, no empty card — as about the sentence being shown.
       scriptTurn(agent, const <AgentEvent>[
         AgentTurnStarted(),
-        AgentAnswered(text: 'You hold five assets.', views: <String>[]),
+        AgentAnswered(text: 'You hold five assets.'),
         AgentTurnEnded(AgentTurnState.inputRequired),
       ]);
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, 'what do I hold?');
 
       expect(find.text('You hold five assets.'), findsOneWidget);
@@ -112,13 +99,13 @@ void main() {
       tester,
     ) async {
       scriptTurn(agent, const <AgentEvent>[]);
-      await pumpConversation(tester, agent: agent, views: views);
+      await pumpConversation(tester, agent: agent);
       await ask(tester, '   ');
 
       verifyNever(
         () => agent.startTurn(
           text: any(named: 'text'),
-          action: any(named: 'action'),
+          messages: any(named: 'messages'),
           messageId: any(named: 'messageId'),
           contextId: any(named: 'contextId'),
         ),

@@ -1,3 +1,4 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:test/test.dart';
 
@@ -24,29 +25,21 @@ void main() {
       );
     });
 
-    test('a surface is equal by index, view and options', () {
+    test('surface messages are equal by their messages', () {
       expect(
-        const AgentSurfaceReady(
-          index: 2,
-          view: 'payoff.curve.v1',
-          options: <String, String>{'term': '30d'},
-        ).props,
+        const AgentSurfaceMessages(<Decoded>[
+          DecodedMessage(DeleteSurface('s')),
+        ]).props,
         equals(<Object?>[
-          2,
-          'payoff.curve.v1',
-          <String, String>{'term': '30d'},
+          <Decoded>[const DecodedMessage(DeleteSurface('s'))],
         ]),
       );
     });
 
-    test('an answer is equal by its text and its views', () {
+    test('an answer is equal by its text and its chips', () {
       expect(
-        const AgentAnswered(text: 'up', views: <String>['a.b.v1']).props,
-        equals(<Object?>[
-          'up',
-          <String>['a.b.v1'],
-          <Suggestion>[],
-        ]),
+        const AgentAnswered(text: 'up').props,
+        equals(<Object?>['up', <Suggestion>[]]),
       );
     });
 

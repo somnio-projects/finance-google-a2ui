@@ -1,3 +1,5 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
+import 'package:finance_app/a2ui/action_clock.dart';
 import 'package:finance_app/components/component_registry.dart';
 import 'package:finance_app/speech/speech_recognizer.dart';
 import 'package:finance_app/theme/app_theme.dart';
@@ -20,6 +22,8 @@ class FinanceApp extends StatelessWidget {
     required this.viewsRepository,
     required this.agentRepository,
     required this.authRepository,
+    required this.catalog,
+    required this.actionClock,
     required this.componentRegistry,
     required this.themeMode,
     required this.speechRecognizer,
@@ -38,6 +42,12 @@ class FinanceApp extends StatelessWidget {
   /// Who is signed in; the sign-in page and the header read it.
   final AuthRepository authRepository;
 
+  /// The A2UI v1.0 catalog the surface host enforces (ADR-M D-4).
+  final Catalog catalog;
+
+  /// What stamps a v1.0 `action` — the one clock in `lib/`.
+  final ActionClock actionClock;
+
   /// The component registry `ComponentHost` resolves with `context.read`.
   final ComponentRegistry componentRegistry;
 
@@ -54,6 +64,8 @@ class FinanceApp extends StatelessWidget {
         RepositoryProvider<ViewsRepository>.value(value: viewsRepository),
         RepositoryProvider<AgentRepository>.value(value: agentRepository),
         RepositoryProvider<AuthRepository>.value(value: authRepository),
+        RepositoryProvider<Catalog>.value(value: catalog),
+        RepositoryProvider<ActionClock>.value(value: actionClock),
         RepositoryProvider<ComponentRegistry>.value(value: componentRegistry),
         RepositoryProvider<SpeechRecognizer>.value(value: speechRecognizer),
       ],

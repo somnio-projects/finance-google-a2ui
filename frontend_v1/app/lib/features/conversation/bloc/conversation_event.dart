@@ -1,54 +1,63 @@
 part of 'conversation_bloc.dart';
 
-/// Something that asks [ConversationBloc] to do work.
+/// Something that happens to the conversation.
 sealed class ConversationEvent extends Equatable {
   /// Allows subclasses to declare `const` constructors.
   const ConversationEvent();
 }
 
-/// Asks the agent [text] and streams the turn that answers it.
+/// The user sent [text].
 final class ConversationMessageSent extends ConversationEvent {
-  /// Sends [text] to the agent.
+  /// Creates the event.
   const ConversationMessageSent(this.text);
 
-  /// What the user typed. Sent verbatim; the client adds no prompt of its own.
+  /// The message, as typed.
   final String text;
 
   @override
   List<Object?> get props => <Object?>[text];
 }
 
-/// A follow-up chip was tapped (spec frontend/0011 OD-3).
+/// The user tapped a follow-up chip.
 ///
-/// The label echoes as the user's turn; the **key** is what travels, through
-/// `ask.suggested.v1` — the client never sends the chip's words as text.
+/// On the v1.0 wire a chip is sent as **its own words in an ordinary text
+/// part** (ADR-M D-7): a chip lives outside any surface, so no A2UI message
+/// pretends one exists.
 final class ConversationSuggestionTapped extends ConversationEvent {
-  /// Creates the event.
+  /// Creates the event for [suggestion].
   const ConversationSuggestionTapped(this.suggestion);
 
-  /// The chip, as the backend published it.
+  /// The chip.
   final Suggestion suggestion;
 
   @override
   List<Object?> get props => <Object?>[suggestion];
 }
 
-/// A surface sent one of its declared actions (spec frontend/0011 OD-4).
+/// The component [componentId] of [surfaceId] raised [request] — a bar of
+/// the waterfall, sent as a v1.0 `action` (ADR-M D-7, AC-6).
 final class ConversationActionSent extends ConversationEvent {
   /// Creates the event.
-  const ConversationActionSent(this.request);
+  const ConversationActionSent({
+    required this.surfaceId,
+    required this.componentId,
+    required this.request,
+  });
 
-  /// The registered action and its published scalars.
+  /// The surface the tap happened on.
+  final String surfaceId;
+
+  /// The component that raised it.
+  final String componentId;
+
+  /// The action's name and its context, as the component published them.
   final SurfaceActionRequest request;
 
   @override
-  List<Object?> get props => <Object?>[request.action, request.args];
+  List<Object?> get props => <Object?>[surfaceId, componentId, request];
 }
 
-/// *Try again* on a failed turn: send what the last turn sent (GGU-111).
-///
-/// Field-less and `const`, like the other events; the request it repeats is
-/// read from the state, so nothing here can disagree with the transcript.
+/// *Try again* on a failed turn: the same request once more (GGU-111).
 final class ConversationRetried extends ConversationEvent {
   /// Creates the event.
   const ConversationRetried();
@@ -57,31 +66,30 @@ final class ConversationRetried extends ConversationEvent {
   List<Object?> get props => const <Object?>[];
 }
 
-/// A person changed one declared option of a surface in the transcript
-/// (GGU-113): re-render that surface with the option changed.
-///
-/// [slot] is the entry's index — entries are only ever appended, so an index
-/// names the same surface for the life of the transcript. The option and its
-/// value travel **verbatim**: the component read them from the payload's own
-/// `inputs[]`, and the backend validates them against the same registry that
-/// declared them (ADR-K D-3).
+/// The person changed one declared [option] of [componentId] on
+/// [surfaceId] to [value] — sent as `callAgentFunction("renderView")`, never
+/// through the model (ADR-M D-6, AC-5).
 final class ConversationSurfaceEdited extends ConversationEvent {
   /// Creates the event.
   const ConversationSurfaceEdited({
-    required this.slot,
+    required this.surfaceId,
+    required this.componentId,
     required this.option,
     required this.value,
   });
 
-  /// Which entry of the transcript.
-  final int slot;
+  /// The surface being edited.
+  final String surfaceId;
+
+  /// The component whose options change.
+  final String componentId;
 
   /// The declared option's name.
   final String option;
 
-  /// Its new value, as the control produced it.
+  /// Its new value, verbatim.
   final String value;
 
   @override
-  List<Object?> get props => <Object?>[slot, option, value];
+  List<Object?> get props => <Object?>[surfaceId, componentId, option, value];
 }

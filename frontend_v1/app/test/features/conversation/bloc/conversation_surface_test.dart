@@ -1,109 +1,81 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/a2ui_fixtures.dart';
 import 'conversation_harness.dart';
 
-/// Runs one turn and returns the entries it produced.
-Future<List<ConversationEntry>> entriesAfterTurn(ConversationBloc bloc) async {
-  bloc.add(const ConversationMessageSent('what moved?'));
-  // Past the skeleton: the slot is filled once the entry is no longer pending.
+/// Runs one turn to its end and returns where the bloc came to rest.
+Future<ConversationState> afterTurn(List<AgentEvent> events) async {
+  final bloc = buildBloc(events: events)
+    ..add(const ConversationMessageSent('what moved?'));
   await bloc.stream.firstWhere(
-    (state) =>
-        (state.entries.length > 1 && state.entries.last is! SurfacePending) ||
-        state.failure != null,
+    (state) => state.status != ConversationStatus.running,
   );
-  final entries = bloc.state.entries;
+  final state = bloc.state;
   await bloc.close();
-  return entries;
+  return state;
 }
 
 void main() {
-  group('$ConversationBloc render intents', () {
-    test('resolves the view the agent chose, with its options', () async {
-      // N-6/N-7: the id and the options are the agent's, taken from the
-      // registry, and they travel to the same read endpoint a `?view=`
-      // request uses. The client invents neither.
-      final views = MockViewsRepository();
-      final bloc = buildBloc(
-        events: const <AgentEvent>[exampleSurface],
-        views: views,
-      );
-      await entriesAfterTurn(bloc);
-
-      final captured = verify(
-        () => views.fetchPortfolioViews(
-          portfolioId: 'current',
-          views: captureAny(named: 'views'),
-          options: captureAny(named: 'options'),
-        ),
-      ).captured;
-      expect(captured.first, equals(<String>[exampleView]));
-      expect(captured.last, equals(<String, String>{'top_n': '5'}));
+  group('$ConversationBloc A2UI surfaces', () {
+    test('a createSurface joins the transcript with its data', () async {
+      // ADR-M D-3: the payload is in the data model — nothing is fetched.
+      final state = await afterTurn(<AgentEvent>[exampleSurface]);
+      expect(state.entries.last, const AgentSurface(exampleSurfaceId));
+      final surface = state.surfaces[exampleSurfaceId]!;
+      expect(surface.read('/root/view'), exampleView);
+      expect(surface.read('/root/options/top_n'), 5);
     });
 
-    test('shows the surface once its payload arrives', () async {
-      final entries = await entriesAfterTurn(
-        buildBloc(events: const <AgentEvent>[exampleSurface]),
-      );
-      final surface = entries.last as AgentSurface;
-      expect(surface.payload.view, equals(exampleView));
-      // Compared, not just cast: an entry's equality is what a rebuilt state
-      // is diffed by, and it is the only thing that exercises its `props`.
-      // The options are the intent's, kept so an edit can merge onto them
-      // (spec frontend/0026 OD-3).
+    test('both canonical surfaces build, in arrival order', () async {
+      // Spec frontend_v1/0001 AC-2, from the examples themselves.
+      final state = await afterTurn(<AgentEvent>[
+        v1ExampleEvent('surface.portfolio_summary.json'),
+        v1ExampleEvent('surface.order_ticket_with_payoff.json'),
+      ]);
+      expect(state.entries.whereType<AgentSurface>(), const <AgentSurface>[
+        AgentSurface('turn-7f3a-0'),
+        AgentSurface('turn-9c21-0'),
+      ]);
       expect(
-        surface,
-        equals(
-          AgentSurface(
-            surface.payload,
-            options: const <String, String>{'top_n': '5'},
-          ),
-        ),
+        state.surfaces['turn-9c21-0']!.components['root']!.children,
+        <String>['payoff'],
       );
     });
 
-    test('degrades one surface without losing the turn', () async {
-      // A read that fails takes that widget down and nothing else: the answer
-      // text is still worth reading.
-      final entries = await entriesAfterTurn(
-        buildBloc(
-          events: const <AgentEvent>[exampleSurface],
-          viewsResult: const Err<RenderedViews>(
-            TransportFailure('the server could not be reached'),
-          ),
-        ),
-      );
-      expect(
-        entries.last,
-        equals(
-          const SurfaceUnavailable(
-            view: exampleView,
-            message: 'the server could not be reached',
-          ),
-        ),
-      );
+    test('a later updateDataModel re-renders the same entry', () async {
+      final state = await afterTurn(<AgentEvent>[
+        v1ExampleEvent('surface.portfolio_summary.json'),
+        v1ExampleEvent('agent_function_response.render_view.json'),
+      ]);
+      expect(state.entries.whereType<AgentSurface>(), hasLength(1));
+      expect(state.surfaces['turn-7f3a-0']!.read('/root/options/range'), '1y');
     });
 
-    test('reports an envelope that carries no payload for the view', () async {
-      // The read succeeded and the view is missing from it — a contract
-      // problem worth showing rather than a blank space.
-      final entries = await entriesAfterTurn(
-        buildBloc(
-          events: const <AgentEvent>[
-            AgentSurfaceReady(
-              index: 0,
-              view: 'payoff.curve.v1',
-              options: <String, String>{},
-            ),
-          ],
-        ),
-      );
-      final entry = entries.last as SurfaceUnavailable;
-      expect(entry.view, equals('payoff.curve.v1'));
-      expect(entry.message, contains('no payload'));
+    test('a deleteSurface takes its entry with it', () async {
+      final state = await afterTurn(<AgentEvent>[
+        exampleSurface,
+        const AgentSurfaceMessages(<Decoded>[
+          DecodedMessage(DeleteSurface(exampleSurfaceId)),
+        ]),
+      ]);
+      expect(state.entries.whereType<AgentSurface>(), isEmpty);
+      expect(state.surfaces.surfaces, isEmpty);
+    });
+
+    test('a message that cannot apply is recorded, the rest still do', () {
+      // The extension spec's processing rules: report, then carry on.
+      return afterTurn(<AgentEvent>[
+        const AgentSurfaceMessages(<Decoded>[
+          DecodedMessage(DeleteSurface('never-created')),
+        ]),
+        exampleSurface,
+      ]).then((state) {
+        expect(state.rendererErrors.single.code, 'SURFACE_NOT_FOUND');
+        expect(state.entries.last, const AgentSurface(exampleSurfaceId));
+      });
     });
   });
 }

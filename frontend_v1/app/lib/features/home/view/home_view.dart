@@ -1,9 +1,9 @@
+import 'package:finance_app/components/portfolio_summary/home_hero.dart';
+import 'package:finance_app/components/portfolio_summary/home_movers.dart';
 import 'package:finance_app/features/home/bloc/home_bloc.dart';
 import 'package:finance_app/features/home/view/home_allocation_card.dart';
 import 'package:finance_app/features/home/view/home_first_run.dart';
 import 'package:finance_app/features/home/view/home_header.dart';
-import 'package:finance_app/features/home/view/home_hero.dart';
-import 'package:finance_app/features/home/view/home_movers.dart';
 import 'package:finance_app/features/home/view/home_questions.dart';
 import 'package:finance_app/features/shell/view/session_sheet.dart';
 import 'package:finance_app/features/shell/view/tab_failure.dart';

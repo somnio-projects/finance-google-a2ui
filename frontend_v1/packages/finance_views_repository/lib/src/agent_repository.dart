@@ -1,8 +1,8 @@
+import 'package:a2ui_v1/a2ui_v1.dart';
 import 'package:finance_api_client/finance_api_client.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/src/agent_event.dart';
 import 'package:finance_views_repository/src/agent_event_parser.dart';
-import 'package:finance_views_repository/src/surface_action_request.dart';
 
 /// Runs agent turns and reports them as a stream of [AgentEvent].
 ///
@@ -22,7 +22,9 @@ class AgentRepository {
 
   final A2aClient _a2aClient;
 
-  /// Runs one turn for [text] and yields its events as they arrive.
+  /// Runs one request — a sentence in [text], or A2UI renderer-to-agent
+  /// [messages] (`action`, `callAgentFunction`) in one `DataPart` — and
+  /// yields its events as they arrive.
   ///
   /// The stream is read **to its end**, not to the terminal status: a failed
   /// turn reports its reason in an `error` event that arrives *after*
@@ -34,13 +36,12 @@ class AgentRepository {
   Stream<AgentEvent> startTurn({
     required String messageId,
     String? text,
-    SurfaceActionRequest? action,
+    List<RendererMessage> messages = const <RendererMessage>[],
     String? contextId,
   }) async* {
     final opened = await _a2aClient.startTurn(
       text: text,
-      action: action?.action,
-      actionArgs: action?.args ?? const <String, String>{},
+      dataPart: text == null ? encodeDataPart(messages) : null,
       messageId: messageId,
       contextId: contextId,
     );

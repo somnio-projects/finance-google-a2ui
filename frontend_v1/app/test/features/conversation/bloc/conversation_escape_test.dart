@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:finance_app/features/conversation/bloc/conversation_bloc.dart';
-import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../../helpers/fixtures.dart';
 import 'conversation_harness.dart';
 
 /// Builds a bloc whose turn stream RAISES instead of ending.
@@ -20,23 +18,15 @@ import 'conversation_harness.dart';
 /// lock, and a lock nobody has tried is not a lock.
 ConversationBloc _blocWhoseTurnThrows(Object failure) {
   final agent = MockAgentRepository();
-  final reads = MockViewsRepository();
   when(
     () => agent.startTurn(
       text: any(named: 'text'),
-      action: any(named: 'action'),
+      messages: any(named: 'messages'),
       messageId: any(named: 'messageId'),
       contextId: any(named: 'contextId'),
     ),
   ).thenAnswer((_) => Stream<AgentEvent>.error(failure));
-  when(
-    () => reads.fetchPortfolioViews(
-      portfolioId: any(named: 'portfolioId'),
-      views: any(named: 'views'),
-      options: any(named: 'options'),
-    ),
-  ).thenAnswer((_) async => Ok<RenderedViews>(renderedViews()));
-  return ConversationBloc(agentRepository: agent, viewsRepository: reads);
+  return ConversationBloc(agentRepository: agent, catalogId: 'c');
 }
 
 /// Sends a message to a bloc whose turn raises, and returns where the
