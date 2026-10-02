@@ -64,6 +64,13 @@ class OrderTicketV2WeightBar extends StatelessWidget {
     final palette = OrderTicketV2Palette.of(context);
     final fill = isChanged ? palette.changed : palette.fill;
     final clamped = fraction.clamp(0.0, 1.0);
+    // One stop means the payload offers no mix to move — a single-leg
+    // ticket's weight is 100 % by definition (`draft_ladder`). No track, no
+    // thumb, no drag: the stepper is the size control, and the label still
+    // says the weight (GGU-149). Read from `stops`, never from a leg count.
+    if (stops.length < 2) {
+      return Row(children: <Widget>[const Spacer(), _label(palette)]);
+    }
     return Row(
       children: <Widget>[
         Expanded(
@@ -111,17 +118,19 @@ class OrderTicketV2WeightBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 9),
-        ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 34),
-          child: Text(
-            display,
-            textAlign: TextAlign.right,
-            style: OrderTicketV2Text.weight(
-              isChanged ? palette.changed : palette.subText,
-            ),
-          ),
-        ),
+        _label(palette),
       ],
     );
   }
+
+  Widget _label(OrderTicketV2Palette palette) => ConstrainedBox(
+    constraints: const BoxConstraints(minWidth: 34),
+    child: Text(
+      display,
+      textAlign: TextAlign.right,
+      style: OrderTicketV2Text.weight(
+        isChanged ? palette.changed : palette.subText,
+      ),
+    ),
+  );
 }

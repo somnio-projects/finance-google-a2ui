@@ -3,6 +3,7 @@ import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_header.da
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_impact.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_line.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_model.dart';
+import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_one_request.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_palette.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_text.dart';
 import 'package:flutter/material.dart';
@@ -60,43 +61,48 @@ class OrderTicketV2Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = OrderTicketV2Palette.of(context);
     final stepped = steppedLegs(changed, data);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.surface,
-        border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(radius),
-      ),
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            OrderTicketV2Header(data: data, stepped: stepped),
-            const SizedBox(height: 12),
-            for (final (index, line) in data.lines.indexed) ...<Widget>[
-              if (index > 0) const SizedBox(height: 8),
-              OrderTicketV2LineTile(
-                line: line,
-                isStepped: stepped.contains(line.key),
+    return OrderTicketV2OneRequest(
+      data: data,
+      isBusy: isBusy,
+      onLegsChanged: onLegsChanged,
+      builder: (send) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: palette.surface,
+          border: Border.all(color: palette.border),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: Padding(
+          padding: padding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              OrderTicketV2Header(data: data, stepped: stepped),
+              const SizedBox(height: 12),
+              for (final (index, line) in data.lines.indexed) ...<Widget>[
+                if (index > 0) const SizedBox(height: 8),
+                OrderTicketV2LineTile(
+                  line: line,
+                  isStepped: stepped.contains(line.key),
+                  changed: changed,
+                  onLegsChanged: send,
+                ),
+              ],
+              const SizedBox(height: 12),
+              OrderTicketV2Impact(
+                data: data,
                 changed: changed,
-                onLegsChanged: isBusy ? null : onLegsChanged,
+                rejection: rejection,
+              ),
+              const SizedBox(height: 12),
+              // N-9: the disclosure is a compliance statement and renders
+              // verbatim, in every state including the blocked one.
+              Text(
+                data.disclosure,
+                style: OrderTicketV2Text.figureLabel(palette.mutedText),
               ),
             ],
-            const SizedBox(height: 12),
-            OrderTicketV2Impact(
-              data: data,
-              changed: changed,
-              rejection: rejection,
-            ),
-            const SizedBox(height: 12),
-            // N-9: the disclosure is a compliance statement and renders
-            // verbatim, in every state including the blocked one.
-            Text(
-              data.disclosure,
-              style: OrderTicketV2Text.figureLabel(palette.mutedText),
-            ),
-          ],
+          ),
         ),
       ),
     );

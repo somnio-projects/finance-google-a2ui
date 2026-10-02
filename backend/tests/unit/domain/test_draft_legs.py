@@ -107,6 +107,23 @@ def test_stepped_writes_the_whole_option_a_tap_sends() -> None:
     assert stepped(LEGS, "ETH", 1) == "BTC:0.06,ETH:1.1,SOL:16"
 
 
+def test_stepped_lands_on_the_grid_from_an_off_grid_leg() -> None:
+    """GGU-149 — after a slider drag a leg holds eight decimals.
+
+    A tap must still move to a grid point, at most one step away: ``+`` to
+    the next one above, ``-`` to the floor (or one below it when the leg is
+    already on the grid). Adding a step to the raw value walked a ladder the
+    display rounded inconsistently, which is what read as an erratic stepper.
+    """
+    off_grid = (LegRequest(symbol="BTC", quantity=Decimal("0.15432100")),)
+    on_grid = (LegRequest(symbol="BTC", quantity=Decimal("0.15")),)
+
+    assert stepped(off_grid, "BTC", 1) == "BTC:0.16"
+    assert stepped(off_grid, "BTC", -1) == "BTC:0.15"
+    assert stepped(on_grid, "BTC", 1) == "BTC:0.16"
+    assert stepped(on_grid, "BTC", -1) == "BTC:0.14"
+
+
 def test_stepped_is_none_where_the_published_bound_ends() -> None:
     """A disabled control, never a value the backend would refuse."""
     at_zero = (LegRequest(symbol="BTC", quantity=Decimal(0)),)

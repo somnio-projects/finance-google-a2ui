@@ -64,7 +64,9 @@ class OrderLine(BaseModel):
         description=(
             "Every `legs` value this leg's slider can land on, ascending by "
             "this leg's units and always including the value on screen. A "
-            "drag picks one and re-renders; the client interpolates nothing."
+            "drag picks one and re-renders; the client interpolates nothing. "
+            "A single stop means there is no mix to move — a one-leg ticket's "
+            "weight is the whole order — and the client draws no slider."
         ),
         examples=[["BTC:0.0,ETH:1.0,SOL:16", "BTC:0.06,ETH:1.0,SOL:16"]],
     )
