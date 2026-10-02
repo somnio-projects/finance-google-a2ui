@@ -6,9 +6,10 @@
 # is slow and belongs on a runner — the same split as backend-ci's `image`
 # job.) When you change one, change its pair: `.claude/rules/ci-conventions.md`
 # §5 exists because a paraphrase drifted until a finding reached `develop`.
-PACKAGES := packages/finance_core packages/finance_api_client packages/finance_views_repository packages/finance_charts packages/finance_auth
+PACKAGES := packages/a2ui_v1 packages/finance_core packages/finance_api_client packages/finance_views_repository packages/finance_charts packages/finance_auth
 PACKAGE_CONFIG := $(CURDIR)/.dart_tool/package_config.json
 LCOV := app/coverage/lcov.info \
+	packages/a2ui_v1/coverage/lcov.info \
 	packages/finance_core/coverage/lcov.info \
 	packages/finance_api_client/coverage/lcov.info \
 	packages/finance_views_repository/coverage/lcov.info \

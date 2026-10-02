@@ -21,6 +21,7 @@ workspace:
   - packages/finance_views_repository
   - packages/finance_auth
   - packages/finance_charts
+  - packages/a2ui_v1
 
 # The workspace root ships no library code, but `tool/` lives here and the
 # gate is made of it. `frontend/test/tool/` is that suite; it needs `test` and

@@ -1,0 +1,33 @@
+{
+  "$comment": "PROVISIONAL test fixture, hand-written from ADR-M D-4/D-6 until the backend generates docs/a2ui/v1.0/finance.catalog.json (spec backend/0053 AC-2). Only names, composition rules and the function name are encoded; once the generated file lands, `make catalog-sync` copies it into app/assets and this file can go.",
+  "catalogId": "https://somniosoftware.com/a2ui/finance-showcase/v1.0/catalog.json",
+  "protocolVersion": "1.0",
+  "components": {
+    "ActivityTimeline": {"allowedParents": ["Surface", "Section"]},
+    "AttributionWaterfall": {"allowedParents": ["Surface", "Section"]},
+    "DriverDetail": {"allowedParents": ["Surface", "AttributionWaterfall"]},
+    "HoldingsSummary": {"allowedParents": ["Surface", "Section"]},
+    "MultiLegOrderTicket": {"allowedParents": ["Surface", "Section"]},
+    "OrderTicket": {"allowedParents": ["Surface", "Section"]},
+    "PortfolioSummary": {"allowedParents": ["Surface", "Section"]},
+    "PositionList": {"allowedParents": ["Surface", "Section"]},
+    "RiskPayoffChart": {
+      "allowedParents": ["OrderTicket", "MultiLegOrderTicket"]
+    },
+    "ScenarioComparison": {"allowedParents": ["Surface", "Section"]},
+    "Section": {"allowedParents": ["Surface"]},
+    "TaxLotTable": {"allowedParents": ["Surface", "Section"]}
+  },
+  "functions": {
+    "renderView": {
+      "type": "object",
+      "returnType": "object",
+      "allowedCallers": "rendererOnly",
+      "properties": {
+        "call": {"const": "renderView"},
+        "args": {"type": "object"}
+      },
+      "required": ["call"]
+    }
+  }
+}
