@@ -1,0 +1,123 @@
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_component.dart';
+import 'package:finance_app/components/scenario_comparison/scenario_comparison_footer.dart';
+import 'package:finance_views_repository/finance_views_repository.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'scenario_comparison_harness.dart';
+
+void main() {
+  group(ScenarioComparisonFooter, () {
+    testWidgets('reports the spread and names both ends', (tester) async {
+      await pumpScenarioCard(tester, scenarioData());
+      expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
+      expect(find.text(r'$1,617.00'), findsOneWidget);
+      expect(
+        find.text(ScenarioComparisonFooter.highestCaption),
+        findsOneWidget,
+      );
+      expect(find.text(ScenarioComparisonFooter.lowestCaption), findsOneWidget);
+      // The tokens the backend sent, not a method the client chose. Scoped
+      // to the footer: the table heads two of its columns with the same two.
+      final footer = find.byType(ScenarioComparisonFooter);
+      expect(
+        find.descendant(of: footer, matching: find.text('FIFO')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: footer, matching: find.text('LIFO')),
+        findsOneWidget,
+      );
+      expect(find.text(ScenarioComparisonFooter.noDifference), findsNothing);
+    });
+
+    testWidgets('names neither end when the methods coincide', (tester) async {
+      // spec `backend/0017` AC-6: a tie is reported as a tie, never
+      // resolved by picking one.
+      final payload = ViewPayload.fromJson(
+        withoutSpreadEnds(scenarioExample()),
+      );
+      await pumpScenarioCard(
+        tester,
+        const ScenarioComparisonComponent().read(payload),
+      );
+      expect(find.text(ScenarioComparisonFooter.noDifference), findsOneWidget);
+      expect(find.text(ScenarioComparisonFooter.highestCaption), findsNothing);
+      expect(find.text(ScenarioComparisonFooter.lowestCaption), findsNothing);
+      // The measured difference is still shown — it is a fact either way.
+      expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
+    });
+
+    testWidgets('shows the one end the backend named, and no tie line', (
+      tester,
+    ) async {
+      // `spread.highest` and `spread.lowest` are `default null`
+      // independently, so this payload is permitted. Under a rule requiring
+      // both ends the card would silently drop `FIFO` **and** claim the
+      // methods coincide — two wrong statements from one missing field.
+      final payload = ViewPayload.fromJson(withOneSpreadEnd(scenarioExample()));
+      await pumpScenarioCard(
+        tester,
+        const ScenarioComparisonComponent().read(payload),
+      );
+      final footer = find.byType(ScenarioComparisonFooter);
+      expect(
+        find.descendant(of: footer, matching: find.text('FIFO')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ScenarioComparisonFooter.highestCaption),
+        findsOneWidget,
+      );
+      expect(find.text(ScenarioComparisonFooter.lowestCaption), findsNothing);
+      expect(find.text(ScenarioComparisonFooter.noDifference), findsNothing);
+    });
+
+    testWidgets('renders every note verbatim and drops none', (tester) async {
+      // N-9. The second note is the sentence that makes the card's silence
+      // on "which method" legible rather than merely absent.
+      await pumpScenarioCard(tester, scenarioData());
+      expect(find.text('Illustrative rates'), findsOneWidget);
+      expect(find.text('Not advice'), findsOneWidget);
+      expect(
+        find.text(
+          'Tax is estimated at 35.00% on the short-term part and 15.00% '
+          'on the long-term part, on gains only. These rates are a declared '
+          'assumption, not yours: no fee and no wash-sale rule is modelled.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'The recommendation is arithmetic under the rates above, not '
+          'advice: which result is preferable depends on a tax situation '
+          'this demo does not know.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('shows no note when the backend attached none', (tester) async {
+      // `notes` defaults to `[]` in the contract.
+      final example = <String, dynamic>{
+        ...scenarioExample(),
+        'notes': <dynamic>[],
+      };
+      await pumpScenarioCard(
+        tester,
+        const ScenarioComparisonComponent().read(ViewPayload.fromJson(example)),
+      );
+      expect(find.text('Illustrative rates'), findsNothing);
+      expect(find.text(ScenarioComparisonFooter.spreadCaption), findsOneWidget);
+    });
+
+    testWidgets('announces a note as one label-and-text unit', (tester) async {
+      await pumpScenarioCard(tester, scenarioData());
+      expect(
+        find.bySemanticsLabel(
+          RegExp('^Illustrative rates[.] Tax is estimated'),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
+}

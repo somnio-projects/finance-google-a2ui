@@ -1,0 +1,20 @@
+name: finance_charts
+description: Framework-free chart primitives — scales, nice tick steps and layouts that turn values into geometry. Draws nothing and imports no Flutter.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+# equatable only. This package is the geometry half of a chart, which is why
+# it is pure Dart: `dart test` runs it in about a second and a painter becomes
+# a thing whose output can be asserted rather than looked at (ADR-L D-13).
+dependencies:
+  equatable: ^3.0.0
+
+dev_dependencies:
+  coverage: ^1.15.0
+  test: ^1.27.0
+  very_good_analysis: ^11.0.0
