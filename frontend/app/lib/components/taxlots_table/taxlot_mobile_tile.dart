@@ -1,10 +1,10 @@
-import 'package:finance_app/components/taxlots_table/taxlot_check_box.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_chip.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_column_headers.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_cell.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_palette.dart';
+import 'package:finance_app/components/taxlots_table/taxlot_sold_mark.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term_colors.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_type.dart';
@@ -21,6 +21,7 @@ class TaxLotMobileTile extends StatelessWidget {
   /// Creates a block.
   const TaxLotMobileTile({
     required this.lot,
+    required this.unitsLabel,
     required this.costBasisLabel,
     required this.proceedsLabel,
     super.key,
@@ -32,6 +33,9 @@ class TaxLotMobileTile extends StatelessWidget {
   /// The payload's `cost_basis.label`, the caption over that figure.
   final String costBasisLabel;
 
+  /// The payload's `units_label`, over the quantity cell.
+  final String unitsLabel;
+
   /// The payload's `proceeds.label`, over the *Mkt value* figure (OD-1).
   final String proceedsLabel;
 
@@ -41,7 +45,7 @@ class TaxLotMobileTile extends StatelessWidget {
     final term = lot.term.colorsIn(palette);
     return Semantics(
       container: true,
-      label: TaxLotCheckBox.rowLabel(lot),
+      label: TaxLotSoldMark.rowLabel(lot),
       child: ExcludeSemantics(
         child: Container(
           height: TaxLotMobileMetrics.tileHeight,
@@ -76,7 +80,7 @@ class TaxLotMobileTile extends StatelessWidget {
 
   Widget _firstLine(TaxLotPalette palette, TaxLotTermColors term) => Row(
     children: <Widget>[
-      TaxLotCheckBox(ticked: lot.fullySold),
+      TaxLotSoldMark(fullySold: lot.fullySold),
       const SizedBox(width: TaxLotMobileMetrics.railGap),
       Expanded(
         child: Text(
@@ -97,7 +101,7 @@ class TaxLotMobileTile extends StatelessWidget {
 
   Widget _grid(TaxLotPalette palette) {
     final cells = <(String, String, bool)>[
-      (TaxLotColumnHeaders.shares, lot.unitsDisplay, false),
+      (unitsLabel, lot.unitsDisplay, false),
       (costBasisLabel, lot.costBasisDisplay, false),
       (proceedsLabel, lot.proceedsDisplay, false),
       (TaxLotColumnHeaders.gainLoss, lot.gainLossDisplay, true),

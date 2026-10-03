@@ -67,6 +67,7 @@ class TaxLotsTableCard extends StatelessWidget {
   /// The desktop form: a caption line over the rows, on one grid.
   List<Widget> _table() => <Widget>[
     TaxLotColumnHeaders(
+      unitsLabel: data.unitsLabel,
       costBasisLabel: data.costBasisLabel,
       proceedsLabel: data.proceedsLabel,
     ),
@@ -83,6 +84,7 @@ class TaxLotsTableCard extends StatelessWidget {
       if (index > 0) const SizedBox(height: TaxLotMobileMetrics.tileGap),
       TaxLotMobileTile(
         lot: lot,
+        unitsLabel: data.unitsLabel,
         costBasisLabel: data.costBasisLabel,
         proceedsLabel: data.proceedsLabel,
       ),

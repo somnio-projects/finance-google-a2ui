@@ -54,17 +54,11 @@ abstract final class TaxLotMetrics {
   /// The gap after the rail, and again after the tick box.
   static const double railGap = 9;
 
-  /// The tick box: 16 × 16, radius 4, a 1.5 px hairline when empty.
-  static const double checkBoxSize = 16;
+  /// The fully-sold mark's diameter — the kit's 16 px box, now round and
+  /// drawn only for a lot the sale consumes whole (GGU-148).
+  static const double soldMarkSize = 16;
 
-  /// That box's corner radius.
-  static const double checkBoxRadius = 4;
-
-  /// The tick box's rounding.
-  static BorderRadius get checkBoxBorderRadius =>
-      BorderRadius.circular(checkBoxRadius);
-
-  /// That box's hairline.
+  /// The 1.5 px hairline the empty state's dashed box is drawn with.
   static const double checkBoxBorderWidth = 1.5;
 
   /// The six columns' widths, as integer flex weights.

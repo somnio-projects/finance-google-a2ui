@@ -15,6 +15,7 @@ class TaxLotsTableData extends Equatable {
     required this.realizedLabel,
     required this.realizedDisplay,
     required this.realizedTrend,
+    required this.unitsLabel,
     required this.costBasisLabel,
     required this.proceedsLabel,
     required this.lots,
@@ -49,6 +50,12 @@ class TaxLotsTableData extends Equatable {
   /// forbids and a use ADR-L D-14 reserves for canvas coordinates.
   final TaxLotTrend realizedTrend;
 
+  /// The payload's `units_label` — the quantity column's caption.
+  ///
+  /// Server-written and asset-neutral (`Quantity`): it said *Shares* as a
+  /// Dart constant, which is wrong for a crypto lot (GGU-148).
+  final String unitsLabel;
+
   /// The payload's `cost_basis.label` — the caption over that column.
   ///
   /// Server-written, so it follows the view's `locale` option. A Dart
@@ -72,6 +79,7 @@ class TaxLotsTableData extends Equatable {
     realizedLabel,
     realizedDisplay,
     realizedTrend,
+    unitsLabel,
     costBasisLabel,
     proceedsLabel,
     lots,

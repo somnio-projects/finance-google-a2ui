@@ -63,6 +63,7 @@ class TaxLotsTableComponent extends ViewComponent {
         payload.text('realized.direction'),
         'realized.direction',
       ),
+      unitsLabel: payload.text('units_label'),
       costBasisLabel: payload.text('cost_basis.label'),
       proceedsLabel: payload.text('proceeds.label'),
       splits: splits,

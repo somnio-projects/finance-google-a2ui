@@ -107,6 +107,7 @@ TaxLotsTableData cardData({
   realizedLabel: 'Realised P/L',
   realizedDisplay: r'+$30,349.50',
   realizedTrend: TaxLotTrend.up,
+  unitsLabel: 'Quantity',
   costBasisLabel: 'Cost basis',
   proceedsLabel: 'Proceeds',
   lots: lots,

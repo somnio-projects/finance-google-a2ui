@@ -16,7 +16,7 @@ import 'taxlots_table_harness.dart';
 /// raster noise, and a tax-lot row is mostly glyphs. Reading the decoration
 /// names the defect — "the rail is the wrong colour" — where a golden says
 /// only that something moved. The tick and the tint are the same kind of
-/// claim about the same row and live in `taxlot_check_box_test.dart`, which
+/// claim about the same row and live in `taxlot_sold_mark_test.dart`, which
 /// is where AC-3 is proved.
 void main() {
   group(TaxLotRowTile, () {

@@ -6,13 +6,15 @@ import 'package:flutter/material.dart';
 
 /// The six column captions, on the same grid as the rows below them.
 ///
-/// **Two of the six come from the payload.** The contract gives no per-lot
+/// **Three of the six come from the payload.** `units_label` captions the
+/// quantity column (it was a *Shares* constant, wrong for a crypto lot —
+/// GGU-148), and The contract gives no per-lot
 /// captions, but its top-level `cost_basis.label` and `proceeds.label` name
 /// exactly those two columns' quantity, and the view declares a `locale`
 /// option — so a Dart constant there would be client-authored copy that
 /// silently ignores it (N-1, spec `frontend/0027` OD-1).
 ///
-/// The other four have no payload label and stay client-authored. Two of them
+/// The other three have no payload label and stay client-authored. Two of them
 /// deliberately do **not** match the artboard:
 ///
 /// - the kit says *Market value*; this prints `proceeds.label`, because
@@ -24,10 +26,14 @@ import 'package:flutter/material.dart';
 class TaxLotColumnHeaders extends StatelessWidget {
   /// Creates the caption line.
   const TaxLotColumnHeaders({
+    required this.unitsLabel,
     required this.costBasisLabel,
     required this.proceedsLabel,
     super.key,
   });
+
+  /// The payload's `units_label`, over the quantity column.
+  final String unitsLabel;
 
   /// The payload's `cost_basis.label`.
   final String costBasisLabel;
@@ -37,9 +43,6 @@ class TaxLotColumnHeaders extends StatelessWidget {
 
   /// The acquisition column's caption.
   static const String acquired = 'Acquired';
-
-  /// The quantity column's caption.
-  static const String shares = 'Shares';
 
   /// The gain/loss column's caption.
   static const String gainLoss = 'Gain / loss';
@@ -53,7 +56,7 @@ class TaxLotColumnHeaders extends StatelessWidget {
     final style = TaxLotType.caption(TaxLotPalette.of(context).mutedText);
     final captions = <String>[
       acquired,
-      shares,
+      unitsLabel,
       costBasisLabel,
       proceedsLabel,
       gainLoss,

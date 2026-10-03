@@ -1,3 +1,4 @@
+import 'package:finance_app/components/taxlots_table/taxlot_figure.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_mobile_metrics.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_palette.dart';
 import 'package:finance_app/components/taxlots_table/taxlot_term.dart';
@@ -49,10 +50,10 @@ class TaxLotMobileCell extends StatelessWidget {
           style: TaxLotType.mobileCaption(palette.mutedText),
         ),
         const SizedBox(height: TaxLotMobileMetrics.captionGap),
-        Text(
+        // Scaled to fit, never cut: an ellipsis on a figure prints a number
+        // the payload never sent (GGU-148).
+        TaxLotFigure(
           value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: trend == null
               ? TaxLotType.cell(valueColor)
               : TaxLotType.cellAccent(valueColor),

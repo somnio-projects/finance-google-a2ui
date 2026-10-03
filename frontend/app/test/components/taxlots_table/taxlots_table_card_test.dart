@@ -80,11 +80,12 @@ void main() {
       // Two captions are the payload's own labels, so they follow the view's
       // `locale` option; four are client-authored because the contract
       // supplies none for those columns (OD-1).
+      expect(find.text('Quantity'), findsOneWidget);
+      expect(find.text('Shares'), findsNothing);
       expect(find.text('Cost basis'), findsOneWidget);
       expect(find.text('Proceeds'), findsOneWidget);
       for (final caption in <String>[
         TaxLotColumnHeaders.acquired,
-        TaxLotColumnHeaders.shares,
         TaxLotColumnHeaders.gainLoss,
         TaxLotColumnHeaders.holdingPeriod,
       ]) {

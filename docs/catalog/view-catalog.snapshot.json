@@ -7849,7 +7849,7 @@
     {
       "actions": [],
       "component": "TaxLotTable",
-      "digest": "0556567d7b94",
+      "digest": "10fdfd66dff1",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -7947,6 +7947,7 @@
         },
         "subtitle": "Sell 0.75 BTC under FIFO",
         "title": "Tax lots this sale consumes",
+        "units_label": "Quantity",
         "view": "taxlots.table.v1"
       },
       "fields": [
@@ -7973,6 +7974,14 @@
           "presence": "required",
           "state": null,
           "type": "string ≤200 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "units_label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
         },
         {
           "binding": "container",

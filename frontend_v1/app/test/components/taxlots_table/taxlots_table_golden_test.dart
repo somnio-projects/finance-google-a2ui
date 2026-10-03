@@ -41,7 +41,7 @@ void main() {
     /// at 4.54 % after the whole-card frames were already cropped away
     /// (spec `frontend/0027` OD-10). The rail and its band are the full
     /// height of the claim; the box and its tick are asserted on the canvas
-    /// in `taxlot_check_box_test.dart`, where emptying `paint` turns them
+    /// in `taxlot_sold_mark_test.dart`, where emptying `paint` turns them
     /// red.
     const phoneChrome = TaxLotMetrics.railWidth + TaxLotMobileMetrics.railGap;
 
@@ -68,12 +68,14 @@ void main() {
       children: <Widget>[
         TaxLotMobileTile(
           lot: lot(fullySold: true),
+          unitsLabel: 'Quantity',
           costBasisLabel: 'Cost basis',
           proceedsLabel: 'Proceeds',
         ),
         const SizedBox(height: TaxLotMobileMetrics.tileGap),
         TaxLotMobileTile(
           lot: lot(term: TaxLotTerm.short, termLabel: 'Short-term'),
+          unitsLabel: 'Quantity',
           costBasisLabel: 'Cost basis',
           proceedsLabel: 'Proceeds',
         ),

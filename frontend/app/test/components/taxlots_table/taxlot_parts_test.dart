@@ -106,7 +106,7 @@ void main() {
       // either. Emptying `paint` turns this red and nothing else.
       await tester.pumpApp(
         const SizedBox.square(
-          dimension: TaxLotMetrics.checkBoxSize,
+          dimension: TaxLotMetrics.soldMarkSize,
           child: CustomPaint(
             painter: TaxLotCheckGlyphPainter(color: Color(0xFF3C90F1)),
           ),
