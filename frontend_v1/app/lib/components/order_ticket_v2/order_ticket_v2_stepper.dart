@@ -29,6 +29,17 @@ class OrderTicketV2Stepper extends StatelessWidget {
   /// The `-` and `+` cell, measured from the design.
   static const double cell = 26;
 
+  /// What a screen reader hears on `+`. A step, not a share: the size of one
+  /// tap is the asset's own step (0.01 BTC, one SOL), and a crypto leg holds
+  /// units, not shares (GGU-149).
+  static String increaseLabel(String symbol) => 'Increase $symbol by one step';
+
+  /// …on `−`.
+  static String decreaseLabel(String symbol) => 'Decrease $symbol by one step';
+
+  /// …on the quantity between them.
+  static String quantityLabel(String symbol) => '$symbol quantity';
+
   /// The leg stepped.
   final OrderTicketV2Line line;
 
@@ -53,7 +64,7 @@ class OrderTicketV2Stepper extends StatelessWidget {
           children: <Widget>[
             _Side(
               glyph: '−',
-              label: 'Remove one ${line.symbol} share',
+              label: decreaseLabel(line.symbol),
               value: line.decrement,
               onLegsChanged: onLegsChanged,
             ),
@@ -61,7 +72,7 @@ class OrderTicketV2Stepper extends StatelessWidget {
               constraints: const BoxConstraints(minWidth: 32),
               child: Semantics(
                 container: true,
-                label: '${line.symbol} shares',
+                label: quantityLabel(line.symbol),
                 value: line.quantityDisplay,
                 excludeSemantics: true,
                 child: Text(
@@ -75,7 +86,7 @@ class OrderTicketV2Stepper extends StatelessWidget {
             ),
             _Side(
               glyph: '+',
-              label: 'Add one ${line.symbol} share',
+              label: increaseLabel(line.symbol),
               value: line.increment,
               onLegsChanged: onLegsChanged,
             ),

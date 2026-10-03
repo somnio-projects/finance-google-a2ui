@@ -47,7 +47,7 @@ void main() {
       await tester.pumpAndSettle();
       final line = readTicketV2(ticketV2Example()).lines.first;
 
-      await tester.tap(find.bySemanticsLabel('Add one ${line.symbol} share'));
+      await tester.tap(plus(line));
       await settleDebounce(tester);
 
       final captured = verify(
@@ -77,7 +77,7 @@ void main() {
         repository,
         Ok<RenderedViews>(ticketV2Envelope(example: ticketV2ExampleStepped())),
       );
-      await tester.tap(find.bySemanticsLabel('Add one ${line.symbol} share'));
+      await tester.tap(plus(line));
       await settleDebounce(tester);
 
       final card = tester.widget<OrderTicketV2Card>(
@@ -94,7 +94,7 @@ void main() {
       await tester.pumpAndSettle();
       final line = readTicketV2(ticketV2Example()).lines.first;
 
-      await tester.tap(find.bySemanticsLabel('Add one ${line.symbol} share'));
+      await tester.tap(plus(line));
       await tester.pump();
       await tester.pump();
 
@@ -114,7 +114,7 @@ void main() {
       final line = readTicketV2(ticketV2Example()).lines.first;
 
       stubFetch(repository, Err<RenderedViews>(rejection(detail: 'no')));
-      await tester.tap(find.bySemanticsLabel('Add one ${line.symbol} share'));
+      await tester.tap(plus(line));
       await settleDebounce(tester);
 
       expect(find.byType(OrderTicketV2Notice), findsOneWidget);

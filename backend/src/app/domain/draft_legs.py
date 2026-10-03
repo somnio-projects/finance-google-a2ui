@@ -27,6 +27,7 @@ from typing import Final
 from app.domain.errors import SymbolNotFoundError
 from app.domain.market import market_asset
 from app.domain.money import ZERO
+from app.domain.orders import floor_to_step
 
 #: The most legs one draft carries. Five is two more than the design draws
 #: and one more than its chips propose (`Add LINK`).
@@ -122,7 +123,15 @@ def stepped(legs: tuple[LegRequest, ...], symbol: str, direction: int) -> str | 
         the control rather than sending a value the backend refuses.
     """
     current = next(leg.quantity for leg in legs if leg.symbol == symbol)
-    target = current + direction * market_asset(symbol).step
+    step = market_asset(symbol).step
+    # Onto the asset's grid first (GGU-149): after a drag `current` is a
+    # rebalanced, off-grid quantity, and adding a step to it skipped around.
+    # `+` is the next grid point up, `-` the floor or the point below it.
+    floor = floor_to_step(current, step=step)
+    if direction > 0:
+        target = floor + step
+    else:
+        target = floor - step if floor == current else floor
     if target < ZERO or target > MAX_LEG_QUANTITY:
         return None
     return format_legs(with_quantity(legs, symbol, target))

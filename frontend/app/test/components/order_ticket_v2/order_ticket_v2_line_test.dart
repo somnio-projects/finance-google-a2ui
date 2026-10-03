@@ -41,7 +41,9 @@ void main() {
       // AC-2: no arithmetic — the string handed over is the string sent.
       final sent = <String>[];
       await pump(tester, onLegsChanged: sent.add);
-      await tester.tap(find.bySemanticsLabel('Add one ${line.symbol} share'));
+      await tester.tap(
+        find.bySemanticsLabel(OrderTicketV2Stepper.increaseLabel(line.symbol)),
+      );
       expect(sent, equals(<String>[line.increment!]));
     });
 
@@ -51,7 +53,7 @@ void main() {
       final sent = <String>[];
       await pump(tester, onLegsChanged: sent.add);
       await tester.tap(
-        find.bySemanticsLabel('Remove one ${line.symbol} share'),
+        find.bySemanticsLabel(OrderTicketV2Stepper.decreaseLabel(line.symbol)),
       );
       expect(sent, equals(<String>[line.decrement!]));
     });
@@ -130,10 +132,13 @@ void main() {
       expect(weight.style?.color, OrderTicketV2Tokens.dark.subText);
     });
 
-    testWidgets('labels the shares for a screen reader', (tester) async {
+    testWidgets('labels the quantity for a screen reader', (tester) async {
       final handle = tester.ensureSemantics();
       await pump(tester);
-      expect(find.bySemanticsLabel('${line.symbol} shares'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(OrderTicketV2Stepper.quantityLabel(line.symbol)),
+        findsOneWidget,
+      );
       handle.dispose();
     });
   });

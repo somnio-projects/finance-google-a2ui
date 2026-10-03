@@ -76,6 +76,25 @@ def test_the_legs_option_is_echoed_under_its_own_name(portfolio: Portfolio) -> N
     assert [line.symbol for line in payload.lines] == ["SOL", "BTC"]
 
 
+def test_a_single_leg_ticket_offers_no_mix_to_drag(portfolio: Portfolio) -> None:
+    """GGU-149 AC-3 — with one leg there is no mix: its weight is the order.
+
+    The payload says so itself — the leg's slider has one stop, the value on
+    screen — so a client hides the track by reading ``stops``, never by
+    counting legs. A multi-leg ticket keeps its whole ladder.
+    """
+    single = render(portfolio, OrderTicketV2Options(legs="BTC:0.15"))
+    (line,) = single.lines
+    assert line.weight.display == "100.00%"
+    assert line.stops == ("BTC:0.15",)
+    assert line.position == "0"
+    assert line.increment == "BTC:0.16"
+    assert line.decrement == "BTC:0.14"
+
+    multi = render(portfolio, OrderTicketV2Options())
+    assert all(len(leg.stops) > 1 for leg in multi.lines)
+
+
 def test_a_buy_within_cash_is_not_blocked(portfolio: Portfolio) -> None:
     """AC-6 — the fillable case declares `none` and carries no sentence."""
     constraints = render(portfolio, OrderTicketV2Options()).constraints

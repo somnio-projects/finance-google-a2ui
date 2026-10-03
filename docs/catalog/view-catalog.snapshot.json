@@ -4628,7 +4628,7 @@
     {
       "actions": [],
       "component": "MultiLegOrderTicket",
-      "digest": "da6c79781962",
+      "digest": "bee2358fbc5e",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
