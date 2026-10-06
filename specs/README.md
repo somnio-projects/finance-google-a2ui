@@ -177,4 +177,5 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0034-the-payoff-chart-is-measured.md](frontend/0034-the-payoff-chart-is-measured.md) | In progress | GGU-146 |
 | [frontend/0035-the-app-sets-the-designs-typeface.md](frontend/0035-the-app-sets-the-designs-typeface.md) | In progress | GGU-147 |
 | [backend/0053-the-agent-speaks-a2ui-v1.md](backend/0053-the-agent-speaks-a2ui-v1.md) | In progress | *unassigned* |
+| [backend/0054-the-leg-quantity-can-be-typed.md](backend/0054-the-leg-quantity-can-be-typed.md) | In progress | *unassigned* |
 | [frontend_v1/0001-a-second-client-renders-a2ui-v1.md](frontend_v1/0001-a-second-client-renders-a2ui-v1.md) | In progress | *unassigned* |

@@ -4628,7 +4628,7 @@
     {
       "actions": [],
       "component": "MultiLegOrderTicket",
-      "digest": "bee2358fbc5e",
+      "digest": "a691e75a6fa9",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -4723,6 +4723,7 @@
         "lines": [
           {
             "decrement": "BTC:0.05,ETH:1.0,SOL:16",
+            "entry": "BTC:{units},ETH:1.0,SOL:16",
             "increment": "BTC:0.07,ETH:1.0,SOL:16",
             "key": "BTC",
             "name": "Bitcoin",
@@ -4771,6 +4772,7 @@
           },
           {
             "decrement": "BTC:0.06,ETH:0.9,SOL:16",
+            "entry": "BTC:0.06,ETH:{units},SOL:16",
             "increment": "BTC:0.06,ETH:1.1,SOL:16",
             "key": "ETH",
             "name": "Ethereum",
@@ -4819,6 +4821,7 @@
           },
           {
             "decrement": "BTC:0.06,ETH:1.0,SOL:15",
+            "entry": "BTC:0.06,ETH:1.0,SOL:{units}",
             "increment": "BTC:0.06,ETH:1.0,SOL:17",
             "key": "SOL",
             "name": "Solana",
@@ -5053,6 +5056,14 @@
           "path": "lines[].decrement",
           "presence": "required",
           "state": "null",
+          "type": "string ≤149 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "lines[].entry",
+          "presence": "required",
+          "state": null,
           "type": "string ≤149 chars"
         },
         {

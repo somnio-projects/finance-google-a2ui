@@ -132,6 +132,7 @@ class OrderTicketV2Component extends ViewComponent {
     decrement: row.optionalText('decrement'),
     stops: row.strings('stops'),
     position: row.geometry('position'),
+    entry: row.optionalText('entry'),
   );
 }
 

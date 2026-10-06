@@ -21,6 +21,7 @@ class OrderTicketV2Line extends Equatable {
     required this.decrement,
     required this.stops,
     required this.position,
+    this.entry,
   });
 
   /// Stable id: the ticker.
@@ -60,6 +61,10 @@ class OrderTicketV2Line extends Equatable {
   /// mix to move, and the track is not draggable.
   final List<String> stops;
 
+  /// The `legs` value with this leg's units left as `{units}`, for a typed
+  /// quantity (spec backend/0054); null on a payload that predates it.
+  final String? entry;
+
   /// Index into [stops] of the value on screen, read as a coordinate.
   ///
   /// It travels as a decimal string because `ViewPayload` has no reader for a
@@ -82,5 +87,6 @@ class OrderTicketV2Line extends Equatable {
     decrement,
     stops,
     position,
+    entry,
   ];
 }

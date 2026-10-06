@@ -59,6 +59,17 @@ class OrderLine(BaseModel):
         description="The `legs` value a `-` sends; null at zero units.",
         examples=["BTC:2,ETH:2,SOL:14"],
     )
+    entry: str = Field(
+        max_length=MAX_LEGS_TEXT,
+        description=(
+            "The `legs` value with this leg's units left as `{units}`. The "
+            "client puts the quantity a person typed there verbatim — no "
+            "parsing, no rounding — and re-renders with the result, which "
+            "the options model judges like any other `legs` value (spec "
+            "0054); an invalid entry is the usual 422."
+        ),
+        examples=["BTC:{units},ETH:1.0,SOL:16"],
+    )
     stops: tuple[str, ...] = Field(
         max_length=MAX_LADDER,
         description=(
