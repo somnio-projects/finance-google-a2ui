@@ -1,9 +1,11 @@
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_model.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_palette.dart';
+import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_quantity_field.dart';
 import 'package:finance_app/components/order_ticket_v2/order_ticket_v2_text.dart';
 import 'package:flutter/material.dart';
 
-/// The design's `− 3 +` stepper.
+/// The design's `− 3 +` stepper, whose count can also be typed (spec
+/// backend/0054).
 ///
 /// **It adds nothing.** A tap sends [OrderTicketV2Line.increment] or
 /// [OrderTicketV2Line.decrement] — the whole `legs` option value the backend
@@ -74,13 +76,12 @@ class OrderTicketV2Stepper extends StatelessWidget {
                 container: true,
                 label: quantityLabel(line.symbol),
                 value: line.quantityDisplay,
-                excludeSemantics: true,
-                child: Text(
-                  line.quantityDisplay,
-                  textAlign: TextAlign.center,
-                  style: OrderTicketV2Text.quantity(
-                    isChanged ? palette.changed : palette.text,
-                  ),
+                textField: true,
+                child: OrderTicketV2QuantityField(
+                  display: line.quantityDisplay,
+                  entry: line.entry,
+                  color: isChanged ? palette.changed : palette.text,
+                  onLegsChanged: onLegsChanged,
                 ),
               ),
             ),

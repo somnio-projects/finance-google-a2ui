@@ -12,6 +12,7 @@ already there: *what is rendered* apart from *how the projection is wired*.
 
 from decimal import Decimal
 
+from app.domain.draft_entry import entry_template
 from app.domain.draft_impact import DraftImpact
 from app.domain.draft_ladder import ladder
 from app.domain.draft_legs import LegRequest, stepped
@@ -70,6 +71,7 @@ def lines(
             weight=options.percentage(leg.weight),
             increment=stepped(requests, leg.symbol, 1),
             decrement=stepped(requests, leg.symbol, -1),
+            entry=entry_template(requests, leg.symbol),
             stops=rungs[leg.symbol].stops,
             position=rungs[leg.symbol].position,
         )

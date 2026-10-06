@@ -7,6 +7,24 @@ repository-side memory; the agent's private memory mirrors the decisions.
 
 ---
 
+## 2026-10-06 — the leg quantity can be typed · spec `backend/0054`
+
+**Branch:** `feat/order-ticket-typed-quantity`. Asked by Patricio the morning
+of the demo: the `0.6` between `−` and `+` on `order.ticket.v2` could only be
+stepped.
+
+**What changed.** `lines[].entry` — the `legs` value with that leg's units
+left as `{units}` (`domain/draft_entry.py`, a new module because
+`draft_legs.py` sat at 150 lines). The count becomes a text field in **both**
+apps (`order_ticket_v2_quantity_field.dart`, copied byte for byte into
+`frontend_v1/`): the typed text is put in the hole verbatim and goes through
+the edit path each app already has. No client-side filter — the first draft
+had a `[0-9.]` input formatter and it came out, because a client rule beside a
+server bound is N-8; the options model's 422 is the validation.
+
+**Worth carrying forward.** A widget the two apps share is now edited twice.
+Until something enforces it, `cmp` the pair in the PR (spec 0054 AC-4).
+
 ## 2026-10-01 — A2UI v1.0 beside v0.9 · ADR-M · specs `backend/0053`, `frontend_v1/0001`
 
 **Branch:** `feat/a2ui-v1-wire` (no GGU ticket yet — none invented). Decided
