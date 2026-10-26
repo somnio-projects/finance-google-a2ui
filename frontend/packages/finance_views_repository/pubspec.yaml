@@ -14,7 +14,7 @@ dependencies:
   finance_core: ^0.1.0
 
 dev_dependencies:
-  coverage: ^1.15.0
+  coverage: ^1.16.0
   # Test-only: the repository suite drives the transport with MockClient so it
   # never opens a socket. Nothing under lib/ may import http (the layering test
   # checks that the data layer stays the only HTTP speaker).
