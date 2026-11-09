@@ -33,6 +33,13 @@ void main() {
       return credential;
     }
 
+    When<Future<UserCredential>> onLink() => when(
+      () => auth.signInWithEmailLink(
+        email: any(named: 'email'),
+        emailLink: any(named: 'emailLink'),
+      ),
+    );
+
     setUp(() {
       auth = _MockAuth();
       identity = FirebaseIdentityProvider(auth: auth);
@@ -48,51 +55,30 @@ void main() {
       expect(await identity.currentToken(), 'fresh');
     });
 
-    test('Google sign-in becomes a firebase session', () async {
-      when(() => auth.signInWithPopup(any()))
-          .thenAnswer((_) async => credentialFor('id'));
-      final result = await identity.signInWithGoogle();
-      expect(result.valueOrNull?.token, 'id');
-      expect(result.valueOrNull?.provider, 'firebase');
-      expect(result.valueOrNull?.email, 'a@b.test');
-    });
-
     test("a provider error carries the SDK's sentence, or its code", () async {
-      when(() => auth.signInWithPopup(any())).thenThrow(
-        FirebaseAuthException(
-          code: 'popup-closed',
-          message: 'The popup was closed.',
-        ),
+      final link = Uri.parse('http://x/?mode=signIn');
+      onLink().thenThrow(
+        FirebaseAuthException(code: 'expired', message: 'The link expired.'),
       );
-      expect(
-        (await identity.signInWithGoogle()).failureOrNull?.message,
-        'The popup was closed.',
-      );
-      when(() => auth.signInWithPopup(any()))
-          .thenThrow(FirebaseAuthException(code: 'network'));
-      expect(
-        (await identity.signInWithGoogle()).failureOrNull?.message,
-        'network',
-      );
+      final expired = await identity.signInWithEmailLink('a@b.test', link);
+      expect(expired.failureOrNull?.message, 'The link expired.');
+      onLink().thenThrow(FirebaseAuthException(code: 'network'));
+      final network = await identity.signInWithEmailLink('a@b.test', link);
+      expect(network.failureOrNull?.message, 'network');
     });
 
     test(
       'a credential without a user or a token is a contract failure',
       () async {
+        final link = Uri.parse('http://x/?mode=signIn');
         final credential = _MockCredential();
         when(() => credential.user).thenReturn(null);
-        when(() => auth.signInWithPopup(any()))
-            .thenAnswer((_) async => credential);
-        expect(
-          (await identity.signInWithGoogle()).failureOrNull,
-          isA<ContractFailure>(),
-        );
-        when(() => auth.signInWithPopup(any()))
-            .thenAnswer((_) async => credentialFor(null));
-        expect(
-          (await identity.signInWithGoogle()).failureOrNull,
-          isA<ContractFailure>(),
-        );
+        onLink().thenAnswer((_) async => credential);
+        final noUser = await identity.signInWithEmailLink('a@b.test', link);
+        expect(noUser.failureOrNull, isA<ContractFailure>());
+        onLink().thenAnswer((_) async => credentialFor(null));
+        final noToken = await identity.signInWithEmailLink('a@b.test', link);
+        expect(noToken.failureOrNull, isA<ContractFailure>());
       },
     );
 

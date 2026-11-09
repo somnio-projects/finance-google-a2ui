@@ -8,12 +8,6 @@ sealed class SignInEvent extends Equatable {
   List<Object?> get props => const <Object?>[];
 }
 
-/// `Continue with Google`.
-final class SignInGoogleRequested extends SignInEvent {
-  /// Creates the event.
-  const SignInGoogleRequested();
-}
-
 /// `Continue with email`.
 final class SignInEmailSubmitted extends SignInEvent {
   /// Creates the event.

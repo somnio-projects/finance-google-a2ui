@@ -1,6 +1,5 @@
 import 'package:finance_app/features/sign_in/view/sign_in_email_form.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_footer.dart';
-import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_hero.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_auth/finance_auth.dart';
@@ -35,14 +34,13 @@ void main() {
       await pump(tester);
       expect(find.text(SignInHero.title), findsOneWidget);
       expect(find.text(SignInHero.pitch), findsOneWidget);
-      expect(find.text(SignInGoogleButton.label), findsOneWidget);
-      expect(find.text('or'), findsOneWidget);
+      expect(find.textContaining('Google'), findsNothing);
+      expect(find.text('or'), findsNothing);
       expect(find.text(SignInEmailForm.label), findsOneWidget);
       expect(find.text(SignInInviteLine.link), findsOneWidget);
       expect(find.text('GitHub'), findsOneWidget);
       expect(find.text('Privacy'), findsOneWidget);
       expect(find.text('Home'), findsNothing);
-      expect(find.byType(GoogleMark), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -92,25 +90,9 @@ void main() {
       },
     );
 
-    testWidgets('Google without a provider says so, verbatim', (tester) async {
-      await pump(tester);
-      await tester.tap(find.text(SignInGoogleButton.label));
-      await tester.pumpAndSettle();
-      expect(find.text(googleNotConfigured), findsOneWidget);
-    });
-
     test('names the repository and the compliance folder', () {
       expect(SignInFooter.github.host, 'github.com');
       expect(SignInFooter.privacy.path, endsWith('docs/compliance'));
-    });
-  });
-
-  group(GoogleMarkPainter, () {
-    test('never repaints', () {
-      expect(
-        const GoogleMarkPainter().shouldRepaint(const GoogleMarkPainter()),
-        isFalse,
-      );
     });
   });
 }

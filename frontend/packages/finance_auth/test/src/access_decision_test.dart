@@ -55,15 +55,11 @@ void main() {
       expect(identity.isConfigured, isFalse);
       expect(await identity.currentToken(), isNull);
       expect(
-        (await identity.signInWithGoogle()).failureOrNull?.message,
-        googleNotConfigured,
-      );
-      expect(
         (await identity.sendEmailLink(
           'a@b.test',
           continueUrl: Uri.parse('http://x'),
-        )).isOk,
-        isFalse,
+        )).failureOrNull?.message,
+        identityNotConfigured,
       );
       expect(identity.isEmailLink(Uri.parse('http://x')), isFalse);
       expect(

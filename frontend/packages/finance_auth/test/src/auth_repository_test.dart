@@ -54,50 +54,62 @@ void main() {
       );
     });
 
-    test(
-      "Google admits an invited person and the token is the provider's",
-      () async {
-        identity
-          ..google = const Ok<AuthSession>(firebaseSession)
-          ..restored = 'fresh-token';
-        final repository = build();
-        expect((await repository.signInWithGoogle()).isOk, isTrue);
-        expect(repository.state.allowsShell, isTrue);
-        expect(repository.state.session, firebaseSession);
-        // Firebase refreshes its own token; the repository always asks it.
-        expect(await repository.token(), 'fresh-token');
-      },
-    );
+    test('the link admits an invited person', () async {
+      identity
+        ..linked = const Ok<AuthSession>(firebaseSession)
+        ..restored = 'fresh-token';
+      final repository = build();
+      expect(
+        (await repository.completeEmailLink(
+          'a@b.test',
+          Uri.parse('http://x/?mode=signIn'),
+        )).isOk,
+        isTrue,
+      );
+      expect(repository.state.allowsShell, isTrue);
+      expect(repository.state.session, firebaseSession);
+      // Firebase refreshes its own token; the repository always asks it.
+      expect(await repository.token(), 'fresh-token');
+    });
 
-    test(
-      'Google without a registry row is not provisioned, and keeps no session',
-      () async {
-        identity.google = const Ok<AuthSession>(firebaseSession);
-        backend.provisioned = false;
-        final repository = build();
-        expect((await repository.signInWithGoogle()).isOk, isTrue);
-        expect(repository.state.status, AuthStatus.notProvisioned);
-        expect(repository.state.session, isNull);
-        expect(repository.state.decision?.message, 'Not provisioned.');
-        expect(await repository.token(), isNull);
-      },
-    );
+    test('a link without a registry row is not provisioned', () async {
+      identity.linked = const Ok<AuthSession>(firebaseSession);
+      backend.provisioned = false;
+      final repository = build();
+      expect(
+        (await repository.completeEmailLink(
+          'a@b.test',
+          Uri.parse('http://x/?mode=signIn'),
+        )).isOk,
+        isTrue,
+      );
+      expect(repository.state.status, AuthStatus.notProvisioned);
+      expect(repository.state.session, isNull);
+      expect(repository.state.decision?.message, 'Not provisioned.');
+      expect(await repository.token(), isNull);
+    });
 
     test(
       'a provider refusal is the failure, and the state does not move',
       () async {
         final repository = build();
-        final result = await repository.signInWithGoogle();
+        final result = await repository.completeEmailLink(
+          'a@b.test',
+          Uri.parse('http://x/?mode=signIn'),
+        );
         expect(result.failureOrNull, isA<TransportFailure>());
         expect(seen, isEmpty);
       },
     );
 
     test('a registry that cannot be reached signs the person out', () async {
-      identity.google = const Ok<AuthSession>(firebaseSession);
+      identity.linked = const Ok<AuthSession>(firebaseSession);
       backend.accessStatus = 503;
       final repository = build();
-      final result = await repository.signInWithGoogle();
+      final result = await repository.completeEmailLink(
+        'a@b.test',
+        Uri.parse('http://x/?mode=signIn'),
+      );
       expect(result.isOk, isFalse);
       expect(repository.state.status, AuthStatus.signedOut);
     });

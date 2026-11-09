@@ -22,13 +22,6 @@ class FirebaseIdentityProvider implements IdentityProvider {
       _auth.currentUser?.getIdToken() ?? Future<String?>.value();
 
   @override
-  Future<Result<AuthSession>> signInWithGoogle() => _attempt(
-    () async => await _session(
-      (await _auth.signInWithPopup(GoogleAuthProvider())).user,
-    ),
-  );
-
-  @override
   Future<Result<void>> sendEmailLink(
     String email, {
     required Uri continueUrl,

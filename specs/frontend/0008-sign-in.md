@@ -1,5 +1,7 @@
 # 0008 — Sign-in: the door, and who holds the key
 
+> **Superseded in part by [frontend/0036](0036-sign-in-is-email-link-only.md):** the Google button is gone; sign-in is e-mail link only.
+
 - **Area:** frontend (+ backend/0027 for the registry)
 - **Status:** In progress
 - **Ticket:** _unassigned — GGU-115 is a local number_

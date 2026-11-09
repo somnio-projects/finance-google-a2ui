@@ -15,9 +15,6 @@ abstract interface class IdentityProvider {
   /// refreshed by the provider, so the same call is used before every request.
   Future<String?> currentToken();
 
-  /// Opens the provider's Google sign-in and returns the session.
-  Future<Result<AuthSession>> signInWithGoogle();
-
   /// Sends a sign-in link to [email] that returns to [continueUrl].
   Future<Result<void>> sendEmailLink(String email, {required Uri continueUrl});
 
@@ -31,9 +28,9 @@ abstract interface class IdentityProvider {
   Future<void> signOut();
 }
 
-/// The sentence the Google button shows when no provider is configured.
-const String googleNotConfigured =
-    'Google sign-in is not configured for this build.';
+/// The sentence the e-mail path shows when no provider is configured.
+const String identityNotConfigured =
+    'Sign-in is not configured for this build.';
 
 /// No identity provider: every provider call declines, honestly.
 final class NullIdentityProvider implements IdentityProvider {
@@ -47,14 +44,10 @@ final class NullIdentityProvider implements IdentityProvider {
   Future<String?> currentToken() async => null;
 
   @override
-  Future<Result<AuthSession>> signInWithGoogle() async =>
-      const Err<AuthSession>(TransportFailure(googleNotConfigured));
-
-  @override
   Future<Result<void>> sendEmailLink(
     String email, {
     required Uri continueUrl,
-  }) async => const Err<void>(TransportFailure(googleNotConfigured));
+  }) async => const Err<void>(TransportFailure(identityNotConfigured));
 
   @override
   bool isEmailLink(Uri link) => false;
@@ -63,7 +56,7 @@ final class NullIdentityProvider implements IdentityProvider {
   Future<Result<AuthSession>> signInWithEmailLink(
     String email,
     Uri link,
-  ) async => const Err<AuthSession>(TransportFailure(googleNotConfigured));
+  ) async => const Err<AuthSession>(TransportFailure(identityNotConfigured));
 
   @override
   Future<void> signOut() async {}

@@ -15,9 +15,6 @@ class FakeIdentity implements IdentityProvider {
   @override
   final bool isConfigured;
   String? restored;
-  Result<AuthSession> google = const Err<AuthSession>(
-    TransportFailure(googleNotConfigured),
-  );
   Result<void> link = const Ok<void>(null);
   Result<AuthSession> linked = const Ok<AuthSession>(
     AuthSession(token: 'linked', provider: 'firebase', email: 'a@b.test'),
@@ -26,12 +23,6 @@ class FakeIdentity implements IdentityProvider {
 
   @override
   Future<String?> currentToken() async => restored;
-
-  @override
-  Future<Result<AuthSession>> signInWithGoogle() async {
-    calls.add('google');
-    return google;
-  }
 
   @override
   Future<Result<void>> sendEmailLink(

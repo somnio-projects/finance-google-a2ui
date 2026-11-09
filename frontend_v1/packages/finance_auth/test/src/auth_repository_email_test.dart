@@ -107,9 +107,12 @@ void main() {
     });
 
     test('sign-out clears both halves and empties the cache once', () async {
-      identity.google = const Ok<AuthSession>(firebaseSession);
+      identity.linked = const Ok<AuthSession>(firebaseSession);
       final repository = build();
-      await repository.signInWithGoogle();
+      await repository.completeEmailLink(
+        'a@b.test',
+        Uri.parse('http://x/?mode=signIn'),
+      );
       await repository.signOut();
       expect(repository.state, const AuthState(status: AuthStatus.signedOut));
       expect(identity.calls.last, 'signOut');
@@ -117,9 +120,12 @@ void main() {
     });
 
     test('a 401 ends the session, and is ignored when there is none', () async {
-      identity.google = const Ok<AuthSession>(firebaseSession);
+      identity.linked = const Ok<AuthSession>(firebaseSession);
       final repository = build();
-      await repository.signInWithGoogle();
+      await repository.completeEmailLink(
+        'a@b.test',
+        Uri.parse('http://x/?mode=signIn'),
+      );
       repository.handleUnauthenticated();
       await Future<void>.delayed(Duration.zero);
       expect(repository.state.status, AuthStatus.signedOut);

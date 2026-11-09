@@ -1,6 +1,5 @@
 import 'package:finance_app/features/sign_in/view/sign_in_email_form.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_footer.dart';
-import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_app/theme/login_palettes.dart';
 import 'package:finance_auth/finance_auth.dart';
@@ -58,7 +57,6 @@ void main() {
             'http://localhost:5173/sign-in?mode=signIn&oobCode=x',
           ),
         );
-        expect(find.text(SignInGoogleButton.label), findsNothing);
         expect(find.text(SignInEmailForm.finishLabel), findsOneWidget);
         await tester.enterText(find.byType(TextField), 'a@b.test');
         await tester.tap(find.text(SignInEmailForm.finishLabel));

@@ -9,11 +9,7 @@ import '../../../helpers/auth_fakes.dart';
 void main() {
   group(SignInBloc, () {
     final url = Uri.parse('http://localhost:5173/sign-in');
-    const session = AuthSession(
-      token: 'id',
-      provider: 'firebase',
-      email: 'demo@somnio.dev',
-    );
+    final link = Uri.parse('http://localhost:5173/sign-in?mode=signIn');
 
     SignInBloc build(AuthRepository auth) =>
         SignInBloc(authRepository: auth, continueUrl: url);
@@ -29,51 +25,59 @@ void main() {
     });
 
     blocTest<SignInBloc, SignInState>(
-      'Google admits and ends idle with no message',
+      'the e-mail link admits an invited person and ends idle',
       build: () => build(
         fakeAuthRepository(
-          identity: FakeIdentity(isConfigured: true)
-            ..google = const Ok<AuthSession>(session),
+          identity: FakeIdentity(isConfigured: true),
+          provisionedEmails: const <String>{'a@b.test'},
         ),
       ),
-      act: (bloc) => bloc.add(const SignInGoogleRequested()),
+      act: (bloc) =>
+          bloc.add(SignInLinkCompleted(email: 'a@b.test', link: link)),
       expect: () => const <SignInState>[
-        SignInState(status: SignInStatus.busy),
+        SignInState(status: SignInStatus.busy, email: 'a@b.test'),
         // The backend has not answered yet, and on a first sign-in it may be
         // enrolling this identity (spec backend/0040). The screen says so.
-        SignInState(status: SignInStatus.provisioning),
-        SignInState(),
+        SignInState(status: SignInStatus.provisioning, email: 'a@b.test'),
+        SignInState(email: 'a@b.test'),
       ],
     );
 
     blocTest<SignInBloc, SignInState>(
-      "Google refused by the provider shows the provider's sentence",
-      build: () => build(fakeAuthRepository()),
-      act: (bloc) => bloc.add(const SignInGoogleRequested()),
-      expect: () => const <SignInState>[
-        SignInState(status: SignInStatus.busy),
-        SignInState(message: googleNotConfigured),
-      ],
-    );
-
-    blocTest<SignInBloc, SignInState>(
-      "Google for an uninvited person shows the backend's sentence",
+      "the e-mail link for an uninvited person shows the backend's sentence",
       build: () => build(
         fakeAuthRepository(
-          identity: FakeIdentity(isConfigured: true)
-            ..google = const Ok<AuthSession>(
-              AuthSession(token: 'id', provider: 'firebase', email: 'x@y.test'),
-            ),
+          identity: FakeIdentity(isConfigured: true),
           provisionedEmails: const <String>{},
         ),
       ),
-      act: (bloc) => bloc.add(const SignInGoogleRequested()),
+      act: (bloc) =>
+          bloc.add(SignInLinkCompleted(email: 'a@b.test', link: link)),
       expect: () => const <SignInState>[
-        SignInState(status: SignInStatus.busy),
-        // The backend has not answered yet; on a first sign-in it may be
-        // enrolling this identity (spec backend/0040).
-        SignInState(status: SignInStatus.provisioning),
-        SignInState(message: "This account isn't provisioned for the preview."),
+        SignInState(status: SignInStatus.busy, email: 'a@b.test'),
+        SignInState(status: SignInStatus.provisioning, email: 'a@b.test'),
+        SignInState(
+          email: 'a@b.test',
+          message: "This account isn't provisioned for the preview.",
+        ),
+      ],
+    );
+
+    blocTest<SignInBloc, SignInState>(
+      "an e-mail link the provider refuses shows the provider's sentence",
+      build: () => build(
+        fakeAuthRepository(
+          identity: FakeIdentity(isConfigured: true)
+            ..linked = const Err<AuthSession>(
+              TransportFailure('The link expired.'),
+            ),
+        ),
+      ),
+      act: (bloc) =>
+          bloc.add(SignInLinkCompleted(email: 'a@b.test', link: link)),
+      expect: () => const <SignInState>[
+        SignInState(status: SignInStatus.busy, email: 'a@b.test'),
+        SignInState(email: 'a@b.test', message: 'The link expired.'),
       ],
     );
 
@@ -83,7 +87,7 @@ void main() {
         const SignInEmailSubmitted('A'),
       );
       expect(const SignInAccessRequested('a').props, <Object?>['a']);
-      expect(const SignInGoogleRequested().props, isEmpty);
+      expect(const SignInMessageDismissed().props, isEmpty);
       expect(
         SignInLinkCompleted(email: 'a', link: Uri.parse('http://x')).props,
         hasLength(2),

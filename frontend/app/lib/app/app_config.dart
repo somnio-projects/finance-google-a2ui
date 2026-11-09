@@ -3,8 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Firebase's **public** web config (ADR-B D-10: only public config ships
 /// client-side). Absent when the build carries no `FIREBASE_API_KEY`, which is
 /// the local stack: there the design's e-mail path is the backend's preview
-/// sign-in (spec backend/0027 OD-3) and the Google button says it is not
-/// configured, rather than pretending.
+/// sign-in (spec backend/0027 OD-3), rather than pretending.
 class FirebaseConfig extends Equatable {
   /// Creates the config.
   const FirebaseConfig({

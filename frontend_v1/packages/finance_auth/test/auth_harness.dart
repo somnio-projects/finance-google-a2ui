@@ -15,17 +15,14 @@ class ScriptedIdentity implements IdentityProvider {
   ScriptedIdentity({
     this.isConfigured = true,
     this.restored,
-    Result<AuthSession>? google,
     Result<void>? link,
     Result<AuthSession>? linked,
-  }) : google = google ?? const Err<AuthSession>(TransportFailure('no google')),
-       link = link ?? const Ok<void>(null),
+  }) : link = link ?? const Ok<void>(null),
        linked = linked ?? const Err<AuthSession>(TransportFailure('no link'));
 
   @override
   final bool isConfigured;
   String? restored;
-  Result<AuthSession> google;
   Result<void> link;
   Result<AuthSession> linked;
   final List<String> calls = <String>[];
@@ -35,12 +32,6 @@ class ScriptedIdentity implements IdentityProvider {
   Future<String?> currentToken() async {
     calls.add('currentToken');
     return restored;
-  }
-
-  @override
-  Future<Result<AuthSession>> signInWithGoogle() async {
-    calls.add('google');
-    return google;
   }
 
   @override

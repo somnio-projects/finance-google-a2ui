@@ -39,7 +39,7 @@ AuthRepository fakeAuthRepository({
     httpClient: MockClient((request) async {
       switch (request.url.path) {
         case '/v1/me/access':
-          // A Google session carries no e-mail this fake can read, so the
+          // A provider session may carry no e-mail this fake can read, so the
           // registry admits it whenever anybody at all is provisioned.
           final ok = current == null
               ? provisionedEmails.isNotEmpty
