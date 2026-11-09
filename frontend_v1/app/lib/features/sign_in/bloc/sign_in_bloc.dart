@@ -8,7 +8,7 @@ import 'package:finance_core/finance_core.dart';
 part 'sign_in_event.dart';
 part 'sign_in_state.dart';
 
-/// The sign-in screen's three buttons and the sentences they end in.
+/// The sign-in screen's buttons and the sentences they end in.
 ///
 /// Every sentence on screen is either the design's chrome (the bloc holds
 /// none of it) or a sentence the backend or the identity provider wrote,
@@ -19,7 +19,6 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     : _auth = authRepository,
       _continueUrl = continueUrl,
       super(const SignInState()) {
-    on<SignInGoogleRequested>(_onGoogle);
     on<SignInEmailSubmitted>(_onEmail);
     on<SignInLinkCompleted>(_onLink);
     on<SignInAccessRequested>(_onAccessRequested);
@@ -49,14 +48,6 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
   /// Whether the e-mail button sends a link (a provider exists) or signs in.
   bool get usesEmailLink => _auth.usesEmailLink;
-
-  Future<void> _onGoogle(
-    SignInGoogleRequested event,
-    Emitter<SignInState> emit,
-  ) async {
-    emit(state.copyWith(status: SignInStatus.busy, message: () => null));
-    _settle(await _auth.signInWithGoogle(), emit);
-  }
 
   Future<void> _onEmail(
     SignInEmailSubmitted event,

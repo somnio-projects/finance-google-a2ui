@@ -26,7 +26,7 @@ cd app && flutter run -d chrome \
 Sign in with **`demo@somnio.dev`** on the e-mail path: the local stack has no
 Firebase, so the backend's preview sign-in answers it for a provisioned
 e-mail (spec `backend/0027` OD-3; `docker-compose.yml` provisions that one at
-boot). To sign in through Firebase — Google or an e-mail link — pass its
+boot). To sign in through Firebase — an e-mail link — pass its
 **public** web config, which is not a credential (ADR-B D-10):
 
 ```bash
@@ -69,8 +69,8 @@ The image is **per environment** — unlike the retired `client_flutter`'s, whos
 container rendered a `/config.json` at start — and the reason is in
 `Dockerfile` Decision 1: this app's deployable is a static Hosting release,
 which has no process to render a `/config.json` at start. The default build
-args are the local stack — the backend on `:8000`, and **no** Firebase, so the
-Google button says it is not configured and the e-mail path is the backend's
+args are the local stack — the backend on `:8000`, and **no** Firebase, so
+the e-mail path is the backend's
 preview sign-in with `demo@somnio.dev`. To build it against a real environment,
 pass the five public values as `--build-arg`.
 
@@ -102,10 +102,9 @@ not secrets, ADR-B D-10) and apply the Terraform that grants the deployer
 `roles/firebasehosting.admin`. The workflow fails naming each missing variable.
 Spec: [`frontend/0017`](../specs/frontend/0017-the-client-runs-in-the-stack-and-ships-itself.md).
 
-The Google button signs in through Firebase's Google provider
-(`signInWithPopup`); it answers *operation-not-allowed* until the provider is
-enabled once in the console (spec 0008 OD-8). The e-mail button sends a
-Firebase sign-in link. Either way the backend then asks its registry whether
+Sign-in is e-mail only (spec [`frontend/0036`](../specs/frontend/0036-sign-in-is-email-link-only.md):
+the Google button was removed): the e-mail button sends a Firebase sign-in link.
+The backend then asks its registry whether
 that e-mail was invited (`GET /v1/me/access`, spec backend/0027) — the first
 admins are `AUTH_BOOTSTRAP_ADMINS`, set for dev in
 `infra/environments/dev.tfvars`.

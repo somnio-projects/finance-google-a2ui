@@ -1,7 +1,6 @@
 import 'package:finance_app/features/sign_in/bloc/sign_in_bloc.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_email_form.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_footer.dart';
-import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_hero.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_provisioning_note.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_snack.dart';
@@ -10,7 +9,7 @@ import 'package:finance_app/theme/theme_toggle_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The sign-in screen: hero · Google · `or` · e-mail · invite line · footer,
+/// The sign-in screen: hero · e-mail · invite line · footer,
 /// at the design's 56/28/28 padding on a 390-wide artboard.
 class SignInView extends StatelessWidget {
   /// Creates the view. [emailLink] is set when finishing an e-mail sign-in.
@@ -81,13 +80,6 @@ class _Body extends StatelessWidget {
                 children: <Widget>[
                   const SignInHero(),
                   const SizedBox(height: 44),
-                  if (link == null) ...<Widget>[
-                    SignInGoogleButton(
-                      busy: state.isBusy,
-                      onPressed: () => bloc.add(const SignInGoogleRequested()),
-                    ),
-                    const _OrDivider(),
-                  ],
                   SignInEmailForm(
                     state: state,
                     finishing: link != null,
@@ -119,31 +111,6 @@ class _Body extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = LoginTokens.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 22),
-      child: Row(
-        children: <Widget>[
-          Expanded(child: Container(height: 1, color: tokens.divider)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(
-              'or',
-              style: TextStyle(fontSize: 12, color: tokens.dividerText),
-            ),
-          ),
-          Expanded(child: Container(height: 1, color: tokens.divider)),
-        ],
       ),
     );
   }

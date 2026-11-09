@@ -1,5 +1,5 @@
+import 'package:finance_app/features/sign_in/view/sign_in_email_form.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_footer.dart';
-import 'package:finance_app/features/sign_in/view/sign_in_google_button.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:flutter/material.dart';
@@ -44,14 +44,14 @@ void main() {
       expect(find.text(SignInInviteLine.link), findsNothing);
       // The rest of the screen is untouched: this removes a claim, not a
       // way in.
-      expect(find.text(SignInGoogleButton.label), findsOneWidget);
+      expect(find.text(SignInEmailForm.label), findsOneWidget);
     });
 
     testWidgets('a policy that cannot be read shows neither', (tester) async {
       await pump(tester, fakeAuthRepository(policy: null));
       expect(find.text(SignInInviteLine.sentence), findsNothing);
       expect(find.text(SignInInviteLine.link), findsNothing);
-      expect(find.text(SignInGoogleButton.label), findsOneWidget);
+      expect(find.text(SignInEmailForm.label), findsOneWidget);
     });
 
     testWidgets('the line is absent before the answer arrives', (tester) async {

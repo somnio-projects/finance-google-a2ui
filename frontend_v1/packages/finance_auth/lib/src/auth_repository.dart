@@ -60,10 +60,6 @@ class AuthRepository {
     await _admit(AuthSession(token: token, provider: 'firebase'));
   }
 
-  /// The Google button.
-  Future<Result<void>> signInWithGoogle() =>
-      _complete(_identity.signInWithGoogle());
-
   /// The e-mail button: a link where a provider exists, a minted token where
   /// none does. [continueUrl] is where the link brings the person back.
   Future<Result<EmailSignInOutcome>> signInWithEmail(

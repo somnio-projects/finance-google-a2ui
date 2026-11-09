@@ -1,5 +1,7 @@
 # 0002 — Firebase sign-in on dev, end to end
 
+> **Superseded in part by [frontend/0036](../frontend/0036-sign-in-is-email-link-only.md):** the Google button is gone; sign-in is e-mail link only.
+
 - **Area:** infra (with the client's build recipe and Hosting target)
 - **Status:** In progress
 - **Ticket:** _unassigned — no GGU number exists for this yet; none is invented here_

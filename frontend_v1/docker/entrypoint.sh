@@ -43,8 +43,8 @@ fi
 # A CSP source is an origin — a trailing slash is not part of one.
 connect_src="${APP_BACKEND_ORIGIN%/}"
 
-# The sign-in popup is hosted on the Firebase auth domain. A build with no
-# Firebase config (the local stack default) opens no popup at all, so the
+# Firebase Auth's helper frame is hosted on the Firebase auth domain. A build
+# with no Firebase config (the local stack default) loads none, so the
 # directive stays empty rather than naming a host this bundle cannot reach —
 # a CSP that permits more than the app does is a CSP nobody can review.
 frame_src=""
@@ -54,9 +54,13 @@ if [ -n "${APP_FIREBASE_AUTH_DOMAIN:-}" ]; then
         exit 1
     fi
     # ...and apis.google.com, which `firebase-auth.js` loads `js/api.js`
-    # from and frames for its sign-in popup handshake. Omitting it is not a
-    # hypothetical: Hosting's policy did, and "Continue with Google" failed
-    # with a message reading only "Error" (spec frontend/0022 OD-6).
+    # from and frames for its auth handshake. Sign-in is e-mail link only
+    # (spec frontend/0036), but the SDK still initialises that frame, and
+    # these two entries were deliberately left alone: dropping them needs a
+    # check against a real Firebase project, not a unit test (spec 0036 §4).
+    # Omitting it was once not hypothetical: Hosting's policy did, and the
+    # sign-in popup failed with a message reading only "Error" (spec
+    # frontend/0022 OD-6).
     frame_src=" https://${APP_FIREBASE_AUTH_DOMAIN} https://apis.google.com"
     # The Firebase JS SDK talks to these two, and only these two, for
     # sign-in and for refreshing an ID token. Named explicitly rather than

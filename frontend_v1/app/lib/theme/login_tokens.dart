@@ -12,11 +12,6 @@ class LoginTokens extends ThemeExtension<LoginTokens> {
     required this.page,
     required this.title,
     required this.subtitle,
-    required this.googleBorder,
-    required this.googleFill,
-    required this.googleText,
-    required this.divider,
-    required this.dividerText,
     required this.fieldBorder,
     required this.fieldFocus,
     required this.fieldLabel,
@@ -47,21 +42,6 @@ class LoginTokens extends ThemeExtension<LoginTokens> {
 
   /// The one-line pitch under it.
   final Color subtitle;
-
-  /// Google button: border.
-  final Color googleBorder;
-
-  /// Google button: fill.
-  final Color googleFill;
-
-  /// Google button: words.
-  final Color googleText;
-
-  /// The `or` rule.
-  final Color divider;
-
-  /// The `or` itself.
-  final Color dividerText;
 
   /// E-mail field: resting border.
   final Color fieldBorder;
@@ -119,22 +99,6 @@ class LoginTokens extends ThemeExtension<LoginTokens> {
 
   /// The glow the hero casts under the logo tile, also artboard-independent.
   static const Color logoGlow = Color(0x8C4F5DFF);
-
-  /// Google's own four brand colours, in the order `GoogleMarkPainter` paints
-  /// them: **blue, red, yellow, green**.
-  ///
-  /// They are Google's rather than this design's, so they do not follow the
-  /// artboard and are a `static const` beside [logoGradient]. They are here at
-  /// all — rather than beside the painter that uses them — because a colour
-  /// literal lives in a `*_tokens.dart` and nowhere else, which
-  /// `app/test/architecture/color_rules_test.dart` now asserts instead of
-  /// `frontend/CLAUDE.md` claiming it (spec frontend/0029 OD-4).
-  static const List<Color> googleMark = <Color>[
-    Color(0xFF4285F4),
-    Color(0xFFEA4335),
-    Color(0xFFFBBC05),
-    Color(0xFF34A853),
-  ];
 
   @override
   LoginTokens copyWith() => this;

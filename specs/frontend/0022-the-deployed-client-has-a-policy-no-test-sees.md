@@ -1,5 +1,7 @@
 # 0022 — The deployed client has a policy no test sees
 
+> **Superseded in part by [frontend/0036](0036-sign-in-is-email-link-only.md):** the Google button is gone; sign-in is e-mail link only.
+
 - **Area:** frontend (the Content-Security-Policy, both copies of it)
 - **Status:** In progress
 - **Ticket:** _unassigned — no GGU number exists for this; none is invented here_

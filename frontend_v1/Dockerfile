@@ -89,8 +89,7 @@
 # The defaults are the local stack: the backend on :8000 as the BROWSER sees
 # it, and no Firebase at all. An empty FIREBASE_API_KEY is not a degraded
 # build, it is a declared state — `AppConfig.fromEnvironment` returns a null
-# `firebase`, the Google button says it is not configured instead of failing
-# at the first click, and the e-mail path is answered by the backend's preview
+# `firebase`, and the e-mail path is answered by the backend's preview
 # sign-in (spec backend/0027 OD-3). The local stack has no Firebase project,
 # so this is the honest shape for it.
 ARG BACKEND_BASE_URL=http://localhost:8000
