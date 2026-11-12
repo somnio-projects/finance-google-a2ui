@@ -44,7 +44,7 @@ The e-mail link needs no change of its own: `SignInPage` already builds the `con
 - **AC-7 (159)** Only a 401 or 403 (or *not provisioned*) routes to sign-in.
 - **AC-8 (159)** *Try again* after the window lands on the remembered route with no new magic link.
 - **AC-9 (163)** Sign-in is never rendered while a session is being restored; the start-up surface is, and it ends when auth resolves.
-- **AC-10** `from` is honoured only for an in-app path: not `//host`, not an absolute URL, not a gateway (no open redirect, no loop).
+- **AC-10** `from` is honoured only for an in-app path: not `//host`, not an absolute URL, not a gateway — with or without a trailing slash (`/starting/`, `/sign-in/`) — so no open redirect and no loop.
 
 ## 5. Tests
 
@@ -63,3 +63,4 @@ The e-mail link needs no change of its own: `SignInPage` already builds the `con
 - **OD-2 — `Retry-After` is decoded with `jsonDecode` in `response_decoder.dart`.** Owner: Lautaro. The numbers rule (`binding_rules_test.dart`) bans `int.parse`/`int.tryParse` from `lib/` because they are how a *figure* is recomputed; `jsonDecode` is already allowed in exactly that file as the transport's decoder. The header is a protocol field nobody sees. The HTTP-date form is not sent by this backend (`rate_limit.py` sends `str(WINDOW_SECONDS)`) and reads as no hint. The alternative — a second allow-listed file for a number mechanism — would widen an exemption whose size is asserted at one.
 - **OD-3 — The start-up surface draws the sign-in hero's tile alone, not a skeleton of a screen.** Owner: design. At that point the app does not know whether the shell or the sign-in form comes next, so drawing the shape of either would be a claim. No spinner: `transition_rules_test.dart` reserves those for controls.
 - **OD-4 — 403 ends the session.** Owner: Lautaro. It is an answer about the credential (valid and not allowed), so it is treated like 401.
+- **OD-5 — A 5xx during a fresh sign-in is now a retry, not a sign-in error.** Owner: Lautaro. A deliberate behaviour change, intended by GGU-159. Before: completing the e-mail link (or any sign-in that reaches `_admit`) while `/v1/me/access` answered 5xx, 429 or dropped emitted `signedOut`, so the person stayed on the sign-in screen with the failure's sentence in the snackbar and had to request a new link. After: the same failure is `unavailable` with the session kept, the gate routes to `/starting?from=…`, and *Try again* re-asks the registry with that session — no new link. The preview sign-in's own `POST /v1/preview-sign-ins` failing is unchanged (it fails before `_admit` and stays on sign-in with its message). `auth_repository_test.dart::a registry that cannot be reached keeps the session` asserts the new behaviour.

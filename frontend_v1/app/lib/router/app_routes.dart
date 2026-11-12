@@ -94,13 +94,17 @@ String gatewayRoute(String gateway, String wanted) => wanted == AppRoutes.home
 ///
 /// Only an in-app path is honoured: it must start with one `/` (`//host` is
 /// another origin) and must not be a gateway itself, so a crafted link can
-/// neither leave the app nor loop the gate.
+/// neither leave the app nor loop the gate. A trailing slash is ignored for
+/// that comparison, so `/starting/` and `/sign-in/` are gateways too.
 String rememberedRoute(Uri gatewayUri) {
   final from = gatewayUri.queryParameters[AppRoutes.fromParameter];
   if (from == null || !from.startsWith('/') || from.startsWith('//')) {
     return AppRoutes.home;
   }
-  final path = from.split(RegExp('[?#]')).first;
+  final path = from
+      .split(RegExp('[?#]'))
+      .first
+      .replaceFirst(RegExp(r'(?<=.)/+$'), '');
   final isGateway = path == AppRoutes.startup || AppRoutes.isSignIn(path);
   return isGateway ? AppRoutes.home : from;
 }

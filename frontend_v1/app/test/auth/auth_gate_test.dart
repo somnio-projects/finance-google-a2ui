@@ -67,6 +67,13 @@ void main() {
   });
 
   group('rememberedRoute', () {
+    test('keeps a trailing slash on a route that is not a gateway', () {
+      expect(
+        rememberedRoute(_at('/starting?from=%2Fholdings%2F')),
+        '/holdings/',
+      );
+    });
+
     test('honours an in-app path with its query', () {
       expect(
         rememberedRoute(_at('/starting?from=%2Fask%3Fask%3Dhi')),
@@ -82,6 +89,9 @@ void main() {
         '/starting',
         '/sign-in?from=%2Fask',
         '/starting#x',
+        '/starting/',
+        '/sign-in/',
+        '/sign-in//?from=%2Fask',
       ]) {
         final uri = Uri(
           path: AppRoutes.startup,
