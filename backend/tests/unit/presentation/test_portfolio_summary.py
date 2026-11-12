@@ -2,15 +2,18 @@
 
 from dataclasses import replace
 from datetime import UTC, datetime
+from decimal import Decimal
+from typing import get_args
 
 import pytest
 from pydantic import ValidationError
 
+from app.domain.baskets import Basket, basket_legs
 from app.domain.persona import DEMO_ACCOUNT, PortfolioOwner
 from app.domain.portfolio import Portfolio
 from app.presentation.registry import REGISTRY
 from app.presentation.summary_options import PortfolioSummaryOptions
-from app.presentation.summary_questions import SUGGESTED_QUESTIONS
+from app.presentation.summary_questions import FLOW_C_BASKET, SUGGESTED_QUESTIONS
 from app.presentation.views.portfolio_summary import VIEW_ID, fitness, render, surface
 
 
@@ -41,8 +44,16 @@ def test_the_questions_are_the_three_chips_the_design_draws(
     assert [q.text for q in payload.questions] == [
         "What moved my portfolio today?",
         "Tax impact of selling BTC?",
-        "Build a $10k order in tech",
+        "Build a $10k order in the majors",
     ]
+
+
+def test_the_order_chip_names_a_basket_the_order_tool_accepts() -> None:
+    """GGU-160: the Flow C chip once said "tech", which ``draft_order`` refuses."""
+    assert FLOW_C_BASKET in get_args(Basket)
+    chip = SUGGESTED_QUESTIONS[2].text
+    assert chip.endswith(f"in the {FLOW_C_BASKET}")
+    assert len(basket_legs(FLOW_C_BASKET, Decimal(10000))) > 1  # type: ignore[arg-type]
 
 
 def test_render_is_pure_over_the_same_inputs(portfolio: Portfolio) -> None:

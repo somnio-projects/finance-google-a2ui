@@ -14,10 +14,14 @@ from app.presentation.summary_payload import Question
 QUESTIONS_TITLE: Final[str] = "Suggested questions"
 MOVERS_TITLE: Final[str] = "Top movers today"
 
+#: The basket the Flow C chip names. It must be one ``draft_order`` accepts
+#: (``app.domain.baskets.Basket``); a test holds the two together (GGU-160).
+FLOW_C_BASKET: Final[str] = "majors"
+
 SUGGESTED_QUESTIONS: Final[tuple[Question, ...]] = (
     Question(text="What moved my portfolio today?"),
     Question(text="Tax impact of selling BTC?"),
-    Question(text="Build a $10k order in tech"),
+    Question(text=f"Build a $10k order in the {FLOW_C_BASKET}"),
 )
 
-__all__ = ["MOVERS_TITLE", "QUESTIONS_TITLE", "SUGGESTED_QUESTIONS"]
+__all__ = ["FLOW_C_BASKET", "MOVERS_TITLE", "QUESTIONS_TITLE", "SUGGESTED_QUESTIONS"]
