@@ -60,7 +60,12 @@ def _error(response: object) -> dict[str, object]:
 def test_a_data_part_runs_a_turn_and_streams_the_documented_events(
     actions_client: TestClient,
 ) -> None:
-    """AC-3 — an action is a turn, and it streams like any other."""
+    """AC-3 — an action is a turn; the drill draws its card with no model.
+
+    Spec 0056 AC-5: the client here wires the null model, which could not
+    have chosen ``driver_detail`` — the surface arriving proves the call was
+    pinned by the action rather than picked.
+    """
     response = actions_client.post(
         "/",
         json=call("message/stream", **action_message(DRILL, {"driver": "LINK"})),
@@ -69,11 +74,17 @@ def test_a_data_part_runs_a_turn_and_streams_the_documented_events(
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
-    assert [event["kind"] for event in events(response.text)] == [
+    streamed = events(response.text)
+    assert [event["kind"] for event in streamed] == [
         "status-update",
+        "render-intent",
         "message",
         "status-update",
     ]
+    assert streamed[1]["renderIntent"] == {
+        "view": "attribution.driver.v1",
+        "options": {"symbol": "LINK"},
+    }
 
 
 def test_an_unknown_action_is_a_json_rpc_error_at_http_200(

@@ -19,7 +19,7 @@ from app.actions.defined.ask_suggested import AskSuggestedArgs
 from app.actions.defined.drill_attribution import ACTION as DRILL
 from app.actions.defined.drill_attribution import DrillAttributionArgs, Driver
 from app.actions.registry import ACTIONS
-from app.actions.resolve import composed_prompt, validated_args
+from app.actions.resolve import composed_turn, validated_args
 from app.actions.suggestions import (
     DECLARED_KEYS,
     SUGGESTIONS,
@@ -38,7 +38,7 @@ def test_the_drivers_offered_are_exactly_the_market_reference() -> None:
 
 def test_a_drill_composes_the_backend_sentence_around_the_chosen_driver() -> None:
     """AC-3 — the caller supplies a value, never the sentence."""
-    prompt = composed_prompt(DRILL, {"driver": "LINK"})
+    prompt = composed_turn(DRILL, {"driver": "LINK"}).prompt
 
     assert prompt == (
         "Break down the contribution of LINK in more detail for the same "
@@ -65,7 +65,7 @@ def test_only_registered_suggestion_keys_are_accepted(key: str) -> None:
 @pytest.mark.parametrize("key", DECLARED_KEYS, ids=list(DECLARED_KEYS))
 def test_the_prompt_is_the_registered_text_byte_for_byte(key: str) -> None:
     """AC-8 — the label a person read and the prompt that ran cannot drift."""
-    assert composed_prompt(CHIP, {"suggestion": key}) == suggestion_prompt(key)
+    assert composed_turn(CHIP, {"suggestion": key}).prompt == suggestion_prompt(key)
     assert suggestion_label(key).strip()
 
 

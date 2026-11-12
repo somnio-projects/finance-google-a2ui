@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 
+from app.agent.contracts import Tool
 from app.agent.registry import ToolRegistry
 from app.core.model import MessageRole, ModelMessage, ModelReply, ToolCall, ToolSpec
 from app.core.protocols import ErrorReporter, ModelClient
@@ -15,7 +16,6 @@ from app.services.agent_service import AgentService
 from app.services.render_intent_service import RenderIntentService
 from app.services.view_service import ViewService
 from tests.conftest import FROZEN_NOW, FakeReporter
-from tests.unit.conftest import FakeTool
 
 ANSWER = "Your portfolio is worth $1.00."
 #: The prompt these tests assert on. Deliberately not the real one: the turn
@@ -50,7 +50,7 @@ def make_resolver(reporter: ErrorReporter) -> TurnRenderResolver:
 def make_service(
     model: ModelClient,
     *,
-    tools: Sequence[FakeTool] = (),
+    tools: Sequence[Tool] = (),
     max_iterations: int = 4,
 ) -> tuple[AgentService, FakeReporter]:
     """Build the service over a fresh registry and a frozen clock."""

@@ -57,6 +57,6 @@ async def test_an_action_is_refused_outright_while_the_flag_is_off(
 
     assert not await service.enabled()
     with pytest.raises(FeatureDisabledError, match=FEATURE_KEY):
-        await service.prompt_for(principal, _drill(), request_id=REQUEST_ID)
+        await service.turn_for(principal, _drill(), request_id=REQUEST_ID)
 
     assert reporter.metrics == []

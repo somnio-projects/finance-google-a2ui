@@ -10,7 +10,7 @@ import json
 from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
-from app.agent.contracts import RenderIntent, ToolContext, ToolOutcome
+from app.agent.contracts import RenderIntent, Tool, ToolContext, ToolOutcome
 from app.core.model import ModelReply
 from app.core.principal import Principal
 from app.domain.provider import InMemoryPortfolioProvider
@@ -57,7 +57,7 @@ def build(
     principal: Principal,
     *,
     model: NullModelClient | None = None,
-    tools: Sequence[FakeTool] = (),
+    tools: Sequence[Tool] = (),
     flags: FakeFlags | None = None,
 ) -> tuple[A2uiV1Service, FakeReporter]:
     """Wire the v1.0 adapter as ``deps.a2ui_v1`` does, over the doubles."""
@@ -85,6 +85,7 @@ async def call_service(
     body: object,
     *,
     flags: FakeFlags | None = None,
+    tools: Sequence[Tool] = (),
 ) -> tuple[Any, NullModelClient]:
     """Answer ``body`` and return the decoded outcome with the model's log.
 
@@ -93,7 +94,7 @@ async def call_service(
         null model, whose ``calls`` say whether the model was reached.
     """
     model = NullModelClient()
-    service, _ = build(principal, model=model, flags=flags)
+    service, _ = build(principal, model=model, flags=flags, tools=tools)
     outcome = await service.call(
         body, principal=principal, context=context, task_id="t1", request_id="r1"
     )

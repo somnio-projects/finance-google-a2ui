@@ -5,13 +5,10 @@ model/tool loop itself lives next door in ``app.services.agent_loop``; this
 module owns what surrounds it — the history the turn starts from, the single
 metric and log line it records, and the failure it reports.
 
-**Two entry points, one loop.** ``run_turn_events`` is the real one: it yields
-each surface the moment it is ready (ADR-K D-19), and the A2A adapter streams
-that. ``run_turn`` is a thin collector for callers that want the finished turn.
+**Two entry points, one loop.** ``run_turn_events`` yields each surface the
+moment it is ready (ADR-K D-19); ``run_turn`` collects the finished turn.
 
-**Sessions are not here.** Both entry points take the history as an argument
-and hold no state between turns; this module imports no session module.
-
+**Sessions are not here:** the history is an argument; no state is held.
 **What is logged.** Exactly one metric and one log line per turn: the model,
 the outcome, the latency and the counters — never the prompt, the reply, tool
 arguments, tool results or the subject (spec 0006 §5, AC-13).
@@ -20,6 +17,7 @@ arguments, tool results or the subject (spec 0006 §5, AC-13).
 from collections.abc import AsyncIterator, Sequence
 from datetime import datetime
 
+from app.actions.contracts import DirectCall
 from app.agent.contracts import ToolContext, TurnResult, TurnState
 from app.agent.events import TurnCompleted, TurnEvent
 from app.agent.registry import ToolRegistry
@@ -71,6 +69,7 @@ class AgentService:
         prompt: str,
         history: Sequence[ModelMessage],
         context: ToolContext,
+        direct: DirectCall | None = None,
     ) -> AsyncIterator[TurnEvent]:
         """Answer ``prompt``, yielding each surface as soon as it is ready.
 
@@ -78,6 +77,7 @@ class AgentService:
             prompt: What the user just asked.
             history: The conversation before this turn, oldest first.
             context: The subject and portfolio provider handed to every tool.
+            direct: The call an action pinned; no model is asked (spec 0056).
 
         Yields:
             One ``SurfaceReady`` per render intent, in production order, then
@@ -94,7 +94,7 @@ class AgentService:
         state = TurnState()
         messages = [*history, ModelMessage(role=MessageRole.USER, text=prompt)]
         try:
-            async for event in self._loop.run(messages, context, state):
+            async for event in self._loop.run(messages, context, state, direct):
                 yield event
         except DependencyUnavailableError as exc:
             self._record(started, state, outcome="model-unavailable", failure=exc)

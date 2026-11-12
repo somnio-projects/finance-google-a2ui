@@ -10,6 +10,7 @@ registered id, never listed, so the next action needs no edit here.
 The refusals are v0.9's too (``a2a_actions``): no third error shape.
 """
 
+from app.actions.contracts import ComposedTurn
 from app.actions.registry import ACTIONS
 from app.core.principal import Principal
 from app.schemas.a2a import INVALID_PARAMS
@@ -43,8 +44,8 @@ async def action_prompt(
     event: ActionEvent,
     rpc_id: str | int | None,
     request_id: str,
-) -> str | dict[str, object]:
-    """Return the prompt this action runs, or the JSON-RPC failure body.
+) -> ComposedTurn | dict[str, object]:
+    """Return the turn this action runs, or the JSON-RPC failure body.
 
     Args:
         actions: The v0.9 dispatcher, which owns the resolution.
@@ -54,15 +55,15 @@ async def action_prompt(
         request_id: Correlation id, for an audited action's event.
 
     Returns:
-        The server-composed sentence, or the refusal — before any stream
-        opens, as on v0.9 (spec 0022 AC-4).
+        The server-composed sentence and its pinned call, or the refusal —
+        before any stream opens, as on v0.9 (spec 0022 AC-4).
     """
     action_id = action_id_for(event.name)
     if action_id is None:
         return failure(rpc_id, INVALID_PARAMS, UNKNOWN_ACTION)
     data = ActionData(action=action_id, args=event.context)
     try:
-        return await actions.prompt_for(principal, data, request_id=request_id)
+        return await actions.turn_for(principal, data, request_id=request_id)
     except REFUSALS as exc:
         return action_failure(rpc_id, exc)
 

@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 /// the whole seam: a host that can re-request the view supplies it, and one
 /// that cannot leaves it null, in which case the ticket renders read-only
 /// rather than offering a control it cannot honour (spec 0006 AC-10). This is
-/// the shape `AttributionWaterfallCard` already uses for `onSegmentTap`.
+/// the shape `AttributionWaterfallCard` already uses for its `drill`.
 ///
 /// Nothing here computes. [changedFigures] is a set of figure *names* decided
 /// by comparing display strings upstream; this widget only decides how a
