@@ -14,6 +14,7 @@ payoff curve right after it joins its surface (D-4) and nothing is reordered.
 from collections.abc import AsyncIterator, Sequence
 from typing import Final
 
+from app.actions.contracts import ComposedTurn, DirectCall
 from app.actions.suggestions import recommended
 from app.agent.contracts import ToolContext, TurnResult
 from app.agent.events import SurfaceReady
@@ -56,6 +57,7 @@ class V1TurnStream:
         task_id: str,
         context_id: str | None,
         context: ToolContext,
+        direct: DirectCall | None = None,
     ) -> AsyncIterator[str]:
         """Return the events of one turn, in protocol order.
 
@@ -65,18 +67,20 @@ class V1TurnStream:
             task_id: Correlation id; surface ids are ``<task_id>-<index>``.
             context_id: The conversation id to echo.
             context: The subject-scoped tool context.
+            direct: The call an action pinned, run with no model (spec 0056).
 
         Returns:
             ``working`` → one ``artifact-update`` per surface → the terminal
             ``message`` → a final status; or the failure pair.
         """
         self._reporter.increment(WIRE_METRIC, tags=WIRE_TAGS)
-        inner = self._turn(prompt, task_id, context_id, context)
+        turn = ComposedTurn(prompt=prompt, direct=direct)
+        inner = self._turn(turn, task_id, context_id, context)
         return guarded(task_id, context_id, inner, reporter=self._reporter)
 
     async def _turn(
         self,
-        prompt: str,
+        turn: ComposedTurn,
         task_id: str,
         context_id: str | None,
         context: ToolContext,
@@ -85,7 +89,7 @@ class V1TurnStream:
         composer = SurfaceComposer()
         results: list[TurnResult] = []
         async for event in self._agent.run_turn_events(
-            prompt=prompt, history=[], context=context
+            prompt=turn.prompt, history=[], context=context, direct=turn.direct
         ):
             if isinstance(event, SurfaceReady):
                 rendered = await self._payloads.render(
@@ -100,7 +104,9 @@ class V1TurnStream:
         for group in composer.flush():
             yield self._surface(task_id, context_id, group)
         result = results[-1]
-        yield sse(closing(task_id, context_id, result.message, recommended(prompt)))
+        yield sse(
+            closing(task_id, context_id, result.message, recommended(turn.prompt))
+        )
         terminal = INPUT_REQUIRED if result.render_intents else COMPLETED
         yield sse(status(task_id, context_id, terminal))
 

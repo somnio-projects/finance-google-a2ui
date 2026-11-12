@@ -15,7 +15,7 @@ from typing import Any, Final
 
 from pydantic import BaseModel, ValidationError
 
-from app.actions.contracts import SurfaceAction
+from app.actions.contracts import ComposedTurn, SurfaceAction
 from app.core.errors import ValidationFailedError
 
 #: Stands in for an argument the action does not declare. Its *name* came from
@@ -52,8 +52,8 @@ def validated_args(action: SurfaceAction, args: Mapping[str, Any]) -> BaseModel:
         raise ValidationFailedError(msg) from exc
 
 
-def composed_prompt(action: SurfaceAction, args: Mapping[str, Any]) -> str:
-    """Validate ``args`` and return the turn input the **backend** composes.
+def composed_turn(action: SurfaceAction, args: Mapping[str, Any]) -> ComposedTurn:
+    """Validate ``args`` once and return the prompt and the pinned call.
 
     Args:
         action: The registered action the surface named.
@@ -61,14 +61,17 @@ def composed_prompt(action: SurfaceAction, args: Mapping[str, Any]) -> str:
 
     Returns:
         The sentence the turn receives — a constant in backend code with
-        validated arguments substituted in. The caller supplies values; it
-        never supplies the sentence, the field path, the tool or the view
-        (ADR-K D-3).
+        validated arguments substituted in; the caller never supplies the
+        sentence, the field path, the tool or the view (ADR-K D-3) — and,
+        when the action declares one, the tool call built from the **same**
+        validated arguments (spec 0056 OD-4).
 
     Raises:
         ValidationFailedError: When an argument is undeclared or out of range.
     """
-    return action.prompt(validated_args(action, args))
+    validated = validated_args(action, args)
+    direct = None if action.direct is None else action.direct(validated)
+    return ComposedTurn(prompt=action.prompt(validated), direct=direct)
 
 
-__all__ = ["composed_prompt", "validated_args"]
+__all__ = ["composed_turn", "validated_args"]

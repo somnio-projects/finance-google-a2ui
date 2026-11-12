@@ -18,7 +18,7 @@ import pytest
 from app.actions.contracts import SurfaceAction
 from app.actions.declared import SurfaceActionRef, declared_action
 from app.actions.registry import ACTIONS
-from app.actions.resolve import UNDECLARED, composed_prompt, validated_args
+from app.actions.resolve import UNDECLARED, composed_turn, validated_args
 from app.core.errors import ValidationFailedError
 
 #: Nothing any action's bound admits, and long enough to expose a missing cap.
@@ -97,7 +97,7 @@ def test_every_action_composes_a_non_empty_prompt_from_its_defaults(
     action: SurfaceAction,
 ) -> None:
     """AC-3 — the sentence is the backend's; it must actually exist."""
-    prompt = composed_prompt(action, {})
+    prompt = composed_turn(action, {}).prompt
 
     assert prompt.strip()
     assert action.id not in prompt

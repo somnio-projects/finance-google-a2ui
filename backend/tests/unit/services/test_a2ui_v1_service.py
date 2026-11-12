@@ -1,13 +1,13 @@
 """Spec 0053 AC-5, AC-6, AC-7 — one call, routed to what answers it.
 
 Prose runs a turn, ``callAgentFunction`` never reaches the model (asserted on
-the null model's own call log), ``action`` runs the composed turn, and every
-refusal is a JSON-RPC body returned before any stream opens.
+the null model's own call log), ``action`` runs the composed turn — with no
+model for the drill (spec 0056) — and every refusal is a JSON-RPC body
+returned before any stream opens.
 """
 
-from app.actions.defined.drill_attribution import DrillAttributionArgs, compose
 from app.agent.contracts import ToolContext
-from app.core.model import MessageRole
+from app.agent.tools.driver_detail import DriverDetailTool
 from app.core.principal import Principal
 from app.schemas.a2a import INVALID_PARAMS
 from app.services.a2a_actions import UNKNOWN_ACTION
@@ -58,12 +58,22 @@ async def test_render_view_answers_without_the_model(
 async def test_an_action_runs_the_turn_the_backend_composed(
     principal: Principal, tool_context: ToolContext
 ) -> None:
-    events, model = await call_service(principal, tool_context, drill())
+    """Spec 0056 AC-5 — the drill draws ``DriverDetail`` and asks no model."""
+    events, model = await call_service(
+        principal, tool_context, drill(), tools=[DriverDetailTool()]
+    )
 
-    assert events[0]["status"] == {"state": "working"}
-    sent = [m for m in model.calls[0].messages if m.role is MessageRole.USER]
-    expected = compose(DrillAttributionArgs.model_validate({"driver": "LINK"}))
-    assert sent[-1].text == expected
+    assert model.calls == []
+    assert [event["kind"] for event in events] == [
+        "status-update",
+        "artifact-update",
+        "message",
+        "status-update",
+    ]
+    data = events[1]["artifact"]["parts"][0]["data"]
+    components = data[0]["createSurface"]["components"]
+    assert "DriverDetail" in {component["component"] for component in components}
+    assert "LINK" in events[2]["parts"][0]["text"]
 
 
 async def test_an_unknown_action_name_is_refused(

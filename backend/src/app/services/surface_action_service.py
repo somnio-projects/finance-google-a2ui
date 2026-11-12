@@ -22,8 +22,9 @@ Three properties the tests hold this to:
 from typing import Final
 
 from app.actions.capability import FEATURE_KEY, SHIPPED_ENABLED
+from app.actions.contracts import ComposedTurn
 from app.actions.registry import ACTIONS
-from app.actions.resolve import composed_prompt
+from app.actions.resolve import composed_turn
 from app.core.errors import AppError, FeatureDisabledError
 from app.core.principal import Principal
 from app.core.protocols import ErrorReporter
@@ -55,9 +56,9 @@ class SurfaceActionService:
         """Say whether `surface.actions` is on; dark-launched off (0022 §9)."""
         return await self._flags.is_enabled(FEATURE_KEY, default=SHIPPED_ENABLED)
 
-    async def prompt_for(
+    async def turn_for(
         self, principal: Principal, data: ActionData, *, request_id: str
-    ) -> str:
+    ) -> ComposedTurn:
         """Resolve one inbound action into the turn's input.
 
         Args:
@@ -66,7 +67,8 @@ class SurfaceActionService:
             request_id: Correlation id, for the audit event when one is written.
 
         Returns:
-            The server-composed prompt for that action and those arguments.
+            The server-composed prompt for that action and those arguments,
+            and the tool call it pins when it declares one (spec 0056).
 
         Raises:
             FeatureDisabledError: While `surface.actions` is off — a disabled
@@ -80,7 +82,7 @@ class SurfaceActionService:
             raise FeatureDisabledError(msg)
         try:
             action = ACTIONS.get(data.action)
-            prompt = composed_prompt(action, data.args)
+            turn = composed_turn(action, data.args)
         except AppError:
             # The tag is the id the caller *named*, which is the only thing
             # worth counting about a rejection — never an argument value.
@@ -94,7 +96,7 @@ class SurfaceActionService:
                 request_id=request_id,
                 target=action.id,
             )
-        return prompt
+        return turn
 
 
 __all__ = [

@@ -1,6 +1,6 @@
 # 05 — An agent turn: question to streamed surfaces
 
-How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md). Dashed = planned. The v1.0 route (`/a2ui/v1/a2a`) runs this same turn and differs only in how a validated intent becomes bytes — diagram [14](14-a2ui-v1-wire.md).
+How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0056](../../specs/backend/0056-the-drill-runs-its-tool-without-the-model.md). Dashed = planned. The v1.0 route (`/a2ui/v1/a2a`) runs this same turn and differs only in how a validated intent becomes bytes — diagram [14](14-a2ui-v1-wire.md).
 
 The turn is everything between `run_turn_events(...)` and `TurnCompleted`. It
 is **session-free**: it takes the history as an argument, bounds itself to
@@ -25,6 +25,13 @@ prose or **one `data` part** naming a registered action; the action is resolved
 and its arguments validated **before the stream opens**, and the prompt the
 turn receives is composed in backend code (ADR-J D-7).
 
+What changed with spec 0056 is *whether a model is asked at all*. An action
+may **pin** the one tool it runs: `drill.attribution.v1` names the only
+argument `driver_detail` takes, so its turn runs that tool through the same
+`execute_tool`, emits the `attribution.driver.v1` surface and completes with a
+backend sentence filled from the tool's display strings — `ModelClient` is
+never called. A chip pins nothing; it is a question, and stays a model turn.
+
 `SessionService` (GGU-46) — which would supply and persist the history, and
 resolve `contextId` against the verified subject — is **not on this branch**:
 every turn starts empty (spec 0012 OD-3).
@@ -47,19 +54,26 @@ sequenceDiagram
     S-->>A: (planned — GGU-46; today history = [])
 
     alt message carries a data part (a tap)
-        A->>X: prompt_for(principal, {action, args})
+        A->>X: turn_for(principal, {action, args})
         X->>X: flag surface.actions · registry lookup · bounded args
         X-->>A: refused → JSON-RPC error at HTTP 200, stream never opens
-        X->>A: accepted → the prompt the BACKEND composed
+        X->>A: accepted → the prompt the BACKEND composed (+ pinned call?)
     else message carries text (a sentence)
         A->>A: prompt = the text parts, joined
     end
 
-    A->>H: run_turn_events(prompt, history, ToolContext)
+    A->>H: run_turn_events(prompt, history, ToolContext, direct)
     A->>C: status-update{working}
-    H->>L: run(messages, context, state)
+    H->>L: run(messages, context, state, direct)
 
-    loop up to AGENT_MAX_TOOL_ITERATIONS model calls
+    opt the action pinned a call (spec 0056 — the drill)
+        L->>T: run the pinned tool, NO model call
+        T->>L: ToolOutcome: *Display strings + render intent
+        L->>P: accept(view, options)?
+        L->>H: SurfaceReady, then TurnCompleted{the action's own sentence}
+    end
+
+    loop otherwise: up to AGENT_MAX_TOOL_ITERATIONS model calls
         L->>M: system prompt + history + tool schemas
         M->>L: text, or tool call(s)
         L->>T: run tool (pure, Decimal, injected clock)
@@ -135,4 +149,9 @@ sequenceDiagram
     %% unlike an invalid render intent there is no default to fall back to.
     %% The client sends an id and scalars; the sentence, the tool and the view
     %% all come from backend code (ADR-K D-3, ADR-J D-7).
+    %% The pinned call is built from the action's VALIDATED arguments, and its
+    %% narration copies the tool's strings — the numbers-from-tools invariant
+    %% with the model removed from the one step that did not need it. It is
+    %% not a pre-filled model turn on purpose: Gemini 3 refuses a functionCall
+    %% with no thoughtSignature, which we must never invent (0056 OD-1).
 ```

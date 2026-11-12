@@ -50,20 +50,16 @@ void main() {
       );
     });
 
-    Widget subject({
-      void Function(String key)? onSegmentTap,
-      String? initialSelectedKey,
-      double width = phoneWidth,
-    }) => Center(
-      child: SizedBox(
-        width: width,
-        child: AttributionWaterfallCard(
-          data: data,
-          onSegmentTap: onSegmentTap,
-          initialSelectedKey: initialSelectedKey,
-        ),
-      ),
-    );
+    Widget subject({String? initialSelectedKey, double width = phoneWidth}) =>
+        Center(
+          child: SizedBox(
+            width: width,
+            child: AttributionWaterfallCard(
+              data: data,
+              initialSelectedKey: initialSelectedKey,
+            ),
+          ),
+        );
 
     test('keeps the card chrome the design was measured at', () {
       expect(AttributionWaterfallCard.radius, 16);
@@ -100,15 +96,11 @@ void main() {
       expect(find.byType(AttributionWaterfallCallout), findsNothing);
     });
 
-    testWidgets('reveals the tapped bucket and reports its key', (
-      tester,
-    ) async {
-      final tapped = <String>[];
-      await tester.pumpApp(subject(onSegmentTap: tapped.add));
+    testWidgets('reveals the tapped bucket', (tester) async {
+      await tester.pumpApp(subject());
       // Nine bands over the plot: the second is BTC, the first holding.
       await tester.tapAt(bandCentre(tester, 1));
       await tester.pumpAndSettle();
-      expect(tapped, <String>['BTC']);
       expect(find.byType(AttributionWaterfallDetail), findsOneWidget);
       expect(find.text('BTC · Bitcoin'), findsOneWidget);
       expect(find.text(r'+54.08% · 2.1 BTC · $64,250.00'), findsOneWidget);
@@ -124,14 +116,12 @@ void main() {
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
     });
 
-    testWidgets('a total is not drillable', (tester) async {
+    testWidgets('a total is not selectable', (tester) async {
       // Neither endpoint has a `key` in the contract, because there is
       // nothing to drill into.
-      final tapped = <String>[];
-      await tester.pumpApp(subject(onSegmentTap: tapped.add));
+      await tester.pumpApp(subject());
       await tester.tapAt(bandCentre(tester, 0));
       await tester.pumpAndSettle();
-      expect(tapped, isEmpty);
       expect(find.byType(AttributionWaterfallDetail), findsNothing);
     });
 

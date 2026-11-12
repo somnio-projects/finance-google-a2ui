@@ -13,6 +13,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.actions.contracts import DirectCall
+
 
 @dataclass(frozen=True, slots=True)
 class SurfaceActionSpec:
@@ -24,6 +26,9 @@ class SurfaceActionSpec:
         args: The bounded arguments model a caller may fill.
         prompt: Composes the turn's input from the validated arguments. It is
             backend code: the caller supplies values, never the sentence.
+        direct: Builds the tool call a dispatch runs with no model, from the
+            validated arguments; ``None`` leaves the turn to the model
+            (spec 0056 AC-2).
         mutating: Whether the action changes anything. ``register`` refuses
             ``True`` outright (spec 0022 AC-9).
         audited: Whether a dispatch writes one ``surface_action.invoke``
@@ -34,6 +39,7 @@ class SurfaceActionSpec:
     label: str
     args: type[BaseModel]
     prompt: Callable[[Any], str]
+    direct: Callable[[Any], DirectCall] | None = None
     mutating: bool = False
     audited: bool = False
 

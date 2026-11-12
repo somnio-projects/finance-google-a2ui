@@ -63,9 +63,9 @@ async def test_a_validated_action_becomes_the_server_composed_prompt(
     """AC-3 — the turn receives backend text, never the caller's."""
     service, reporter, audit = make_service()
 
-    prompt = await service.prompt_for(principal, _data(), request_id=REQUEST_ID)
+    turn = await service.turn_for(principal, _data(), request_id=REQUEST_ID)
 
-    assert prompt == (
+    assert turn.prompt == (
         "Break down the contribution of LINK in more detail for the same "
         "window, and show the result."
     )
@@ -80,7 +80,7 @@ async def test_an_unknown_action_is_rejected_before_the_turn(
     service, reporter, _ = make_service()
 
     with pytest.raises(UnknownActionError, match="is not registered"):
-        await service.prompt_for(principal, _data("no.such.v1"), request_id=REQUEST_ID)
+        await service.turn_for(principal, _data("no.such.v1"), request_id=REQUEST_ID)
 
     assert reporter.metrics == [(REJECTED_METRIC, {"action": "no.such.v1"})]
 
@@ -92,7 +92,7 @@ async def test_an_out_of_range_argument_is_rejected_and_counted(
     service, reporter, _ = make_service()
 
     with pytest.raises(ValidationFailedError, match=r"rejected argument.*driver"):
-        await service.prompt_for(principal, _data(driver="XRP"), request_id=REQUEST_ID)
+        await service.turn_for(principal, _data(driver="XRP"), request_id=REQUEST_ID)
 
     assert reporter.metrics == [(REJECTED_METRIC, {"action": DRILL})]
 
@@ -103,7 +103,7 @@ async def test_no_telemetry_carries_an_argument_value_or_the_prompt(
     """AC-10 — the tag set is asserted exactly, not merely checked for absence."""
     service, reporter, _ = make_service()
 
-    await service.prompt_for(principal, _data(driver="SOL"), request_id=REQUEST_ID)
+    await service.turn_for(principal, _data(driver="SOL"), request_id=REQUEST_ID)
 
     assert [tags for _, tags in reporter.metrics] == [{"action": DRILL}]
     assert all("SOL" not in str(tags) for _, tags in reporter.metrics)
@@ -115,7 +115,7 @@ async def test_the_shipped_actions_record_no_audit_event(
     """AC-10 — a tap decides nothing, so it must not bury the identity trail."""
     service, _, audit = make_service()
 
-    await service.prompt_for(principal, _data(), request_id=REQUEST_ID)
+    await service.turn_for(principal, _data(), request_id=REQUEST_ID)
 
     assert audit.events == []
 
@@ -126,7 +126,7 @@ async def test_an_audited_action_records_exactly_one_event(
     """AC-10 — the seam works, so the first deciding action inherits a trail."""
     service, _, audit = make_service()
 
-    await service.prompt_for(
+    await service.turn_for(
         principal, ActionData(action=audited_action), request_id=REQUEST_ID
     )
 

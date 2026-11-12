@@ -1,5 +1,8 @@
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_component.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_drill_button.dart';
+import 'package:finance_app/components/attribution_window/attribution_window_component.dart';
 import 'package:finance_app/components/surface_actions.dart';
+import 'package:finance_app/components/view_component.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,109 +11,120 @@ import '../../helpers/catalog_snapshot.dart';
 import '../../helpers/pump_app.dart';
 import 'attribution_waterfall_card_test.dart' show bandCentre;
 
+/// Spec frontend/0040 — the tap selects; the selected bucket's button drills.
 void main() {
-  group('$AttributionWaterfallComponent and its drill action', () {
-    late Map<String, dynamic> example;
+  for (final (component, view) in <(ViewComponent, String)>[
+    (const AttributionWaterfallComponent(), 'attribution.waterfall.v1'),
+    (const AttributionWindowComponent(), 'attribution.window.v1'),
+  ]) {
+    group('$view and its drill action', () {
+      late Map<String, dynamic> example;
+      late List<SurfaceActionRequest> sent;
 
-    setUp(() {
-      example = CatalogSnapshot.load().exampleForView(
-        'attribution.waterfall.v1',
-      );
-    });
+      setUp(() {
+        example = CatalogSnapshot.load().exampleForView(view);
+        sent = <SurfaceActionRequest>[];
+      });
 
-    Widget surface(Map<String, dynamic> json) => Center(
-      child: SizedBox(
-        width: 571,
-        child: Builder(
-          builder: (context) => const AttributionWaterfallComponent().build(
-            context,
-            ViewPayload.fromJson(json),
+      Widget surface(Map<String, dynamic> json, {bool scoped = true}) {
+        // Scrollable, so a button under a tall card can be brought into view.
+        final card = SingleChildScrollView(
+          child: Center(
+            child: SizedBox(
+              width: 571,
+              child: Builder(
+                builder: (context) =>
+                    component.build(context, ViewPayload.fromJson(json)),
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
+        return scoped ? SurfaceActions(onAction: sent.add, child: card) : card;
+      }
 
-    testWidgets('the payload declares the drill with its drivers', (
-      tester,
-    ) async {
-      final drivers = AttributionWaterfallComponent.drillableDrivers(
-        ViewPayload.fromJson(example),
-      );
-      expect(drivers, isNotNull);
-      expect(drivers, contains('BTC'));
-    });
+      Future<void> select(WidgetTester tester) async {
+        await tester.tapAt(bandCentre(tester, 1));
+        await tester.pumpAndSettle();
+      }
 
-    testWidgets('inside a scope, a tapped driver is sent as the action', (
-      tester,
-    ) async {
-      final sent = <SurfaceActionRequest>[];
-      await tester.pumpApp(
-        SurfaceActions(onAction: sent.add, child: surface(example)),
-      );
-      await tester.tapAt(bandCentre(tester, 1));
-      await tester.pumpAndSettle();
-      expect(sent, hasLength(1));
-      // The v1.0 action name (ADR-M D-7); the payload declares the drill by
-      // its registered id, which is what decides the bar is tappable.
-      expect(sent.single.action, 'drill_attribution');
-      expect(sent.single.args.keys, <String>['driver']);
-      expect(
-        AttributionWaterfallComponent.drillableDrivers(
-          ViewPayload.fromJson(example),
-        ),
-        contains(sent.single.args['driver']),
-      );
-    });
+      testWidgets('the tap only selects; the button sends the drill', (
+        tester,
+      ) async {
+        await tester.pumpApp(surface(example));
+        await select(tester);
+        expect(sent, isEmpty, reason: 'AC-1: a tap sends nothing');
 
-    testWidgets('outside a scope the tap stays local', (tester) async {
-      await tester.pumpApp(surface(example));
-      await tester.tapAt(bandCentre(tester, 1));
-      await tester.pumpAndSettle();
-      // Nothing to assert on the wire; the selection still shows.
-      expect(find.byType(AttributionWaterfallComponent), findsNothing);
-    });
+        final button = find.byType(AttributionWaterfallDrillButton);
+        expect(button, findsOneWidget);
+        expect(find.text('Break this down'), findsOneWidget);
+        await tester.ensureVisible(find.text('Break this down'));
+        await tester.tap(find.text('Break this down'));
+        await tester.pumpAndSettle();
 
-    testWidgets('a payload that declares no drill sends nothing', (
-      tester,
-    ) async {
-      final sent = <SurfaceActionRequest>[];
-      final undeclared = <String, dynamic>{...example, 'actions': <dynamic>[]};
-      await tester.pumpApp(
-        SurfaceActions(onAction: sent.add, child: surface(undeclared)),
-      );
-      await tester.tapAt(bandCentre(tester, 1));
-      await tester.pumpAndSettle();
-      expect(sent, isEmpty);
-      expect(
-        AttributionWaterfallComponent.drillableDrivers(
-          ViewPayload.fromJson(undeclared),
-        ),
-        isNull,
-      );
-    });
+        expect(sent, hasLength(1));
+        // The v1.0 action name (ADR-M D-7); the payload declares the drill
+        // by its registered id.
+        expect(sent.single.action, 'drill_attribution');
+        expect(sent.single.args.keys, <String>['driver']);
+        final declared = ViewPayload.fromJson(example).rows('actions').single;
+        expect(
+          declared.strings('choices'),
+          contains(sent.single.args['driver']),
+        );
+      });
 
-    testWidgets('a tapped key outside the published choices sends nothing', (
-      tester,
-    ) async {
-      final sent = <SurfaceActionRequest>[];
-      final narrowed = <String, dynamic>{
-        ...example,
-        'actions': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'action': 'drill.attribution.v1',
-            'arg': 'driver',
-            'control': 'choice',
-            'label': 'Break this down',
-            'choices': <String>['ZZZ'],
-          },
-        ],
-      };
-      await tester.pumpApp(
-        SurfaceActions(onAction: sent.add, child: surface(narrowed)),
-      );
-      await tester.tapAt(bandCentre(tester, 1));
-      await tester.pumpAndSettle();
-      expect(sent, isEmpty);
+      testWidgets('a second tap deselects and takes the button away', (
+        tester,
+      ) async {
+        await tester.pumpApp(surface(example));
+        await select(tester);
+        await select(tester);
+        expect(find.byType(AttributionWaterfallDrillButton), findsNothing);
+        expect(sent, isEmpty);
+      });
+
+      testWidgets('outside a scope a selection offers no drill', (
+        tester,
+      ) async {
+        await tester.pumpApp(surface(example, scoped: false));
+        await select(tester);
+        expect(find.byType(AttributionWaterfallDrillButton), findsNothing);
+      });
+
+      testWidgets('a payload that declares no drill offers none', (
+        tester,
+      ) async {
+        await tester.pumpApp(
+          surface(<String, dynamic>{...example, 'actions': <dynamic>[]}),
+        );
+        await select(tester);
+        expect(find.byType(AttributionWaterfallDrillButton), findsNothing);
+      });
+
+      testWidgets('a key outside the published choices offers none', (
+        tester,
+      ) async {
+        final narrowed = <String, dynamic>{
+          ...example,
+          'actions': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'action': 'some.other.v1',
+              'label': 'Other',
+              'choices': <String>[],
+            },
+            <String, dynamic>{
+              'action': 'drill.attribution.v1',
+              'arg': 'driver',
+              'control': 'choice',
+              'label': 'Break this down',
+              'choices': <String>['ZZZ'],
+            },
+          ],
+        };
+        await tester.pumpApp(surface(narrowed));
+        await select(tester);
+        expect(find.byType(AttributionWaterfallDrillButton), findsNothing);
+      });
     });
-  });
+  }
 }

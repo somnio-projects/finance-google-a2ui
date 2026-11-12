@@ -1,4 +1,6 @@
+import 'package:a2ui_v1/a2ui_v1.dart' show drillAttributionAction;
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_drill.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_reader.dart';
 import 'package:finance_app/components/component_registry.dart';
@@ -20,9 +22,11 @@ import 'package:flutter/widgets.dart';
 /// the all-time view for a question about a window, so a sentence about today
 /// appeared above bars about all time (spec `backend/0039`).
 ///
-/// No drill: the all-time walk declares `drill.attribution.v1` and this one
-/// declares no actions, so a tap here has nothing to send. An affordance that
-/// answers nothing is worse than none (`app.actions.capability`).
+/// It drills like the all-time walk, through the same [WaterfallDrill]: this
+/// was the surface Flow A's question draws, and it used to read no actions,
+/// so a tapped bar sent nothing (GGU-161). The backend declares the drill on
+/// today's window only (backend/0056 OD-2); a week's walk declares none and
+/// draws no button.
 class AttributionWindowComponent extends ViewComponent {
   /// Creates the component.
   const AttributionWindowComponent();
@@ -35,7 +39,15 @@ class AttributionWindowComponent extends ViewComponent {
 
   @override
   Widget build(BuildContext context, ViewPayload payload) =>
-      AttributionWaterfallCard(data: read(payload));
+      AttributionWaterfallCard(
+        data: read(payload),
+        drill: WaterfallDrill.of(
+          context,
+          payload,
+          // The v1.0 action name (ADR-M D-7).
+          action: drillAttributionAction,
+        ),
+      );
 
   /// Reads [payload] into the model the card draws.
   ///

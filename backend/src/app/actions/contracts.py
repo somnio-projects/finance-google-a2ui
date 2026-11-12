@@ -15,10 +15,36 @@ action that decides something — declared and tested now so it inherits a trail
 rather than an omission (0022 §5, OD-4).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict
+
+
+@dataclass(frozen=True, slots=True)
+class DirectCall:
+    """A tool an action runs **without the model** choosing it (spec 0056).
+
+    Attributes:
+        tool: The registered tool's name.
+        arguments: Built from the action's validated arguments, never from
+            the caller's raw map (0056 OD-4).
+        answer: Narrates the tool's result. Backend text over the tool's own
+            ``*Display`` strings; it copies figures and computes none.
+    """
+
+    tool: str
+    arguments: Mapping[str, object]
+    answer: Callable[[Mapping[str, object]], str]
+
+
+@dataclass(frozen=True, slots=True)
+class ComposedTurn:
+    """What one inbound message runs: the prompt, and an optional direct call."""
+
+    prompt: str
+    direct: DirectCall | None = None
 
 
 class SurfaceAction(Protocol):
@@ -45,6 +71,11 @@ class SurfaceAction(Protocol):
         ...
 
     @property
+    def direct(self) -> Callable[[Any], DirectCall] | None:
+        """Build the tool call a dispatch pins, or ``None`` for a model turn."""
+        ...
+
+    @property
     def mutating(self) -> bool:
         """Whether the action changes anything; always ``False`` here."""
         ...
@@ -65,4 +96,4 @@ class ActionArgs(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-__all__ = ["ActionArgs", "SurfaceAction"]
+__all__ = ["ActionArgs", "ComposedTurn", "DirectCall", "SurfaceAction"]

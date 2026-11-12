@@ -19,6 +19,7 @@ tapped is worse than saying no.
 
 from typing import Final
 
+from app.actions.contracts import ComposedTurn
 from app.actions.errors import UnknownActionError
 from app.core.errors import (
     AppError,
@@ -71,8 +72,8 @@ async def prepared_prompt(
     message: ClientMessage,
     rpc_id: str | int | None,
     request_id: str,
-) -> str | dict[str, object]:
-    """Return the prompt this call runs, or the failure body to answer with.
+) -> ComposedTurn | dict[str, object]:
+    """Return the turn this call runs, or the failure body to answer with.
 
     Args:
         actions: The dispatcher that resolves an action against the registry.
@@ -83,13 +84,14 @@ async def prepared_prompt(
 
     Returns:
         The turn's input — the user's prose, or the sentence the **backend**
-        composed for a registered action — or the JSON-RPC error body.
+        composed for a registered action with the call it pins — or the
+        JSON-RPC error body.
     """
     data = message.action()
     if data is None:
-        return message.text()
+        return ComposedTurn(prompt=message.text())
     try:
-        return await actions.prompt_for(principal, data, request_id=request_id)
+        return await actions.turn_for(principal, data, request_id=request_id)
     except REFUSALS as exc:
         # Deliberately NOT `AppError`. A DependencyUnavailableError from the
         # audit write of an `audited=True` action is a 503, and catching it

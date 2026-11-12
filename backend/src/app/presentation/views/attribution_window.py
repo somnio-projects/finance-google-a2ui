@@ -5,9 +5,8 @@ The projection: options model, pure ``render``, A2UI adapter, fitness and its
 the builders in ``presentation.window_walk``, the seam
 ``attribution_waterfall`` already draws.
 
-It answers the question the agent's ``compute_attribution`` tool actually
-computes; ``window_payload`` records what went wrong before it existed and
-why this is a new id rather than an option on the old one.
+It answers what ``compute_attribution`` computes; ``window_payload`` records
+why this is a new id, and why only today's walk declares the drill.
 """
 
 from datetime import timedelta
@@ -35,10 +34,10 @@ from app.presentation.window_payload import (
     WINDOW_DAYS,
     WINDOW_WORDS,
     AttributionWindowPayload,
+    window_actions,
 )
 
-#: The selection rule never volunteers this: a window is asked for, not
-#: guessed. The all-time waterfall stays the default explanation.
+#: Never volunteered by the selection rule: a window is asked for, not guessed.
 NEVER_SELECTED: Final[int] = 0
 
 
@@ -95,15 +94,12 @@ def render(
         ),
         buckets=steps,
         annotations=said,
+        actions=window_actions(options.window),
     )
 
 
 def surface(payload: AttributionWindowPayload) -> Surface:
-    """Map the payload onto the same A2UI waterfall the all-time walk uses.
-
-    ``AttributionWaterfall`` deliberately: design's waterfall drawing a
-    different quantity, not a second widget.
-    """
+    """Map the payload onto the all-time walk's A2UI waterfall: same widget."""
     return Surface(
         component="AttributionWaterfall",
         view=payload.view,
@@ -116,6 +112,7 @@ def surface(payload: AttributionWindowPayload) -> Surface:
             "period": payload.period,
             "steps": [step.model_dump(mode="json") for step in payload.buckets],
             "notes": [note.text for note in payload.annotations],
+            "actions": [ref.model_dump(mode="json") for ref in payload.actions],
         },
     )
 

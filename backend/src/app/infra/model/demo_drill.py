@@ -10,25 +10,20 @@ the script then says so in a sentence of its own (spec 0033 OD-3).
 
 from typing import Final
 
+from app.actions.defined.drill_attribution import ANSWER, DRIVER_TOOL, NOT_HELD
 from app.infra.model.script import Script, ScriptedCall
 
-DRIVER: Final[str] = "driver_detail"
+DRIVER: Final[str] = DRIVER_TOOL
 
 
 def drill(symbol: str) -> Script:
     """Return the turn a tapped waterfall bar for ``symbol`` runs (0033 OD-3)."""
     return Script(
         calls=(ScriptedCall(DRIVER, {"symbol": symbol}),),
-        answer=(
-            "{name} ({symbol}) contributed {contributionDisplay} today: its price "
-            "moved {priceMovePctDisplay} ({priceMoveDisplay}) on {sharesDisplay} "
-            "units at {priceDisplay}, {shareOfDayDisplay} of the day's "
-            "{dayGainDisplay}."
-        ),
-        otherwise=(
-            f"{symbol} is not held in this portfolio, so there is no "
-            "contribution to break down."
-        ),
+        # One sentence for both paths: a tapped drill runs with no model and
+        # says ANSWER itself (spec 0056); a typed one reaches this script.
+        answer=ANSWER,
+        otherwise=NOT_HELD.format(symbol=symbol),
     )
 
 

@@ -2,6 +2,8 @@ import 'package:finance_app/charts/chart_palette.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_body.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_callout.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_detail.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_drill.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_drill_button.dart';
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_model.dart';
 import 'package:finance_charts/finance_charts.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +17,15 @@ import 'package:flutter/material.dart';
 /// payload field distinguishes them. The threshold is [calloutMinWidth],
 /// measured off the two artboards (spec frontend/0028 OD-4).
 ///
-/// Dispatching the catalog's `drill.attribution.v1` action back to the agent
-/// is the component's seam, not this card's, so the callback is exposed and
-/// the card does not know what it does.
+/// **The tap only selects** (spec frontend/0040 AC-1). Drilling is a second,
+/// explicit gesture: a selected bucket the [drill] offers shows a button
+/// that sends it. A tap that both selected and sent could not be looked at
+/// before it was acted on, and its deselecting re-tap drilled again.
 class AttributionWaterfallCard extends StatefulWidget {
   /// Creates the card.
   const AttributionWaterfallCard({
     required this.data,
-    this.onSegmentTap,
+    this.drill,
     this.initialSelectedKey,
     super.key,
   });
@@ -43,8 +46,8 @@ class AttributionWaterfallCard extends StatefulWidget {
   /// What to draw.
   final AttributionWaterfallData data;
 
-  /// Called with a bucket's `key` when the reader taps its band.
-  final void Function(String key)? onSegmentTap;
+  /// What a selected bucket may send, or null when nothing is offered.
+  final WaterfallDrill? drill;
 
   /// The bucket selected before any tap, which is how a test and a golden
   /// reach the selected state without driving a gesture.
@@ -87,7 +90,7 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
 
   Widget _body(double width) {
     final steps = widget.data.steps;
-    final index = _selectedIndex(steps);
+    final index = _indexOf(_selectedKey, steps);
     final wide = width >= AttributionWaterfallCard.calloutMinWidth;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,12 +107,24 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
         ),
         if (!wide && index != null)
           AttributionWaterfallDetail(step: steps[index]),
+        if (_drillButton(index) case final Widget button) button,
       ],
     );
   }
 
-  int? _selectedIndex(List<AttributionStep> steps) {
-    final key = _selectedKey;
+  Widget? _drillButton(int? index) {
+    final drill = widget.drill;
+    if (drill == null || index == null) return null;
+    final step = widget.data.steps[index];
+    if (!drill.offers(step.key)) return null;
+    return AttributionWaterfallDrillButton(
+      label: drill.label,
+      step: step,
+      onPressed: () => drill.send(step.key),
+    );
+  }
+
+  int? _indexOf(String? key, List<AttributionStep> steps) {
     if (key == null) return null;
     for (var index = 0; index < steps.length; index++) {
       if (steps[index].key == key) return index;
@@ -118,24 +133,16 @@ class _AttributionWaterfallCardState extends State<AttributionWaterfallCard> {
   }
 
   void _handleTap(String key) {
-    // A total is not drillable — the contract gives neither endpoint a key,
+    // A total is not selectable — the contract gives neither endpoint a key,
     // and there is nothing to drill into. Tapping one clears the selection.
     // The test is the step's `kind`, a sealed enum, rather than the spelling
     // of its key: a synthetic-key convention is a rule a reader has to know,
     // and this one is already in the type system.
-    final step = _stepFor(key);
+    final steps = widget.data.steps;
+    final index = _indexOf(key, steps);
+    final kind = index == null ? null : steps[index].step.kind;
     final isBucket =
-        step != null &&
-        (step.step.kind == WaterfallStepKind.gain ||
-            step.step.kind == WaterfallStepKind.loss);
+        kind == WaterfallStepKind.gain || kind == WaterfallStepKind.loss;
     setState(() => _selectedKey = isBucket && key != _selectedKey ? key : null);
-    if (isBucket) widget.onSegmentTap?.call(key);
-  }
-
-  AttributionStep? _stepFor(String key) {
-    for (final step in widget.data.steps) {
-      if (step.key == key) return step;
-    }
-    return null;
   }
 }

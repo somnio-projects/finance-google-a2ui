@@ -21,7 +21,8 @@ from app.presentation.attribution_walk import ANNOTATED, move_of
 from app.presentation.displays import signed_money
 from app.presentation.fragments import Annotation, Delta
 from app.presentation.options import DisplayOptions
-from app.presentation.window_payload import NET_LABEL, WindowStep
+from app.presentation.window_payload import NET_LABEL
+from app.presentation.window_step import WindowStep
 
 
 def net_of(*, start: Decimal, end: Decimal, options: DisplayOptions) -> Delta:

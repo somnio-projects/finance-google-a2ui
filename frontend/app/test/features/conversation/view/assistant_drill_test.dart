@@ -1,4 +1,5 @@
 import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_card.dart';
+import 'package:finance_app/components/attribution_waterfall/attribution_waterfall_drill_button.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:finance_views_repository/finance_views_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,8 +12,8 @@ import '../../../helpers/fixtures.dart';
 import 'conversation_harness.dart';
 
 void main() {
-  testWidgets('a tapped waterfall bar in the transcript opens the drill turn '
-      '(frontend/0011 OD-4)', (tester) async {
+  testWidgets('the drill button of a selected bar opens the drill turn '
+      '(frontend/0011 OD-4, frontend/0040 AC-3)', (tester) async {
     final agent = MockAgentRepository();
     final views = MockViewsRepository();
     final waterfall = CatalogSnapshot.load().exampleForView(
@@ -45,6 +46,17 @@ void main() {
     expect(find.byType(AttributionWaterfallCard), findsOneWidget);
 
     await tester.tapAt(bandCentre(tester, 1));
+    await tester.pumpAndSettle();
+    verifyNever(
+      () => agent.startTurn(
+        action: any(named: 'action'),
+        messageId: any(named: 'messageId'),
+        contextId: any(named: 'contextId'),
+      ),
+    );
+    expect(find.byType(AttributionWaterfallDrillButton), findsOneWidget);
+    await tester.ensureVisible(find.text('Break this down'));
+    await tester.tap(find.text('Break this down'));
     await tester.pumpAndSettle();
 
     final sent =

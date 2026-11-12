@@ -2236,14 +2236,51 @@
       "view": "attribution.waterfall.v1"
     },
     {
-      "actions": [],
+      "actions": [
+        {
+          "action": "drill.attribution.v1",
+          "arg": "driver",
+          "choices": [
+            "AAVE",
+            "ARB",
+            "AVAX",
+            "BTC",
+            "ETH",
+            "LINK",
+            "SOL",
+            "USDC"
+          ],
+          "control": "choice",
+          "label": "Break this down",
+          "pattern": null
+        }
+      ],
       "component": "AttributionWaterfall",
-      "digest": "abde9901e9d2",
+      "digest": "bc8001598c1b",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
       ],
       "example": {
+        "actions": [
+          {
+            "action": "drill.attribution.v1",
+            "arg": "driver",
+            "choices": [
+              "AAVE",
+              "ARB",
+              "AVAX",
+              "BTC",
+              "ETH",
+              "LINK",
+              "SOL",
+              "USDC"
+            ],
+            "control": "choice",
+            "label": "Break this down",
+            "pattern": null
+          }
+        ],
         "annotations": [
           {
             "label": "Bitcoin",
@@ -2856,6 +2893,62 @@
           "presence": "required",
           "state": null,
           "type": "string ≤200 chars"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "actions",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].action",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].label",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤64 chars"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].arg",
+          "presence": "required",
+          "state": null,
+          "type": "string ≤32 chars"
+        },
+        {
+          "binding": "enum",
+          "input": null,
+          "path": "actions[].control",
+          "presence": "required",
+          "state": "variant",
+          "type": "enum choice / text"
+        },
+        {
+          "binding": "container",
+          "input": null,
+          "path": "actions[].choices",
+          "presence": "default `[]`",
+          "state": "empty",
+          "type": "array ≤24 items"
+        },
+        {
+          "binding": "text",
+          "input": null,
+          "path": "actions[].pattern",
+          "presence": "default `null`",
+          "state": "null",
+          "type": "string ≤64 chars"
         }
       ],
       "guidance": null,

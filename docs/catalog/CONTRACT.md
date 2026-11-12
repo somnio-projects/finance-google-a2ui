@@ -142,7 +142,7 @@ Three of the four states design needs are facts about the schema. One is not:
 | [`activity.timeline.v1`](#activitytimelinev1) | `ActivityTimeline` | `ca94f0c3c8bf` | 23 | `kind`, `query`, `groups[].entries[].kind` | The Activity tab: the ledger as a timeline grouped under today, this week and each month, filtered by kind, every row captioned and its amount signed the way the design colours it. |
 | [`attribution.driver.v1`](#attributiondriverv1) | `DriverDetail` | `aa0536008605` | 35 | `symbol` | One holding's part in today's move: its contribution, the price move behind it, the units that carried it and its share of the day's result. The card a tapped waterfall bar opens. |
 | [`attribution.waterfall.v1`](#attributionwaterfallv1) | `AttributionWaterfall` | `d33d3882383f` | 52 | read-only | Unrealised profit and loss walked from cost basis to market value, one bucket per holding, biggest move first. |
-| [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `abde9901e9d2` | 47 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
+| [`attribution.window.v1`](#attributionwindowv1) | `AttributionWaterfall` | `bc8001598c1b` | 54 | `window` | The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost. |
 | [`holdings.allocation.v1`](#holdingsallocationv1) | `HoldingsSummary` | `f7f90b385bee` | 29 | `group_by` | Allocation of the portfolio's market value — by holding, asset class or sector — with weight and day change per slice, the count in the donut's centre, and the all-time gain under the total. |
 | [`holdings.positions.v1`](#holdingspositionsv1) | `PositionList` | `9ff39ae83d7f` | 44 | `asset_class`, `query` | The Holdings tab: total value with the all-time gain, then one row per position — units and average cost, value, unrealised result, today's move, price and weight — each with the question that hands it to the assistant. |
 | [`order.ticket.v1`](#orderticketv1) | `OrderTicket` | `4f00c29a4c39` | 28 | `symbol`, `side`, `size`, `size_in` | Order ticket: a proposed buy or sell with its units, entry price and notional, plus the bounded inputs that re-render it. It places nothing. |
@@ -1454,7 +1454,7 @@ _This surface sends nothing back: tapping it starts no turn._
 
 > The portfolio's move over a chosen window, one bucket per holding, biggest mover first. Not unrealised profit and loss: this compares each holding to what it was worth when the window opened, not to what it cost.
 
-- **Frozen id:** `attribution.window.v1` · **digest:** `abde9901e9d2`
+- **Frozen id:** `attribution.window.v1` · **digest:** `bc8001598c1b`
 - **Component:** `AttributionWaterfall`
 - **Payload type:** `AttributionWindowPayload`
 - **Served by:** `GET /v1/portfolios/{portfolio_id}/views` · `POST /v1/view-renders`
@@ -1521,6 +1521,13 @@ _This surface sends nothing back: tapping it starts no turn._
 | `annotations` | array | default `[]` | `container` | empty | — |
 | `annotations[].label` | string ≤64 chars | required | `text` | — | — |
 | `annotations[].text` | string ≤200 chars | required | `text` | — | — |
+| `actions` | array | default `[]` | `container` | empty | — |
+| `actions[].action` | string ≤64 chars | required | `text` | — | — |
+| `actions[].label` | string ≤64 chars | required | `text` | — | — |
+| `actions[].arg` | string ≤32 chars | required | `text` | — | — |
+| `actions[].control` | enum choice / text | required | `enum` | variant | — |
+| `actions[].choices` | array ≤24 items | default `[]` | `container` | empty | — |
+| `actions[].pattern` | string ≤64 chars | default `null` | `text` | null | — |
 
 ### When the agent picks this
 
@@ -1528,7 +1535,9 @@ _No design page for this component yet, so the catalog teaches the model only th
 
 ### Actions
 
-_This surface sends nothing back: tapping it starts no turn._
+| Action | Label | Argument | Control | Accepts |
+|---|---|---|---|---|
+| `drill.attribution.v1` | Break this down | `driver` | choice | 'AAVE', 'ARB', 'AVAX', 'BTC', 'ETH', 'LINK', 'SOL', 'USDC' |
 
 ### Example payload
 
@@ -1767,6 +1776,25 @@ _This surface sends nothing back: tapping it starts no turn._
     {
       "label": "Net",
       "text": "+$2,201.05 today"
+    }
+  ],
+  "actions": [
+    {
+      "action": "drill.attribution.v1",
+      "label": "Break this down",
+      "arg": "driver",
+      "control": "choice",
+      "choices": [
+        "AAVE",
+        "ARB",
+        "AVAX",
+        "BTC",
+        "ETH",
+        "LINK",
+        "SOL",
+        "USDC"
+      ],
+      "pattern": null
     }
   ]
 }

@@ -4,7 +4,8 @@ Three things can arrive, and each goes to the piece that already owns it:
 
 * **prose** → a turn, through the agent loop (``V1TurnStream``);
 * **``callAgentFunction``** → ``RenderViewService``, with no model at all;
-* **``action``** → ``SurfaceActionService`` composes the prompt, then a turn.
+* **``action``** → ``SurfaceActionService`` composes the prompt, then a turn
+  — one with no model when the action pins its tool (spec 0056).
 
 Everything a client can get wrong is refused **before** the stream opens, as a
 JSON-RPC error body; once a stream opens, a failure is the terminal pair
@@ -13,6 +14,7 @@ inside it. That is the v0.9 contract (spec 0022 AC-4), unchanged.
 
 from collections.abc import AsyncIterator
 
+from app.actions.contracts import ComposedTurn
 from app.agent.contracts import ToolContext
 from app.core.principal import Principal
 from app.core.protocols import ErrorReporter
@@ -78,22 +80,26 @@ class A2uiV1Service:
         context_id = message.context_id
         incoming = message.renderer_message()
         if incoming is None:
-            prompt: str | dict[str, object] = message.text()
+            turn: ComposedTurn | dict[str, object] = ComposedTurn(message.text())
         elif isinstance(incoming, FunctionMessage):
             call = incoming.call_agent_function
             return self._function(call, task_id=task_id, context_id=context_id)
         else:
-            prompt = await action_prompt(
+            turn = await action_prompt(
                 self._actions,
                 principal=principal,
                 event=incoming.action,
                 rpc_id=envelope.id,
                 request_id=request_id,
             )
-        if isinstance(prompt, dict):
-            return prompt
+        if isinstance(turn, dict):
+            return turn
         return self._turns.stream(
-            prompt=prompt, task_id=task_id, context_id=context_id, context=context
+            prompt=turn.prompt,
+            task_id=task_id,
+            context_id=context_id,
+            context=context,
+            direct=turn.direct,
         )
 
     def _function(

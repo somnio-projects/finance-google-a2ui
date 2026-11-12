@@ -24,6 +24,7 @@ trusted on its own.
 
 from collections.abc import AsyncIterator
 
+from app.actions.contracts import DirectCall
 from app.actions.suggestions import recommended
 from app.agent.contracts import ToolContext, TurnResult
 from app.agent.events import SurfaceReady
@@ -62,6 +63,7 @@ class A2aService:
         prompt: str,
         task_id: str,
         context: ToolContext,
+        direct: DirectCall | None = None,
     ) -> AsyncIterator[str]:
         """Yield the events of one turn, in protocol order.
 
@@ -71,6 +73,7 @@ class A2aService:
                 person typed, or the sentence the backend composed for an action.
             task_id: Correlation id for this turn.
             context: The subject-scoped tool context.
+            direct: The call an action pinned, run with no model (spec 0056).
 
         Yields:
             Server-sent events: a `working` status, a `render-intent` per
@@ -82,7 +85,8 @@ class A2aService:
         """
         yield sse(status(task_id, message.context_id, WORKING))
         try:
-            async for event in self._turn(message, prompt, task_id, context):
+            turn = self._turn(message, prompt, task_id, context, direct)
+            async for event in turn:
                 yield event
         except AppError as exc:
             for event in failed(task_id, message.context_id, exc.code, exc.detail):
@@ -103,12 +107,13 @@ class A2aService:
         prompt: str,
         task_id: str,
         context: ToolContext,
+        direct: DirectCall | None,
     ) -> AsyncIterator[str]:
         """Forward the turn's own events, surfaces first, terminal pair last."""
         context_id = message.context_id
         results: list[TurnResult] = []
         async for event in self._agent.run_turn_events(
-            prompt=prompt, history=[], context=context
+            prompt=prompt, history=[], context=context, direct=direct
         ):
             if isinstance(event, SurfaceReady):
                 yield sse(surface(task_id, context_id, event.index, event.intent))

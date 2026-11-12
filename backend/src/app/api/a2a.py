@@ -96,18 +96,22 @@ async def call(
     message = message_of(envelope)
     if isinstance(message, dict):
         return JSONResponse(content=message)
-    prompt = await prepared_prompt(
+    turn = await prepared_prompt(
         actions,
         principal=principal,
         message=message,
         rpc_id=envelope.id,
         request_id=request_id,
     )
-    if isinstance(prompt, dict):
-        return JSONResponse(content=prompt)
+    if isinstance(turn, dict):
+        return JSONResponse(content=turn)
     return StreamingResponse(
         service.stream(
-            message=message, prompt=prompt, task_id=str(uuid4()), context=context
+            message=message,
+            prompt=turn.prompt,
+            task_id=str(uuid4()),
+            context=context,
+            direct=turn.direct,
         ),
         media_type=EVENT_STREAM,
         headers={"Cache-Control": "no-store"},

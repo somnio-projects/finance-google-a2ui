@@ -5,35 +5,27 @@ The two now answer different questions: this module decides *what happens
 next* inside a turn, while ``AgentService`` owns the turn's boundary — the
 history it starts from, the telemetry it records and the failure it reports.
 
-The loop is an **async generator**, which is the whole point: a surface leaves
-it the instant the tool that produced it returned, instead of waiting for the
-model to finish talking. ``TurnCompleted`` is always the last thing it yields
-on a path that does not raise.
+The loop is an **async generator**: a surface leaves it the instant its tool
+returned, and ``TurnCompleted`` is always the last thing it yields. A turn an
+action pinned skips the model entirely (``direct``, spec 0056).
 """
 
 from collections.abc import AsyncIterator, Sequence
 
+from app.actions.contracts import DirectCall
 from app.agent.contracts import ToolContext, TurnResult, TurnState
 from app.agent.events import SurfaceReady, TurnCompleted, TurnEvent
 from app.agent.prompt import ITERATION_LIMIT_MESSAGE
 from app.agent.registry import ToolRegistry
 from app.core.model import MessageRole, ModelMessage, ToolCall
 from app.core.protocols import ErrorReporter, ModelClient
+from app.services.agent_direct import direct_turn
 from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_tools import execute_tool
 
 
 def turn_result(state: TurnState, *, message: str, truncated: bool) -> TurnResult:
-    """Freeze the accumulated state into the turn's result.
-
-    Args:
-        state: The counters and render intents the turn accumulated.
-        message: The assistant's answer.
-        truncated: True when the iteration bound ended the turn.
-
-    Returns:
-        The immutable result the caller of a turn receives.
-    """
+    """Freeze ``state`` into the result, ``truncated`` when the bound ended it."""
     return TurnResult(
         message=message,
         render_intents=tuple(state.renders),
@@ -69,6 +61,7 @@ class TurnLoop:
         messages: list[ModelMessage],
         context: ToolContext,
         state: TurnState,
+        direct: DirectCall | None = None,
     ) -> AsyncIterator[TurnEvent]:
         """Yield the turn's events until the model answers or the bound stops it.
 
@@ -76,6 +69,7 @@ class TurnLoop:
             messages: The conversation so far; the loop appends to it.
             context: The subject and portfolio provider handed to every tool.
             state: The turn's accumulator, updated in place.
+            direct: A call an action pinned; the turn then asks no model.
 
         Yields:
             One ``SurfaceReady`` per render intent as it is produced, then
@@ -85,6 +79,18 @@ class TurnLoop:
             DependencyUnavailableError: When the model provider failed. The
                 turn's boundary reports and records it; the loop does not.
         """
+        if direct is not None:
+            pinned = direct_turn(
+                direct,
+                context,
+                state,
+                tools=self._tools,
+                reporter=self._reporter,
+                renders=self._renders,
+            )
+            async for event in pinned:
+                yield event
+            return
         while state.iterations < self._max_iterations:
             state.iterations += 1
             reply = await self._model.generate(
