@@ -1,3 +1,4 @@
+import 'package:finance_app/auth/firebase_error_copy.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,7 +57,9 @@ class FirebaseIdentityProvider implements IdentityProvider {
     try {
       return await call();
     } on FirebaseAuthException catch (error) {
-      return Err<T>(TransportFailure(error.message ?? error.code));
+      return Err<T>(
+        TransportFailure(firebaseErrorCopy(error.code, error.message)),
+      );
     }
   }
 

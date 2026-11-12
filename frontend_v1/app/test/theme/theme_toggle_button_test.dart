@@ -12,6 +12,24 @@ void main() {
       expect(find.byKey(ThemeToggleButton.toggleKey), findsNothing);
     });
 
+    testWidgets('is announced once in both states (GGU-162)', (tester) async {
+      final handle = tester.ensureSemantics();
+      final controller = (ThemeModeController()..value = ThemeMode.light);
+      addTearDown(controller.dispose);
+      await tester.pumpApp(
+        const Scaffold(body: ThemeToggleButton()),
+        themeMode: controller,
+      );
+      String name() =>
+          tester.getSemantics(find.byType(Tooltip)).getSemanticsData().label;
+      expect(name(), 'Switch to dark appearance');
+      await tester.tap(find.byKey(ThemeToggleButton.toggleKey));
+      await tester.pumpAndSettle();
+      expect(name(), 'Switch to light appearance');
+      expect(find.bySemanticsLabel(RegExp('Switch to')), findsOneWidget);
+      handle.dispose();
+    });
+
     testWidgets('offers the opposite of the theme that is showing', (
       tester,
     ) async {

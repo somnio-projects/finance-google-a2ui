@@ -20,20 +20,32 @@ class ThemeToggleButton extends StatelessWidget {
     if (controller == null) return const SizedBox.shrink();
     final dark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
+    final label = dark
+        ? 'Switch to light appearance'
+        : 'Switch to dark appearance';
+    void toggle() => controller.value = dark ? ThemeMode.light : ThemeMode.dark;
     return Material(
       key: toggleKey,
       color: scheme.surfaceContainerHigh,
       shape: const CircleBorder(),
-      child: IconButton(
-        tooltip: dark
-            ? 'Switch to light appearance'
-            : 'Switch to dark appearance',
-        onPressed: () =>
-            controller.value = dark ? ThemeMode.light : ThemeMode.dark,
-        icon: Icon(
-          dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-          size: 20,
-          color: scheme.onSurfaceVariant,
+      child: Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        onTap: toggle,
+        // The tooltip is for the pointer; announcing it as well read the
+        // name twice (GGU-162).
+        child: Tooltip(
+          message: label,
+          excludeFromSemantics: true,
+          child: IconButton(
+            onPressed: toggle,
+            icon: Icon(
+              dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              size: 20,
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
         ),
       ),
     );
