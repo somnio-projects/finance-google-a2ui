@@ -15,7 +15,7 @@ dependencies:
   # The Flutter template dependency. Present because the framework and
   # go_router reference CupertinoIcons on code paths this web-first app does
   # not take; without it every release build warns about a missing font.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   equatable: ^3.0.0
   finance_api_client: ^0.1.0
   # Who is signed in and whether they were invited (spec frontend/0008).
@@ -24,7 +24,7 @@ dependencies:
   finance_charts: ^0.1.0
   finance_core: ^0.1.0
   finance_views_repository: ^0.1.0
-  firebase_auth: ^6.7.0
+  firebase_auth: ^6.7.1
   firebase_core: ^4.15.0
   flutter:
     sdk: flutter
@@ -38,7 +38,7 @@ dependencies:
   # (spec frontend/0023 AC-10). Already in the lock as a transitive of the
   # Flutter web tooling; declared here because this app now calls it.
   url_launcher: ^6.3.3
-  web: ^1.1.1
+  web: ^1.1.2
 
 dev_dependencies:
   bloc_test: ^10.0.0
