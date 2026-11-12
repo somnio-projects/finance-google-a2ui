@@ -6636,3 +6636,18 @@ held under `needs-tl-decision` in the previous entry; GGU-31 AC-1 stands.
 
 **Harness:** no rule, hook or CLAUDE.md change. This entry ships in its own PR
 so #189's head (and its manual-run identity) did not move.
+
+## 2026-11-12 — GGU-164: a numeric JSON-RPC id is accepted and echoed (spec backend/0057)
+
+PR #191 → develop. Found while building GGU-161 (#189), already on develop before it.
+
+- **Code:** `RpcId` in `schemas/a2a.py` replaces `str | int | None` + `max_length=128`
+  on the envelope id; used by `JsonRpcRequest`/`JsonRpcFailure` and the a2a / a2ui_v1
+  services. Both A2A endpoints (`/` and `/a2ui/v1/a2a`) share it. Out-of-bounds ids
+  (129-char string, |int| > 2^53−1, bool) are a JSON-RPC `-32602` at HTTP 200.
+- **Know:** a pydantic length constraint on a union reaches every branch, and on a
+  non-sized branch raises `TypeError`, not `ValidationError` — so it surfaces as a 500
+  past `dispatch.parse`. Declare bounds per branch (`Annotated[...] | Annotated[...]`).
+  Mutation check: restoring `max_length` on the union fails 20 of 34 new unit tests.
+- **Unverified:** full `docker compose up` (manual run was uvicorn + throwaway Postgres).
+- **Harness:** no rule changed. Logged in its own PR so #191's head did not move.
