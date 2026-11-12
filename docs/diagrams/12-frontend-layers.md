@@ -44,7 +44,9 @@ graph TD
   boot -.-> agentrepo
   boot -.->|"FirebaseIdentityProvider (app/lib/auth)<br/>implements the seam; NullIdentityProvider<br/>when the build has no Firebase config"| auth
   auth --> api
-  router -->|"redirect: AuthGate.redirectFor<br/>signed out → /sign-in (no shell)"| auth
+  %% Three answers, and ?from= carries the wanted location through both
+  %% gateways, so a cold load or a sign-in lands where it was (spec frontend/0038).
+  router -->|"redirect: AuthGate.redirectFor<br/>restoring / unavailable → /starting?from=<br/>signed out → /sign-in?from= (no shell)"| auth
   boot --> manifest
   manifest -->|"register()"| host
   router --> page

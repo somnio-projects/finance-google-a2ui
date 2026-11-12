@@ -67,9 +67,46 @@ abstract final class AppRoutes {
     '/transactions': activity,
   };
 
+  /// The neutral start-up surface, outside the shell: drawn while the app
+  /// finds out who this is, and when the registry could not say (GGU-163,
+  /// GGU-159). Never a destination of its own.
+  static const String startup = '/starting';
+
+  /// The query key that carries the location a person asked for through
+  /// [startup] and [signIn], so a cold load or a sign-in lands there rather
+  /// than on Home (GGU-154).
+  static const String fromParameter = 'from';
+
   /// Whether [location] is the sign-in screen — the one path the gate treats
   /// differently from every other.
   static bool isSignIn(String location) => location == signIn;
+}
+
+/// [gateway] (sign-in or start-up) remembering [wanted], unless that is Home.
+String gatewayRoute(String gateway, String wanted) => wanted == AppRoutes.home
+    ? gateway
+    : Uri(
+        path: gateway,
+        queryParameters: <String, String>{AppRoutes.fromParameter: wanted},
+      ).toString();
+
+/// The location [gatewayUri] was remembering, or Home.
+///
+/// Only an in-app path is honoured: it must start with one `/` (`//host` is
+/// another origin) and must not be a gateway itself, so a crafted link can
+/// neither leave the app nor loop the gate. A trailing slash is ignored for
+/// that comparison, so `/starting/` and `/sign-in/` are gateways too.
+String rememberedRoute(Uri gatewayUri) {
+  final from = gatewayUri.queryParameters[AppRoutes.fromParameter];
+  if (from == null || !from.startsWith('/') || from.startsWith('//')) {
+    return AppRoutes.home;
+  }
+  final path = from
+      .split(RegExp('[?#]'))
+      .first
+      .replaceFirst(RegExp(r'(?<=.)/+$'), '');
+  final isGateway = path == AppRoutes.startup || AppRoutes.isSignIn(path);
+  return isGateway ? AppRoutes.home : from;
 }
 
 /// The assistant's location with [question] ready to send — how the Home

@@ -58,11 +58,35 @@ Object? _parseBody(http.Response response) {
 
 Err<JsonResponse> _failure(http.Response response, Object? body) {
   final problem = ProblemDetails.tryParse(body);
-  if (problem != null) return Err<JsonResponse>(ProblemFailure(problem));
+  if (problem != null) {
+    return Err<JsonResponse>(
+      ProblemFailure(problem, retryAfter: _retryAfter(response)),
+    );
+  }
   // Not a problem document: a proxy, a load balancer or a gateway answered.
   // Reporting it as a transport failure is honest; inventing a problem
   // document the backend never sent would not be.
   return Err<JsonResponse>(
     TransportFailure('the server answered ${response.statusCode}'),
   );
+}
+
+/// `Retry-After` in delta-seconds, or null (GGU-159).
+///
+/// Decoded as JSON, in the one file allowed to turn response text into data,
+/// rather than with an `int` parser: the numbers rule bans those from `lib/`
+/// because they are how a *figure* gets recomputed, and this is a protocol
+/// field nobody ever sees. The HTTP-date form is not one this
+/// backend sends, and reads as no hint at all — a retry is then offered at
+/// once, which is what the screen did before.
+Duration? _retryAfter(http.Response response) {
+  final raw = response.headers['retry-after'];
+  if (raw == null) return null;
+  final Object? seconds;
+  try {
+    seconds = jsonDecode(raw.trim());
+  } on FormatException {
+    return null;
+  }
+  return seconds is int && seconds >= 0 ? Duration(seconds: seconds) : null;
 }
