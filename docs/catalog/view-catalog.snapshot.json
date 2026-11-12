@@ -6324,7 +6324,7 @@
     {
       "actions": [],
       "component": "PortfolioSummary",
-      "digest": "191db33e1a5f",
+      "digest": "8c615df7d1b4",
       "endpoints": [
         "GET /v1/portfolios/{portfolio_id}/views",
         "POST /v1/view-renders"
@@ -6398,7 +6398,7 @@
             "text": "Tax impact of selling BTC?"
           },
           {
-            "text": "Build a $10k order in tech"
+            "text": "Build a $10k order in the majors"
           }
         ],
         "questions_title": "Suggested questions",

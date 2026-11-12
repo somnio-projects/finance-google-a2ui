@@ -9,7 +9,7 @@ void main() {
     const questions = <String>[
       'What moved my portfolio today?',
       'Tax impact of selling BTC?',
-      r'Build a $10k order in tech',
+      r'Build a $10k order in the majors',
     ];
 
     testWidgets(
@@ -58,10 +58,10 @@ void main() {
     ) async {
       await tester.pumpApp(
         const SizedBox(
-          width: 1200,
+          width: 1400,
           child: HomeQuestionsRail(questions: questions),
         ),
-        surfaceSize: const Size(1400, 600),
+        surfaceSize: const Size(1600, 600),
       );
       await tester.pump();
       expect(find.byKey(HomeQuestionsRail.arrowKey), findsNothing);

@@ -6560,3 +6560,40 @@ A small second finding: the helper first took the response and annotated it
 `httpx.Response`, which basedpyright rejected — `TestClient` returns
 `httpx2._models.Response`. It takes the header string instead, so it is
 coupled to neither.
+
+## GGU-154…163 — ten QA bugs from one E2E pass, four PRs, one integrator
+
+Damian's E2E run (348 cases, web/tablet/mobile, 2026-11-11) filed GGU-154 to
+GGU-163. Nine were fixed in four parallel worktree PRs; GGU-161 (waterfall
+drill-down) carries `needs-tl-decision` and was left for that decision.
+
+| PR | Tickets | Spec |
+|---|---|---|
+| #186 | GGU-154, 159, 163 — cold deep links, `/v1/me/access` 429/5xx, sign-in flash | `frontend/0038` |
+| #184 | GGU-155, 156, 162 — e-mail validation, footer links, toggle label | `frontend/0037` |
+| #185 | GGU-157, 158 — Activity row semantics, Holdings hand-off button | `frontend/0039` |
+| #188 | GGU-160 — the Flow C chip names `majors`, a basket `draft_order` accepts | `backend/0055` |
+
+**One root cause behind three tickets.** The auth gate had two answers —
+shell or sign-in — so "not known yet", "registry did not answer" and
+"signed out" all became `/sign-in`, and the requested location was dropped.
+A third answer (`/starting`, with `?from=`) fixed GGU-154, 159 and 163 at once.
+
+**Spec numbers had to be reserved up front.** Three agents writing
+`specs/frontend/` in parallel would each have picked 0037; the integrator
+assigned 0037/0038/0039 mid-flight, and each merge still conflicted on the
+index rows in `specs/README.md` (keep every row — `repo.spec-numbers` proves it).
+
+**A drift check for the chip.** The old copy said "tech", a basket from the
+equities era that the order tool never accepted, and no test compared the two.
+`FLOW_C_BASKET` is now the single name and a unit test checks it against the
+tool's `Basket` set.
+
+**Out of scope but on the path:** `certifi 2026.7.22` (PYSEC-2026-4320) made
+`make audit` red on `develop` itself; #188 bumps it with
+`uv lock --upgrade-package certifi`.
+
+**Still owed:** none of the a11y fixes was checked with a real screen reader,
+and the GGU-163 web path is covered only by a mocked `FirebaseAuth`. Re-run the
+E2E suite (its `test.fail()` cases should turn red) after the next
+`frontend-cd` / `frontend-v1-cd`.

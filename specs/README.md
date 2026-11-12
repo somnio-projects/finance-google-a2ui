@@ -182,4 +182,5 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0039-activity-rows-and-the-position-hand-off-are-reachable.md](frontend/0039-activity-rows-and-the-position-hand-off-are-reachable.md) | In progress | GGU-157, GGU-158 |
 | [backend/0053-the-agent-speaks-a2ui-v1.md](backend/0053-the-agent-speaks-a2ui-v1.md) | In progress | *unassigned* |
 | [backend/0054-the-leg-quantity-can-be-typed.md](backend/0054-the-leg-quantity-can-be-typed.md) | In progress | *unassigned* |
+| [backend/0055-the-order-chip-names-a-supported-basket.md](backend/0055-the-order-chip-names-a-supported-basket.md) | In progress | GGU-160 |
 | [frontend_v1/0001-a-second-client-renders-a2ui-v1.md](frontend_v1/0001-a-second-client-renders-a2ui-v1.md) | In progress | *unassigned* |
