@@ -27,7 +27,7 @@ from app.core.errors import (
     ValidationFailedError,
 )
 from app.core.principal import Principal
-from app.schemas.a2a import INVALID_PARAMS, METHOD_NOT_FOUND, ClientMessage
+from app.schemas.a2a import INVALID_PARAMS, METHOD_NOT_FOUND, ClientMessage, RpcId
 from app.services.a2a_dispatch import failure
 from app.services.surface_action_service import SurfaceActionService
 
@@ -42,7 +42,7 @@ UNKNOWN_ACTION: Final[str] = "UNKNOWN_ACTION"
 ACTIONS_DISABLED: Final[str] = "Surface actions are not enabled."
 
 
-def action_failure(request_id: str | int | None, exc: AppError) -> dict[str, object]:
+def action_failure(request_id: RpcId, exc: AppError) -> dict[str, object]:
     """Map a refused surface action onto the error shapes that already exist.
 
     Args:
@@ -70,7 +70,7 @@ async def prepared_prompt(
     *,
     principal: Principal,
     message: ClientMessage,
-    rpc_id: str | int | None,
+    rpc_id: RpcId,
     request_id: str,
 ) -> ComposedTurn | dict[str, object]:
     """Return the turn this call runs, or the failure body to answer with.

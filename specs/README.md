@@ -185,5 +185,6 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [backend/0055-the-order-chip-names-a-supported-basket.md](backend/0055-the-order-chip-names-a-supported-basket.md) | In progress | GGU-160 |
 | [frontend_v1/0001-a-second-client-renders-a2ui-v1.md](frontend_v1/0001-a-second-client-renders-a2ui-v1.md) | In progress | *unassigned* |
 | [backend/0056-the-drill-runs-its-tool-without-the-model.md](backend/0056-the-drill-runs-its-tool-without-the-model.md) | In progress | GGU-161 |
+| [backend/0057-a-numeric-json-rpc-id-is-echoed-never-a-500.md](backend/0057-a-numeric-json-rpc-id-is-echoed-never-a-500.md) | In progress | GGU-164 |
 | [frontend/0040-a-selected-bar-offers-the-drill.md](frontend/0040-a-selected-bar-offers-the-drill.md) | In progress | GGU-161 |
 | [frontend_v1/0002-a-selected-bar-offers-the-drill.md](frontend_v1/0002-a-selected-bar-offers-the-drill.md) | In progress | GGU-161 |
