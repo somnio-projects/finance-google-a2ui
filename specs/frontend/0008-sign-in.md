@@ -1,6 +1,8 @@
 # 0008 — Sign-in: the door, and who holds the key
 
 > **Superseded in part by [frontend/0036](0036-sign-in-is-email-link-only.md):** the Google button is gone; sign-in is e-mail link only.
+>
+> **Amended by [frontend/0038](0038-a-stored-session-starts-where-it-was.md):** the gate has a third answer — a `/starting` surface while a stored session is restored or the registry cannot answer — and both gateways remember the location as `?from=`.
 
 - **Area:** frontend (+ backend/0027 for the registry)
 - **Status:** In progress

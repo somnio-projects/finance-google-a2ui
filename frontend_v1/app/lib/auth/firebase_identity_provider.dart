@@ -1,3 +1,4 @@
+import 'package:finance_app/auth/firebase_error_copy.dart';
 import 'package:finance_auth/finance_auth.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,9 +18,17 @@ class FirebaseIdentityProvider implements IdentityProvider {
   @override
   bool get isConfigured => true;
 
+  /// The signed-in user's token, once the SDK has finished restoring them.
+  ///
+  /// On the web `currentUser` is null for a moment after start-up while the
+  /// SDK reads its persisted session; reading it then reported a signed-in
+  /// person as nobody (GGU-163). `authStateChanges()` emits once that read is
+  /// done — the user, or null — so a null `currentUser` waits for it.
   @override
-  Future<String?> currentToken() =>
-      _auth.currentUser?.getIdToken() ?? Future<String?>.value();
+  Future<String?> currentToken() async {
+    final user = _auth.currentUser ?? await _auth.authStateChanges().first;
+    return await user?.getIdToken();
+  }
 
   @override
   Future<Result<void>> sendEmailLink(
@@ -56,7 +65,9 @@ class FirebaseIdentityProvider implements IdentityProvider {
     try {
       return await call();
     } on FirebaseAuthException catch (error) {
-      return Err<T>(TransportFailure(error.message ?? error.code));
+      return Err<T>(
+        TransportFailure(firebaseErrorCopy(error.code, error.message)),
+      );
     }
   }
 

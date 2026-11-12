@@ -1,3 +1,4 @@
+import 'package:finance_app/auth/firebase_error_copy.dart';
 import 'package:finance_app/auth/firebase_identity_provider.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -48,11 +49,24 @@ void main() {
     test("is configured, and reads the current user's token", () async {
       expect(identity.isConfigured, isTrue);
       when(() => auth.currentUser).thenReturn(null);
+      when(() => auth.authStateChanges())
+          .thenAnswer((_) => Stream<User?>.value(null));
       expect(await identity.currentToken(), isNull);
       final user = _MockUser();
       when(user.getIdToken).thenAnswer((_) async => 'fresh');
       when(() => auth.currentUser).thenReturn(user);
       expect(await identity.currentToken(), 'fresh');
+    });
+
+    test('waits for a persisted session the SDK is still restoring', () async {
+      // GGU-163: on the web `currentUser` is null until the SDK has read its
+      // persistence, and reading it then made a signed-in person nobody.
+      final user = _MockUser();
+      when(user.getIdToken).thenAnswer((_) async => 'restored');
+      when(() => auth.currentUser).thenReturn(null);
+      when(() => auth.authStateChanges())
+          .thenAnswer((_) => Stream<User?>.value(user));
+      expect(await identity.currentToken(), 'restored');
     });
 
     test("a provider error carries the SDK's sentence, or its code", () async {
@@ -64,7 +78,7 @@ void main() {
       expect(expired.failureOrNull?.message, 'The link expired.');
       onLink().thenThrow(FirebaseAuthException(code: 'network'));
       final network = await identity.signInWithEmailLink('a@b.test', link);
-      expect(network.failureOrNull?.message, 'network');
+      expect(network.failureOrNull?.message, firebaseFallbackCopy);
     });
 
     test(

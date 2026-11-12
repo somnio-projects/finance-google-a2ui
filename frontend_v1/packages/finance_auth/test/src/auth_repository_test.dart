@@ -102,7 +102,8 @@ void main() {
       },
     );
 
-    test('a registry that cannot be reached signs the person out', () async {
+    test('a registry that cannot be reached keeps the session', () async {
+      // GGU-159: a 503 says nothing about who this is.
       identity.linked = const Ok<AuthSession>(firebaseSession);
       backend.accessStatus = 503;
       final repository = build();
@@ -111,7 +112,9 @@ void main() {
         Uri.parse('http://x/?mode=signIn'),
       );
       expect(result.isOk, isFalse);
-      expect(repository.state.status, AuthStatus.signedOut);
+      expect(repository.state.status, AuthStatus.unavailable);
+      expect(repository.state.session, firebaseSession);
+      expect(repository.state.failure?.code, 'transport-unavailable');
     });
   });
 }
