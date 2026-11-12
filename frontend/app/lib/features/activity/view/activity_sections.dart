@@ -1,3 +1,4 @@
+import 'package:finance_app/features/activity/view/activity_entry_label.dart';
 import 'package:finance_app/features/activity/view/activity_entry_tile.dart';
 import 'package:finance_app/features/shell/view/tab_app_bar.dart';
 import 'package:finance_app/theme/activity_tokens.dart';
@@ -48,7 +49,13 @@ class ActivitySections extends StatelessWidget {
           for (final entry in group.rows('entries'))
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: ActivityEntryTile(entry: entry),
+              // One node per row, labelled from the payload (GGU-157): the
+              // loose `Text`s used to merge into one blob per section.
+              child: Semantics(
+                container: true,
+                label: activityEntryLabel(entry),
+                child: ExcludeSemantics(child: ActivityEntryTile(entry: entry)),
+              ),
             ),
         ],
       ],

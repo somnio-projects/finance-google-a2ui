@@ -77,10 +77,14 @@ class PositionTile extends StatelessWidget {
       'down' => tokens.loss,
       _ => holdings.neutralAccent,
     };
+    final label = '${row.text('name')} ${row.text('value.display')}';
+    // Only the head is the button, not the card: a button's descendants are
+    // presentational on the web, which swallowed the hand-off (GGU-158).
     return Semantics(
-      button: true,
-      label: '${row.text('name')} ${row.text('value.display')}',
+      container: true,
+      explicitChildNodes: true,
       child: GestureDetector(
+        excludeFromSemantics: true,
         onTap: onTap,
         child: Container(
           clipBehavior: Clip.antiAlias,
@@ -116,7 +120,13 @@ class PositionTile extends StatelessWidget {
                       color: expanded ? holdings.expandedHead : tokens.card,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(10, 13, 15, 13),
-                        child: PositionHead(row: row, isCash: isCash),
+                        child: Semantics(
+                          container: true,
+                          button: true,
+                          label: label,
+                          onTap: onTap,
+                          child: PositionHead(row: row, isCash: isCash),
+                        ),
                       ),
                     ),
                     if (expanded && !isCash)
