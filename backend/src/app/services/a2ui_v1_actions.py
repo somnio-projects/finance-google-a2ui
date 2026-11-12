@@ -13,7 +13,7 @@ The refusals are v0.9's too (``a2a_actions``): no third error shape.
 from app.actions.contracts import ComposedTurn
 from app.actions.registry import ACTIONS
 from app.core.principal import Principal
-from app.schemas.a2a import INVALID_PARAMS
+from app.schemas.a2a import INVALID_PARAMS, RpcId
 from app.schemas.a2a_parts import ActionData
 from app.schemas.a2ui_v1_events import ActionEvent
 from app.services.a2a_actions import REFUSALS, UNKNOWN_ACTION, action_failure
@@ -42,7 +42,7 @@ async def action_prompt(
     *,
     principal: Principal,
     event: ActionEvent,
-    rpc_id: str | int | None,
+    rpc_id: RpcId,
     request_id: str,
 ) -> ComposedTurn | dict[str, object]:
     """Return the turn this action runs, or the JSON-RPC failure body.

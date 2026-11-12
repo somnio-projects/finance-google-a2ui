@@ -11,9 +11,9 @@ Only the members the client SDK actually sends are modelled. A field this
 service ignores is better absent than present-and-lying.
 """
 
-from typing import Any, Literal
+from typing import Annotated, Any, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 
 from app.schemas.a2a_message import ClientMessage, StreamParams
 from app.schemas.a2a_parts import ActionData, DataPart, MessagePart, TextPart
@@ -27,6 +27,20 @@ UNSUPPORTED_OPERATION = -32004
 #: anything it does not declare; this only stops an unbounded dictionary
 #: reaching that model.
 MAX_PARAMS = 32
+#: The largest integer every JSON implementation represents exactly (2**53 - 1).
+MAX_SAFE_INT: Final = 2**53 - 1
+#: Longest string id reflected back (it is echoed verbatim).
+MAX_ID_LENGTH: Final = 128
+
+#: A JSON-RPC 2.0 id: string, number or null. The bound is declared **per
+#: branch**: a ``max_length`` on the union is applied to the integer too, and
+#: pydantic then raises ``TypeError`` (an HTTP 500), not ``ValidationError``
+#: (GGU-164). ``StrictInt`` keeps ``true`` from coercing to ``1``.
+RpcId = (
+    Annotated[str, StringConstraints(max_length=MAX_ID_LENGTH)]
+    | Annotated[StrictInt, Field(ge=-MAX_SAFE_INT, le=MAX_SAFE_INT)]
+    | None
+)
 
 
 class JsonRpcRequest(BaseModel):
@@ -35,13 +49,14 @@ class JsonRpcRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="ignore")
 
     jsonrpc: Literal["2.0"] = Field(description="Protocol version; always `2.0`.")
-    id: str | int | None = Field(
+    id: RpcId = Field(
         default=None,
-        max_length=128,
         description=(
-            "Correlation id the response echoes. Bounded because it is "
-            "reflected verbatim: an unbounded id is an unbounded response."
+            "Correlation id the response echoes with the same JSON type: a "
+            "string (at most 128 characters), an integer within the JSON-safe "
+            "range, or null. Bounded because it is reflected verbatim."
         ),
+        examples=["req-1", 1],
     )
     method: str = Field(
         max_length=64,
@@ -80,14 +95,16 @@ class JsonRpcFailure(BaseModel):
     jsonrpc: Literal["2.0"] = Field(
         default=JSONRPC_VERSION, description="Always `2.0`."
     )
-    id: str | int | None = Field(default=None, description="The request's id.")
+    id: RpcId = Field(default=None, description="The request's id, echoed as sent.")
     error: JsonRpcError = Field(description="What went wrong.")
 
 
 __all__ = [
     "INVALID_PARAMS",
     "JSONRPC_VERSION",
+    "MAX_ID_LENGTH",
     "MAX_PARAMS",
+    "MAX_SAFE_INT",
     "METHOD_NOT_FOUND",
     "UNSUPPORTED_OPERATION",
     "ActionData",
@@ -97,6 +114,7 @@ __all__ = [
     "JsonRpcFailure",
     "JsonRpcRequest",
     "MessagePart",
+    "RpcId",
     "StreamParams",
     "TextPart",
 ]

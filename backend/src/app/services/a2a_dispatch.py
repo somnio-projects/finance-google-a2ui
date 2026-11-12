@@ -25,6 +25,7 @@ from app.schemas.a2a import (
     JsonRpcError,
     JsonRpcFailure,
     JsonRpcRequest,
+    RpcId,
     StreamParams,
 )
 
@@ -37,7 +38,7 @@ CANCEL_UNSUPPORTED: Final[str] = "tasks/cancel is not supported."
 BAD_PARAMS: Final[str] = "Invalid parameters for message/stream."
 
 
-def failure(request_id: str | int | None, code: int, message: str) -> dict[str, object]:
+def failure(request_id: RpcId, code: int, message: str) -> dict[str, object]:
     """Build a JSON-RPC error response body.
 
     Args:
