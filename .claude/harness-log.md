@@ -6597,3 +6597,42 @@ tool's `Basket` set.
 and the GGU-163 web path is covered only by a mocked `FirebaseAuth`. Re-run the
 E2E suite (its `test.fail()` cases should turn red) after the next
 `frontend-cd` / `frontend-v1-cd`.
+
+## 2026-11-12 — GGU-161: tapping a selected bar drills into what drove it
+
+**Specs:** backend/0056 (new), frontend/0040 (new), frontend_v1/0002 (new). PR #189 → develop (9335078).
+
+**Decision:** drill-down is in scope (Lautaro, TL, 2026-11-12). The ticket was
+held under `needs-tl-decision` in the previous entry; GGU-31 AC-1 stands.
+
+**What changed in code**
+- `attribution.window.v1` declares `drill.attribution.v1` for `window=1d` only
+  (`window_payload.window_actions`); 7d/30d declare `[]` — the driver card is a
+  day view (0056 OD-2). `WindowStep` moved to `presentation/window_step.py` (budget).
+- Surface actions may pin a direct call: `SurfaceActionSpec.direct` →
+  `DirectCall(tool, arguments, answer)`; `resolve.composed_turn` replaces
+  `composed_prompt`; `SurfaceActionService.prompt_for` → `turn_for` returning
+  `ComposedTurn`. `TurnLoop.run(..., direct)` delegates to `services/agent_direct.py`,
+  which runs the tool through `execute_tool`, streams its surface and completes with
+  the action's narration — no `ModelClient.generate` (iterations=0).
+- `drill.attribution.v1` pins `driver_detail`; its `ANSWER`/`NOT_HELD` templates are
+  shared with `infra/model/demo_drill.py` (one sentence for tapped and typed drills).
+- Both clients: the bar tap only selects (GGU-119); `WaterfallDrill.of` reads the
+  declaration; `AttributionWaterfallDrillButton` (the declaration's label) sends it.
+- Diagram 05 gains the "pinned call, no model" branch.
+
+**What the next person should know**
+- A pre-filled model turn was rejected on purpose: Gemini 3 400s a functionCall
+  without a thoughtSignature, and we never invent provider state (0056 OD-1).
+- The way back from a drill is the transcript (0056 OD-3); no Back action exists.
+- The Playwright `flows.spec.ts` the ticket cites is not in this repo; when it
+  arrives it must tap the bar AND press "Break this down".
+- Near the budget: `agent_service.py` 150/150, `attribution_waterfall_card.dart`
+  148/150 in both apps — the next change extracts first.
+- Found, not fixed: a numeric JSON-RPC `id` 500s on `POST /` (`max_length` on
+  `str | int`), also before this change — needs its own ticket.
+- Manual run used uvicorn + throwaway Postgres (no backend/.env in agent
+  worktrees); no live Gemini key, which the drill does not need.
+
+**Harness:** no rule, hook or CLAUDE.md change. This entry ships in its own PR
+so #189's head (and its manual-run identity) did not move.
