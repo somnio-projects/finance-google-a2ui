@@ -19,12 +19,17 @@ class PositionAsk extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final holdings = HoldingsTokens.of(context);
+    void open() => context.go(askRoute(question));
     return Semantics(
+      // Its own node: without `container` the card's merge swallowed this
+      // button and activating it reached the card's collapse (GGU-158).
+      container: true,
       button: true,
       label: label,
+      onTap: open,
       excludeSemantics: true,
       child: GestureDetector(
-        onTap: () => context.go(askRoute(question)),
+        onTap: open,
         child: Container(
           padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
           decoration: BoxDecoration(
