@@ -1,3 +1,4 @@
+import 'package:finance_app/auth/firebase_error_copy.dart';
 import 'package:finance_app/auth/firebase_identity_provider.dart';
 import 'package:finance_core/finance_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -77,7 +78,7 @@ void main() {
       expect(expired.failureOrNull?.message, 'The link expired.');
       onLink().thenThrow(FirebaseAuthException(code: 'network'));
       final network = await identity.signInWithEmailLink('a@b.test', link);
-      expect(network.failureOrNull?.message, 'network');
+      expect(network.failureOrNull?.message, firebaseFallbackCopy);
     });
 
     test(

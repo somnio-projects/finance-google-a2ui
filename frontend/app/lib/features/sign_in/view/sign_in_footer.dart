@@ -1,4 +1,5 @@
 import 'package:finance_app/features/sign_in/view/request_access_sheet.dart';
+import 'package:finance_app/features/sign_in/view/sign_in_footer_link.dart';
 import 'package:finance_app/theme/login_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -96,40 +97,10 @@ class SignInFooter extends StatelessWidget {
       children: <Widget>[
         Text('Open source · Apache 2.0', style: words),
         Text('·', style: dot),
-        Link(uri: github, label: 'GitHub', style: links),
+        SignInFooterLink(uri: github, label: 'GitHub', style: links),
         Text('·', style: dot),
-        Link(uri: privacy, label: 'Privacy', style: links),
+        SignInFooterLink(uri: privacy, label: 'Privacy', style: links),
       ],
     );
   }
-}
-
-/// A footer link: the [uri] is what it stands for, and a test can read it.
-class Link extends StatelessWidget {
-  /// Creates the link.
-  const Link({
-    required this.uri,
-    required this.label,
-    required this.style,
-    super.key,
-  });
-
-  /// Where it goes.
-  final Uri uri;
-
-  /// What it says.
-  final String label;
-
-  /// How it looks.
-  final TextStyle style;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    link: true,
-    label: label,
-    child: Tooltip(
-      message: uri.toString(),
-      child: Text(label, style: style),
-    ),
-  );
 }

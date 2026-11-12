@@ -1,5 +1,7 @@
 import 'package:finance_app/features/sign_in/bloc/sign_in_bloc.dart';
+import 'package:finance_app/features/sign_in/view/sign_in_email_check.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_field_decoration.dart';
+import 'package:finance_app/features/sign_in/view/sign_in_submit_button.dart';
 import 'package:finance_app/theme/login_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -22,10 +24,10 @@ class SignInEmailForm extends StatefulWidget {
   static const String helper = 'Use your provisioned work email';
 
   /// The primary button's words.
-  static const String label = 'Continue with email';
+  static const String label = SignInSubmitButton.label;
 
   /// The primary button's words when finishing an e-mail sign-in.
-  static const String finishLabel = 'Finish signing in';
+  static const String finishLabel = SignInSubmitButton.finishLabel;
 
   /// The sentence shown once a link went out.
   static const String linkSent =
@@ -52,6 +54,7 @@ class _SignInEmailFormState extends State<SignInEmailForm> {
     text: widget.state.email,
   );
   final FocusNode _focus = FocusNode();
+  bool _invalid = false;
 
   @override
   void initState() {
@@ -72,7 +75,9 @@ class _SignInEmailFormState extends State<SignInEmailForm> {
       _focus.requestFocus();
       return;
     }
-    widget.onSubmitted(email);
+    final valid = looksLikeEmail(email);
+    setState(() => _invalid = !valid);
+    if (valid) widget.onSubmitted(email);
   }
 
   @override
@@ -91,13 +96,30 @@ class _SignInEmailFormState extends State<SignInEmailForm> {
             enabled: !widget.state.isBusy,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
+            onChanged: (_) {
+              if (_invalid) setState(() => _invalid = false);
+            },
             onSubmitted: (_) => _submit(),
             style: TextStyle(fontSize: 15, color: tokens.title),
             cursorColor: tokens.fieldFocus,
             decoration: signInFieldDecoration(tokens, focused: focused),
           ),
         ),
-        if (focused || widget.finishing || sent)
+        if (_invalid)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                invalidEmailMessage,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+          )
+        else if (focused || widget.finishing || sent)
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
             child: Text(
@@ -106,35 +128,10 @@ class _SignInEmailFormState extends State<SignInEmailForm> {
             ),
           ),
         const SizedBox(height: 14),
-        SizedBox(
-          height: 52,
-          child: FilledButton(
-            onPressed: widget.state.isBusy ? null : _submit,
-            style: FilledButton.styleFrom(
-              backgroundColor: tokens.primary,
-              foregroundColor: tokens.primaryText,
-              disabledBackgroundColor: tokens.primary.withValues(alpha: 0.6),
-              shape: const StadiumBorder(),
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            child: widget.state.isBusy
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: tokens.primaryText,
-                    ),
-                  )
-                : Text(
-                    widget.finishing
-                        ? SignInEmailForm.finishLabel
-                        : SignInEmailForm.label,
-                  ),
-          ),
+        SignInSubmitButton(
+          busy: widget.state.isBusy,
+          finishing: widget.finishing,
+          onPressed: _submit,
         ),
       ],
     );

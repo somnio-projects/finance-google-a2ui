@@ -178,6 +178,7 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend/0035-the-app-sets-the-designs-typeface.md](frontend/0035-the-app-sets-the-designs-typeface.md) | In progress | GGU-147 |
 | [frontend/0036-sign-in-is-email-link-only.md](frontend/0036-sign-in-is-email-link-only.md) | In progress | *unassigned* |
 | [frontend/0038-a-stored-session-starts-where-it-was.md](frontend/0038-a-stored-session-starts-where-it-was.md) | In progress | GGU-154, GGU-159, GGU-163 |
+| [frontend/0037-sign-in-validates-links-and-announces-once.md](frontend/0037-sign-in-validates-links-and-announces-once.md) | In progress | GGU-155, GGU-156, GGU-162 |
 | [frontend/0039-activity-rows-and-the-position-hand-off-are-reachable.md](frontend/0039-activity-rows-and-the-position-hand-off-are-reachable.md) | In progress | GGU-157, GGU-158 |
 | [backend/0053-the-agent-speaks-a2ui-v1.md](backend/0053-the-agent-speaks-a2ui-v1.md) | In progress | *unassigned* |
 | [backend/0054-the-leg-quantity-can-be-typed.md](backend/0054-the-leg-quantity-can-be-typed.md) | In progress | *unassigned* |
