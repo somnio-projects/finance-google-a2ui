@@ -38,7 +38,10 @@ void main() {
       });
 
       test('props are the problem itself', () {
-        expect(const ProblemFailure(problem).props, equals(<Object?>[problem]));
+        expect(
+          const ProblemFailure(problem).props,
+          equals(<Object?>[problem, null]),
+        );
       });
     });
 

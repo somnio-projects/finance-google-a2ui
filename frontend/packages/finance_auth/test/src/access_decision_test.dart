@@ -102,8 +102,9 @@ void _authStateIsAValue() {
         decision: decision,
       );
       expect(a, equals(b));
-      expect(a.props, hasLength(3));
+      expect(a.props, hasLength(4));
       expect(a.allowsShell, isTrue);
+      expect(a.isStarting, isFalse);
       expect(
         const AuthState(status: AuthStatus.notProvisioned).allowsShell,
         isFalse,

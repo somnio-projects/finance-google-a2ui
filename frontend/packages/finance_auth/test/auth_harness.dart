@@ -67,6 +67,9 @@ class FakeBackend {
   bool provisioned;
   String? previewToken;
   int accessStatus = 200;
+
+  /// Answers `/v1/me/access` gives first, one per call, before the above.
+  final List<http.Response> accessAnswers = <http.Response>[];
   int requestStatus = 202;
 
   /// The wire value `/v1/sign-in-policy` answers with; null answers 503.
@@ -83,6 +86,7 @@ class FakeBackend {
     requests.add(request);
     switch (request.url.path) {
       case '/v1/me/access':
+        if (accessAnswers.isNotEmpty) return accessAnswers.removeAt(0);
         if (accessStatus != 200) return http.Response('', accessStatus);
         return _json(<String, dynamic>{
           'email': 'a@b.test',

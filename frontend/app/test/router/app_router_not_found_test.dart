@@ -101,15 +101,15 @@ void main() {
     ) async {
       // The alias is a route, so the one auth redirect runs before it and
       // nothing about the shell is reachable by knowing a synonym.
+      final auth = fakeAuthRepository();
       await pumpRouter(
         tester,
-        buildRouter(
-          initialLocation: '/home',
-          gate: AuthGate(fakeAuthRepository()),
-        ),
+        buildRouter(initialLocation: '/home', gate: AuthGate(auth)),
         repository: repository,
-        auth: fakeAuthRepository(),
+        auth: auth,
       );
+      // Nobody to restore: start-up settles on signed out (GGU-163).
+      await auth.restore();
       await tester.pumpAndSettle();
       expect(find.byType(SignInPage), findsOneWidget);
       expect(find.byType(HomePage), findsNothing);

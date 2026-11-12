@@ -10,6 +10,7 @@ import 'package:finance_app/features/order_ticket_v2/view/order_ticket_v2_page.d
 import 'package:finance_app/features/shell/view/app_shell.dart';
 import 'package:finance_app/features/shell/view/not_found_page.dart';
 import 'package:finance_app/features/sign_in/view/sign_in_page.dart';
+import 'package:finance_app/features/startup/view/startup_page.dart';
 import 'package:finance_app/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 
@@ -40,7 +41,7 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
     // The auth gate is a single `redirect`, not a check inside each screen
     // (ADR-I D-3). With no gate — the tests that pump one route — every path
     // is open; with one, `AuthGate.redirectFor` is the whole decision.
-    redirect: (context, state) => gate?.redirectFor(state.matchedLocation),
+    redirect: (context, state) => gate?.redirectFor(state.uri),
     // A location no route claims is drawn in the app's own theme with a way
     // Home, instead of go_router's unstyled error widget (GGU-112 AC-1). The
     // path is echoed; the exception is not.
@@ -130,6 +131,10 @@ GoRouter buildRouter({String? initialLocation, AuthGate? gate}) {
       GoRoute(
         path: AppRoutes.signIn,
         builder: (context, state) => const SignInPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.startup,
+        builder: (context, state) => const StartupPage(),
       ),
       GoRoute(
         path: AppRoutes.orderTicket,

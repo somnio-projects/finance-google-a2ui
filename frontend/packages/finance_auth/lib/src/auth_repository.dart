@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:finance_auth/src/access_admission.dart';
 import 'package:finance_auth/src/access_decision.dart';
 import 'package:finance_auth/src/access_gateway.dart';
 import 'package:finance_auth/src/auth_session.dart';
@@ -50,14 +51,25 @@ class AuthRepository {
     return await _identity.currentToken() ?? session.token;
   }
 
-  /// A provider session survived a reload: ask the registry again.
+  /// A provider session survived a reload: ask the registry again, as
+  /// [AuthStatus.restoring] so no sign-in form is drawn meanwhile (GGU-163).
   Future<void> restore() async {
     final token = await _identity.currentToken();
     if (token == null) {
       _emit(const AuthState(status: AuthStatus.signedOut));
       return;
     }
-    await _admit(AuthSession(token: token, provider: 'firebase'));
+    await _admit(
+      AuthSession(token: token, provider: 'firebase'),
+      pending: AuthStatus.restoring,
+    );
+  }
+
+  /// *Try again* after [AuthStatus.unavailable]: same session (GGU-159).
+  Future<void> retry() async {
+    final session = _state.session;
+    if (_state.status != AuthStatus.unavailable || session == null) return;
+    await _admit(session, pending: AuthStatus.restoring);
   }
 
   /// The e-mail button: a link where a provider exists, a minted token where
@@ -100,43 +112,35 @@ class AuthRepository {
   }
 
   /// The server answered 401 to a signed-in call: the session is over.
+  /// Said at once, so an access check that got the 401 reads it as ended.
   void handleUnauthenticated() {
     if (_state.status == AuthStatus.signedOut) return;
+    _emit(const AuthState(status: AuthStatus.signedOut));
     unawaited(signOut());
   }
 
-  Future<Result<void>> _complete(Future<Result<AuthSession>> attempt) async {
-    switch (await attempt) {
-      case Err<AuthSession>(:final failure):
-        return Err<void>(failure);
-      case Ok<AuthSession>(:final value):
-        return await _admit(value);
-    }
-  }
+  Future<Result<void>> _complete(Future<Result<AuthSession>> attempt) async =>
+      switch (await attempt) {
+        Err<AuthSession>(:final failure) => Err<void>(failure),
+        Ok<AuthSession>(:final value) => await _admit(value),
+      };
 
-  Future<Result<void>> _admit(AuthSession session) async {
-    // Emitted, not just assigned. The provider has vouched for them and the
-    // registry has not answered yet — and on a first sign-in it may be
-    // writing a row before it can (spec `backend/0040`). This window used to
-    // be invisible, so the screen showed the sign-in form as though nothing
-    // had happened.
-    _emit(AuthState(status: AuthStatus.provisioning, session: session));
-    switch (await _access.access()) {
-      case Err<AccessDecision>(:final failure):
-        _emit(const AuthState(status: AuthStatus.signedOut));
-        return Err<void>(failure);
-      case Ok<AccessDecision>(:final value):
-        _emit(
-          AuthState(
-            status: value.provisioned
-                ? AuthStatus.signedIn
-                : AuthStatus.notProvisioned,
-            session: value.provisioned ? session : null,
-            decision: value,
-          ),
-        );
-        return const Ok<void>(null);
+  Future<Result<void>> _admit(
+    AuthSession session, {
+    AuthStatus pending = AuthStatus.provisioning,
+  }) async {
+    // Emitted, not just assigned: the registry may be writing a first row
+    // before it can answer (spec `backend/0040`), and that wait is a state.
+    _emit(AuthState(status: pending, session: session));
+    final answer = await _access.access();
+    // A 401 on this very call has already ended the session; keep that.
+    if (_state.status != AuthStatus.signedOut) {
+      _emit(admission(answer, session));
     }
+    return switch (answer) {
+      Err<AccessDecision>(:final failure) => Err<void>(failure),
+      Ok<AccessDecision>() => const Ok<void>(null),
+    };
   }
 
   void _emit(AuthState next) {

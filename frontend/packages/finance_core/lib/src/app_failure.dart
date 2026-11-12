@@ -42,10 +42,18 @@ final class TransportFailure extends AppFailure {
 /// The backend answered with an RFC 9457 problem document.
 final class ProblemFailure extends AppFailure {
   /// Wraps the [problem] the backend returned.
-  const ProblemFailure(this.problem);
+  const ProblemFailure(this.problem, {this.retryAfter});
 
   /// The document as received.
   final ProblemDetails problem;
+
+  /// How long the backend asked us to wait, from a `Retry-After` header in
+  /// delta-seconds — null when it sent none (a 429 or a 503 may carry one).
+  ///
+  /// It travels beside the document rather than in it because the header is
+  /// not part of RFC 9457's body; a screen that offers *Try again* reads it
+  /// so the retry does not arrive inside the window (GGU-159).
+  final Duration? retryAfter;
 
   @override
   String get code => problem.code;
@@ -54,7 +62,7 @@ final class ProblemFailure extends AppFailure {
   String get message => problem.detail;
 
   @override
-  List<Object?> get props => <Object?>[problem];
+  List<Object?> get props => <Object?>[problem, retryAfter];
 }
 
 /// The response arrived but did not match the shape the contract declares.
