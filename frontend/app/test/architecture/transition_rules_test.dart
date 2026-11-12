@@ -20,7 +20,7 @@ import 'workspace_sources.dart';
 /// seam. Both are attached to a control, neither is a page's whole body.
 const Set<String> actionSpinners = <String>{
   // The sign-in button, while the credential is being checked.
-  'app/lib/features/sign_in/view/sign_in_email_form.dart',
+  'app/lib/features/sign_in/view/sign_in_submit_button.dart',
   // A ticket field being re-rendered by the backend (spec 0006 AC-7).
   'app/lib/components/order_ticket/order_ticket_busy_dot.dart',
   // The same control, one step later: the credential was accepted and the

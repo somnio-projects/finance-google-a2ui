@@ -37,6 +37,7 @@ dependencies:
   # and nowhere else — `speech_rules_test.dart` fails on a second importer
   # (spec frontend/0023 AC-10). Already in the lock as a transitive of the
   # Flutter web tooling; declared here because this app now calls it.
+  url_launcher: ^6.3.3
   web: ^1.1.1
 
 dev_dependencies:
@@ -44,6 +45,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.5
+  plugin_platform_interface: ^2.1.8
+  url_launcher_platform_interface: ^2.3.2
   very_good_analysis: ^11.0.0
 
 flutter:
