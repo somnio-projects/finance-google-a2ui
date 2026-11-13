@@ -14,8 +14,14 @@ or other PII; log ids and fingerprints.
 Events worth knowing: `startup` (with `public_base_url`), `shutdown`,
 `unhandled_exception` (with traceback, before the masked 500 is returned),
 `agent.turn` (one per turn: `model`, `outcome`, `duration_ms`, `iterations`,
-`tool_calls` — and deliberately **no** prompt, answer or subject, spec 0006
-AC-13), `agent.tool.failed` (the tool name and the exception *type*, never its
+`tool_calls`, `surfaces`, `views`, and since spec 0058 `tokens_input`,
+`tokens_cached`, `tokens_output`, `tokens_thinking`, `model_calls_billed`,
+`estimated_cost_usd` (a JSON number, USD, 6 dp, or `null`) and `price_missing`
+— and deliberately **no** prompt, answer or subject, spec 0006 AC-13). Its
+`outcome` is `ok`, `truncated`, `model-unavailable`, `model-out-of-credit`
+(Gemini answered 402: the prepaid balance is spent) or `error`. The estimated
+cost feeds the spend alerts in `infra/gemini_spend.tf`; when one fires, follow
+[`docs/gemini-balance-runbook.md`](../../docs/gemini-balance-runbook.md), `agent.tool.failed` (the tool name and the exception *type*, never its
 text) and `agent.tool.unknown` (a tool the model asked for that is not
 registered).
 

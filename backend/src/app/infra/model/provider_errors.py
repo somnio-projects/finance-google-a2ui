@@ -27,18 +27,24 @@ terse, and a diagnostic that needs more than that is one to reproduce by hand
 anyway.
 """
 
+from http import HTTPStatus
 from typing import Final
 
 import httpx
 import structlog
 
 from app.core.logging import get_logger
+from app.core.model_errors import ModelOutOfCreditError, ModelProviderError
+from app.core.model_usage import TokenUsage
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 #: How much of a provider's complaint is worth keeping. Long enough for the
 #: two that have actually bitten us, short enough to bound a log line.
 MAX_DETAIL_CHARS: Final[int] = 800
+
+#: The one detail every provider failure leaves with, whatever the cause.
+UNAVAILABLE: Final[str] = "model provider unavailable"
 
 #: Statuses where another attempt could plausibly land differently.
 RETRYABLE_STATUS: Final[frozenset[int]] = frozenset({408, 429, 500, 502, 503, 504})
@@ -98,9 +104,33 @@ def log_provider_failure(exc: BaseException) -> None:
     log.warning("model_provider_unreachable", error=type(exc).__name__)
 
 
+def provider_failure(
+    exc: BaseException | None, *, usage: TokenUsage
+) -> ModelProviderError:
+    """Mask the last failed attempt, keeping what the call billed (spec 0058).
+
+    Args:
+        exc: The failure that ended the call, if any.
+        usage: The tokens every attempt of the call reported.
+
+    Returns:
+        ``ModelOutOfCreditError`` for a 402 — the prepaid balance is spent,
+        and no retry will refill it — otherwise ``ModelProviderError``. Both
+        carry the same fixed detail, so the client cannot tell them apart.
+    """
+    if (
+        isinstance(exc, httpx.HTTPStatusError)
+        and exc.response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    ):
+        return ModelOutOfCreditError(UNAVAILABLE, usage=usage)
+    return ModelProviderError(UNAVAILABLE, usage=usage)
+
+
 __all__ = [
     "MAX_DETAIL_CHARS",
     "RETRYABLE_STATUS",
+    "UNAVAILABLE",
     "is_retryable",
     "log_provider_failure",
+    "provider_failure",
 ]

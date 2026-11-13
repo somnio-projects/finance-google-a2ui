@@ -17,18 +17,22 @@ unavailable provider.
 """
 
 from collections.abc import Mapping, Sequence
-from typing import Final
 
 import httpx
 from pydantic import SecretStr
 
-from app.core.errors import DependencyUnavailableError
 from app.core.model import ModelMessage, ModelReply, ToolSpec
+from app.core.model_errors import ModelProviderError
+from app.core.model_usage import ZERO_USAGE, TokenUsage
 from app.infra.model.payload import to_request
-from app.infra.model.provider_errors import is_retryable, log_provider_failure
+from app.infra.model.provider_errors import (
+    UNAVAILABLE,
+    is_retryable,
+    log_provider_failure,
+    provider_failure,
+)
 from app.infra.model.reply import from_response
-
-UNAVAILABLE: Final[str] = "model provider unavailable"
+from app.infra.model.usage import usage_of
 
 
 class GeminiModelClient:
@@ -71,16 +75,19 @@ class GeminiModelClient:
 
     async def _attempt(
         self, client: httpx.AsyncClient, body: Mapping[str, object]
-    ) -> object:
+    ) -> tuple[object, TokenUsage]:
         """POST the body, retrying retryable failures up to the attempt cap.
 
         The loop ends three ways, all reachable: a success returns, a
         non-retryable failure breaks, an exhausted budget falls through.
+        Every attempt's ``usageMetadata`` is summed, failed ones included.
 
         Raises:
-            DependencyUnavailableError: When every permitted attempt failed.
+            ModelProviderError: When every permitted attempt failed —
+                ``ModelOutOfCreditError`` when the last one was a 402.
         """
         last: BaseException | None = None
+        spent = ZERO_USAGE
         attempts = 0
         while attempts < self._max_attempts:
             attempts += 1
@@ -88,16 +95,17 @@ class GeminiModelClient:
                 response = await client.post(
                     self._url, json=dict(body), headers=self._headers()
                 )
+                spent += usage_of(response)
                 response.raise_for_status()
-                return response.json()
+                return response.json(), spent
             except (httpx.HTTPError, ValueError) as exc:
                 last = exc
                 log_provider_failure(exc)
                 if not is_retryable(exc):
                     break
-        raise DependencyUnavailableError(UNAVAILABLE) from last
+        raise provider_failure(last, usage=spent) from last
 
-    async def _post(self, body: Mapping[str, object]) -> object:
+    async def _post(self, body: Mapping[str, object]) -> tuple[object, TokenUsage]:
         """Send ``body``, owning the HTTP client when none was injected."""
         client = self._http or httpx.AsyncClient(timeout=self._timeout)
         try:
@@ -121,20 +129,22 @@ class GeminiModelClient:
             tools: The tools the model may call this turn.
 
         Returns:
-            The model's text and any tool calls it asked for.
+            The model's text, any tool calls it asked for, and the usage
+            every attempt of the call billed (spec 0058 AC-2).
 
         Raises:
-            DependencyUnavailableError: For every provider failure — timeout,
+            ModelProviderError: For every provider failure — timeout,
                 transport error, HTTP status, a body that is not JSON, or a
-                body that is not a Gemini reply.
+                body that is not a Gemini reply — carrying the usage billed.
         """
-        payload = await self._post(
+        payload, spent = await self._post(
             to_request(system=system, messages=messages, tools=tools)
         )
         try:
-            return from_response(payload)
+            reply = from_response(payload)
         except ValueError as exc:
-            raise DependencyUnavailableError(UNAVAILABLE) from exc
+            raise ModelProviderError(UNAVAILABLE, usage=spent) from exc
+        return reply.model_copy(update={"usage": spent})
 
 
 __all__ = ["UNAVAILABLE", "GeminiModelClient"]

@@ -1,6 +1,8 @@
 """Builders shared by the agent-host test modules (turn loop and telemetry)."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from datetime import datetime
+from typing import Any
 
 from app.agent.contracts import Tool
 from app.agent.registry import ToolRegistry
@@ -52,6 +54,7 @@ def make_service(
     *,
     tools: Sequence[Tool] = (),
     max_iterations: int = 4,
+    now: datetime = FROZEN_NOW,
 ) -> tuple[AgentService, FakeReporter]:
     """Build the service over a fresh registry and a frozen clock."""
     registry = ToolRegistry()
@@ -63,7 +66,7 @@ def make_service(
         tools=registry,
         reporter=reporter,
         renders=make_resolver(reporter),
-        clock=FixedClock(FROZEN_NOW),
+        clock=FixedClock(now),
         max_iterations=max_iterations,
         system_prompt=TEST_PROMPT,
     )
@@ -101,3 +104,16 @@ class FailingModel:
     ) -> ModelReply:
         del system, messages, tools
         raise self.error
+
+
+class PricedModel(NullModelClient):
+    """The null client under a model id the price table knows (spec 0058)."""
+
+    @property
+    def name(self) -> str:
+        return "gemini-3.8-flash"
+
+
+def turn_line(logs: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
+    """Return the one ``agent.turn`` entry a turn logged."""
+    return next(entry for entry in logs if entry["event"] == "agent.turn")

@@ -21,12 +21,11 @@ from app.actions.contracts import DirectCall
 from app.agent.contracts import ToolContext, TurnResult, TurnState
 from app.agent.events import TurnCompleted, TurnEvent
 from app.agent.registry import ToolRegistry
-from app.core.errors import DependencyUnavailableError
 from app.core.model import MessageRole, ModelMessage
 from app.core.protocols import Clock, ErrorReporter, ModelClient
 from app.services.agent_loop import TurnLoop
 from app.services.agent_renders import TurnRenderResolver
-from app.services.agent_telemetry import TURN_METRIC, record_turn
+from app.services.agent_telemetry import TURN_METRIC, failure_outcome, record_turn
 
 
 class AgentService:
@@ -96,11 +95,8 @@ class AgentService:
         try:
             async for event in self._loop.run(messages, context, state, direct):
                 yield event
-        except DependencyUnavailableError as exc:
-            self._record(started, state, outcome="model-unavailable", failure=exc)
-            raise
         except Exception as exc:
-            self._record(started, state, outcome="error", failure=exc)
+            self._record(started, state, outcome=failure_outcome(exc), failure=exc)
             raise
         self._record(started, state, outcome="ok")
 
@@ -138,12 +134,14 @@ class AgentService:
         """Hand the turn's counters — and any failure — to the telemetry boundary."""
         if failure is not None:
             self._reporter.capture_exception(failure)
+        now = self._clock.now()
         record_turn(
             self._reporter,
             state,
             model=self._model_name,
             outcome=outcome,
-            elapsed=self._clock.now() - started,
+            elapsed=now - started,
+            on=now.date(),
         )
 
 
