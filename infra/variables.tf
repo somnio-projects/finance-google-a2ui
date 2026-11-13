@@ -126,3 +126,25 @@ variable "secret_rotation_days" {
   type        = number
   default     = 90
 }
+
+variable "gemini_credit_usd" {
+  description = "Prepaid Google AI Studio balance, in USD, that the Gemini spend alerts measure against (specs/infra/0006). The alerts fire at 50 % and 80 % of it over a rolling 24 h. Update it when the balance is topped up."
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.gemini_credit_usd > 0
+    error_message = "gemini_credit_usd must be a positive amount of USD."
+  }
+}
+
+variable "spend_alert_emails" {
+  description = "Addresses that receive the Gemini spend and out-of-credit alerts. Empty (the default) creates the policies with no channel: they still open incidents in Cloud Monitoring, they just notify nobody. Slack is a human step in the console (docs/gemini-balance-runbook.md)."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for address in var.spend_alert_emails : can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", address))])
+    error_message = "spend_alert_emails must contain email addresses only."
+  }
+}

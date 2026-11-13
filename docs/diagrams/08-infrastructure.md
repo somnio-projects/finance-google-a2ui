@@ -1,6 +1,6 @@
 # 08 — Infrastructure (Google Cloud)
 
-What `infra/` creates, and what differs between `dev` and production. **Validated, not applied** — the project is provisioned with GGU-29, dev first. Source of truth: [`infra/README.md`](../../infra/README.md), [`docs/compliance/CLOUD_SERVICES.md`](../compliance/CLOUD_SERVICES.md), [`specs/infra/0001-dev-environment.md`](../../specs/infra/0001-dev-environment.md).
+What `infra/` creates, and what differs between `dev` and production. **Validated, not applied** — the project is provisioned with GGU-29, dev first. Source of truth: [`infra/README.md`](../../infra/README.md), [`specs/infra/0006`](../../specs/infra/0006-the-spend-alert-fires-before-the-credit-runs-out.md), [`docs/compliance/CLOUD_SERVICES.md`](../compliance/CLOUD_SERVICES.md), [`specs/infra/0001-dev-environment.md`](../../specs/infra/0001-dev-environment.md).
 
 Nodes labelled *production only* are counted out of `dev` by `local.ephemeral` in `main.tf`; dashed edges are the dev-only paths that replace them.
 
@@ -25,7 +25,7 @@ flowchart TB
             sql[("Cloud SQL PostgreSQL 16<br/>PRIVATE IP · TLS only — both environments<br/>prod: REGIONAL HA · PITR · 30 backups<br/>dev: ZONAL · no PITR · 2 backups · destroyable")]
         end
         sm["Secret Manager<br/>DATABASE_URL · AUTH_JWT_SECRET · SENTRY_DSN · GEMINI_API_KEY<br/>90-day rotation → Pub/Sub"]
-        obs["Cloud Logging 90d (dev 30d) · data-access audit logs<br/>alerts: 5xx, auth-failure spike<br/>uptime check /readyz + readiness alert: production only"]
+        obs["Cloud Logging 90d (dev 30d) · data-access audit logs<br/>alerts: 5xx, auth-failure spike<br/>Gemini spend 50 % / 80 % of credit per 24h · out of credit (402)<br/>uptime check /readyz + readiness alert: production only"]
         sched["Cloud Scheduler — monthly"]
         sa(["Runtime service account<br/>cloudsql.client · per-secret accessor · log/metric writer<br/>no owner, no key"])
         subgraph delivery["Delivery (GGU-48) — develop→dev, main→production, both behind a green gate"]
@@ -53,13 +53,21 @@ flowchart TB
     svc -. "secretAccessor" .-> sm
     job -. "secretAccessor" .-> sm
     svc --> obs
+    aistudio(["Google AI Studio<br/>Gemini · PREPAID balance<br/>no balance API"])
+    svc -->|"generateContent<br/>usageMetadata back"| aistudio
+    obs -. "email (var.spend_alert_emails)<br/>Slack: console step, not Terraform" .-> human(["Owner with the card"])
+    human -. "top up · auto-reload with a monthly cap" .-> aistudio
     sa -.->|"identity of"| svc
     sa -.->|"identity of"| job
     sa -.->|"identity of"| mig
     sa -.->|"identity of"| seed
     dsa -->|"execute, then wait"| mig
 
-    %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,delivery}.tf
+    %% The Gemini alerts read OUR estimate (agent.turn estimated_cost_usd,
+    %% backend spec 0058), never the real balance: AI Studio has no balance API
+    %% for a prepaid key. The edges to the owner are dashed because the email
+    %% list defaults to empty and Slack needs a human OAuth grant.
+    %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,gemini_spend,delivery}.tf
     %% trivy config: 0 misconfigurations. Apply is GGU-29.
     %% The edge subgraph and the connector are counted out of dev by local.ephemeral
     %% (main.tf). Dev therefore has NO WAF, NO edge rate limit and NO HA — a real

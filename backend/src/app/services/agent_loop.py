@@ -20,6 +20,7 @@ from app.agent.registry import ToolRegistry
 from app.core.model import MessageRole, ModelMessage, ToolCall
 from app.core.protocols import ErrorReporter, ModelClient
 from app.services.agent_direct import direct_turn
+from app.services.agent_model_call import ask_model
 from app.services.agent_renders import TurnRenderResolver
 from app.services.agent_tools import execute_tool
 
@@ -93,7 +94,9 @@ class TurnLoop:
             return
         while state.iterations < self._max_iterations:
             state.iterations += 1
-            reply = await self._model.generate(
+            reply = await ask_model(
+                self._model,
+                state,
                 system=self._system_prompt,
                 messages=messages,
                 tools=self._tools.specs(),
