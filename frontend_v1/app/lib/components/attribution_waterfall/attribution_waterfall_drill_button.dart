@@ -39,8 +39,14 @@ class AttributionWaterfallDrillButton extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerRight,
         child: Semantics(
+          // Its own node: without `container` the card's merge swallowed
+          // this button (rect = the card) and its tap never arrived
+          // (GGU-165, the GGU-158 defect). The explicit `onTap` is what a
+          // screen reader's activation calls.
+          container: true,
           button: true,
           label: '$label, ${step.identityLine}',
+          onTap: onPressed,
           excludeSemantics: true,
           child: TextButton.icon(
             onPressed: onPressed,
