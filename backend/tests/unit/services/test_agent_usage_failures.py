@@ -63,7 +63,7 @@ async def test_a_failed_model_call_is_counted_and_named(
     service, reporter = make_service(FailingModel(failure))
 
     with structlog.testing.capture_logs() as logs:
-        with pytest.raises(ModelProviderError, match="provider is unavailable"):
+        with pytest.raises(ModelProviderError, match="model provider unavailable"):
             await service.run_turn(prompt="hi", history=[], context=tool_context)
 
     line = turn_line(logs)
@@ -83,7 +83,7 @@ async def test_a_turn_that_fails_late_keeps_what_its_earlier_calls_billed(
     service, _ = make_service(model, tools=[fake_tool])
 
     with structlog.testing.capture_logs() as logs:
-        with pytest.raises(ModelOutOfCreditError, match="provider is unavailable"):
+        with pytest.raises(ModelOutOfCreditError, match="model provider unavailable"):
             await service.run_turn(prompt="hi", history=[], context=tool_context)
 
     line = turn_line(logs)

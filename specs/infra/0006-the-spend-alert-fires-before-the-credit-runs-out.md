@@ -23,6 +23,7 @@ is the estimate the backend now writes on every `agent.turn`
 |---|---|
 | `google_logging_metric.gemini_cost` | DELTA **distribution** of `EXTRACT(jsonPayload.estimated_cost_usd)` over `agent.turn` lines with `model_calls_billed>0` and `price_missing=false` |
 | `google_monitoring_alert_policy.gemini_spend["50"]` / `["80"]` | PromQL: rolling 24 h `sum(increase(<metric>_sum[24h]))` above 50 % (WARNING) / 80 % (CRITICAL) of `var.gemini_credit_usd` |
+| `google_monitoring_alert_policy.gemini_price_missing` | log-match on any `agent.turn` with `price_missing=true` (WARNING), at most one notification per hour — the turns the spend alerts cannot see |
 | `google_monitoring_alert_policy.gemini_out_of_credit` | log-match on any `agent.turn` with `outcome="model-out-of-credit"` (CRITICAL), at most one notification per hour |
 | `google_monitoring_notification_channel.spend_email` | one email channel per entry of `var.spend_alert_emails` |
 
@@ -50,6 +51,9 @@ is the estimate the backend now writes on every `agent.turn`
   deprecated; PromQL is the supported way to ask for it.
 - **Log-match for 402.** The credit being gone is a single event that needs a
   human now; waiting for a metric alignment period would only delay the page.
+- **A burn rate, not a balance.** The 50 %/80 % policies compare the last
+  24 h of estimated spend with `var.gemini_credit_usd`. They cannot see what
+  is left, so `gemini_credit_usd` must be bumped on every top-up.
 - **Filtered, not failed.** Turns that billed nothing (scripted client, direct
   calls) and turns with no price (`price_missing`) are excluded by the filter
   rather than left for `EXTRACT` to fail on.
@@ -74,8 +78,10 @@ variables, never committed in `*.tfvars` by this change.
    `backend-ci` runs whenever `infra/gemini_spend.tf` changes.
 3. **AC-3** — both thresholds are derived from `var.gemini_credit_usd`; no
    amount is hard-coded in a policy.
-4. **AC-4** — with `spend_alert_emails = []` the plan creates the three
+4. **AC-4** — with `spend_alert_emails = []` the plan creates the four
    policies and no channel.
+5. **AC-5** — a turn with `price_missing=true` opens an incident, so a model
+   missing from the price table is never silently outside the spend alerts.
 
 ## 7. Test plan
 
@@ -84,6 +90,7 @@ variables, never committed in `*.tfvars` by this change.
 | AC-1 | `infra-ci` job *Terraform* (and the same commands locally) |
 | AC-2 | `py.test` (`test_spend_alert_contract.py`) |
 | AC-3, AC-4 | review of `gemini_spend.tf`; the first `terraform plan` |
+| AC-5 | `py.test` (`test_spend_alert_contract.py`: the flag name and both filters) |
 
 ## 8. Open decisions
 

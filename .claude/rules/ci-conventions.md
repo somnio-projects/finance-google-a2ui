@@ -133,7 +133,7 @@ repository-wide one is not, on purpose:
 | workflow | runs on | scope | exists? |
 |---|---|---|---|
 | `repo-ci` | pull requests | **no `paths:` filter** — spelling, secrets, shell lint, gate pairs, spec numbering, manual-run check | yes |
-| `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `docker-compose.yml`, its own file | yes |
+| `backend-ci` | pull requests | `backend/**`, `docs/catalog/**`, `infra/gemini_spend.tf` (its gate compares the alerts' field names with the Python that writes them — spec backend/0058 AC-12), `docker-compose.yml`, its own file | yes |
 | `frontend-ci` | pull requests | `frontend/**`, its own file | yes |
 | `frontend-v1-ci` | pull requests | `frontend_v1/**`, `docs/a2ui/**`, `docs/catalog/**`, its own file | yes — the A2UI v1.0 client (ADR-M D-9), added 2026-10-01 |
 | `infra-ci` | pull requests | `infra/**`, the delivery workflows | yes |

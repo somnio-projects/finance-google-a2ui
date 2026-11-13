@@ -42,6 +42,14 @@ def test_the_out_of_credit_alert_matches_the_outcome_the_turn_records() -> None:
     assert local_value("gemini_out_of_credit") == MODEL_OUT_OF_CREDIT
 
 
+def test_the_unpriced_turn_alert_matches_the_flag_the_turn_logs() -> None:
+    flag = local_value("gemini_price_missing_field")
+
+    assert flag in cost_fields(TurnState(), model="m", on=date.min)
+    assert "jsonPayload.${local.gemini_price_missing_field}=true" in hcl()
+    assert "jsonPayload.${local.gemini_price_missing_field}=false" in hcl()
+
+
 def test_every_turn_field_the_terraform_filters_on_is_one_the_turn_logs() -> None:
     logged = {"event", "outcome", *cost_fields(TurnState(), model="m", on=date.min)}
     filtered = set(re.findall(r"jsonPayload\.([a-z_]+)", hcl()))

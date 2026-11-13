@@ -25,7 +25,7 @@ flowchart TB
             sql[("Cloud SQL PostgreSQL 16<br/>PRIVATE IP · TLS only — both environments<br/>prod: REGIONAL HA · PITR · 30 backups<br/>dev: ZONAL · no PITR · 2 backups · destroyable")]
         end
         sm["Secret Manager<br/>DATABASE_URL · AUTH_JWT_SECRET · SENTRY_DSN · GEMINI_API_KEY<br/>90-day rotation → Pub/Sub"]
-        obs["Cloud Logging 90d (dev 30d) · data-access audit logs<br/>alerts: 5xx, auth-failure spike<br/>Gemini spend 50 % / 80 % of credit per 24h · out of credit (402)<br/>uptime check /readyz + readiness alert: production only"]
+        obs["Cloud Logging 90d (dev 30d) · data-access audit logs<br/>alerts: 5xx, auth-failure spike<br/>Gemini 24h burn rate vs credit 50 % / 80 % · out of credit (402) · unpriced model<br/>uptime check /readyz + readiness alert: production only"]
         sched["Cloud Scheduler — monthly"]
         sa(["Runtime service account<br/>cloudsql.client · per-secret accessor · log/metric writer<br/>no owner, no key"])
         subgraph delivery["Delivery (GGU-48) — develop→dev, main→production, both behind a green gate"]

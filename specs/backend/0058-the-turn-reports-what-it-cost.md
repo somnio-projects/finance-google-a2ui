@@ -76,6 +76,13 @@ the Google AI Studio pricing page (Standard tier) that day:
 | `gemini-3.8-flash` | (earliest) | $0.75 | $0.075 | $3.75 |
 | `gemini-3.8-flash` | 2027-01-01 | $1.50 | $0.15 | $7.50 |
 
+**Source, both bands:** the Google AI Studio pricing page,
+`aistudio.google.com/docs/pricing`, read 2026-11-13. It lists
+`gemini-3.8-flash` at $0.75 input / $3.75 output / $0.075 cached input per 1M
+tokens **until 31 Dec 2026**, and $1.50 / $7.50 / $0.15 **from 1 Jan 2027**.
+The 2027 band is therefore an announced price, not one observed on a bill;
+re-read the page before that date and bump `PRICE_TABLE_VERSION` if it moved.
+
     cost = (input − cached) · in + cached · cachedIn + (output + thinking) · out
 
 per million tokens. The band is chosen by the **turn's own date**, which comes
