@@ -12,17 +12,17 @@ Since GGU-157 ([0039](0039-activity-rows-and-the-position-hand-off-are-reachable
 |---|---|
 | OD-1 | Each section label is wrapped in `Semantics(container: true, header: true)`: its own node, flagged as a header, labelled with only its own text (`group.text('label')`, verbatim from the payload). |
 | OD-2 | Reading order needs no sort keys: header and rows are consecutive children of one `Column`, so the traversal is header, its rows, next header. The test pins it. |
-| OD-3 | The rows keep the GGU-157 wrapper unchanged; filters and search still replace the whole `ActivitySections`, so every row and every header is rebuilt exposed. |
+| OD-3 | The rows keep the GGU-157 wrapper unchanged; the `kind` filter and the `query` search both replace the whole `ActivitySections`, so every row and every header is rebuilt exposed. |
 
 ## 3. Acceptance criteria
 
 - AC-1: every section header is a separate semantics node with `isHeader` and only its own label.
 - AC-2: in traversal order the sequence is header, that section's rows, next header, and so on.
-- AC-3: after a filter change every row (and header) is still exposed (GGU-157 holds).
+- AC-3: after a filter change or a search every row (and header) is still exposed (GGU-157 holds).
 
 ## 4. Tests
 
-`activity_semantics_test.dart`: the whole labelled traversal of `ActivitySections` is compared with `[header, rows..., header, rows...]` built from the payload, on first load and after a filter change; and the header nodes alone equal the payload's `groups[].label`. In both apps; 100 % line coverage holds.
+`activity_headings_test.dart` (the GGU-157 `activity_semantics_test.dart` stays untouched, inside the 150-line budget): the whole labelled traversal of `ActivitySections` is compared with `[header, rows..., header, rows...]` built from the payload, on first load, after a filter change and after a search (the `query` option, through the search field); and the header nodes alone equal the payload's `groups[].label`. In both apps; 100 % line coverage holds.
 
 ## 5. Not verified
 
