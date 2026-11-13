@@ -94,6 +94,14 @@ async def test_the_turn_log_line_carries_no_prompt_no_result_and_no_subject(
         "tool_calls",
         "surfaces",
         "views",
+        # Spec 0058: counts and a price — still no prompt, reply or subject.
+        "tokens_input",
+        "tokens_cached",
+        "tokens_output",
+        "tokens_thinking",
+        "model_calls_billed",
+        "estimated_cost_usd",
+        "price_missing",
     }
     assert turns[0]["outcome"] == "ok"
     rendered = str(turns[0])

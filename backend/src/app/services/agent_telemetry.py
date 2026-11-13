@@ -12,18 +12,55 @@ without noticing. Tests assert the key set exactly, not merely that the
 forbidden keys are absent, so a new field cannot be added silently.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
+from decimal import Decimal
 from typing import Final
 
 import structlog
 
 from app.agent.contracts import TurnState
+from app.core.errors import DependencyUnavailableError
 from app.core.logging import get_logger
+from app.core.model_errors import MODEL_UNAVAILABLE, ModelProviderError
+from app.core.model_pricing import estimate_cost
 from app.core.protocols import ErrorReporter
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
 
 TURN_METRIC: Final[str] = "agent.turn"
+#: The log field the spend metric extracts (infra/gemini_spend.tf, spec 0058).
+COST_FIELD: Final[str] = "estimated_cost_usd"
+#: Six decimal places: a micro-dollar, well below one token's price.
+COST_QUANTUM: Final[Decimal] = Decimal("0.000001")
+
+
+def failure_outcome(exc: BaseException) -> str:
+    """Name the outcome a turn that raised ``exc`` records (spec 0058 AC-10/11)."""
+    if isinstance(exc, ModelProviderError):
+        return exc.outcome
+    if isinstance(exc, DependencyUnavailableError):
+        return MODEL_UNAVAILABLE
+    return "error"
+
+
+def cost_fields(state: TurnState, *, model: str, on: date) -> dict[str, object]:
+    """Return the turn's usage and estimated cost as log fields (spec 0058 §3).
+
+    The cost is a JSON **number** rounded to ``COST_QUANTUM`` — what a
+    distribution metric's ``EXTRACT`` reads — or None with ``price_missing``
+    when tokens were billed against a model the price table does not know.
+    """
+    usage = state.usage
+    cost = estimate_cost(model, usage, on=on)
+    return {
+        "tokens_input": usage.prompt,
+        "tokens_cached": usage.cached,
+        "tokens_output": usage.candidates,
+        "tokens_thinking": usage.thoughts,
+        "model_calls_billed": usage.billed_calls,
+        COST_FIELD: None if cost is None else float(cost.quantize(COST_QUANTUM)),
+        "price_missing": cost is None,
+    }
 
 
 def record_turn(
@@ -33,6 +70,7 @@ def record_turn(
     model: str,
     outcome: str,
     elapsed: timedelta,
+    on: date,
 ) -> None:
     """Emit the turn's single metric and single log line.
 
@@ -52,6 +90,7 @@ def record_turn(
         model: Name of the model client that served the turn.
         outcome: ``ok``, ``truncated`` or a failure code.
         elapsed: How long the turn took.
+        on: The turn's date, from the injected clock — it picks the price.
     """
     views = sorted({intent.view for intent in state.renders})
     reporter.increment(
@@ -70,7 +109,15 @@ def record_turn(
         tool_calls=state.tool_calls,
         surfaces=len(state.renders),
         views=views,
+        **cost_fields(state, model=model, on=on),
     )
 
 
-__all__ = ["TURN_METRIC", "record_turn"]
+__all__ = [
+    "COST_FIELD",
+    "COST_QUANTUM",
+    "TURN_METRIC",
+    "cost_fields",
+    "failure_outcome",
+    "record_turn",
+]

@@ -23,6 +23,8 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.model_usage import ZERO_USAGE, TokenUsage
+
 TOOL_NAME_PATTERN: Final[str] = r"^[a-z][a-z0-9_]{2,47}$"
 
 
@@ -106,6 +108,10 @@ class ModelReply(BaseModel):
     text: str = Field(default="", description="The assistant's prose, possibly empty.")
     tool_calls: tuple[ToolCall, ...] = Field(
         default=(), description="Tools the model wants run before it can answer."
+    )
+    usage: TokenUsage = Field(
+        default=ZERO_USAGE,
+        description="Tokens every attempt of this call billed (spec 0058).",
     )
 
 

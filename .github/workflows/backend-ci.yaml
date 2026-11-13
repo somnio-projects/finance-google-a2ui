@@ -15,6 +15,10 @@ on:
       # The frozen catalog contract is generated from backend/ and verified here,
       # so a hand-edit of the document must start the run that rejects it.
       - "docs/catalog/**"
+      # The Gemini spend alerts filter `agent.turn` by field names this gate
+      # compares against the Python that writes them (spec backend/0058 AC-12),
+      # so an edit to either side must start the run that compares them.
+      - "infra/gemini_spend.tf"
       - "docker-compose.yml"
       - ".github/workflows/backend-ci.yaml"
   # `backend-cd` calls this workflow as a job on every push to develop and main,

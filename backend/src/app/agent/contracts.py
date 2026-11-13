@@ -1,15 +1,13 @@
 """What a tool is, what it is given, and what one turn produces (spec 0006 §3.2).
 
-A tool is a small async callable over the domain. It receives a
-``ToolContext`` — the owner key (``Principal.owner_key``) and the provider —
-so a tool cannot open a session, reach a repository or read ``Settings`` even
-by accident. It returns a ``ToolOutcome``: the JSON payload the model reads,
-plus an optional render intent.
+A tool is a small async callable over the domain. It receives a ``ToolContext`` —
+the owner key (``Principal.owner_key``) and the provider — so a tool cannot open a
+session, reach a repository or read ``Settings`` even by accident. It returns a
+``ToolOutcome``: the JSON payload the model reads, plus an optional render intent.
 
-**Numbers-from-tools.** Every figure inside ``ToolOutcome.data`` is a
-pre-formatted ``*Display`` string produced through ``app.core.display``
-(ADR-E D-2/D-3, ADR-K D-5). The model copies those strings; it never rounds,
-never formats and never computes.
+**Numbers-from-tools.** Every figure inside ``ToolOutcome.data`` is a pre-formatted
+``*Display`` string produced through ``app.core.display`` (ADR-E D-2/D-3, ADR-K
+D-5). The model copies those strings; it never rounds, formats or computes.
 """
 
 from collections.abc import Mapping
@@ -18,6 +16,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.model_usage import ZERO_USAGE, TokenUsage
 from app.domain.provider import PortfolioProvider
 
 #: A **bound on the string**, not a check on the view: it keeps a tool's id
@@ -125,6 +124,7 @@ class TurnState:
     tool_calls: int = 0
     renders: list[RenderIntent] = field(default_factory=list)
     emitted: int = 0
+    usage: TokenUsage = ZERO_USAGE  # every model call's tokens, failed ones too
 
     def take_renders(self) -> tuple[tuple[int, RenderIntent], ...]:
         """Return the render intents collected since the last call, with indexes.
