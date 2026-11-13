@@ -6680,3 +6680,24 @@ PR #191 → develop. Found while building GGU-161 (#189), already on develop bef
   2027-01-01). `agent_service.py` is at 148/150.
 - **Found on the way:** a non-httpx exception while building the HTTP client (missing CA bundle in a local
   venv) makes a turn log `outcome=error`, not `model-unavailable` — pre-existing, not addressed.
+
+## 2026-11-13 — GGU-165 / GGU-166: two semantics gaps QA found with the accessibility tree (specs frontend/0041–0042, frontend_v1/0003–0004)
+
+- **GGU-165 (#193):** `AttributionWaterfallDrillButton` wrapped its `TextButton` in
+  `Semantics(button: true, excludeSemantics: true)` without `container: true`, so the node merged into the
+  card (card-sized bounds) and its tap action sat on the excluded child — assistive activation sent nothing.
+  Fix: `container: true` + `onTap: onPressed`, both apps. Same defect class as GGU-158's Holdings CTA.
+- **GGU-166 (#194):** GGU-157 gave each Activity row its own node, but the section labels were loose `Text`
+  and merged into one ancestor name ahead of the rows. Fix: each label is
+  `Semantics(container: true, header: true)`; header and rows are consecutive children of one `Column`, so
+  reading order needs no sort keys. Heading tests live in a new `activity_headings_test.dart` (the old file
+  would have crossed 150 lines) and assert the full traversal after a filter **and** after a search.
+- **Harness:** no rule changed. Lesson worth keeping: **a `Semantics(excludeSemantics: true)` without
+  `container: true` is a merge, not a node** — it is the second time (GGU-158, GGU-165) it shipped green,
+  because widget tests that `find.bySemanticsLabel` pass on a merged node. The tests added here assert the
+  node's rect and that no ancestor carries the label, which is what fails on the merge.
+- **Integration cost:** both PRs hit the same `specs/README.md` index-row conflict with GGU-167; each
+  `develop` merge moved the head and so the manual run had to be redone. A `gh run rerun` of
+  `repo.manual-run` re-reads the **old** event's PR body — close/reopen the PR to get a fresh event.
+- **Not verified:** a real screen reader (VoiceOver/TalkBack). Proven on the Flutter semantics tree and on
+  the deployed sites' accessibility tree with Playwright.
