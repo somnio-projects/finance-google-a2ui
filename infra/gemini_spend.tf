@@ -29,14 +29,20 @@ locals {
     "80" = { fraction = 0.8, severity = "CRITICAL" }
   }
 
-  gemini_alert_channels = [for channel in google_monitoring_notification_channel.spend_email : channel.id]
-  gemini_runbook        = "Follow docs/gemini-balance-runbook.md: check usage in Google AI Studio, top up the prepaid balance, and enable auto-reload with a monthly cap."
+  # Email channels this file creates, plus Slack (or any other) channels a human
+  # created in the console and Terraform only REFERENCES (specs/infra/0007).
+  gemini_alert_channels = concat(
+    [for channel in google_monitoring_notification_channel.spend_email : channel.id],
+    var.spend_alert_channel_ids,
+  )
+  gemini_runbook = "Follow docs/gemini-balance-runbook.md: check usage in Google AI Studio, top up the prepaid balance, and enable auto-reload with a monthly cap."
 }
 
 # One channel per address. An empty list (the default) creates none, and the
 # policies below still exist and still open incidents — they notify nobody.
-# Slack needs an OAuth grant in the console; it is a human step in the runbook,
-# never faked here.
+# Slack is NOT created here: the OAuth token of the Google Cloud Monitoring app
+# would have to live in git or in Terraform state. A human authorises it in the
+# console and the channel's id goes in var.spend_alert_channel_ids.
 resource "google_monitoring_notification_channel" "spend_email" {
   for_each     = toset(var.spend_alert_emails)
   display_name = "${local.name} Gemini spend"

@@ -194,3 +194,4 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [frontend_v1/0003-the-drill-button-is-its-own-accessible-node.md](frontend_v1/0003-the-drill-button-is-its-own-accessible-node.md) | In progress | GGU-165 |
 | [backend/0058-the-turn-reports-what-it-cost.md](backend/0058-the-turn-reports-what-it-cost.md) | In progress | GGU-167 |
 | [infra/0006-the-spend-alert-fires-before-the-credit-runs-out.md](infra/0006-the-spend-alert-fires-before-the-credit-runs-out.md) | In progress | GGU-167 |
+| [infra/0007-the-spend-alerts-reach-slack.md](infra/0007-the-spend-alerts-reach-slack.md) | In progress | GGU-167 |

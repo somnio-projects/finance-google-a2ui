@@ -138,8 +138,19 @@ variable "gemini_credit_usd" {
   }
 }
 
+variable "spend_alert_channel_ids" {
+  description = "Full resource names (projects/<project>/notificationChannels/<id>) of notification channels that ALREADY exist and should also receive the Gemini spend alerts — in practice the Slack channel a workspace member authorised in the console (docs/gemini-balance-runbook.md §4). Referenced, never created, so no Slack token enters git or state (specs/infra/0007)."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.spend_alert_channel_ids : can(regex("^projects/[a-z][a-z0-9-]{4,28}[a-z0-9]/notificationChannels/[0-9]+$", id))])
+    error_message = "spend_alert_channel_ids must be full names: projects/<project>/notificationChannels/<numeric id>."
+  }
+}
+
 variable "spend_alert_emails" {
-  description = "Addresses that receive the Gemini spend and out-of-credit alerts. Empty (the default) creates the policies with no channel: they still open incidents in Cloud Monitoring, they just notify nobody. Slack is a human step in the console (docs/gemini-balance-runbook.md)."
+  description = "Addresses that receive the Gemini spend and out-of-credit alerts. Empty (the default) creates the policies with no channel: they still open incidents in Cloud Monitoring, they just notify nobody. Slack is not an email: see spend_alert_channel_ids."
   type        = list(string)
   default     = []
 

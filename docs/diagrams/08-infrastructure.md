@@ -55,7 +55,7 @@ flowchart TB
     svc --> obs
     aistudio(["Google AI Studio<br/>Gemini · PREPAID balance<br/>no balance API"])
     svc -->|"generateContent<br/>usageMetadata back"| aistudio
-    obs -. "email (var.spend_alert_emails)<br/>Slack: console step, not Terraform" .-> human(["Owner with the card"])
+    obs -. "email (var.spend_alert_emails)<br/>Slack: console grant, id in var.spend_alert_channel_ids" .-> human(["Owner with the card"])
     human -. "top up · auto-reload with a monthly cap" .-> aistudio
     sa -.->|"identity of"| svc
     sa -.->|"identity of"| job
@@ -66,7 +66,8 @@ flowchart TB
     %% The Gemini alerts read OUR estimate (agent.turn estimated_cost_usd,
     %% backend spec 0058), never the real balance: AI Studio has no balance API
     %% for a prepaid key. The edges to the owner are dashed because the email
-    %% list defaults to empty and Slack needs a human OAuth grant.
+    %% list defaults to empty and Slack needs a human OAuth grant (its token never
+    %% enters Terraform: only the channel id does, specs/infra/0007).
     %% Everything here is Terraform: infra/{network,database,secrets,iam,run,edge,observability,gemini_spend,delivery}.tf
     %% trivy config: 0 misconfigurations. Apply is GGU-29.
     %% The edge subgraph and the connector are counted out of dev by local.ephemeral

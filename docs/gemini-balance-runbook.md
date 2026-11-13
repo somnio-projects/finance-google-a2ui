@@ -66,12 +66,24 @@ Studio is the truth; the estimate only tells you when to look.
 - Run one priced turn, then in **Metrics Explorer** → PromQL run
   `sum(increase(logging_googleapis_com:user_<metric_name_with_underscores>_sum[1h]))`
   and confirm it shows the turn's `estimated_cost_usd` (spec infra/0006 OD-1).
-- **Slack**: Cloud Monitoring → *Alerting* → *Edit notification channels* →
-  *Slack* → *Add new*, authorise the workspace, pick the channel. Then add the
-  channel to the four policies in the console (or import it into Terraform
-  later). Terraform cannot perform the OAuth grant, so this is a human step.
+- **Slack** (spec infra/0007; the token never touches git or Terraform state):
+  1. A workspace admin installs the *Google Cloud Monitoring* app in Slack and,
+     in the target channel (`#finance-google-a2ui-dev`), runs
+     `/invite @Google Cloud Monitoring`.
+  2. Cloud Monitoring → *Alerting* → *Edit notification channels* → *Slack* →
+     *Add new*, authorise the workspace, pick the channel, name it
+     `finance-a2ui-dev Gemini spend (Slack)`.
+  3. Read its id: `gcloud alpha monitoring channels list --project finance-a2ui
+     --filter='type=slack' --format='value(name)'` (or the REST
+     `notificationChannels` list).
+  4. Put it in the environment's tfvars (not committed if it holds anything
+     private; the id itself is not a secret):
+     `spend_alert_channel_ids = ["projects/finance-a2ui/notificationChannels/<id>"]`
+     and apply. The four policies now notify it.
+  5. Prove it: *Edit notification channels* → the channel → *Send test
+     notification*, and see it land in Slack.
 - With `spend_alert_emails = []` the policies notify nobody: add at least one
-  address or the Slack channel before relying on them.
+  address or `spend_alert_channel_ids` before relying on them.
 
 ## 5. While the balance is zero
 
