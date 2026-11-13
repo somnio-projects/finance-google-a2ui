@@ -36,13 +36,20 @@ class ActivitySections extends StatelessWidget {
         for (final group in payload.rows('groups')) ...<Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
-            child: Text(
-              group.text('label'),
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.4,
-                color: activity.section,
+            // Its own node, flagged as a heading (GGU-166): a loose `Text`
+            // merged into the nearest ancestor, so every section label read
+            // as one name ahead of the rows.
+            child: Semantics(
+              container: true,
+              header: true,
+              child: Text(
+                group.text('label'),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.4,
+                  color: activity.section,
+                ),
               ),
             ),
           ),
