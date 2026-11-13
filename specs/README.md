@@ -190,3 +190,5 @@ claim this file cannot keep is what GGU-105 was cut for. Rows are appended.
 | [backend/0057-a-numeric-json-rpc-id-is-echoed-never-a-500.md](backend/0057-a-numeric-json-rpc-id-is-echoed-never-a-500.md) | In progress | GGU-164 |
 | [frontend/0040-a-selected-bar-offers-the-drill.md](frontend/0040-a-selected-bar-offers-the-drill.md) | In progress | GGU-161 |
 | [frontend_v1/0002-a-selected-bar-offers-the-drill.md](frontend_v1/0002-a-selected-bar-offers-the-drill.md) | In progress | GGU-161 |
+| [backend/0058-the-turn-reports-what-it-cost.md](backend/0058-the-turn-reports-what-it-cost.md) | In progress | GGU-167 |
+| [infra/0006-the-spend-alert-fires-before-the-credit-runs-out.md](infra/0006-the-spend-alert-fires-before-the-credit-runs-out.md) | In progress | GGU-167 |

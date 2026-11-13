@@ -1,6 +1,6 @@
 # 05 — An agent turn: question to streamed surfaces
 
-How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0056](../../specs/backend/0056-the-drill-runs-its-tool-without-the-model.md). Dashed = planned. The v1.0 route (`/a2ui/v1/a2a`) runs this same turn and differs only in how a validated intent becomes bytes — diagram [14](14-a2ui-v1-wire.md).
+How a sentence — or a tap — becomes UI. Source of truth: [ADR-D](../adr/ADR-D-a2ui-streaming-transport.md), [ADR-J](../adr/ADR-J-rest-api-and-a2a-surface.md) D-7, [ADR-K](../adr/ADR-K-response-shaping.md), [spec 0006](../../specs/backend/0006-agent-host.md), [spec 0012](../../specs/backend/0012-delivery-followups.md), [spec 0022](../../specs/backend/0022-surface-actions.md), [spec 0056](../../specs/backend/0056-the-drill-runs-its-tool-without-the-model.md), [spec 0058](../../specs/backend/0058-the-turn-reports-what-it-cost.md). Dashed = planned. The v1.0 route (`/a2ui/v1/a2a`) runs this same turn and differs only in how a validated intent becomes bytes — diagram [14](14-a2ui-v1-wire.md).
 
 The turn is everything between `run_turn_events(...)` and `TurnCompleted`. It
 is **session-free**: it takes the history as an argument, bounds itself to
@@ -31,6 +31,14 @@ argument `driver_detail` takes, so its turn runs that tool through the same
 `execute_tool`, emits the `attribution.driver.v1` surface and completes with a
 backend sentence filled from the tool's display strings — `ModelClient` is
 never called. A chip pins nothing; it is a question, and stays a model turn.
+
+What changed with spec 0058 is *what a turn says it cost*. Every model call
+returns the `usageMetadata` its attempts reported (retries included), the loop
+sums it into `TurnState.usage` — a failed call's too, carried on
+`ModelProviderError` — and `agent.turn` prints the tokens and an estimated
+USD cost from the declared price table, priced on the turn's own date from the
+injected clock. A Gemini 402 is its own outcome, `model-out-of-credit`, while
+the client still gets the same masked 503.
 
 `SessionService` (GGU-46) — which would supply and persist the history, and
 resolve `contextId` against the verified subject — is **not on this branch**:
@@ -75,7 +83,8 @@ sequenceDiagram
 
     loop otherwise: up to AGENT_MAX_TOOL_ITERATIONS model calls
         L->>M: system prompt + history + tool schemas
-        M->>L: text, or tool call(s)
+        M->>L: text, or tool call(s) + usage (every attempt's usageMetadata)
+        L->>L: state.usage += usage (a failed call's too)
         L->>T: run tool (pure, Decimal, injected clock)
         T->>L: ToolOutcome: *Display strings + render intent
         L->>P: accept(view, options)?
@@ -87,6 +96,7 @@ sequenceDiagram
     end
 
     L->>H: TurnCompleted{message, render_intents, counters}
+    H->>H: agent.turn: counters + tokens + estimated_cost_usd (price on the clock's date)
     A->>C: message (answer + every renderIntent + suggestions)
     A->>C: status-update{completed | input_required}
     A-->>S: append assistant message (planned — GGU-46)
@@ -105,7 +115,10 @@ sequenceDiagram
     %% just run — never by the model, which cannot invent a chip (0022 OD-1).
     %% A tapped chip or bar comes back as the data part at the top.
     %% A turn emits exactly one agent.turn metric and one log line:
-    %% model, outcome, duration, counters — never prompt, result or subject.
+    %% model, outcome, duration, counters, tokens and estimated cost — never
+    %% prompt, result or subject. The cost is what infra/gemini_spend.tf sums
+    %% to warn before the prepaid credit runs out (spec 0058, infra/0006);
+    %% outcome model-out-of-credit (a 402) pages on its own.
     %% The incremental events add NO log line: the shape of a conversation
     %% is the user's, and a per-surface log would put it in the logs.
     %% An unknown or raising tool becomes {"error": ...} fed back, not a failed
