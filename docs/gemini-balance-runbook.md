@@ -9,6 +9,15 @@ it ([`infra/gemini_spend.tf`](../infra/gemini_spend.tf), spec
 | *Gemini estimated spend over 50 % of the credit in 24h* | WARNING | at this rate the balance lasts about a day more |
 | *Gemini estimated spend over 80 % of the credit in 24h* | CRITICAL | the balance can run out within hours |
 | *Gemini credit exhausted (HTTP 402)* | CRITICAL | it **has** run out: every agent turn now fails, the assistant answers nothing |
+| *Gemini turn billed on an unpriced model* | WARNING | `GEMINI_MODEL` has no price in the table: those turns are **missing from the two spend alerts** |
+
+**The 50 % / 80 % alerts are a burn rate, not a balance.** They compare the
+estimated spend of the **last 24 h** with `gemini_credit_usd` — a number in
+the environment's `*.tfvars`, not anything read from AI Studio. They do not
+know what is left: a balance drained slowly over a week never fires them, and
+a fresh top-up does not reset them. **Bump `gemini_credit_usd` on every
+top-up** (§2), or the thresholds keep measuring the old credit. Only the 402
+alert says the balance is actually gone.
 
 The spend figures are an **estimate** from Gemini's `usageMetadata` and the
 price table in `backend/src/app/core/model_pricing.py` (spec
@@ -32,14 +41,17 @@ Studio is the truth; the estimate only tells you when to look.
 3. If the two disagree by more than a few percent, the price table is stale:
    update `PRICES` and `PRICE_TABLE_VERSION` in `model_pricing.py` from the
    pricing page, in a PR.
-4. If lines carry `price_missing=true`, `GEMINI_MODEL` names a model the table
-   does not know — those turns are **not** in the alert's sum. Add the model.
+4. If lines carry `price_missing=true` (the *unpriced model* alert),
+   `GEMINI_MODEL` names a model the table does not know — those turns are
+   **not** in the spend alerts' sum. Add the model's prices to `PRICES` from the
+   pricing page, in a PR.
 
 ## 2. Top up
 
 1. AI Studio → **Billing** → add prepaid credit.
-2. Set `gemini_credit_usd` in the environment's `*.tfvars` to the new balance
-   and apply, so the 50 %/80 % thresholds measure the right amount.
+2. **Every time:** set `gemini_credit_usd` in the environment's `*.tfvars` to
+   the new credit and apply. The 50 %/80 % thresholds are fractions of that
+   variable, never of the real balance.
 
 ## 3. Stop it happening again — auto-reload with a cap
 
@@ -56,7 +68,7 @@ Studio is the truth; the estimate only tells you when to look.
   and confirm it shows the turn's `estimated_cost_usd` (spec infra/0006 OD-1).
 - **Slack**: Cloud Monitoring → *Alerting* → *Edit notification channels* →
   *Slack* → *Add new*, authorise the workspace, pick the channel. Then add the
-  channel to the three policies in the console (or import it into Terraform
+  channel to the four policies in the console (or import it into Terraform
   later). Terraform cannot perform the OAuth grant, so this is a human step.
 - With `spend_alert_emails = []` the policies notify nobody: add at least one
   address or the Slack channel before relying on them.

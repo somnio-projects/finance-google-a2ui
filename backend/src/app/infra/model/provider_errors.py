@@ -34,7 +34,11 @@ import httpx
 import structlog
 
 from app.core.logging import get_logger
-from app.core.model_errors import ModelOutOfCreditError, ModelProviderError
+from app.core.model_errors import (
+    MASKED_DETAIL,
+    ModelOutOfCreditError,
+    ModelProviderError,
+)
 from app.core.model_usage import TokenUsage
 
 log: structlog.stdlib.BoundLogger = get_logger(__name__)
@@ -44,7 +48,7 @@ log: structlog.stdlib.BoundLogger = get_logger(__name__)
 MAX_DETAIL_CHARS: Final[int] = 800
 
 #: The one detail every provider failure leaves with, whatever the cause.
-UNAVAILABLE: Final[str] = "model provider unavailable"
+UNAVAILABLE: Final[str] = MASKED_DETAIL
 
 #: Statuses where another attempt could plausibly land differently.
 RETRYABLE_STATUS: Final[frozenset[int]] = frozenset({408, 429, 500, 502, 503, 504})

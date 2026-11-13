@@ -6651,3 +6651,32 @@ PR #191 → develop. Found while building GGU-161 (#189), already on develop bef
   Mutation check: restoring `max_length` on the union fails 20 of 34 new unit tests.
 - **Unverified:** full `docker compose up` (manual run was uvicorn + throwaway Postgres).
 - **Harness:** no rule changed. Logged in its own PR so #191's head did not move.
+
+## 2026-11-13 — GGU-167: Gemini cost telemetry and a spend alert before the credit runs out (specs backend/0058, infra/0006)
+
+- **Why:** the US$5 prepaid AI Studio balance ran out mid-QA; every call answered 402 and the turn logged
+  `model-unavailable`, identical to a 503. `usageMetadata` was never read, so no turn knew its cost.
+- **Code (#195):** `TokenUsage` (`core/model_usage.py`) read from every attempt's `usageMetadata`
+  (`infra/model/usage.py`), summed across retries and failed calls (`ModelProviderError` carries it);
+  `ask_model` adds it to `TurnState`. Price table `core/model_pricing.py` (versioned `2026-11-13`, `Decimal`,
+  band picked by the injected clock's date). `agent.turn` gains `tokens_input/cached/output/thinking`,
+  `model_calls_billed`, `estimated_cost_usd` (JSON number, 6 dp, null when unpriced), `price_missing`.
+  402 → `ModelOutOfCreditError` → outcome `model-out-of-credit`; the client's RFC 9457 problem is unchanged.
+- **Infra (#195):** `infra/gemini_spend.tf` — DELTA distribution metric + PromQL 50 %/80 % of
+  `var.gemini_credit_usd` over 24 h + log-match on `model-out-of-credit`; `spend_alert_emails` defaults
+  empty (no channel). Validated (`fmt`, `validate`, `trivy config`), not applied.
+- **Harness:** cross-stack contract test (`test_spend_alert_contract.py`) compares the HCL field names with
+  the Python constants; `infra/gemini_spend.tf` added to `backend-ci`'s `paths:` (ci-conventions §5, eighth
+  instance: a stack's filter lists every file its gate reads), and to the §4b row in this follow-up.
+- **Follow-ups shipped in `chore/GGU-167_spend_alert_followups`:** spec 0058 §3.1 cites the pricing page for
+  both bands; runbook and `gemini_credit_usd` say plainly the 50/80 % alerts are a 24 h burn rate against that
+  variable, not the balance, and that it is bumped on every top-up; a log-match alert on `price_missing=true`
+  (WARNING, rate-limited, auto-close) with the contract test extended; `ModelOutOfCreditError`'s docstring
+  says what makes it distinct, and the masked detail is now the constant `MASKED_DETAIL` rather than a
+  docstring fallback, so rewording a docstring can no longer change what a caller sees.
+- **Next person:** verify `increase(<metric>_sum[24h])` in Metrics Explorer after the first apply
+  (infra/0006 OD-1); set `spend_alert_emails` and connect Slack in the console; bump `gemini_credit_usd` on
+  every top-up; update `PRICES` + `PRICE_TABLE_VERSION` when the pricing page changes (re-read it before
+  2027-01-01). `agent_service.py` is at 148/150.
+- **Found on the way:** a non-httpx exception while building the HTTP client (missing CA bundle in a local
+  venv) makes a turn log `outcome=error`, not `model-unavailable` — pre-existing, not addressed.

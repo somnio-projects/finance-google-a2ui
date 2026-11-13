@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from app.core.errors import DependencyUnavailableError
 from app.core.model import ModelReply
 from app.core.model_errors import (
+    MASKED_DETAIL,
     MODEL_OUT_OF_CREDIT,
     MODEL_UNAVAILABLE,
     ModelOutOfCreditError,
@@ -61,3 +62,13 @@ def test_a_model_error_is_the_same_masked_problem_whatever_its_outcome(
 
 def test_a_model_error_spends_nothing_by_default() -> None:
     assert ModelProviderError().usage == ZERO_USAGE
+
+
+@pytest.mark.parametrize(
+    "error", [ModelProviderError, ModelOutOfCreditError], ids=["unavailable", "402"]
+)
+def test_a_model_error_without_a_detail_never_falls_back_to_its_docstring(
+    error: type[ModelProviderError],
+) -> None:
+    """The docstrings name the cause; the detail a caller sees must not."""
+    assert error().detail == MASKED_DETAIL

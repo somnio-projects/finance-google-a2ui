@@ -24,10 +24,14 @@ from app.core.model_usage import ZERO_USAGE, TokenUsage
 MODEL_UNAVAILABLE: Final[str] = "model-unavailable"
 #: The outcome of a turn the provider refused because the balance is spent.
 MODEL_OUT_OF_CREDIT: Final[str] = "model-out-of-credit"
+#: The one detail a caller sees, whichever class is raised. Fixed here, never
+#: taken from a docstring: ``AppError`` falls back to ``__doc__``, and the
+#: docstrings below describe the cause — which is what a caller must not learn.
+MASKED_DETAIL: Final[str] = "model provider unavailable"
 
 
 class ModelProviderError(DependencyUnavailableError):
-    """The model provider is unavailable."""
+    """The model provider failed — transport, status or an unreadable reply."""
 
     outcome: ClassVar[str] = MODEL_UNAVAILABLE
 
@@ -35,17 +39,24 @@ class ModelProviderError(DependencyUnavailableError):
         self, detail: str | None = None, *, usage: TokenUsage = ZERO_USAGE
     ) -> None:
         """Carry the masked detail and the usage the failed call billed."""
-        super().__init__(detail)
+        super().__init__(detail or MASKED_DETAIL)
         self.usage = usage
 
 
 class ModelOutOfCreditError(ModelProviderError):
-    """The model provider is unavailable."""
+    """The provider answered 402: the prepaid balance is spent.
+
+    Distinct from its parent only inward — the turn records
+    ``model-out-of-credit``, which pages an owner (infra/gemini_spend.tf),
+    and no retry is attempted because none can succeed until a top-up.
+    Outward it is the same masked 503 (spec 0058 OD-4).
+    """
 
     outcome: ClassVar[str] = MODEL_OUT_OF_CREDIT
 
 
 __all__ = [
+    "MASKED_DETAIL",
     "MODEL_OUT_OF_CREDIT",
     "MODEL_UNAVAILABLE",
     "ModelOutOfCreditError",

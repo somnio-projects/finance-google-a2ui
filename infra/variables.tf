@@ -128,7 +128,7 @@ variable "secret_rotation_days" {
 }
 
 variable "gemini_credit_usd" {
-  description = "Prepaid Google AI Studio balance, in USD, that the Gemini spend alerts measure against (specs/infra/0006). The alerts fire at 50 % and 80 % of it over a rolling 24 h. Update it when the balance is topped up."
+  description = "Prepaid Google AI Studio credit, in USD, that the Gemini spend alerts are a fraction of (specs/infra/0006). The 50 % / 80 % alerts are a 24 h BURN-RATE signal — estimated spend in the last 24 h relative to this number — NOT the remaining balance, which nothing here can read. Bump it on every top-up, or the thresholds measure the old credit."
   type        = number
   default     = 5
 
