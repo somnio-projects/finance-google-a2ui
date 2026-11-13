@@ -22,3 +22,7 @@ auth_bootstrap_admins = "lbertuzzi@somniosoftware.com"
 # and staging leave this at its `false` default.
 auth_open_enrolment = true
 alert_email         = "lbertuzzi@somniosoftware.com"
+# Gemini spend alerts (specs/infra/0006, 0007). Applied 2026-11-13 with this
+# address; kept here so a later full apply does not drop the channel. Add the
+# Slack channel id to spend_alert_channel_ids once it exists (runbook §4).
+spend_alert_emails = ["lbertuzzi@somniosoftware.com"]
