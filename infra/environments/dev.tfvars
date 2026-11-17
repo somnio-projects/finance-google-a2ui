@@ -24,10 +24,15 @@ auth_open_enrolment = true
 alert_email         = "lbertuzzi@somniosoftware.com"
 # Gemini spend alerts (specs/infra/0006, 0007). Applied 2026-11-13; kept here
 # so a later full apply does not drop the channels. Agustina (PM) and Guillermo
-# (engineering management) were added the same day at Agustina's request, until
-# the Slack channel exists. Add its id to spend_alert_channel_ids then (runbook §4).
+# (engineering management) were added the same day at Agustina's request.
 spend_alert_emails = [
   "lbertuzzi@somniosoftware.com",
   "ascarafia@somniosoftware.com",
   "ghilal@somniosoftware.com",
+]
+# The Slack channel #finance-google-a2ui-dev, authorised in the console on
+# 2026-11-17 (runbook §4, spec infra/0007). Only its id is code; the Slack
+# token lives in Cloud Monitoring, never in git or state.
+spend_alert_channel_ids = [
+  "projects/finance-a2ui/notificationChannels/11253373181725321446",
 ]
